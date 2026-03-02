@@ -1,0 +1,60 @@
+# 2015 AMC 12A Problem 24
+
+## Problem
+Rational numbers a and b are chosen at random among all rational numbers in the interval [0,2) that can be written as fractions $\frac{n}{d}$ where n and d are integers with 1 $\le$ d $\le 5.$ What is the probability that
+($\text{cos}(a\pi)+i\text{sin}(b\pi))^4$
+is a real number?
+
+$\textbf{(A)}\ \frac{3}{50} \qquad\textbf{(B)}\ \frac{4}{25} \qquad\textbf{(C)}\ \frac{41}{200} \qquad\textbf{(D)}\ \frac{6}{25} \qquad\textbf{(E)}\ \frac{13}{50}$
+## Solution
+Let $\cos(a\pi) =$ x and $\sin(b\pi) =$ y. Consider the binomial expansion of the expression:
+$x^4 +$ 4ix^{3}y - $6x^{2}y^{2} - 4$ixy^3 + y^4.
+
+We notice that the only terms with i are the second and the fourth terms. Thus for the expression to be a real number, either $\cos(a\pi)$ or $\sin(b\pi)$ must be 0, or the second term and the fourth term cancel each other out (because in the fourth term, you have $i^2 = -1).$
+
+$\text{Case~1:}$ Either $\cos(a\pi)$ or $\sin(b\pi)$ is 0.
+
+The two $\text{a's}$ satisfying this are $\tfrac{1}{2}$ and $\tfrac{3}{2},$ and the two $\text{b's}$ satisfying this are 0 and 1. Because a and b can both be expressed as fractions with a denominator less than or equal to 5, there are a total of 20 possible values for a and b:
+
+
+$$
+0, 1, \frac{1}{2}, \frac{3}{2}, \frac{1}{3},
+\frac{2}{3}, \frac{4}{3}, \frac{5}{3}, \frac{1}{4}, \frac{3}{4},
+\frac{5}{4}, \frac{7}{4}, \frac{1}{5}, \frac{2}{5}, \frac{3}{5},
+$$
+
+$\frac{4}{5}, \frac{6}{5}, \frac{7}{5}, \frac{8}{5}, \text{and} \frac{9}{5}.$
+
+Calculating the total number of sets of (a,b) results in 20 $\cdot 20 = 400$ sets.
+Calculating the total number of invalid sets (sets where a doesn't equal $\tfrac{1}{2}$ or $\tfrac{3}{2}$ and b doesn't equal 0 or 1), resulting in (20-2) $\cdot (20-2) = 324.$
+
+Thus the number of valid sets is 76.
+
+$\text{Case~2}$: The two terms cancel.
+
+We then have:
+
+$$\cos^3(a\pi) \cdot \sin(b\pi) = \cos(a\pi) \cdot \sin^3(b\pi).$$
+
+So:
+
+$$\cos^2(a\pi) = \sin^2(b\pi),$$
+
+which means for a given value of $\cos(a\pi)$ or $\sin(b\pi),$ there are 4 valid values(one in each quadrant).
+
+When either $\cos(a\pi)$ or $\sin(b\pi)$ are equal to 1, however, there are only two corresponding values. We don't count the sets where either $\cos(a\pi)$ or $\sin(b\pi)$ equals 0, for we would get repeated sets. We also exclude values where the denominator is an odd number, for we cannot find any corresponding values(for example, if a is $\tfrac{1}{5},$ then b must be $\tfrac{3}{10},$ which we don't have). Thus the total number of sets for this case is 4 $\cdot 4 + 2 \cdot 2 = 20.$
+
+Thus, our final answer is $\frac{(20 + 76)}{400} = \frac{6}{25},$ which is $\boxed{\text{(D)}}.$
+## Solution 2
+Multiplying complex numbers is equivalent to multiplying their magnitudes and summing their angles. In order for ($\cos(a\pi)+i\sin(b\pi))^4$ to be a real number, then the angle of $\cos(a\pi)+i\sin(b\pi)$ must be a multiple of $45^{\circ}$, so $\cos(a\pi)+i\sin(b\pi)$ satisfies $\cos(a\pi)=0, \sin(b\pi)=0, \cos(a\pi)=\sin(b\pi),$ or $\cos(a\pi)=-\sin(b\pi).$
+
+There are 20 possible values of a and b. $\sin(x\pi) = 0$ at x = $\{0,1\}$ and $\cos(x\pi) = 0$ at x = $\{\frac12, \frac32\}$. The probability of $\sin(b\pi) = 0$ or $\cos(a\pi) = 0$ is $\frac{1}{10} + \frac{1}{10} - \frac{1}{100} ($We overcounted the case where $\sin = \cos = 0.)$
+
+We also consider the case where $\sin(b\pi) = \pm \cos(a\pi).$ This only happens when a = $\{0,1\}$, b = $\{\frac12, \frac32\}$ or a,b = $\{ \frac14, \frac34, \frac54, \frac74 \}$. The probability is $\frac{1}{100} + \frac{1}{25}$ The total probability is $\frac15 + \frac{1}{25} = \frac{6}{25} \rightarrow\boxed{\text{(D)}}$
+
+*~zeric*
+### Video Solution by Richard Rusczyk
+https://artofproblemsolving.com/videos/amc/2015amc12a/401
+
+*~dolphin7*
+## See Also

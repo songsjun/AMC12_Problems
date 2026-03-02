@@ -1,0 +1,42 @@
+# 2003 AMC 12A Problem 1
+
+> This problem is the same as [2003 AMC 12A #1](https://artofproblemsolving.com/wiki/index.php/2003_AMC_12A_Problems) and [2003 AMC 10A #1](https://artofproblemsolving.com/wiki/index.php/2003_AMC_10A_Problems).
+## Problem
+What is the difference between the sum of the first 2003 even counting numbers and the sum of the first 2003 odd counting numbers?
+
+
+$$\mathrm{(A) \ } 0\qquad \mathrm{(B) \ } 1\qquad \mathrm{(C) \ } 2\qquad \mathrm{(D) \ } 2003\qquad \mathrm{(E) \ } 4006$$
+
+## Solution 1
+The first 2003 even counting numbers are 2,4,6,...,4006.
+
+The first 2003 odd counting numbers are 1,3,5,...,4005.
+
+Thus, the problem is asking for the value of (2+4+6+...+4006)-(1+3+5+...+4005).
+
+$$(2+4+6+...+4006)-(1+3+5+...+4005) = (2-1)+(4-3)+(6-5)+...+(4006-4005)$$
+
+$$= 1+1+1+...+1 = \boxed{\mathrm{(D)}\ 2003}$$
+
+The answer is 2003
+## Solution 2
+Using the sum of an [arithmetic progression](https://artofproblemsolving.com/wiki/index.php/arithmetic_progression) formula, we can write this as $\frac{2003}{2}(2 + 4006) - \frac{2003}{2}(1 + 4005) = \frac{2003}{2} \cdot 2 = \boxed{\mathrm{(D)}\ 2003}.$
+## Solution 3
+The formula for the sum of the first n even numbers, is $S_E=n^{2}$+n, (E standing for even).
+
+Sum of first n odd numbers, is $S_O=n^{2}$, (O standing for odd).
+
+Knowing this, plug 2003 for n,
+
+
+$$S_E-S_O= (2003^{2}+2003)-(2003^{2})=2003 \Rightarrow \boxed{\mathrm{(D)}\ 2003}.$$
+
+## Solution 4
+In the case that we don't know if 0 is considered an even number, we note that it doesn't matter! The sum of odd numbers is O=1+3+5+...+4005. And the sum of even numbers is either $E_1=0+2+4$...+4004 or $E_2=2+4+6$+...+4006. When compared to the sum of odd numbers, we see that each of the nth term in the series of even numbers differ by 1. For example, take series O and $E_1$. The first terms are 1 and 0. Their difference is |1-0|=1. Similarly, take take series O and $E_2$. The first terms are 1 and 2. Their difference is |1-2|=1. Since there are 2003 terms in each set, the answer $\boxed{\mathrm{(D)}\ 2003}.$
+## Solution 5 (Fastest method)
+We can pair each term of the sums - the first even number with the first odd number, the second with the second, and so forth. Then, there are 2003 pairs with a difference of 1 in each pair - 2-1 is 1, 4-3 is 1, 6-5 is 1, and so on. Then, the solution is 1 $\cdot 2003,$ and the answer is $\boxed{\text{(D) }2003}.$
+
+<3
+## See also
+https://www.youtube.com/watch?v=6ZRnm_DGFfY
+Video solution by canada math

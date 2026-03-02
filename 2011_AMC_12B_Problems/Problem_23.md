@@ -1,0 +1,57 @@
+# 2011 AMC 12B Problem 23
+
+## Problem
+A bug travels in the coordinate plane, moving only along the lines that are parallel to the x-axis or y-axis. Let A = (-3, 2) and B = (3, -2). Consider all possible paths of the bug from A to B of length at most 20. How many points with integer coordinates lie on at least one of these paths?
+
+$\textbf{(A)}\ 161 \qquad \textbf{(B)}\ 185 \qquad \textbf{(C)}\ 195 \qquad \textbf{(D)}\ 227 \qquad \textbf{(E)}\ 255$
+## Solution
+We declare a point (x, y) to make up for the extra steps that the bug has to move. If the point (x, y) satisfies the property that |x - 3| + |y + 2| + |x + 3| + |y - 2| $\le 20,$ then it is in the desirable range because |x - 3| + |y + 2| is the length of the shortest path from (x,y) to (3, -2) and |x + 3| + |y - 2| is the length of the shortest path from (x,y) to (-3, 2).
+
+If $-3\le$ x $\le 3,$ then $-7\le$ y $\le 7$ satisfy the property. there are 15 $\times 7 = 105$ lattice points here.
+
+else let 3< x $\le 8 (a$nd for -8 $\le$ x < -3 because it is symmetrical) We set 8 as the upper bound for x because the shortest distance from (-3, 2) to (x, y) added to the shortest distance from (x, y) to (3, -2) is |x - 3| + |y + 2| + |x + 3| + |y - 2|. Since the minimum value for the difference between the y-coordinates is at $y = 0$, we get $2x + 4 = 20$ or -$2x + 4 = 20$. Thus, the upper and lower bounds for x are 8 and -8, respectively.
+
+Now we test each value for x satisfying 3< x $\le 8$ and double the result because of symmetry.
+
+For $x = 4$, the possibles values of y are such that |$2y$| $\le 12$ for a total of 13 lattice points,
+
+for $x = 5$, the possibles values of y are such that |$2y$| $\le 10$ for a total of 11 lattice points,
+
+for $x = 6$, the possibles values of y are such that |$2y$| $\le 8$ for a total of 9 lattice points,
+
+for $x = 7$, the possibles values of y are such that |$2y$| $\le 6$ for a total of 7 lattice points,
+
+for $x = 8$, the possibles values of y are such that |$2y$| $\le 4$ for a total of 5 lattice points,
+
+Hence, there are a total of 105 + 2 ( 13 + 11 + 9 + 7 + 5) = $\boxed{(C) 195}$ lattice points.
+
+One may also obtain the result by using Pick's Theorem(how?).
+
+i = a - $\frac{b}{2} - 1 ($Suggestion)
+## Solution 2
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+import graph; import patterns; unitsize(1cm); add("tile",tile()); add("checker",checker()); filldraw((-3,2)--(3,2)--(3,-2)--(-3,-2)--cycle,pattern("checker")); filldraw((-3,2)--(-3,7)--(3,7)--(3,2)--cycle,pattern("tile")); filldraw((-3,-2)--(-3,-7)--(3,-7)--(3,-2)--cycle,pattern("tile")); filldraw((-8,2)--(-3,2)--(-3,-2)--(-8,-2)--cycle,pattern("tile")); filldraw((8,2)--(3,2)--(3,-2)--(8,-2)--cycle,pattern("tile")); draw((8,2)--(3,7)--(-3,7)--(-8,2)--(-8,-2)--(-3,-7)--(3,-7)--(8,-2)--cycle,blue); xaxis(-9,9,Ticks(NoZero,Step=1)); yaxis(-8,8,Ticks(NoZero,Step=1)); dot((-3,2));label("$A$",(-3,2),N); dot((3,-2));label("$B$",(3,-2),N); // Asymptote by Technodoggo; August 16, 2024
+```
+
+(Diagram for Solution 2 by Technodoggo also don't ask about the patterns, I just figured out how to use the patterns module)
+
+Notice that the bug is basically moving from A to B (length 10) but optionally going on a detour anywhere along its route.
+
+Specifically, the detour would be of total length 10, 5 to some point and then going back by retracing its path (also length 5). Just to simplify things we can observe that the coordinates don't matter here and all we need to remember is that A and B are the diagonally opposite vertices of a 4 by 6 rectangle (5 by 7 lattice points). The bug can start the "detour" from any point on or inside the rectangle. Notice that the bug can go 5 steps in the y direction, 5 steps in the x direction, or anything in between, so the points covered by possible detours from any point would look like a rhombus or square rotated 45 degrees (with centre at a point on or inside the rectangle). Drawing this out we would get an octagon.
+
+Finding the final answer is then easy, for this solution I will slice the octagon into 4 rectangles (2 of which are squares) and 4 isosceles triangles. There are (4+1)$\cdot (6+1) = 35$ points on or inside the original triangle, $5\cdot 7$ points covered by the rectangles above and below the original one and $5\cdot 5$ points for the squares to the right and left of the original triangle. Lastly each of the four isosceles triangles cover $4+3+2+1 = 10$ points. (Notice that although the length of the detour is 5, the points on the edge of the triangles were already counted).
+
+Adding these up, we get $3\cdot 35 + 2\cdot 25 + 4\cdot 10 = 195 => \boxed{(C)}$
+
+Another way to get to the octagon would be to note that aside from the 4x6/5x7 box of the bare absolutely necessary route (the checkered region), we can go on a 5-step detour anywhere (as above); we need only examine how far we can get through the edges (the border), because that takes us the farthest. Starting from any point on the border, the farthest that it can go is 5 units in some cardinal direction, which gives us the tiled region in the diagram above. Finally, from our corners, we can also go 4-1, 3-2, 2,3, or 1-4, which gives us the rest of the region enclosed in blue. This gives us our octagon.
+
+tl;dr the interior of the octagon in blue is a result of taking all the points that can be reached from the boundary of the box as described in no more than 5 moves. We can then proceed to find the area in any simple way. (Extra way & diagram by Technodoggo)
+## Solution 3 (think about it a lil bit)
+We start with reaching B from A first. It only takes 10 moves, a sequence of moves down and towards the right. This is a 5 by 7 grid of squares. For the remaining 10 moves, we can move 5 moves out, and then spend the other 5 moves "undoing" these 5 moves. For example, we can move 4 left and 1 up at the start, and of the remaining 15 moves, there must be 4 "downs" and 6 "rights", along with 5 moves that undo the original 5 at the start.
+
+Drawing it on a grid, we will have one center rectangle, 4 rectangles attached to it (1 on each side), and 1 triangle in each corner. The total number of points is 35+35+35+25+25+10+10+10+10 = $\boxed{\textbf{(C) }195}.$
+
+*~skibbysiggy*
+## See also

@@ -1,0 +1,15 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2025_AMC_12B_Problems/Problem_23&action=raw
+
+Published Time: Sun, 16 Nov 2025 19:56:04 GMT
+
+Markdown Content:
+==Problem==
+Let S be the set of all integers z > 1 such that for all pairs of nonnegative integers (x, y) with x < y < z, the remainder when 2025x is divided by z is less than the remainder when 2025y is divided by z. What is the sum of the elements of S?
+
+\textbf{(A)}~3041 \qquad \textbf{(B)}~3542 \qquad \textbf{(C)}~3750 \qquad \textbf{(D)}~4044 \qquad \textbf{(E)}~4319
+
+==Solution 1==
+Notice that there are z distinct remainders modulo z. However, if we let R(x) denote the remainder when 2025x is divided by z, we know that by the problem condition,
+R(0) But there are only z distinct remainders, and each of the z terms above must correspond to a distinct remainder, so we must have R(k)=k for all k=0,1,\dots,z-1. Then 2025k\equiv k\pmod{z}, so 2024k\equiv 0\pmod{z}. Since k can vary, this is equivalent to 2024\equiv 0\pmod{z}, or z\mid 2024. Therefore, the values z that satisfy the property are the factors of 2024, so we simply need to find the sum of the factors of 2024 and subtract 1 at the end since z\ne 1. But 2024=2^3\cdot 11\cdot 23, so the sum of the factors minus 1 is (1+2+4+8)(1+11)(1+23)-1=15\cdot12\cdot24-1=4320-1=\boxed{\textbf{(E)}~4319 }. ~ [https://artofproblemsolving.com/wiki/index.php/User:Eevee9406 eevee9406] ==Solution 2 (Fast)== Notice that 2025x \equiv x \pmod{z} \, \forall z \mid 2024. Since x, all pairs (x,y) satisfy the remainder condition when z\mid 2024 except for z=1. Recall that 2024=2^3\cdot 11 \cdot 23, so \sum z=(15)(12)(24)-1=\boxed{\textbf{(E)}~4319}, which is the largest answer choice. ==Video Solution 1 by OmegaLearn.org== https://youtu.be/HvraNBxazkI ==See Also== {{AMC12 box|year=2025|ab=B|num-b=22|num-a=24}} {{MAA Notice}}

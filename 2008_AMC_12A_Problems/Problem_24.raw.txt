@@ -1,0 +1,42 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2008_AMC_12A_Problems/Problem_24&action=raw
+
+Published Time: Thu, 07 Jun 2018 18:35:49 GMT
+
+Markdown Content:
+== Problem == 
+[[Triangle]] ABC has \angle C = 60^{\circ} and BC = 4.  Point D is the [[midpoint]] of BC.  What is the largest possible value of \tan{\angle BAD}?
+
+\mathrm{(A)}\ \frac{\sqrt{3}}{6}\qquad\mathrm{(B)}\ \frac{\sqrt{3}}{3}\qquad\mathrm{(C)}\ \frac{\sqrt{3}}{2\sqrt{2}}\qquad\mathrm{(D)}\ \frac{\sqrt{3}}{4\sqrt{2}-3}\qquad\mathrm{(E)}\ 1
+
+== Solution 1 ==
+unitsize(12mm); pair C=(0,0), B=(4 * dir(60)), A = (8,0), D=(2 * dir(60)); pair E=(1,0), F=(2,0); draw(C--B--A--C); draw(A--D);draw(D--E);draw(B--F); dot(A);dot(B);dot(C);dot(D);dot(E);dot(F); label("\(C\)",C,SW); label("\(B\)",B,N); label("\(A\)",A,SE); label("\(D\)",D,NW); label("\(E\)",E,S); label("\(F\)",F,S); label("\(60^\circ\)",C+(.1,.1),ENE); label("\(2\)",1*dir(60),NW); label("\(2\)",3*dir(60),NW); label("\(\theta\)",(7,.4)); label("\(1\)",(.5,0),S); label("\(1\)",(1.5,0),S); label("\(x-2\)",(5,0),S);
+
+Let x = CA. Then \tan\theta = \tan(\angle BAF - \angle DAE), and since \tan\angle BAF = \frac{2\sqrt{3}}{x-2} and \tan\angle DAE = \frac{\sqrt{3}}{x-1}, we have
+
+\tan\theta = \frac{\frac{2\sqrt{3}}{x-2} - \frac{\sqrt{3}}{x-1}}{1 + \frac{2\sqrt{3}}{x-2}\cdot\frac{\sqrt{3}}{x-1}}= \frac{x\sqrt{3}}{x^2-3x+8}
+
+With calculus, taking the [[derivative]] and setting equal to zero will give the maximum value of \tan \theta. Otherwise, we can apply [[AM-GM]]:
+
+\begin{align*} \frac{x^2 - 3x + 8}{x} = \left(x + \frac{8}{x}\right) -3 &\geq 2\sqrt{x \cdot \frac 8x} - 3 = 4\sqrt{2} - 3\\ \frac{x}{x^2 - 3x + 8} &\leq \frac{1}{4\sqrt{2}-3}\\ \frac{x\sqrt{3}}{x^2 - 3x + 8} = \tan \theta &\leq \frac{\sqrt{3}}{4\sqrt{2}-3}\end{align*}
+
+Thus, the maximum is at  
+\frac{\sqrt{3}}{4\sqrt{2}-3} \Rightarrow \mathbf{(D)}.
+
+== Solution 2 ==
+We notice that \tan(x) is strictly increasing on the interval [0, \frac{\pi}{2}) (if \angle BAD\ge 90^\circ, then it is impossible for \angle C=60^\circ), so we want to maximize \angle BAD. 
+
+Consider the circumcircle of BAD and let it meet AC again at F. Any point P between A and F on line AC is inside this circle, so it follows that \angle BPD>\angle BAD. Therefore to maximize \angle BAD, the circumcircle of BAD must be tangent to AC at A. By PoP we find that CA^2=CD\cdot CB \Rightarrow AC = 2\sqrt{2}.
+
+Now our computations are straightforward:
+\tan\angle BAD = \frac{\sin \angle BAD}{\cos \angle BAD} = \frac{\frac{2\sin\angle ABD}{AD}}{\frac{AB^2+AD^2-BD^2}{2AB\cdot AD}}
+=\frac{4\sin \angle ABD\cdot AB}{AB^2+AD^2-4} = \frac{4 AC \sin \angle ACB}{AB^2 + AD^2 - 4}
+=\frac{4\sqrt{6}}{(4^2+(2\sqrt{2})^2-4\cdot 2\sqrt{2}) + (2^2+(2\sqrt{2})^2 - 2\cdot 2\sqrt{2}) - 4} = \frac{4\sqrt{6}}{32-12\sqrt{2}}
+=\boxed{\frac{\sqrt{3}}{4\sqrt{2}-3}}
+
+== See also ==
+{{AMC12 box|year=2008|ab=A|num-b=23|num-a=25}}
+
+[[Category:Intermediate Geometry Problems]]
+{{MAA Notice}}

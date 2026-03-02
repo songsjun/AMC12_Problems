@@ -1,0 +1,24 @@
+# 2015 AMC 12B Problem 9
+
+## Problem
+Larry and Julius are playing a game, taking turns throwing a ball at a bottle sitting on a ledge. Larry throws first. The winner is the first person to knock the bottle off the ledge. At each turn the probability that a player knocks the bottle off the ledge is $\tfrac{1}{2},$ independently of what has happened before. What is the probability that Larry wins the game?
+
+$\textbf{(A)}\; \dfrac{1}{2} \qquad\textbf{(B)}\; \dfrac{3}{5} \qquad\textbf{(C)}\; \dfrac{2}{3} \qquad\textbf{(D)}\; \dfrac{3}{4} \qquad\textbf{(E)}\; \dfrac{4}{5}$
+## Solution
+## Solution 1
+If Larry wins, he either wins on the first move, or the third move, or the fifth move, etc. Let W represent "player wins", and L represent "player loses". Then the events corresponding to Larry winning are W, LLW, LLLLW, LLLLLLW, $\ldots$
+
+Thus the probability of Larry winning is
+
+$$\frac{1}{2} + \frac{1}{2^3} + \frac{1}{2^5} + \frac{1}{2^7} + \cdots$$
+
+This is a geometric series with ratio $\frac{1}{2^2}=\frac{1}{4},$ hence the answer is $\frac{1}{2} \cdot \frac{1}{1 - \frac{1}{4}} = \boxed{\textbf{(C)}\; \frac{2}{3}}.$
+## Solution 2
+Break the problem up into two separate cases: (a) Larry wins on the first throw or (b) Larry wins after the first throw.
+
+a: The probability that Larry wins on the first throw is $\frac{1}{2}.$
+
+b: The probability that Larry wins after the first throw is half the probability that Julius wins because it only occurs half the time. This probability is $\frac{1}{2}(1-x),$ where x is the probability that Larry wins.
+
+Therefore, x = $\frac{1}{2} + \frac{1}{2}(1 - x).$ This equation can be solved for x to find that the probability that Larry wins is $\boxed{\textbf{(C)}\; \frac{2}{3}}.$
+## See Also

@@ -1,0 +1,78 @@
+{{duplicate|[[2024 AMC 10A Problems/Problem 19|2024 AMC 10A #19]] and [[2024 AMC 12A Problems/Problem 12|2024 AMC 12A #12]]}}
+
+==Problem==
+The first three terms of a geometric sequence are the integers <math>a,\,720,</math> and <math>b,</math> where <math>a<720<b.</math> What is the sum of the digits of the least possible value of <math>b?</math>
+
+<math>\textbf{(A) } 9 \qquad \textbf{(B) } 12 \qquad \textbf{(C) } 16 \qquad \textbf{(D) } 18 \qquad \textbf{(E) } 21</math>
+
+==Solution 1==
+For a geometric sequence, we have <math>ab=720^2=2^8 3^4 5^2</math>, and we can test values for <math>b</math>. We find that <math>b=768</math> and <math>a=675</math> works, and we can test multiples of <math>5</math> in between the two values. Finding that none of the multiples of 5 divide <math>720^2</math> besides <math>720</math> itself, we know that the answer is <math>7+6+8=\boxed{\textbf{(E) } 21}</math>.
+
+(Note: To find the value of <math>b</math> without bashing, we can observe that <math>2^8=256</math>, and that multiplying it by <math>3</math> gives us <math>768</math>, which is really close to <math>720</math>. ~ YTH)
+
+Note: The reason why <math>ab=720^2</math> is because <math>b/720 = 720/a</math>. Rearranging this gives <math>ab = 720^2</math>
+
+~eevee9406
+
+Note: Another reason that <math>ab=720^2</math> is because the <math>\sqrt{ab}=720</math> (as the middle term in a geometric series is always the geometric mean [the geometric mean is the square root of the product of the first and last terms of the series]) and squaring on both sides results in <math>ab=720^2</math>.
+
+~ThatPrimePunnyGuy
+
+Note: Because it is a geometric sequence, it is clear that <math>a*k = 720</math> and <math>720*k = b</math>. Then, <math>a*k = 720 = b/k</math>. Multiply the first and third term together and it is equal to the middle term multiplied by itself.
+
+~RON-WEASLEY
+
+==Solution 2==
+We have <math>720 = 2^4 \cdot 3^2 \cdot 5</math>. We want to find factors <math>x</math> and <math>y</math> where <math>y>x</math> such that <math>\frac{y}{x}</math> is minimized, as <math>720 \cdot \frac{y}{x}</math> will then be the least possible value of <math>b</math>. After experimenting, we see this is achieved when <math>y=16</math> and <math>x=15</math>, which means our value of <math>b</math> is <math>720 \cdot \frac{16}{15} = 768</math>, so therefore our sum is <math>7+6+8=\boxed{\textbf{(E) } 21}</math>.
+
+~i_am_suk_at_math_2
+
+== Solution 3 (Similar to previous solutions) ==
+
+To minimize the value of <math>b</math>, where it has to be an integer, and it has to be greater than 720, we can express the common ratio as <math>\dfrac{n+1}{n}</math>, where the value has to be greater than <math>1</math>, and <math>n</math>, and <math>n+1</math> have to be factors of 720. Since the bigger the denominator gets, the smaller the value of the fraction, we essentially have to find the biggest value for <math>n</math>, where itself and <math>n+1</math> are factors of <math>720</math>. From here, we can check whether <math>n(n+1) = 720</math> yields an integer root, which it doesn't. So, then we check the next biggest factor of <math>720</math>, which is <math>360</math>. <math>n(n+1) = 360</math>, this doesn't have an integer root either. So, then we check the next biggest factor which is <math>240</math>, <math>n(n+1) = 240</math>, which we get <math>15</math> as a root. This means the common ration is <math>\dfrac{16}{15}</math>. We then multiply <math>\dfrac{16}{15}</math> times <math>720</math> and add up the digits getting <math>\boxed{\textbf{(E) } 21}</math>.
+
+~yuvag
+
+== Solution 4 ==
+
+Let the common ratio of the geometric sequence be <math>\frac{x}{y}</math>, with <math>x>y</math>. This means that <math>720(\frac{x}{y})</math> and <math>720(\frac{y}{x})</math> must both be integers, therefore <math>x</math> and <math>y</math> are both factors of <math>720</math>. We would achieve the smallest ratio <math>\frac{x}{y}</math> if <math>x</math> and <math>y</math> are consecutive, so by listing out the factors of <math>720</math>, we find that <math>1</math>, <math>2</math>, <math>3</math>, <math>4</math>, <math>5</math>, <math>6</math>, <math>8</math>, <math>9</math>, <math>10</math>, <math>15</math>, <math>16</math> are the only consecutive factors (any factors larger than these would result in the ratio simplifying, making it larger than just using consecutive integers). <math>15</math> and <math>16</math> are the largest, so we find the common ratio to be <math>\frac{16}{15}</math>, making <math>b=720(\frac{16}{15})</math> giving us <math>768</math>. The sum of its digits is <math>\boxed{\textbf{(E) } 21}</math>.
+
+~lisztepos
+
+~ small edit by RoyalPawn38
+
+==Solution 5 (similar to other solutions) ==
+We look for the smallest possible increasing ratio in the geometric sequence for <math>a</math>, <math>720</math>, and <math>b</math>.
+First, we find the prime factorization of <math>720</math>, which is really easy <math>720=2^4\cdot3^2\cdot5</math>. Then, we look for the closest possible fraction-ratio out of the primes, and after a quick look, it's easy to see it is <math>16</math> and <math>15</math>. Now that we found our ratio, we multiply <math>720</math> by <math>16/15</math> to get <math>768</math>, so the sum of the digits of the least possible value of <math>b</math> is <math>21</math>.
+
+~hashbrown2009 (trash latex ik sorry)
+NOTE: It's not 9/8 because we want it to be as close as possible to 1 ~gabrielle.esther
+
+==Video Solution by [https://artofproblemsolving.com/wiki/index.php/User:grogg007 grogg007]== 
+https://www.youtube.com/watch?v=-VWz8lEBv0I
+
+== Video Solution by Power Solve ==
+https://www.youtube.com/watch?v=B0JOMiiCtAo
+
+==Detailed Video Solution by Scholars Foundation==
+
+https://www.youtube.com/watch?v=JoF4-fo7W1w&pp=ygULYW1jIDEwIDIwMjQ%3D
+
+==Video Solution by Pi Academy==
+
+https://youtu.be/fW7OGWee31c?si=oq7toGPh2QaksLHE
+
+==Video Solution by SpreadTheMathLove==
+https://youtu.be/otByKTvfE7I?si=3x83heqecMIKYCMD
+
+== Video solution by TheNeuralMathAcademy ==
+https://www.youtube.com/watch?v=4b_YLnyegtw&t=4056s
+
+==See Also==
+
+
+{{AMC10 box|year=2024|ab=A|num-b=18|num-a=20}}
+
+
+{{AMC12 box|year=2024|ab=A|num-b=11|num-a=13}}
+{{MAA Notice}}

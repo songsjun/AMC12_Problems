@@ -1,0 +1,105 @@
+{{duplicate|[[2024 AMC 10A Problems/Problem 15|2024 AMC 10A #15]] and [[2024 AMC 12A Problems/Problem 9|2024 AMC 12A #9]]}}
+==Problem==
+Let <math>M</math> be the greatest integer such that both <math>M+1213</math> and <math>M+3773</math> are perfect squares. What is the units digit of <math>M</math>?
+
+<math>\textbf{(A) }1\qquad\textbf{(B) }2\qquad\textbf{(C) }3\qquad\textbf{(D) }6\qquad\textbf{(E) }8</math>
+
+==Solution 1==
+
+Let <imath>M+1213=P^2</imath> and <imath>M+3773=Q^2</imath> for some positive integers <imath>P</imath> and <imath>Q.</imath> We subtract the first equation from the second, then apply the difference of squares: <cmath>(Q+P)(Q-P)=2560.</cmath> Note that <imath>Q+P</imath> and <imath>Q-P</imath> have the same parity, and <imath>Q+P>Q-P.</imath> 
+
+We wish to maximize both <imath>P</imath> and <imath>Q,</imath> so we maximize <imath>Q+P</imath> and minimize <imath>Q-P.</imath> It follows that
+<cmath>\begin{align*}
+Q+P&=1280, \\
+Q-P&=2,
+\end{align*}</cmath>
+from which <imath>(P,Q)=(639,641).</imath>
+
+Finally, we get <imath>M=P^2-1213=Q^2-3773\equiv1-3\equiv8\pmod{10},</imath> so the units digit of <imath>M</imath> is <imath>\boxed{\textbf{(E) }8}.</imath>
+
+~MRENTHUSIASM 
+
+~Tacos_are_yummy_1
+
+~minor edit
+
+==Solution 2==
+
+Ideally, we would like for the two squares to be as close as possible. The best case is that they are consecutive squares (no square numbers in between them); however, since <math>M+1213</math> and <math>M+3773</math> (and thus their square roots) have the same parity, they cannot be consecutive squares (which are always opposite parities). The best we can do is that <math>M+1213</math> and <math>M+3773</math> have one square in between them. 
+
+Let the square between <math>M+1213</math> and <math>M+3773</math> be <math>x^2</math>. So, we have <math>M+1213 = (x-1)^2</math> and <math>M+3773 = (x+1)^2</math>. Subtracting the two, we have <math>(M+3773)-(M+1213) = (x+1)^2 - (x-1)^2</math>, which yields <math>2560 = 4x</math>, which leads to <math>x = 640</math>. Therefore, the two squares are <math>639^2</math> and <math>641^2</math>, which both have units digit <math>1</math>. Since both <math>1213</math> and <math>3773</math> have units digit <math>3</math>, <math>M</math> will have units digit <math>\boxed{\textbf{(E) }8}</math>.
+
+~i_am_suk_at_math_2 (parity argument editing by Technodoggo)
+
+==Solution 3==
+Let <math>M+1213=N^2</math> <math>\Rightarrow M+3773=(N+a)^2</math>
+
+It is obvious that <math>a\neq1</math> by parity
+
+Thus, the minimum value of <math>a</math> is 2
+Which gives us,
+<cmath>(N+a)^2-N^2=M+3773-(M+1213)</cmath>
+<cmath>4N+4=2560</cmath>
+<cmath>N=639</cmath>
+Plugging this back in,
+<cmath>M=N^2-1213 \space \mod \space 10</cmath>
+<cmath>M=8 \space \mod \space 10</cmath>
+Hence the answer <math>\boxed{\textbf{(E) }8}</math>.
+
+~lptoggled
+
+- trevian1(minor edit)
+
+==Solution 4==
+
+Let <math>M+1213=n^2</math> and <math>M+3773=(n+1)^2</math> for some positive integer <math>n</math>. We do this because, in order to maximize <math>M</math>, the perfect squares need to be as close to each other as possible. We find that this configuration doesn't work, as when we subtract the equations, we have <math>2n+1=2560</math>; impossible. Then we try <math>M+3773=(n+2)^2</math>. Now we would have <math>4n+4=2560</math> which indeed works! <math>n=639</math>. 
+
+Finally, we get <math>M=n^2-1213</math> so the units digit of <math>M</math> is <math>11-3=\boxed{\textbf{(E) }8}.</math>
+
+~xHypotenuse
+
+==Note==
+We experiment with values of <math>M</math> to find the reason for why <math>M</math> is maximised when <math> M + 1213 </math> and <math> M + 3773 </math> are nearly consecutive perfect squares. If <math> M</math> is very small, <math>M + 1213</math> and <math>M + 3773</math> are perfect squares that are far apart. Yet, as <math>M</math> grows, the relative distance between <math> M + 1213 </math> and <math> M + 3773 </math> decreases, so for very nearly consecutive perfect squares, <math>M</math> is very large.
+
+~LeonQS
+
+(I don't know if this is trivial - when I first read the solutions, I was confused to why this was true. Maybe I didn't get enough sleep.)
+
+==Video Solution (Fast! About 3 min solve!)==
+https://youtu.be/l3VrUsZkv8I
+
+~MC
+
+== Video Solution (4 min solve)==
+
+https://youtu.be/YgJ23mepN0Q
+
+<i>~Education, the Study of Everything</i>
+
+== Video Solution by Pi Academy ==
+
+https://youtu.be/ABkKz0gS1MU?si=ZQBgDMRaJmMPSSMM
+
+== Video Solution 1 by Power Solve ==
+https://youtu.be/FvZVn0h3Yk4
+
+==Video Solution by SpreadTheMathLove==
+https://youtu.be/CmIPAvwtWLA?si=ZCv3ypdDmCaV-aX3
+
+==Video Solution by Dr. David==
+https://youtu.be/XLoetj5obYE
+
+== Video solution by TheNeuralMathAcademy ==
+https://www.youtube.com/watch?v=4b_YLnyegtw&t=2808s
+
+==See Also==
+{{AMC10 box|year=2024|ab=A|before=[[2023 AMC 10B Problems]]|after=[[2024 AMC 10B Problems]]}}
+{{AMC12 box|year=2024|ab=A|before=[[2023 AMC 12B Problems]]|after=[[2024 AMC 12B Problems]]}}
+
+* [[AMC 10]]
+* [[AMC 10 Problems and Solutions]]
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

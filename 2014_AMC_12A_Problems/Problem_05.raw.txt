@@ -1,0 +1,43 @@
+{{duplicate|[[2014 AMC 12A Problems|2014 AMC 12A #5]] and [[2014 AMC 10A Problems|2014 AMC 10A #5]]}}
+==Problem==
+
+On an algebra quiz, <math>10\%</math> of the students scored <math>70</math> points, <math>35\%</math> scored <math>80</math> points, <math>30\%</math> scored <math>90</math> points, and the rest scored <math>100</math> points. What is the difference between the mean and median score of the students' scores on this quiz?
+
+<math> \textbf{(A)}\ 1\qquad\textbf{(B)}\ 2\qquad\textbf{(C)}\ 3\qquad\textbf{(D)}\ 4\qquad\textbf{(E)}\ 5</math>
+
+==Solution 1==
+WLOG, let there be <math>20</math> students (the least whole number possible) who took the test. We have <math>2</math> students score <math>70</math> points, <math>7</math> students score <math>80</math> points, <math>6</math> students score <math>90</math> points and <math>5</math> students score <math>100</math> points. Therefore, the mean
+is <math>87</math> and the median is <math>90</math>.
+
+Thus, the solution is <cmath>90-87=3\implies\boxed{\textbf{(C)} \ 3}</cmath>
+
+==Solution 2==
+The percentage who scored <math>100</math> points is <math>100\%-(10\%+35\%+30\%)=100\%-75\%=25\%</math>. Now, we need to find the median, which is the score that splits the upper and lower <math>50\%</math>.The lower <math>10\%+35\%=45\%</math> scored <math>70</math> or <math>80</math> points, so the median is <math>90</math> (since the upper <math>25\%</math> is <math>100</math> points and the lower <math>45\%</math> is <math>70</math> or <math>80</math>).The mean is <math>10\%\cdot70+35\%\cdot80+30\%\cdot90+25\%\cdot100=7+28+27+25=87</math>.
+So, our solution is <math>90-87=3\Rightarrow\boxed{3 \ \textbf{(C)} }</math> ~sosiaops
+
+==Solution 3==
+The <math>\le 80</math>-point scores make up <math>10\%+35\% = 45\% < 50\%</math> of the scores, but the <math>\le 90</math>-point scores make up <math>45\%+30\% = 75\% > 50\%</math> of the scores, so the median is <math>90</math>.
+
+<math>10\%</math> of scores were <math>70-90 = -20</math> more than the median, <math>35\%</math> were <math>-10</math> more, <math>100\%-75\% = 25\%</math> were <math>10</math> more, and the rest were equal. This means that the mean score is <math>10\%\cdot(-20)+35\%\cdot(-10)+25\%\cdot10 = -2 + (-3.5) + 2.5 = -3</math> more than the median, so their difference is <math>\left|-3\right| = \boxed{\textbf{(C)}\ 3}</math>.
+~[[User:emerald_block|emerald_block]]
+
+==Video Solution (CREATIVE THINKING)==
+ https://youtu.be/OHF3WWRq0h4
+
+~Education, the Study of Everything
+
+
+
+
+==Video Solution==
+https://youtu.be/Oe-QLPIuTeY
+
+~savannahsolver
+
+==See Also==
+
+{{AMC10 box|year=2014|ab=A|num-b=4|num-a=6}}
+{{AMC12 box|year=2014|ab=A|num-b=4|num-a=6}}
+{{MAA Notice}}
+
+[[Category: Introductory Algebra Problems]]

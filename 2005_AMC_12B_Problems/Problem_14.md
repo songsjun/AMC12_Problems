@@ -1,0 +1,18 @@
+# 2005 AMC 12B Problem 14
+
+## Problem
+A circle having center (0,k), with k>6, is tangent to the lines y=x, y=-x and $y=6$. What is the radius of this circle?
+
+
+$$\mathrm{(A)}\ 6\sqrt{2}-6 \qquad \mathrm{(B)}\ 6 \qquad \mathrm{(C)}\ 6\sqrt{2} \qquad \mathrm{(D)}\ 12 \qquad \mathrm{(E)}\ 6+6\sqrt{2}$$
+
+## Solution
+Let R be the radius of the circle. Draw the two radii that meet the points of tangency to the lines y = $\pm$ x. We can see that a square is formed by the origin, two tangency points, and the center of the circle. The side lengths of this square are R and the diagonal is k = R+6. The diagonal of a square is $\sqrt{2}$ times the side length. Therefore, R+6 = R$\sqrt{2} \Rightarrow R = \dfrac{6}{\sqrt{2}-1} = 6+6\sqrt{2} \Rightarrow \boxed{\mathrm{E}}.$
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+real Xmin,Xmax,Ymin,Ymax; real R = 6+6*sqrt(2); Xmin = -16; Xmax $= 16$; Ymin = -4; Ymax $= 40$; xaxis(Xmin,Xmax,Arrows); yaxis(Ymin,Ymax,Arrows); label("$x$",(Xmax+0.25,0),S); label("$y$",(0,Ymax+0.25),E); draw((Xmin,-Xmin)--(-Ymin,Ymin)); draw((Xmax,Xmax)--(Ymin,Ymin)); draw((Xmin,6)--(Xmax,6)); dot((0,0)); dot((R/sqrt(2),R/sqrt(2))); dot((-R/sqrt(2),R/sqrt(2))); dot((0,R*sqrt(2))); draw((0,0)--(R/sqrt(2),R/sqrt(2))--(0,R*sqrt(2))--(-R/sqrt(2),R/sqrt(2))--(0,0)); draw(Circle((0,6+R),R)); label("$R$",(0,6+R/2),(0,0)); label("$R$",(-R/(2*sqrt(2)),3*R/(2*sqrt(2))),0.5*NW); label("$R$",(R/(2*sqrt(2)),3*R/(2*sqrt(2))),0.5*NE); label("$R$",(-R/(2*sqrt(2)),R/(2*sqrt(2))),0.5*SW); label("$R$",(R/(2*sqrt(2)),R/(2*sqrt(2))),0.5*SE); label("$6$",(0,3),(0,0));
+```
+## See also

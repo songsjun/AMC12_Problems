@@ -1,0 +1,79 @@
+# 2021 AMC 12A Problem 15
+
+## Problem
+A choir director must select a group of singers from among his 6 tenors and 8 basses. The only requirements are that the difference between the number of tenors and basses must be a multiple of 4, and the group must have at least one singer. Let N be the number of different groups that could be selected. What is the remainder when N is divided by 100?
+
+$\textbf{(A) } 47\qquad\textbf{(B) } 48\qquad\textbf{(C) } 83\qquad\textbf{(D) } 95\qquad\textbf{(E) } 96\qquad$
+## Solution 1 (Bijection)
+Suppose that t tenors and b basses are selected. The requirements are $t\equivb\pmod{4}$ and (t,b)$\neq(0,0).$
+
+It follows that b'=8-b basses are not selected. Since the ordered pairs (t,b) and the ordered pairs (t,b') have one-to-one correspondence, we consider the ordered pairs (t,b') instead. The requirements become $t\equiv8-b$'$\pmod{4}$ and (t,8-b')$\neq(0,0),$ which simplify to t+b'$\equiv0\pmod{4}$ and (t,b')$\neq(0,8),$ respectively.
+
+As t+b'$\in\{0,4,8,12\}$, the total number of such groups is
+
+$$
+\begin{align*} N&=\binom{14}{0}+\binom{14}{4}+\left[\binom{14}{8}-1\right]+\binom{14}{12} \\ &=\binom{14}{0}+\binom{14}{4}+\left[\binom{14}{6}-1\right]+\binom{14}{2} \\ &=1+1001+[3003-1]+91 \\ &=4095, \end{align*}
+$$
+
+from which N$\equiv\boxed{\textbf{(D) } 95}\pmod{100}.$
+
+*~MRENTHUSIASM*
+## Solution 2 (Vandermonde's Identity)
+Suppose that t tenors and b basses are selected. The requirements are $t\equivb\pmod{4}$ and (t,b)$\neq(0,0).$
+
+Note that $\binom{6}{t}\binom{8}{b}$ different groups can be formed by selecting t tenors and b basses. Since $t-b\in\{-8,-4,0,4\}$, we apply casework:
+
+ 1.   If t-b=-8, then $\binom{6}{0}\binom{8}{8}$ different group can be formed.
+
+2.   If t-b=-4, then $\sum_{k=0}^{4}\binom{6}{k}\binom{8}{k+4}$ different groups can be formed.
+
+3.   If t-$b=0$, then $\left$[$\sum_{k=0}^{6}\binom{6}{k}\binom{8}{k}\right$]-1 different groups can be formed, recalling that (t,b)$\neq(0,0).$
+
+4.   If t-$b=4$, then $\sum_{k=0}^{2}\binom{6}{k+4}\binom{8}{k}$ different groups can be formed.
+
+By the combinatorial identity $\binom{n}{k}=\binom{n}{n-k}$ and Vandermonde's Identity $\sum_{k=0}^{r}\binom{m}{k}\binom{n}{r-k}=\binom{m+n}{r},$ we find the total number of such groups:
+
+$$
+\begin{align*} N&=\binom{6}{0}\binom{8}{8}+\left[\sum_{k=0}^{4}\binom{6}{k}\binom{8}{k+4}\right]+\left[\left[\sum_{k=0}^{6}\binom{6}{k}\binom{8}{k}\right]-1\right]+\left[\sum_{k=0}^{2}\binom{6}{k+4}\binom{8}{k}\right] \\ &=\binom{6}{0}\binom{8}{0}+\left[\sum_{k=0}^{4}\binom{6}{k}\binom{8}{4-k}\right]+\left[\left[\sum_{k=0}^{6}\binom{6}{6-k}\binom{8}{k}\right]-1\right]+\left[\sum_{k=0}^{2}\binom{6}{2-k}\binom{8}{k}\right] \\ &=\binom{14}{0}+\binom{14}{4}+\left[\binom{14}{6}-1\right]+\binom{14}{2} \\ &=1+1001+[3003-1]+91 \\ &=4095, \end{align*}
+$$
+
+from which N$\equiv\boxed{\textbf{(D) } 95}\pmod{100}.$
+
+*~MRENTHUSIASM*
+## Solution 3 (Generating Functions)
+The problem can be done using a roots of unity filter. Let f(x,y)=(1+x)^$8(1+y)^6$. By expanding the binomials and distributing, f(x,y) is the generating function for different groups of basses and tenors. That is, f(x,y)=$\sum_{m=0}^8\sum_{n=0}^6a_{mn}$x^my^n,
+where $a_{mn}$ is the number of groups of m basses and n tenors. What we want to do is sum up all values of $a_{mn}$ for which 4\mid m-n except for $a_{00}=1$. To do this, define a new function $g(x)=f(x$,$x^{-1})=\sum_{m=0}^8\sum_{n=0}^6a_{mn}x^{m-n}=(1+x)^8(1+x^{-1})^6$.
+Now we just need to sum all coefficients of g(x) for which 4\mid m-n. Consider a monomial $h(x)=x^k.$ If 4\mid k, then h(i)+h(-1)+h(-i)+h(1)=$1+1+1+1=4$.
+Otherwise,
+$$h(i)+h(-1)+h(-i)+h(1)=0.$$
+g(x) is a sum of these monomials so this gives us a method to determine the sum we're looking for:
+$$\frac{g(i)+g(-1)+g(-i)+g(1)}{4}=2^{12}=4096.$$
+(since g(-1)=0 and it can be checked that $g(i)=-g(-i)).$ Hence, the answer is $4096-1=4095\equiv\boxed{\textbf{(D) } 95}\pmod{100}.$
+
+*~lawliet163*
+## Solution 4 (Enumeration)
+Note that $\binom{6}{t}\binom{8}{b}$ different groups can be formed by selecting t tenors and b basses. By casework, we construct the following table:
+
+$$
+\begin{array}{c|c|c|c} & & & \\ [-2ex] \textbf{\# of Tenors} & \textbf{\# of Basses} & \textbf{\# of Groups} & \textbf{Evaluate \# of Groups} \\ [0.5ex] \hline\hline & & & \\ [-2ex] 0 & 4 & \tbinom{6}{0}\tbinom{8}{4} & 70 \\ [1ex] 0 & 8 & \tbinom{6}{0}\tbinom{8}{8} & 1 \\ [1ex] \hline & & & \\ [-2ex] 1 & 1 & \tbinom{6}{1}\tbinom{8}{1} & 48 \\ [1ex] 1 & 5 & \tbinom{6}{1}\tbinom{8}{5} & 336 \\ [1ex] \hline & & & \\ [-2ex] 2 & 2 & \tbinom{6}{2}\tbinom{8}{2} & 420 \\ [1ex] 2 & 6 & \tbinom{6}{2}\tbinom{8}{6} & 420 \\ [1ex] \hline & & & \\ [-2ex] 3 & 3 & \tbinom{6}{3}\tbinom{8}{3} & 1120 \\ [1ex] 3 & 7 & \tbinom{6}{3}\tbinom{8}{7} & 160 \\ [1ex] \hline & & & \\ [-2ex] 4 & 0 & \tbinom{6}{4}\tbinom{8}{0} & 15 \\ [1ex] 4 & 4 & \tbinom{6}{4}\tbinom{8}{4} & 1050 \\ [1ex] 4 & 8 & \tbinom{6}{4}\tbinom{8}{8} & 15 \\ [1ex] \hline & & & \\ [-2ex] 5 & 1 & \tbinom{6}{5}\tbinom{8}{1} & 48 \\ [1ex] 5 & 5 & \tbinom{6}{5}\tbinom{8}{5} & 336 \\ [1ex] \hline & & & \\ [-2ex] 6 & 2 & \tbinom{6}{6}\tbinom{8}{2} & 28 \\ [1ex] 6 & 6 & \tbinom{6}{6}\tbinom{8}{6} & 28 \\ [1ex] \end{array}
+$$
+
+We find the total number of such groups: N=$70+1+48+336+420+420+1120+160+15+1050+15+48+336+28+28=4095$,
+from which N$\equiv\boxed{\textbf{(D) } 95}\pmod{100}.$
+
+Alternatively, since the answer choices have different units digits, it suffices to find the units digit of N only.
+
+*~sugar_rush ~MRENTHUSIASM*
+## Solution 5 (Symmetry Applied Twice)
+Consider the set of all $2^{8+6}=2^{14}$ possible choirs that can be formed. For a given choir let D be the difference in the number of tenors and bases modulo 4, so D = T - B $\pmod{4}.$ Exactly half of all choirs have either D=0 or D=2. To see this, pick one of the tenors and note that including or removing him from a choir changes D by $\pm1.$ Of those $2^{13}$ choirs with D=0 or D=2, we claim exactly half have D=0. To see this, for any choir having D=0 or D=2, we can replace the T tenors with the 6 - T tenors who were not in the choir, thereby sending D $\mapsto D + 2 \pmod{4}.$ Excluding the empty choir, there are $2^{12}-1 = 4095$ choirs that meet the conditions of the problem, and the answer is $\boxed{\textbf{(D) } 95}.$
+
+*~telluridetoaster and ~bigskystomper*
+## Video Solution by Punxsutawney Phil
+https://youtube.com/watch?v=FD9BE7hpRvg&t=533s
+## Video Solution by Hawk Math
+https://www.youtube.com/watch?v=AjQARBvdZ20
+## Video Solution by OmegaLearn (Using Vandermonde's Identity)
+https://www.youtube.com/watch?v=mki7xtZLk1I
+
+*~pi_is_3.14*
+## See also

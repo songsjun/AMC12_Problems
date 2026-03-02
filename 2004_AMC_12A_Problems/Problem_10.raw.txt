@@ -1,0 +1,27 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2004_AMC_12A_Problems/Problem_10&action=raw
+
+Published Time: Thu, 09 Jul 2020 21:28:47 GMT
+
+Markdown Content:
+== Problem ==
+The sum of 49 consecutive integers is 7^5. What is their [[median]]?
+
+\text {(A)}\ 7 \qquad \text {(B)}\ 7^2\qquad \text {(C)}\ 7^3\qquad \text {(D)}\ 7^4\qquad \text {(E)}\ 7^5
+
+== Solutions ==
+
+===Solution 1=== 
+The median of a sequence is the middle number of the sequence when the sequence is arranged in order. Since the integers are consecutive, the median is also the [[mean]], so the median is \frac{7^5}{49} = 7^3\ \mathrm{(C)}.
+
+===Solution 2===
+Notice that 49\cdot7^3=7^5. So, our middle number (median) must be  7^3\ \mathrm{(C)} since all the other terms can be grouped to form an additional 48 copies 7^3. Adding them would give 7^5.  
+
+Solution by franzliszt
+
+== See also ==
+{{AMC12 box|year=2004|ab=A|num-b=9|num-a=11}}
+
+[[Category:Introductory Algebra Problems]]
+{{MAA Notice}}

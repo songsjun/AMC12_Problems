@@ -1,0 +1,27 @@
+# 2010 AMC 12A Problem 15
+
+## Problem
+A coin is altered so that the probability that it lands on heads is less than $\frac{1}{2}$ and when the coin is flipped four times, the probability of an equal number of heads and tails is $\frac{1}{6}.$ What is the probability that the coin lands on heads?
+
+$\textbf{(A)}\ \frac{\sqrt{15}-3}{6} \qquad \textbf{(B)}\ \frac{6-\sqrt{6\sqrt{6}+2}}{12} \qquad \textbf{(C)}\ \frac{\sqrt{2}-1}{2} \qquad \textbf{(D)}\ \frac{3-\sqrt{3}}{6} \qquad \textbf{(E)}\ \frac{\sqrt{3}-1}{2}$
+## Solution
+Let x be the probability of flipping heads. It follows that the probability of flipping tails is 1-x.
+
+The probability of flipping 2 heads and 2 tails is equal to the number of ways to flip it times the product of the probability of flipping each coin.
+
+
+$$
+\begin{align*}{4 \choose 2}x^2(1-x)^2 &= \frac{1}{6}\\ 6x^2(1-x)^2 &= \frac{1}{6}\\ x^2(1-x)^2 &= \frac{1}{36}\\ x(1-x) &= \pm\frac{1}{6}\end{align*}
+$$
+
+
+As for the desired probability x both x and 1-x are nonnegative, we only need to consider the positive root, hence
+
+
+$$
+\begin{align*}x(1-x) &= \frac{1}{6}\\ 6x^2-6x+1&=0\end{align*}
+$$
+
+
+Applying the quadratic formula we get that the roots of this equation are $\frac{3\pm\sqrt{3}}{6}.$ As the probability of heads is less than $\frac{1}{2},$ we get that the answer is $\boxed{\textbf{(D)}\ \frac{3-\sqrt{3}}{6}}.$
+## See also

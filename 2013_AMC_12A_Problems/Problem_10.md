@@ -1,0 +1,43 @@
+# 2013 AMC 12A Problem 10
+
+## Problem
+Let S be the set of positive integers n for which $\tfrac{1}{n}$ has the repeating decimal representation $0.\overline{ab} = 0.$ababab$\cdots,$ with a and b different digits.  What is the sum of the elements of S?
+
+$\textbf{(A)}\ 11\qquad\textbf{(B)}\ 44\qquad\textbf{(C)}\ 110\qquad\textbf{(D)}\ 143\qquad\textbf{(E)}\ 155\qquad$
+## Solution 1
+Note that $\frac{1}{11} = 0.\overline{09}.$
+
+Dividing by 3 gives $\frac{1}{33} = 0.\overline{03},$ and dividing by 9 gives $\frac{1}{99} = 0.\overline{01}.$
+
+$$S = \{11, 33, 99\}$$
+
+$$11 + 33 + 99 = 143$$
+
+The answer must be at least 143, but cannot be 155 since no n $\le 12$ other than 11 satisfies the conditions, so the answer is 143.
+## Solution 2
+Let us begin by working with the condition $0.\overline{ab} = 0.$ababab$\cdots,.$ Let $x = 0$.ababab$\cdots.$ So, 100x-x = ab $\Rightarrowx =\frac{ab}{99}.$ In order for this fraction x to be in the form $\frac{1}{n}, 99$ must be a multiple of ab. Hence the possibilities of ab are 1,3,9,11,33,99. Checking each of these, $\frac{1}{99} = 0.\overline{01}, \frac{3}{99}=\frac{1}{33} = 0.\overline{03}, \frac{9}{99}=\frac{1}{11} = 0.\overline{09}, \frac{11}{99}=\frac{1}{9} = 0.\overline{1}, \frac{33}{99} =\frac{1}{3}= 0.\overline{3},$ and $\frac{99}{99} = 1.$ So the only values of n that have distinct a and b are 11,33, and 99. So, $11+33+99=\boxed{\textbf{(D)} 143}$
+## Solution 3
+Notice that we have $\frac{100}{n}=$ ab.$\overline{ab}$
+
+We can subtract $\frac{1}{n}=00.\overline{ab}$ to get $\frac{99}{n}=a$b
+
+From this we determine n must be a positive factor of 99
+
+The factors of 99 are 1,3,9,11,33, and 99.
+
+For $n=1$,3, and 9 however, they yield ab=99,33 and 11 which doesn't satisfy a and b being distinct.
+
+For $n=11$,33 and 99 we have ab=09,03 and 01.  (Notice that a or b can be zero)
+
+The sum of these n are $11+33+99=143$
+
+$$\boxed{\textbf{(D)} 143}$$
+## Solution 4
+As in previous solutions, we have n|99 and $\overline{ab} = 99$/n. If we had a=b, the decimal would be $0.\overline{a},$ which is characterized by n|9 and $a = 9$/n. So we seek the sum of the factors of 99 that are not also factors of 9.
+
+Since 99 = 3^2 $\cdot 11,$ the sum is (1 + 3 + 9)(1 + 11) - (1 + 3 + 9) = $13(12 - 1)=\textbf{(D)} 143.$
+## Video Solution
+https://www.youtube.com/watch?v=XQpQaomC2tA
+
+*~sugar_rush*
+## See also

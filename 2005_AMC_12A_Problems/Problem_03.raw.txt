@@ -1,0 +1,20 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2005_AMC_12A_Problems/Problem_3&action=raw
+
+Published Time: Tue, 01 Jul 2025 18:16:19 GMT
+
+Markdown Content:
+== Problem ==
+A [[rectangle]] with a diagonal of length x is twice as long as it is wide. What is the area of the rectangle?
+
+ (\mathrm {A}) \ \frac 14x^2 \qquad (\mathrm {B}) \ \frac 25x^2 \qquad (\mathrm {C})\ \frac 12x^2 \qquad (\mathrm {D}) \ x^2 \qquad (\mathrm {E})\ \frac 32x^2 
+
+== Solution ==
+Let w be the width, so the length is 2w. By the [[Pythagorean Theorem]], w^2 + 4w^2 = x^2 \Longrightarrow \frac{x}{\sqrt{5}} = w. The area of the rectangle is (w)(2w) = 2w^2 = 2\left(\frac{x}{\sqrt{5}}\right)^2 = \frac{2}{5}x^2 \ \mathrm{(B)}.
+
+== See also ==
+{{AMC12 box|year=2005|num-b=2|num-a=4|ab=A}}
+
+[[Category:Introductory Geometry Problems]]
+{{MAA Notice}}

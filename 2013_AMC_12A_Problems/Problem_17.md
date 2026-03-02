@@ -1,0 +1,44 @@
+# 2013 AMC 12A Problem 17
+
+## Problem 17
+A group of  12  pirates agree to divide a treasure chest of gold coins among themselves as follows. The  $k^\text{th}$  pirate to take a share takes  $\frac{k}{12}$  of the coins that remain in the chest. The number of coins initially in the chest is the smallest number for which this arrangement will allow each pirate to receive a positive whole number of coins. How many coins does the  $12^{\text{th}}$  pirate receive?
+
+$\textbf{(A)} \ 720 \qquad \textbf{(B)} \ 1296 \qquad \textbf{(C)} \ 1728 \qquad \textbf{(D)} \ 1925 \qquad \textbf{(E)} \ 3850$
+## Solution
+### Solution 1
+The first pirate takes $\frac{1}{12}$ of the x coins, leaving $\frac{11}{12}$ x.
+
+The second pirate takes $\frac{2}{12}$ of the remaining coins, leaving $\frac{10}{12}\cdot \frac{11}{12}$*x.
+
+Note that
+
+$$12^{11} = (2^2 \cdot 3)^{11} = 2^{22} \cdot 3^{11}$$
+
+
+$$11! = 11 \cdot 10 \cdot 9 \cdot 8 \cdot 7 \cdot 6 \cdot 5 \cdot 4 \cdot 3 \cdot 2$$
+
+
+All the $2s$ and $3s$ cancel out of 11!, leaving
+
+$$11 \cdot 5 \cdot 7 \cdot 5 = 1925$$
+
+in the numerator.
+
+We know there were just enough coins to cancel out the denominator in the fraction. So, at minimum, x is the denominator, leaving $\boxed{\textbf{(D) }1925}$ coins for the twelfth pirate.
+### Solution 2
+The answer cannot be an even number. Here is why:
+
+Consider the highest power of 2 that divides the starting number of coins, and consider how this value changes as each pirate takes their share. At each step, the size of the pile is multiplied by some $\frac{n}{12}.$ This means the highest power of 2 that divides the number of coins is continually decreasing or staying the same (except once, briefly, when we multiply by $\frac{2}{3}$ for pirate 4, but it immediately drops again in the next step).
+
+Therefore, if the 12th pirate's coin total were even, then it can't be the smallest possible value, because we can safely cut the initial pot (and all the intermediate totals) in half. We could continue halving the result until the 12th pirate's total is finally odd.
+
+Only one of the choices given is odd, $\boxed{\textbf{(D) }1925}.$
+
+Note that if there had been multiple odd answer choices, we could repeat the reasoning above to see that the value also must not be divisible by 3.
+## Solution 3 (Work backwards)
+Let x be the number of coins the 12th pirate takes. Then the number of coins the k<12th pirate takes is $\frac{12}{1} \cdot \frac{12}{2} \cdots \frac{12}{12-k}$ x. For all these to be an integer, we need the denominators to divide into the numerators. Looking at prime factors, obviously there are sufficient 2s and 3s, so we just need $5^$2 $\cdot 7 \cdot 11 = \boxed{\textbf{(D) }1925}$ to divide into x. -Frestho
+## Video Solution by Richard Rusczyk
+https://artofproblemsolving.com/videos/amc/2013amc12a/356
+
+*~dolphin7*
+## See also

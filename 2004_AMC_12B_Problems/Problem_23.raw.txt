@@ -1,0 +1,36 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2004_AMC_12B_Problems/Problem_23&action=raw
+
+Published Time: Sun, 29 Oct 2023 18:52:11 GMT
+
+Markdown Content:
+== Problem ==
+The [[polynomial]] x^3 - 2004 x^2 + mx + n has [[integer]] coefficients and three distinct positive zeros. Exactly one of these is an integer, and it is the sum of the other two.  How many values of n are possible?
+
+\mathrm{(A)}\ 250,\!000 \qquad\mathrm{(B)}\ 250,\!250 \qquad\mathrm{(C)}\ 250,\!500 \qquad\mathrm{(D)}\ 250,\!750 \qquad\mathrm{(E)}\ 251,\!000
+
+== Solution 1 ==
+Let the roots be r,s,r + s, and let t = rs. Then
+
+(x - r)(x - s)(x - (r + s)) = x^3 - (r + s + r + s) x^2 + (rs + r(r + s) + s(r + s))x - rs(r + s) = 0
+
+and by matching coefficients, 2(r + s) = 2004 \Longrightarrow r + s = 1002. Then our polynomial looks like 
+x^3 - 2004x^2 + (t + 1002^2)x - 1002t = 0
+and we need the number of possible products t = rs = r(1002 - r). Because m=t+1002^2 is an integer, we also note that t must be an integer. 
+
+Since r > 0 and t > 0, it follows that 0 < t = r(1002-r) < 501^2 = 251001, with the endpoints not achievable because the roots must be distinct and positive. Because neither r nor 1002-r can be an integer, there are 251,000 - 500 = \boxed{\textbf{(C) } 250,500} possible values of n = -1002t.
+
+== Solution 2 ==
+
+Letting the roots be r, s, and t, where t = r+s, we see that by Vieta's Formula's, 2004 = r+s+t = t + t = 2t, and so t = 1002. Therefore, x-1002 is a factor of x^3 - 2004x^2 + mx + n. Letting x = 0 gives that 1002 \mid n because x - 1002 \mid x^3 - 2004x^2 + mx + n. Letting n = -1002a and noting that x^3 - 2004x^2 + mx + n = (x-1002)(x^2 - bx + a) for some b, we see that b is the sum of the roots of x^2 - bx + a, r and s, and so b = 1002. Now, we have that x^2 - 1002x + a has roots r and s, and we wish to find the number of possible values of a. By the quadratic formula, we see that \frac{1002 \pm \sqrt{1002^2 - 4a}}{2} = 501 \pm \sqrt{501^2 - a} are the two values of noninteger positive real numbers r and s, neither of which is equal to 1002. This information gives us that 0 < 501^2 - a < 501^2, and so since 501^2 - a is evidently not a square, we have 501^2 - 1 - 500 = 251,001 - 500 - 1 = \boxed{\textbf{(C) } 250,500} possible values of n = 1002a.
+
+== Solution 3 (cheese)==
+
+Observe that the answer clearly must have something to do with the number 2004, and we see that 250,500 is a multiple of 2004, so there is a very high probability that it is the correct answer.
+
+== See also ==
+{{AMC12 box|year=2004|ab=B|num-b=22|num-a=24}}
+
+[[Category:Intermediate Algebra Problems]]
+{{MAA Notice}}

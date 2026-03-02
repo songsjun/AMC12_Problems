@@ -1,0 +1,39 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2016_AMC_12B_Problems/Problem_20&action=raw
+
+Published Time: Sun, 01 Jun 2025 23:25:07 GMT
+
+Markdown Content:
+==Problem==
+
+A set of teams held a round-robin tournament in which every team played every other team exactly once. Every team won 10 games and lost 10 games; there were no ties. How many sets of three teams \{A, B, C\} were there in which A beat B, B beat C, and C beat A?
+
+\textbf{(A)}\ 385 \qquad \textbf{(B)}\ 665 \qquad \textbf{(C)}\ 945 \qquad \textbf{(D)}\ 1140 \qquad \textbf{(E)}\ 1330
+
+==Solution 1==
+
+We use complementary counting. First, because each team played 20 other teams, there are 21 teams total. All sets that do not have A beat B, B beat C, and C beat A have one team that beats both the other teams. Thus we must count the number of sets of three teams such that one team beats the two other teams and subtract that number from the total number of ways to choose three teams.
+
+There are 21 ways to choose the team that beat the two other teams, and \binom{10}{2} = 45 ways to choose two teams that the first team both beat. This is 21 * 45 = 945 sets. There are \binom{21}{3} = 1330 sets of three teams total. Subtracting, we obtain 1330 - 945 = \boxed{385}, thus (\text{A})  is our answer.
+
+==Solution 2==
+
+As above, note that there are 21 teams, and call them A, B, C, ... T, U. WLOG, assume that A beat teams B-L and lost to teams M-U. We will count the number of sets satisfying the “cycle-win” condition—e.g. here, A beats a team in X which beats a team in Y which beats A. The first and third part of the condition are already met by our wlog, so we just need to count of number of ways the second condition is true (a team in X beats a team in Y). These are the number of cycle-wins that include A, then multiply by 21 (for each team) and divide by 3 (since every set will be counted by each of the 3 teams that are a part of that set). 
+
+To do this, let X=\{B, ..., L\} and Y=\{M, ..., U\}. Since a total of 10*10=100 losses total were suffered by teams in Y and \binom{10}{2}=45^{*} losses were suffered by teams in Y from teams in Y, we have 100-45=55 losses suffered by teams in Y from teams in X. Hence, for each of these 55 losses, there is exactly one set of three teams that includes A that satisfies the problem conditions. Thus, the answer is \frac{55\cdot 21}{3}=\boxed{385}.
+
+~^{*}the number of ways that two teams in Y play each other — each face-off guarantees 1 loss (and 1 win)
+
+==Solution 3 (extremely risky—only try if you are running out of time)==
+Note that there are 21 teams total and \binom{21}{3}=1330 ways to pick {A,B,C}. The possible arrangements are one team beats the other two or they each win/lose equally (we want the second case). Approximately \frac{1}{4} of all the arrangements satisfy the second case, and \frac{1330}{4}=332.5, which is by far the closest to \boxed{(A)}.
+
+==Video Solution by CanadaMath (Problems 11-20)==
+Fast forward to 42:52 for problem 20
+https://www.youtube.com/watch?v=4osvFatUv1o
+
+~THEMATHCANADIAN
+
+==See Also==
+{{AMC12 box|year=2016|ab=B|num-b=19|num-a=21}}
+{{MAA Notice}}

@@ -1,0 +1,335 @@
+{{duplicate|[[2020 AMC 12A Problems|2020 AMC 12A #18]] and [[2020 AMC 10A Problems|2020 AMC 10A #20]]}}
+
+== Problem ==
+Quadrilateral <imath>ABCD</imath> satisfies <imath>\angle ABC = \angle ACD = 90^{\circ}, AC=20,</imath> and <imath>CD=30.</imath> Diagonals <imath>\overline{AC}</imath> and <imath>\overline{BD}</imath> intersect at point <imath>E,</imath> and <imath>AE=5.</imath> What is the area of quadrilateral <imath>ABCD?</imath>
+
+<imath>\textbf{(A) } 330 \qquad \textbf{(B) } 340 \qquad \textbf{(C) } 350 \qquad \textbf{(D) } 360 \qquad \textbf{(E) } 370</imath>
+
+== Solution 1 ==
+
+<asy>
+size(15cm,0);
+import olympiad;
+draw((0,0)--(0,2)--(6,4)--(4,0)--cycle);
+label("A", (0,2), NW);
+label("B", (0,0), SW);
+label("C", (4,0), SE);
+label("D", (6,4), NE);
+label("E", (1.714,1.143), N);
+label("F", (1,1.5), N);
+draw((0,2)--(4,0), dashed);
+draw((0,0)--(6,4), dashed);
+draw((0,0)--(1,1.5), dashed);
+label("20", (0,2)--(4,0), SW);
+label("30", (4,0)--(6,4), SE);
+label("$x$", (1,1.5)--(1.714,1.143), NE);
+label("5$-$$x$", (1,1.5)--(0,2), NE);
+draw(rightanglemark((0,2),(0,0),(4,0)));
+draw(rightanglemark((0,2),(4,0),(6,4)));
+draw(rightanglemark((0,0),(1,1.5),(0,2)));
+</asy>
+
+It's crucial to draw a good diagram for this one. Since <math>AC=20</math> and <math>CD=30</math>, we get <math>[ACD]=300</math>. Now we need to find <math>[ABC]</math> to get the area of the whole quadrilateral. Drop an altitude from <math>B</math> to <math>AC</math> and call the point of intersection <math>F</math>. Let <math>FE=x</math>. Since <math>AE=5</math>, then <math>AF=5-x</math>. 
+
+By dropping this altitude, we can also see two similar triangles, <math>\triangle BFE \sim \triangle DCE</math>. Since <math>EC</math> is <math>20-5=15</math>, and <math>DC=30</math>, we get that <math>BF=2x</math>. 
+
+Now, if we redraw another diagram just of <math>ABC</math>, we get that <math>(2x)^2=(5-x)(15+x)</math> because of the altitude geometric mean theorem which states that in any right triangle, the altitude squared is equal to the product of the two lengths that it divides the base into. 
+
+Expanding, simplifying, and dividing by the GCF, we get <math>x^2+2x-15=0</math>. This factors to <math>(x+5)(x-3)</math>, which has roots of <math>x=-5, 3</math>. Since lengths cannot be negative, <math>x=3</math>. Since <math>x=3</math>, that means the altitude <math>BF=2\cdot3=6</math>, or <math>[ABC]=60</math>. Thus <math>[ABCD]=[ACD]+[ABC]=300+60=\boxed {\textbf{(D) }360}</math>
+
+~ Solution by Ultraman
+~ Diagram by ciceronii
+
+==Solution 2 (Coordinates)==
+<asy>
+size(10cm,0);
+draw((10,30)--(10,0)--(-8,-6)--(-10,0)--(10,30));
+draw((-20,0)--(20,0));
+draw((0,-15)--(0,35));
+draw((10,30)--(-8,-6));
+draw(circle((0,0),10));
+label("E",(-4.05,-.25),S);
+label("D",(10,30),NE);
+label("C",(10,0),NE);
+label("B",(-8,-6),SW);
+label("A",(-10,0),NW);
+label("5",(-10,0)--(-5,0), NE);
+label("15",(-5,0)--(10,0), N);
+label("30",(10,0)--(10,30), E);
+dot((-5,0));
+dot((-10,0));
+dot((-8,-6));
+dot((10,0));
+dot((10,30));
+</asy>
+Let the points be <math>A(-10,0)</math>, <math>\:B(x,y)</math>, <math>\:C(10,0)</math>, <math>\:D(10,30)</math>,and <math>\:E(-5,0)</math>, respectively. Since <math>B</math> lies on line <math>DE</math>, we know that <math>y=2x+10</math>. Furthermore, since <math>\angle{ABC}=90^\circ</math>, <math>B</math> lies on the circle with diameter <math>AC</math>, so <math>x^2+y^2=100</math>. Solving for <math>x</math> and <math>y</math> with these equations, we get the solutions <math>(0,10)</math> and <math>(-8,-6)</math>. We immediately discard the <math>(0,10)</math> solution as <math>y</math> should be negative. Thus, we conclude that <math>[ABCD]=[ACD]+[ABC]=\frac{20\cdot30}{2}+\frac{20\cdot6}{2}=\boxed{\textbf{(D)}\:360}</math>.
+
+==Solution 3 (Power of A Point)== 
+[[File:2020-AMC-10A--20-Diagram.png|410px]] 
+
+
+Draw the circumcircle of <math>\triangle ABC.</math> Let <math>BE = x</math>, and let <math>F</math> be the point where the circumcircle of <math>\triangle ABC</math> meets <math>BD.</math> By the Pythagorean Theorem, <math>ED = \sqrt{1125},</math> so <math>\frac{75}{x} + DF = \sqrt{1125} \implies DF = \sqrt{1125} - \frac{75}{x}.</math> (<math>EF = \frac{75}{x}</math> by the Intersecting Chords Theorem.) From Power of A Point we have <math>CD^2 = 30^2 = FD \cdot BD = FD^2 + FD \cdot BF =</math> <math>(\sqrt{1125} - \frac{75}{x})^2 + (\sqrt{1125} - \frac{75}{x})(x + \frac{75}{x}) = </math> <math>(\sqrt{1125} - \frac{75}{x})(\sqrt{1125} + x).</math> Solving we get <math>x = 3\sqrt{5}.</math> <math>\sin\angle CED = \frac{30}{15\sqrt{5}}.</math> The area of a quadrilateral is half the product of its diagonals times the sine of the angle between them, so the answer is <math>18\sqrt{5} \cdot 20 \cdot \frac{30}{15\sqrt{5}} \cdot \frac{1}{2} = 180 \cdot 2 = \boxed{360}.</math> 
+
+~[[User:grogg007|grogg007]]
+
+==Solution 4 (Trigonometry)==
+Let <math>\angle C = \angle{ACB}</math> and <math>\angle{B} = \angle{CBE}.</math> Using Law of Sines on <math>\triangle{BCE}</math> we get <cmath>\dfrac{BE}{\sin{C}} = \dfrac{CE}{\sin{B}} = \dfrac{15}{\sin{B}}</cmath> and LoS on <math>\triangle{ABE}</math> yields <cmath>\dfrac{BE}{\sin{(90 - C)}} = \dfrac{5}{\sin{(90 - B)}} = \dfrac{BE}{\cos{C}} = \dfrac{5}{\cos{B}}.</cmath> Divide the two to get <math>\tan{B} = 3 \tan{C}.</math> Now, <cmath>\tan{\angle{CED}} = 2 = \tan{\angle{B} + \angle{C}} = \dfrac{4 \tan{C}}{1 - 3\tan^2{C}}</cmath> and solve the quadratic, taking the positive solution (C is acute) to get <math>\tan{C} = \frac{1}{3}.</math> So if <math>AB = a,</math> then <math>BC = 3a</math> and <math>[ABC] = \frac{3a^2}{2}.</math> By Pythagorean Theorem, <math>10a^2 = 400 \iff \frac{3a^2}{2} = 60</math> and the answer is <math>300 + 60 \iff \boxed{\textbf{(D)}}.</math>
+
+(This solution is incomplete, can someone complete it please)
+Edit by kc5170
+
+We could use the famous m-n rule in trigonometry in <math>\triangle ABC</math> with Point <math>E</math> 
+[Unable to write it here.Could anybody write the expression]
+. We will find that <math>\overrightarrow{BD}</math> is an angle bisector of <math>\triangle ABC</math> (because we will get <math>\tan(x) = 1</math>).     
+Therefore by converse of angle bisector theorem <math>AB:BC = 1:3</math>. By using Pythagorean theorem, we have values of <math>AB</math> and <math>AC</math>. 
+Computing <math>AB \cdot AC = 120</math>. Adding the areas of <math>ABC</math> and <math>ACD</math>, hence the answer is <math>\boxed{\textbf{(D)}\:360}</math>.
+
+~ Math-Amaze, Catoptrics
+
+==Solution 5 (Law of Cosines)==
+
+<asy>
+import olympiad;
+pair A = (0, 189), B = (0,0), C = (570,0), D = (798, 798);
+dot("$A$", A, W); dot("$B$", B, S); dot("$C$", C, E); dot("$D$", D, N);dot("$E$",(140, 140), N);
+draw(A--B--C--D--A);
+draw(A--C, dotted); draw(B--D, dotted);
+</asy>
+
+Denote <math>EB</math> as <math>x</math>. By the Law of Cosines:
+<cmath>AB^2 = 25 + x^2 - 10x\cos(\angle DEC)</cmath>
+<cmath>BC^2 = 225 + x^2 + 30x\cos(\angle DEC)</cmath>
+
+Adding these up yields:
+<cmath>400 = 250 + 2x^2 + 20x\cos(\angle DEC) \Longrightarrow x^2 + \frac{10x}{\sqrt{5}} - 75 = 0</cmath>
+By the quadratic formula, <math>x = 3\sqrt5</math>.
+
+Observe:
+<cmath>[AEB] + [BEC] = \frac{1}{2}(x)(5)\sin(\angle DEC) + \frac{1}{2}(x)(15)\sin(180-\angle DEC) = (3)(20) = 60</cmath>.
+
+Thus the desired area is <math>\frac{1}{2}(30)(20) + 60 = \boxed{\textbf{(D) } 360}</math>
+
+~qwertysri987
+
+==Solution 6 (Vectors / Coordinates)==
+
+Let <math>C = (0, 0)</math> and <math>D = (0, 30)</math>. Then <math>E = (-15, 0), A = (-20, 0),</math> and <math>B</math> lies on the line <math>y=2x+30.</math> So the coordinates of <math>B</math> are <cmath>(x, 2x+30).</cmath>
+
+We can make this a vector problem.
+<math>\overrightarrow{\mathbf{B}} = \begin{pmatrix}
+x \\
+2x+30
+\end{pmatrix}.</math> We notice that point <math>B</math> forms a right angle, meaning vectors <math>\overrightarrow{\mathbf{BC}}</math> and <math>\overrightarrow{\mathbf{BA}}</math> are orthogonal, and their dot-product is <math>0</math>.
+
+We determine <math>\overrightarrow{\mathbf{BC}}</math> and <math>\overrightarrow{\mathbf{BA}}</math> to be <math>\begin{pmatrix}
+-x \\
+-2x-30
+\end{pmatrix}</math> and <math>\begin{pmatrix}
+-20-x \\
+-2x-30
+\end{pmatrix}</math> , respectively. (To get this, we use the fact that <math>\overrightarrow{\mathbf{BC}} = \overrightarrow{\mathbf{C}}-\overrightarrow{\mathbf{B}}</math> and similarly, <math>\overrightarrow{\mathbf{BA}} = \overrightarrow{\mathbf{A}} - \overrightarrow{\mathbf{B}}.</math> )
+
+Equating the cross-product to <math>0</math> gets us the quadratic <math>-x(-20-x)+(-2x-30)(-2x-30)=0.</math> The solutions are <math>x=-18, -10.</math> Since <math>B</math> clearly has a more negative x-coordinate than <math>E</math>, we take <math>x=-18</math>. So <math>B = (-18, -6).</math>
+
+From here, there are multiple ways to get the area of <math>\Delta{ABC}</math> to be <math>60</math>, and since the area of <math>\Delta{ACD}</math> is <math>300</math>, we get our final answer to be <cmath>60 + 300 = \boxed{\text{(D) } 360}.</cmath>
+
+-PureSwag
+
+== Solution 7 (Power of a Point)==
+
+<asy>
+import olympiad;
+pair A = (0, 189), B = (0,0), C = (570,0), D = (798, 798),F=(285,94.5),G=(361.2,361.2);
+dot("$A$", A, W); dot("$B$", B, S); dot("$C$", C, E); dot("$D$", D, N);dot("$E$",(140, 140), N);dot("$F$",F,N);dot("$G$",G,N);
+draw(A--B--C--D--A);
+draw(A--C, dotted); draw(B--D, dotted); draw(F--G, dotted);
+</asy>
+
+Let <math>F</math> be the midpoint of <math>AC</math>, and draw <math>FG // CD</math> where <math>G</math> is on <math>BD</math>. We have <math>EF=5,FC=10</math>.
+
+<math>\Delta EFG \sim \Delta ECD \implies FG=10=FA=FC</math>. Therefore <math>ABCG</math> is a cyclic quadrilateral.
+
+Notice that <math>\angle EFG=90^\circ, EG=\sqrt{5^2+10^2}=5\sqrt{5} \implies BE=\frac{AE\cdot EC}{EG}=\frac{5\cdot 15}{5\sqrt{5}}=3\sqrt{5}</math> via Power of a Point.
+
+The altitude from <math>B</math> to <math>AC</math> is then equal to <math>GF\cdot \frac{BE}{GE}=10\cdot \frac{3\sqrt 5}{5 \sqrt 5}=6</math>. 
+
+Finally, the total area of <math>ABCD</math> is equal to <math>\frac 12 \cdot 20 \left(30+6 \right) =\boxed{\text{(D) } 360}.</math>
+
+~asops
+
+==Solution 8 (Solving Equations)==
+
+<asy>
+size(15cm,0);
+import olympiad;
+draw((0,0)--(0,2)--(6,4)--(4,0)--cycle);
+label("A", (0,2), NW);
+label("B", (0,0), SW);
+label("C", (4,0), SE);
+label("D", (6,4), NE);
+label("E", (1.714,1.143), N);
+label("F", (1.714,0), SE);
+draw((0,2)--(4,0), dashed);
+draw((0,0)--(6,4), dashed);
+draw((1.714,1.143)--(1.714,0), dashed);
+label("20", (0,2)--(4,0), SW);
+label("30", (4,0)--(6,4), SE);
+label("$x$", (-0.3,2)--(-0.3,0), N);
+label("$y$", (0,-0.3)--(4,-0.3), E);
+draw(rightanglemark((1.714,2),(1.714,0),(5.714,0)));
+draw(rightanglemark((0,2),(0,0),(4,0)));
+draw(rightanglemark((0,2),(4,0),(6,4)));
+</asy>
+
+Let <math>AB = x</math>, <math>BC = y</math>
+
+Looking at the diagram we have <math>x^2 + y^2 = 20^2</math>,
+<math>DE = \sqrt{30^2+15^2} = 15\sqrt{5}</math>, <math>[ACD] = \frac{1}{2} \cdot 20 \cdot 30 = 300</math>
+
+Because <math>\triangle CEF \sim \triangle CAB</math>, <math>EF = AB \cdot \frac{CE}{CA} = x \cdot \frac{15}{20} = \frac{3x}{4}</math>
+
+<math>BF = BC - CF = BC - BC \cdot \frac{CE}{CA} = \frac{1}{4} \cdot BC = \frac{y}{4}</math>
+
+<math>BE = \sqrt{ \left( \frac{3x}{4} \right) ^2 + \left( \frac{y}{4} \right) ^2 } = \frac{ \sqrt{9x^2 + y^2} }{4}</math> , substituting <math>x^2 + y^2 = 400</math>,  we get <math>BE = \frac{ \sqrt{8x^2 + 400} }{4} = \frac{ \sqrt{2x^2 + 100} }{2}</math> 
+
+<math>[ABC] = \frac{1}{2} \cdot x \cdot y</math>
+
+Because <math>\triangle ABC</math> and <math>\triangle ACD</math> share the same base, <math>\frac{[ABC]}{[ACD]} = \frac{BE}{DE}</math>
+
+<math>[ABC] = [ACD] \cdot \frac{BE}{DE} = 300 \cdot \frac{ \frac{ \sqrt{2x^2 + 100} } {2} }{ 15 \sqrt{5} }</math>
+
+<math>\frac{1}{2} \cdot x \cdot y = 20 \cdot \frac{ \frac{ \sqrt{2x^2 + 100} } {2} }{ \sqrt{5} }</math>
+
+<math>xy = 4 \sqrt{10x^2 + 500}</math>
+
+By <math>x^2 + y^2 = 400</math>, <math>y = \sqrt{400 - x^2}</math>. So, <math>x \cdot  \sqrt{400 - x^2} = 4 \sqrt{10x^2 + 500}</math>
+
+<math>x^2 (400 - x^2) = 16 (10x^2 + 500)</math>
+
+Let <math>x^2 = a</math>, <math>a (400 - a) = 16 (10a + 500)</math>, <math>400a - a^2 = 160a + 8000</math>, <math>a^2 - 240a + 8000 = 0</math>, <math>(a-200)(a-40) = 0</math>
+
+Because <math>x < 20</math>, <math>a</math> can only equal 40. <math>a = 40</math>, <math>x = 2 \sqrt{10}</math>, <math>y = 6 \sqrt{10}</math>
+
+<math>[ABC] = \frac{1}{2} \cdot 2 \sqrt{10} \cdot 6 \sqrt{10} = 60</math>
+
+<math>[ABCD] = [ABC] + [ACD] = 60 + 300 = \boxed{\text{(D) } 360}</math>
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+==Solution 9==
+Drop perpendiculars <math>\overline{AF}</math> and <math>\overline{CG}</math> to <math>\overline{BD}.</math> Notice that since <math>\angle AEF=\angle CEG</math> (since they are vertical angles) and <math>\angle AFE=\angle CGE=90^\circ,</math> triangles <math>AEF</math> and <math>CEG</math> are similar. Therefore, we have
+
+<cmath>x/EF=CE/AE=15/5=3,</cmath>
+
+where <math>EG=x.</math> Therefore, <math>EF=x/3.</math>
+
+Additionally, angle chasing shows that triangles <math>CEG</math> and <math>DCG</math> are also similar. This gives <math>CG/x=DC/CE=30/15=2,</math> so <math>CG=2x.</math> Thus, applying the Pythagorean Theorem to triangle <math>CEG</math> gives
+
+<cmath>x^2+(2x)^2=15^2,</cmath>
+
+so <math>EG=x=3\sqrt 5.</math> Our pairs of similar triangles then allow us to fill in the following lengths (in this order):
+
+<cmath>EF=x/3=\sqrt 5, CG=2x=6\sqrt 5, AF=CG/3=2\sqrt 5, DG=2\cdot CG=12\sqrt 5.</cmath>
+
+Now, let <math>BF=y.</math> Angle chasing shows that triangle <math>ABF</math> and <math>BCG</math> are similar, so <math>BG/AF=CG/BF.</math> Plugging in known lengths gives
+
+<cmath>\dfrac{y+4\sqrt 5}{2\sqrt 5}=\dfrac{6\sqrt 5}{y}.</cmath>
+
+This gives <math>y=2\sqrt 5.</math> Now we know all the lengths that make up <math>BD,</math> which allows us to find 
+
+<cmath>BD=2\sqrt 5+\sqrt 5+3\sqrt 5+12\sqrt 5=18\sqrt 5.</cmath>
+
+Therefore,
+
+<cmath>\begin{align*}
+[ABCD] &= [ABD]+[CBD] \\
+&= (BD)(AF)/2+(BD)(CG)/2 \\
+&= (18\sqrt 5)(2\sqrt 5)/2+(18\sqrt 5)(6\sqrt 5)/2 \\
+&= \boxed{\text{(D) } 360}.
+\end{align*}</cmath>
+
+--vaporwave
+
+==Solution 10 (Trigonometry) ==
+
+
+<asy>
+size(15cm,0);
+import olympiad;
+draw((0,0)--(0,2)--(6,4)--(4,0)--cycle);
+label("A", (0,2), NW);
+label("B", (0,0), SW);
+label("C", (4,0), SE);
+label("D", (6,4), NE);
+label("E", (1.714,1.143), N);
+label("F", (1.714,0), SE);
+draw((0,2)--(4,0), dashed);
+draw((0,0)--(6,4), dashed);
+draw((4,0)--(6,0), dashed);
+draw((6,0)--(6,4), dashed);
+draw((1.714,1.143)--(1.714,0), dashed);
+label("20", (0,2)--(4,0), SW);
+label("30", (4,0)--(6,4), SE);
+label("$x$", (-0.3,2)--(-0.3,0), N);
+label("$y$", (0,-0.3)--(4,-0.3), E);
+
+label( "$X$", (6,0), SE);
+label("5", (0,2)--(1.714,1.143), NE);
+label("15",(1.714,1.143)--(4,0),NE);
+label("5$C$", (0,0)--(1.714,0),S);
+label("15$C$", (1.714,0)--(4,0),S);
+label("30$S$", (4,0)--(6,0),S);
+label("30$C$", (6,0)--(6,4),E);
+draw(anglemark((1.714,1.143),(4,0),(1.714,0)));
+draw(anglemark((4,0),(6,4),(6,0)));
+draw(rightanglemark((1.714,2),(1.714,0),(5.714,0)));
+draw(rightanglemark((0,2),(0,0),(4,0)));
+draw(rightanglemark((0,2),(4,0),(6,4)));
+</asy>
+
+set  <cmath>\angle ACB = \theta , C= \cos(\theta), S = \sin(\theta) </cmath>
+
+<cmath>\dfrac{E_y}{E_x} = \dfrac{30C}  { 20C+30S}  =  \dfrac{15S} {20C-15C} </cmath>
+
+<cmath>2SC = \dfrac35</cmath>
+
+<cmath>\begin{align*}
+[ABCD] &= [ABD]+[CBD] \\
+&= \dfrac12\cdot 20C\cdot 30C  + \dfrac12 \cdot 20S (20C+30S) \\
+&= 100\cdot   2SC + 300 \\
+&= \boxed{\text{(D) } 360}.
+\end{align*}</cmath>
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Cyantist luckuso]
+
+== Video Solution by Pi Academy (Easy Similar Triangles,[Sol. 1]) ==
+
+https://youtu.be/3SZp46_LNIo
+
+==Video Solution by Education, The Study of Everything==
+https://youtu.be/5lb8kk1qbaA
+
+==Video Solution by On The Spot STEM==
+https://www.youtube.com/watch?v=hIdNde2Vln4
+
+==Video Solution by MathEx==
+https://www.youtube.com/watch?v=sHrjx968ZaM
+
+==Video Solution by TheBeautyOfMath==
+https://youtu.be/RKlG6oZq9so?t=655
+
+==Video Solution by Triviality==
+https://youtu.be/R220vbM_my8?t=658
+(amritvignesh0719062.0)
+
+== Video Solution by OmegaLearn ==
+https://youtu.be/hDsoyvFWYxc?t=1224
+~ pi_is_3.14
+==Video explanation of this theorem==
+https://youtu.be/EbWoDTDi86A
+
+==See Also==
+
+{{AMC10 box|year=2020|ab=A|num-b=19|num-a=21}}
+{{AMC12 box|year=2020|ab=A|num-b=17|num-a=19}}
+{{MAA Notice}}

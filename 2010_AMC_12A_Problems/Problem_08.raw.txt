@@ -1,0 +1,74 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2010_AMC_12A_Problems/Problem_8&action=raw
+
+Published Time: Tue, 20 Aug 2024 00:33:33 GMT
+
+Markdown Content:
+== Problem ==
+Triangle ABC has AB=2 \cdot AC. Let D and E be on \overline{AB} and \overline{BC}, respectively, such that \angle BAE = \angle ACD. Let F be the intersection of segments AE and CD, and suppose that \triangle CFE is equilateral. What is \angle ACB?
+
+\textbf{(A)}\ 60^\circ \qquad \textbf{(B)}\ 75^\circ \qquad \textbf{(C)}\ 90^\circ \qquad \textbf{(D)}\ 105^\circ \qquad \textbf{(E)}\ 120^\circ
+
+== Solution 1 ==
+
+[[File:AMC 2010 12A Problem 8.png]]
+
+Let \angle BAE = \angle ACD = x.
+
+\begin{align*}\angle BCD &= \angle AEC = 60^\circ\\ \angle EAC + \angle FCA + \angle ECF + \angle AEC &= \angle EAC + x + 60^\circ + 60^\circ = 180^\circ\\ \angle EAC &= 60^\circ - x\\ \angle BAC &= \angle EAC + \angle BAE = 60^\circ - x + x = 60^\circ\end{align*}
+
+Since \frac{AC}{AB} = \frac{1}{2} and the angle between the hypotenuse and the shorter side is 60^\circ, triangle ABC is a 30-60-90 triangle, so \angle BCA = \boxed{90^\circ\,\textbf{(C)}}.
+
+== Solution 2(Trig and Angle Chasing) ==
+Let AB=2a, AC=a
+Let \angle BAE=\angle ACD=x
+Because \triangle CFE is equilateral, we get \angle FCE=60, so \angle ACB=60+x
+
+Because \triangle CFE is equilateral, we get \angle CFE=60. 
+
+Angles AFD and CFE are vertical, so \angle AFD=60. 
+
+By triangle ADF, we have \angle ADF=120-x, and because of line AB, we have \angle BDC=60+x.
+
+Because Of line BC, we have \angle AEB=120, and by line CD, we have \angle DFE=120. 
+
+By quadrilateral BDFE, we have \angle ABC=60-x.
+
+By the Law of Sines:
+\frac{\sin(60-x)}{a}=\frac{\sin(60+x)}{2a}\implies 2\sin(60-x)=\sin(60+x)
+
+By the sine addition formula(\sin(a+b)=\sin(a)\cos(b)+\cos(a)\sin(b)):
+2(\sin(60)\cos(-x)+\cos(60)\sin(-x))=\sin(60)\cos(x)+\cos(60)\sin(x)
+
+Because cosine is an even function, and sine is an odd function, we have 2\sin(60)\cos(x)-2\cos(60)\sin(x)=\sin(60)\cos(x)+\cos(60)\sin(x) \implies \sin(60)\cos(x)=3\cos(60)\sin(x)
+
+We know that \sin(60)=\frac{\sqrt{3}}{2}, and \cos(60)=\frac{1}{2}, hence 
+\frac{\sqrt{3}}{2}\cos(x)=\frac{3}{2}\sin(x)\implies \tan(x)=\frac{\sqrt{3}}{3}
+
+The only value of x that satisfies 60+x<180(because 60+x is an angle of the triangle) is x=30^{\circ}. We seek to find \angle ACB, which as we found before is 60+x, which is 90. The answer is 90, \text{or} \textbf{(C)}
+
+-vsamc
+
+== Solution 3 (Similar Triangles) ==
+Notice that \angle AEB=\angle AFC = 120^{\circ} and \angle ACF=\angle BAE. Hence, triangle AEB is similar to triangle CFA. Since AB=2AC, AE=2CF=2FE, as triangle CFE is equilateral. Therefore, AF=FE=FC, and since \angle AFC=120^{\circ}, x=30. Thus, the measure of \angle ACE equals to \angle FCE+\angle ACF=90^{\circ}, \text{or} \textbf{(C)} 
+-HarryW
+
+== Solution 4 ==
+Notice that \triangle ADF \sim \triangle CDA (by AA Similarity.) Since the corresponding angles of a pair of similar triangles are congruent, we have \angle DAC = \angle DFA = 60^\circ. Since AB = 2 \cdot AC and \angle DFA = 60^\circ, we have that \triangle ABC is congruent by SAS to a 30-60-90 right triangle, which gives the answer \boxed{\textbf{(C)}}.
+~clever14710owl
+
+==Video Solution by the Beauty of Math==
+https://youtu.be/kU70k1-ONgM?t=785
+
+== Video Solution by OmegaLearn ==
+https://youtu.be/O_o_-yjGrOU?t=58
+
+~ pi_is_3.14
+
+== See also ==
+{{AMC10 box|year=2010|ab=A|num-b=13|num-a=15}}
+{{AMC12 box|year=2010|num-b=7|num-a=9|ab=A}}
+
+[[Category:Introductory Geometry Problems]]
+{{MAA Notice}}

@@ -1,0 +1,85 @@
+{{duplicate|[[2022 AMC 10A Problems/Problem 14|2022 AMC 10A #14]] and [[2022 AMC 12A Problems/Problem 10|2022 AMC 12A #10]]}}
+
+==Problem==
+
+How many ways are there to split the integers <math>1</math> through <math>14</math> into <math>7</math> pairs such that in each pair, the greater number is at least <math>2</math> times the lesser number?
+
+<math>\textbf{(A) } 108 \qquad \textbf{(B) } 120 \qquad \textbf{(C) } 126 \qquad \textbf{(D) } 132 \qquad \textbf{(E) } 144</math>
+
+==Solution 1 (Multiplication Principle)==
+
+Clearly, the integers from <math>8</math> through <math>14</math> must be in different pairs, so are the integers from <math>1</math> through <math>7.</math> Note that <math>7</math> must pair with <math>14.</math>
+
+We pair the numbers <math>1,2,3,4,5,6</math> with the numbers <math>8,9,10,11,12,13</math> systematically:
+
+* <math>6</math> can pair with either <math>12</math> or <math>13.</math>
+
+* <math>5</math> can pair with any of the three remaining numbers from <math>10,11,12,13.</math>
+
+* <math>1,2,3,4</math> can pair with the other four remaining numbers from <math>8,9,10,11,12,13</math> without restrictions.
+
+Together, the answer is <math>2\cdot3\cdot4!=\boxed{\textbf{(E) } 144}.</math>
+
+~MRENTHUSIASM
+
+==Solution 2 (Multiplication Principle)==
+
+As said in Solution 1, clearly, the integers from <math>8</math> through <math>14</math> must be in different pairs.
+
+We know that <math>8</math> or <math>9</math> can pair with any integer from <math>1</math> to <math>4</math>, <math>10</math> or <math>11</math> can pair with any integer from <math>1</math> to <math>5</math>, and <math>12</math> or <math>13</math> can pair with any integer from <math>1</math> to <math>6</math>. Thus, <math>8</math> will have <math>4</math> choices to pair with, <math>9</math> will then have <math>3</math> choices to pair with (<math>9</math> cannot pair with the same number as the one <math>8</math> pairs with). <math>10</math> cannot pair with the numbers <math>8</math> and <math>9</math> has paired with but can also now pair with <math>5</math>, so there are <math>3</math> choices. <math>11</math> cannot pair with <math>8</math>'s, <math>9</math>'s, or <math>10</math>'s paired numbers, so there will be <math>2</math> choices for <math>11</math>. <math>12</math> can pair with an integer from <math>1</math> to <math>5</math> that hasn't been paired with already, or it can pair with <math>6</math>. <math>13</math> will only have one choice left, and <math>7</math> must pair with <math>14</math>.
+
+So, the answer is <math>4\cdot3\cdot3\cdot2\cdot2\cdot1\cdot1=\boxed{\textbf{(E) } 144}.</math>
+
+~Scarletsyc
+
+==Solution 3 (Generalization)==
+
+The integers <imath>x \in \{8, \ldots , 14 \}</imath> must each be the larger elements of a distinct pair.
+
+Assign partners in decreasing order for <imath>x \in \{7, \dots, 1\}</imath>:
+
+Note that <imath>7</imath> must pair with <imath>14</imath>: <imath>\mathbf{1} \textbf{ choice}</imath>.
+
+For <imath>5 \leq x \leq 7</imath>, the choices are <imath>\{2x, \dots, 14\} - \{ \text{previous choices}\}</imath>. As <imath>x</imath> decreases by 1, The minuend increases by 2 elements, and the subtrahend increases by 1 element, so the difference increases by 1, yielding <imath>\mathbf{3!} \textbf{ combined choices}</imath>.
+
+After assigning a partner to <imath>5</imath>, there are no invalid pairings for yet-unpaired numbers, so there are <imath>\mathbf{4!} \textbf{ ways}</imath> to choose partners for <imath>\{1,2,3,4\}</imath>.
+
+The answer is <imath>3! \cdot 4! = \boxed{\textbf{(E) } 144}</imath>.
+
+In general, for <imath>1,\ldots,2n</imath>, the same logic yields answer: <imath>\left\lfloor\dfrac{n}{2}\right\rfloor! \cdot \left\lceil\dfrac{n}{2}\right\rceil!</imath>
+
+~oinava
+
+==Video Solution (Interactive teaching approach!)==
+
+https://www.youtube.com/watch?v=7GMrB-hkGVA
+
+~Mathkidsbymax
+
+==Video Solution by Education, the Study of Everything==
+https://youtu.be/k6EUl65wS9Q
+
+== Video Solution by Sohil Rathi==
+https://youtu.be/V1jOj8ysd_w
+
+~ pi_is_3.14
+
+==Video Solution (Smart and Simple)==
+https://youtu.be/7yAh4MtJ8a8?si=jyIdy-jZb2raj3cM&t=1800
+
+~Math-X
+
+==Video Solution (RMM club)==
+https://youtu.be/DwCE1wu5hrA
+
+== Video Solution by Lucas637 (Fast and Easy) ==
+https://www.youtube.com/watch?v=egQK11g54mA
+==Video Solution by TheBeautyofMath==
+https://youtu.be/0kkc4-y8TkU?t=1367
+
+~IceMatrix
+
+== See Also ==
+{{AMC10 box|year=2022|ab=A|num-b=13|num-a=15}}
+{{AMC12 box|year=2022|ab=A|num-b=9|num-a=11}}
+{{MAA Notice}}

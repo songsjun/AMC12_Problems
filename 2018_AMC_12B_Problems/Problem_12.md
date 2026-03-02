@@ -1,0 +1,28 @@
+# 2018 AMC 12B Problem 12
+
+## Problem
+Side $\overline{AB}$ of $\triangle ABC$ has length 10. The bisector of angle A meets $\overline{BC}$ at D, and CD = 3. The set of all possible values of AC is an open interval (m,n). What is m+n?
+
+$\textbf{(A) }16 \qquad \textbf{(B) }17 \qquad \textbf{(C) }18 \qquad \textbf{(D) }19 \qquad \textbf{(E) }20 \qquad$
+## Solution
+Let AC=x. By Angle Bisector Theorem, we have $\frac{AB}{AC}=\frac{BD}{CD},$ from which BD=CD$\cdot\frac{AB}{AC}=\frac{30}{x}.$
+
+Recall that x>0. We apply the Triangle Inequality to $\triangle ABC$:
+
+$$1.   AC+BC>AB \iff x+\left(\frac{30}{x}+3\right)>10$$
+We simplify and complete the square to get $\left(x-\frac72\right)^2+\frac{71}{4}>0,$ from which x>0.
+
+$$2.   AB+BC>AC \iff 10+\left(\frac{30}{x}+3\right)>x$$
+We simplify and factor to get $(x+2)(x-15)<0$, from which 0
+
+$$3.   AB+AC>BC \iff 10+x>\frac{30}{x}+3$$
+We simplify and factor to get $(x+10)(x-3)>0$, from which x>3.
+
+Taking the intersection of the solutions gives (m,n)=(0,$\infty)\cap(0,15)\cap(3,\infty)=(3,15),$ so the answer is $m+n=\boxed{\textbf{(C) }18}.$
+
+*~quinnanyc ~MRENTHUSIASM*
+## Video Solution (HOW TO THINK CRITICALLY!!!)
+https://youtu.be/OfnHE-KxZJI
+
+*~Education, the Study of Everything*
+## See Also

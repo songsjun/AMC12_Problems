@@ -1,0 +1,174 @@
+{{duplicate|[[2020 AMC 10B Problems|2020 AMC 10B #23]] and [[2020 AMC 12B Problems|2020 AMC 12B #19]]}}
+
+== Problem ==
+Square <math>ABCD</math> in the coordinate plane has vertices at the points <math>A(1,1), B(-1,1), C(-1,-1),</math> and <math>D(1,-1).</math> Consider the following four transformations:
+
+<math>\quad\bullet\qquad</math> <math>L,</math> a rotation of <math>90^{\circ}</math> counterclockwise around the origin;
+
+<math>\quad\bullet\qquad</math> <math>R,</math> a rotation of <math>90^{\circ}</math> clockwise around the origin;
+
+<math>\quad\bullet\qquad</math> <math>H,</math> a reflection across the <math>x</math>-axis; and
+
+<math>\quad\bullet\qquad</math> <math>V,</math> a reflection across the <math>y</math>-axis.
+
+Each of these transformations maps the squares onto itself, but the positions of the labeled vertices will change. For example, applying <math>R</math> and then <math>V</math> would send the vertex <math>A</math> at <math>(1,1)</math> to <math>(-1,-1)</math> and would send the vertex <math>B</math> at <math>(-1,1)</math> to itself. How many sequences of <math>20</math> transformations chosen from <math>\{L, R, H, V\}</math> will send all of the labeled vertices back to their original positions? (For example, <math>R, R, V, H</math> is one sequence of <math>4</math> transformations that will send the vertices back to their original positions.)
+
+<math>\textbf{(A)}\ 2^{37} \qquad\textbf{(B)}\ 3\cdot 2^{36} \qquad\textbf{(C)}\ 2^{38} \qquad\textbf{(D)}\ 3\cdot 2^{37} \qquad\textbf{(E)}\ 2^{39}</math>
+
+== Solution 1 ==
+For each transformation:
+<ol style="margin-left: 1.5em;">
+  <li>Each labeled vertex will move to an adjacent position.</li><p>
+  <li>The labeled vertices will maintain the consecutive order <math>ABCD</math> in either direction (clockwise or counterclockwise).</li><p>
+  <li><math>L</math> and <math>R</math> will retain the direction of the labeled vertices, but <math>H</math> and <math>V</math> will alter the direction of the labeled vertices.</li><p>
+</ol>
+After the <math>19</math>th transformation, vertex <math>A</math> will be at either <math>(1,-1)</math> or <math>(-1,1).</math> All possible configurations of the labeled vertices are shown below:
+<asy>
+/* Made by MRENTHUSIASM */
+unitsize(7mm);
+label("$A$",(1,0));
+label("$B$",(1,1));
+label("$C$",(0,1));
+label("$D$",(0,0));
+
+label("$C$",(5,0));
+label("$D$",(5,1));
+label("$A$",(4,1));
+label("$B$",(4,0));
+
+label("$A$",(9,0));
+label("$D$",(9,1));
+label("$C$",(8,1));
+label("$B$",(8,0));
+
+label("$C$",(13,0));
+label("$B$",(13,1));
+label("$A$",(12,1));
+label("$D$",(12,0));
+
+label("\textbf{Configuration}",(-5,0.5));
+label("\textbf{The 20th}",(-5,-1.5));
+label("\textbf{Transformation}",(-5,-2.25));
+label("$L$",(0.5,-1.875));
+label("$R$",(4.5,-1.875));
+label("$H$",(8.5,-1.875));
+label("$V$",(12.5,-1.875));
+</asy>
+Each sequence of <math>19</math> transformations generates one valid sequence of <math>20</math> transformations. Therefore, the answer is <math>4^{19}=\boxed{\textbf{(C)}\ 2^{38}}.</math>
+
+~MRENTHUSIASM
+
+== Solution 2 ==
+Let <math>(+)</math> denote counterclockwise/starting orientation and <math>(-)</math> denote clockwise orientation.
+Let <math>1,2,3,</math> and <math>4</math> denote which quadrant <math>A</math> is in.
+
+Realize that from any odd quadrant and any orientation, the <math>4</math> transformations result in some permutation of <math>(2+, 2-, 4+, 4-).</math>
+
+The same goes that from any even quadrant and any orientation, the <math>4</math> transformations result in some permutation of <math>(1+, 1-, 3+, 3-).</math>
+
+We start our first <math>19</math> moves by doing whatever we want, <math>4</math> choices each time. Since <math>19</math> is odd, we must end up on an even quadrant. 
+
+As said above, we know that exactly one of the four transformations will give us <math>(1+),</math> and we must use that transformation.
+
+Thus, the answer is <math>4^{19}=\boxed{\textbf{(C)}\ 2^{38}}.</math>
+
+== Solution 3 ==
+Notice that any '''pair''' of transformations either swaps the <imath>x</imath> and <imath>y</imath>-coordinates, negates the <imath>x</imath> and <imath>y</imath>-coordinates, swaps and negates the <imath>x</imath> and <imath>y</imath>-coordinates, or leaves the original unchanged. Furthermore, notice that for each of these results, if we apply another pair of transformations, one of these results will happen again, and with equal probability. Therefore, no matter what state we are in after we apply the first <imath>9</imath> pairs of transformations, there is a <imath>\frac{1}{4}</imath> chance the last pair of transformations will return the figure to its original position. Therefore, the answer is <imath>\frac{4^{20}}{8} = 2^{37} = \boxed{\textbf{(A)}\ 2^{37}}.</imath>
+
+== Solution 4 ==
+The total number of sequences is <math>4^{20}=2^{40}.</math>
+
+Note that there can only be an even number of reflections since they result in the same anti-clockwise orientation of the vertices <math>A,B,C,D.</math> Therefore, the probability of having the same anti-clockwise orientation with the original arrangement after the transformation is <math>\frac{1}{2}.</math>
+
+Next, the even number of reflections means that there must be an even number of rotations since their sum is even. Even rotations result in only the original position or a <math>180^{\circ}</math> rotation of it. 
+
+Since rotation <math>R</math> and rotation <math>L</math> cancel each other out, the difference between the numbers of them define the final position. The probability of the transformation returning the vertices to the original position, given that there are even number of rotations, is equivalent to the probability that
+
+<center><math>|n(R)-n(L)|\equiv0\pmod{4}</math> when <math>|n(H)-n(V)|\equiv0\pmod{4}</math></center>
+
+<center>or</center>
+
+<center><math>|n(R)-n(L)|\equiv2\pmod{4}</math> when <math>|n(H)-n(V)|\equiv2\pmod{4}</math></center>
+
+which is again, <math>\frac{1}{2}.</math>
+
+Therefore, the answer is <math>2^{40}\cdot\frac{1}{2}\cdot\frac{1}{2}=\boxed{\textbf{(C)}\ 2^{38}}.</math>
+
+~joshuamh111
+
+~Edits by Eric X
+
+== Solution 5 (Group Theory) ==
+
+This problem is a [https://en.wikipedia.org/wiki/Dihedral_group Dihedral Group] problem, <math>D_4</math>, in [https://en.wikipedia.org/wiki/Group_theory Group Theory].
+
+The transformation has associativity, for <math>x, y, z \in 	\{ L, R, H, V \}</math>, <math>(x \circ y) \circ z = x \circ (y \circ z)</math>.
+
+Let <math>I</math> be the initial state of the square <math>A(1,1), B(-1,1), C(-1,-1),</math> and <math>D(1,-1)</math>.
+<cmath>\begin{align}
+R \circ L = L \circ R = V \circ V = H \circ H = I\\
+V \circ H = R \circ R = H \circ V = L \circ L\\
+H \circ R = L \circ H = V \circ L = R \circ V\\
+V \circ R = L \circ V = H \circ L = R \circ H
+\end{align}</cmath>
+It's not hard to see that after a series of transformations from initial state <math>I</math> to initial state <math>I</math>, the number of transformations must be even. Denote <math>f(2n)</math> be the number of sequences of <math>2n</math> transformations from initial state <math>I</math> to initial state <math>I</math>. We are going to prove <math>f(2n) = 4^{2n-1}</math>.
+
+For each transformation composite operator, there are <math>4</math> replacements. 
+
+For example, when <math>n = 2</math>:
+<cmath>R \circ R \circ R \circ R = (R \circ R) \circ R \circ R = I.</cmath>
+From <math>(2)</math>, <math>R \circ R = V \circ H = H \circ V = L \circ L</math>, so <math>R \circ R</math> can be replaced with <math>V \circ H</math>, <math>H \circ V</math>, <math>L \circ L</math> without changing the result. Suppose we choose <math>V \circ H</math>, then <cmath>(R \circ R) \circ R \circ R = (V \circ H) \circ R \circ R = V \circ (H \circ R) \circ R.</cmath>
+From <math>(3)</math>, <math>H \circ R = L \circ H = V \circ L = R \circ V</math>, so <math>H \circ R</math> can be replaced with <math>L \circ H</math>, <math>V \circ L</math>, <math>R \circ V</math> without changing the result. Suppose we choose <math>R \circ V</math>, then <cmath>V \circ (H \circ R) \circ R = V \circ (R \circ V) \circ R = V \circ R \circ (V \circ R).</cmath>
+From <math>(4)</math>, <math>V \circ R = L \circ V = H \circ L = R \circ H</math>, so <math>V \circ R</math> can be replaced with <math>L \circ V</math>, <math>H \circ L</math>, <math>R \circ H</math> without changing the result. Suppose we choose <math>H \circ L</math>, then <cmath>V \circ R \circ (V \circ R) =V \circ R \circ (H \circ L) = V \circ R \circ H \circ L = I.</cmath>
+So, we have <math>f(4) = 4^{4-1}</math>:
+<cmath>\underbrace{R \circ R \circ R \circ R \circ \dots R \circ R \circ R}_{2n}.</cmath>
+With <math>2n</math> <math>R</math> transformations, it will go from initial state to initial state. There are <math>2n-1</math> transformation composite operators <math>\circ</math> between the transformations, and each pair of transformations surrounding the transformations composite operator <math>\circ</math> have <math>4</math> options. So, we have <math>f(2n) = 4^{2n-1}</math>, from which <math>f(20) = 4^{20-1} = \boxed{\textbf{(C)}\ 2^{38}}</math>.
+
+<u><b>Side Note</b></u>
+
+Equations <math>(2)</math>, <math>(3)</math>, <math>(4)</math> are equivalent. Here I will prove that <math>(2)</math> is equivalent to <math>(3)</math>.
+
+From <math>(1)</math>, <math>R \circ L = V \circ V</math>. We have
+<cmath>H \circ (R \circ L) = H \circ (V \circ V) = (H \circ V) \circ V.</cmath>
+From <math>(2)</math>, <math>H \circ V = V \circ H = L \circ L</math>. We have
+<cmath>(H \circ V) \circ V = (V \circ H) \circ V = V \circ (H \circ V) = V \circ (L \circ L).</cmath>
+So, <cmath>(H \circ R) \circ L = H \circ (R \circ L) = V \circ (L \circ L) = (V \circ L) \circ L.</cmath>
+It follows that <math>H \circ R = V \circ L</math>, which is <math>(3)</math>.
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+
+== Solution 6 (Quick) ==
+
+The number of possible ways to orient a square using this method <math>20</math> times would be <math>4^{20}</math>, as for each of the transformations we can only use the four transformations <math>L</math>, <math>V</math>, <math>H</math>, or <math>R</math>.
+
+After 20 transformations, there are only 4 possible outcomes, as parity prohibits the other 4 outcomes. By symmetry, all <math>4</math> of these possibilities are equally likely. Thus, our answer is <math>\frac{4^{20}}{4} = 4^{19}=\boxed{\textbf{(C)}\ 2^{38}}.</math>
+
+~cdm ~QuickCat (clarified fakesolve element)
+
+== Solution 7 (Generating Functions) ==
+
+Let <math>x</math> represent rotating <math>\overline{AC}</math> <math>90^\circ</math> counterclockwise about the origin and let <math>y</math> represent rotating <math>\overline{BD}</math> <math>90^\circ</math> counterclockwise about the origin. Then, note that the transformations <math>L, V, H,</math> and <math>R</math> can be encoded by <math>xy, \tfrac{1}{xy}, \tfrac{y}{x},</math> and <math>\tfrac{x}{y},</math> respectively. Thus, we wish to compute the sum of the coefficients of the terms of the form <math>cx^{4a}y^{4b}</math> for <math>a, b, c \ge 0</math> in the polynomial <cmath>(xy+\tfrac{1}{xy}+\tfrac{y}{x}+\tfrac{x}{y})^{20}.</cmath> We can factor the polynomial to get <cmath>((x+\tfrac{1}{x})(y+\tfrac{1}{y}))^{20} = (x+\tfrac{1}{x})^{20}(y+\tfrac{1}{y})^{20}.</cmath> We can multiply the polynomial by <math>x^{20}y^{20}</math> and it wouldn't affect the sum of the coefficients of the terms of the form <math>cx^{4a}y^{4b},</math> so we can now work with <cmath>(x^2+1)^{20}(y^2+1)^{20}.</cmath> Now, it is very evident that we will get a term of the form <math>cx^{4a}y^{4b}</math> exactly when the first part of the polynomial contributes an even number of <math>x^2</math>'s and the second part of the polynomial contributes an even number of <math>y^2</math>'s, so the answer is
+\begin{align*}
+\left(\binom{20}{0} + \binom{20}{2} + \ldots + \binom{20}{20}\right)\left(\binom{20}{0} + \binom{20}{2} + \ldots + \binom{20}{20}\right) &= 2^{19} \cdot 2^{19} \\
+&= \boxed{\text{(C)} \ 2^{38}}.
+\end{align*}
+<math>\square</math>
+
+~lpieleanu
+
+==Video Solutions==
+=== Video Solution 1 ===
+https://www.youtube.com/watch?v=XZs9DHg6cx0 
+
+~MathEx
+
+===Video Solution 2 by The Beauty of Math===
+https://youtu.be/Bl2kn9oVxQ8?t=348
+
+~Icematrix
+
+== See Also ==
+{{AMC10 box|year=2020|ab=B|num-b=22|num-a=24}}
+{{AMC12 box|year=2020|ab=B|num-b=18|num-a=20}}
+{{MAA Notice}}

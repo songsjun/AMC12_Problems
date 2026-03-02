@@ -1,0 +1,48 @@
+# 2007 AMC 12A Problem 24
+
+## Problem
+For each [integer](https://artofproblemsolving.com/wiki/index.php/integer) n>1, let F(n) be the number of solutions to the [equation](https://artofproblemsolving.com/wiki/index.php/equation) $\sin{x}=\sin{(nx)}$ on the interval [0,$\pi$]. What is $\sum_{n=2}^{2007} F(n)$?
+
+
+$$\mathrm{(A)}\ 2014524\qquad\mathrm{(B)}\ 2015028\qquad\mathrm{(C)}\ 2015033\qquad\mathrm{(D)}\ 2016532\qquad\mathrm{(E)}\ 2017033$$
+
+## Solution 1
+$$F(2)=3$$
+
+By looking at various graphs, we obtain that, for most of the graphs
+
+$$F(n) = n + 1$$
+
+Notice that the solutions are basically reflections across x = $\frac{\pi}{2}.$
+However, when n $\equiv 1 \pmod{4},$ the middle apex of the [sine](https://artofproblemsolving.com/wiki/index.php/sine) curve touches the sine curve at the top only one time (instead of two reflected points), so we get here $F(n) = n.$
+
+
+$$
+3+4+5+5+7+8+9+9+\cdots+2008
+= (1+2+3+4+5+\cdots+2008) - 3 - 501
+= \frac{(2008)(2009)}{2} - 504 = 2016532  \mathrm{(D)}
+$$
+
+## Solution 2
+
+$$\sin nx - \sin x = 2\left( \cos \frac {n + 1}{2}x\right) \left( \sin \frac {n - 1}{2}x\right)$$
+
+So $\sinnx =\sin$ x if and only if $\cos \frac$ {n + 1}{2}$x = 0$ or $\sin \frac$ {n - 1}{2}$x = 0$.
+
+The first occurs whenever $\frac$ {n + 1}{2}x = (j + 1/2)$\pi,$ or $x =\frac$ {(2j + 1)$\pi$}{n + 1} for some nonnegative integer j. Since $x\leq \pi,j\leq$ n/2. So there are 1 + $\lfloor$ n/2 $\rfloor$ solutions in this case.
+
+The second occurs whenever $\frac$ {n - 1}{2}$x =k\pi,$ or $x =\frac$ {$2k\pi$}{n - 1} for some nonnegative integer k. Here $k\leq \frac$ {n - 1}{2} so that there are $\left\lfloor \frac$ {n + 1}{2}$\right\rfloor$ solutions here.
+
+However, we overcount intersections. These occur whenever
+$$\frac {2j + 1}{n + 1} = \frac {2k}{n - 1}$$
+
+$$k = \frac {(2j + 1)(n - 1)}{2(n + 1)}$$
+which is equivalent to $2(n + 1)$ dividing $(2j + 1)$(n - 1). If n is even, then $(2j + 1)$(n - 1) is odd, so this never happens. If $n\equiv 3\pmod{4},$ then there won't be intersections either, since a multiple of 8 can't divide a number which is not even a multiple of 4.
+
+This leaves $n\equiv 1\pmod{4}.$ In this case, the divisibility becomes $\frac$ {n + 1}{2} dividing ($2j + $1)$\frac$ {n - 1}{4}. Since $\frac$ {n + 1}{2} and $\frac$ {n - 1}{4} are relatively prime (subtracting twice the second number from the first gives 1), $\frac$ {n + 1}{2} must divide $2j + 1$. Since $j\leq \frac$ {n - 1}{2}, $2j+1\leq$ n < $2\cdot \frac$ {n + 1}{2}. Then there is only one intersection, namely when $j =\frac$ {n - 1}{4}.
+
+Therefore we find F(n) is equal to 1 + $\lfloor$ n/2 $\rfloor + \left \lfloor \frac$ {n + 1}{2}$\right\$rfloor = n + 1, unless $n\equiv 1\pmod{4},$ in which case it is one less, or n. The problem may then be finished as in Solution 1.
+
+Note from Williamgolly:
+An easier way to see that there is an extra point of intersection at n $\equiv 1 \pmod{4}$ is that $v_2(2j+1$)=0, so we must have $v_2(n-1)>v_2(n+1$) since $v_2(2k) \geq 1 >$v_2(2j+$1)$.  Therefore, we suspect that n $\equiv 1 \pmod{4}$ has an extra point of intersection.  Testing, we see this is true.
+## See also

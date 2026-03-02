@@ -1,0 +1,67 @@
+# 2023 AMC 12A Problem 14
+
+## Problem
+How many complex numbers satisfy the equation $z^5=\overline{z},$ where $\overline{z}$ is the conjugate of the complex number z?
+
+$\textbf{(A)} ~2\qquad\textbf{(B)} ~3\qquad\textbf{(C)} ~5\qquad\textbf{(D)} ~6\qquad\textbf{(E)} ~7$
+## Solution 1
+When $z^5=\overline{z},$ there are two conditions: either $z=0$ or $z\neq 0.$ When $z\neq 0,$ since |$z^$5|=|$\overline{z}$|, |z|=1. $z^5\cdotz=z^6=\overline{z}\cdot$ z=|z|^2=1. Consider the r($\cos \theta +i\sin \theta)$ form, when $z^6=1,$ there are 6 different solutions for z. Therefore, the number of complex numbers satisfying $z^5=\bar{z}$ is $\boxed{\textbf{(E)} 7}.$
+
+*~plasta*
+## Solution 2
+Let z = $re^{i\theta}$. We now have $\overline{z} =re^{-i\theta}$, and want to solve
+
+$$r^5e^{5i\theta} = re^{-i\theta}.$$
+
+From this, we have $r = 0$ as a solution, which gives $z = 0. If r\neq 0,$ then we divide by it, yielding
+
+$$r^4e^{5i\theta} = e^{-i\theta}.$$
+
+Dividing both sides by $e^{-i\theta}$ yields $r^4e^{6i\theta} = 1$.
+Taking the magnitude of both sides tells us that $r^4 = 1,$ so $r^2 =\pm 1.$ However, if $r^2 = -1,$ then r = $\pm$ i, but r must be real. Therefore, r^2 = 1.
+
+Multiplying both sides by $r^2,$
+
+$$r^6\cdot e^{6i\theta} = z^6 = 1.$$
+
+Each of the 6th roots of unity is a solution to this, so there are 6 + 1 = $\boxed{\textbf{(E)}\ 7}$ solutions.
+
+*~Benedict T (countmath 1)*
+## Solution 3 (Rectangular Form, similar to Solution 1)
+Let z = a+bi.
+
+Then, our equation becomes:
+$$(a+bi)^5=a-bi$$
+
+Note that since every single term in the expansion contains either an a or b, simply setting $a=0$ and $b=0$ yields a solution.
+
+Now, considering the other case that either a or b does not equal 0:
+
+Multiplying both sides by a+bi (or z), we get:
+(a+bi)^6=a^2+b^2 (since i^2=-1).
+
+Substituting z back into the left hand side, we get:
+$$z^6=a^2+b^2$$
+
+Note that this will have 6 distinct, non-zero solutions since in this case, we consider that either a or b is not 0, and these are simply the sixth roots of a positive real number.
+
+Adding up the solutions, we get $1+6=\boxed{\textbf{(E)} 7}$
+
+*~SwordOfJustice*
+## Solution 4
+Using the fact that $z\bar{z}=$|z|^$2,$ we rewrite our equation as $z^6=$|z|^$2.  Now,$ let r represent |z|. We know that $r^6 = r^2$; hence, we have $r^6-r^2=r^2(r^4-1)=0$.
+
+From here, we have two cases: $r=0$, or $r=1$. In the case that $r=0$, we have $z^6=0$ hence $z=0$. This gives one solution. Alternatively, if $r=1$, then we have $z^6=1,$ giving 6 solutions for each root of unity.
+
+Therefore, the answer is $6+1=\boxed{\textbf{(E)} 7}.$
+
+- xHypotenuse
+## Video Solution by Power Solve
+https://youtu.be/YXIH3UbLqK8?si=l8Ay2f0dMqSkjuQH&t=1975
+## Video Solution by OmegaLearn
+https://youtu.be/rbdIrmOyczk
+## Video Solution
+https://youtu.be/m627Mjp3PkM
+
+*~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)*
+## See also

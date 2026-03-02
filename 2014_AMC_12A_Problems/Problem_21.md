@@ -1,0 +1,17 @@
+# 2014 AMC 12A Problem 21
+
+## Problem
+For every real number x, let $\lfloorx\rfloor$ denote the greatest integer not exceeding x, and let f(x)=$\lfloorx\rfloor(2014^{x-\lfloor x\rfloor}-1).$  The set of all numbers x such that $1\leq$ x<2014 and f(x)$\leq 1$ is a union of disjoint intervals.  What is the sum of the lengths of those intervals?
+
+$\textbf{(A) }1\qquad \textbf{(B) }\dfrac{\log 2015}{\log 2014}\qquad \textbf{(C) }\dfrac{\log 2014}{\log 2013}\qquad \textbf{(D) }\dfrac{2014}{2013}\qquad \textbf{(E) }2014^{\frac1{2014}}\qquad$
+## Solution
+Let $\lfloorx\rfloor=k$ for some integer $1\leqk\leq 2013.$  Then we can rewrite f(x) as k$(2014^{x-k}-1)$.  In order for this to be less than or equal to 1, we need $2014^{x-k}-1\leq\dfrac1k\impliesx\leqk+\log_{2014}\left(\dfrac{k+1}k\right).$  Combining this with the fact that $\lfloorx\rfloor =k$ gives that $x\in\left$[k,k+$\log_{2014}\left(\dfrac{k+1}k\right)\right$], and so the length of the interval is $\log_{2014}\left(\dfrac{k+1}k\right).$  We want the sum of all possible intervals such that the inequality holds true; since all of these intervals must be disjoint, we can sum from $k=1 to k=2013$ to get that the desired sum is $\sum_{i=1}^{2013}\log_{2014}\left(\dfrac{i+1}i\right)=\log_{2014}\left(\prod_{i=1}^{2013}\dfrac{i+1}i\right)=\log_{2014}\left(\dfrac{2014}1\right)=\boxed{1\textbf{ (A)}}.$
+### Video Solution by Richard Rusczyk
+https://artofproblemsolving.com/videos/amc/2014amc12a/380
+
+*~dolphin7*
+## Video Solution by Punxsutawney Phil
+https://youtube.com/watch?v=MI3ax4WJBZA
+
+(The video is no longer available on YouTube)
+## See Also

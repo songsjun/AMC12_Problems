@@ -1,0 +1,77 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2012_AMC_12B_Problems/Problem_23&action=raw
+
+Published Time: Mon, 06 Sep 2021 21:25:25 GMT
+
+Markdown Content:
+== Problem ==
+Consider all polynomials of a complex variable, P(z)=4z^4+az^3+bz^2+cz+d, where a,b,c, and d are integers, 0\le d\le c\le b\le a\le 4, and the polynomial has a zero z_0 with |z_0|=1. What is the sum of all values P(1) over all the polynomials with these properties?
+
+\textbf{(A)}\ 84\qquad\textbf{(B)}\ 92\qquad\textbf{(C)}\ 100\qquad\textbf{(D)}\ 108\qquad\textbf{(E)}\ 120 
+
+== Solution 1 ==
+Since z_0 is a root of P, and P has integer coefficients, z_0 must be algebraic. Since z_0 is algebraic and lies on the unit circle, z_0 must be a root of unity (Comment: this is not true. See this link: [http://math.stackexchange.com/questions/4323/are-all-algebraic-integers-with-absolute-value-1-roots-of-unity]). Since P has degree 4, it seems reasonable (and we will assume this only temporarily) that z_0 must be a 2nd, 3rd, or 4th root of unity. These are among the set \{\pm1,\pm i,(-1\pm i\sqrt{3})/2\}. Since complex roots of polynomials come in conjugate pairs, we have that P has one (or more) of the following factors: z+1, z-1, z^2+1, or z^2+z+1. If z=1 then a+b+c+d+4=0; a contradiction since a,b,c,d are non-negative. On the other hand, suppose z=-1. Then (a+c)-(b+d)=4. This implies a+b=8,7,6,5,4 while b+d=4,3,2,1,0 correspondingly. After listing cases, the only such valid a,b,c,d are 4,4,4,0, 4,3,3,0, 4,2,2,0, 4,1,1,0, and 4,0,0,0. 
+
+Now suppose z=i. Then 4=(a-c)i+(b-d) whereupon a=c and b-d=4. But then a=b=c and d=a-4. This gives only the cases a,b,c,d equals 4,4,4,0, which we have already counted in a previous case.
+
+Suppose z=-i. Then 4=i(c-a)+(b-d) so that a=c and b=4+d. This only gives rise to a,b,c,d equal 4,4,4,0 which we have previously counted. 
+
+Finally suppose z^2+z+1 divides P. Using polynomial division ((or that z^3=1 to make the same deductions) we ultimately obtain that b=4+c. This can only happen if a,b,c,d is 4,4,0,0. 
+
+Hence we've the polynomials
+4x^4+4x^3+4x^2+4x
+4x^4+4x^3+3x^2+3x
+4x^4+4x^3+2x^2+2x
+4x^4+4x^3+x^2+x
+4x^4+4x^3
+4x^4+4x^3+4x^2
+However, by inspection 4x^4+4x^3+4x^2+4x+4 has roots on the unit circle, because x^4+x^3+x^2+x+1=(x^5-1)/(x-1) which brings the sum to 92 (choice B).  Note that this polynomial has a 5th root of unity as a root. We will show that we were \textit{almost} correct in our initial assumption; that is that z_0 is at most a 5th root of unity, and that the last polynomial we obtained is the last polynomial with the given properties. Suppose that z_0 in an nth root of unity where n>5, and z_0 is not a 3rd or 4th root of unity. (Note that 1st and 2nd roots of unity are themselves 4th roots of unity). If n is prime, then \textit{every} nth root of unity except 1 must satisfy our polynomial, but since n>5 and the degree of our polynomial is 4, this is impossible. Suppose n is composite. If it has a prime factor p greater than 5 then again every pth root of unity must satisfy our polynomial and we arrive at the same contradiction. Therefore suppose n is divisible only by 2,3,or 5. Since by hypothesis z_0 is not a 2nd or 3rd root of unity, z_0 must be a 5th root of unity. Since 5 is prime, every 5th root of unity except 1 must satisfy our polynomial. That is, the other 4 complex 5th roots of unity must satisfy P(z_0)=0. But (x^5-1)/(x-1) has exactly all 5th roots of unity excluding 1, and (x^5-1)/(x-1)=x^4+x^3+x^2+x+1. Thus this must divide P which implies P(x)=4(x^4+x^3+x^2+x+1). This completes the proof.
+
+== Solution 2 ==
+First, assume that z_0\in \mathbb{R}, so z_0=1 or -1. 1 does not work because P(1)\geq 4. Assume that z_0=-1. Then 0=P(-1)=4-a+b-c+d,  we have 4+b+d=a+c\leq 4+b, so d=0. Also, a=4 has to be true since 4+b=a+c \leq a+b. Now 4+b=4+c gives b=c, therefore the only possible choices for (a,b,c,d) are (4,t,t,0). In these cases, P(-1)=4-4+t-t+0=0. The sum of P(1) over these cases is \sum_{t=0}^{4} (4+4+t+t) = 40+20=60.
+
+Second, assume that z_0\in \mathbb{C} \backslash \mathbb{R}, so z_0=x_0+iy_0 for some real x_0, y_0, |x_0|<1. By conjugate roots theorem we have that P(z_0)=P(z_0^{*})=0, therefore (z-z_0)(z-z_0^{*}) = (z^2 - 2x_0*z + 1) is a factor of P(z), and we may assume that 
+
+P(z) = (z^2-2x_0 z + 1)(4z^2 + pz + d)
+
+for some real p. Expanding this polynomial and comparing the coefficients, we have the following equations:
+
+p-8x_0 = a
+d+4-2px_0 = b
+p-2dx_0 = c
+
+From the first and the third we may deduce that 2x_0 = \frac{a-c}{d-4} and that p=\frac{da-4c}{d-4}, if d\neq 4 (we will consider d=4 by the end). Let k=2px_0=\frac{(a-c)(da-4c)}{(4-d)^2}. From the second equation, we know that k=d+4-b is non-negative.
+
+Consider the following cases:
+
+Case 1: a=c. Then k=0, b=d+4, so a=b=c=4, d=0. However, this has already been found (i.e. the form of (4,t,t,0)).
+
+Case 2: a>c\geq 0. Then since k\geq 0, we have da-4c\geq 0. However, da \leq 4c, therefore da-4c=0. This is true only when d=c. Also, we get k=0 again. In this case, b=d+4, so a=b=4, c=d=0, x_0=-1/2. P(z) has a root z_0=e^{i2\pi/3}. P(1)=12.
+
+Last case: d=4. We have a=b=c=d=4 and that P(z) has a root z_0=e^{i2\pi/5}. P(1)=20.
+
+Therefore the desired sum is 60+12+20=92 ...\framebox{B}.
+
+== Solution 3 ==
+First, notice that z=1 cannot be a root of the polynomial because a,b,c,d \geq 0. Multiplying the polynomial by (z-1) yields P(z)(z-1) = 4z^5-(4-a)z^4-(a-b)z^3-(b-c)z^2-(c-d)z-d, so for z \neq 1 to be a root of P(z), 4z^5 = (4-a)z^4+(a-b)z^3+(b-c)z^2+(c-d)z+d. Now we consider the root z_0 with |z_0|=1. |4z_0^5| = 4, so the right hand side must have absolute value 4. By the triangle inequality, |(4-a)z_0^4+(a-b)z_0^3+(b-c)z_0^2+(c-d)z_0+d| \leq |(4-a)z_0^4|+|(a-b)z_0^3| + |(b-c)z_0^2| + |(c-d)z_0|+d  = (4-a)+(a-b)+(b-c)+(c-d)+d=4, with equality if and only if each of 4z_0^5, (4-a)z_0^4, (a-b)z_0^3, (b-c)z_0^2, (c-d)z_0, and d is either zero or in the same direction as all the others when looked at as vectors in the complex plane. 
+
+We can now divide into two cases: d \neq 0 and d=0. If d \neq 0, then 4z_0^5 must be real by the previous argument, so z_0 is a fifth root of unity. Also, (4-a)z_0^4, (a-b)z_0^3, (b-c)z_0^2, and (c-d)z_0 must all be zero because if z_0 is a fifth root of unity, none of these can be real numbers with positive absolute value. Therefore, a=4, b=a, c=b, and d=c, leading to the solution (a,b,c,d)=(4,4,4,4). Just to be sure, we can easily verify that this solution leads to the six complex numbers under question being in the same direction.
+
+If d=0, then each of 4z_0^5, (4-a)z_0^4, (a-b)z_0^3, (b-c)z_0^2, and cz_0 must either be zero or in the same direction as all the others, so each of 4z_0^4, (4-a)z_0^3, (a-b)z_0^2, (b-c)z_0, and c must either be zero or in the same direction as all the others. We can divide this into two cases: c \neq 0 and c=0. If c \neq 0, then 4z_0^4 must be real. Then, z_0 is a fourth root of unity. If z_0 is not a second root of unity, (4-a)z_0^3, (a-b)z_0^2, and (b-c)z_0 must be zero, implying that a=4, b=a=4, and c=b=4, leading to the solution (a,b,c,d)=(4,4,4,0). If z_0 is also a second root of unity, (4-a)z_0^3 and (b-c)z_0 must be zero but (a-b)z_0^2 can be anything. This implies a=4 and b=c with no other restrictions, leading to the new solutions (a,b,c,d) = (4,3,3,0), (4,2,2,0), (4,1,1,0), (4,0,0,0). 
+
+If c=0, then we can similarly show that each of 4z_0^3, (4-a)z_0^2, (a-b)z_0, and b must be zero or in the same direction as all the others. If b \neq 0, then z_0 must be a third root of unity, so (4-a)z_0^2 and (a-b)z_0 must be zero, implying a=b=4, leading to the new solution (a,b,c,d)=(4,4,0,0). 
+
+If b=0, then we can similarly show that each of 4z_0^2, (4-a)z_0, and a must be zero or in the same direction as the others. For |z_0|=1, a = 4, but we have already counted the solution (a,b,c,d)=(4,0,0,0). 
+
+Then, the complete list of solutions is (a,b,c,d)=(4,4,4,4),(4,4,4,0),(4,3,3,0),(4,2,2,0),(4,1,1,0),(4,0,0,0),(4,4,0,0), leading to a sum of \framebox{B}=92.
+
+== Video Solution by Richard Rusczyk ==
+https://artofproblemsolving.com/videos/amc/2012amc12b/278
+
+~dolphin7
+
+== See Also ==
+
+{{AMC12 box|year=2012|ab=B|num-b=22|num-a=24}}
+{{MAA Notice}}

@@ -1,0 +1,36 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2011_AMC_12B_Problems/Problem_19&action=raw
+
+Published Time: Sun, 14 Jul 2024 00:02:49 GMT
+
+Markdown Content:
+==Problem==
+A lattice point in an xy-coordinate system is any point (x, y) where both x and y are integers. The graph of y = mx + 2 passes through no lattice point with 0 < x \leq 100 for all m such that \frac{1}{2} < m < a. What is the maximum possible value of a?
+
+\textbf{(A)}\ \frac{51}{101} \qquad \textbf{(B)}\ \frac{50}{99} \qquad \textbf{(C)}\ \frac{51}{100} \qquad \textbf{(D)}\ \frac{52}{101} \qquad \textbf{(E)}\ \frac{13}{25}
+
+==Solution 1==
+It is very easy to see that the +2  in the graph does not impact whether it passes through the lattice. 
+
+We need to make sure that m cannot be in the form of \frac{a}{b} for 1\le b\le 100. Otherwise, the graph y= mx passes through the lattice point at x = b. We only need to worry about \frac{a}{b} very close to \frac{1}{2}, \frac{n+1}{2n+1}, \frac{n+1}{2n} will be the only case we need to worry about and we want the minimum of those, clearly for  1\le b\le 100, the smallest is \frac{50}{99} , so answer is \boxed{\frac{50}{99} \textbf{(B)}} (In other words we are trying to find the smallest m>\frac{1}{2} such that b\le 100.)
+
+==Solution 2==
+Like in the first solution, we note that the +2 does not affect our answer. Thus, we can ignore it and consider an equivalent problem with the line y = mx.
+
+A line with a slope of \frac{1}{2} passes through (among other lattice points) the lattice point (100,50). As the slope of the line increases from \frac{1}{2}, the first lattice point it hits is at (99, 50), the slope of that line being \frac{50}{99} . So the answer is \boxed{\textbf{(B)}}
+
+==Solution 3==
+Like in the first solution, we note that the +2 does not affect our answer. Thus, we can ignore it and consider an equivalent problem with the line y = mx.
+
+We will start with the first answer choice. Notice how it is impossible for a line with slope \frac{51}{101} to pass through a lattice point when 0 < x \leq 100. 
+
+However, if the slope is \frac{50}{99}, then the line will pass through the point (99, 50). This sets the upper bound for a as \boxed{\textbf{(B)}}.
+
+~xHypotenuse
+
+== See also ==
+{{AMC12 box|year=2011|num-b=18|num-a=20|ab=B}}
+
+[[Category:Introductory Algebra Problems]]
+{{MAA Notice}}

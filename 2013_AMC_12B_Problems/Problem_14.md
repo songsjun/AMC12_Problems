@@ -1,0 +1,18 @@
+# 2013 AMC 12B Problem 14
+
+> This problem is the same as [2013 AMC 12B #14](https://artofproblemsolving.com/wiki/index.php/2013_AMC_12B_Problems) and [2013 AMC 10B #21](https://artofproblemsolving.com/wiki/index.php/2013_AMC_10B_Problems).
+## Problem
+Two non-decreasing sequences of nonnegative integers have different first terms. Each sequence has the property that each term beginning with the third is the sum of the previous two terms, and the seventh term of each sequence is N. What is the smallest possible value of N?
+
+$\textbf{(A)}\ 55 \qquad \textbf{(B)}\ 89 \qquad \textbf{(C)}\ 104 \qquad \textbf{(D)}\ 144 \qquad \textbf{(E)}\ 273$
+## Solution 1
+Let the first two terms of the first sequence be $x_{1}$ and $x_{2}$ and the first two of the second sequence be $y_{1}$ and $y_{2}$.  Computing the seventh term, we see that $5x_{1}+8x_{2}=5y_{1}+8y_{2}$.  Note that this means that $x_{1}$ and $y_{1}$ must have the same value modulo 8.  To minimize, let one of them be 0; [WLOG](https://artofproblemsolving.com/wiki/index.php/WLOG), assume that $x_{1} = 0$.  Thus, the smallest possible value of $y_{1}$ is 8; and since the sequences are non-decreasing we get $y_{2}\ge 8.$  To minimize, let $y_{2} = 8$.  Thus, $5y_{1}+8y_{2} = 40 + 64 = \boxed{\textbf{(C) }104}.$
+## Solution 2
+WLOG, let $a_i$, $b_i$ be the sequences with $a_1$. Then N=5$a_1+8a_2=$5b_1+$8b_2$ or $5a_1+8a_2=5($a_1+c)+8(a_$2-d)$ for some natural numbers c, d. Thus $5c=8d$. To minimize c and d, we have (c,d)=(8,5), or 5$a_1+8a_2=5(a_1+8)+8($a_2-$5)$. To minimize $a_1$ and $b_1$, we have $(a_1,b_1)$=(0,0+c)=(0,8). Using the same method, since b_$2\geb_1$, we have b_$2\ge8.$ Thus the minimum N=$5b_1+8b_2=\boxed{\textbf{(C) }104}.$ ~ Nafer
+## Solution 3
+Do the same thing as any of the previous solutions to find the 7th term must be in the form $5a+8$b and $5c+8$d where $a\neq$ c. Then test the options and find the smallest number that can be expressed in these 2 ways is $\boxed{\textbf{(C) }104}. -$Andrew2019
+## Video Solution
+https://youtu.be/fgQN3e_aa4Y ~IceMatrix
+## Video Solution 2
+https://youtu.be/JF3In44sXy0 ~savannahsolver
+## See also

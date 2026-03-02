@@ -1,0 +1,29 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2004_AMC_12A_Problems/Problem_9&action=raw
+
+Published Time: Fri, 08 Jan 2021 17:37:04 GMT
+
+Markdown Content:
+{{duplicate|[[2004 AMC 12A Problems|2004 AMC 12A #9]] and [[2004 AMC 10A Problems/Problem 11|2004 AMC 10A #11]]}}
+== Problem ==
+A company sells peanut butter in cylindrical jars.  Marketing research suggests that using wider jars will increase sales.  If the [[diameter]] of the jars is increased by 25\% without altering the [[volume]], by what percent must the height be decreased?
+
+ \mathrm{(A) \ } 10 \qquad \mathrm{(B) \ } 25 \qquad \mathrm{(C) \ } 36 \qquad \mathrm{(D) \ } 50 \qquad \mathrm{(E) \ } 60 
+
+== Solution ==
+When the diameter is increased by 25\%, it is increased by \dfrac{5}{4}, so the area of the base is increased by \left(\dfrac54\right)^2=\dfrac{25}{16}.
+
+To keep the volume the same, the height must be \dfrac{1}{\frac{25}{16}}=\dfrac{16}{25} of the original height, which is a 36\% reduction. \boxed{\mathrm{(C)}\ 36}
+
+== Video Solution ==
+https://youtu.be/2A_Fh0Kmu88
+
+Education, the Study of Everything
+
+== See also ==
+{{AMC12 box|year=2004|ab=A|num-b=8|num-a=10}}
+{{AMC10 box|year=2004|ab=A|num-b=10|num-a=12}}
+
+[[Category:Introductory Algebra Problems]]
+{{MAA Notice}}

@@ -1,0 +1,38 @@
+# 2002 AMC 12B Problem 4
+
+> This problem is the same as [2002 AMC 12B #4](https://artofproblemsolving.com/wiki/index.php/2002_AMC_12B_Problems) and [2002 AMC 10B #7](https://artofproblemsolving.com/wiki/index.php/2002_AMC_10B_Problems).
+## Problem
+Let n be a positive [integer](https://artofproblemsolving.com/wiki/index.php/integer) such that $\frac 12 + \frac 13 + \frac 17 + \frac 1$n is an integer. Which of the following statements is **not ** true:
+
+$\mathrm{(A)}$\ 2\ $\text{divides\ }$n $\qquad\mathrm{(B)}$\ 3\ $\text{divides\ }$n $\qquad\mathrm{(C)}$ \ 6\ $\text{divides\ }$n $\qquad\mathrm{(D)}$\ 7\ $\text{divides\ }$n $\qquad\mathrm{(E)}$\ n > 84
+## Solution 1
+Since $\frac 12 + \frac 13 + \frac 17 = \frac$ {41}{42}, 0 < $\lim_{n \rightarrow \infty} \left(\frac{41}{42} + \frac{1}{n}\right) < \frac$ {41}{42} + $\frac 1n < \frac{41}{42} + \frac 11 < 2$
+
+From which it follows that $\frac{41}{42} + \frac 1$n = 1 and $n = 42$. The only answer choice that is not true is $\boxed{\mathrm{(E)}\ n>84}.$
+## Solution 2 (no limits)
+Since $\frac 12 + \frac 13 + \frac 17 = \frac$ {41}{42}, it is very clear that $n=42$ makes the expression an integer*. Because n is a positive integer, $\frac{1}{n}$ must be less than or equal to 1. Thus, the only integer the expression can take is 1, which means the only value for n is 42. Thus $\boxed{\mathrm{(E)}\ n>84}$
+
+*~superagh*
+## Solution 2.1 (faster ending to solution 2)
+Once you find $n=42$, you can skip the rest of Solution 2 by noting that $n=42=2\times3\times7,$ which satisfies A, B, C, D, but not E. Thus $\boxed{\mathrm{(E)}\ n>84}$ must be the answer by PoE (Process of Elimination).
+
+*~speed tip by rawr3507*
+## Solution 3(similiar to solution2)
+Cross multiplying and adding the fraction we get the fraction to be equal to $\frac$ {41n + 42}{$42n$}, This value has to be an integer. This implies,
+
+$4$2n|(41n+42)$$.
+
+=> 42|$(41n + 42)$
+   but 42|42, hence 42|$41n$
+   but 42 does not divides 41,
+   42|n                                                                                                    -(1)
+
+=> n|$(41n+42)$
+   but n|$41n$,
+   n|42                                                                                                    -(2)
+
+from (1) and (2) we get that $n=42$.
+Comparing this with the options, we see that option E is the incorrect statement and hence E is the answer.
+
+*~rudolf1279*
+## See also

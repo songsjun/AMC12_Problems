@@ -1,0 +1,67 @@
+# 2009 AMC 12B Problem 11
+
+> This problem is the same as [2009 AMC 10B #14](https://artofproblemsolving.com/wiki/index.php/2009_AMC_10B_Problems) and [2009 AMC 12B #11](https://artofproblemsolving.com/wiki/index.php/2009_AMC_12B_Problems).
+## Problem
+On Monday, Millie puts a quart of seeds, 25\% of which are millet, into a bird feeder.  On each successive day she adds another quart of the same mix of seeds without removing any seeds that are left.  Each day the birds eat only 25\% of the millet in the feeder, but they eat all of the other seeds.  On which day, just after Millie has placed the seeds, will the birds find that more than half the seeds in the feeder are millet?
+
+$\textbf{(A)}\ \text{Tuesday}\qquad \textbf{(B)}\ \text{Wednesday}\qquad \textbf{(C)}\ \text{Thursday}\qquad \textbf{(D)}\ \text{Friday}\qquad \textbf{(E)}\ \text{Saturday}$
+## Solution 1
+On Monday, day 1, the birds find $\frac 14$ quart of millet in the feeder.  On Tuesday they find
+$$\frac 14 + \frac 34 \cdot \frac 14$$
+quarts of millet.  On Wednesday, day 3, they find
+$$\frac 14 + \frac 34 \cdot \frac 14 + \left(\frac34\right)^2 \cdot \frac 14$$
+quarts of millet.  The number of quarts of millet they find on day n is
+
+$$\frac 14 + \frac 34 \cdot \frac 14 + \left(\frac34\right)^2 \cdot \frac 14 + \cdots + \left(\frac 34\right)^{n-1} \cdot \frac 14 = \frac {(\frac 14)(1 - (\frac 34)^n)}{1 - \frac 34} = 1 - \left(\frac 34\right)^n .$$
+
+The birds always find $\frac 34$ quart of other seeds, so more than half the seeds are millet if 1 - $\left(\frac 34\right)^n > \frac 34,$ that is, when $\left(\frac 34\right)^n < \frac 14.$  Because $\left(\frac 34\right)^4 = \frac$ {81}{256} > $\frac 14$ and $\left(\frac 34\right)^5 = \frac$ {243}{1024} < $\frac 14,$ this will first occur on day 5 which is $\boxed$ {$\text{Friday}$}. The answer is $\mathrm{(D)}.$
+## Solution 2 (Brute Force)
+Notice that, every day, there is always $\frac34$ quarts of other seeds in the feeder, so we simply need to calculate when the quantity of millet seeds is greater than $\frac34$ quarts.
+Every day that elapses, a fourth of the millet is taken away (eaten by birds), and then a fourth of a quart is added (by Millie). Thus, if n was the quantity of millet seeds the previous day, then on the next day, the quantity is $\dfrac34n+\dfrac14=\dfrac14\left(3n+1\right).$
+
+Monday: $\dfrac14\quad$
+
+Tuesday: $\dfrac14\left(3\cdot\dfrac14+1\right)=\dfrac{7}{16}$
+
+Wednesday: $\dfrac14\left(3\cdot\dfrac{7}{16}+1\right)=\dfrac{37}{64}$
+
+Thursday: $\dfrac14\left(3\cdot\dfrac{37}{64}+1\right)=\dfrac{175}{256}$
+
+Friday: $\dfrac14\left(3\cdot\dfrac{175}{256}+1\right)=\dfrac{781}{1024}>\dfrac{768}{1024}=\dfrac34.$
+
+Brute forcing, we see that it takes 4 days. Thus, the answer is $\boxed{\text{Friday}},$ or $\boxed{\text{(D)}}.$
+*~aidan0626, lucaswujc, & Technodoggo*
+
+Note: Yes there is a pattern to it, $1-\left(\frac{3}{4}\right)^x$ where x is the number of days, as shown in Solution 1. This solution is only if you didn't notice the pattern. -aidan0626
+## Solution 3 (Overkill)
+Let $a_n$ denote the the amount of millet that the birds find on day n. Here $n\ge1$ and $n=1$ corresponds to Monday. Similarly, let $b_n$ denote the amount of other seeds that the birds find on day n. Notice that $a_n$ and $b_n$ satisfy the following:
+
+
+$$
+\begin{cases}
+a_1=\frac{1}{4}\\
+a_n=\frac{3}{4}a_{n-1}+\frac{1}{4}\quad (n>1)
+\end{cases}
+$$
+
+
+$$b_n=\frac{3}{4}$$
+
+We can solve for $a_n$ using difference equations to get $a_n=-\left(\frac{3}{4}\right)^n+1.$ We want to find the least n for which $a_n>\frac{1}{2}(a_n+b_n).$ In other words, $a_n>b_n$. Substituting in what we know about $a_n$ and $b_n$ we get:
+
+$$-\left(\frac{3}{4}\right)^n+1>\frac{3}{4}$$
+
+$$\left(\frac{3}{4}\right)^n<\frac{1}{4}$$
+
+$$3^n<4^{n-1}$$
+
+$$n\ge5$$
+
+Hence, the answer is $\boxed{\text{Friday}},$ or $\boxed{\text{(D)}}.$
+
+*~tsun26*
+## Video Solution 2
+https://www.youtube.com/watch?v=jj3eCwD7Bms
+
+*~savannahsolver*
+## See also

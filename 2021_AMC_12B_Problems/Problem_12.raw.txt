@@ -1,0 +1,106 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2021_AMC_12B_Problems/Problem_12&action=raw
+
+Published Time: Wed, 24 Sep 2025 03:39:10 GMT
+
+Markdown Content:
+{{duplicate|[[2021 AMC 10B Problems#Problem 19|2021 AMC 10B #19]] and [[2021 AMC 12B Problems#Problem 12|2021 AMC 12B #12]]}}
+
+==Problem==
+Suppose that S is a finite set of positive integers. If the greatest integer in S is removed from S, then the average value (arithmetic mean) of the integers remaining is 32. If the least integer in S is also removed, then the average value of the integers remaining is 35. If the greatest integer is then returned to the set, the average value of the integers rises to 40. The greatest integer in the original set S is 72 greater than the least integer in S. What is the average value of all the integers in the set S?
+
+\textbf{(A) }36.2 \qquad \textbf{(B) }36.4 \qquad \textbf{(C) }36.6\qquad \textbf{(D) }36.8 \qquad \textbf{(E) }37
+
+==Solution 1==
+
+We can then say that \( \frac{A+S(n)}{n+1} = 32 \), \( \frac{S(n)}{n} = 35 \), and \( \frac{B+S(n)}{n+1} = 40 \). 
+
+Expanding gives us \( A+S(n) = 32n+32 \), \( S(n) = 35n \), and \( B+S(n) = 40n+40 \). 
+
+Substituting \( S(n) = 35n \) to all gives us \( A+35n=32n+32 \) and \( B+35n=40n+40 \). 
+
+Solving for \( A \) and \( B \) gives \( A=-3n+32 \) and \( B = 5n+40 \). 
+
+We now need to find \( \frac{S(n)+A+B}{n+2} \). We substitute everything to get \( \frac{35n+(-3n+32)+(5n+40)}{n+2} \), or \( \frac{37n+72}{n+2} \). 
+
+Say that the answer to this is \( Z \). Then, \( Z \) needs to be a number that makes \( n \) a positive integer. The only options that work is \boxed{\textbf{(C) }36.6} and \boxed{\textbf{(D) }36.8}. 
+
+However, if 36.6 is an option, we get \( n=3 \). So that means that \(A\) is \(23\) and \(B\) is \(55\), and \( S(n)=105 \). But if there is \(3\) terms, then the middle number is \(105\), but we said that \( B \) is the largest number in the set, so therefore our answer cannot be \boxed{\textbf{(C) }36.6} and is instead \boxed{\textbf{(D) }36.8} and now, we're finished!
+
+~Pinotation
+
+===Solution 1 Alternative Ending===
+If A is smaller than B by 72 therefore from the equation on the top you can find out that \(N = 8\) using substitution the plug it in to the equation \( \frac{37n+72}{n+2} \) then you will get that Z = \boxed{\textbf{(D) }36.8}. 
+
+This was more efficient then the last part.
+
+~LittleWavelet
+
+~Pinotation (Grammar and Formatting)
+
+==Solution 2==
+Let the lowest value be L and the highest G, and let the sum be Z and the amount of numbers n. We have \frac{Z-G}{n-1}=32, \frac{Z-L-G}{n-2}=35, \frac{Z-L}{n-1}=40, and G=L+72. Clearing denominators gives Z-G=32n-32, Z-L-G=35n-70, and Z-L=40n-40. We use G=L+72 to turn the first equation into Z-L=32n+40. Since Z-L=40(n-1) we substitute it into the equation which gives n=10. Turning the second into Z-2L=35n+2 using G=L+72 we see L=8 and Z=368 so the average is \frac{Z}{n}=\boxed{\textbf{(D) }36.8} ~aop2014
+
+==Solution 3==
+Let x be the greatest integer, y be the smallest, z be the sum of the numbers in S excluding x and y, and k be the number of elements in S.
+
+Then, S=x+y+z
+
+First, when the greatest integer is removed, \frac{S-x}{k-1}=32
+
+When the smallest integer is also removed, \frac{S-x-y}{k-2}=35
+
+When the greatest integer is added back, \frac{S-y}{k-1}=40
+
+We are given that x=y+72
+
+After you substitute x=y+72, you have 3 equations with 3 unknowns S,, y and k.
+
+S-y-72=32k-32
+
+S-2y-72=35k-70
+
+S-y=40k-40
+
+This can be easily solved to yield k=10, y=8, S=368.
+
+\therefore average value of all integers in the set =S/k = 368/10 = \boxed{\textbf{(D) }36.8}
+
+~ SoySoy4444
+
+==Solution 4==
+We should plug in 36.2 and assume everything is true except the 35 part. We then calculate that part and end up with 35.75. We also see with the formulas we used with the plug in that when you increase by 0.2 the 35.75 part decreases by 0.25. The answer is then \boxed{\textbf{(D) }36.8}. You can work backwards because it is multiple choice and you don't have to do critical thinking. ~Lopkiloinm
+
+==Solution 5==
+Let S = \{a_1, a_2, a_3, \hdots, a_n\} with a_1 < a_2 < a_3 < \hdots < a_n. We are given the following: {\begin{cases} \sum_{i=1}^{n-1} a_i = 32(n-1) = 32n-32, \\ \sum_{i=2}^n a_i = 40(n-1) = 40n-40, \\ \sum_{i=2}^{n-1} a_i = 35(n-2) = 35n-70, \\ a_n-a_1 = 72 \implies a_1 + 72 = a_n. \end{cases}} Subtracting the third equation from the sum of the first two, we find that \sum_{i=1}^n a_i = \left(32n-32\right) + \left(40n-40\right) - \left(35n-70\right) = 37n - 2. Furthermore, from the fourth equation, we have \sum_{i=2}^{n} a_i - \sum_{i=1}^{n-1} a_i = \left[\left(a_1 + 72\right) + \sum_{i=2}^{n-1} a_i\right] - \left[\left(a_1\right) + \sum_{i=2}^{n-1} a_i\right] = \left(40n-40\right)-\left(32n-32\right). Combining like terms and simplifying, we have 72 = 8n-8 \implies 8n = 80 \implies n=10. Thus, the sum of the elements in S is 37 \cdot 10 - 2 = 368, and since there are 10 elements in S, the average of the elements in S is \tfrac{368}{10}=\boxed{\textbf{(D) }36.8}
+
+~peace09
+
+==Solution 6==
+Let n be the number of elements in S, m_l = 32, \Sigma_l = m_l \cdot (n-1), m_g = 40, \Sigma_g = m_g \cdot (n-1), m_{lg} = 35, \Sigma_lg = m_{lg} \cdot (n-2).
+\Sigma_g - \Sigma_l = 72 = (n-1) \cdot (m_g - m_l) \implies n = 1 + \frac {72}{m_g - m_l} = 1 + \frac {72}{40-32}=10.
+m = \frac {\Sigma_g + \Sigma_l - \Sigma_{lg}}{n} = \frac {40 \cdot 9 + 32 \cdot 9 - 35 \cdot 8}{10} = 36.8.
+'''vladimir.shelomovskii@gmail.com, vvsss'''
+
+== Video Solution by OmegaLearn (System of equations) ==
+https://youtu.be/dRdT9gzm-Pg
+
+~ pi_is_3.14
+
+==Video Solution by Hawk Math==
+https://www.youtube.com/watch?v=p4iCAZRUESs
+
+==Video Solution by TheBeautyofMath==
+https://youtu.be/FV9AnyERgJQ?t=676
+
+~IceMatrix
+==Video Solution by Interstigation==
+https://youtu.be/TbHluJQoy8s
+
+~Interstigation
+
+==See Also==
+{{AMC12 box|year=2021|ab=B|num-b=11|num-a=13}}
+{{AMC10 box|year=2021|ab=B|num-b=18|num-a=20}}
+{{MAA Notice}}

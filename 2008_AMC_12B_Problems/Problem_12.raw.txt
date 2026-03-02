@@ -1,0 +1,46 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2008_AMC_12B_Problems/Problem_12&action=raw
+
+Published Time: Wed, 21 May 2025 17:05:23 GMT
+
+Markdown Content:
+==Problem==
+For each positive integer n, the mean of the first n terms of a sequence is n. What is the 2008th term of the sequence?
+
+\textbf{(A)}\ 2008 \qquad \textbf{(B)}\ 4015 \qquad \textbf{(C)}\ 4016 \qquad \textbf{(D)}\ 4030056 \qquad \textbf{(E)}\ 4032064
+
+==Solution 1==
+Letting S_n be the nth partial sum of the sequence:
+
+\frac{S_n}{n} = n
+
+S_n = n^2
+
+The only possible sequence with this result is the sequence of odd integers.
+
+a_n = 2n - 1
+
+a_{2008} = 2(2008) - 1 = 4015 \Rightarrow \textbf{(B)}
+
+==Solution 2==
+
+Letting the sum of the sequence equal a_1+a_2+\cdots+a_n yields the following two equations:
+
+\frac{a_1+a_2+\cdots+a_{2008}}{2008}=2008 and
+
+\frac{a_1+a_2+\cdots+a_{2007}}{2007}=2007.
+
+Therefore:
+
+a_1+a_2+\cdots+a_{2008}=2008^2 and a_1+a_2+\cdots+a_{2007}=2007^2
+
+Hence, by substitution, a_{2008}=2008^2-2007^2=(2008+2007)(2008-2007)=4015(1)=4015\implies\boxed{\textbf{B}}
+
+==Solution 3==
+Since the mean will be the sum of the first n terms divided by n, and said mean also equals n, we know that the sum must be n^2. This means the sequence must compute squares, and this is done by the odd integer sequence 1+3+5+7+\ldots. Therefore, we must find the 2008th odd number, which is found by 2n-1 \implies 2(2008)-1 = 4015, so the answer is \boxed{\textbf{B}}
+~stress-couture
+
+==See Also==
+{{AMC12 box|year=2008|ab=B|num-b=11|num-a=13}}
+{{MAA Notice}}

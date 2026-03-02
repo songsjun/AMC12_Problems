@@ -1,0 +1,79 @@
+# 2020 AMC 12A Problem 21
+
+## Problem
+How many positive integers n are there such that n is a multiple of 5, and the least common multiple of 5! and n equals 5 times the greatest common divisor of 10! and n?
+
+$\textbf{(A) } 12 \qquad \textbf{(B) } 24 \qquad \textbf{(C) } 36 \qquad \textbf{(D) } 48 \qquad \textbf{(E) } 72$
+## Solution 1
+We set up the following equation as the problem states:
+
+ $\text{lcm}{(5!, n)} = 5\text{gcd}{(10!, n)}.$
+
+Breaking each number into its prime factorization, we see that the equation becomes
+
+
+$$\text{lcm}{(2^3\cdot 3 \cdot 5, n)} = 5\text{gcd}{(2^8\cdot 3^4 \cdot 5^2 \cdot 7, n)}.$$
+
+
+We can now determine the prime factorization of n. We know that its prime factors belong to the set $\{2, 3, 5, 7\}$, as no factor of 10! has 11 in its prime factorization, nor anything greater. Next, we must find exactly how many different possibilities exist for each.
+
+There can be anywhere between 3 and 8 2's and 1 to 4 3's. However, since n is a multiple of 5, and we multiply the $\text{gcd}$ by 5, there can only be 3 5's in n's prime factorization. Finally, there can either 0 or 1 7's.
+
+Thus, we can multiply the total possibilities of n's factorization to determine the number of integers n which satisfy the equation, giving us 6 $\times 4 \times 1 \times 2 = \boxed{\textbf{(D) } 48}.$ ~ciceronii
+## Solution 2
+We do casework based on the values of $n$ to uniquely determine the values of $\text{lcm}(5!, n)$.
+
+Case 1: $n \le 5!$
+
+If $n \le 5!$, then $\text{lcm}(n, 5!) = 120$. Then, we have
+$$120 = 5 \gcd(10!, n)$$
+Or, $24 = \gcd(10!, n)$. However, this cannot be possible, as $10!$ and $n$ share a common $5$. Then, the $\gcd$ must also be a multiple of $5$, but $24$ is not a multiple. Thus, the second case must be true.
+
+Case 2: $n > 5!$.
+
+If $n > 5!$, we have $\text{lcm}(n, 5!) = n$. Then, we have
+$$n = 5 \gcd(10!, n)$$
+The prime factorization of $10!$ is $2^8 \cdot 3^4 \cdot 5^2 \cdot 7$. Then, the $\gcd$ is the highest power of the number of factors between $10!$ and $n$. The prime factorization of $n$ must have $5^j$. Then, we see that $j = 2$, because if $j = 1$ then we have that when we divide $5$ on both sides, one side will contain no power of $5$ and the other will have a power of $5$. Thus, $n$ has a prime factorization $2^a 3^b 5^2 7^c$. Then, we have $n > 120$. To account for this, we divide by $120$ on both sides to obtain a number with the prime factorization $2^5 \cdot 3^3 \cdot 5 \cdot 7$. Thus, $n$ is determined by the factors of this number (excluding $5$, since $n$ must have $5$). Then, the number of unique $n$ is (5+1)(3+1)(1+1) = $6\times 4 \times 2 = \boxed{048}.$
+
+*~Pinotation*
+## Solution 3
+Like the Solution 1, we start from the equation:
+
+$\text{lcm}{(5!, n)} = 5\text{gcd}{(10!, n)}.$
+Assume $\text{lcm}{(5!, n)}=k\cdot5$!, with some integer k. It follows that $k\cdot $4!=$\text{gcd}{(10!, n)}.$ It means that n has a divisor 4!. Since n is a multiple of 5, n has a divisor 5!. Thus, $\text{lcm}{(5!, n)}=n=k\cdot5$!. The equation can be changed as
+k$\cdot5$!=5$\text{gcd}{(10!, k\cdot5!)}$
+$$k=5\text{gcd}{(6\cdot7\cdot8\cdot9\cdot10, k)}$$
+We can see that k is also a multiple of 5, with a form of $5\cdot$ m. Substituting it in the above equation, we have
+$$m=5\text{gcd}{(6\cdot7\cdot8\cdot9\cdot2, m)}$$
+Similarly, m is a multiple of 5, with a form of $5\cdot$ s. We have
+
+$$s=\text{gcd}{(6\cdot7\cdot8\cdot9\cdot2, 5\cdot s)}=\text{gcd}{(2^5\cdot3^3\cdot7, s)}$$
+
+The equation holds, if s is a divisor of $2^5\cdot3^3\cdot7,$ which has (5+1)(3+1)(1+1)=$\boxed{(\textbf{D})48}$ divisors. ~Linty Huang.shen k.kai
+## Solution 4
+As in the previous solutions, we start with
+
+$\text{lcm}(5!,n) = 5\text{gcd}(10!,n)$
+
+From this we have that $\text{lcm}(5!,n)$ \,|\, $5\text{gcd}(10!,n)$ , and in particular, n \,|\, $5\text{gcd}(10!,n).$ However, $\text{gcd}(10!,n)$\, |\, n, so we must have $\text{gcd}(10!,n) =$ n or $\text{gcd}(10!,n) =$ n/5. If $\text{gcd}(10!,n) =$ n, then we have $\text{lcm}(5!,n) = 5$n; because 5\, |\, 5!, this implies that 5 does not divide n, so we must have $\text{gcd}(10!,n) =$ n/5.
+
+Now we have $\text{lcm}(5!,n) =$ n, implying that 5!\, |\, n, and n/5\, |\, 10!. Writing out prime factorizations, this gives us
+
+
+$$
+2^3 \cdot 3 \cdot 5 \,|\, n
+n \,|\, 2^8 \cdot 3^4 \cdot 5^2 \cdot 7
+$$
+
+
+So n can have 3, 4, 5, 6, 7, or 8 factors of 2; 1, 2, 3, or 4 factors of two; and 0 or 1 factors of 7. Note that $\text{gcd}(2^8 \cdot 3^4 \cdot 5^2 \cdot 7,n) =$ n/5 implies that n has 2 factors of 5. Thus, there are 6 $\cdot 4 \cdot 2 = 48$ possible choices for n, and our answer is $\boxed{\textbf{(D) 48}}.$
+
+*~gumbymoo*
+## Video Solution by Richard Rusczyk
+https://www.youtube.com/watch?v=8S85536jpYw&list=PLyhPcpM8aMvJvwA2kypmfdtlxH90ShZCc&index=1&t=25s
+- AMBRIGGS
+## Video Solution by OmegaLearn
+https://youtu.be/CWZkTCNu42o?t=846
+
+*~pi_is_3.14*
+## See Also

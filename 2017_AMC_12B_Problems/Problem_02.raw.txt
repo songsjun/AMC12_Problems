@@ -1,0 +1,37 @@
+==Problem==
+
+Real numbers <math>x</math>, <math>y</math>, and <math>z</math> satisfy the inequalities
+<math>0<x<1</math>, <math>-1<y<0</math>, and <math>1<z<2</math>.
+Which of the following numbers is necessarily positive?
+
+<math>\textbf{(A)}\ y+x^2\qquad\textbf{(B)}\ y+xz\qquad\textbf{(C)}\ y+y^2\qquad\textbf{(D)}\ y+2y^2\qquad\textbf{(E)}\ y+z</math>
+
+==Solution==
+Notice that <math>y+z</math> must be positive because <math>|z|>|y|</math>. Therefore the answer is <math>\boxed{\textbf{(E) } y+z}</math>.
+
+The other choices:
+
+<math>\textbf{(A)}</math> As <math>x</math> grows closer to <math>0</math>, <math>x^2</math> decreases and thus becomes less than <math>y</math>.
+
+<math>\textbf{(B)}</math> <math>x</math> can be as small as possible (<math>x>0</math>), so <math>xz</math> grows close to <math>0</math> as <math>x</math> approaches <math>0</math>.
+
+<math>\textbf{(C)}</math> For all <math>-1<y<0</math>, <math>|y|>|y^2|</math>, and thus it is always negative.
+
+<math>\textbf{(D)}</math> The same logic as above, but when <math>-\frac{1}{2}<y<0</math> this time.
+
+==Video Solution==
+https://youtu.be/BnkFy36V_WE
+
+~savannahsolver
+
+==Video Solution by TheBeautyofMath==
+https://youtu.be/zTGuz6EoBWY?t=525
+
+~IceMatrix
+
+==See Also==
+{{AMC10 box|year=2017|ab=B|num-b=2|num-a=4}}
+{{AMC12 box|year=2017|ab=B|num-b=1|num-a=3}}
+{{MAA Notice}}
+
+[[Category:Introductory Algebra Problems]]

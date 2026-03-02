@@ -1,0 +1,42 @@
+# 2023 AMC 12B Problem 1
+
+> This problem is the same as [2023 AMC 10B #1](https://artofproblemsolving.com/wiki/index.php/2023_AMC_10B_Problems/Problem_1) and [2023 AMC 12B #1](https://artofproblemsolving.com/wiki/index.php/2023_AMC_12B_Problems/Problem_1).
+## Problem
+Mrs. Jones is pouring orange juice into four identical glasses for her four sons. She fills the first three glasses completely but runs out of juice when the fourth glass is only $\frac{1}{3}$ full. What fraction of a glass must Mrs. Jones pour from each of the first three glasses into the fourth glass so that all four glasses will have the same amount of juice?
+
+$\textbf{(A) } \frac{1}{12} \qquad\textbf{(B) } \frac{1}{4} \qquad\textbf{(C) } \frac{1}{6} \qquad\textbf{(D) } \frac{1}{8} \qquad\textbf{(E) } \frac{2}{9}$
+## Solution 1
+The first three glasses each have a full glass.  Let's assume that each glass has "1 unit" of juice. It won't matter exactly how much juice everyone has because we're dealing with ratios, and that wouldn't affect our answer. The fourth glass has a glass that is one third. So the total amount of juice will be $1+1+1+\dfrac{1}{3} = \dfrac{10}{3}.$ If we divide the total amount of juice by 4, we get $\dfrac{5}{6},$ which should be the amount of juice in each glass. This means that each of the first three glasses will have to contribute 1 - $\dfrac{5}{6} = \boxed{\textbf{(C) }\dfrac16}$ to the fourth glass.
+
+*~Sir Ian Seo the Great & lprado*
+## Solution 2 (unnecessary numerical values)
+Given that the first three glasses are full and the fourth is only $\frac{1}{3}$ full, let's represent their contents with a common denominator, which we'll set as 6. This makes the first three glasses $\dfrac{6}{6}$ full, and the fourth glass $\frac{2}{6}$ full.
+
+To equalize the amounts, Mrs. Jones needs to pour juice from the first three glasses into the fourth. Pouring $\frac{1}{6}$ from each of the first three glasses will make them all $\dfrac{5}{6}$ full. Thus, all four glasses will have the same amount of juice. Therefore, the answer is $\boxed{\textbf{(C) }\dfrac16}.$
+
+*~Ishaan Garg*
+## Solution 3 (simple algebra)
+We let x denote how much juice we take from each of the first 3 children and give to the 4th child.
+
+We can write the following equation: $1-x=\dfrac13+3$x, since each value represents how much juice each child (equally) has in the end. (Each of the first three children now have 1-x juice, and the fourth child has $3x$ more juice on top of their initial $\dfrac13.)$
+
+Solving, we see that $x=\boxed{\textbf{(C) }\dfrac16}.$
+
+*~Technodoggo*
+## Video Solution by Math-X (First understand the problem!!!!)
+https://youtu.be/EuLkw8HFdk4?si=kYOwfMyrV1Wwtdev&t=62
+
+*~Math-X*
+## Video Solution 🚀 1 min solve 🚀
+https://youtu.be/toJBKTrPiRY
+
+*~Education, the Study of Everything*
+## Video Solution by SpreadTheMathLove
+https://www.youtube.com/watch?v=SUnhwbA5_So
+## Video Solution
+https://youtu.be/HFHOTVvU3yQ
+
+*~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)*
+## Video Solution by Interstigation
+https://youtu.be/gDnmvcOzxjg?si=cYB6uChy7Ue0UT4L
+## See also

@@ -1,0 +1,100 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2010_AMC_12A_Problems/Problem_22&action=raw
+
+Published Time: Tue, 19 Aug 2025 03:16:58 GMT
+
+Markdown Content:
+== Problem ==
+What is the minimum value of f(x)=\left|x-1\right| + \left|2x-1\right| + \left|3x-1\right| + \cdots + \left|119x - 1 \right|?
+
+\textbf{(A)}\ 49 \qquad \textbf{(B)}\ 50 \qquad \textbf{(C)}\ 51 \qquad \textbf{(D)}\ 52 \qquad \textbf{(E)}\ 53
+
+== Solution 1 ==
+If we graph each term separately, we will notice that all of the zeros occur at \frac{1}{m}, where m is any integer from 1 to 119, inclusive: |mx-1|=0\implies mx=1\implies x=\frac{1}{m}.
+
+The minimum value of f(x) occurs where the absolute value of the sum of the slopes is at a minimum \ge 0, since it is easy to see that the value will be increasing on either side. That means the minimum must happen at some \frac{1}{m}.
+
+The sum of the slopes at x = \frac{1}{m} is
+
+\begin{align*}&\sum_{i=m+1}^{119}i - \sum_{i=1}^{m}i\\ &=\sum_{i=1}^{119}i - 2\sum_{i=1}^{m}i\\ &=-m^2-m+7140\end{align*}
+
+Now we want to minimize -m^2-m+7140. The zeros occur at -85 and 84, which means the slope is 0 where m = 84, 85.
+
+We can now verify that both x=\frac{1}{84} and x=\frac{1}{85} yield \boxed{49\ \textbf{(A)}}.
+
+You can also think of the slopes playing 'tug of war', where the slope of each absolute function upon passing its x-intercept is negated, positively tugging on the remaining negative slopes.
+
+The sum of the slopes is 1+2+3+4\dots 119=\sum_{m=1}^{119}m=\frac{119\cdot 120}{2}=60\cdot 119=7140
+
+So we need to find the least integer a such that 1+2+3+\dots a=\sum_{n=1}^an=\frac{a(a+1)}{2}\ge \frac{7140}{2}=3570:
+
+a(a+1)\ge 7140\implies a^2+a-7140\ge 0\rightarrow a=84\text{ exactly!}
+This "exactly" means that the slope is ZERO between the whole interval x\in\left(\frac{1}{85},\frac{1}{84}\right). We can explicitly evaluate both to check that they are both equal to the desired minimum value of f(x):
+
+\frac{84+83+\dots+2+1+1+2+\dots+33+34}{85}=\frac{84(85)/2+34(35)/2}{85}=\frac{85(14+84)/2}{85}=49
+
+\frac{83+82+\dots+2+1+1+2+\dots+34+35}{84}=\frac{83(84)/2+35(36)/2}{84}=\frac{84(15+83)/2}{84}=49
+
+Thus the minimum value of f(x) is 49.
+
+== Solution 2 ==
+Rewrite the given expression as follows:
+ 1|x-1| + 2\left|x-\frac 12\right| + \cdots + 119\left|x-\frac 1{119}\right|
+Imagine the real line. For each n\in\{1,\dots,119\} imagine that there are n boys standing at the coordinate \frac 1n. We now need to place a donut on the real line in such a way that the sum of its distances from all the boys is minimal, and we need to compute this sum.
+
+Note that there are B=1+2+\cdots+119 = 119\cdot 60=7140 boys in total. Let's label them from 1 (the only boy placed at 1) to B (the last boy placed at \frac 1{119}.
+
+Clearly, the minimum sum is achieved if the donut's coordinate is the median of the boys' coordinates. To prove this, place the donut at the median coordinate. If you now move it in any direction by any amount d, there will be B/2 boys such that it moves d away from this boy. For each of the remaining boys, it moves at most d closer, hence the total sum of distances does not decrease.
+
+Hence the optimal solution is to place the donut at the median coordinate. Or, more precisely, as B is even, we can place it anywhere on the segment formed by boy B/2 and boy (B/2)+1: by extending the previous argument, anywhere on this segment the sum of distances is the same.
+
+By trial and error, or by solving the quadratic equation z(z+1)/2 = 7140/2 we get that boy number B/2 is the last boy placed at \frac 1{84} and the next boy is the one placed at \frac 1{85}. Hence the given expression is minimized for any x\in\left[ \frac 1{85}, \frac 1{84} \right].
+
+=== Common part of both solutions ===
+
+To find the minimum, we want to balance the expression so that it is neither top nor bottom heavy. \frac{119(120)}{2(2)}=\frac{7140}{2}=3570=\frac{84(85)}{2}=\frac{119(120)}{2}-\frac{84(85)}{2}.
+
+Now that we know that the sum of the first 84 x's is equivalent to the sum of x's 85 to 119, we can plug either \frac{1}{84} or \frac{1}{85} to find the minimum.
+
+Note that the terms x-1 to 83x-1 are negative, and the terms 85x-1 to 119x-1 are positive. Hence we get:
+ \begin{align*} & |x-1| + |2x-1| + \cdots + |83x-1| \\ =~ & (1-x) + (1-2x) + \cdots + (1-83x) \\ =~ & 83 - x(1+2+\cdots+83) \\ =~ & 83 - \frac 1{84} \cdot \frac{83\cdot 84}2 \\ =~ & 83 - \frac{83}2 \\ =~ & \frac{83}2 \end{align*} 
+and
+ \begin{align*} & |85x-1| + |86x-1| + \cdots + |119x-1| \\ =~ & (85x-1) + (86x-1) + \cdots + (119x-1) \\ =~ & x(85+86+\cdots+119) - (119-84) \\ =~ & \frac 1{84} \cdot \frac{84\cdot 85}2 - 35 \\ =~ & \frac{85}2 - 35 \\ =~ & \frac{15}2 \end{align*} 
+Hence the total sum of distances is \frac{83}2 + \frac{15}2 = 49.
+
+== Solution 3 ==
+By the triangle inequality,|x-1|+|2x-1|+|3x-1|+\cdots + |119x-1| \geq |(x-1)+(2x-1)+\cdots+(119x)-1|.
+However, we may change signs of some of these terms to cancel out the x's.
+Since the minimum exists, we want all the xs to cancel out. Thus, we want to find some n such that 1+2+3+...+n=(n+1)+(n+2)+(n+3)+...+119 \frac{n(n+1)}{2}=\frac{119\cdot120}{2}-\frac{n(n+1)}{2} n^2+n-7140=0 n=84
+
+Then, x=\frac{1}{n}= \frac{1}{84}. The answer(expression's value) is then 84*1+(119-85+1)*(-1) , which becomes 84-35=\boxed{49}.
+
+== Solution 4 ==
+If nx\geq1 for some value n between 1 and 119, we have that the nx, (n+1)x, ... , 119x terms will be positive and (n-1)x, (n-2)x, ... , 1x terms will be negative. 
+
+Therefore, the expression given in the problem will be nx-1 + (n+1)x-1 + ... + 119x-1 - ((n-1)x-1 + (n-2)x-1 + ... + x-1) which simplifies to (7140-n(n-1))x + (2n-121).
+
+The minimum value of x that achieves this state is when nx=1, so we have x=\frac{1}{n}. 
+
+Applying x=\frac{1}{n} to the expression above, we have \frac{7140}{n} + n - 120. 
+
+To finish finding the minimizing n of this expression, we either use AM-GM on \frac{7140}{n} + n or derivatives.
+
+Either way, we find that the value of n that minimizes is 84.49 which should mean n=85. Plugging this value in, we get \boxed{49} as our minimum value.
+
+~xHypotenuse
+
+===Comments===
+There is no motivation behind wanting all the xs to cancel out other than assumption that that would lead to the minimum.  There are two possibilities for the minima of a function such as this. One occurs when there is a flat region on the graph of this function as the minimum, which is when you can use the above solution, but the other one occurs when the minimum is achieved at a "kink", when the graph's slope switches from positive to negative at a single point. For example, if there were 7 terms, since \frac{7*8}{2} is not of the form n(n+1), you cannot cancel all the xs. In fact, the unique global minimum would be achieved at x=\frac{1}{5}, where the slope jumps from negative to positive on a graph. Thus the assumption that the minimum is achieved when all the xs cancel is not valid.
+
+==Video Solution by mop 2024==
+https://youtu.be/lu4jlTNUYrQ
+
+~r00tsOfUnity
+
+== See also ==
+{{AMC12 box|year=2010|num-b=21|num-a=23|ab=A}}
+
+[[Category:Intermediate Geometry Problems]]
+{{MAA Notice}}

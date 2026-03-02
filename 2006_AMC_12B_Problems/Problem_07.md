@@ -1,0 +1,25 @@
+# 2006 AMC 12B Problem 7
+
+## Problem
+Mr. and Mrs. Lopez have two children.  When they get into their family car, two people sit in the front, and the other two sit in the back.  Either Mr. Lopez or Mrs. Lopez must sit in the driver's seat.  How many seating arrangements are possible?
+
+
+$$\text {(A) } 4 \qquad \text {(B) } 12 \qquad \text {(C) } 16 \qquad \text {(D) } 24 \qquad \text {(E) } 48$$
+
+## Solution 1
+First, we seat the children.
+
+The first child can be seated in 3 spaces.
+
+The second child can be seated in 2 spaces.
+
+Now there are 2 $\times 1$ ways to seat the adults.
+
+$$3 \times 2 \times 2 = 12 \Rightarrow \text{(B)}$$
+## Solution 2
+There are only two possible occupants for the driver's seat. After the driver is chosen, any of the remaining three people can sit in the front, and there are two arrangements for the other two people in the back. Thus, there are $2\cdot 3\cdot 2 = \boxed{12}$ possible seating arrangements. ~ aopsav (Credit to AoPS Alcumus)
+
+Alternative solution:
+
+If there was no restriction, there would be 4!=24 ways to sit. However, only 2/4 of the people can sit in the driver's seat, so our answer is $\frac{2}{4}\cdot 24= 12 \Rightarrow \text{(B)}$
+## See also

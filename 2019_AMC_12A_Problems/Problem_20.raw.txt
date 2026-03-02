@@ -1,0 +1,187 @@
+{{duplicate|[[2019 AMC 10A Problems|2019 AMC 10A #22]] and [[2019 AMC 12A Problems|2019 AMC 12A #20]]}}
+
+==Problem==
+
+Real numbers between 0 and 1, inclusive, are chosen in the following manner. A fair coin is flipped. If it lands heads, then it is flipped again and the chosen number is 0 if the second flip is heads, and 1 if the second flip is tails. On the other hand, if the first coin flip is tails, then the number is chosen uniformly at random from the closed interval <math>[0,1]</math>. Two random numbers <math>x</math> and <math>y</math> are chosen independently in this manner. What is the probability that <math>|x-y| > \tfrac{1}{2}</math>?
+
+<math>\textbf{(A) } \frac{1}{3} \qquad \textbf{(B) } \frac{7}{16} \qquad \textbf{(C) } \frac{1}{2} \qquad \textbf{(D) } \frac{9}{16} \qquad \textbf{(E) } \frac{2}{3}</math>
+
+==Solution 1==
+
+There are several cases depending on what the first coin flip is when determining <math>x</math> and what the first coin flip is when determining <math>y</math>.
+
+The four cases are:
+
+'''Case 1''': <math>x</math> is either <math>0</math> or <math>1</math>, and <math>y</math> is either <math>0</math> or <math>1</math>.
+
+'''Case 2''': <math>x</math> is either <math>0</math> or <math>1</math>, and <math>y</math> is chosen from the interval <math>[0,1]</math>.
+
+'''Case 3''': <math>x</math> is is chosen from the interval <math>[0,1]</math>, and <math>y</math> is either <math>0</math> or <math>1</math>.
+
+'''Case 4''': <math>x</math> is is chosen from the interval <math>[0,1]</math>, and <math>y</math> is also chosen from the interval <math>[0,1]</math>.
+
+Each case has a <math>\frac{1}{4}</math> chance of occurring (as it requires two coin flips).
+
+For Case 1, we need <math>x</math> and <math>y</math> to be different. Therefore, the probability for success in Case 1 is <math>\frac{1}{2}</math>.
+
+For Case 2, if <math>x</math> is 0, we need <math>y</math> to be in the interval <math>\left(\frac{1}{2}, 1\right]</math>. If <math>x</math> is 1, we need <math>y</math> to be in the interval <math>\left[0, \frac{1}{2}\right)</math>. Regardless of what <math>x</math> is, the probability for success for Case 2 is <math>\frac{1}{2}</math>.
+
+By symmetry, Case 3 has the same success rate as Case 2.
+
+For Case 4, we must use geometric probability because there are an infinite number of pairs <math>(x, y)</math> that can be selected, whether they satisfy the inequality or not. Graphing <math>|x-y| > \tfrac{1}{2}</math> gives us the following picture where the shaded area is the set of all the points that fulfill the inequality:
+
+<asy>
+filldraw((0,0)--(0,1)--(1/2,1)--(0,1/2)--cycle,black+linewidth(1));
+filldraw((0,0)--(1,0)--(1,1/2)--(1/2,0)--cycle,black+linewidth(1));
+draw((0,0)--(0,1)--(1,1)--(1,0)--cycle);
+</asy>
+
+The shaded area is <math>\frac{1}{4}</math>, which means the probability for success for case 4 is <math>\frac{1}{4}</math> (since the total area of the bounding square, containing all possible pairs, is <math>1</math>).
+
+Adding up the success rates from each case, we get:
+
+<math>\left(\frac{1}{4}\right) \cdot \left(\frac{1}{2} + \frac{1}{2} + \frac{1}{2} + \frac{1}{4}\right) = \boxed{\textbf{(B) }\frac{7}{16}}</math>.
+
+
+==Solution 2==
+Taking into account that there are two options for the result of the first coin flip, there are four possible combinations with equal possibility of initial coins flips.
+
+(1) x: heads, y: heads
+
+(2) x: heads, y: tails
+
+(3) x: tails, y: heads
+
+(4) x: tails, y: tails
+
+(1) Because x and y both must be integers, so it's simple to see that the probability that <math>|x-y| > \tfrac{1}{2}</math> is <math>\frac{1}{2}</math>.
+
+(2) Since x has to be an integer it is also easy to see that the probability is again <math>\frac{1}{2}</math>.
+
+(3) This is the same as case 2 so the probability is <math>\frac{1}{2}</math>.
+
+(4) This one is a little bit tricky. You could use geometric probability shown above, but if you don't understand it or happened to not think of it, there is another solution that involves using the multiple choice answers. 
+
+First, the probability we have so far is <math>\frac{3}{8}</math>.This is greater than <math>\frac{1}{3}</math> so <math>A</math> is the not the answer. It is either <math>B, C, D,</math> or <math>E</math>. Let's draw out the probability with two parallel lines on a paper with represent a number line from <math>0-1</math>. The concept is to compare one point and find the fraction of the other line that contains points that are at least <math>\frac{1}{2}</math> away from it. If the point we choose is on the endpoints, then the fraction of the other line that works is exactly <math>\frac{1}{2}</math>. But as we move this point closer to the middle, the deadzone (area where the other point cannot be) grows, diminishing the probability. Finally, when it is directly in the middle, there are no points that pass the requirements except at <math>1</math> and <math>0</math>.
+
+So, looking at the choices again, we have <math>\frac{7}{16}</math>, <math>\frac{1}{2}</math>, <math>\frac{9}{16}</math>, and <math>\frac{2}{3}</math>. 
+
+<math>\frac{1}{2}</math> is exactly <math>\frac{1}{8}</math> more than the probability we had before. Notice that this is impossible because we proved that the average probability of the fourth case is lower than <math>\frac{1}{2}</math>, so the answer is <math>\boxed{B}</math>.
+
+-jackshi2006
+
+==Solution 3 (with Table)==
+First, calculate the conditional probabilities:
+
+<math>P(x\in[0,\frac{1}{2}) \mid x\in[0,1]) = \frac{1}{2}</math>,  <math>P(|x-y|>\frac{1}{2} \mid x\in[0,1], y=1) = \frac{1}{2}</math>
+
+<math>P(x\in(\frac{1}{2},1] \mid x\in[0,1]) = \frac{1}{2}</math>,  <math>P(|x-y|>\frac{1}{2} \mid x\in[0,1], y=0) = \frac{1}{2}</math>
+
+<math>P(y\in[0,\frac{1}{2}) \mid y\in[0,1]) = \frac{1}{2}</math>,  <math>P(|x-y|>\frac{1}{2} \mid x=1, y\in[0,1]) = \frac{1}{2}</math>
+
+<math>P(y\in(\frac{1}{2},1] \mid y\in[0,1]) = \frac{1}{2}</math>,  <math>P(|x-y|>\frac{1}{2} \mid x=0, y\in[0,1]) = \frac{1}{2}</math>
+
+As stated in Solution 1, <math>P(|x-y|>\frac{1}{2} \mid x\in[0,1], y\in[0,1]) = \frac{1}{4}</math>
+
+Next, calculate the dependent event probabilities by <math>P(A \cap B)= P(A \mid B) \cdot P(B)</math>, draw a table to calculate <math>P(|x-y|>\frac{1}{2})</math> by the dependent events:
+
+<cmath>\[ \begin{array}[b]{cccc}
+ & P(x=0)=\frac{1}{4} & P(x=1)=\frac{1}{4} & P(x \in [0,1])=\frac{1}{2} \\
+ &  &  &  \\
+P(y=0)=\frac{1}{4} & 0 & \frac{1}{4} \cdot \frac{1}{4} = \frac{1}{16} & \frac{1}{2} \cdot \frac{1}{2} \cdot \frac{1}{4} = \frac{1}{16} \\
+ &  &  &  \\
+P(y=1)=\frac{1}{4} & \frac{1}{4} \cdot \frac{1}{4} = \frac{1}{16} & 0 & \frac{1}{2} \cdot \frac{1}{2} \cdot \frac{1}{4} = \frac{1}{16} \\
+ &  &  &  \\
+P(y \in [0,1])=\frac{1}{2} & \frac{1}{2} \cdot \frac{1}{2} \cdot \frac{1}{4} = \frac{1}{16} & \frac{1}{2} \cdot \frac{1}{2} \cdot \frac{1}{4} = \frac{1}{16} & \frac{1}{2} \cdot \frac{1}{2} \cdot \frac{1}{4} = \frac{1}{16} 
+\end{array} \]</cmath>
+
+The sum of all the cell values is <math>\boxed{\textbf{(B)}\frac{7}{16}}</math>
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+==Solution 4==
+
+Notice the probability that <math>|x-y| > \tfrac{1}{2}</math> is equal to <math>2</math> times the probability that <math>x-y > \tfrac{1}{2}</math>.
+
+For <math>x-y > \tfrac{1}{2}</math> to be true; there are <math>4</math> cases.
+
+Case <math>1</math>: <math>x</math> flips <math>T</math> and <math>y</math> flips <math>T</math>
+
+When <math>x</math> flips <math>T</math> and <math>y</math> flips <math>T</math>, both <math>x</math> and <math>y</math> are randomly chosen from the interval <math>[0,1]</math>. The probability that <math>x-y > \tfrac{1}{2}</math> when both <math>x</math> and <math>y</math> are randomly chosen from the interval <math>[0,1]</math> is <math>\frac18</math>, as illustrated in the geometric probability diagram below.
+
+<asy>
+size(3cm,0);
+filldraw((0,0)--(1,0)--(1,1/2)--(1/2,0)--cycle,black+linewidth(1));
+draw((0,0)--(0,1)--(1,1)--(1,0)--cycle);
+</asy>
+
+Therefore, the probability for Case <math>1</math> is <math>\frac12 \cdot \frac12 \cdot \frac18 = \frac{1}{32}</math>
+
+Case <math>2</math>: <math>x</math> flips <math>HT</math> and <math>y</math> flips <math>T</math>
+
+When <math>x</math> flips <math>HT</math> and <math>y</math> flips <math>T</math>, <math>x=1</math>, and <math>y</math> is randomly chosen from the interval <math>[0,1]</math>. The probability that <math>x-y > \tfrac{1}{2}</math> when <math>x=1</math>, and <math>y</math> is randomly chosen from the interval <math>[0,1]</math> is <math>\frac12</math> (<math>y</math> has to be between <math>[0,\frac12]</math>).
+
+Therefore, the probability for Case <math>2</math> is <math>\frac12 \cdot \frac12 \cdot \frac12 \cdot \frac12 = \frac{1}{16}</math>
+
+Case <math>3</math>: <math>x</math> flips <math>T</math> and <math>y</math> flips <math>HH</math>
+
+When <math>x</math> flips <math>T</math> and <math>y</math> flips <math>HH</math>, <math>x</math> is randomly chosen from the interval <math>[0,1]</math>, and <math>y = 0</math>. The probability that <math>x-y > \tfrac{1}{2}</math> when <math>x</math> is randomly chosen from the interval <math>[0,1]</math>, and <math>y = 0 </math>is <math>\frac12</math> (<math>x</math> has to be between <math>[\frac12,1]</math>).
+
+Therefore, the probability for Case <math>3</math> is <math>\frac12 \cdot \frac12 \cdot \frac12 \cdot \frac12 = \frac{1}{16}</math>
+
+Case <math>4</math>: <math>x</math> flips <math>HT</math> and <math>y</math> flips <math>HH</math>
+
+When <math>x</math> flips <math>HT</math> and <math>y</math> flips <math>HH</math>, <math>x=1</math>, and <math>y = 0</math>. The probability that <math>x-y > \frac{1}{2}</math> when <math>x=1</math>, and <math>y = 0</math> is <math>1</math>.
+
+Therefore, the probability for Case <math>4</math> is <math>\frac12 \cdot \frac12 \cdot \frac12 \cdot \frac12 \cdot 1= \frac{1}{16}</math>
+
+Hence, the answer is <math>2(\frac{1}{32} + \frac{1}{16} + \frac{1}{16} + \frac{1}{16}) = \boxed{\textbf{(B)}\frac{7}{16}}</math>
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+==Solution 5==
+The probability of choosing <math>0</math> and <math>1</math> with the first coin landing on heads are both <math>\frac{1}{4}</math>. The probability of choosing a number less than <math>\frac{1}{2}</math>, <math>l</math>, and a number greater than <math>\frac{1}{2}</math>, <math>g</math>, with the first coin landing on tails are both <math>\frac{1}{4}</math>.
+
+For pairs <math>(x, y)</math>, the probability of choosing <math>(0, 1)</math>, <math>(1, 0)</math>, <math>(0, g)</math>, <math>(g, 0)</math>, <math>(1, l)</math> and <math>(l, 1)</math> are all <math>\frac{1}{16}</math>. However, <math>(l, g)</math> and <math>(g, l)</math> are <math>\frac{1}{32}</math> respectively.
+
+Therefore, <math>\frac{1}{16} \cdot 6 + \frac{1}{32} \cdot 2 = \boxed{\textbf{(B) } \frac{7}{16}}</math>.
+
+~MaPhyCom
+
+==Solution 6 (Educated Guess)==
+
+Notice how if we choose \( x = 0 \) and \( y \in [0, 1/2) \), we then see that there is going to be a chance that is slightly less than \( 1/2 \). We then see that this is apparent for \( y=0 \) and \( x \in [0, 1/2) \).
+
+Now, if \( x = 0 \) and \( y = 0 \), this is obviously not going to work, so we have to subtract a case. The same applies for \( x = 1 \) and \( y = 1 \), and we subtract another case.
+
+Additionally, we can include \( x = 1 \), \( y = 0 \) and \( y = 0 \), \( x = 1 \), giving us 2 cases that work, and we see that this is part of the \( (1/2 , 1] \) interval, and therefore it doesn't change the outcome.
+
+We are looking for a solution that is slightly less than \( 1/2 \). The only one is <math>\boxed{\textbf{(B) } \frac{7}{16}}</math>
+
+~Pinotation
+
+==Video Solution 1==
+https://youtu.be/wimynTAVIx8
+
+Education, the Study of Everything
+
+== Video Solution 2 ==
+https://youtu.be/ZhAZ1oPe5Ds?t=263
+
+~ pi_is_3.14
+
+==Video Solution (Interactive Teaching Approach)==
+
+https://www.youtube.com/watch?v=6nrF-cXQpME
+
+~MathkidsbyMax
+
+== Video Solution by Richard Rusczyk  ==
+https://www.youtube.com/watch?v=Fe5bDwSzsOs
+
+==See Also==
+
+{{AMC10 box|year=2019|ab=A|num-b=21|num-a=23}}
+{{AMC12 box|year=2019|ab=A|num-b=19|num-a=21}}
+{{MAA Notice}}
+[[Category: Introductory Probability Problems]]

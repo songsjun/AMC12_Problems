@@ -1,0 +1,228 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2024_AMC_12A_Problems/Problem_23&action=raw
+
+Published Time: Mon, 17 Nov 2025 04:24:53 GMT
+
+Markdown Content:
+==Problem==
+What is the value of \tan^2 \frac {\pi}{16} \cdot \tan^2 \frac {3\pi}{16} + \tan^2 \frac {\pi}{16} \cdot \tan^2 \frac {5\pi}{16}+\tan^2 \frac {3\pi}{16} \cdot \tan^2 \frac {7\pi}{16}+\tan^2 \frac {5\pi}{16} \cdot \tan^2 \frac {7\pi}{16}?
+
+\textbf{(A) } 28 \qquad \textbf{(B) } 68 \qquad \textbf{(C) } 70 \qquad \textbf{(D) } 72 \qquad \textbf{(E) } 84
+
+==Solution 1 (Trigonometric Identities)==
+
+First, notice that
+
+\tan^2 \frac {\pi}{16} \cdot \tan^2 \frac {3\pi}{16} + \tan^2 \frac {\pi}{16} \cdot \tan^2 \frac {5\pi}{16}+\tan^2 \frac {3\pi}{16} \cdot \tan^2 \frac {7\pi}{16}+\tan^2 \frac {5\pi}{16} \cdot \tan^2 \frac {7\pi}{16}
+
+=(\tan^2\frac{\pi}{16}+\tan^2 \frac{7\pi}{16})(\tan^2\frac{3\pi}{16}+\tan^2 \frac{5\pi}{16})
+
+Here, we make use of the fact that
+
+\tan^2 x+\tan^2 (\frac{\pi}{2}-x)
+=(\tan x+\tan (\frac{\pi}{2}-x))^2-2
+=\left(\frac{\sin x}{\cos x}+\frac{\sin (\frac{\pi}{2}-x)}{\cos (\frac{\pi}{2}-x)}\right)^2-2
+=\left(\frac{\sin x \cos (\frac{\pi}{2}-x)+\sin (\frac{\pi}{2}-x) \cos x}{\cos x \cos (\frac{\pi}{2}-x)}\right)^2-2
+=\left(\frac{\sin \frac{\pi}{2}}{\cos x \cos (\frac{\pi}{2}-x)}\right)^2-2
+=\left(\frac{1}{\cos x \sin x}\right)^2-2
+=\left(\frac{2}{\sin 2x}\right)^2-2
+=\frac{4}{\sin^2 2x}-2
+
+Hence,
+
+(\tan^2\frac{\pi}{16}+\tan^2 \frac{7\pi}{16})(\tan^2\frac{3\pi}{16}+\tan^2 \frac{5\pi}{16})
+=\left(\frac{4}{\sin^2 \frac{\pi}{8}}-2\right)\left(\frac{4}{\sin^2 \frac{3\pi}{8}}-2\right)
+
+Note that 
+
+\sin^2 \frac{\pi}{8}=\frac{1-\cos \frac{\pi}{4}}{2}=\frac{2-\sqrt{2}}{4}
+ 
+
+\sin^2 \frac{3\pi}{8}=\frac{1-\cos \frac{3\pi}{4}}{2}=\frac{2+\sqrt{2}}{4}
+
+Hence,
+
+\left(\frac{4}{\sin^2 \frac{\pi}{8}}-2\right)\left(\frac{4}{\sin^2 \frac{3\pi}{8}}-2\right)
+
+=\left(\frac{16}{2-\sqrt{2}}-2\right)\left(\frac{16}{2+\sqrt{2}}-2\right)
+
+=(14+8\sqrt{2})(14-8\sqrt{2})
+
+=68
+
+Therefore, the answer is \fbox{\textbf{(B) } 68}.
+
+~tsun26
+
+==Solution 2 (Another Identity)==
+
+First, notice that
+
+\tan^2 \frac {\pi}{16} \cdot \tan^2 \frac {3\pi}{16} + \tan^2 \frac {\pi}{16} \cdot \tan^2 \frac {5\pi}{16}+\tan^2 \frac {3\pi}{16} \cdot \tan^2 \frac {7\pi}{16}+\tan^2 \frac {5\pi}{16} \cdot \tan^2 \frac {7\pi}{16}
+
+=(\tan^2\frac{\pi}{16}+\tan^2 \frac{7\pi}{16})(\tan^2\frac{3\pi}{16}+\tan^2 \frac{5\pi}{16})
+
+Here, we make use of the fact that
+
+ \begin{align*} \tan^2 x+\tan^2 (\frac{\pi}{2}-x) &= (\tan x - \tan (\frac{\pi}{2} - x))^2 + 2\\ &= (\tan (\frac{\pi}{2} - 2x) \cdot (1 + \tan x \tan (\frac{\pi}{2} - x))^2 + 2~~~~(\mathrm{difference~of~two~tan})\\ &= (\tan (\frac{\pi}{2} - 2x) \cdot (1 + 1))^2 + 2\\ &= 4\tan^2 (\frac{\pi}{2} - 2x) + 2 \end{align*} 
+
+Hence,
+
+ \begin{align*} (\tan^2\frac{\pi}{16}+\tan^2 \frac{7\pi}{16})(\tan^2\frac{3\pi}{16}+\tan^2 \frac{5\pi}{16}) &= (4\tan^2 (\frac{\pi}{2} - \frac{\pi}{16} \cdot 2) + 2)(4\tan^2 (\frac{\pi}{2} - \frac{3\pi}{16} \cdot 2) + 2)\\ &= (4\tan^2 \frac{3\pi}{8} + 2)(4\tan^2 \frac{\pi}{8} + 2)\\ &= 16\tan^2 \frac{3\pi}{8} \cdot \tan^2 \frac{\pi}{8} + 8(\tan^2 \frac{3\pi}{8} + \tan^2 \frac{\pi}{8}) + 4\\ &= 16 + 8(4\tan^2 (\frac{\pi}{2} - \frac{\pi}{8} \cdot 2) + 2) + 4\\ &= 16 + 8(4\tan^2 \frac{\pi}{4} + 2) + 4\\ &= 16 + 8(4 + 2) + 4\\ &= 68 \end{align*} 
+
+Therefore, the answer is \fbox{\textbf{(B) } 68}.
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Reda_mandymath reda_mandymath]
+
+==Solution 3 (Complex Numbers)==
+Let \theta = \frac{\pi}{16}. Then,
+ y = e^{8i\theta} = e^{\frac{\pi}{2} i} = (\cos \theta + i\sin \theta)^8 = 0 + i. 
+Expanding by using a binomial expansion, 
+ \Re(y) = \cos^8 \theta - 28 \cos^6 \theta \sin^2 \theta + 70 \cos^4 \theta \sin^4 \theta - 28 \cos^2 \theta \sin^6 \theta + \sin^8\theta =0. 
+Divide by \cos^8 \theta and notice we can set \frac{\sin \theta}{\cos \theta} = x where x = \tan(\theta). Then, define f(x) so that
+ f(x) = 1 - 28 x^2 + 70 x^4 - 28 x^6 + x^8. 
+
+Notice that we can have (\cos \theta_k + i \sin \theta_k)^8 = 0 \pm i because we are only considering the real parts. We only have this when k \equiv 1,3 \mod 4, meaning k \equiv 1 \mod 2. This means that we have k = 1,3,5,7,9,11,13,15 as unique roots (we get them from k\theta \in [0,\pi]) and by using the fact that \tan(\pi - \theta) = -\tan \theta, we get x \in \left\{\tan \theta, -\tan \theta, \tan \left(3 \theta \right), -\tan \left(3 \theta \right), \tan \left(5 \theta \right), -\tan \left(5 \theta \right), \tan \left(7 \theta \right), -\tan \left(7 \theta \right) \right\} 
+Since we have a monic polynomial, by the Fundamental Theorem of Algebra,
+f(x) = (x-\tan \theta)(x+\tan \theta) (x-\tan \left(3 \theta \right))(x+\tan \left(3 \theta \right)) (x-\tan \left(5 \theta \right))(x+\tan \left(5 \theta \right))(x-\tan\left(7 \theta \right))(x+\tan \left(7 \theta \right))
+f(x) = (x^2 - \tan^2 \theta)(x^2 - \tan^2 (3\theta))(x^2 - \tan^2 (5\theta))(x^2 - \tan^2 (7\theta)) 
+Looking at the x^4 term in the expansion for f(x) and using vietas gives us
+ \tan^2 \theta \tan^2 (3\theta) + \tan^2 \theta \tan^2 (5\theta) + \tan^2 \theta \tan^2 (7\theta) + \tan^2 (3\theta) \tan^2 (5\theta) 
+ + \tan^2 (3\theta) \tan^2 (7\theta) + \tan^2 (5\theta) \tan^2 (7\theta) = \frac{70}{1} = 70. 
+Since \tan\left(\frac{\pi}{2} - \theta\right) = \cot \theta and  \tan \theta \cot \theta = 1 
+ \tan^2 \theta \tan^2 (7\theta) = \tan^2 (3\theta) \tan^2 (5\theta) = 1. 
+Therefore
+ \tan^2 \theta \tan^2 (3\theta) + \tan^2 \theta \tan^2 (5\theta) + \tan^2 (3\theta) \tan^2 (7\theta) + \tan^2 (5\theta) \tan^2 (7\theta) + 2 = 70. 
+ \tan^2 \theta \tan^2 (3\theta) + \tan^2 \theta \tan^2 (5\theta) + \tan^2 (3\theta) \tan^2 (7\theta) + \tan^2 (5\theta) \tan^2 (7\theta) = \boxed{\textbf{(B) } 68} 
+
+~[https://artofproblemsolving.com/wiki/index.php/User:KEVIN_LIU KEVIN_LIU]
+
+==Solution 5 (Transformation)==
+
+Set x = \pi/16  , 7x = \pi/2 - x , 
+set C7 = cos^2(7x) , C5 = cos^2(5x), C3 = cos^2(3x), C= cos^2(x) , S2 = sin^2(2x) , S6 = sin^2(6x), etc.
+
+First, notice that
+\tan^2 x \cdot \tan^2 3x + \tan^2 3x \cdot \tan^2 5x+\tan^2 3x \cdot \tan^2 7x+\tan^2 5x \cdot \tan^2 7x
+=(\tan^2x+\tan^2 7x)(\tan^23x+\tan^2 5x)
+=(\frac{1}{C} - 1 +\frac{1}{C7}-1)(\frac{1}{C3} - 1 +\frac{1}{C5}-1)
+=(\frac{C+C7}{C \cdot C7} -2)( \frac{C3+C5}{C3 \cdot C5} -2)
+=(\frac{1}{C \cdot S} -2)( \frac{1}{C3 \cdot S3} -2)
+=(\frac{4}{S2} -2)( \frac{4}{S6} -2)
+=4(\frac{2-S2}{S2})( \frac{2-S6}{S6})
+=4(\frac{4-2 \cdot S2-S \cdot S6 }{S2 \cdot S6}+1)
+=4 + \frac{8}{S2 \cdot S6} 
+=4 + \frac{32}{S4} 
+=4 + 64  
+= 68 
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Cyantist luckuso]
+
+==Solution 6 (Half angle formula twice)==
+So from the question we have:
+\tan^2 \frac {\pi}{16} \cdot \tan^2 \frac {3\pi}{16} + \tan^2 \frac {\pi}{16} \cdot \tan^2 \frac {5\pi}{16}+\tan^2 \frac {3\pi}{16} \cdot \tan^2 \frac {7\pi}{16}+\tan^2 \frac {5\pi}{16} \cdot \tan^2 \frac {7\pi}{16}
+
+=(\tan^2\frac{\pi}{16}+\tan^2 \frac{7\pi}{16})(\tan^2\frac{3\pi}{16}+\tan^2 \frac{5\pi}{16})
+
+Using \tan^2\frac{\theta}{2}=\frac{1-\cos\theta}{1+\cos\theta}
+
+=(\frac{1+\cos\frac{\pi}{8}}{1-\cos\frac{\pi}{8}}+\frac{1+\cos\frac{7\pi}{8}}{1-\cos\frac{7\pi}{8}})(\frac{1+\cos\frac{3\pi}{8}}{1-\cos\frac{3\pi}{8}}+\frac{1+\cos\frac{5\pi}{8}}{1-\cos\frac{5\pi}{8}})
+
+Using \cos\theta=-\cos(\pi-\theta)
+
+=(\frac{1+\cos\frac{\pi}{8}}{1-\cos\frac{\pi}{8}}+\frac{1-\cos\frac{\pi}{8}}{1+\cos\frac{\pi}{8}})(\frac{1+\cos\frac{3\pi}{8}}{1-\cos\frac{3\pi}{8}}+\frac{1-\cos\frac{3\pi}{8}}{1+\cos\frac{3\pi}{8}})
+
+=(\frac{(1+\cos\frac{\pi}{8})^2+(1-\cos\frac{\pi}{8})^2}{1-\cos^2\frac{\pi}{8}})(\frac{(1+\cos\frac{3\pi}{8})^2+(1-\cos\frac{3\pi}{8})^2}{1-\cos^2\frac{3\pi}{8}})
+
+=(\frac{2+2\cos^2\frac{\pi}{8}}{1-\cos^2\frac{\pi}{8}})(\frac{2+2\cos^2\frac{3\pi}{8}}{1-\cos^2\frac{3\pi}{8}})
+
+Using \cos^2\frac{\theta}{2}=\frac{1+\cos\theta}{2}
+
+=(\frac{2+1+\cos\frac{\pi}{4}}{1-\frac{1+\cos\frac{\pi}{4}}{2}})(\frac{2+1+\cos\frac{3\pi}{4}}{1-\frac{1+\cos\frac{3\pi}{4}}{2}})
+
+=(\frac{12+2\sqrt{2}}{2-\sqrt{2}})(\frac{12-2\sqrt{2}}{2+\sqrt{2}})
+
+=\frac{136}{2}=\boxed{\textbf{B) }68 }
+
+~ERiccc
+
+==Solution 7 (Find each individual tan)== 
+
+The half angle formula for \tan^2 is \tan^2\frac{\theta}{2} = \frac{1 - \cos\theta}{1 + \cos\theta} and the half angle formula for cosine is \cos\frac{\theta}{2} = \sqrt{\frac{1 + \cos\theta}{2}}. We can use this to find each tan:
+
+\cos(\pi/8) = \sqrt{\frac{1 + \cos(\pi/4)}{2}} = \frac{\sqrt{2 + \sqrt{2}}}{2} 
+
+\tan^2(\pi/16) = \frac{1 - \cos(\pi/8)}{1 + \cos(\pi/8)} = \frac{2 - \sqrt{2 + \sqrt{2}}}{2 + \sqrt{2 + \sqrt{2}}}
+
+\cos(3\pi/8) = \sqrt{\frac{1 + \cos(3\pi/4)}{2}} = \frac{\sqrt{2 - \sqrt{2}}}{2}
+\tan^2(3\pi/16) = \frac{1 - \cos(3\pi/8)}{1 + \cos(3\pi/8)} = \frac{2 - \sqrt{2 - \sqrt{2}}}{2 + \sqrt{2 - \sqrt{2}}}
+
+\cos(5\pi/8) = - \sqrt{\frac{1 + \cos(5\pi/4)}{2}} = -\frac{\sqrt{2 - \sqrt{2}}}{2}
+\tan^2(5\pi/16) = \frac{1 - \cos(5\pi/8)}{1 + \cos(5\pi/8)} = \frac{2 + \sqrt{2 - \sqrt{2}}}{2 - \sqrt{2 - \sqrt{2}}}
+
+\cos(7\pi/8) = - \sqrt{\frac{1 + \cos(7\pi/4)}{2}} = -\frac{\sqrt{2 + \sqrt{2}}}{2}
+\tan^2(7\pi/16) = \frac{1 - \cos(7\pi/8)}{1 + \cos(7\pi/8)} = \frac{2 + \sqrt{2 + \sqrt{2}}}{2 - \sqrt{2 + \sqrt{2}}}
+
+The problem's expression can be factored as (\tan^2\frac{\pi}{16}+\tan^2 \frac{7\pi}{16})(\tan^2\frac{3\pi}{16}+\tan^2 \frac{5\pi}{16}). So the answer is
+
+(\frac{2 - \sqrt{2 + \sqrt{2}}}{2 + \sqrt{2 + \sqrt{2}}} + \frac{2 + \sqrt{2 + \sqrt{2}}}{2 - \sqrt{2 + \sqrt{2}}}) \cdot (\frac{2 - \sqrt{2 - \sqrt{2}}}{2 + \sqrt{2 - \sqrt{2}}} + \frac{2 + \sqrt{2 - \sqrt{2}}}{2 - \sqrt{2 - \sqrt{2}}}) = 
+
+(\frac{12 + 2\sqrt{2}}{2 - \sqrt{2}}) \cdot (\frac{12 - 2\sqrt{2}}{2 + \sqrt{2}}) =  
+
+(14 + 8\sqrt{2}) \cdot (14 - 8\sqrt{2}) = 
+
+196 - 128 = \boxed{68}.
+
+~[[User:grogg007|grogg007]]
+
+==Solution 8 (single formula)==
+\cot \alpha - \tan \alpha = 2 \cot 2 \alpha \implies \cot^2 \alpha + \tan^2 \alpha = 4 \cot^2 2 \alpha + 2. 
+We use \alpha = \frac {\pi}{16} for (\tan^2\frac{\pi}{16}+\tan^2 \frac{7\pi}{16})(\tan^2\frac{3\pi}{16}+\tan^2 \frac{5\pi}{16}).
+
+(\tan^2 \alpha + \cot^2 \alpha)(\tan^2 (\frac{\pi}{4} - \alpha) + \cot^2 (\frac{\pi}{4} - \alpha)) = (4 \cot^2 2 \alpha + 2)(4 \cot^2 (\frac{\pi}{2} - 2\alpha) +2) =
+= 4 \cdot(4+ 2\tan^2 2\alpha + 2\cot^2 2\alpha +1) = 20 + 8 \cdot (4 \cot^2 4 \alpha +2) = 68.\blacksquare
+'''vladimir.shelomovskii@gmail.com, vvsss'''
+
+==Solution 9 (Vietas)==
+As the above solutions noted, we can factor the expression into (\tan^2\frac{\pi}{16}+\tan^2 \frac{7\pi}{16})(\tan^2\frac{3\pi}{16}+\tan^2 \frac{5\pi}{16}).
+
+Before we directly solve this problem, let's analyze the roots of \tan(4\tan^{-1}{x}) = 1, or equivalently using tangent expansion formula, \frac{1-6x^2+x^4}{4x-4x^3}=1, which implies x^4+4x^3-6x^2-4x+1=0. Now note that the roots of this equation are precisely \tan\frac{\pi}{16}, \tan\frac{5\pi}{16}, \tan\frac{9\pi}{16}, \tan\frac{13\pi}{16}, so the second symmetric sum of these four numbers is 6 by Vieta's. Thus, we have \tan\frac{\pi}{16}\tan\frac{5\pi}{16}+\tan\frac{\pi}{16}\tan\frac{9\pi}{16}+\tan\frac{\pi}{16}\tan\frac{13\pi}{16}+\tan\frac{5\pi}{16}\tan\frac{9\pi}{16}+\tan\frac{5\pi}{16}\tan\frac{13\pi}{16}+\tan\frac{9\pi}{16}\tan\frac{13\pi}{16}=6
+Upon further inspection, \tan\frac{\pi}{16}\tan\frac{9\pi}{16}+\tan\frac{5\pi}{16}\tan\frac{13\pi}{16}=-2 using the fact that \tan(x)*\tan(x + \pi/2) = -1. Hence, we have \tan\frac{\pi}{16}\tan\frac{5\pi}{16}-1+\tan\frac{\pi}{16}\tan\frac{13\pi}{16}+\tan\frac{5\pi}{16}\tan\frac{9\pi}{16}-1+\tan\frac{9\pi}{16}\tan\frac{13\pi}{16}=6
+\tan\frac{\pi}{16}\tan\frac{5\pi}{16}+\tan\frac{\pi}{16}\tan\frac{13\pi}{16}+\tan\frac{5\pi}{16}\tan\frac{9\pi}{16}+\tan\frac{9\pi}{16}\tan\frac{13\pi}{16}=8
+(\tan\frac{\pi}{16}+\tan\frac{9\pi}{16})(\tan\frac{5\pi}{16}+\tan\frac{13\pi}{16})=8
+
+Now, we return to the problem statement, where we see a similar squared sum. We use this motivation to square our equation above to obtain 
+
+(\tan^2\frac{\pi}{16}+\tan^2\frac{9\pi}{16}-2)(\tan^2\frac{5\pi}{16}+\tan^2\frac{13\pi}{16}-2)=64
+(\tan^2\frac{\pi}{16}+\tan^2\frac{9\pi}{16})(\tan^2\frac{5\pi}{16}+\tan^2\frac{13\pi}{16})-2(\tan^2\frac{\pi}{16}+\tan^2\frac{5\pi}{16}+\tan^2\frac{9\pi}{16}+\tan^2\frac{13\pi}{16})+4=64
+(\tan^2\frac{\pi}{16}+\tan^2\frac{9\pi}{16})(\tan^2\frac{5\pi}{16}+\tan^2\frac{13\pi}{16})-2(\tan^2\frac{\pi}{16}+\tan^2\frac{5\pi}{16}+\tan^2\frac{9\pi}{16}+\tan^2\frac{13\pi}{16})=60
+Then, use the fact that \tan^2{x}=\tan^2{\pi/2-x} to get
+(\tan^2\frac{\pi}{16}+\tan^2\frac{7\pi}{16})(\tan^2\frac{3\pi}{16}+\tan^2\frac{5\pi}{16})-2(\tan^2\frac{\pi}{16}+\tan^2\frac{5\pi}{16}+\tan^2\frac{9\pi}{16}+\tan^2\frac{13\pi}{16})=60
+Hold on; the first term is exactly what we are solving for! It thus suffices to find \tan^2\frac{\pi}{16}+\tan^2\frac{5\pi}{16}+\tan^2\frac{9\pi}{16}+\tan^2\frac{13\pi}{16}. Fortunately, this is just {S_1}^2-2{S_2} (Where S_n is the nth symmetric sum), with relation to roots of x^4+4x^3-6x^2-4x+1=0. By Vieta's, this is just (-4)^2-2(6)=4. 
+
+Finally, we plug this value into our equation to obtain 
+(\tan^2\frac{\pi}{16}+\tan^2\frac{7\pi}{16})(\tan^2\frac{3\pi}{16}+\tan^2\frac{5\pi}{16})-2(4)=60
+(\tan^2\frac{\pi}{16}+\tan^2\frac{7\pi}{16})(\tan^2\frac{3\pi}{16}+\tan^2\frac{5\pi}{16})=\boxed{68}
+
+==Alternate proof of the two tangent squares formula==
+
+We want to simplify \tan^{2}(x) + \tan^{2}(\frac{\pi}{2} - x). We make use of the fact that \tan(\frac{\pi}{2} - x) = \cot(x).Then, the expression becomes \tan^{2}(x) + \cot^{2}(x). 
+Notice we can write:
+(\tan x + \cot x)^{2} as \tan^{2}(x) + \cot^{2}(x) + 2 as tangent and cotangent are reciprocals of each other. Then, the sum of the tangent and cotangent can be simplified to \frac{\sec^{2}{x}}{\tan x}. Using the fact that secant is the reciprocal of cosine and tangent is the ratio of sine and cosine, we can simplify that expression to \frac{1}{\sin x \cos x}. So, we have that: \tan^{2}(x) + \cot^{2}(x) = \frac{1}{(\sin x \cos x)^2} - {2} which can be simplfied to: 2\Bigr(\frac{2}{\sin^{2}(2x)} - 1\Bigr) or \frac{4}{\sin^{2}(2x)} - 2 as stated in earlier solutions. 
+
+~ilikemath247365
+
+==Solution 10 (Options)==
+For this question, there are five options: \(28\), \(68\), \(70\), \(72\), and \(84\). Since \(28\) is too small and \(84\) is too large, these two options can be eliminated. At this point, only three options remain. While one could make a guess here, it is better to analyze these remaining options further. When we divide each of these three options by \(2\), we get \(34\), \(35\), and \(36\) respectively. Option C (\(70\)) should be eliminated because, after division by \(2\), it is the only odd number among the three results. Last but not least, Option D (\(72\)) appears excessively frequently in AMC answer choices. Therefore, it is reasonable to conjecture that the Mathematical Association of America (MAA) will avoid using this option again for AMC, leading to the elimination of D. As a result, the only remaining option is B (\(68\)).
+
+Curator note: Upon extensive investigation, we have been forced to conclude that the above solution is pure undistilled yap
+
+== Video Solution ==
+[https://youtu.be/Kc8cgdXoOPs?si=rbPKKpKMHMUV6Ta2 2024 AMC 12 A #23]
+
+[https://mathproblemsolvingskills.wordpress.com/ MathProblemSolvingSkills.com]
+
+==See also==
+{{AMC12 box|year=2024|ab=A|num-b=22|num-a=24}}
+{{MAA Notice}}

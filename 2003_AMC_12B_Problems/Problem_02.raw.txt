@@ -1,0 +1,22 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2003_AMC_12B_Problems/Problem_2&action=raw
+
+Published Time: Sun, 01 Aug 2021 21:40:03 GMT
+
+Markdown Content:
+{{duplicate|[[2003 AMC 12B Problems|2003 AMC 12B #2]] and [[2003 AMC 10B Problems|2003 AMC 10B #2]]}}
+
+==Problem==
+Al gets the disease algebritis and must take one green pill and one pink pill each day for two weeks. A green pill costs  \ 1 more than a pink pill, and Al's pills cost a total of \textdollar 546 for the two weeks. How much does one green pill cost?
+
+ \textbf{(A)}\ \textdollar 7 \qquad\textbf{(B) }\textdollar 14 \qquad\textbf{(C) }\textdollar 19\qquad\textbf{(D) }\textdollar 20\qquad\textbf{(E) }\textdollar 39 
+
+==Solution==
+
+Because there are 14 days in two weeks, Al spends 546/14 = 39 dollars per day for the cost of a green pill and a pink pill. If the green pill costs x dollars and the pink pill x-1 dollars, the sum of the two costs 2x-1 should equal 39 dollars. Then the cost of the green pill x is \boxed{\textbf{(D) }\textdollar 20}.
+
+==See Also==
+{{AMC12 box|year=2003|ab=B|num-b=1|num-a=3}}
+{{AMC10 box|year=2003|ab=B|num-b=1|num-a=3}}
+{{MAA Notice}}

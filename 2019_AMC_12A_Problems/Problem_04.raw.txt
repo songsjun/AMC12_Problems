@@ -1,0 +1,45 @@
+{{duplicate|[[2019 AMC 10A Problems|2019 AMC 10A #5]] and [[2019 AMC 12A Problems|2019 AMC 12A #4]]}}
+
+==Problem==
+What is the greatest number of consecutive integers whose sum is <math>45?</math>
+
+<math>\textbf{(A) } 9 \qquad\textbf{(B) } 25 \qquad\textbf{(C) } 45 \qquad\textbf{(D) } 90 \qquad\textbf{(E) } 120</math>
+
+==Solution 1==
+We might at first think that the answer would be <math>9</math>, because <math>1+2+3 \dots +n = 45</math> when <math>n = 9</math>. But note that the problem says that they can be integers, not necessarily positive. Observe also that every term in the sequence <math>-44, -43, \cdots, 44, 45</math> cancels out except <math>45</math>.  Thus, the answer is, intuitively, <math>\boxed{\textbf{(D) } 90 }</math> integers.
+
+Though impractical, a proof of maximality can proceed as follows:  Let the desired sequence of consecutive integers be <math>a, a+1, \cdots, a+(N-1)</math>, where there are <math>N</math> terms, and we want to maximize <math>N</math>.  Then the sum of the terms in this sequence is <math>aN + \frac{(N-1)(N)}{2}=45</math>.  Rearranging and factoring, this reduces to <math>N(2a+N-1) = 90</math>.  Since <math>N</math> must divide <math>90</math>, and we know that <math>90</math> is an attainable value of the sum, <math>90</math> must be the maximum.
+
+==Solution 2==
+To maximize the number of integers, we need to make the average of them as low as possible while still being positive. The average can be <math>\frac12</math> if the middle two numbers are <math>0</math> and <math>1</math>, so the answer is <math>\frac{45}{\frac12}=\boxed{\textbf{(D) } 90 }</math>.
+
+===Solution 2a (more detailed ver. of Solution 2)===
+
+Note that the sum of <math>n</math> consecutive integers whose mean (median; the two are equal in this case) is <math>a</math> is equal to <math>an</math>. Here, we want to maximize <math>n</math> such that <math>an=45</math>. The mean/median of a set of consecutive integers is either an integer or half of an integer; clearly, <math>n</math> is maximized when <math>a=0.5</math> and <math>n=\boxed{\textbf{(D) }90}</math>. 
+
+~Technodoggo
+
+==Solution 3==
+
+If we want the answer to have as many terms as possible, we need to make as many terms cancel out as much as we can. Because <math>45 - 1 <</math> <math>\frac12</math>60 so we can eliminate <math>E</math>. Now lets make every integer cancel to zero except for <math>45</math> and then we account for <math>0</math> and <math>45</math> to get <math>44*2+1+1=\boxed{\textbf{(D) }90}</math>. Pls help me clarify idk how to explain it clearer.
+
+
+~Twinotter
+~Pungent_Muskrat (grammar and cleanup and latex)
+
+== Video Solution 1 ==
+https://youtu.be/ZhAZ1oPe5Ds?t=665
+
+~ pi_is_3.14
+
+==Video Solution 2==
+https://youtu.be/ivYp-eNOIZA
+
+~savannahsolver
+
+==See Also==
+
+{{AMC10 box|year=2019|ab=A|num-b=4|num-a=6}}
+{{AMC12 box|year=2019|ab=A|num-b=3|num-a=5}}
+{{MAA Notice}}
+[[Category: Introductory Algebra Problems]]

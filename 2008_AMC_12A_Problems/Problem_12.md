@@ -1,0 +1,25 @@
+# 2008 AMC 12A Problem 12
+
+## Problem
+A [function](https://artofproblemsolving.com/wiki/index.php/function) f has [domain](https://artofproblemsolving.com/wiki/index.php/domain) [0,2] and [range](https://artofproblemsolving.com/wiki/index.php/range) [0,1]. (The notation [a,b] denotes $\{x:a \le x \le b \}$.) What are the domain and range, respectively, of the function g defined by $g(x)=1-f(x+1$)?
+
+
+$$\mathrm{(A)}\ [-1,1],[-1,0]\qquad\mathrm{(B)}\ [-1,1],[0,1]\qquad\textbf{(C)}\ [0,2],[-1,0]\qquad\mathrm{(D)}\ [1,3],[-1,0]\qquad\mathrm{(E)}\ [1,3],[0,1]$$
+
+## Solution 1
+g(x) is defined if f(x + 1) is defined. Thus the domain is all x| x + 1 $\in$ [0,2] $\rightarrow$ x $\in$ [ - 1,1].
+
+Since f(x + 1) $\in$ [0,1], - f(x + 1) $\in$ [ - 1,0]. Thus $g(x) = $1 - f(x + 1) $\in$ [0,1] is the range of g(x).
+
+Thus the answer is [- 1,1],[0,1] $\longrightarrow \boxed{B}.$
+## Solution 2
+Look at the vertical and horizontal translations, and we rewrite the function to a more recognizable -f$(x+1) + 1$ to help us visualize.
+
+Horizontal: There is one horizontal shift one unit to the left from the $(x+1)$ component making the domain [-1, 1]
+
+Vertical: There is one vertical mirror from the -f causing the range to become [-1, 0] and then a vertical shift one unit upward from the + 1 causing the range to become [0, 1].
+
+This generates the answer of $\mathrm{(B)}.$
+
+*~PhysicsDolphin*
+## See Also

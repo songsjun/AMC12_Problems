@@ -1,0 +1,64 @@
+{{duplicate|[[2018 AMC 10A Problems/Problem 7|2018 AMC 10A #7]] and [[2018 AMC 12A Problems/Problem 7|2018 AMC 12A #7]]}}
+
+==Problem==
+For how many (not necessarily positive) integer values of <math>n</math> is the value of <math>4000\cdot \left(\tfrac{2}{5}\right)^n</math> an integer?
+
+<math>
+\textbf{(A) }3 \qquad
+\textbf{(B) }4 \qquad
+\textbf{(C) }6 \qquad
+\textbf{(D) }8 \qquad
+\textbf{(E) }9 \qquad
+</math>
+
+==Solution 1 (Algebra)==
+Note that <cmath>4000\cdot \left(\frac{2}{5}\right)^n=\left(2^5\cdot5^3\right)\cdot \left(2\cdot5^{-1}\right)^n=2^{5+n}\cdot5^{3-n}.</cmath>
+Since this expression is an integer, we need: 
+<ol style="margin-left: 1.5em;">
+  <li><math>5+n\geq0,</math> from which <math>n\geq-5.</math></li><p>
+  <li><math>3-n\geq0,</math> from which <math>n\leq3.</math></li><p>
+</ol>
+Taking the intersection gives <math>-5\leq n\leq3.</math> So, there are <math>3-(-5)+1=\boxed{\textbf{(E) }9}</math> integer values of <math>n.</math>
+
+~MRENTHUSIASM
+
+==Solution 2 (Observations)==
+Note that <math>4000\cdot \left(\frac{2}{5}\right)^n</math> will be an integer if the denominator is a factor of <math>4000</math>. We also know that the denominator will always be a power of <math>5</math> for positive values and a power of <math>2</math> for all negative values. So we can proceed to divide 
+<math>4000</math> by <math>5^n</math> for each increasing positive value of <math>n</math> until we get a non-factor of <math>4000</math> and also divide <math>4000</math> by <math>2^{-n}</math> for each decreasing negative value of <math>n</math>. For positive values we get <math>n= 1, 2, 3</math> and for negative values we get <math>n= -1, -2, -3, -4, -5</math>. Also keep in mind that the expression will be an integer for <math>n=0</math>, which gives us a total of <math>\boxed{\textbf{(E) }9}</math> for <math>n.</math>
+
+==Solution 3 (Brute Force)==
+The values for <math>n</math> are <math>-5, -4, -3, -2, -1, 0, 1, 2,</math> and <math>3.</math>
+
+The corresponding values for <math>4000\cdot \left(\frac{2}{5}\right)^n</math> are <math>390625, 156250, 62500, 25000, 10000, 4000, 1600, 640,</math> and <math>256,</math> respectively.
+
+In total, there are <math>\boxed{\textbf{(E) }9}</math> values for <math>n.</math>
+
+~Little ~MRENTHUSIASM
+
+==Video Solution (HOW TO THINK CREATIVELY!)==
+https://youtu.be/vzyRAnpnJes
+
+Education, the Study of Everything
+
+
+
+==Video Solution==
+https://youtu.be/ZiZVIMmo260
+
+==Video Solution==
+https://youtu.be/2vz_CnxsGMA
+
+~savannahsolver
+
+==Video Solution by OmegaLearn==
+https://youtu.be/ZhAZ1oPe5Ds?t=1763
+
+~ pi_is_3.14
+
+== See Also ==
+
+{{AMC10 box|year=2018|ab=A|num-b=6|num-a=8}}
+{{AMC12 box|year=2018|ab=A|num-b=6|num-a=8}}
+{{MAA Notice}}
+
+[[Category:Introductory Number Theory Problems]]

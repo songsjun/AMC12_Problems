@@ -1,0 +1,19 @@
+# 2003 AMC 12B Problem 10
+
+## Problem
+Several figures can be made by attaching two equilateral triangles to the regular pentagon ABCDE in two of the five positions shown. How many non-congruent figures can be constructed in this way?
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(200); defaultpen(0.9); real $r = 5$/dir(54).x, $h = 5$ tan(54*pi/180); pair A = (5,0), B = A+10*dir(72), C = (0,r+h), E = (-5,0), D = E+10*dir(108); draw(A--B--C--D--E--cycle); label("$A$",A+(0,-0.5),SSE); label("$B$",B+(0.5,0),ENE); label("$C$",C+(0,0.5),N); label("$D$",D+(-0.5,0),WNW); label("$E$",E+(0,-0.5),SW); // real $l = 5$*sqrt(3); pair ab = (h+l)*dir(72), bc = (h+l)*dir(54); pair AB = (ab.y, h-ab.x), BC = (bc.x,h+bc.y), CD = (-bc.x,h+bc.y), DE = (-ab.y, h-ab.x), EA = (0,-l); draw(A--AB--B^^B--BC--C^^C--CD--D^^D--DE--E^^E--EA--A, dashed); // dot(A); dot(B); dot(C); dot(D); dot(E); dot(AB); dot(BC); dot(CD); dot(DE); dot(EA);
+```
+
+
+$$\text {(A) } 1 \qquad \text {(B) } 2 \qquad \text {(C) } 3 \qquad \text {(D) } 4 \qquad \text {(E) } 5$$
+
+## Solution 1
+Place the first triangle. Now, we can place the second triangle either adjacent to the first, or with one side between them, for a total of $\boxed{\text{(B) }2}$
+## Solution 2
+Take {5 $\choose 2$} to realize there are 10 ways to choose 2 different triangles. Then divide by 5 for each vertex of a pentagon to get $\boxed{\text{(B) }2}$
+## See Also

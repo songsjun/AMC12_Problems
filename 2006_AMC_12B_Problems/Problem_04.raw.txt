@@ -1,0 +1,31 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2006_AMC_12B_Problems/Problem_4&action=raw
+
+Published Time: Sun, 08 Dec 2013 20:11:00 GMT
+
+Markdown Content:
+== Problem ==
+Mary is about to pay for five items at the grocery store.  The prices of the items are 7.99, 4.99, 2.99, 1.99, and 0.99.  Mary will pay with a twenty-dollar bill.  Which of the following is closest to the percentage of the 20.00 that she will receive in change?
+
+ \text {(A) } 5 \qquad \text {(B) } 10 \qquad \text {(C) } 15 \qquad \text {(D) } 20 \qquad \text {(E) } 25 
+
+== Solution ==
+The total price of the items is (8-.01)+(5-.01)+(3-.01)+(2-.01)+(1-.01)=19-.05=18.95
+
+20-18.95=1.05
+
+\frac{1.05}{20}=.0525 \Rightarrow \text{(A)}
+
+==Alternative Solution==
+We can round the prices to 8, 5, 3, 2, and 1. 
+
+So  20 - (8+5+3+2+1) = 1 
+
+We can make an equation:  20* \frac{x}{100}=1 
+
+If we simplify the equation to "x", we get x=5
+
+== See also ==
+{{AMC12 box|year=2006|ab=B|num-b=3|num-a=5}}
+{{MAA Notice}}

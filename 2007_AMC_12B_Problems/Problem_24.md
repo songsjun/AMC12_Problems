@@ -1,0 +1,151 @@
+# 2007 AMC 12B Problem 24
+
+Also refer to the [https://artofproblemsolving.com/wiki/index.php/2007_AMC_10B_Problems/Problem_25#Solution| 2007 AMC 10B #25] (same problem)
+## Problem
+How many pairs of positive integers (a,b) are there such that $\text{gcd}(a,b)=1$ and $\frac{a}{b} + \frac{14b}{9a}$ is an integer?
+
+$\mathrm$ {(A)}\ $4\quad\mathrm$ {(B)}\ $6\quad\mathrm$ {(C)}\ $9\quad\mathrm$ {(D)}\ $12\quad\mathrm$ {(E)}\ $\text{infinitely many}$
+## Solution 1
+Combining the fraction, $\frac{9a^2 + 14b^2}{9ab}$ must be an integer.
+
+Since the denominator contains a factor of 9, 9 | $9a^2+14b^2 \quad\Longrightarrow\quad $9 | $b^2 \quad\Longrightarrow\quad 3$ | b
+
+Since $b =3n$ for some positive integer n, we can rewrite the fraction(divide by 9 on both top and bottom) as $\frac{a^2 + 14n^2}{3an}$
+
+Since the denominator now contains a factor of n, we get n | $a^2 +14n^2 \quad\Longrightarrow\quad$ n | $a^2.$
+
+But since $1=\gcd(a,b)=\gcd(a,3n)=\gcd(a,n),$ we must have $n=1$, and thus $b=3$.
+
+For $b=3$ the original fraction simplifies to $\frac{a^2 + 14}{3a}.$
+
+For that to be an integer, a must be a factor of 14, and therefore we must have $a\in\{1,2,7,14\}$. Each of these values does indeed yield an integer.
+
+Thus there are four solutions: (1,3), (2,3), (7,3), (14,3) and the answer is $\mathrm{(A)}$
+## Solution 2
+Let's assume that $\frac{a}{b} + \frac{14b}{9a} =$ m We get
+
+$9a^2 - 9$mab + $14b^2 = 0$
+
+Factoring this, we get 4 equations-
+
+$$(3a-2b)(3a-7b) = 0$$
+
+$$(3a-b)(3a-14b) = 0$$
+
+$$(a-2b)(9a-7b) = 0$$
+
+$$(a-b)(9a-14b) = 0$$
+
+(It's all negative, because if we had positive signs, a would be the opposite sign of b)
+
+Now we look at these, and see that-
+
+$$3a=2b$$
+
+$$3a=b$$
+
+$$3a=7b$$
+
+$$3a=14b$$
+
+$$a=2b$$
+
+$$9a=7b$$
+
+$$a=b$$
+
+$$9a=14b$$
+
+This gives us 8 solutions, but we note that the middle term needs to give you back $9m$.
+
+For example, in the case
+
+($a-2b)(9a-7$b), the middle term is -25ab, which is not equal by -$9m$ for any integer m.
+
+Similar reason for the fourth equation. This eliminates the last four solutions out of the above eight listed, giving us 4 solutions total $\mathrm$ {(A)}
+## Solution 3
+Let $u =\frac{a}{b}.$ Then the given equation becomes u + $\frac{14}{9u} = \frac{9u^2 + 14}{9u}.$
+
+Let's set this equal to some value, k $\Rightarrow \frac{9u^2 + 14}{9u} =$ k.
+
+Clearing the denominator and simplifying, we get a quadratic in terms of u:
+
+$$9u^2 - 9ku + 14 = 0 \Rightarrow u = \frac{9k \pm \sqrt{(9k)^2 - 504}}{18}$$
+
+Since a and b are integers, u is a rational number. This means that $\sqrt{(9k)^2 - 504}$ is an integer.
+
+Let $\sqrt{(9k)^2 - 504} =$ x. Squaring and rearranging yields:
+
+$$(9k)^2 - x^2 = 504$$
+
+$$(9k+x)(9k-x) = 504.$$
+
+In order for both x and a to be an integer, $9k$ + x and $9k$ - x must both be odd or even. (This is easily proven using modular arithmetic.) In the case of this problem, both must be even. Let $9k+x =2m$ and $9k-x =2n$.
+
+Then:
+
+$$2m \cdot 2n = 504$$
+
+$$mn = 126.$$
+
+Factoring 126, we get 6 pairs of numbers: (1,126), (2,63), (3,42), (6,21), (7,18), and (9,14).
+
+Looking back at our equations for m and n, we can solve for $k =\frac{2m + 2n}{18} = \frac{m+n}{9}.$ Since k is an integer, there are only 2 pairs of (m,n) that work: (3,42) and (6,21). This means that there are 2 values of k such that u is an integer. But looking back at u in terms of k, we have $\pm,$ meaning that there are 2 values of u for every k. Thus, the answer is 2 $\cdot 2 = 4 \Rightarrow \mathrm{(A)}.$
+## Solution 4
+Rewriting the expression over a common denominator yields $\frac{9a^2 + 14b^2}{9ab}.$ This expression must be equal to some integer m.
+
+Thus, $\frac{9a^2 + 14b^2}{9ab} =$ m $\rightarrow 9a^2 + 14b^2 = 9$abm. Taking this $\pmod{a}$ yields $1$4b^2 $\equiv 0\pmod{a}.$ Since $\gcd(a,b)=1, 14 \equiv 0\pmod{a}.$ This implies that a|14 so $a = 1$, 2, 7, 14.
+
+We can then take $9a^2+14b^2 = 9$abm $\pmod{b}$ to get that 9 $\equiv 0 \pmod{b}.$ Thus $b = 1$, 3, 9.
+
+However, taking $9a^2+14b^2 = 9$abm $\pmod{3},b^2 \equiv 0\pmod{3}$ so b cannot equal 1.
+
+Also, note that if $b = 9,  \frac{a}{b}+\frac{14b}{9a} = \frac{a}{9}+\frac{14}{a}.$ Since a|14, $\frac{14}{a}$ will be an integer, but $\frac{a}{9}$ will not be an integer since none of the possible values of a are multiples of 9. Thus, b cannot equal 9.
+
+Thus, the only possible values of b is 3, and a can be 1, 2, 7, or 14. This yields 4 possible solutions, so the answer is $\mathrm{(A)}.$
+## Solution 5 (Similar to Solution 1)
+Rewriting $\frac{a}{b} + \frac{14b}{9a}$ over a common denominator gives $\frac{9a^2 + 14b^2}{9ab}.$
+
+Thus, we have 9 \mid $9a^2+14b^2 \Rightarrow 3$\mid b.
+
+Next, we have ab \mid $9a^2+14b^2 \Rightarrow$ ab \mid 14b^2 $\Rightarrow$ a \mid $14b$.
+
+Thus, a $\in (1,2,7,4).$
+
+Next, we have b \mid $9a^2+14b^2 \Rightarrow$ b \mid 9a^2 $\Rightarrow$ b \mid 9.
+
+Thus, b $\in (1,3,9).$
+
+Now, we simply do casework on b.
+
+Plugging in $b = 1$,3 and 9 gives that there are 4 total solutions for (a,b).
+
+*~coolmath2017*
+## Solution 6 (Similar to solution 3)
+Let $\frac{a}{b} =$ r. So r + $\frac{14}{9r}=I,$ where I is an integer. Algebraic manipulations yield: $r^2-Ir+\frac{14}{9}=0.$ The discriminant of this must be the square of a rational number, call this $R. So I^2-\frac{56}{9}=R^2 \longrightarrow I^2-R^2=(I-R)(I+R)=\frac{56}{9}. I$ is $\frac{1}{2}$ the sum of I-R and I+R. To have an integer sum, I-R and I+R must have the same denominator, namely 3. We proceed with casework.
+
+Case 1.
+I+R=56/3, I-R=1/3. This yields I=19/2, which is not an integer. This case produces 0 solutions.
+
+Case 2.
+I+R=28/3, I-R=2/3. This yields I=5. Substituting into our original equation yields: $r^2-5r+\frac{14}{9}=0.$ Factoring gives: $r=\frac{1}{3},r=\frac{14}{3}.$ This case produces 2 solutions, namely (1,3) and (14,3).
+
+Case 3.
+I+R=14/3, I-R=4/3. This yields I=3. Substituting into our original equation yields: $r^2-3r+\frac{14}{9}=0.$ Factoring gives: $r=\frac{2}{3},r=\frac{7}{3}.$ This case produces 2 solutions, namely (2,3) and (7,3).
+
+Case 4.
+I+R=8/3, I-R=7/3. This yields I=5/2, which is not an integer. This case produces 0 solutions.
+
+Altogether, we have 4 solutions, so our answer is $\boxed{(A)}.$
+
+*~Math4Life2020*
+## Solution 7
+Rewrite the equation
+$$\frac{a}{b}+\frac{14b}{9a}=k$$
+in two different forms. First, multiply both sides by b and subtract a to obtain
+$$\frac{14b^2}{9a}=bk-a.$$
+Because a, b, and k are integers, $14b^2$ must be a multiple of a, and because a and b have no common factors greater than 1, it follows that 14 is divisible by a. Next, multiply both sides of the original equation by $9a$ and subtract $14b$ to obtain
+$$\frac{9a^2}{b}=9ak-14b.$$
+This shows that $9a^2$ is a multiple of b, so 9 must be divisible by b. Thus if (a,b) is a solution, then $b=1$, 3, or 9, and $a=1$, 2, 7, or 14. This gives a total of twelve possible solutions (a,b), each of which can be checked quickly. $\frac{a}{b}+\frac{14b}{9a}$
+will only be an integer when (a,b) $\in\{(1,3),(2,3), (7,3), (14,3)\}$, for a total of $\boxed{4}$ pairs.
+## See Also

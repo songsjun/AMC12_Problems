@@ -1,0 +1,64 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2024_AMC_12B_Problems/Problem_15&action=raw
+
+Published Time: Thu, 17 Jul 2025 16:15:23 GMT
+
+Markdown Content:
+==Problem==
+A triangle in the coordinate plane has vertices A(\log_21,\log_22), B(\log_23,\log_24), and C(\log_27,\log_28). What is the area of \triangle ABC?
+
+ \textbf{(A) }\log_2\frac{\sqrt3}7\qquad \textbf{(B) }\log_2\frac3{\sqrt7}\qquad \textbf{(C) }\log_2\frac7{\sqrt3}\qquad \textbf{(D) }\log_2\frac{11}{\sqrt7}\qquad \textbf{(E) }\log_2\frac{11}{\sqrt3}\qquad 
+
+==Solution 1 (Shoelace Theorem)==
+We rewrite:
+A(0,1)
+B(\log _{2} 3, 2)
+C(\log _{2} 7, 3).
+
+From here we setup Shoelace Theorem and obtain:
+\frac{1}{2}(2(\log _{2} 3) - log _{2} 7).
+
+Following log properties and simplifying gives \boxed{\textbf{(B) }\log_2 \frac{3}{\sqrt{7}}}.
+
+~MendenhallIsBald, ShortPeopleFartalot
+
+==Solution 2 (Determinant)==  
+To calculate the area of a triangle formed by three points \( A(x_1, y_1) \), \( B(x_2, y_2) \), and \( C(x_3, y_3) \) on a Cartesian coordinate plane, you can use the following formula:
+ \text{Area} = \frac{1}{2} \left| x_1(y_2 - y_3) + x_2(y_3 - y_1) + x_3(y_1 - y_2) \right| 
+The coordinates are:A(0, 1), B(\log_2 3, 2), C(\log_2 7, 3)
+
+Taking a numerical value into account:
+ \text{Area} = \frac{1}{2} \left| 0 \cdot (2 - 3) + \log_2 3 \cdot (3 - 1) + \log_2 7 \cdot (1 - 2) \right| 
+Simplify:
+ = \frac{1}{2} \left| 0 + \log_2 3 \cdot 2 + \log_2 7 \cdot (-1) \right| 
+ = \frac{1}{2} \left| \log_2 (3^2) - \log_2 7 \right| 
+ = \frac{1}{2} \left| \log_2 \frac{9}{7} \right| 
+Thus, the area is:\text{Area} = \frac{1}{2} \left| \log_2 \frac{9}{7} \right| = \boxed{\textbf{(B) }\log_2 \frac{3}{\sqrt{7}}}
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Athmyx Athmyx]
+
+==Solution 3 (Geometry)==
+[[File:AMC 12B 2024 Problem15.png|None]]
+
+In the graph above, the biggest triangle has legs \log_2 7 and 2. Its area is then \log_2 7.
+
+There are 3 smaller shapes as well:
+
+1. Triangle 1. Legs = \log_2 3 and 1. Area = \frac{1}{2}\log_2 3 = \log_2 \sqrt{3}.;
+
+2. Triangle 2. Legs = \log_2\frac{7}{3} and 1. Area = \frac{1}{2}\log_2 \frac{7}{3} = \log_2 \frac{\sqrt{7}}{\sqrt{3}};
+
+3. Rectangle. Legs = \log_2\frac{7}{3} and 1. Area = \log_2\frac{7}{3}.;
+
+The area of the triangle is therefore \log_2 7 - \log_2 \sqrt{3} - \log_2 \frac{\sqrt{7}}{\sqrt{3}} - \log_2\frac{7}{3}.
+This is equivalent to \log_2 7*\frac{1}{\sqrt{3}}*\frac{\sqrt{3}}{\sqrt{7}}*\frac{3}{7} which simplifies to \boxed{\textbf{(B)}\log_2 \frac{3}{\sqrt{7}}}.
+
+~mathwizard123123
+
+==Video Solution 1 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=jyupN3dT2yY&t=0s
+
+==See also==
+{{AMC12 box|year=2024|ab=B|num-b=14|num-a=16}}
+{{MAA Notice}}

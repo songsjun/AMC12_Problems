@@ -1,0 +1,42 @@
+# 2010 AMC 12A Problem 3
+
+## Problem
+Rectangle ABCD, pictured below, shares 50\% of its area with square EFGH. Square EFGH shares 20\% of its area with rectangle ABCD. What is $\frac{AB}{AD}$?
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+unitsize(1mm); defaultpen(linewidth(.8pt)+fontsize(8pt)); draw((0,0)--(0,25)--(25,25)--(25,0)--cycle); fill((0,20)--(0,15)--(25,15)--(25,20)--cycle,gray); draw((0,15)--(0,20)--(25,20)--(25,15)--cycle); draw((25,15)--(25,20)--(50,20)--(50,15)--cycle); label("$A$",(0,20),W); label("$B$",(50,20),E); label("$C$",(50,15),E); label("$D$",(0,15),W); label("$E$",(0,25),NW); label("$F$",(25,25),NE); label("$G$",(25,0),SE); label("$H$",(0,0),SW);
+```
+
+
+$\textbf{(A)}\ 4 \qquad \textbf{(B)}\ 5 \qquad \textbf{(C)}\ 6 \qquad \textbf{(D)}\ 8 \qquad \textbf{(E)}\ 10$
+## Solution 1
+If we shift A to coincide with E, and add new horizontal lines to divide EFGH into five equal parts:
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+unitsize(1mm); defaultpen(linewidth(.8pt)+fontsize(8pt)); draw((0,0)--(0,25)--(25,25)--(25,0)--cycle); fill((0,25)--(0,20)--(25,20)--(25,25)--cycle,gray); draw((25,20)--(25,25)--(50,25)--(50,20)--cycle); draw((0,5)--(25,5)); draw((0,10)--(25,10)); draw((0,15)--(25,15)); label("$A=E$",(0,25),W); label("$B$",(50,25),E); label("$C$",(50,20),E); label("$D$",(0,20),W); label("$F$",(25,25),NE); label("$G$",(25,0),SE); label("$H$",(0,0),SW);
+```
+
+
+This helps us to see that AD=a/5 and AB=$2a$, where a=EF.
+Hence $\dfrac{AB}{AD}=\dfrac{2a}{a/5}=10.$
+## Solution 2
+From the problem statement, we know that
+$\frac{[ABCD]}{2} = \frac{[EFGH]}{5} \Rightarrow$ [ABCD]=$\frac{2[EFGH]}{5}$
+
+If we let a = EF and b = AD, we see
+[ABCD] = $2ab =\frac{2a^2}{5} \Rightarrowb =\frac{a}{5}.$ Hence, $\frac{AB}{AD} = \frac{2a}{b} = 2a(\frac{5}{a}) = \boxed{\bold{10}}$
+## Video Solution
+https://youtu.be/TLtqy-62TKo?si=-UUsxm_I0svPWCnk
+
+*~Charles3829*
+## Video Solution 2 (Logic and Word Analysis)
+https://youtu.be/BTDMUrT9oYo
+
+*~Education, the Study of Everything*
+## See also

@@ -1,0 +1,34 @@
+# 2021 AMC 12B Problem 1
+
+> This problem is the same as [2021 AMC 10B #1](https://artofproblemsolving.com/wiki/index.php/2021_AMC_10B_Problems#Problem_1) and [2021 AMC 12B #1](https://artofproblemsolving.com/wiki/index.php/2021_AMC_12B_Problems#Problem_1).
+## Problem
+How many integer values of x satisfy |x|<$3\pi$?
+
+$\textbf{(A)} ~9 \qquad\textbf{(B)} ~10 \qquad\textbf{(C)} ~18 \qquad\textbf{(D)} ~19 \qquad\textbf{(E)} ~20$
+## Solution 1
+Since $3\pi\approx9.42,$ we multiply 9 by 2 for the integers from 1 to 9 and the integers from -1 to -9 and add 1 to account for 0 to get $\boxed{\textbf{(D)} ~19}.$
+
+*~smarty101 and edited by Tony_Li2007 and sl_hc*
+## Solution 2
+|x|<$3\pi \iff -3\pi.$ Since $\pi$ is approximately 3.14, $3\pi$ is approximately 9.42. We are trying to solve for -9.42, where $x\in\mathbb{Z}.$ Hence, -9.42 $\implies -9\leqx\leq9,$ for $x\in\mathbb{Z}.$ The number of integer values of x is 9-(-9)+1=19. Therefore, the answer is $\boxed{\textbf{(D)} ~19}.$ ~ {TSun} ~
+## Solution 3
+$3\pi \approx 9.4.$ There are two cases here. When x>0, |x|>0, and x = |x|. So then x<9.4 When x<0, |x|>0, and x = -|x|. So then -x<9.4. Dividing by -1 and flipping the sign, we get x>-9.4. From case 1 and 2, we know that -9.4 < x < 9.4. Since x is an integer, we must have x between -9 and 9. There are a total of 9-(-9) + 1 = $\boxed{\textbf{(D)} ~19} \text{ integers}.$ ~PureSwag
+## Solution 4
+Looking at the problem, we see that instead of directly saying x, we see that it is |x|. That means all the possible values of x in this case are positive and negative. Rounding $\pi$ to 3 we get $3(3)=9$. There are 9 positive solutions and 9 negative solutions: $9+9=18$. But what about zero? Even though zero is neither negative nor positive, but we still need to add it into the solution. Hence, the answer is $9+9+1=18+1=\boxed{\textbf{(D)} ~19}.$ ~DuoDuoling0
+## Solution 5
+There are an odd number of integer solutions x to this inequality since if any non-zero integer x satisfies this inequality, then so does -x, and we must also account for 0, which gives us the desired. Then, the answer is either $\textbf{(A)}$ or $\textbf{(D)},$ and since 3 $\pi > 3 \cdot 3 > 9,$ the answer is at least 9 $\cdot 2 + 1 = 19,$ yielding $\boxed{\textbf{(D)} ~19}.$
+## Video Solution by savannahsolver
+https://youtu.be/Hv9bQF5x1yQ ~savannahsolver
+## Video Solution by Punxsutawney Phil
+https://youtube.com/watch?v=qpvS2PVkI8A
+## Video Solution by OmegaLearn (Basic Computation)
+https://youtu.be/_C4ceJn6Iaw
+## Video Solution by Hawk Math
+https://www.youtube.com/watch?v=VzwxbsuSQ80
+## Video Solution by TheBeautyofMath
+https://youtu.be/gLahuINjRzU https://youtu.be/EMzdnr1nZcE ~IceMatrix
+## Video Solution by Interstigation
+https://youtu.be/DvpN56Ob6Zw ~Interstigation
+## Video Solution (Just 1 min!)
+https://youtu.be/9hN8QVAR748 ~Education, the Study of Everything
+## See Also

@@ -1,0 +1,31 @@
+# 2016 AMC 12A Problem 17
+
+## Problem 17
+Let ABCD be a square. Let E, F, G and H be the centers, respectively, of equilateral triangles with bases $\overline{AB}, \overline{BC}, \overline{CD},$ and $\overline{DA},$ each exterior to the square. What is the ratio of the area of square EFGH to the area of square ABCD?
+
+$\textbf{(A)}\ 1\qquad\textbf{(B)}\ \frac{2+\sqrt{3}}{3} \qquad\textbf{(C)}\ \sqrt{2} \qquad\textbf{(D)}\ \frac{\sqrt{2}+\sqrt{3}}{2} \qquad\textbf{(E)}\ \sqrt{3}$
+## Solution
+The center of an equilateral triangle is its centroid, where the three medians meet.
+
+The distance along the median from the centroid to the base is one third the length of the median.
+
+Let the side length of the square be 1. The height of $\triangle E$ is $\frac{\sqrt{3}}{2},$ so the distance from E to the midpoint of $\overline{AB}$ is $\frac{\sqrt{3}}{2} \cdot \frac{1}{3} = \frac{\sqrt{3}}{6}$
+
+EG = 2 $\cdot \frac{\sqrt{3}}{6} (f$rom above)  + 1 (side length of the square).
+
+Since EG is the diagonal of square EFGH, $\frac{[EFGH]}{ABCD} = \frac{\frac{EG^2}{2}}{1^2} = \boxed{\textbf{(B) }\frac{2 + \sqrt{3}}{3}}$
+## Solution 2 (Coordinates)
+Note that we can also use coordinates to solve this problem. WLOG, set the side length of square ABCD equal to 6.
+
+This makes the coordinates of the square EFGH equal to ($-\sqrt{3}, 3), (3, 6+\sqrt{3}), (6+\sqrt{3}, 3),$ and (3, $-\sqrt{3}).$
+
+Using the first two points, this gives $EF^2 = (3-(-\sqrt{3})^2+(6+\sqrt{3}-3)^2)= (3+\sqrt{3})^2+(3+\sqrt{3})^2 = 24+12 \sqrt{3}.$
+
+Thus, [EFGH]=24+$12\sqrt{3}.$
+
+Because the side length of ABCD is 6, [ABCD] = 36.
+
+Therefore, $\frac{[EFGH]}{[ABCD]} = \frac{24+12\sqrt{3}}{36} = \boxed{\textbf{(B) }\frac{2 + \sqrt{3}}{3}}$
+
+- Pleaseletmewin
+## See Also

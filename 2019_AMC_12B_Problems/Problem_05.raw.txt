@@ -1,0 +1,52 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2019_AMC_10B_Problems/Problem_7&action=raw
+
+Published Time: Sat, 24 Jun 2023 14:25:01 GMT
+
+Markdown Content:
+{{duplicate|[[2019 AMC 10B Problems|2019 AMC 10B #7]] and [[2019 AMC 12B Problems|2019 AMC 12B #5]]}}
+
+==Problem==
+
+Each piece of candy in a store costs a whole number of cents. Casper has exactly enough money to buy either 12 pieces of red candy, 14 pieces of green candy, 15 pieces of blue candy, or n pieces of purple candy. A piece of purple candy costs 20 cents. What is the smallest possible value of n?
+
+\textbf{(A) } 18 \qquad \textbf{(B) } 21 \qquad \textbf{(C) } 24\qquad \textbf{(D) } 25 \qquad \textbf{(E) } 28
+
+==Solution 1==
+
+If he has enough money to buy 12 pieces of red candy, 14 pieces of green candy, and 15 pieces of blue candy, then the smallest amount of money he could have is \text{lcm}{(12,14,15)} = 420 cents. Since a piece of purple candy costs 20 cents, the smallest possible value of n is \frac{420}{20} = \boxed{\textbf{(B) } 21}.
+
+~IronicNinja
+
+==Solution 2==
+We simply need to find a value of 20n that is divisible by 12, 14, and 15. Observe that 20 \cdot 18 is divisible by 12 and 15, but not 14. 20 \cdot 21 is divisible by 12, 14, and 15, meaning that we have exact change (in this case, 420 cents) to buy each type of candy, so the minimum value of n is \boxed{\textbf{(B) } 21}.
+
+==Solution 3==
+We can notice that the number of purple candy times 20 has to be divisible by 7, because of the 14 green candies, and 3, because of the 12 red candies. 7\cdot3=21, so the answer has to be \boxed{\textbf{(B) } 21}.
+
+==Video Solution==
+https://youtu.be/szqeHGv9l7E
+
+~Education, the Study of Everything
+
+==Video Solution==
+https://youtu.be/7xf_g3YQk00
+
+~IceMatrix
+
+==Video Solution==
+https://youtu.be/U8LzBqzpQaU
+
+~savannahsolver
+
+== Video Solution ==
+https://youtu.be/HISL2-N5NVg?t=2562
+
+~ pi_is_3.14
+
+==See Also==
+
+{{AMC10 box|year=2019|ab=B|num-b=6|num-a=8}}
+{{AMC12 box|year=2019|ab=B|num-b=4|num-a=6}}
+{{MAA Notice}}

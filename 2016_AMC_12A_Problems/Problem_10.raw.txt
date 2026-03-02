@@ -1,0 +1,37 @@
+== Problem ==
+
+Five friends sat in a movie theater in a row containing <math>5</math> seats, numbered <math>1</math> to <math>5</math> from left to right. (The directions "left" and "right" are from the point of view of the people as they sit in the seats.) During the movie Ada went to the lobby to get some popcorn. When she returned, she found that Bea had moved two seats to the right, Ceci had moved one seat to the left, and Dee and Edie had switched seats, leaving an end seat for Ada. In which seat had Ada been sitting before she got up?
+
+<math>\textbf{(A) }1 \qquad \textbf{(B) } 2 \qquad \textbf{(C) } 3 \qquad \textbf{(D) } 4\qquad \textbf{(E) } 5</math>
+
+==Solution 1==
+Assume that Edie and Dee were originally in seats 3 and 4. If this were so, there is no possible position for which Bea can move 2 seats to the right. The same applies for seats 2 and 3. This means that either Edie or Dee was originally in an edge seat. If Edie and Dee were in seats 1 and 2, then Bea must have been in seat 3, which would mean that seat 5 would now be occupied and the positioning would not work. So, Edie and Dee are in seats 4 and 5. This means that Bea was originally in seat 1. Ceci must have been in seat 3 to keep seat 1 open, which leaves seat 2.
+
+Thus, Ada was in seat <math>\boxed{\textbf{(B) }2}</math>.
+
+==Solution 2==
+Note that the person (out of A,B,C) that moves the most, moves the amount equal to the sum of what the other 2 move. They essentially make a cycle. D & E are seat fillers and can be ignored. A,B,C take up either seats 1,2,3 or 2,4,5. In each case you find A was originally in seat <math>\boxed{2}</math>
+
+==Solution 3 (no casework)==
+Note that the net displacements in the right direction sum up to <math>0</math>. The sum of the net displacements of Bea, Ceci, Dee, Edie is <math>2-1 = 1</math>, so Ada moved exactly <math>1</math> place to the left. Since Ada ended on an end seat, she must have started on seat <math>\boxed{2}</math>.
+
+==Video Solution (CREATIVE THINKING)==
+https://youtu.be/YPz72EyJzbw
+
+~Education, the Study of Everything
+
+
+
+==Video Solution==
+https://youtu.be/dHY8gjoYFXU?t=664
+
+~IceMatrix
+
+https://youtu.be/wKfU1CF-HaA
+
+~savannahsolver
+
+==See Also==
+{{AMC10 box|year=2016|ab=A|num-b=12|num-a=14}}
+{{AMC12 box|year=2016|ab=A|num-b=9|num-a=11}}
+{{MAA Notice}}

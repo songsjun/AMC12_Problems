@@ -1,0 +1,42 @@
+# 2013 AMC 12A Problem 15
+
+## Problem
+Rabbits Peter and Pauline have three offspring—Flopsie, Mopsie, and Cotton-tail. These five rabbits are to be distributed to four different pet stores so that no store gets both a parent and a child. It is not required that every store gets a rabbit. In how many different ways can this be done?
+
+$\textbf{(A)} \ 96 \qquad \textbf{(B)} \ 108 \qquad \textbf{(C)} \ 156 \qquad \textbf{(D)} \ 204 \qquad \textbf{(E)} \ 372$
+## Solution 1
+There are two possibilities regarding the parents.
+
+1) Both are in the same store. In this case, we can treat them both as a single bunny, and they can go in any of the 4 stores. The 3 baby bunnies can go in any of the remaining 3 stores. There are 4 $\cdot 3^3 = 108$ combinations.
+
+2) The two are in different stores. In this case, one can go in any of the 4 stores, and the other can go in any of the 3 remaining stores. The 3 baby bunnies can each go in any of the remaining 2 stores. There are 4 $\cdot 3 \cdot 2^3 = 96$ combinations.
+
+Adding up, we get $108 + 96 = 204$ combinations.
+## Solution 2
+We tackle the problem by sorting it by how many stores are involved in the transaction.
+
+1) 2 stores are involved. There are $\binom{4}{2} = 6$ ways to choose which of the stores are involved and 2 ways to choose which store recieves the parents. 6 $\cdot 2 = 12$ total arrangements.
+
+2) 3 stores are involved. There are $\binom{4}{3} = 4$ ways to choose which of the stores are involved. We then break the problem down to into two subsections - when the parents and grouped together or sold separately.
+
+**Separately:**
+All children must be in one store. There are 3! ways to arrange this. 6 ways in total.
+
+**Together:**
+Both parents are in one store and the 3 children are split between the other two. There are $\binom{3}{2}$ ways to split the children and 3! ways to choose to which store each group will be sold. 3! $\cdot \binom{3}{2} = 18.$
+
+(6 + 18) $\cdot 4 = 96$ total arrangements.
+
+3) All 4 stores are involved. We break down the problem as previously shown.
+
+**Separately:**
+All children must be split between two stores. There are $\binom{3}{2} = 3$ ways to arrange this. We can then arrange which group is sold to which store in 4! ways. 4! $\cdot 3 = 72.$
+
+**Together:**
+Both parents are in one store and the 3 children are each in another store. There are 4! = 24 ways to arrange this.
+
+$24 + 72 = 96$ total arrangements.
+
+**Final Answer:**
+$$12 + 96 + 96 = \boxed{\textbf{(D)} \: 204}.$$
+## See also

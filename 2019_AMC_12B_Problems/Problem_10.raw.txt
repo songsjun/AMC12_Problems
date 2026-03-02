@@ -1,0 +1,57 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2019_AMC_12B_Problems/Problem_10&action=raw
+
+Published Time: Sun, 02 Feb 2020 02:18:46 GMT
+
+Markdown Content:
+==Problem==
+The figure below is a map showing 12 cities and 17 roads connecting certain pairs of cities. Paula wishes to travel along exactly 13 of those roads, starting at city A and ending at city L, without traveling along any portion of a road more than once. (Paula is allowed to visit a city more than once.)
+ import olympiad; unitsize(50); for (int i = 0; i < 3; ++i) { for (int j = 0; j < 4; ++j) { pair A = (j,i); dot(A); } } for (int i = 0; i < 3; ++i) { for (int j = 0; j < 4; ++j) { if (j != 3) { draw((j,i)--(j+1,i)); } if (i != 2) { draw((j,i)--(j,i+1)); } } } label("$A$", (0,2), W); label("$L$", (3,0), E); 
+
+How many different routes can Paula take?
+
+\textbf{(A) } 0 \qquad\textbf{(B) } 1 \qquad\textbf{(C) } 2 \qquad\textbf{(D) } 3 \qquad\textbf{(E) } 4
+
+==Solution 1 (graph theory)==
+Note that of the 12 cities, 6 of them (2 on the top, 2 on the bottom, and 1 on each side) have 3 edges coming into/out of them (i.e., in graph theory terms, they have degree 3). Therefore, at least 1 edge connecting to each of these cities cannot be used. Additionally, the same applies to the start and end points, since we don't want to return to them. Thus there are 6+2=8 vertices that we know have 1 unused edge, and we have 17-13=4 unused edges to work with (since there are 17 edges in total, and we must use exactly 13 of them). It is not hard to find that there is only one configuration satisfying these conditions:
+
+''Note:'' \text{X}s represent unused edges.
+
+ import olympiad; unitsize(50); for (int i = 0; i < 3; ++i) { for (int j = 0; j < 4; ++j) { pair A = (j,i); dot(A); } } for (int i = 0; i < 3; ++i) { for (int j = 0; j < 4; ++j) { if (j != 3) { draw((j,i)--(j+1,i)); } if (i != 2) { draw((j,i)--(j,i+1)); } } } label("$A$", (0,2), W); label("$L$", (3,0), E); label("X", (0, 1.5)); label("X", (1.5, 2)); label("X", (1.5, 0)); label("X", (3, 0.5)); label("O", (1,1), NE); label("O", (2,1), NE); 
+
+Observe that at each of the 2 cities marked with an \text{O} on a path, there are 2 possibilities: we can either continue straight and cross back over the path later, or we can make a left turn, then turn right when we approach the junction again. This gives us a total of 2\cdot 2 = \boxed{\textbf{(E) } 4} valid paths.
+
+==Solution 2 (longer graph theory)==
+Let the bottom-left vertex be (0,0), and let each of the edges have length 1, so that all of the vertices are at lattice points.
+Firstly, notice that for any vertex V on the graph (other than A or L), we can visit it at most M(V) = \left\lfloor \frac{\text{deg}(V)}{2} \right\rfloor times, where \text{deg}(V) is, as usual, the degree of V (i.e. the number of edges coming into/out of V). This is because to visit any of these vertices, we would have to enter and exit it by two different edges, in order to avoid using any portion of a road more than once. (Those who know some graph theory will recognise this a well-known principle.) We will label each vertex with this number.
+ import olympiad; unitsize(50); for (int i = 0; i < 3; ++i) { for (int j = 0; j < 4; ++j) { pair A = (j,i); dot(A); } } for (int i = 0; i < 3; ++i) { for (int j = 0; j < 4; ++j) { if (j != 3) { draw((j,i)--(j+1,i)); } if (i != 2) { draw((j,i)--(j,i+1)); } } } label("$A$", (0,2), W); label("$L$", (3,0), E); label("1", (1,2), N); label("1", (2,2), N); label("1", (3,2), N); label("1", (0,1), W); label("2", (1,1), NW); label("2", (2,1), NW); label("1", (3,1), E); label("1", (0,0),S); label("1", (1,0),S); label("1", (2,0),S); 
+Additionally, notice that if we visit n vertices (not necessarily distinct, i.e. counting a vertex which is visited twice as two vertices) along our path, we must traverse n-1 edges (this is quite easy to prove). Thus, if we want to traverse 13 edges in total, we have to visit 14 vertices. We must visit A and L, leaving 12 vertices from the rest of the graph to visit. 
+
+If we sum the maximum numbers of visits to each vertex, we find that this is exactly equal to the 12 found above. This means that we have to visit each vertex M(V) times, and must traverse 2\cdot M(V) edges connected to each vertex. Specifically, we must traverse all 4 of the edges connected to the two central vertices at (1,1) and (1,2), as well as both edges connected to the 2 corner vertices (excluding A and L), and any 2 edges connected to the other vertices along the outside edge of the rectangle.
+
+With this information, we can now proceed by dividing into cases.
+
+'''Case 1''': We first move down from A.
+
+In this case, we see that we must immediately move right to (1,1) in order to traverse the edge from (0,1) to (1,1), since we can never revisit (0,1). However, by the same logic, we must immediately move to (0,0). This is a contradiction, so there are no possible paths in this case.
+
+'''Case 2''': We first move right from A.
+
+Similar to the last case, we see that we must immediately move to (1,1). By symmetry, we conclude that our last two moves must be (2,1) \rightarrow (2,0) \rightarrow (3,0). With this information, we have reduced the problem to traveling from (1,1) to (2,1) with the same constraints as before. We redraw the graph, removing the edges we have already used and updating our labels (note that (1,1) and (2,1) are still labeled with 2 since we will pass through them twice, at the start and the end). Then, we remove the vertices with label 0 and the edges we know we can never traverse, giving:
+
+ import olympiad; unitsize(50); for (int i = 0; i < 3; ++i) { for (int j = 0; j < 4; ++j) { if(j==1 && i==2) {continue;} if(j==2 && i==0) {continue;} pair A = (j,i); dot(A); } } draw((0,0)--(1,0)--(1,1)--(0,1)--cycle); draw((2,1)--(3,1)--(3,2)--(2,2)--cycle); draw((1,1)--(2,1)); label("$A$", (0,2), W); label("$L$", (3,0), E); label("1", (2,2), N); label("1", (3,2), N); label("1", (0,1), W); label("2", (1,1), NW); label("2", (2,1), NW); label("1", (3,1), E); label("1", (0,0),S); label("1", (1,0),S); 
+Now, it is clear that we must complete a cycle in the lower left square, return to (1,1), go to (2,1), and complete a cycle in the top right square, returning to (2,1).
+There are two ways to traverse each cycle (clockwise and anti-clockwise), giving us a total of 2\cdot 2 = \boxed{\textbf{(E) } 4} paths of length 13 from A to L.
+
+==Solution 3 (Condensed version of Solution 1)==
+Observe that only the two central vertices can be visited twice. Since the path is of length 13, we need to repeat a vertex. Using casework on each vertex, we can find there are two paths that go through each central vertex twice, for an answer of \boxed{4}.
+
+==Solution 4==
+Looking at the answer choices we see that it would probably be easy enough to count the different paths. After some experimenting, we find that we must cross one of the middle vertexes twice, making counting easier. 
+
+We finally find that there are \boxed{4} paths that satisfy the conditions. Luckily, 4 is the largest answer choice so we know it must be correct.
+
+==See Also==
+{{AMC12 box|year=2019|ab=B|num-b=9|num-a=11}}
+{{MAA Notice}}

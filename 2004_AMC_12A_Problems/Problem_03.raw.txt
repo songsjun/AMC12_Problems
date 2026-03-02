@@ -1,0 +1,29 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2004_AMC_12A_Problems/Problem_3&action=raw
+
+Published Time: Sat, 29 Sep 2018 05:35:30 GMT
+
+Markdown Content:
+==Problem==
+For how many ordered pairs of positive integers (x,y) is x + 2y = 100?
+
+\text {(A)} 33 \qquad \text {(B)} 49 \qquad \text {(C)} 50 \qquad \text {(D)} 99 \qquad \text {(E)}100
+
+==Solution 1==
+Every integer value of y leads to an integer solution for x
+Since y must be positive, y\geq 1
+
+Also, y = \frac{100-x}{2}
+Since x must be positive, y < 50
+
+1 \leq y < 50
+This leaves 49 values for y, which mean there are 49 solutions to the equation \Rightarrow \mathrm{(B)}
+
+==Solution 2==
+If x and 2y must each be positive integers, then we can say that x is at least 1 and 2y is at least 1. From there, we want to find out how many ways there are to distribute the other 98 ones (the smallest positive integer addends of 100). 98 identical objects can be distributed to two distinct bins in 99 ways (think stars and bars), yet this 99 is an overcount. Because y must be an integer, 2y must be even; thus only \left\lfloor \frac{99}{2} \right\rfloor = \boxed{ 49 \implies B} ways exist to distribute these ones.
+
+==See Also==
+
+{{AMC12 box|year=2004|ab=A|num-b=2|num-a=4}}
+{{MAA Notice}}

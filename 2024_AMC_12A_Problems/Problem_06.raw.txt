@@ -1,0 +1,74 @@
+{{duplicate|[[2024 AMC 10A Problems/Problem 7|2024 AMC 10A #7]] and [[2024 AMC 12A Problems/Problem 6|2024 AMC 12A #6]]}}
+
+==Problem==
+The product of three integers is <math>60</math>. What is the least possible positive sum of the 
+three integers? 
+
+<math>\textbf{(A) }2\qquad\textbf{(B) }3\qquad\textbf{(C) }5\qquad\textbf{(D) }6\qquad\textbf{(E) }13</math>
+
+==Solution 1==
+We notice that the optimal solution involves two negative numbers and a positive number. Thus we may split <math>60</math> into three factors and choose negativity. We notice that <math>10\cdot6\cdot1=10\cdot(-6)\cdot(-1)=60</math>, and trying other combinations does not yield lesser results so the answer is <math>10-6-1=\boxed{\textbf{(B) }3}</math>.
+
+~eevee9406
+
+== Solution 2==
+We have <math>abc = 60</math>. Let <math>a</math> be positive, and let <math>b</math> and <math>c</math> be negative. Then we need <math>a > |b + c|</math>. If <math>a = 6</math>, then <math>|b + c|</math> is at least <math>7</math>, so this doesn't work. If <math>a = 10</math>, then <math>(b,c) = (-6,-1)</math> works, giving <math>10 - 7 = \boxed{\textbf{(B) }3}</math>
+
+~[[User:pog|pog]],~[[User:Mathkiddus|mathkiddus]]
+
+== Solution 3 ==
+We can see that the most optimal solution would be <math>1</math> positive integer and <math>2</math> negative ones (as seen in solution 1). Let the three integers be <math>x</math>, <math>y</math>, and <math>z</math>, and let <math>x</math> be positive and <math>y</math> and <math>z</math> be negative. If we want the optimal solution, we want the negative numbers to be as large as possible. so the answer should be <math>-60 \cdot -1 \cdot 1</math>, where <math>-60 - 1 + 1 = -60</math>... right?
+
+No! Our sum must be positive, so that would be invalid! We see that -<math>30, -20, -15</math>, and <math>-10</math> are too less to allow the sum to be positive. For example, <math>-15 = z. -15xy=60</math>, so <math>xy = -4</math>. For <math>xy</math> to be the most positive, we will have <math>4</math> and <math>-1</math>. Yet, <math>-15+4-1</math> is still negative. After <math>-10</math>, the next factor of <math>60</math> would be <math>-6</math>. if <math>z</math> = <math>-6</math>, <math>xy = -10</math>. This might be positive! Now, if we have <math>z = -6, y = -1</math>, and <math>x = 10, x + y + z = 3</math>. It cannot be smaller because <math>x = 5</math> and <math>y = -2</math> would result in <math>x + y + z</math> being negative. Therefore, our answer would be <math>\boxed{\textbf{(B) }3}</math>.
+
+~Moonwatcher22
+
+Tiny minor edits made by SuperVince1
+
+== Video Solution by Apex Academy ==
+
+https://youtu.be/bXyUErRWq5Q
+
+==Video Solution(Don't be tricked!)==
+https://youtu.be/l3VrUsZkv8I
+
+== Video Solution by Math from my desk ==
+
+https://www.youtube.com/watch?v=ptw2hYKoAIs&t=2s
+
+== Video Solution (🚀 2 min solve 🚀) ==
+
+https://youtu.be/u42_QzyO9zA
+
+<i>~Education, the Study of Everything</i>
+
+== Video Solution by Pi Academy ==
+
+https://youtu.be/6qYaJsgqkbs?si=K2Ebwqg-Ro8Yqoiv
+
+== Video Solution 1 by Power Solve ==
+https://youtu.be/j-37jvqzhrg?si=aggRgbnyZ3QjYwZF&t=806
+
+== Video Solution by Daily Dose of Math ==
+
+https://youtu.be/e8eL1l5os30
+
+~Thesmartgreekmathdude
+
+==Video Solution by SpreadTheMathLove==
+https://www.youtube.com/watch?v=_o5zagJVe1U
+
+==Video Solution by Dr. David==
+https://youtu.be/5nRW7pb3ZXs
+
+==Video solution by TheNeuralMathAcademy==
+https://www.youtube.com/watch?v=4b_YLnyegtw&t=1033s
+
+==See Also==
+{{AMC10 box|year=2024|ab=A|before=[[2023 AMC 10B Problems]]|after=[[2024 AMC 10B Problems]]}}
+{{AMC12 box|year=2024|ab=A|before=[[2023 AMC 12B Problems]]|after=[[2024 AMC 12B Problems]]}}
+* [[AMC 10]]
+* [[AMC 10 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

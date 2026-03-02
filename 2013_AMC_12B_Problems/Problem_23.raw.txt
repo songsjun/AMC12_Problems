@@ -1,0 +1,165 @@
+{{duplicate|[[2013 AMC 12B Problems|2013 AMC 12B #23]] and [[2013 AMC 10B Problems|2013 AMC 10B #25]]}}
+
+==Problem==
+
+Bernardo chooses a three-digit positive integer <math>N</math> and writes both its base-5 and base-6 representations on a blackboard. Later LeRoy sees the two numbers Bernardo has written. Treating the two numbers as base-10 integers, he adds them to obtain an integer <math>S</math>. For example, if <math>N = 749</math>, Bernardo writes the numbers <math>10,\!444</math> and <math>3,\!245</math>, and LeRoy obtains the sum <math>S = 13,\!689</math>. For how many choices of <math>N</math> are the two rightmost digits of <math>S</math>, in order, the same as those of <math>2N</math>?
+
+<math> \textbf{(A)}\ 5 \qquad\textbf{(B)}\ 10 \qquad\textbf{(C)}\ 15 \qquad\textbf{(D)}\ 20 \qquad\textbf{(E)}\ 25</math>
+
+==Solution 1==
+First, we can examine the units digits of the number base 5 and base 6 and eliminate some possibilities.
+
+Say that <math>N \equiv a \pmod{6}</math>
+
+also that <math>N \equiv b \pmod{5}</math>
+
+Substituting these equations into the question and setting the units digits of <math>2N</math> and <math>S</math> equal to each other, it can be seen that <math>b < 5</math> (because otherwise <math>a</math> and <math>b</math> will have different parities), and thus <math>a=b</math>.
+<math>N \equiv a \pmod{6}</math>,
+<math>N \equiv  a \pmod{5}</math>,
+<math>\implies N=a \pmod{30}</math>,
+<math>0 \le a \le 4 </math>
+
+Therefore, <math>N</math> can be written as  <math>30x+y</math>
+and <math>2N</math> can be written as <math>60x+2y</math>			
+
+Just keep in mind that <math>y</math> can be one of five choices: <math>0, 1, 2, 3,</math> or <math>4</math>, ;
+Also, we have already found which digits of <math>y</math> will add up into the units digits of <math>2N</math>.
+
+Now, examine the tens digit, <math>x</math> by using <math>\mod{25}</math> and <math>\mod{36}</math> to find the tens digit (units digits can be disregarded because <math>y=0,1,2,3,4</math> will always work)
+Then we take <math>N=30x+y</math> <math>\mod{25}</math> and <math>\mod{36}</math> to find the last two digits in the base <math>5</math> and <math>6</math> representation.
+<cmath>N \equiv 30x \pmod{36}</cmath>
+<cmath>N \equiv 30x \equiv 5x \pmod{25}</cmath> 
+Both of those must add up to 
+<cmath>2N\equiv60x \pmod{100}</cmath>
+
+(<math>33 \ge x \ge 4</math>)
+
+Now, since <math>y=0,1,2,3,4</math> will always work if <math>x</math> works, then we can treat <math>x</math> as a units digit instead of a tens digit in the respective bases and decrease the mods so that <math>x</math> is now the units digit.
+<cmath>N \equiv 5x \pmod{6}</cmath> 
+<cmath>N \equiv 6x \equiv x \pmod{5}</cmath> 
+<cmath>2N\equiv 6x \pmod{10}</cmath>
+
+Say that <math>x=5m+n</math> (m is between 0-6, n is 0-4 because of constraints on x)
+Then 
+
+<cmath>N \equiv 5m+n \pmod{5}</cmath> 
+<cmath>N \equiv 25m+5n \pmod{6}</cmath> 
+<cmath>2N\equiv30m + 6n \pmod{10}</cmath>
+
+and this simplifies to 
+
+<cmath>N \equiv n \pmod{5}</cmath> 
+<cmath>N \equiv m+5n \pmod{6}</cmath>
+<cmath>2N\equiv 6n \pmod{10}</cmath>
+
+From careful inspection, this is true when
+
+<math>n=0, m=6</math>
+
+<math>n=1, m=6</math>
+
+<math>n=2, m=2</math>
+
+<math>n=3, m=2</math>
+
+<math>n=4, m=4</math>
+
+This gives you <math>5</math> choices for <math>x</math>, and <math>5</math> choices for <math>y</math>, so the answer is 
+<math>5* 5 = \boxed{\textbf{(E) }25}</math>
+
+==Solution 2==
+Notice that there are exactly <math>1000-100=900=5^2\cdot 6^2</math> possible values of <math>N</math>. This means, in <math>100\le N\le 999</math>, every possible combination of <math>2</math> digits will happen exactly once. We know that <math>N=900,901,902,903,904</math> work because <math>900\equiv\dots00_5\equiv\dots00_6</math>.
+
+We know for sure that the units digit will add perfectly every <math>30</math> added or subtracted, because <math>\text{lcm }(5, 6)=30</math>. So we only have to care about cases of <math>N</math> every <math>30</math> subtracted. In each case, <math>2N</math> subtracts <math>6</math>/adds <math>4</math>, <math>N_5</math> subtracts <math>1</math> and <math>N_6</math> adds <math>1</math> for the <math>10</math>'s digit.
+
+<cmath>\textbf{5 }\textcolor{red}{\text{ 0}}\text{ 4 3 2 1 0 }\textcolor{red}{\text{4}}\text{ 3 2 1 0 4 3 2 1 0 4 }\textcolor{red}{\text{3 2}}\text{ 1 0 4 3 2 1 0 4 3 2 }\textcolor{red}{\text{1}}</cmath>
+
+<cmath>\textbf{6 }\textcolor{red}{\text{ 0}}\text{ 1 2 3 4 5 }\textcolor{red}{\text{0}}\text{ 1 2 3 4 5 0 1 2 3 4 }\textcolor{red}{\text{5 0}}\text{ 1 2 3 4 5 0 1 2 3 4 }\textcolor{red}{\text{5}}</cmath>
+
+<cmath>\textbf{10}\textcolor{red}{\text{ 0}}\text{ 4 8 2 6 0 }\textcolor{red}{\text{4}}\text{ 8 2 6 0 4 8 2 6 0 4 }\textcolor{red}{\text{8 2}}\text{ 6 0 4 8 2 6 0 4 8 2 }\textcolor{red}{\text{6}}</cmath>
+
+As we can see, there are <math>5</math> cases, including the original, that work. These are highlighted in <math>\textcolor{red}{\text{red}}</math>. So, thus, there are <math>5</math> possibilities for each case, and <math>5\cdot 5=\boxed{\textbf{(E) }25}</math>.
+
+== Solution 3 ==
+
+Notice that <math>N_5</math> ranges from <math>3</math> to <math>5</math> digits and <math>N_6</math> ranges from <math>3</math> to <math>4</math> digits.
+
+So we can let <math>N_5 = a_1b_1c_1d_1e_1</math> and <math>N_6 = a_2b_2c_2d_2</math>. <cmath>S = 10000a_1 + 1000(b_1 + a_2) + 100(c_1 + b_2) + 10(d_1 + c_2) + e_1 + d_2.</cmath> To make it easier to work with mod 100, we will let <math>N = 625a_1 + 125b_1 + 25c_1 + 5d_1 + e_1</math> here. So we have:
+
+<cmath>2N \equiv S \pmod{100} \implies 2(625a_1 + 125b_1 + 25c_1 + 5d_1 + e_1) \equiv 10(d_1 + c_2) + e_1 + d_2 \pmod{100}.</cmath>
+
+<cmath>50(a_1 + b_1 + c_1) + \cancel{10d_1} + 2e_1 \equiv \cancel{10d_1} + 10c_2 + e_1 + d_2 \pmod{100}.</cmath>
+
+<cmath>50(a_1 + b_1 + c_1) + e_1 \equiv 10c_2 + d_2 \pmod{100}.</cmath> 
+
+Now note that <math>50(a_1 + b_1 + c_1)</math> and <math>10c_2</math> will always end with zeros, so the only way for this expression to be true is if <math>e_1 = d_2.</math> 
+
+<cmath>50(a_1 + b_1 + c_1) + \cancel{e_1} \equiv 10c_2 + \cancel{d_2} \pmod{100}</cmath>
+
+<cmath>5(a_1 + b_1 + c_1) \equiv c_2 \pmod{10}.</cmath> 
+
+So <math>c_2</math> can either be <math>0</math> or <math>5</math>.
+
+Now we can express <math>N</math> in its base-six and base-five forms and set them equal to each other: 
+
+<cmath>625a_1 + 125b_1 + 25c_1 + 5d_1 + \cancel{d_2} = 216a_2 + 36b_2 + 6c_2 + \cancel{d_2}</cmath> 
+
+<cmath>5(125a_1 + 25b_1 + 5c_1 + d_1) = 6c_2 + 36(b_2 + 6a_2).</cmath> 
+
+Since we established <math>5 \mid c_2</math> (remember, <math>c_2</math> can either be <math>0</math> or <math>5</math>), for the right hand side to be a multiple of <math>5</math>, <math>5 \mid b_2 + 6a_2.</math> So we have seven possible pairs for <math>a_2</math> and <math>b_2</math>: 
+
+<cmath>(a_2, b_2) \rightarrow (5,0), (4,1), (3,2), (2,3), (1,4), (0, 5), (0,0).</cmath> But if we had <math>(0,0),</math> then <math>N_6</math> would only have two digits, and <math>N</math> would not be a three digit number. And if we had <math>a_2 = 5,</math> then <math>N</math> would exceed <math>1000</math> and also not be a three digit number. So we actually have five valid pairs: <math>(4,1), (3,2), (2,3), (1,4), (0, 5).</math> Since a number in one base can be expressed in the other base in exactly one way, and the value of <math>c_2</math> is dependent on <math>a_1, b_1,</math> and <math>c_1,</math> there is one solution <math>(a_1, b_1, c_1, d_1)</math> for every <math>(a_2, b_2)</math> in 
+
+<cmath>N_5 =  625a_1 + 125b_1 + 25c_1 + 5d_1 + d_2 = N_6 =  216a_2 + 36b_2 + 6c_2 + d_2.</cmath> 
+
+And for every pair we have, there are five choices for <math>e_1 = d_2</math> (any integer from <math>0 - 4</math>). So the answer is <math>5 \cdot 5 = \boxed{25}.</math>
+
+~ [[User:grogg007|grogg007]], Nafer
+
+==Solution 4==
+
+Observe that the maximum possible value of the sum of the last two digits of the base <math>5</math> number and the base <math>6</math> number is <math>44+55=99</math>. 
+Let <math>N \equiv a \pmod {25}</math> and <math>N \equiv b \pmod {36}</math>. 
+
+If <math>a < \frac{25}{2}</math>, <math>2N \equiv 2a \pmod {25}</math> and if <math>a > \frac{25}{2}</math>, <math>2N \equiv 2a - 25 \pmod {25}</math>.
+
+Using the same logic for <math>b</math>, if <math>b < 18</math>, <math>2N \equiv 2b \pmod {36}</math>, and in the other case <math>2N \equiv 2b - 36 \pmod {36}</math>.
+
+We can do four cases:
+
+Case 1: <math>a + b = 2a - 25 + 2b - 36 \implies a + b = 61</math>.
+
+For this case, there is trivially only one possible solution, <math>(a, b) = (25, 36)</math>, which is equivalent to <math>(a, b) = (0, 0)</math>. 
+
+Case 2: <math>a + b = 2a - 25 + 2b \implies a + b = 25</math>.
+
+Note that in this case, <math>a \geq 13</math> must hold, and <math>b < 18</math> must hold. 
+We find the possible ordered pairs to be: <math>(13, 12), (14, 11), (15, 10), ..., (24, 1)</math> for a total of <math>12</math> ordered pairs.
+
+Case 3: <math>a + b = 2a + 2b - 36 \implies a + b = 36</math>.
+
+Note that in this case, <math>b \geq 18</math> must hold, and <math>a < 13</math> must hold.
+We find the possible ordered pairs to be: <math>(24, 12), (25, 11), (26, 10), ..., (35, 1)</math> for a total of <math>12</math> ordered pairs.
+
+Case 4: <math>a + b = 2a + 2b</math>.
+
+Trivially no solutions except <math>(a, b) = (0, 0)</math>, which matches the solution in Case 1, which makes this an overcount.
+
+By CRT, each solution <math>(a, b)</math> corresponds exactly one positive integer in a set of exactly <math>\text{lcm} (25, 36) = 900</math> consecutive positive integers, and since there are <math>900</math> positive integers between <math>100</math> and <math>999</math>, our induction is complete, and our answer is <math>1 + 12 + 12 = \boxed{\textbf{(E) }25}</math>.
+
+~ fidgetboss_4000
+
+
+==Video Solution==
+
+https://www.youtube.com/watch?v=tgCK-H5jsOE&t=497s
+
+==See Also==
+
+{{AMC12 box|year=2013|ab=B|num-b=22|num-a=24}}
+
+{{AMC10 box|year=2013|ab=B|num-b=24|after=Last Question}}
+
+{{MAA Notice}}
+
+[[Category:Intermediate Number Theory Problems]]

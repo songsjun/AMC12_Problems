@@ -1,0 +1,61 @@
+# 2009 AMC 12A Problem 18
+
+> This problem is the same as [2009 AMC 12A #18](https://artofproblemsolving.com/wiki/index.php/2009_AMC_12A_Problems) and [2009 AMC 10A #25](https://artofproblemsolving.com/wiki/index.php/2009_AMC_10A_Problems).
+## Problem
+For k > 0, let $I_k=10\ldots 064,$ where there are k zeros between the 1 and the 6.  Let N(k) be the number of factors of 2 in the prime factorization of $I_k$.  What is the maximum value of N(k)?
+
+$\textbf{(A)}\ 6\qquad \textbf{(B)}\ 7\qquad \textbf{(C)}\ 8\qquad \textbf{(D)}\ 9\qquad \textbf{(E)}\ 10$
+## Solution 1
+The number $I_k$ can be written as $10^{k+2}+64 =5^{k+2}\cdot 2^{k+2} + 2^6.$
+
+For $k\in\{1,2,3\}$ we have $I_k=2^{k+2}\left( 5^{k+2} + 2^{4-k} \right).$ The first value in the parentheses is odd, the second one is even, hence their sum is odd and we have N(k)=$k+2\leq 5.$
+
+For k>4 we have $I_k=2^6 \left( 5^{k+2}\cdot 2^{k-4} + 1 \right).$ For k>4 the value in the parentheses is odd, hence $N(k)=6.$
+
+This leaves the case $k=4$. We have $I_4 = 2^6 \left( 5^6 + 1 \right).$ The value $5^6 + 1$ is obviously even. And as $5\equiv 1 \pmod 4,$ we have $5^$6 $\equiv 1 \pmod 4,$ and therefore $5^6 + $1 $\equiv 2 \pmod 4.$ Hence the largest power of 2 that divides $5^6+1$ is $2^1,$ and this gives us the desired maximum of the function N: N(4) = $\boxed{7}.$
+## Solution 2
+Notice that 2 is a prime factor of an integer n if and only if n is even. Therefore, given any sufficiently high positive integral value of k, dividing $I_k$ by $2^6$ yields a terminal digit of zero, and dividing by 2 again leaves us with $2^$7 $\cdota =I_k$ where a is an odd integer.
+Observe then that $\boxed{\textbf{(B)}7}$ must be the maximum value for N(k) because whatever value we choose for k, N(k) must be less than or equal to 7.
+
+"Isn't this solution incomplete because we need to show that $N(k) = 7$ can be reached?"
+
+An example of 7 being reached is 1000064. 1000064 divided by $2^7=128$ is 7813.
+
+In fact, 1000064 is the ONLY N(k) that satisfies 7. All others are 6 or lower, because if there are more zeroes, to be divisible by $128 (2^7),$ the last 7 digits must be divisible by 128, but 64 isn't. Meanwhile, if there are less zeroes, we can test by division that they do not work.
+## Solution 3
+As in the first solution, the number $I_k$ can be written as $10^{k+2}+64 =5^{k+2}2^{k+2} + 2^6$. Factor 2^6 out of the expression to get $I_k = 2^6(1+2^{k-4}5^{k+2})$.
+
+You can now easily see that $I_k$ is divisible by at least 6 factors of two, from $2^6. Any$ other factors of two will come from the expression (1+$2^{k-4}5^{k+2}$).
+
+Make the substitution: $x=k-4$.
+You now have (1+$2^{x}5^{x+6}) = (1+10^x 5^6)$
+
+$5^6=15625,$ so the expression becomes ($1+15625\cdot10^x)$ This is valid when x>-4.
+
+Obviously, if x is negative, the expression will be fractional and not contain any extra factors of two.
+
+If x>0, the value $15625\cdot10^x$ will end in a zero. When 1 is added to the expression, the expression will end in 1. Since numbers divisible by 2 end in 0,2,4,6, or 8, the expression is not divisible by 2 and will not contribute to the total.
+
+If $x=0$, the expression evaluates to 15626. Dividing out twos, you find that this value is only divisible by one factor of 2.
+
+The six factors of two from earlier add to this factor of two to give $\textbf{(B)}$\ $7\qquad$
+
+Solution written by coolak
+## Solution 4
+Similar to the other solutions, notice that $I_k$ can be written as $10^{k+2}+$64 $\Rightarrow 2^{k+2}5^{k+2}+2^6.$ Factoring out $2^6$ we see that
+
+$$I_k = 2^6(2^{k-4}5^{k+2}+1)$$
+
+Notice that for k < 4, $2^{k-4}$ will not be an integer, and will "steal" some 2's from the $2^6.$ We don't want this to happen, since we want to maximize the exponent of 2. We start by considering $k = 4$. Then
+
+$$I_k = 2^6(*5^6+1) \Rightarrow 2^6(5^6+1)$$
+
+$5^6$ is an odd number; more specifically, it ends in 25 (all powers of 5 after $5^1$ end in 25). Therefore the value in the parentheses will be some large number that ends in 26. Considering the rules of divisibility, we find that $5^6+1$ is even, so it is divisible by 2. Now our exponent of 2 is at 7. But the divisibility rule for 4 is the last 2 digits of the number must be divisible by 4. We know the last digits: 26, which is not divisible by 4. Therefore 5^6 + 1 is divisible by 2, but not 4. Testing more values of k, we find that for k $\ge 5,$ the last digit becomes 1, which means it is not even divisible by 2. Therefore the highest possible exponent of 2 that we can reach is 7 $\Rightarrow \boxed{\text{B}}.$
+## Solution 5 (LTE)
+Let $m=k+2. v_2(10^m+2^6$)=6 if m>6 and $v_2(10^m+2^6$)=m if m<6.
+However, if $m=6$, then $v_2(10^6+2^6)=v_2(2^6(5^6+1))=6+v_2(5^6+1)$. By LTE, $v_2(5^6-1)=v_2(5-1)+v_2(5+1)+v_2(6)-1=2+1+1-1=3$. Since $v_2(5^6-1)=3, v_2(5^6+1)$ must equal 1. So, the answer is $6+1=7\Rightarrow \boxed{\text{B}}$
+## Solution 6 (Easy)
+Note that if k<4, then $I_k$ is not divisible by 64=2^6. However, if $k=5$, then 1000064 is divisible by 64. So, we can write $I_k$ for $k=5$ as $I_5=64(1+15625)=2^6(1+15625)$. For $k=5$, we see that $I_5=2^6(1+15625)=2^6(15626)$, which is divisible by $2^7,$ because there is already $a 2^6$ and the 15626 only adds one more factor of 2 (the last two digits of 15626, 26, are not divisible by 4). For k>5 or $k\geq6,$ there are $(k-5)$ zeroes trailing behind 15625, giving $I_k=2^6(1+156250...0)$. 156250...0 is clearly even if there is at least one zero. Then, adding the extra 1 to the even 156250...0 gives 156250...01, which is odd. Thus, for k>5, $I_k=2^6(156250...01)$, which is only divisible by 2^6. Therefore, the maximum value of N(k) is $\boxed{\textbf{(B)} 7}$ when $k=5$.
+
+Written by ChristianZhang
+## See Also

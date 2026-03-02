@@ -1,0 +1,35 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2004_AMC_12A_Problems/Problem_13&action=raw
+
+Published Time: Mon, 19 Oct 2020 04:58:53 GMT
+
+Markdown Content:
+== Problem ==
+Let S be the [[set]] of [[point]]s (a,b) in the [[coordinate plane]], where each of a and b may be - 1, 0, or 1. How many distinct [[line]]s pass through at least two members of S?
+
+\text {(A)}\ 8 \qquad \text {(B)}\ 20 \qquad \text {(C)}\ 24 \qquad \text {(D)}\ 27\qquad \text {(E)}\ 36
+
+== Solution ==
+[[Image:2004_AMC12A-13.png|center]]
+=== Solution 1 ===
+Let's count them by cases:
+
+[[Image:2004_AMC12A-13b.png|center]]
+
+*'''Case 1''': The line is horizontal or vertical, clearly 3 \cdot 2 = 6.
+*'''Case 2''': The line has slope \pm 1, with 2 through (0,0) and 4 additional ones one unit above or below those. These total 6.  
+*'''Case 3''': The only remaining lines pass through two points, a vertex and a non-vertex point on the opposite side. Thus we have each vertex pairing up with two points on the two opposites sides, giving 4 \cdot 2 = 8 lines.
+These add up to 6+6+8=20\ \mathrm{(B)}. 
+
+=== Solution 2 ===
+There are {9 \choose 2} = 36 ways to pick two points, but we've clearly overcounted all of the lines which pass through three points. In fact, each line which passes through three points will have been counted {3 \choose 2} = 3 times, so we have to subtract 2 for each of these lines. Quick counting yields 3 horizontal, 3 vertical, and 2 diagonal lines, so the answer is 36 - 2(3+3+2) = 20 distinct lines.
+
+=== Solution 3 ===
+First consider how many lines go through (-1, -1) and hit two points in S. You can see that there are 5 such lines. Now, we cross out (-1, -1) and make sure to never consider consider lines that go through it anymore (As doing so would be double counting). Repeat for (-1, 0), making sure not to count the vertical line as it goes through the crossed out (-1, -1). Then cross out (-1, 0). Repeat for the rest, and count 20 lines in total.
+
+== See Also ==
+{{AMC12 box|year=2004|ab=A|num-b=12|num-a=14}}
+
+[[Category:Intermediate Combinatorics Problems]]
+http://www.artofproblemsolving.com/Wiki/index.php?title=2004_AMC_12A_Problems/Problem_14&action=edit§ion=3

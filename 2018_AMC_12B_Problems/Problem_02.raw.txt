@@ -1,0 +1,50 @@
+{{duplicate|[[2018 AMC 12B Problems|2018 AMC 12B #2]] and [[2018 AMC 10B Problems|2018 AMC 10B #2]]}}
+
+== Problem ==
+Sam drove <math>96</math> miles in <math>90</math> minutes. His average speed during the first <math>30</math> minutes was <math>60</math> mph (miles per hour), and his average speed during the second <math>30</math> minutes was <math>65</math> mph. What was his average speed, in mph, during the last <math>30</math> minutes?
+
+<math>
+\textbf{(A) } 64 \qquad
+\textbf{(B) } 65 \qquad
+\textbf{(C) } 66 \qquad
+\textbf{(D) } 67 \qquad
+\textbf{(E) } 68
+</math>
+
+== Solution 1 ==
+Suppose that Sam's average speed during the last <math>30</math> minutes was <math>x</math> mph.
+
+Recall that a half hour is equal to <math>30</math> minutes. Therefore, Sam drove <math>60\cdot0.5=30</math> miles during the first half hour, <math>65\cdot0.5=32.5</math> miles during the second half hour, and <math>x\cdot0.5</math> miles during the last half hour. We have <cmath>\begin{align*}
+30+32.5+x\cdot0.5&=96 \\
+x\cdot0.5&=33.5 \\
+x&=\boxed{\textbf{(D) } 67}.
+\end{align*}</cmath>
+~Haha0201 ~MRENTHUSIASM
+
+== Solution 2 ==
+Suppose that Sam's average speed during the last <math>30</math> minutes was <math>x</math> mph.
+
+Note that Sam's average speed during the entire trip was <math>\frac{96}{3/2}=64</math> mph. Since Sam drove at <math>60</math> mph, <math>65</math> mph, and <math>x</math> mph for the same duration (<math>30</math> minutes each), his average speed during the entire trip was the average of <math>60</math> mph, <math>65</math> mph, and <math>x</math> mph. We have
+<cmath>\begin{align*}
+\frac{60+65+x}{3}&=64 \\
+60+65+x&=192 \\
+x&=\boxed{\textbf{(D) } 67}.
+\end{align*}</cmath>
+~coolmath_2018 ~MRENTHUSIASM
+
+== Video Solution ==
+https://youtu.be/77dDIzKprzA
+
+~savannahsolver
+
+==Video Solution (HOW TO THINK CRITICALLY!!!)==
+https://youtu.be/VN88m4xUHM0
+
+~Education, the Study of Everything
+
+==See Also==
+
+{{AMC10 box|year=2018|ab=B|num-b=1|num-a=3}}
+{{AMC12 box|year=2018|ab=B|num-b=1|num-a=3}}
+{{MAA Notice}}
+[[Category: Introductory Algebra Problems]]

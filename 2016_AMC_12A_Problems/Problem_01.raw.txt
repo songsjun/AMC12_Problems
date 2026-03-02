@@ -1,0 +1,100 @@
+==Problem==
+
+What is the value of <math>\dfrac{11!-10!}{9!}</math>?
+
+<math>\textbf{(A)}\ 99\qquad\textbf{(B)}\ 100\qquad\textbf{(C)}\ 110\qquad\textbf{(D)}\ 121\qquad\textbf{(E)}\ 132</math>
+
+==Solution 1==
+
+We can use subtraction of fractions to get <cmath>\frac{11!-10!}{9!} = \frac{11!}{9!} - \frac{10!}{9!} = 110 -10 = \boxed{\textbf{(B)}\;100}.</cmath>
+
+==Solution 2==
+
+Factoring out <math>9!</math> gives <math>\frac{11!-10!}{9!} = \frac{9!(11 \cdot 10 - 10)}{9!} = 110-10=\boxed{\textbf{(B)}~100}</math>.
+
+
+==Solution 3==
+<math>\dfrac{11!-10!}{9!}</math>
+consider 10 as n 
+<math>\dfrac{(n+1)!-n!}{(n-1)!}</math>
+simpify 
+<math>\dfrac{(n+1)n!+(-1)n!}{(n-1)!}</math> = <math>\dfrac{n(n!)}{(n-1)!}</math> = <math>\dfrac{n(n(n-1)!)}{(n-1)!}</math> = <math>\dfrac{n(n)(1)}{1}</math> = <math>\dfrac{n^2}{1}</math>
+subsitute n as 10 again  
+<math>\dfrac{10^2}{1}</math>
+
+answer is <math>10^2</math> which is <math>\boxed{\textbf{(B)}~100}</math>.
+
+==Solution 4==
+We are given the equation <math>\frac{11!-10!}{9!}</math>
+
+This is equivalent to <math>\frac{11(10!) - 1(10!)}{9!}</math>
+Simplifying, we get <math>\frac{(11-1)(10!)}{9!}</math>, which equals <math>10 \cdot 10</math>.
+
+Therefore, the answer is <math>10^2</math> = <math>\boxed{\textbf{(B)}~100}</math>.
+
+~TheGoldenRetriever
+
+==Solution 5 (This is a joke)==
+
+Let
+<cmath>
+I_n := \int_0^\infty x^n e^{-x} \, dx = n!
+</cmath>
+(the Gamma–integral).
+
+Then
+<cmath>
+\frac{11! - 10!}{9!} = \frac{I_{11} - I_{10}}{I_9} = \frac{\int_0^\infty e^{-x} (x^{11} - x^{10}) \, dx}{I_9}.
+</cmath>
+Integration by parts on the numerator with \( u = x^{11} - x^{10} \), \( dv = e^{-x} \, dx \) (so \( du = (11x^{10} - 10x^9) \, dx \), \( v = -e^{-x} \)) gives
+<cmath>
+\int_0^\infty e^{-x} (x^{11} - x^{10}) \, dx = \left[ -e^{-x} (x^{11} - x^{10}) \right]_0^\infty + \int_0^\infty e^{-x} (11x^{10} - 10x^9) \, dx = 11 I_{10} - 10 I_9,
+</cmath>
+since the boundary term vanishes.
+
+Hence
+<cmath>
+\frac{I_{11} - I_{10}}{I_9} = \frac{11 I_{10}}{I_9} - 10.
+</cmath>
+Do another integration by parts to relate \( I_{10} \) and \( I_9 \):
+<cmath>
+I_{10} = \int_0^\infty x^{10} e^{-x} \, dx = \left[ -x^{10} e^{-x} \right]_0^\infty + 10 \int_0^\infty x^9 e^{-x} \, dx = 10 I_9.
+</cmath>
+Therefore
+<cmath>
+\frac{I_{11} - I_{10}}{I_9} = 11 \cdot 10 - 10 = 100.
+</cmath>
+
+<math>\boxed{(B) 100}</math>.
+
+~Pinotation
+
+~Minorly Edited by OffBrandCab
+
+==Video Solution (HOW TO THINK CREATIVELY!!!)==
+ https://youtu.be/r5G98oPPyNM
+
+~Education, the Study of Everything
+
+
+
+==Video Solution==
+https://youtu.be/VIt6LnkV4_w
+
+
+https://youtu.be/CrS7oHDrvP8
+
+~savannahsolver
+
+==Video Solution (FASTEST METHOD!)==
+
+https://youtu.be/jowREGsZaTs
+
+~Veer Mahajan
+
+
+==See Also==
+{{AMC10 box|year=2016|ab=A|before=First Problem|num-a=2}}
+{{AMC12 box|year=2016|ab=A|before=First Problem|num-a=2}}
+{{MAA Notice}}
+[[Category: Introductory Algebra Problems]]

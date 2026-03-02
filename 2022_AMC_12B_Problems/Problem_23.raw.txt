@@ -1,0 +1,204 @@
+{{duplicate|[[2022 AMC 10B Problems#Problem 25|2022 AMC 10B #25]] and [[2022 AMC 12B Problems#Problem 23|2022 AMC 12B #23]]}}
+
+==Problem==
+Let <math>x_0,x_1,x_2,\dotsc</math> be a sequence of numbers, where each <math>x_k</math> is either <math>0</math> or <math>1</math>. For each positive integer <math>n</math>, define 
+<cmath>S_n = \sum_{k=0}^{n-1} x_k 2^k</cmath>
+Suppose <math>7S_n \equiv 1 \pmod{2^n}</math> for all <math>n \geq 1</math>. What is the value of the sum  
+<cmath>x_{2019} + 2x_{2020} + 4x_{2021} + 8x_{2022}?</cmath>
+<math>\textbf{(A) } 6 \qquad \textbf{(B) } 7 \qquad \textbf{(C) }12\qquad \textbf{(D) } 14\qquad \textbf{(E) }15</math>
+
+==Solution 1==
+
+In binary numbers, we have <cmath>S_n = (x_{n-1} x_{n-2} x_{n-3} x_{n-4} \ldots x_{2} x_{1} x_{0})_2.</cmath>
+It follows that <cmath>8S_n = (x_{n-1} x_{n-2} x_{n-3} x_{n-4} \ldots x_{2} x_{1} x_{0}000)_2.</cmath>
+We obtain <math>7S_n</math> by subtracting the equations:
+<cmath>\begin{array}{clccrccccccr}
+  & (x_{n-1} & x_{n-2} & x_{n-3} & x_{n-4} & \ldots & x_2 & x_1 & x_0 & 0 & 0 & 0 \ )_2 \\
+-\quad & & & & (x_{n-1} & \ldots & x_5 & x_4 & x_3 & x_2 & x_1 & x_0)_2 \\
+\hline
+  & & & & & & & & & & &  \\ [-2.5ex]
+  & ( \ \ ?& ? & ? & 0 \ \ \ & \ldots & 0 & 0 & 0 & 0 & 0 & 1 \ )_2 \\
+\end{array}</cmath>
+We work from right to left:
+<cmath>\begin{alignat*}{6}
+x_0=x_1=x_2=1 
+\quad &\implies \quad &x_3 &= 0& \\ 
+\quad &\implies \quad &x_4 &= 1& \\ 
+\quad &\implies \quad &x_5 &= 1& \\
+\quad &\implies \quad &x_6 &= 0& \\ 
+\quad &\implies \quad &x_7 &= 1& \\ 
+\quad &\implies \quad &x_8 &= 1& \\
+\quad &\quad \vdots & & &
+\end{alignat*}</cmath>
+For all <math>n\geq3,</math> we conclude that
+
+* <math>x_n=0</math> if and only if <math>n\equiv 0\pmod{3}.</math>
+
+* <math>x_n=1</math> if and only if <math>n\not\equiv 0\pmod{3}.</math>
+
+Finally, we get <math>(x_{2019},x_{2020},x_{2021},x_{2022})=(0,1,1,0),</math> from which <cmath>x_{2019} + 2x_{2020} + 4x_{2021} + 8x_{2022} = \boxed{\textbf{(A) } 6}.</cmath>
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+~MRENTHUSIASM
+
+==Solution 2==
+First, notice that <cmath>x_{2019} + 2x_{2020} + 4x_{2021} + 8x_{2022} = \frac{S_{2023} - S_{2019}}{2^{2019}}.</cmath>
+Then since <math>S_n</math> is the modular inverse of <math>7</math> in <math>\mathbb{Z}_{2^n}</math>, we can perform the Euclidean Algorithm to find it for <math>n = 2019,2023</math>.
+
+Starting with <math>2019</math>, 
+<cmath>\begin{align*}
+7S_{2019} &\equiv 1 \pmod{2^{2019}} \\
+7S_{2019} &= 2^{2019}k + 1.
+\end{align*}</cmath>
+Now, take both sides <math>\operatorname{mod} \ 7</math>:
+<cmath>0 \equiv 2^{2019}k + 1 \pmod{7}.</cmath>
+Using Fermat's Little Theorem, <cmath>2^{2019} = (2^{336})^6 \cdot 2^3 \equiv 2^3 \equiv 1 \pmod{7}.</cmath>
+Thus,  <cmath>0 \equiv k + 1 \pmod{7} \implies k \equiv 6 \pmod{7} \implies k = 7j + 6.</cmath>
+Therefore, <cmath>7S_{2019} = 2^{2019} (7j + 6) + 1 \implies S_{2019} = \frac{2^{2019} (7j + 6) + 1}{7}.</cmath>
+
+We may repeat this same calculation with <math>S_{2023}</math> to yield <cmath>S_{2023} = \frac{2^{2023} (7h + 3) + 1}{7}.</cmath>
+Now, we notice that <math>S_n</math> is basically an integer expressed in binary form with <math>n</math> bits.
+This gives rise to a simple inequality, <cmath>0 \leqslant S_n \leqslant 2^n.</cmath>
+Since the maximum possible number that can be generated with <math>n</math> bits is <cmath>\underbrace{{11111\dotsc1}_2}_{n} = \sum_{k=0}^{n-1} 2^k = 2^n - 1 \leqslant 2^n.</cmath>
+Looking at our calculations for <math>S_{2019}</math> and <math>S_{2023}</math>, we see that the only valid integers that satisfy that constraint are <math>j = h = 0</math>.
+<cmath>\frac{S_{2023} - S_{2019}}{2^{2019}} = \frac{\tfrac{2^{2023} \cdot 3 + 1}{7} - \tfrac{2^{2019} \cdot 6 + 1}{7}}{2^{2019}} = \frac{2^4 \cdot 3 - 6}{7} = \boxed{\textbf{(A) } 6}.</cmath>
+~zoomanTV
+
+==Solution 3 ==
+
+As in Solution 2, we note that 
+<cmath>x_{2019}+2x_{2020}+4x_{2021}+8x_{2022}=\frac{S_{2023}-S_{2019}}{2^{2019}}.</cmath>
+We also know that <math>7S_{2023} \equiv 1 \pmod{2^{2023}}</math> and <math>7S_{2019} \equiv 1 \pmod{2^{2019}}</math>, this implies:
+<cmath> \textbf{(1) } 7S_{2023}=2^{2023}\cdot{x} + 1, </cmath>
+<cmath> \textbf{(2) } 7S_{2019}=2^{2019}\cdot{y} + 1. </cmath>
+Dividing by <math>7</math>, we can isolate the previous sums:
+<cmath> \textbf{(3) } S_{2023}=\frac{2^{2023}\cdot{x} + 1}{7}, </cmath>
+<cmath> \textbf{(4) } S_{2019}=\frac{2^{2019}\cdot{y} + 1}{7}. </cmath>
+The maximum value of <math>S_n</math> occurs when every <math>x_i</math> is equal to <math>1</math>. Even when this happens, the value of <math>S_n</math> is less than <math>2^n</math>. Therefore, we can construct the following inequalities:
+<cmath> \textbf{(3) } S_{2023}=\frac{2^{2023}\cdot{x} + 1}{7} < 2^{2023}, </cmath>
+<cmath> \textbf{(4) } S_{2019}=\frac{2^{2019}\cdot{y} + 1}{7} < 2^{2019}. </cmath>
+From these two equations, we can deduce that both <math>x</math> and <math>y</math> are less than <math>7</math>. 
+
+Reducing <math>\textbf{1}</math> and <math>\textbf{2}</math> <math>\pmod{7},</math> we see that 
+<cmath>2^{2023}\cdot{x}\equiv 6\pmod{7},</cmath>
+and 
+<cmath>2^{2019}\cdot{y}\equiv 6\pmod{7}.</cmath>
+
+The powers of <math>2</math> repeat every <math>3, \pmod{7}.</math> 
+
+Therefore, <math>2^{2023}\equiv 2 \pmod 7</math> and <math>2^{2019} \equiv 1 \pmod {7}.</math> Substituing this back into the above equations, 
+<cmath>2x\equiv{6}\pmod{7}</cmath>
+and
+<cmath>y\equiv{6}\pmod{7}.</cmath>
+
+Since <math>x</math> and <math>y</math> are integers less than <math>7</math>, the only values of <math>x</math> and <math>y</math> are <math>3</math> and <math>6</math> respectively. 
+
+The requested sum is 
+<cmath>\begin{align*}
+\frac{S_{2023}-S_{2019}}{2^{2019}} &= \frac{\frac{2^{2023}\cdot{x} + 1}{7} - \frac{2^{2019}\cdot{y} + 1}{7}}{2^{2019}} \\
+&= \frac{1}{2^{2019}}\left(\frac{2^{2023}\cdot{3} + 1}{7} -\left(\frac{2^{2019}\cdot{6} + 1}{7}  \right)\right) \\
+&= \frac{3\cdot{2^4}-6}{7} \\
+&= \boxed{\textbf{(A) } 6}.
+\end{align*}</cmath>
+-Benedict T (countmath1)
+
+==Solution 4 ==
+
+Note that, as in Solution 2, we have <cmath>x_{2019} + 2x_{2020} + 4x_{2021} + 8x_{2022} = \frac{S_{2023} - S_{2019}}{2^{2019}}.</cmath> This is because <cmath>S_{2023} = x_{0}2^{0} + x_{1}2^{1} + \cdots + x_{2019}2^{2019} + \cdots + x_{2022}2^{2022}</cmath> and <cmath>S_{2019} = x_{0}2^{0} + x_{1}2^{1} + \cdots + x_{2018}2^{2018}.</cmath> Note that <cmath>S_{2023} - S_{2019} = x_{2019}2^{2019} + \cdots + x_{2022}2^{2022} = 2^{2019}(x_{2019} + 2x_{2020} + 4x_{2021} + 8x_{2022}).</cmath> Therefore, <cmath>x_{2019} + 2x_{2020} + 4x_{2021} + 8x_{2022} = \frac{S_{2023} - S_{2019}}{2^{2019}}.</cmath> Multiplying both sides by 7 gives us <cmath>7(x_{2019} + 2x_{2020} + 4x_{2021} + 8x_{2022}) = \frac{7S_{2023} - 7S_{2019}}{2^{2019}}.</cmath> We can write <cmath>7S_{2023} = 1\pmod{2^{2023}} = 1 + 2^{2023}a = 1 + 2^{2019}*16a</cmath> and <cmath>7S_{2019} = 1\pmod{2^{2019}} = 1 + 2^{2019}b</cmath> for some a and b. Substituting, we get <cmath>7(x_{2019} + 2x_{2020} + 4x_{2021} + 8x_{2022}) = \frac{(1 + 2^{2019} * 16a) - (1 + 2^{2019}b)}{2^{2019}} = 16a - b.</cmath> Therefore, our answer can be written as <cmath>\frac{16a - b}{7}.</cmath> Another thing to notice is that a and b are integers between 0 and 6. This is because <cmath>7(1 + 2 + 4 + 8 + \cdots + 2^{2022}) \geqslant 7S_{2023} = 1 + 2^{2023}a</cmath> which is <cmath>7(2^{2023}) - 7 \geqslant 1 + 2^{2023}a</cmath> <cmath>(7-a) \geqslant \frac{8}{2^{2023}}</cmath> which only holds when a is less than 7 because the right is very small positive number, so the left must be positive, too. Clearly, a is also non-negative, because otherwise, <cmath>7S_{2023} = 1 + 2^{2023}a < 0</cmath> which would mean <cmath>S_{2023} < 0</cmath> which cannot happen, so a is greater than 0.  A similar explanation for b shows that b is an integer between 0 and 6 inclusive. 
+
+Going back to the solution, if our answer to the problem is n, then <cmath>16a - b = 7n</cmath> and <cmath>16a = 7n + b,</cmath> so we can try the five option choices and see which one, when multiplied by 7 and added to some whole number between 0 and 6 results in a multiple of 16. Trying all the option choices, we see that you need to add 7n to something more than 6 to equal a multiple of 16 other than for option A. Therefore, the answer is <math>\boxed{\textbf{(A) } 6}.</math>
+
+-Rutvik Arora (youtube channel: https://www.youtube.com/channel/UCkgAgmNAQV8WGTOazGYEGwg)
+-whatdohumanitarianseat made a small edit for a typo
+
+==Solution 5 ==
+
+Given that <math>7S_n \equiv 1 \pmod{2^n}</math>, we have
+<cmath>\begin{align*}
+7S_n &= a_n2^n + 1\\
+7S_{n-1} &= a_{n-1}2^{n-1} + 1.
+\end{align*}</cmath>
+where <math>a_n</math> is integer.
+
+Notice that <cmath>S_n = S_{n-1} + 2^{n-1}x_{n-1}.</cmath>
+Thus,
+<cmath>\begin{align*}
+7(S_n - S_{n-1}) &= 2^{n-1}(2a_n - a_{n-1})\\
+7 \cdot 2^{n - 1}x_{n - 1} &= 2^{n - 1}(2a_n - a_{n - 1})\\
+7x_{n-1} &= 2a_n - a_{n-1}.
+\end{align*}</cmath>
+Obviously, <math>x_0 = 1</math>, <math>S_1 = 1</math>, <math>7S_1 = 3 \times 2^1 + 1</math>, so <math>a_1 = 3</math>. 
+For each <math>i</math>, <math>x_i</math> must be 0 or 1, and <math>a_i</math> is an integer, so we can repeat the recursion to yield
+<cmath>\begin{align*}
+x_1 = \frac{2a_2 - a_1}{7} = \frac{2a_2 - 3}{7}\text{ can only be 1, where }a_2 = 5\\
+x_2 = \frac{2a_3 - a_2}{7} = \frac{2a_3 - 5}{7}\text{ can only be 1, where }a_3 = 6\\
+x_3 = \frac{2a_4 - a_3}{7} = \frac{2a_4 - 6}{7}\text{ can only be 0, where }a_4 = 3\\
+x_4 = \frac{2a_5 - a_4}{7} = \frac{2a_5 - 3}{7}\text{ can only be 1, where }a_5 = 5\\
+x_5 = \frac{2a_6 - a_5}{7} = \frac{2a_6 - 5}{7}\text{ can only be 1, where }a_6 = 6\\
+x_6 = \frac{2a_7 - a_6}{7} = \frac{2a_7 - 6}{7}\text{ can only be 0, where }a_7 = 3
+\end{align*}</cmath>
+So for any non-negative integer <math>k</math>,  we can find that <math>x_{3k + 1} = 1</math>, <math>x_{3k + 2} = 1</math>, <math>x_{3k + 3} = 0</math>, <cmath>x_{2019} + 2x_{2020} + 4x_{2021} + 8x_{2022} = 0 + 2 \times 1 + 4 \times 1 + 8 \times  0 = \boxed{\textbf{(A) } 6}.</cmath>
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Reda_mandymath reda_mandymath]
+
+==Solution 6==
+
+Using the given conditions, it is evident that <math>x_{2019} + 2x_{2020} + 4x_{2021} + 8x_{2022}=\frac{S_{2023}-S_{2019}}{2^{2019}}=a</math> (for simplicity). Moreover, because <math>7S_n \equiv 1 \pmod{2^n}</math> is true, an impulse to multiply the numerator and denominator by 7 is created. Let <math>7S_{2023}=2^{2023}k+1</math> and <math>7S_{2019}=2^{2019}k'+1</math>.
+\begin{align*}
+a=\frac{7S_{2023}-7S_{2019}}{7\cdot2^{2019}}&=\frac{2^{2023}k+1-2^{2019}k'-1}{7\cdot2^{2019}} \\
+&=\frac{2^4k-k'}{7} \\
+&=\frac{16k-k'}{7} \\
+\end{align*}
+Furthermore, because <math>0\le x_{2019} + 2x_{2020} + 4x_{2021} + 8x_{2022}\le15</math>, <math>0\le\frac{16k-k'}{7}\le15</math>. The order pairs <math>(k,k',a)</math> could be found through trial and error that satisfies conditions <math>7S_{2023}=2^{2023}k+1</math> and <math>7S_{2019}=2^{2019}k'+1</math>. It is evident that <math>k\ne0,1,2</math> using Euler's Theorem.
+
+<math>(3,6,6)</math> is valid because <math>7|2^{2023}\cdot3+1</math> and <math>7|2^{2019}\cdot6</math>.
+Thereby, <math>x_{2019} + 2x_{2020} + 4x_{2021} + 8x_{2022}=\boxed{\textbf{(A) } 6}</math>.
+
+~MaPhyCom
+
+==Solution 7 (Very Fast but Still Rigorous)==
+
+<math>7=2^3-1 | 2^{2022}-1</math> since <math>3|2022</math>, so <math>2^{2022} \equiv 1 \pmod 7</math>, with 
+<cmath>2^{2022}-1 = 7 (2^{2019} + 2^ {2016} + \dots +1).</cmath>
+<math>6 \cdot 2^{2022} +1</math> thus is a multiple of <math>7</math>, so it is thus <math>7 \cdot S_n</math>. We have
+<cmath>6 \cdot 2^{2022} +1 = (2^2+2^1) (7 (2^{2019} + 2^ {2016} + \dots +1) +1) +1 = 7 ((2^2+2^1)(2^{2019} + 2^ {2016} + \dots +1) +1) = 7 (2^{2021}+ 2^{2020} + 2^{2018}+2^{2017}+\dots),</cmath>
+so <math>x_{2022}=0,x_{2021}=1, x_{2020}=1, x_{2019}=0 \implies x_{2019} + 2x_{2020} + 4x_{2021} + 8x_{2022}=\boxed{\textbf{(A) } 6}</math>.
+
+~[[Ddk001]]
+
+==Video Solution by MOP 2024==
+https://youtu.be/ShEE5WMhS2w
+
+~r00tsOfUnity
+
+==Video Solution by ThePuzzlr==
+https://youtu.be/sBmk7tNSQBA 
+
+~ ThePuzzlr
+
+==Video Solution by Steven Chen==
+https://youtu.be/2Dw75Zy6yAQ
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+== Video Solution by OmegaLearn Using Binary and Modular Arithmetic ==
+https://youtu.be/s_Bgj9srrXI
+
+~ pi_is_3.14
+
+==Video Solution by The Power of Logic==
+https://youtu.be/rZaJSTbs7jY
+==Video Solution by Interstigation==
+https://youtu.be/r9VjnOzN4Ek
+
+~Interstigation
+
+==Video Solution by [[User:grogg007 | grogg007]] (No Binary)== 
+https://youtu.be/EiJzaiw_YoQ?si=NvL9a8AslaH9m-IF
+
+==See Also==
+{{AMC10 box|year=2022|ab=B|num-b=24|after=Last problem}}
+{{AMC12 box|year=2022|ab=B|num-b=22|num-a=24}}
+
+[[Category:Intermediate Number Theory Problems]]
+{{MAA Notice}}

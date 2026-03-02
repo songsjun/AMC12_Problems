@@ -1,0 +1,92 @@
+{{duplicate|[[2018 AMC 10A Problems/Problem 25|2018 AMC 10A #25]] and [[2018 AMC 12A Problems/Problem 25|2018 AMC 12A #25]]}}
+
+== Problem ==
+
+For a positive integer <math>n</math> and nonzero digits <math>a</math>, <math>b</math>, and <math>c</math>, let <math>A_n</math> be the <math>n</math>-digit integer each of whose digits is equal to <math>a</math>; let <math>B_n</math> be the <math>n</math>-digit integer each of whose digits is equal to <math>b</math>, and let <math>C_n</math> be the <math>2n</math>-digit (not <math>n</math>-digit) integer each of whose digits is equal to <math>c</math>. What is the greatest possible value of <math>a + b + c</math> for which there are at least two values of <math>n</math> such that <math>C_n - B_n = A_n^2</math>?
+
+<math>\textbf{(A) } 12 \qquad \textbf{(B) } 14 \qquad \textbf{(C) } 16 \qquad \textbf{(D) } 18 \qquad \textbf{(E) } 20</math>
+
+== Solution 1==
+By geometric series, we have
+<cmath>\begin{alignat*}{8}
+A_n&=a\bigl(\phantom{ }\underbrace{111\cdots1}_{n\text{ digits}}\phantom{ }\bigr)&&=a\left(1+10+10^2+\cdots+10^{n-1}\right)&&=a\cdot\frac{10^n-1}{9}, \\
+B_n&=b\bigl(\phantom{ }\underbrace{111\cdots1}_{n\text{ digits}}\phantom{ }\bigr)&&=b\left(1+10+10^2+\cdots+10^{n-1}\right)&&=b\cdot\frac{10^n-1}{9}, \\
+C_n&=c\bigl(\phantom{ }\underbrace{111\cdots1}_{2n\text{ digits}}\phantom{ }\bigr)&&=c\left(1+10+10^2+\cdots+10^{2n-1}\right)&&=c\cdot\frac{10^{2n}-1}{9}.
+\end{alignat*}</cmath>
+By substitution, we rewrite the given equation <math>C_n - B_n = A_n^2</math> as
+<cmath>c\cdot\frac{10^{2n}-1}{9} - b\cdot\frac{10^n-1}{9} = a^2\cdot\left(\frac{10^n-1}{9}\right)^2.</cmath>
+Since <math>n > 0,</math> it follows that <math>10^n > 1.</math> We divide both sides by <math>\frac{10^n-1}{9}</math> and then rearrange:
+<cmath>\begin{align*}
+c\left(10^n+1\right) - b &= a^2\cdot\frac{10^n-1}{9} \\
+9c\left(10^n+1\right) - 9b &= a^2\left(10^n-1\right) \\
+\left(9c-a^2\right)10^n &= 9b-9c-a^2. &&(\bigstar)
+\end{align*}</cmath>
+Let <math>y=10^n.</math> Note that <math>(\bigstar)</math> is a linear equation with <math>y,</math> and <math>y</math> is a one-to-one function of <math>n.</math> Since <math>(\bigstar)</math> has at least two solutions of <math>n,</math> it has at least two solutions of <math>y.</math> We conclude that <math>(\bigstar)</math> must be an identity, so we get the following system of equations:
+<cmath>\begin{align*}
+9c-a^2&=0, \\
+9b-9c-a^2&=0.
+\end{align*}</cmath>
+The first equation implies that <math>c=\frac{a^2}{9}.</math> Substituting this into the second equation gives <math>b=\frac{2a^2}{9}.</math> 
+
+To maximize <math>a + b + c = a + \frac{a^2}{3},</math> we need to maximize <math>a.</math> Clearly, <math>a</math> must be divisible by <math>3.</math> The possibilities for <math>(a,b,c)</math> are <math>(9,18,9),(6,8,4),</math> or <math>(3,2,1),</math> but <math>(9,18,9)</math> is invalid. Therefore, the greatest possible value of <math>a + b + c</math> is <math>6+8+4=\boxed{\textbf{(D) } 18}.</math>
+
+~CantonMathGuy (Solution)
+
+~MRENTHUSIASM (Revision)
+
+== Solution 2==
+
+Immediately start trying <math>n = 1</math> and <math>n = 2</math>. These give the system of equations <math>11c - b = a^2</math> and <math>1111c - 11b = (11a)^2</math> (which simplifies to <math>101c - b = 11a^2</math>). These imply that <math>a^2 = 9c</math>, so the possible <math>(a, c)</math> pairs are <math>(9, 9)</math>, <math>(6, 4)</math>, and <math>(3, 1)</math>. The first puts <math>b</math> out of range but the second makes <math>b = 8</math>. We now know the answer is at least <math>6 + 8 + 4 = 18</math>.
+
+We now only need to know whether <math>a + b + c = 20</math> might work for any larger <math>n</math>. We will always get equations like <math>100001c - b = 11111a^2</math> where the <math>c</math> coefficient is very close to being nine times the <math>a</math> coefficient. Since the <math>b</math> term will be quite insignificant, we know that once again <math>a^2</math> must equal <math>9c</math>, and thus <math>a = 9, c = 9</math> is our only hope to reach <math>20</math>. Substituting and dividing through by <math>9</math>, we will have something like <math>100001 - \frac{b}{9} = 99999</math>. No matter what <math>n</math> really was, <math>b</math> is out of range (and certainly isn't <math>2</math> as we would have needed).
+
+The answer then is <math>\boxed{\textbf{(D) } 18}</math>.
+
+== Solution 3 ==
+
+The given equation can be written as
+<cmath>c \cdot (\phantom{ } \overbrace{1111 \ldots 1111}^{2n\text{ digits}}\phantom{ }) - b \cdot (\phantom{ } \overbrace{11 \ldots 11}^{n\text{ digits}} \phantom{ }) = a^2 \cdot (\phantom{ } \overbrace{11 \ldots 11}^{n\text{ digits}} \phantom{ })^2.</cmath>
+Divide by <math>\overbrace{11 \ldots 11}^{n\text{ digits}}</math> on both sides:
+<cmath>c \cdot (\phantom{ } \overbrace{1000 \ldots 0001}^{n+1\text{ digits}}\phantom{ }) - b = a^2 \cdot (\phantom{ } \overbrace{11 \ldots 11}^{n\text{ digits}} \phantom{ }).</cmath>
+Next, split the first term to make it easier to deal with:
+<cmath>\begin{align*}
+2c + c \cdot (\phantom{ }\overbrace{99 \ldots 99}^{n\text{ digits}}\phantom{ }) - b &= a^2 \cdot (\phantom{ } \overbrace{11 \ldots 11}^{n\text{ digits}} \phantom{ }) \\
+2c - b &= (a^2 - 9c) \cdot (\phantom{ }\overbrace{11 \ldots 11}^{n\text{ digits}}\phantom{ }).
+\end{align*}</cmath>
+Because <math>2c - b</math> and <math>a^2 - 9c</math> are constants and because there must be at least two distinct values of <math>n</math> that satisfy, <math>2c - b = a^2 - 9c = 0.</math> Thus, we have
+<cmath>\begin{align*}
+2c&=b, \\
+a^2&=9c.
+\end{align*}</cmath>
+Knowing that <math>a,b,</math> and <math>c</math> are single digit positive integers and that <math>9c</math> must be a perfect square, the values of <math>(a,b,c)</math> that satisfy both equations are <math>(3,2,1)</math> and <math>(6,8,4).</math> Finally, <math>6 + 8 + 4 = \boxed{\textbf{(D) } 18}.</math>
+
+~LegionOfAvatars (Solution)
+
+~MRENTHUSIASM (Reformatting)
+
+==Solution 4 (Informed Guess)==
+
+By [[PaperMath’s sum]], the answer is at least <math>6+8+4=\boxed{\textbf{(D) } 18}.</math>
+
+== Video Solution by Pi Academy (Easy) ==
+
+https://youtu.be/DgtlLI9GaWY?si=WgXKpx2PCF1cftuE
+
+~ Pi Academy
+
+== Video Solution (#21-#25) ==
+https://youtube.com/playlist?list=PLpxy89D2tvVow8EoCSsNY3Y-2SwJly_SZ&si=aEJ3Ttjck10aCIUH
+
+== Video Solution by Richard Rusczyk ==
+
+https://artofproblemsolving.com/videos/amc/2018amc10a/470
+
+~ dolphin7
+
+==See Also==
+
+{{AMC10 box|year=2018|ab=A|num-b=24|after=Last Problem}}
+{{AMC12 box|year=2018|ab=A|num-b=24|after=Last Problem}}
+{{MAA Notice}}
+
+[[Category:Intermediate Number Theory Problems]]

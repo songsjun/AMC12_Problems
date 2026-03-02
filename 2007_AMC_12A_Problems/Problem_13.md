@@ -1,0 +1,21 @@
+# 2007 AMC 12A Problem 13
+
+## Problem
+A piece of cheese is located at (12,10) in a [coordinate plane](https://artofproblemsolving.com/wiki/index.php/coordinate_plane). A mouse is at (4,-2) and is running up the [line](https://artofproblemsolving.com/wiki/index.php/line) y=-$5x+18$. At the point (a,b) the mouse starts getting farther from the cheese rather than closer to it. What is  a+b?
+
+
+$$\mathrm{(A)}\ 6\qquad \mathrm{(B)}\ 10\qquad \mathrm{(C)}\ 14\qquad \mathrm{(D)}\ 18\qquad \mathrm{(E)}\ 22$$
+
+## Solution 1
+The point (a,b) is the foot of the perpendicular from (12,10) to the line y=-$5x+18$. The perpendicular has slope $\frac{1}{5},$ so its equation is $y=10+\frac{1}{5}(x-12)=\frac{1}{5}x+\frac{38}{5}.$ The x-coordinate at the foot of the perpendicular satisfies the equation $\frac{1}{5}x+\frac{38}{5}=-5$x+18, so $x=2$ and $y=-5\cdot2+18=8.$ Thus (a,b) = (2,8), and $a+b =\boxed{10}.$
+## Solution 2
+If the mouse is at (x, y) = (x, 18 - $5x$), then the square of the distance from the mouse to the cheese is $(x - 12)^2 + (8 -5x)^2 =26(x^2 - 4x + 8)=26((x - 2)^2 + 4$).
+The value of this expression is smallest when $x = 2$, so the mouse is closest to the cheese at the point (2, 8), and a+$b=2+8 =\boxed{10}.$
+## Solution 3
+We are trying to find the point where distance between the mouse and (12, 10) is minimized. This point is where the line that passes through (12, 10) and is perpendicular to y=-$5x+18$ intersects y=-$5x+18$. By basic knowledge of perpendicular lines, this line is $y=\frac{x}{5}+\frac{38}{5}.$ This line intersects y=-$5x+18$ at (2,8). So $a+b=\boxed{10}. -$ MegaLucario1001
+## Solution 4
+If the mouse is at (x, y) = (x, 18 - $5x$), then the square of the distance from the mouse to the cheese is
+$$(x - 12)^2 + (8 - 5x)^2 = 26(x^2 - 4x + 8) = 26((x - 2)^2 + 4).$$
+The value of this expression is smallest when $x = 2$, so the mouse is closest to the cheese at the point (2, 8), and a+$b=2+8 =\boxed{10}.$
+*~Paixiao*
+## See also

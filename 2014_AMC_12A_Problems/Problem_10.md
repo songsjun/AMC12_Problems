@@ -1,0 +1,31 @@
+# 2014 AMC 12A Problem 10
+
+## Problem
+Three congruent isosceles triangles are constructed with their bases on the sides of an equilateral triangle of side length 1.  The sum of the areas of the three isosceles triangles is the same as the area of the equilateral triangle.  What is the length of one of the two congruent sides of one of the isosceles triangles?
+
+$\textbf{(A) }\dfrac{\sqrt3}4\qquad \textbf{(B) }\dfrac{\sqrt3}3\qquad \textbf{(C) }\dfrac23\qquad \textbf{(D) }\dfrac{\sqrt2}2\qquad \textbf{(E) }\dfrac{\sqrt3}2$
+## Solution 1
+Reflect each of the triangles over its respective side.  Then since the areas of the triangles total to the area of the equilateral triangle, it can be seen that the triangles fill up the equilateral one and the vertices of these triangles concur at the circumcenter of the equilateral triangle.  Hence the desired answer is just its circumradius, or $\boxed{\dfrac{\sqrt3}3\textbf{ (B)}}.$
+
+(Solution by djmathman)
+## Solution 2
+Since the total area of each [congruent](https://artofproblemsolving.com/wiki/index.php/Congruent_(geometry)) isosceles triangle is the same, the area of each is $\dfrac{1}3$ the total [area of the equilateral triangle](https://artofproblemsolving.com/wiki/index.php/area_of_an_equilateral_triangle) of side length 1, or $\dfrac{1}3 x \dfrac{\sqrt3}4.$ Likewise, the area of each can be defined as $\dfrac{bh}2$ with base b equaling 1, meaning that $\dfrac{h}2 = \dfrac{1}3 x \dfrac{\sqrt3}4,$ or $h =\dfrac{\sqrt3}6. A$ side length of the isosceles triangle is the hypotenuse with legs $\dfrac{b}2$ and h. Using the Pythagorean Theorem, the side length is $\sqrt{{(\dfrac{1}2)}^2 + {(\dfrac{\sqrt3}6)}^2},$ or $\boxed{\dfrac{\sqrt3}3\textbf{ (B)}}.$
+
+(Solution by johnstucky)
+## Solution 3
+Note that each of the congruent sides meets at the circumcenter of the equilateral triangle. Therefore, they are equal to the circumradius. The area is then $\dfrac{abc}{4R},$ or $\dfrac{1}{4R}.$ The area can also be found using $\dfrac{\sqrt3}{4}s^2,$ or $\dfrac{\sqrt3}{4}.$ Setting these equal and solving entails R = $\dfrac{1}{\sqrt3}$ or $\boxed{\dfrac{\sqrt3}3\textbf{ (B)}}.$
+
+solution by Proper
+
+Additional Insight:
+After noting that the congruent sides meet at the circumcenter, you can just use the Extended Law of Sines to see that R = $\dfrac{1}{2\sin 60^{\circ}} = \dfrac{\sqrt{3}}{3},$ which is choice B
+*~Extremelysupercooldude*
+## Video Solution by OmegaLearn
+https://youtu.be/5jwD5UViZO8?t=1013
+
+*~pi_is_3.14*
+## Video Solution
+https://youtu.be/rJytKoJzNBY
+
+solution by sugar_rush
+## See Also

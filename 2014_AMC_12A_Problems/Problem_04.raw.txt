@@ -1,0 +1,56 @@
+{{duplicate|[[2014 AMC 12A Problems|2014 AMC 12A #4]] and [[2014 AMC 10A Problems|2014 AMC 10A #6]]}}
+
+==Problem==
+
+Suppose that <math>a</math> cows give <math>b</math> gallons of milk in <math>c</math> days. At this rate, how many gallons of milk will <math>d</math> cows give in <math>e</math> days?
+
+<math>\textbf{(A)}\ \frac{bde}{ac}\qquad\textbf{(B)}\ \frac{ac}{bde}\qquad\textbf{(C)}\ \frac{abde}{c}\qquad\textbf{(D)}\ \frac{bcde}{a}\qquad\textbf{(E)}\ \frac{abc}{de}</math>
+
+==Solution 1==
+
+We need to multiply <math>b</math> by <math>\frac{d}{a}</math> for the new cows and <math>\frac{e}{c}</math> for the new time, so the answer is <math>b\cdot \frac{d}{a}\cdot \frac{e}{c}=\frac{bde}{ac}</math>, or <math>\boxed{\textbf{(A) } \frac{bde}{ac}}</math>.
+
+==Solution 2==
+
+
+We plug in <math>a=2</math>, <math>b=3</math>, <math>c=4</math>, <math>d=5</math>, and <math>e=6</math>. Hence the question becomes "2 cows give 3 gallons of milk in 4 days. How many gallons of milk do 5 cows give in 6 days?"
+
+If 2 cows give 3 gallons of milk in 4 days, then 2 cows give <math>\frac{3}{4}</math> gallons of milk in 1 day, so 1 cow gives <math>\frac{3}{4\cdot2}</math> gallons in 1 day. This means that 5 cows give <math>\frac{5\cdot3}{4\cdot2}</math> gallons of milk in 1 day. Finally, we see that 5 cows give <math>\frac{5\cdot3\cdot6}{4\cdot2}</math> gallons of milk in 6 days. Substituting our values for the variables, this becomes <math>\frac{dbe}{ac}</math>, which is <math>\boxed{\textbf{(A)}\ \frac{bde}{ac}}</math>.
+
+==Solution 3==
+We see that the number of cows is inversely proportional to the number of days and directly proportional to the gallons of milk. So our constant is <math>\dfrac{ac}{b}</math>.
+
+Let <math>g</math> be the answer to the question. We have <math>\dfrac{de}{g}=\dfrac{ac}{b}\implies gac=bde\implies g=\dfrac{bde}{ac}\implies\boxed{ \textbf{(A)}\ \frac{bde}{ac}}</math>
+
+==Solution 4==
+The problem specifics "rate," so it would be wise to first find the rate at which cows produce milk. We can find the rate of work/production by finding the gallons produced by a single cow in a single day. To do this, we divide the amount produced by the number of cows and number of days <cmath>\implies\text{rate}=\dfrac{b}{ac}</cmath>
+
+Now that we have the gallons produced by a single cow in a single day, we simply multiply that rate by the number of cows and the number of days <cmath>\implies\boxed{\textbf{(A) } \dfrac{bde}{ac}}</cmath>
+==Solution 5==
+If <math>a</math> cows give <math>b</math> gallons of milk in <math>c</math> days, that means that one cow will give <math>\frac{b}{a}</math> gallons of milk in <math>c</math> days. Also, we want to find the number of gallons of milk will <math>d</math> cows give in <math>e</math> days, so in <math>\frac{e}{c}</math> days <math>d</math> cows give <math>\frac{bd}{a}</math> gallons of milk. Multiplying with the formula <math>d=rt</math>, we get <math>\boxed{\textbf{(A) } \dfrac{bde}{ac}}</math>
+
+==Solution 6==
+
+In the right formula, plugging in <math>d=a</math> and <math>e=c</math> should simplify to <math>b</math>, as if it doesn't, we'd essentially be saying "<math>a</math> cows give <math>b</math> gallons of milk in <math>c</math> days, but <math>a</math> cows don't give <math>b</math> gallons of milk in <math>c</math> days." The only one of the answer choices that simplifies like this is <math>\boxed{\textbf{(A)}}</math>
+
+==Solution 7==
+
+Call the rate at which a single cow produces milk <math>r</math>. Using the given information we get that <math>rac=b</math>, and we want to find <math>rde</math>. We solve for <math>r</math> in the first equation to get <math>r=b \cdot \tfrac{1}{ac}</math>. Plugging in this value for <math>r</math> into the expression we want, we get that <math>rde=\frac{bde}{ac}</math>, or <math>\boxed{\textbf{(A)}}</math>.
+
+==Video Solution (CREATIVE THINKING)==
+ https://youtu.be/4THtSkiSGMg
+
+~Education, the Study of Everything
+
+==Video Solution==
+https://youtu.be/OW4rHUTPgPA
+
+~savannahsolver
+
+==See Also==
+
+{{AMC10 box|year=2014|ab=A|num-b=5|num-a=7}}
+{{AMC12 box|year=2014|ab=A|num-b=3|num-a=5}}
+{{MAA Notice}}
+
+[[Category: Introductory Algebra Problems]]

@@ -1,0 +1,63 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2015_AMC_12B_Problems/Problem_17&action=raw
+
+Published Time: Sun, 14 Feb 2021 01:24:59 GMT
+
+Markdown Content:
+==Problem==
+An unfair coin lands on heads with a probability of \tfrac{1}{4}. When tossed n>1 times, the probability of exactly two heads is the same as the probability of exactly three heads. What is the value of n?
+
+\textbf{(A)}\; 5 \qquad\textbf{(B)}\; 8 \qquad\textbf{(C)}\; 10 \qquad\textbf{(D)}\; 11 \qquad\textbf{(E)}\; 13
+
+==Solution==
+When tossed n times, the probability of getting exactly 2 heads and the rest tails is
+
+\dbinom{n}{2} {\left( \frac{1}{4} \right)}^2 {\left( \frac{3}{4} \right) }^{n-2}.
+
+Similarly, the probability of getting exactly 3 heads is
+
+\dbinom{n}{3}{\left( \frac{1}{4} \right)}^3 {\left( \frac{3}{4} \right) }^{n-3}.
+
+Now set the two probabilities equal to each other and solve for n:
+
+\dbinom{n}{2}{\left( \frac{1}{4} \right)}^2 {\left( \frac{3}{4} \right) }^{n-2}=\dbinom{n}{3}{\left( \frac{1}{4} \right)}^3 {\left( \frac{3}{4} \right) }^{n-3}
+
+\frac{n(n-1)}{2!} \cdot \frac{3}{4} = \frac{n(n-1)(n-2)}{3!} \cdot \frac{1}{4}
+
+3 = \frac{n-2}{3}
+
+n-2 = 9
+
+n = \fbox{\textbf{(D)}\; 11}
+
+Note: the original problem did not specify n>1, so n=1 was a solution, but this was fixed in the Wiki problem text so that the answer would make sense. [[User:Adihaya|— @adihaya]] ([[User talk:Adihaya|talk]]) 15:23, 19 February 2016 (EST)
+
+==Solution 2==
+
+Bash it out with the answer choices! (not really a rigorous solution)
+
+==Solution 2.5==
+
+In order to test the answer choices efficiently, realize that the probability n flips yielding two heads is of the form:
+
+\dbinom{n}{2}{\left(\frac{1}{4} \cdot \frac{1}{4}\right)}{\left(\frac{3}{4} \cdot \frac{3}{4} \cdot \frac{3}{4} \ldots \right)} = \dbinom{n}{2}{\left(\frac{3^{n-2}}{4^n}\right)}
+
+Similarly, the form for the probability of three heads is:
+
+\dbinom{n}{3}{\left(\frac{3^{n-3}}{4^n}\right)}
+
+The probability of getting three heads (comapred to the probability of getting two) from n flips is missing a factor of 3 in the numerator. Thus, we need \dbinom{n}{3} to add a factor of 3 to the numerator of the probability of getting three heads.
+Our testing equation becomes
+
+\dbinom{n}{2} \times 3 = \dbinom{n}{3}
+
+since after factoring out the 3 from \dbinom{n}{3}, the remaining factorizations should be equal. 
+
+The only answer choice satisfying this condition is \fbox{\textbf{(D)}\;11}.
+
+-Solution by Joeya
+
+==See Also==
+{{AMC12 box|year=2015|ab=B|num-a=18|num-b=16}}
+{{MAA Notice}}

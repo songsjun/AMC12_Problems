@@ -1,0 +1,96 @@
+# 2011 AMC 12A Problem 23
+
+## Problem
+Let f(z)= $\frac{z+a}{z+b}$ and $g(z)=f(f(z))$, where a and b are complex numbers. Suppose that $\left$| a $\right$| = 1 and g(g(z))=z for all z for which g(g(z)) is defined. What is the difference between the largest and smallest possible values of $\left$| b $\right$|?
+
+$\textbf{(A)}\ 0 \qquad \textbf{(B)}\ \sqrt{2}-1 \qquad \textbf{(C)}\ \sqrt{3}-1 \qquad \textbf{(D)}\ 1 \qquad \textbf{(E)}\ 2$
+## Solution 1 (plug and chug)
+By algebraic manipulations, we obtain
+$h(z)=g(g(z))$=f(f(f(f(z))))=$\frac{Pz+Q}{Rz+S}$ where
+
+$$
+P=(a+1)^2+a(b+1)^2
+Q=a(b+1)(b^2+2a+1)
+R=(b+1)(b^2+2a+1)
+S=a(b+1)^2+(a+b^2)^2
+$$
+
+In order for $h(z)=z$, we must have R=0, Q=0, and P=S.
+
+R=0 implies b=-1 or $b^2+2a+1=0$.
+
+Q=0 implies $a=0$, b=-1, or $b^2+2a+1=0$.
+
+P=S implies $b=\pm1$ or $b^2+2a+1=0$.
+
+Since |a|=$1\neq 0,$ in order to satisfy all 3 conditions we must have either $b=\pm1$ or $b^2+2a+1=0$. In the first case |b|=1.
+
+For the latter case note that
+
+$$
+|b^2+1|=|-2a|=2
+2=|b^2+1|\leq |b^2|+1
+$$
+
+and hence,
+$$1\leq|b|^2\Rightarrow1\leq |b|.$$
+On the other hand,
+$$2=|b^2+1|\geq|b^2|-1$$
+so,
+|$b^$2|$\leq 3\Rightarrow0\leq$ |b|$\leq \sqrt{3}.$ Thus $1\leq$ |b|$\leq \sqrt{3}.$ Hence the maximum value for |b| is $\sqrt{3}$ while the minimum is 1 (which can be achieved for instance when |a|=1,|b|=$\sqrt{3}$ or |a|=1,|b|=1 respectively). Therefore the answer is $\boxed{\textbf{(C)}\ \sqrt{3}-1}.$
+## Shortcut
+We only need Q in $f^4(z)=g^2(z)$=$\frac{Pz+\textcolor{red}{Q}}{Rz+S}.$
+
+Set Q=0: a($b+1)\left(b^2+2a+1\right)=0.$ Since |a|=1, either $b+1=0$ or $b^2+2a+1=0$.
+
+$$b+1=0\rightarrow b=-1 so |b|=1.$$
+
+$b^2+2a+1=0\rightarrowb^2=-1-2a$. This is a circle in the complex plane centered at (-1,0) with radius 2 since |a|=1. The maximum distance from the origin is 3 at (-3,0) and similarly the minimum distance is 1 at (1,0). So $1\le$ |$b^$2|$\le 3\rightarrow 1\le$ |b|$\le \sqrt{3}.$
+
+Both solutions give the same lower bound, 1. So the range is $\sqrt{3}-1=\boxed{\textbf{(C) }\sqrt{3}-1}.$
+## Solution 2
+note: the "begin{align*}" environment is weird on aops, so if the two things that use it below are duplicated in front of each other, just reload the page or something.
+
+$\textbf{Lemma.}$ Let h(x)=$\frac{ax+b}{cx+d}$ and $h\left (h(x)\right )=x$ for all such x where h(h(x)) is defined. Then either d=-a or h(x)=x.
+
+This lemma is one that is typically known by people who could make it this far into this AMC 12 anyway (USAMO qualifiers likely).
+
+$\textit{Proof.}$ We plug in $h\left (h(x)\right ),$ and equating it to x, we see
+
+$$
+\begin{align*}
+h\left (h(x)\right ) &=h\left (\frac{ax+b}{cx+d}\right ) \\ &= \frac{a\cdot \frac{ax+b}{cx+d}+b}{c\cdot \frac{ax+b}{cx+d}+d} \\ &= \frac{a(ax+b)+b(cx+d)}{c(ax+b)+d(cx+d)} \\ &= \frac{(a^2+bc)x+(ab+bd)}{(ac+cd)x+(bc+d^2)}=x.
+\end{align*}
+$$
+
+Then if we clear the denominator, it rearranges into $(a^2+bc)x+(ab+bd)=(ac+cd)x^2+(bc+d^2)x\implies (ac+cd)$x^2+(d^2-a^2)x-(ab+bd)=0. Since this equation is true for all x (since now the fractions are gone), this implies that the coefficients of this quadratic are all equal to 0. Focus on the condition $d^2-a^2=0.$
+
+$\textbf{Case 1:} d+a=0$
+
+Then all the other coefficients automatically become zero, so $d+a=0\implies$ d=-a is a sufficient condition.
+
+$\textbf{Case 2:} d-a=0 (and d+a\neq 0)$
+
+Then in ab+bd=0, we divide both sides by a+d to see that $b=0$. Similarly, in ac+cd=0, we divide to also see that $c=0$. Then since d=a, h(x)=$\frac{ax+b}{cx+d}=\frac{ax+0}{0x+a}=x.$ Therefore, in this case, it is required that $h(x)=x$, which now works. This proves our desired claim. $\qquad \qquad \square$
+
+Note that we are asking when g(g(z))=z. So either $g(z)=z$, or in the expansion of $g(z)=f(f(z))$, the two corresponding coefficients are negations of each other.
+
+$\textbf{Case 1:} g(z)=z$
+
+Then f(f(z))=z, so either $f(z)=z$ or the two coefficients are negative of each other. Clearly f(z)$\neq$ z, since the numerator and denominator are both degree 1 polynomials. So we would require the coefficients, namely 1 and b, to be negatives of each other. Then b=-1 is a possibility here, giving |b|=1.
+
+$\textbf{Case 2:} The two coefficients are negative of each other.$
+
+It can be found that $\begin{align*}$
+f(f(x))&=f$\left (\frac{z+a}{z+b}\right )$ \\ &=$\frac{\frac{z+a}{z+b}+a}{\frac{z+a}{z+b}+b}$ \\ &=$\frac{z+a+a(z+b)}{z+a+b(z+b)}$ \\ &= $\frac{(a+1)z+(ab+a)}{(b+1)z+(b^2+a)}.\end{align*}$ By our lemma, we would require $a+1=-(b^2+a),$ which rearranges into $b^2=-1-2a$. But we are given that |a|=1. The triangle inequality for complex numbers states that |a|+|b|$\geq$ |a+b|, where equality happens when the arguments of a and b are equal. Here, we can see that |-1-$2a$|$\leq$ |-1|+|-2a|=$1+2=3$, but we can also find that |-1-$2a$|+1=|-1-2a|+|1|$\geq$ |-2a|=$2\implies$ |-1-2a|$\geq 1.$ Therefore, because |$b^$2|=|-1-$2a$|, then $1\leq$ |b|^$2\leq 3,$ giving us $1\leq$ |b|$\leq \sqrt{3}.$
+
+When we combine the two cases, we find that the possible range of |b| is |b|$\in$ [1,$\sqrt{3}$], so the answer is $\boxed{\textbf{(C) }\sqrt{3}-1}.$
+
+*~ethanzhang1001*
+## Video Solution
+https://youtu.be/FU18x_LsTeQ
+
+*~MathProblemSolvingSkills.com*
+## Note
+This problem is kinda similar to [2002 AIME I Problems/Problem 12](https://artofproblemsolving.com/wiki/index.php/2002_AIME_I_Problems/Problem_12)
+## See also

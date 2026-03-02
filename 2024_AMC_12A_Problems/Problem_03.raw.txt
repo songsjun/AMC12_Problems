@@ -1,0 +1,87 @@
+{{duplicate|[[2024 AMC 10A Problems/Problem 4|2024 AMC 10A #4]] and [[2024 AMC 12A Problems/Problem 3|2024 AMC 12A #3]]}}
+== Problem ==
+
+The number <math>2024</math> is written as the sum of not necessarily distinct two-digit numbers. What is the least number of two-digit numbers needed to write this sum?
+
+<math>\textbf{(A) }20\qquad\textbf{(B) }21\qquad\textbf{(C) }22\qquad\textbf{(D) }23\qquad\textbf{(E) }24</math>
+
+== Solution 1 ==
+
+Since we want the least number of two-digit numbers, we maximize the two-digit numbers by choosing as many <math>99</math>s as possible. Since <math>2024=99\cdot20+44\cdot1,</math> we choose twenty <math>99</math>s and one <math>44,</math> for a total of <math>\boxed{\textbf{(B) }21}</math> two-digit numbers.
+
+~MRENTHUSIASM
+
+== Solution 2 ==
+We claim the answer is <math>21</math>. This can be achieved by adding twenty <math>99</math>'s and a <math>44</math>. To prove that the answer cannot be less than or equal to <math>20</math>, we note that the maximum value of the sum of <math>20</math> or less two digit numbers is <math>20 \cdot 99 = 1980</math>, which is smaller than <math>2024</math>, so we are done. Thus, the answer is <math>\boxed{\textbf{(B) }21}</math>.
+
+~andliu766
+
+== Solution 3 (Same as Solution 1 but Using 100=99+1)==
+<math>2024=100\cdot20+24</math>. Since <math>100=99+1</math>, <math>2024=(99+1)\cdot20+24=99\cdot20+1\cdot20+24=99\cdot20+44</math>. Therefore a total of <math>\boxed{\textbf{(B) }21}</math> two-digit numbers are needed.
+
+~woh123
+
+== Solution 4 ==
+The maximum <math>2</math>-digit number is <math>99</math>, but try <math>100</math>. <math>2024 \div 100</math> is a little more than <math>20</math>, and the remainder is less than <math>100</math>, by intuition, so there's <math>20 +</math> the remainder <math>1 = \boxed{\textbf{(B) }21}</math>.
+
+~RandomMathGuy500
+
+==Video Solution==
+https://youtu.be/l3VrUsZkv8I 
+~MC
+
+==Video Solution by Central Valley Math Circle==
+
+https://youtu.be/aZqNhnTB_lQ
+
+~mr_mathman
+
+== Video Solution by Math from my desk ==
+
+https://www.youtube.com/watch?v=f6ogWpv56qw
+
+== Video Solution (⚡️ 55 sec solve ⚡️) ==
+
+https://youtu.be/5nsOZQTcyMs
+
+<i>~Education, the Study of Everything </i>
+
+== Video Solution by Pi Academy ==
+https://youtu.be/GPoTfGAf8bc?si=JYDhLVzfHUbXa3DW
+
+== Video Solution by Daily Dose of Math ==
+
+https://youtu.be/sEk9jQnMzfk
+
+~Thesmartgreekmathdude
+
+== Video Solution by FrankTutor ==
+
+https://youtu.be/g2RxRsxrp2Y
+
+== Video Solution 1 by Power Solve ==
+https://youtu.be/j-37jvqzhrg?si=rWQoAYu7QsZP8ty4&t=407
+
+==Video Solution by SpreadTheMathLove==
+https://www.youtube.com/watch?v=6SQ74nt3ynw
+
+==Video Solution by TheBeautyofMath==
+For AMC 10: https://youtu.be/uKXSZyrIOeU?t=1084
+
+For AMC 12: https://youtu.be/zaswZfIEibA?t=900
+
+~IceMatrix
+
+==Video Solution by Dr. David==
+https://youtu.be/2onMJh_X2U4
+
+==Video Solution by TheNeuralMathAcademy==
+https://www.youtube.com/watch?v=4b_YLnyegtw&t=684s
+
+==See Also==
+{{AMC10 box|year=2024|ab=A|before=[[2023 AMC 10B Problems]]|after=[[2024 AMC 10B Problems]]}}
+* [[AMC 10]]
+* [[AMC 10 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

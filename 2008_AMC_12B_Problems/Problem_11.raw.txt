@@ -1,0 +1,29 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2008_AMC_12B_Problems/Problem_11&action=raw
+
+Published Time: Sun, 09 May 2021 02:12:48 GMT
+
+Markdown Content:
+==Problem==
+A cone-shaped mountain has its base on the ocean floor and has a height of 8000 feet. The top \frac{1}{8} of the volume of the mountain is above water. What is the depth of the ocean at the base of the mountain in feet?
+
+\textbf{(A)}\ 4000 \qquad \textbf{(B)}\ 2000(4-\sqrt{2}) \qquad \textbf{(C)}\ 6000 \qquad \textbf{(D)}\ 6400 \qquad \textbf{(E)}\ 7000
+
+==Solution==
+In a cone, radius and height each vary inversely with increasing height (i.e. the radius of the cone formed by cutting off the mountain at 4,000 feet is half that of the original mountain). Therefore, volume varies as the inverse cube of increasing height (expressed as a percentage of the total height of cone):
+V_I\times \text{Height}^3 = V_N
+
+Plugging in our given condition, \frac{1}{8} = \text{Height}^3 \Rightarrow \text{Height} = \frac{1}{2}.  
+
+8000\cdot\frac{1}{2}=4000 \Rightarrow \boxed{\textbf{A}}.
+
+==Faster Solution==
+The volume of the cone above water is \frac 1 8 that of the entire cone (mountain). These cones are obviously similar so the radius and height of the small cone must be \sqrt[3]{\frac1 8}= \frac 1 2 that of the large one. Because the height of the large cone is 8000 the height of the small cone is 4000. Thus the depth of the water is 8000-4000 = 4000 \Rightarrow\boxed{\text{A}} - AOPqghj
+
+==See Also==
+{{AMC12 box|year=2008|ab=B|num-b=10|num-a=12}}
+
+[[Category:Introductory Geometry Problems]]
+[[Category:3D Geometry Problems]]
+{{MAA Notice}}

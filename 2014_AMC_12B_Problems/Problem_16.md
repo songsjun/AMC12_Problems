@@ -1,0 +1,45 @@
+# 2014 AMC 12B Problem 16
+
+## Problem
+Let P be a cubic polynomial with P(0) = k, P(1) = $2k$, and P(-1) = $3k$.  What is P(2) + P(-2) ?
+
+$\textbf{(A)}\ 0\qquad\textbf{(B)}\ k\qquad\textbf{(C)}\ 6k\qquad\textbf{(D)}\ 7k\qquad\textbf{(E)}\ 14k$
+## Solution
+Let P(x) = Ax^3+Bx^2 + Cx+D.   Plugging in 0 for x, we find D=k, and plugging in 1 and -1 for x, we obtain the following equations:
+
+$$
+A+B+C+k=2k
+*~A+B-C+k=3k*
+$$
+
+Adding these two equations together, we get
+$$2B=3k$$
+If we plug in 2 and -2 in for x, we find that
+$$P(2)+P(-2) = 8A+4B+2C+k+(-8A+4B-2C+k)=8B+2k$$
+Multiplying the third equation by 4 and adding $2k$ gives us our desired result, so
+$$P(2)+P(-2)=12k+2k=\boxed{\textbf{(E)}\ 14k}$$
+## Solution 2
+If we use [Gregory's Triangle](https://artofproblemsolving.com/wiki/index.php/Gregory's_Triangle), the following happens:
+P(-1), P(0), P(1)
+ $3k$ , k , $2k$
+ -$2k$ , k
+ $3k$
+
+Since this is cubic, the common difference is $3k$ for the linear level so the string of 3ks are infinite in each direction.
+If we put a $3k$ on each side of the original $3k$, we can solve for P(-2) and P(2).
+
+P(-2), P(-1), P(0), P(1), P(2)
+ $8k$ , 3k , k , 2k , $6k$
+ -$5k$ , -2k , k , $4k$
+ $3k$ , 3k , $3k$
+
+The above shows us that P(-2) is $8k$ and P(2) is $6k$ so $8k+$6k=$14k$.
+
+NOTE (not from author): The link you put for gregory's triangle doesn't work so please explain it in your post or find a resource that does work; there isn't much on google.
+
+NOTE (not from author or user above): I have now updated the link. It should work.
+## Solution 3
+First, define G(x)=P(x)+P(-x). We have G(-1)=G(1)=$5k$ and G(0)=$2k$. Notice that G(x)  is of the form $a*x^2+b,$ since if we added P(x)+P(-x), the x and $x^3$ terms would cancel out. Plug in the values, and you get $a=3k, b=2k$, so P(2)+P(-2)=G(2)=$14k$.
+
+(E)
+## See also

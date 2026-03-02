@@ -1,0 +1,59 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2009_AMC_10B_Problems/Problem_1&action=raw
+
+Published Time: Wed, 15 Sep 2021 02:41:18 GMT
+
+Markdown Content:
+{{duplicate|[[2009 AMC 10B Problems#Problem 1|2009 AMC 10B #1]] and [[2009 AMC 12B Problems#Problem 1|2009 AMC 12B #1]]}}
+
+== Problem ==
+Each morning of her five-day workweek, Jane bought either a 50-cent muffin or a 75-cent bagel. Her total cost for the week was a whole number of dollars. How many bagels did she buy?
+
+\textbf{(A) } 1\qquad\textbf{(B) } 2\qquad\textbf{(C) } 3\qquad\textbf{(D) } 4\qquad\textbf{(E) } 5
+
+== Solution 1 (Observations: Replacements) ==
+If Jane bought one more bagel but one fewer muffin, then her total cost for the week would increase by 25 cents.
+
+If Jane bought 1 bagel, then she bought 4 muffins. Her total cost for the week would be 75\cdot1+50\cdot4=275 cents, or 2.75 dollars. Clearly, she bought one more bagel but one fewer muffin at a total cost of 3.00 dollars. Therefore, she bought \boxed{\textbf{(B) } 2} bagels.
+
+~MRENTHUSIASM
+
+== Solution 2 (Observations: Answer Choices) ==
+* If Jane bought 1 bagel, then she bought 4 muffins. Her total cost for the week would be 75\cdot1+50\cdot4=275 cents, or 2.75 dollars. So, \textbf{(A)} is incorrect.
+
+* If Jane bought 2 bagels, then she bought 3 muffins. Her total cost for the week would be 75\cdot2+50\cdot3=300 cents, or 3.00 dollars. So, \boxed{\textbf{(B) } 2} is correct.
+
+For completeness, we will check \textbf{(C)},\textbf{(D)}, and \textbf{(E)} too. If you decide to use this solution on the real test, then you will not need to do that, as you want to save more time.
+
+* If Jane bought 3 bagels, then she bought 2 muffins. Her total cost for the week would be 75\cdot3+50\cdot2=325 cents, or 3.25 dollars. So, \textbf{(C)} is incorrect.
+
+* If Jane bought 4 bagels, then she bought 1 muffin. Her total cost for the week would be 75\cdot4+50\cdot1=350 cents, or 3.50 dollars. So, \textbf{(D)} is incorrect.
+
+* If Jane bought 5 bagels, then she bought 0 muffins. Her total cost for the week would be 75\cdot5+50\cdot0=375 cents, or 3.75 dollars. So, \textbf{(E)} is incorrect.
+
+~MRENTHUSIASM
+
+== Solution 3 (Arithmetic) ==
+In this solution, all amounts are in the unit of cents.
+
+Note that the amount spent on muffins must end in either 00 or 50, and the amount spent on bagels must end in one of 00,25,50, or 75. Furthermore, the number of muffins bought and the number of bagels bought must sum to 5.
+
+We have two possible cases:
+
+ 1.   The amounts spent on muffins and bagels both end in 00.
+
+The number of muffins bought must be even, and the number of bagels bought must be a multiple of 4.
+
+In this case, there are no solutions. 2.   The amounts spent on muffins and bagels both end in 50.
+
+The number of muffins bought must be odd, and the number of bagels bought must be 2 more than a multiple of 4.
+
+In this case, the only solution is 3 muffins and 2 bagels, from which the answer is \boxed{\textbf{(B) } 2}.
+
+~MRENTHUSIASM
+
+== See also ==
+{{AMC10 box|year=2009|ab=B|before=First Question|num-a=2}}
+{{AMC12 box|year=2009|ab=B|before=First Question|num-a=2}}
+{{MAA Notice}}

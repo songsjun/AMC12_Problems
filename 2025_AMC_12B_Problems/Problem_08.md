@@ -1,0 +1,46 @@
+# 2025 AMC 12B Problem 8
+
+## Problem
+There are integers a and b such that the polynomial $x^3 -5x^2$ + ax + b has $4+\sqrt{5}$ as a root. What is a+b?
+
+$\textbf{(A) } 13 \qquad \textbf{(B) } 17 \qquad \textbf{(C) } 20 \qquad \textbf{(D) } 30 \qquad \textbf{(E) } 68$
+## Solution 1
+Because every coefficient of our polynomial f(x) is an integer, the conjugate of $4+\sqrt{5}, 4-\sqrt{5}$ is also a root.
+
+Let the third and final root be $r_3$. Thanks to Vieta's Formulas, we know that the sum of the roots is
+
+$$
+(r_3) + (4+\sqrt{5}) + (4 - \sqrt{5}) = 5
+r_3 = -3.
+$$
+
+
+We now calculate f(1) = (1+3)($1-4-\sqrt{5})(1-4+\sqrt{5}).$
+
+$$(1-4-\sqrt{3})(1-4+\sqrt{3}) = (-3-\sqrt{5})(-3+\sqrt{5}) = 9 - 5 = 4.$$
+
+$$So f(1) = 4 \cdot 4 = 16.$$
+
+Hence f(1) = 16 = 1-5 + a + b. Therefore, a + b = $\boxed{20}.$
+
+*~lprado (minor edits by singularity1)*
+## Solution 2
+As in Solution 1, we have that f(x) contains roots $4+\sqrt{5}$ and its conjugate $4-\sqrt{5},$ and that $r_3$=-3, where $r_3$ is the last root. Hence, we can create a factorization for f(x) and compare coefficients as follows:
+
+($x+3)(x-(4+\sqrt{5}))(x-(4-\sqrt{5}))=(x+3)(x^2-8x+11)=x^3-8x^2+11x+3x^2-24x+33=x^3-5x^3-13x+33$, and hence by comparing the coefficients we have that $a+b=-13+33=\boxed{20\hspace{1mm}\textbf{(C)}}.$
+
+*~singularity1*
+## Solution 3 (Bash)
+Since $4+\sqrt{ 5 }$ is a root of polynomial, by definition
+$$(4+\sqrt{ 5 })^3-5(4+\sqrt{ 5 })^2+a(4+\sqrt{ 5 })+b=0=0+0\sqrt { 5 }$$
+Since a,b$\in \mathbb{Z},$ we can expand and compare coefficients,
+
+$$
+\begin{cases} 64+3\cdot 4 \cdot 5-5(4^2+5)+4a+b=0 \\ 3\cdot 16+5-5\cdot 2\cdot 4+a=0 \end{cases}
+$$
+
+Solving, a=-13, b=-$4a-19=33$, so $a+b=\boxed{\textbf{(C) } 20}.$
+
+*~imosilver*
+## Video Solution 1 by SpreadTheMathLove
+https://www.youtube.com/watch?v=dLSWVrrKsgs

@@ -1,0 +1,144 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2012_AMC_12B_Problems/Problem_17&action=raw
+
+Published Time: Thu, 10 Oct 2024 14:49:44 GMT
+
+Markdown Content:
+==Problem==
+
+Square PQRS lies in the first quadrant. Points (3,0), (5,0), (7,0), and (13,0) lie on lines SP, RQ, PQ, and SR, respectively. What is the sum of the coordinates of the center of the square PQRS?
+
+ \textbf{(A)}\ 6\qquad\textbf{(B) }\frac{31}5\qquad\textbf{(C) }\frac{32}5\qquad\textbf{(D) }\frac{33}5\qquad\textbf{(E) }\frac{34}5 
+
+==Diagram==
+
+ size(7cm); pair A=(0,0),B=(1,1.5),D=B*dir(-90),C=B+D-A; draw((-4,-2)--(8,-2), Arrows); draw(A--B--C--D--cycle); pair AB = extension(A,B,(0,-2),(1,-2)); pair BC = extension(B,C,(0,-2),(1,-2)); pair CD = extension(C,D,(0,-2),(1,-2)); pair DA = extension(D,A,(0,-2),(1,-2)); draw(A--AB--B--BC--C--CD--D--DA--A, dotted); dot(AB^^BC^^CD^^DA);
+
+(diagram by MSTang)
+
+==Solution 1==
+
+ size(14cm); pair A=(3,0),B=(5,0),C=(7,0),D=(13,0),EE=(4,0),F=(10,0),P=(3.4,1.2),Q=(5.2,0.6),R=(5.8,2.4),SS=(4,3),M=(4.6,1.8),G=(3.2,0.6),H=(7.6,1.8); dot(A^^B^^C^^D^^EE^^F^^P^^Q^^R^^SS^^M^^G^^H); draw(A--SS--D--cycle); draw(P--Q--R^^B--Q--C); draw(EE--M--F^^G--B^^C--H,dotted); label("A",A,SW); label("B",B,S); label("C",C,S); label("D",D,SE); label("E",EE,S); label("F",F,S); label("P",P,W); label("Q",Q,NW); label("R",R,NE); label("S",SS,N); label("M",M,S); label("G",G,W); label("H",H,NE);
+
+Construct the midpoints E=(4,0) and F=(10,0) and triangle \triangle EMF as in the diagram, where M is the center of square PQRS. Also construct points G and H as in the diagram so that BG\parallel PQ and CH\parallel QR.
+
+Observe that \triangle AGB\sim\triangle CHD while PQRS being a square implies that GB=CH. Furthermore, CD=6=3\cdot AB, so \triangle CHD is 3 times bigger than \triangle AGB. Therefore, HD=3\cdot GB=3\cdot HC. In other words, the longer leg is 3 times the shorter leg in any triangle similar to \triangle AGB.
+
+Let K be the foot of the perpendicular from M to EF, and let x=EK. Triangles \triangle EKM and \triangle MKF, being similar to \triangle AGB, also have legs in a 1:3 ratio, therefore, MK=3x and KF=9x, so 10x=EF=6. It follows that EK=0.6 and MK=1.8, so the coordinates of M are (4+0.6,1.8)=(4.6,1.8) and so our answer is 4.6+1.8 = 6.4 = \boxed{\mathbf{(C)}\ 32/5}.
+
+==Solution 2==
+
+ size(7cm); pair A=(0,0),B=(1,1.5),D=B*dir(-90),C=B+D-A; draw((-4,-2)--(8,-2), Arrows); draw(A--B--C--D--cycle); pair AB = extension(A,B,(0,-2),(1,-2)); pair BC = extension(B,C,(0,-2),(1,-2)); pair CD = extension(C,D,(0,-2),(1,-2)); pair DA = extension(D,A,(0,-2),(1,-2)); draw(A--AB--B--BC--C--CD--D--DA--A, dotted); dot(AB^^BC^^CD^^DA);
+
+Let the four points be labeled P_1, P_2, P_3, and P_4, respectively. Let the lines that go through each point be labeled L_1, L_2, L_3, and L_4, respectively. Since L_1 and L_2 go through SP and RQ, respectively, and SP and RQ are opposite sides of the square, we can say that L_1 and L_2 are parallel with slope m. Similarly, L_3 and L_4 have slope -\frac{1}{m}. Also, note that since square PQRS lies in the first quadrant, L_1 and L_2 must have a positive slope. Using the point-slope form, we can now find the equations of all four lines: L_1: y = m(x-3), L_2: y = m(x-5), L_3: y = -\frac{1}{m}(x-7), L_4: y = -\frac{1}{m}(x-13).
+
+Since PQRS is a square, it follows that \Delta x between points P and Q is equal to \Delta y between points Q and R. Our approach will be to find \Delta x and \Delta y in terms of m and equate the two to solve for m. L_1 and L_3 intersect at point P. Setting the equations for L_1 and L_3 equal to each other and solving for x, we find that they intersect at x = \frac{3m^2 + 7}{m^2 + 1}. L_2 and L_3 intersect at point Q. Intersecting the two equations, the x-coordinate of point Q is found to be x = \frac{5m^2 + 7}{m^2 + 1}. Subtracting the two, we get \Delta x = \frac{2m^2}{m^2 + 1}. Substituting the x-coordinate for point Q found above into the equation for L_2, we find that the y-coordinate of point Q is y = \frac{2m}{m^2+1}. L_2 and L_4 intersect at point R. Intersecting the two equations, the y-coordinate of point R is found to be y = \frac{8m}{m^2 + 1}. Subtracting the two, we get \Delta y = \frac{6m}{m^2 + 1}. Equating \Delta x and \Delta y, we get 2m^2 = 6m which gives us m = 3. Finally, note that the line which goes though the midpoint of P_1 and P_2 with slope 3 and the line which goes through the midpoint of P_3 and P_4 with slope -\frac{1}{3} must intersect at at the center of the square. The equation of the line going through (4,0) is given by y = 3(x-4) and the equation of the line going through (10,0) is y = -\frac{1}{3}(x-10). Equating the two, we find that they intersect at (4.6, 1.8). Adding the x and y-coordinates, we get 6.4 = 32/5. Thus, answer choice \boxed{\textbf{(C)}} is correct.
+
+==Solution 3==
+
+Note that the center of the square lies along a line that has an x-intercept of \frac{3+5}{2}=4, and also along another line with x-intercept \frac{7+13}{2}=10. Since these 2 lines are parallel to the sides of the square, they are perpendicular (since the sides of a square are). Let m be the slope of the first line. Then -\frac{1}{m} is the slope of the second line. We may use the point-slope form for the equation of a line to write l_1:y=m(x-4) and l_2:y=-\frac{1}{m}(x-10). We easily calculate the intersection of these lines using substitution or elimination to obtain \left(\frac{4m^2+10}{m^2+1},\frac{6m}{m^2+1}\right) as the center or the square. Let \theta denote the (acute) angle formed by l_1 and the x-axis. Note that \tan\theta=m. Let s denote the side length of the square. Then \sin\theta=s/2. On the other hand the acute angle formed by l_2 and the x-axis is 90-\theta so that \cos\theta=\sin(90-\theta)=s/6. Then m=\tan\theta=3. Substituting into \left(\frac{4m^2+10}{m^2+1},\frac{6m}{m^2+1}\right) we obtain \left(\frac{23}{5},\frac{9}{5}\right) so that the sum of the coordinates is \frac{32}{5}=6.4. Hence the answer is \framebox{C}.
+
+==Solution 4 (Fast)==
+Suppose
+
+SP: y=m(x-3)
+RQ: y=m(x-5)
+PQ: -my=x-7
+SR: -my=x-13
+
+where m >0.
+
+Recall that the distance between two parallel lines Ax+By+C=0 and Ax+By+C_1=0 is |C-C_1|/\sqrt{A^2+B^2}, we have distance between SP and RQ equals to 2m/\sqrt{1+m^2}, and the distance between PQ and SR equals to 6/\sqrt{1+m^2}. Equating them, we get m=3.
+
+Then, the center of the square is just the intersection between the following two "mid" lines:
+
+L_1: y=3(x-4)
+L_2: -3y = x-10
+
+The solution is (4.6,1.8), so we get the answer 4.6+1.8=6.4.  \framebox{C}.
+
+==Solution 5 (Trigonometry)==
+
+Using the diagram shown in Solution 1, we can set angle BCQ as \theta. We know that AB=2 and BC=2. Now using AA
+
+similarity, we know that \triangle BCQ\sim\triangle ACP in a 1:2 ratio. Now we can see that CQ=-2\cos\theta, therefore, 
+
+meaning that PQ=-2\cos\theta. PQRS is a square, so QR=-2\cos\theta. We also know that QCHR is also a square since its 
+
+angles are 90^\circ and all of its sides are equal. Because squares PQRS and QCHR have equal side lengths, they are 
+
+congruent leading to the conclusion that side CH=-2\cos\theta. Since PQRS is a square, lines PQ and SR are parallel 
+
+meaning that angle CDH and angle BCQ are congruent. We can easily calculate that the length of CD=6 and furthermore that 
+
+CH=6\sin\theta. Setting 6\sin\theta=-2\cos\theta, we get that \tan\theta=-1/3. This means -1/3 is the slope of line PQ
+
+and the lines parallel to it. This is good news because we are dealing with easy numbers. We can solve for the coordinates of 
+
+points E and F because they are the midpoints. This will make solving for the center of square PQRS easier. E=(4,0) and 
+
+F=(10,0). We know the slopes of lines MF and ME, which are -1/3 and 3 respectively. Now we can get the two equations.
+
+\left\{\begin{array}{l}y=-1/3x+10/3\\y=3x-12\end{array}\right.
+
+By solving:  -1/3x+10/3=3x-12, we find that x=4.6. Then plugging x back into one of the first equations, we can find y and the final coordinate turns out to be (4.6,1.8). Summing up the values of x and y, you get 4.6+1.8=6.4=32/5.   \boxed{\mathbf{(C)}\ 32/5}.
+
+~kempwood
+
+== Solution 6 ==
+
+ size(14cm); pair A=(3,0),B=(5,0),C=(7,0),D=(13,0),EE=(4,0),F=(10,0),P=(3.4,1.2),Q=(5.2,0.6),R=(5.8,2.4),SS=(4,3),M=(4.6,1.8),G=(3.2,0.6),H=(7.6,1.8); dot(A^^B^^C^^D^^EE^^F^^P^^Q^^R^^SS^^M^^G^^H); draw(A--SS--D--cycle); draw(P--Q--R^^B--Q--C); draw(EE--M--F^^G--B^^C--H,dotted); label("A",A,SW); label("B",B,S); label("C",C,S); label("D",D,SE); label("E",EE,S); label("F",F,S); label("P",P,W); label("Q",Q,NW); label("R",R,NE); label("S",SS,N); label("M",M,S); label("G",G,W); label("H",H,NE);
+
+SP: y = mx - 3m, RQ: y = mx-5m, PQ: y = -\frac{1}{m}x + \frac{7}{m}, SR: y = -\frac{1}{m}x + \frac{13}{m}
+
+Let SP = RP = PQ = SR = a, \angle GAB = \angle HCD = \theta, and the slope of SP be m.
+
+When the slope of SP is m, the slope of SR is -\frac{1}{m}, \tan \theta = m, \cot \theta = -\frac{1}{m}
+
+\sin \theta = \frac{GB}{AB} = \frac{a}{2}, \cos \theta = \frac{HC}{CD} = \frac{a}{6}
+
+As \tan \theta = \frac{\sin \theta}{\cos \theta} = \frac{\frac{a}{2}}{\frac{a}{6}} = 3, m = 3
+
+SP: y = 3x - 9, RQ: y = 3x-15, PQ: y = -\frac{1}{3}x + \frac{7}{3}, SR: y = -\frac{1}{3}x + \frac{13}{3}
+
+3x - 9 = -\frac{1}{3}x + \frac{13}{3}, x = 4, y = 3, S = (4, 3)
+
+3x-15 = -\frac{1}{3}x + \frac{7}{3}, x = 5.2, y = 0.6, Q = (5.2, 0.6)
+
+M = (4.6, 1.8), 4.6 + 1.8 = \boxed{\mathbf{(C)}\ 32/5}
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+== Solution 7 (Pure Trig and Similarity) ==
+
+ unitsize(1 cm); pair P,Q,R,S,A,B,C,D,E,F,F1,F2,F3,M; P = (3.4,1.2); Q = (5.2,0.6); R = (5.8,2.4); S = (4,3); A = (3,0); B = (5,0); C = (7,0); D = (13,0); E = (3.2,0.6); F = (7.6,1.8); F1 = (3.2,0); F2 = (3.4,0); F3 = (5.8,0); M = (4.6,1.8); dot(P); dot(Q); dot(R); dot(S); dot(A); dot(B); dot(C); dot(D); dot(E); dot(F); dot(F1); dot(F2); dot(F3); dot(M); draw(P--Q--R--S--cycle); draw(P--A); draw(Q--B); draw(R--D); draw(Q--C); draw(A--D); draw(B--E, dashed); draw(C--F, dashed); draw(E--F1, dashed); draw(P--F2, dashed); draw(R--F3, dashed); draw(P--R, dashed); label("$A$",A,W); label("$B$",B,SW); label("$C$",C,SW); label("$D$",D,SW); label("$P$",P,W); label("$Q$",Q,ENE); label("$R$",R,N); label("$S$",S,N); label("$E$",E,NW); label("$F$",F,NE); label("$F_1$",F1,SSW); label("$F_2$",F2,SE); label("$F_3$",F3,SW); label("$M$",M,NW); 
+Let PQ=x and \angle PCA=\theta. Draw the line BE such that E is on AP and BE\parallel PQ. Also, Draw the line CF such that F is on DR and CF\parallel RQ. Then EB=FC=x and \angle EBA=\angle FDC=\theta. Also, note that AB=2 and CD=6. Hence:
+\cos(\theta)=\frac{x}{2},\sin(\theta)=\frac{x}{6}.
+Thus \cos(\theta)=3\sin(\theta). Since \theta<\frac{\pi}{2}, \sin(\theta)=\sqrt{1-\cos^2(\theta)}, so \cos(\theta)=3\sqrt{1-\cos^2(\theta)}. Hence, \cos(\theta)=\frac{3}{\sqrt{10}} and x=\frac{6}{\sqrt{10}}. Draw the perpendicular lines EF_1\perp AD,PF_2\perp AD,RF_3\perp AD. Note that:
+F_1B=BE\cdot\cos(\theta)=\frac{6}{\sqrt{10}}\cdot\frac{3}{\sqrt{10}}=\frac{9}{5}.
+Hence:
+EF_1=\sqrt{EB^2-EF_1^2}=\sqrt{\frac{18}{5}-\frac{81}{25}}=\frac{3}{5}.
+Note that \triangle EF_1B\sim\triangle PF_2C, so:
+\frac{PF_2}{EF_1}=\frac{F_2C}{F_1B}=\frac{AC}{AB}=2.
+Hence:
+PF_2=\frac{6}{5}, F_2C=\frac{18}{5}.
+So P has coordinates:
+\left(7-\frac{18}{5},\frac{6}{5}\right)=\left(\frac{17}{5},\frac{6}{5}\right).
+Also note that \triangle EF_1B\sim\triangle RF_3D, so:
+\frac{RF_3}{EF_1}=\frac{F_3D}{F_1B}=\frac{BD}{AB}=4.
+Hence:
+RF_3=\frac{12}{5}, F_3D=\frac{36}{5}.
+So R has coordinates:
+\left(13-\frac{36}{5},\frac{12}{5}\right)=\left(\frac{29}{5},\frac{12}{5}\right).
+Hence, the center of square PQRS, which is also the midpoint of PR, has coordinates:
+\left(\frac{\frac{17}{5}+\frac{29}{5}}{2},\frac{\frac{6}{5}+\frac{12}{5}}{2}\right)=\left(\frac{23}{5},\frac{9}{5}\right).
+We thus see that the answer is:
+\frac{23}{5}+\frac{9}{5}=\boxed{\text{(C)}\frac{32}{5}}.
+
+== See Also ==
+
+{{AMC12 box|year=2012|ab=B|num-b=16|num-a=18}}
+
+[[Category:Introductory Geometry Problems]]
+{{MAA Notice}}

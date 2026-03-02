@@ -1,0 +1,58 @@
+# 2005 AMC 12A Problem 9
+
+## Problem
+There are two values of a for which the equation $4x^2 + ax +8x + 9 = 0$ has only one solution for x. What is the sum of those values of a?
+
+
+$$(\mathrm {A}) \ -16 \qquad (\mathrm {B}) \ -8 \qquad (\mathrm {C})\ 0 \qquad (\mathrm {D}) \ 8 \qquad (\mathrm {E})\ 20$$
+
+## Solution
+### Video Solution by OmegaLearn
+https://youtu.be/3dfbWzOfJAI?t=222
+*~AVM2023*
+### Solution 1 (Slowest)
+We first rewrite $4x^2 + ax +8x + 9 = 0$ as $4x^2 + (a+8)$$$x + 9 = 0. Since there is only one root, the discriminant, $(a+8)^2-144$, has to be 0. We solve the remaining as below:
+
+$$
+(a+8)^2 = a^2+16a+64.
+a^2+16a+64-144=a^2+16a-80=0.
+$$
+
+To apply the quadratic formula, we rewrite $a^2+16a-80$ as $a^2+16a$+-80.
+Then the formula yields:
+$$\frac{-16\pm24}{2}.$$
+Which is,
+$$-8\pm12.$$
+This gives -20 and 4, which sums up to $\boxed{-16\text{ (A)}}.$
+*~AVM2023*
+### Solution 2 (Slow)
+We first rewrite $4x^2 + ax +8x + 9 = 0$ as $4x^2 + (a+8)$$$x + 9 = 0. Since there is only one root, the discriminant, $(a+8)^2-144$, has to be 0. We expand $(a+8)^2$ as $a^2+16a+64$. Applying our discriminant rule yields:
+$$a^2+16a+64-144=a^2+16a-80=0.$$
+To apply the quadratic formula, we rewrite $a^2+16a-80$ as $a^2+16a$+-80.
+Then the formula yields:
+$$\frac{-16\pm24}{2}.$$
+Which is,
+$$-8\pm12.$$
+Notice that we have to find the sum of the two values, since the average is obviously -8, the sum is $2\cdot-8=\boxed{-16\text{ (A)}}.$
+*~AVM2023*
+### Solution 3 (Quick)
+We first rewrite $4x^2 + ax +8x + 9 = 0$ as $4x^2 + (a+8)$$$x + 9 = 0. Since there is only one root, the discriminant, $(a+8)^2-144$, has to be 0. We solve the remaining as below:
+
+$$
+(a+8)^2-144=0 so
+(a+8)^2=144.
+$$
+
+So $a+8$ is either 12 or -12, which make a either 4 or -20, respectively. The sum of these values is $\boxed{-16\text{ (A)}}.$
+*~AVM2023*
+### Solution 4 (Quickest)
+We first rewrite $4x^2 + ax +8x + 9 = 0$ as $4x^2 + (a+8)$$$x + 9 = 0. Since there is only one root, the discriminant, $(a+8)^2-144$, has to be 0. We solve the remaining as below:
+
+$$
+(a+8)^2-144=0 so
+(a+8)^2=144.
+$$
+
+So $a+8$ is either 12 or -12, which make 2$a+16=0$, the sum, or $2a$, is $\boxed{-16\text{ (A)}}.$
+*~AVM2023*
+## See also

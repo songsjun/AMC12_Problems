@@ -1,0 +1,28 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2016_AMC_12B_Problems/Problem_9&action=raw
+
+Published Time: Fri, 05 Jul 2024 19:31:27 GMT
+
+Markdown Content:
+==Problem==
+
+Carl decided to fence in his rectangular garden. He bought 20 fence posts, placed one on each of the four corners, and spaced out the rest evenly along the edges of the garden, leaving exactly 4 yards between neighboring posts. The longer side of his garden, including the corners, has twice as many posts as the shorter side, including the corners. What is the area, in square yards, of Carl's garden?
+
+\textbf{(A)}\ 256\qquad\textbf{(B)}\ 336\qquad\textbf{(C)}\ 384\qquad\textbf{(D)}\ 448\qquad\textbf{(E)}\ 512
+
+==Solution==
+
+To start, use algebra to determine the number of posts on each side. You have (the long sides count for 2 because there are twice as many) 6x = 20 + 4 (each corner is double counted so you must add 4) Making the shorter end have 4, and the longer end have 8.  ((8-1) \cdot 4) \cdot ((4-1) \cdot 4) = 28 \cdot 12 = 336. Therefore, the answer is \boxed{\textbf{(B)}\ 336}
+
+~Albert471
+
+==Solution 2==
+
+To start, allocate 4 posts from the total 20 to be the corners. Now 16 posts are left. Pairing each long and short side together, you have 8 posts for a segment of long and short (For rectangle ABCD, AB = CD, AC = BD, we are taking what is originally AB + BC + CD + DA = 16, and making it AB + AC = 8). From 8, you need two numbers that add up too 8, that when you add 2 to both of them are at a 1:2 ratio. Brute force says these numbers are 6 and 2. 6 + 2 = 12, and (6+2) = 2(2+2). Then it is trivial to calculate area, as the long side has 8 posts, short side has 4, the total length of the long side is 28, and the short side 12. 28 x 12 = 336.
+
+~Shadow-18
+
+==See Also==
+{{AMC12 box|year=2016|ab=B|num-b=8|num-a=10}}
+{{MAA Notice}}

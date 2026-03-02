@@ -1,0 +1,86 @@
+# 2022 AMC 12B Problem 12
+
+## Problem
+Kayla rolls four fair 6-sided dice. What is the probability that at least one of the numbers Kayla rolls is greater than 4 and at least two of the numbers she rolls are greater than 2?
+
+$\textbf{(A)}\ \frac{2}{3} \qquad \textbf{(B)}\ \frac{19}{27} \qquad \textbf{(C)}\ \frac{59}{81} \qquad \textbf{(D)}\ \frac{61}{81} \qquad \textbf{(E)}\ \frac{7}{9}$
+## Solution 1 (Complementary Counting)
+We will subtract from one the probability that the first condition is violated and the probability that *only* the second condition is violated, being careful not to double-count the probability that both conditions are violated.
+
+For the first condition to be violated, all four dice must read 4 or less, which happens with probability $\left( \frac23 \right)^4 = \frac{16}{81}.$
+
+For the first condition to be met but the second condition to be violated, at least one of the dice must read greater than 4, but less than two of the dice can read greater than 2. Therefore, one of the four die must read 5 or 6, while the remaining three dice must read 2 or less, which happens with probability {4 $\choose 1} \left(\frac13\right) \left(\frac13\right)^3 = 4 \cdot \frac13 \cdot \frac{1}{27} = \frac{4}{81}.$
+
+Therefore, the overall probability of meeting both conditions is 1 - $\frac{16}{81} - \frac{4}{81} = \boxed{\textbf{(D)}\ \frac{61}{81}}.$
+## Solution 2 (Direct and Complementary Counting)
+There are either 0, 1, 2, 3, or 4 dice that have values of more than 4. The probability of getting 0 is $\left(\frac{2}{3}\right)^4 = \frac{16}{81},$ the probability of getting 1 is 4 $\cdot \left(\frac{1}{3}\right)\left(\frac{2}{3}\right)^3 = \frac{32}{81},$ and the probability of getting 2 or greater is 1 - $\frac{16}{81} - \frac{32}{81} = \frac{11}{27}.$
+
+It is obvious that the probability of getting at least two numbers greater than 2 is 1 if we have 2 numbers greater than 4.
+
+Let us calculate the probability of getting at least two numbers greater than 2 if one die is greater than 4 by using complementary counting. We already have one die that is greater than 2, and the probability that a die that is less than 5 is greater than 2 is $\frac{1}{2}.$ Thus, our probability is 1 - $\left(\frac{1}{2}\right)^3 = \frac{7}{8}.$
+
+Finally, our total probability is $\frac{11}{27} + \frac{7}{8}\cdot\frac{32}{81} = \boxed{\textbf{(D)}\ \frac{61}{81}}$
+
+*~mathboy100*
+## Solution 3 (Complementary Counting and PIE)
+We use Solution 1's idea of complementary counting. However, we will find the probability that the first condition is violated and the probability that the second condition is violated, then subtract the overlap (first and second condition both violated). We can do this because of PIE.
+
+As in Solution 1, the probability that the $\textbf{first condition}$ is violated is $\left(\frac{2}{3}\right)^4 = \frac{16}{81}.$
+
+The probability that the $\textbf{second condition}$ is violated (regardless of the first condition) can be broken into two cases.
+
+$\textbf{Case 1: exactly one number rolled is greater than 2}$
+
+Then, there are four choices for which die is the one greater than 2, $\frac{2}{3}$ chance for whether it reads 3, 4, 5, or 6, and $\left(\frac{1}{3}\right)^3 = \frac{1}{27}$ for the other three die that must read 1 or 2. The probability is then $4\left(\frac{2}{3}\right)\left(\frac{1}{27}\right) = \frac{8}{81}.$
+
+$\textbf{Case 2: exactly zero numbers rolled are greater than 2}$
+
+Then, all four dice are either 1 or 2, so the probability of this is $\left(\frac{1}{3}\right)^4 = \frac{1}{81}.$
+
+Now, we look at the $\textbf{overlap}.$ In other words, we want to find the probability none of the rolls are greater than 4 and less than two of the rolls are greater than 2. We split into the same two cases again.
+
+$\textbf{Case 1: exactly one number rolled is greater than 2 (and none of the rolls are greater than 4)}$
+
+There are still 4 choices for this die, and it must be 3 or 4, with probability $\frac{1}{3}.$ The other must read 1 or 2, with probability $\frac{1}{27},$ so this case yields $4\left(\frac{1}{3}\right)\left(\frac{1}{27}\right) = \frac{4}{81}.$
+
+$\textbf{Case 2: exactly zero numbers rolled are greater than 2 (and none of the rolls are greater than 4)}$
+
+The first statement implies the second statement, so this case yields $\frac{1}{81}$ as from our previous Case 2.
+
+Now we've got everything! Our answer is 1 - ($\frac{16}{81} + (\frac{8}{81} + \frac{1}{81}) - (\frac{4}{81} + \frac{1}{81})) = \boxed{\textbf{(D)}\ \frac{61}{81}}.$
+
+*~sirswagger21*
+## Solution 4 (Direct Counting with Subtraction)
+Let X be the number of rolls greater than 4 (i.e. 5 or 6), and Y be the number of rolls greater than 2 (i.e. 3, 4, 5, or 6). We want to compute P(X >= 1 and Y >= 2).
+
+We first compute P(X >= 1). The complement is that no roll is greater than 4, so every roll is in {1,2,3,4}. The probability of this is (4/6)^4 = 16/81. Thus,
+
+P(X >= 1) = 1 - $16/81 = 65/81$.
+
+This already guarantees Y >= 1, but we still need to enforce Y >= 2. Therefore, we subtract the outcomes where X >= 1 but Y = 1.
+
+The only way for X >= 1 and Y = 1 to occur is if exactly one die is greater than 2, and that die is also greater than 4. In other words, one die is 5 or 6, and the other three dice are 1 or 2.
+
+There are 4 choices for which die is >=5, and that die has probability $2/6 = 1/3$. The other three dice must be in {1,2}, each with probability 1/3. Therefore, the probability of this “bad” case is
+
+$$4 * (1/3) * (1/3)^3 = 4/81.$$
+
+Finally, subtracting gives
+
+P(X >= 1 and Y >= 2) = 65/81 - $4/81 = 61/81$.
+
+Thus, the answer is $\boxed{\textbf{(D)}\ 61/81}.$
+*~FastOne*
+## Video Solution by mop 2024
+https://youtu.be/ezGvZgBLe8k&t=171s
+
+*~r00tsOfUnity*
+## Video Solution (Just 2 min!)
+https://www.youtube.com/watch?v=m-rF2xwDLGM
+
+-_~Education, the Study of Everything_
+## Video Solution(1-16)
+https://youtu.be/SCwQ9jUfr0g
+
+~~Hayabusa1
+## See Also

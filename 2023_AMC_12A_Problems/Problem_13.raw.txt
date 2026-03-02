@@ -1,0 +1,127 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2023_AMC_12A_Problems/Problem_13&action=raw
+
+Published Time: Thu, 26 Feb 2026 15:47:03 GMT
+
+Markdown Content:
+{{duplicate|[[2023 AMC 10A Problems/Problem 16|2023 AMC 10A #16]] and [[2023 AMC 12A Problems/Problem 13|2023 AMC 12A #13]]}}
+
+==Problem==
+
+In a table tennis tournament, every participant played every other participant exactly once. Although there were twice as many right-handed players as left-handed players, the number of games won by left-handed players was 40\% more than the number of games won by right-handed players. (There were no ties and no ambidextrous players.) What is the total number of games played?
+
+\textbf{(A) }15\qquad\textbf{(B) }36\qquad\textbf{(C) }45\qquad\textbf{(D) }48\qquad\textbf{(E) }66
+
+==Solution 1==
+We know that the total amount of games must be the sum of games won by left and right handed players. Then, we can write g = l + r, and since l = 1.4r, g = 2.4r. Given that r and g are both integers, g/2.4 also must be an integer. From here we can see that g must be divisible by 12, leaving only answers B and D. Now we know the formula for how many games are played in this tournament is n(n-1)/2, the sum of the first n-1 numbers. Now, setting 36 and 48 equal to the equation will show that two consecutive numbers must have a product of 72 or 96. Clearly, 72=8*9, so the answer is \boxed{\textbf{(B) }36}.
+
+~~ Antifreeze5420
+
+==Solution 2==
+First, we know that every player played every other player, so there's a total of \dbinom{n}{2} games since each pair of players forms a bijection to a game. Therefore, that rules out D. Also, if the right-handed players won a total of x games, the left-handed players must have won a total of \dfrac{7}{5}x games, meaning that the total number of games played was \dfrac{12}{5}x. Thus, the total number of games must be divisible by 12. Therefore leaving only answer choices B and D. Since answer choice D doesn't satisfy the first condition, the only answer that satisfies both conditions is \boxed{\textbf{(B) }36}
+
+A simpler way is to know that the result must be a number in the form \dbinom{n}{2} games. This eliminates D. Then write a expression that equals the answer, 1.4x+x=n games total. Only 48 and 36 satisfy so 36 is the answer which is \boxed{\textbf{(B) }36}
+
+~breakingbread
+
+==Solution 3==
+Let r be the amount of games the right-handed won. Since the left-handed won 1.4r games, the total number of games played can be expressed as (2.4)r, or 12/5r, meaning that the answer is divisible by 12. This brings us down to two answer choices, B and D. 
+We note that the answer is some number x choose 2. This means the answer is in the form x(x-1)/2. Since answer choice D gives 48 = x(x-1)/2, and 96 = x(x-1) has no integer solutions, we know that \boxed{\textbf{(B) }36} is the only possible choice.
+
+==Solution 4 (Rigid solving, no cheese)==
+Here is the rigid way to prove that 36 is the only answer. Let the number of left-handed players be n, so the number of right-handed players is 2n. The number of games won by the left-handed players comes in two ways: 
+*The games played by two left-left pairs, which is \frac{n(n-1)}{2}, and 
+*The games played by left-right pairs, which we'll call x. 
+Note that x\leq 2n^2, which is the total number of games played by left-right pairs. Using the same logic for right-right pairs and right-left pairs, we have that \frac{\frac{n(n-1)}{2}+x}{\frac{2n(2n-1)}{2}+2n^2-x}=1.4, which gives x=\frac{17n^2}{8}-\frac{3n}{8}. 
+We know that x\leq 2n^2, applying that becomes
+\begin{align*} \frac{17n^2}{8}-\frac{3n}{8} &\le 2n^2 \\ 17n^2 - 3n &\le 16n^2 \\ n^2 - 3n &\le 0 \\ n &\le 3. \end{align*}
+(We can safely divide by n because it must be positive). So the total number of players p can only be 3, 6, and 9. 
+
+Since the total number of games p(p-1)/2  is 1.4+1 = \frac{12}{5} times a non-negative integer number of games won by righties, p(p-1) must be a multiple of 12(2) = 24. Among \{3,6,9\}, only p = 9 satisfies this condition,  so the total number of games is \frac{(9)(8)}{2} = \boxed{\textbf{(B)}\ 36}.
+
+~ggao5uiuc, oinava, yingkai_0_ (minor edits)
+
+==Solution 5 (🧀Cheese🧀)==
+If there are n players, the total number of games played must be \binom{n}{2}, so it has to be a triangular number. The ratio of games won by left-handed to right-handed players is 7:5, so the number of games played must also be divisible by 12. Finally, we notice that only \boxed{\textbf{(B) }36} satisfies both of these conditions.
+
+~MathFun1000
+
+==Solution 5.1 (Slightly Faster)==
+
+We know that the number of games played must be a triangular number, which elimiates {\textbf{(D)}48}, then we see that there are twice as many right-handed players as left-handed ones. Which means that the total number of players must be divisible by 3, and since each player can't play themselves, we can add 1 to the largest number in the sequence, since 1 + 2 + 3 + \dots + 8 is the only one which the amount of players is divisble by 3(9 players), \boxed{\textbf{(B) }36} is the answer
+
+~Deekzs
+
+==Solution 6 (Cheese 2)==
+
+Call the number of games x, the number of games won by right handed player R, and by left handed players L. L+R=x and L=1.4 R. Therefore, x/2.4 must be an integer, which leaves only 36 and 48. Then, note x must be half the product of two consecutive numbers (the number of possible combinations of two people) and we can eliminate 48.
+
+~meikh_neiht
+
+How is this cheese... it is literally the first solution but scaled down
+
+-Shreyansh
+
+EXACTLY... the first solution is also cheese.
+
+-AndrewZhong2012
+
+==Solution 7==
+
+Let the number of people be n. This means that there will be \frac{n(n-1)}{2} games played. We can now eliminate \textbf{(D)} because it's not a triangular number. The problem states that there are twice as many right handed people as left handed people with no ambidextrous people. Based on this, we can say that the number of people (or n) has to be divisible by 3. Because the number of games won by left-handed people is 40% more than the number of games won by right-handed people, we can set the ratio between the number of games won by left-handed to right-handed as \frac{7}{5}. The sum of the numerator and the denominator is 12. This means that the number of games must be divisible by 12. Thus, the only answer choice that fits the conditions above is answer \boxed{\textbf{(B) }36}.
+
+~ROGER8432V3
+
+==Solution 8(Pairing) - easiest noncheese==
+
+Case 1: in-group pairing
+
+In every pair where both players use the same hand, the win rate is always \(50\%\). This is because the total number of such pairs is even — any factorial other than the trivial case \(1!\) is even, and \(1\) is insufficient to form a pair. Thus, no player is left out, and in each pair exactly one player wins and one loses, giving a win‑loss ratio of \(1:1\). In other words, this case completely cancels out due to its balanced win‑loss ratio.
+
+Case 2: cross-group pairing
+
+For convenience, let left‑handed players be denoted by \(L\) and right‑handed players by \(R\). The problem gives the ratio \(R : L = 1 : 2\). This means each \(L\) plays \(2L\) times as many games as an \(R\). From this, the total number of cross‑group games is \(2L \times L = 2L^2\).
+
+The problem also states that the ratio of \(L\) wins to \(R\) wins is \(7:5\), so the total number of wins in this case must be divisible by \(5 + 7 = 12\). We therefore require \(2L^2\) to be divisible by \(12\). Simplifying gives \(L^2 \mid 6\). The smallest perfect square divisible by \(6\) is \(\boxed{\textbf{(B)}\ 36}\).
+
+~Twinotter
+
+==Video Solution by Little Fermat==
+https://youtu.be/h2Pf2hvF1wE?si=W4Ad9Bm3vhcTBB4G&t=3440
+~little-fermat
+==Video Solution by Math-X ==
+https://youtu.be/GP-DYudh5qU?si=DCXVk-iVlqWT-6bS&t=4158
+~Math-X
+
+== Video Solution by Power Solve ==
+https://youtu.be/2_ytwADrIto
+
+==Video Solution ⚡️ Under 2 min ⚡️ ==
+https://youtu.be/wSeSYxDCOZ8
+
+_~Education, the Study of Everything_
+
+== Video Solution 1 by OmegaLearn ==
+https://youtu.be/BXgQIV2WbOA
+
+== Video Solution by CosineMethod ==
+
+https://www.youtube.com/watch?v=N-eZMOv_ZjY
+
+== Video Solution 2 by TheBeautyofMath ==
+https://www.youtube.com/watch?v=sLtsF1k9Fx8&t=227s
+
+==Video Solution==
+
+https://youtu.be/S9l1C6pjXWI
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+==Video Solution by SpreadTheMathLove==
+https://www.youtube.com/watch?v=sypOvNiR3sw
+
+==See Also==
+{{AMC10 box|year=2023|ab=A|num-b=15|num-a=17}}
+{{AMC12 box|year=2023|ab=A|num-b=12|num-a=14}}
+{{MAA Notice}}

@@ -1,0 +1,22 @@
+# 2014 AMC 12B Problem 15
+
+## Problem
+When $p =\sum$\$limits_{k=1}^{6}$ k $\text{ ln }{k},$ the number $e^p$ is an integer.  What is the largest power of 2 that is a factor of $e^p$?
+
+$\textbf{(A)}\ 2^{12}\qquad\textbf{(B)}\ 2^{14}\qquad\textbf{(C)}\ 2^{16}\qquad\textbf{(D)}\ 2^{18}\qquad\textbf{(E)}\ 2^{20}$
+## Solution
+Let's write out the sum.  Our sum is equal to
+
+$$
+1 \ln{1} + 2 \ln{2} + 3 \ln{3} + 4 \ln{4} + 5 \ln{5} + 6 \ln{6} =
+\ln{1^1} + \ln{2^2} + \ln{3^3} + \ln {4^4} + \ln{5^5} + \ln {6^6} =
+\ln{(1^1\times2^2\times3^3\times4^4\times5^5\times6^6)}
+$$
+
+Raising e to the power of this quantity eliminates the natural logarithm, which leaves us with
+$$e^p = 1^1\times2^2\times3^3\times4^4\times5^5\times6^6$$
+This product has 2 powers of 2 in the $2^2$ factor, 4*2=8 powers of 2 in the $4^4$ factor, and 6 powers of 2 in the $6^6$ factor.
+This adds up to $2+8+6=16$ powers of two which divide into our quantity, so our answer is $\boxed{\textbf{(C)}\ 2^{16}}$
+## Video Solution
+For those wanting a video: https://www.youtube.com/watch?v=iq2X86GFVBo
+## See also

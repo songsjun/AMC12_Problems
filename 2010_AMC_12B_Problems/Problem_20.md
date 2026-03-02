@@ -1,0 +1,28 @@
+# 2010 AMC 12B Problem 20
+
+## Problem
+A geometric sequence $(a_n)$ has a_$1=\sin$ x, a_$2=\cos$ x, and $a_3=\tan$ x for some real number x. For what value of n does $a_n=1+\cos$ x?
+
+$\textbf{(A)}\ 4 \qquad \textbf{(B)}\ 5 \qquad \textbf{(C)}\ 6 \qquad \textbf{(D)}\ 7 \qquad \textbf{(E)}\ 8$
+## Solution
+By the defintion of a geometric sequence, we have $\cos^2x=\sin$ x $\tan$ x. Since $\tanx=\frac{\sin x}{\cos x},$ we can rewrite this as $\cos^3x=\sin^2$x.
+
+The common ratio of the sequence is $\frac{\cos x}{\sin x},$ so we can write
+
+
+$$
+a_1= \sin x
+a_2= \cos x
+a_3= \frac{\cos^2x}{\sin x}
+a_4=\frac{\cos^3x}{\sin^2x}=1
+a_5=\frac{\cos x}{\sin x}
+a_6=\frac{\cos^2x}{\sin^2x}
+a_7=\frac{\cos^3x}{\sin^3x}=\frac{1}{\sin x}
+a_8=\frac{\cos x}{\sin^2 x}=\frac{1}{\cos^2 x}
+$$
+
+
+Since $\cos^3x=\sin^2x=1-\cos^2$x, we have $\cos^3x+\cos^2x=1 \implies \cos^2x(\cosx+1)=1 \implies \cosx+1=\frac{1}{\cos^2 x},$ which is $a_8$ , making our answer 8 $\Rightarrow \boxed{E}.$
+## Solution 2
+Notice that the common ratio is $r=\frac{\cos(x)}{\sin(x)}$; multiplying it to $\tan(x)=\frac{\sin(x)}{\cos(x)}$ gives $a_4=1$. Then, working backwards we have a_$3=\frac{1}{r},$ a_$2=\frac{1}{r^2}$ and a_$1=\frac{1}{r^3}.$ Now notice that since a_$1=\sin(x)$ and a_$2=\cos(x),$ we need $a_1^2+a_2^2=1$, so $\frac{1}{r^6}+\frac{1}{r^4}=\frac{r^2+1}{r^6}=1\implies$ r^2+1=r^6. Dividing both sides by $r^2$ gives $1+\frac{1}{r^2}=r^4,$ which the left side is equal to $1+\cos(x)$; we see as well that the right hand side is equal to $a_8$ given $a_4=1$, so the answer is $\boxed{E}. -$ mathleticguyyy
+## See also

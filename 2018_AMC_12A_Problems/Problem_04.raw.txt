@@ -1,0 +1,57 @@
+{{duplicate|[[2018 AMC 10A Problems/Problem 5|2018 AMC 10A #5]] and [[2018 AMC 12A Problems/Problem 4|2018 AMC 12A #4]]}}
+
+==Problem==
+
+Alice, Bob, and Charlie were on a hike and were wondering how far away the nearest town was. When Alice said, "We are at least <math>6</math> miles away," Bob replied, "We are at most <math>5</math> miles away." Charlie then remarked, "Actually the nearest town is at most <math>4</math> miles away." It turned out that none of the three statements were true. Let <math>d</math> be the distance in miles to the nearest town. Which of the following intervals is the set of all possible values of <math>d</math>?
+
+<math>\textbf{(A) }   (0,4)   \qquad        \textbf{(B) }   (4,5)   \qquad    \textbf{(C) }   (4,6)   \qquad   \textbf{(D) }  (5,6)  \qquad  \textbf{(E) }   (5,\infty) </math>
+
+==Solution 1==
+For each of the false statements, we identify its corresponding true statement. Note that:
+<ol style="margin-left: 1.5em;">
+  <li><math>\mathrm{False}\cap\mathrm{True}=\varnothing.</math></li><p>
+  <li><math>\mathrm{False}\cup\mathrm{True}=[0,\infty).</math></li><p>
+</ol>
+We construct the following table:
+<cmath>\begin{array}{c||c|c}
+& &  \\ [-2.5ex]
+\textbf{Hiker} & \textbf{False Statement} & \textbf{True Statement} \\ [0.5ex]
+\hline
+& & \\ [-2ex]
+\textbf{Alice} & [6,\infty) & [0,6) \\ 
+& & \\ [-2.25ex]
+\textbf{Bob} & [0,5] & (5,\infty)  \\
+& & \\ [-2.25ex]
+\textbf{Charlie} & [0,4] & (4,\infty)
+\end{array}</cmath>
+Taking the intersection of the true statements, we have <cmath>[0,6)\cap(5,\infty)\cap(4,\infty)=(5,6)\cap(4,\infty)=\boxed{\textbf{(D) } (5,6)}.</cmath>
+~MRENTHUSIASM
+
+==Solution 2==
+Think of the distances as if they are on a number line. Alice claims that <math>d > 6</math>, Bob says <math>d < 5</math>, while Charlie thinks <math>d < 4</math>. This means that all possible numbers less than <math>5</math> and greater than <math>6</math> are included. However, since the three statements are actually false, the distance to the nearest town is one of the numbers not covered. Therefore, the answer is <math>\boxed{\textbf{(D) } (5,6)}</math>.
+
+==Video Solution (HOW TO THINK CREATIVELY!)==
+https://youtu.be/nNEXCxWLJzc
+
+Education, the Study of Everything
+
+
+
+
+==Video Solution==
+https://youtu.be/vO-ELYmgRI8
+
+~IceMatrix
+
+==Video Solution==
+https://youtu.be/cLJ87xJzcWI
+
+~savannahsolver
+
+== See Also ==
+
+{{AMC10 box|year=2018|ab=A|num-b=4|num-a=6}}
+{{AMC12 box|year=2018|ab=A|num-b=3|num-a=5}}
+{{MAA Notice}}
+
+[[Category:Logic Problems]]

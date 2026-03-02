@@ -1,0 +1,37 @@
+# 2003 AMC 12B Problem 20
+
+## Problem
+Part of the graph of $f(x) = ax^3 + bx^2 + cx + d$ is shown. What is b?
+
+[Image:2003_$12B_AMC-20$.png](https://artofproblemsolving.com/wiki/index.php/Image:2003_12B_AMC-20.png)
+
+
+$$\mathrm{(A)}\ -4 \qquad\mathrm{(B)}\ -2 \qquad\mathrm{(C)}\ 0 \qquad\mathrm{(D)}\ 2 \qquad\mathrm{(E)}\ 4$$
+
+## Solution
+### Solution 1
+Since
+
+$$
+\begin{align*} -f(-1) = a - b + c - d = 0 = f(1) = a + b + c + d \end{align*}
+$$
+
+
+It follows that b + $d = 0$. Also, d = f(0) = 2, so b = -2 $\Rightarrow \mathrm{(B)}.$
+### Solution 2
+Two of the roots of $f(x) = 0$ are $\pm 1,$ and we let the third one be n. Then
+a$(x-1)(x+1)(x-n)$ = ax^3-anx^2-ax+an = ax^3 + bx^2 + cx + $d = 0$
+Notice that f(0) = d = an = 2, so b = -an = -2 $\Rightarrow \mathrm{(B)}.$
+### Solution 3
+Notice that if $g(x) = 2-2x^2$, then f - g vanishes at x = -1, 0, 1 and so
+$$f(x) - g(x) = ax(x-1)(x+1) = ax^3 - ax$$
+implies by $x^2$ coefficient, b + 2 = 0, b = -2 $\Rightarrow \mathrm{(B)}.$
+### Solution 4
+The roots of this equation are -1, 1, $\text{ and }$ x, letting x be the root not shown in the graph. By Vieta, we know that $-1+1+x=x=-\frac{b}{a}$ and $-1\cdot 1\cdotx=-x=-\frac{d}{a}.$ Therefore, $x=\frac{d}{a}.$ Setting the two equations for x equal to each other, $\frac{d}{a}=-\frac{b}{a}.$ We know that the y-intercept of the polynomial is d, so $d=2$. Plugging in for d, $\frac{2}{a}=-\frac{b}{a}.$
+
+Therefore, b=-2 $\Rightarrow \boxed{B}$
+### Solution 5
+From the graph, we have f(0)=2 so $d=2$. Also from the graph, we have f(1)=a+b+$c+2=0$. But we also have from the graph f(-1)=-a+b-$c+2=0$. Summing f(1)+f(2) we get 2$b+4=0$ so b = -2 $\Rightarrow \mathrm{(B)}.$
+
+Solution by franzliszt
+## See also

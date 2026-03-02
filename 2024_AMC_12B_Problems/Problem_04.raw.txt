@@ -1,0 +1,54 @@
+{{duplicate|[[2024 AMC 10B Problems/Problem 4|2024 AMC 10B #4]] and [[2024 AMC 12B Problems/Problem 4|2024 AMC 12B #4]]}}
+
+==Problem==
+Balls numbered 1, 2, 3, ... are deposited in 5 bins, labeled A, B, C, D, and E, using the following procedure. Ball 1 is deposited in bin A, and balls 2 and 3 are deposited in bin B. The next 3 balls are deposited in bin C, the next 4 in bin D, and so on, cycling back to bin A after balls are deposited in bin E. (For example, balls numbered 22, 23, ..., 28 are deposited in bin B at step 7 of this process.) In which bin is ball 2024 deposited?
+
+<math>\textbf{(A) } A \qquad\textbf{(B) } B \qquad\textbf{(C) } C \qquad\textbf{(D) } D \qquad\textbf{(E) } E</math>
+
+==Solution 1==
+
+Consider the triangular array of numbers:
+<cmath>1</cmath>
+<cmath>2, 3</cmath>
+<cmath>4, 5, 6</cmath>
+<cmath>7, 8, 9, 10</cmath>
+<cmath>11, 12, 13, 14, 15</cmath>
+<cmath>\vdots</cmath>.
+
+The numbers in a row congruent to <math>1 \bmod{5}</math> will be in bucket A. Similarly, the numbers in a row congruent to <math>2, 3, 4, 0 \bmod{5}</math> will be in buckets B, C, D, and E respectively. Note that the <math>n^\text{th}</math> row ends with the <math>n^\text{th}</math> triangle number, <math>\frac{n(n+1)}{2}</math>.
+
+We must find values of <math>n</math> that make <math>\frac{n(n+1)}{2}</math> close to <math>2024</math>.
+<cmath>\frac{n(n+1)}{2} \approx 2024</cmath>
+<cmath>n(n+1) \approx 4048</cmath>
+<cmath>n^2 \approx 4048</cmath>
+<cmath>n \approx 63</cmath>
+
+Trying <math>n = 63</math> we find that <math>\frac{n(n+1)}{2} = 2016</math>. Since <math>2016</math> will be the last ball in row <math>63</math>, ball <math>2024</math> will be in row <math>64</math>. Since <math>64 \equiv 4 \bmod{5}</math>, ball <math>2024</math> will be placed in bucket <math>\boxed{\text{D. } D}</math>.
+
+~numerophilee
+
+== Solution 2  ==
+[[Image: 2024_AMC_12B_P04.jpeg|thumb|center|600px|]]
+~Kathan
+
+==Video Solution 1 by Pi Academy (Fast and Easy ⚡🚀)==
+
+https://youtu.be/DIl3rLQQkQQ?feature=shared
+
+~ Pi Academy
+
+== Video Solution by Daily Dose of Math ==
+
+https://youtu.be/GsXiQWPowoE
+
+~Thesmartgreekmathdude
+
+==Video Solution by TheBeautyofMath==
+https://youtu.be/mpnm_r6D3-w?t=634
+
+~IceMatrix
+
+==See also==
+{{AMC10 box|year=2024|ab=B|num-b=3|num-a=5}}
+{{AMC12 box|year=2024|ab=B|num-b=3|num-a=5}}
+{{MAA Notice}}

@@ -1,0 +1,99 @@
+# 2025 AMC 12B Problem 17
+
+> This problem is the same as [2025 AMC 10B #21](https://artofproblemsolving.com/wiki/index.php/2025_AMC_10B_Problems/Problem_21) and [2025 AMC 12B #17](https://artofproblemsolving.com/wiki/index.php/2025_AMC_12B_Problems/Problem_17).
+## Problem
+Each of the 9 squares in a {3 $\times 3$} grid is to be colored red, blue, or yellow in such a way that each red square shares an edge with at least one blue square, each blue square shares an edge with at least one yellow square, and each yellow square shares an edge with at least one red square. Colorings that can be obtained from one another by rotations and/or reflections are considered the same. How many different colorings are possible?
+
+$\textbf{(A) } 3 \qquad \textbf{(B) } 9 \qquad \textbf{(C) } 12 \qquad \textbf{(D) } 18 \qquad \textbf{(E) } 27$
+## Solution 1 (Casework)
+Denote $1=\text{red}, 2=\text{blue}, 3=\text{yellow}.$ We need $1\to 2\to 3\to 1.$
+
+WLOG place 1 in the center (0,0), 2 on the left edge (-1,0), 3 on the top-left corner (-1,1).
+
+$$
+\begin{bmatrix} 3 & 0 & 0 \\ 2 & 1 & 0 \\ 0 & 0 & 0 \end{bmatrix}
+$$
+
+3 must see 1, so the top edge (0,1) must also have 1. Then, 1 must see 2, so the top-right corner (1,1) becomes 2, which must see 3, so the right edge (1,0) must have 3.
+
+$$
+\begin{bmatrix} 3 & 1 & 2 \\ 2 & 1 & 3 \\ 0 & 0 & 0 \end{bmatrix}
+$$
+
+Now this bottom-right corner can vary either as 1, 2 or 3.
+Cases on (1,-1):
+If 1:
+
+$$
+\begin{bmatrix} 3 & 1 & 2 \\ 2 & 1 & 3 \\ 3 & 2 & 1 \end{bmatrix}
+$$
+
+but the 3 needs a 1 and does not have it, so there are 0 cases.
+If 2:
+
+$$
+\begin{bmatrix} 3 & 1 & 2 \\ 2 & 1 & 3 \\ b & a & 2 \end{bmatrix}
+$$
+
+if $a=1$, b can be 1 or 3. If $a=2, b=3$, but the 3 needs a 1 and can't get it.
+If $a=3, b=1$,2, so there are 4 cases in total.
+If 3:
+
+$$
+\begin{bmatrix} 3 & 1 & 2 \\ 2 & 1 & 3 \\ 2 & 1 & 3 \end{bmatrix}
+$$
+
+Since the 2 in the bottom left corner does not have a 3 nearby, there are 0 cases.
+
+WLOG the center fixes a factor of 3, so the answer is $4\cdot 3=\boxed{\textbf{(C) } 12}.$
+
+*~imosilver*
+- hey random question did u get silver in IMO ? W if u did ,lwky nice solution =)
+*~edited by Alex Tu*
+## Solution 2 (Complex Circular Counting)
+This solution is complex, but gives the answer in less than a couple minutes and saves the bearing of casework, so proceed as a last resort.
+
+Also yes this solution is inspired from 3Blue1Brown's Olympiad Counting video.
+
+We will find the arrangement that contains the least possible occurrences of a color $a$ and the most occurrences of a color $b$, in which we will then use the circular gap theorem $C_n A$ on all integers $x$ such that $x \in [a,b]$ and $(a,b,x) \in \mathbb{Z}^+$.
+
+The average number of colors $M$ is simply $9/3 = 3$ (9 slots divided by 3 colors). So we see that the interval contains $a < 3 < b$. We also have that the minimal number of colors is clearly 1 (it doesn't take much to show a case that contains only one color). The challenge is to find the maximal number, which is $b$.
+
+We see that there must be at least one of each color, so $b$ can be a maximum of 6. However, we can see that 6 clearly cannot be $b$, as if we have a configuration of 6 colors, that would mean that through the constraints in the problem, the other three colors are already uniquely determined. However, now there is no slots in the grid, and we cannot satisfy all the requirements, so $b \le 5$.
+
+However, we also find that $b \ne 5$, as the four colors, say blue already determine 2 other colors, say yellow, which determine another 2 colors, say red. However, now there is one color left! This color must be blue (as there are 5), but if there is one blue an no yellow to satisfy the condition, then the case is simply impossible. Therefore, $b \le 4$.
+
+We can try to do the same thing for 4, but we will see that $b=4$ satisfies the prerequisites.
+
+Therefore, $a=1$ and $b=4$, in which we then use the circular gap theorem
+
+$$C_n A = \frac{n}{k} \binom{n-k-1}{k-1}$$
+
+For $n=x : x \in [a,b]$, (a,b,x)$ \in \mathbb{Z}^+$ and $0 < k \le \left\lfloor\frac{n}{2}\right\rfloor : k \in \mathbb{Z}^+$
+
+And so, we do so!
+
+For $n=1, C_n A = 1$ (note that every $\binom{n}{0}=1)$
+
+For $n=2, C_n A = 2$
+
+For $n=3, C_n A = 3$
+
+For $n=4, C_n A = 6$
+
+Our answer is just the sum of all four of these, which is $6+3+2+1$ or $\boxed{\textbf{(C) } 12}$
+
+*~Pinotation*
+
+btw the actual theorem name for $C_n A$ isn't actually the Circular Gap Theorem. I just call it that because I honestly don't know the name of it. It is a pretty neat theorem however, and I first learned it from this AIME problem here: [https://artofproblemsolving.com/wiki/index.php?title=1983_AIME_Problems/Problem_7 1983 AIME Q7 Sol. 9].
+
+It is apparently a closed form for the number of ways to write n as the sum of k positive circular cycles for n $\ge 2,$ and for 0, the value is just 1.
+## Solution 3
+We begin by WLOG-ing the center box as red, denoted R.  $\begin{tabular}{|c|c|c|} \hline$ & & \\ $\hline$ & R & \\ $\hline$ & & \\ $\hline \end{tabular}$  We will then consider the upper edge box, for now we'll assume it to be blue (it will be clear later)  $\begin{tabular}{|c|c|c|} \hline$ & B & \\ $\hline$ & R & \\ $\hline$ & & \\ $\hline \end{tabular}$  Now we consider the upper right box, which is forced to be yellow as it would be redundant due to reflection through the center column.  $\begin{tabular}{|c|c|c|} \hline$ & B & Y \\ $\hline$ & R & \\ $\hline$ & & \\ $\hline \end{tabular}$  Now, working in a clockwise direction, the right edge box is forced to be red, the bottom corner therefore is forced to be blue, and the bottom edge is forced to be yellow.  $\begin{tabular}{|c|c|c|} \hline$ & B & Y \\ $\hline$ & R & R \\ $\hline$ & Y & B \\ $\hline \end{tabular}$  Now we must consider the bottom left corner. If we set the bottom left corner to red, the left edge therefore must be blue, but then nothing can be filled in for the top left box (red causes left edge to violate the blue -> yellow rule, blue fails for a multitude of reasons, and yellow violates the yellow -> red rule).  $\begin{tabular}{|c|c|c|} \hline$ ? & B & Y \\ $\hline B$ & R & R \\ $\hline R$ & Y & B \\ $\hline \end{tabular}$  However, the other two colors both work:  $\begin{tabular}{|c|c|c|} \hline Y$ & B & Y \\ $\hline R$ & R & R \\ $\hline Y$ & Y & B \\ $\hline \end{tabular}$  and  $\begin{tabular}{|c|c|c|} \hline Y$ & B & Y \\ $\hline R$ & R & R \\ $\hline B$ & Y & B \\ $\hline \end{tabular}$  Now we can prove why the second case works: We have a red box on the edge, therefore the above box is a rotation of the box in step 2 with a red on the upper edge. Additionally, given that the upper edge box is not red, we have two cases, we assumed that it was blue and worked down, but now we will denote what boxes it forces (denoted as f'):  $\begin{tabular}{|c|c|c|} \hline$ & 2 & f' \\ $\hline$ & R & R \\ $\hline$ & f' & f' \\ $\hline \end{tabular}$  Combining the forced boxes from the lower left corner (the f forced boxes) and the forced boxes from the upper edge (the f' forced boxes), we get the following table:  $\begin{tabular}{|c|c|c|} \hline$ f & 2 & f' \\ $\hline$ f & R & R \\ $\hline $2 & f' & f' \\ $\hline \end{tabular}$  From this, we can write the box in terms of number of cases of that box (remember that we WLOG-ed the center as red, so 3 cases there):  $\begin{tabular}{|c|c|c|} \hline $1 & 2 & 1 \\ $\hline $1 & 3 & 1 \\ $\hline $2 & 1 & 1 \\ $\hline \end{tabular}$  By multiplication, we get $2\cdot 3 \cdot 2=\boxed{\textbf{(C) } 12}.$ ~hi-person
+## Video Solution 1 by OmegaLearn.org
+https://youtu.be/SKy8Ng7lFXE
+## Video Solution 2 (Fast and Easy)
+https://www.youtube.com/watch?v=OhYXPcTPBOg ~ Pi Academy
+## Video Solution 3 by SpreadTheMathLove
+https://www.youtube.com/watch?v=JSUNM1kdjc0
+## See Also

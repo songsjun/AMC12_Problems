@@ -1,0 +1,66 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2024_AMC_12B_Problems/Problem_23&action=raw
+
+Published Time: Thu, 17 Jul 2025 15:55:42 GMT
+
+Markdown Content:
+==Problem==
+A right pyramid has regular octagon ABCDEFGH with side length 1 as its base and apex V. Segments \overline{AV} and \overline{DV} are perpendicular. What is the square of the height of the pyramid?
+
+\textbf{(A) }1 \qquad \textbf{(B) }\frac{1+\sqrt2}{2} \qquad \textbf{(C) }\sqrt2 \qquad \textbf{(D) }\frac32 \qquad \textbf{(E) }\frac{2+\sqrt2}{3} \qquad
+
+==Solution 1==
+To find the height of the pyramid, we need the length from the center of the octagon (denote as I) to its vertices and the length of AV. 
+
+From symmetry, we know that \overline{AV} = \overline{DV}, therefore \triangle{AVD} is a 45-45-90 triangle. Denote \overline{AV} as x so that \overline{AD} = x\sqrt{2}. Doing some geometry on the isosceles trapezoid ABCD (we know this from the fact that it is a regular octagon) reveals that \overline{AD}=1+2(\sqrt{2}/2)=1+\sqrt{2} and \overline{AV}=(\overline{AD})/\sqrt{2}=(\sqrt{2}+2)/2. 
+
+To find the length \overline{IA}, we cut the octagon into 8 triangles, each with a smallest angle of 45 degrees. Using the law of cosines on \triangle{AIB} we find that {\overline{IA}}^2=(2+\sqrt{2})/2. 
+
+Finally, using the pythagorean theorem, we can find that {\overline{IV}}^2={\overline{AV}}^2-{\overline{IA}}^2= {((\sqrt{2}+2)/2)}^2 - (2+\sqrt{2})/2 = \boxed{(1+\sqrt{2})/2} which is answer choice \boxed{B}.
+
+～username2333
+~hashbrown2009
+
+==Solution 2 (Less computation)==
+
+Let O be the center of the regular octagon. Connect AD, and let I be the midpoint of line segment AD. It is easy to see that VI=\frac{1}{2} AD=\frac{1+\sqrt{2}}{2} and OI=\frac{1}{2}AH=\frac{1}{4}. Hence, 
+VO^2=VI^2-OI^2
+=\left(\frac{1+\sqrt{2}}{2}\right)^2-\frac{1}{4}
+=\frac{1+\sqrt{2}}{2} 
+Hence, the answer is \boxed{B}.
+
+~tsun26
+==Solution 3==
+[[Image: 2024_AMC_12B_P23.jpeg|thumb|center|600px|]]
+~Kathan
+
+==Solution 4 (Easy Geometry)==
+[[File:AMC_12B_2024_Problem23.png|None]]
+
+Firstly, scale each of the sides up by 2\sqrt{2}, and split the octagon into half. Next, divide the octagon into a rectangle and the isosceles trapezoid, and let A and D be the points where the shapes coincide. Also, let I be the center of the rectangle (which is also the center of the octagon.) By drawing 45-45-90 triangles in the trapezoid, we see that AD = 4+2\sqrt{2}. Now, consider the length of AI. It is half of the diagonal of the rectangle, and since the diagonal is just \sqrt{(2\sqrt{2})^{2}+(4+2\sqrt{2})^{2}} = \sqrt{8+24+16\sqrt{2}} = \sqrt{32+16\sqrt{2}}, the length of AI is just \sqrt{8+4\sqrt{2}}. Now, consider triangle ADV. The apex of a regular pyramid is defined to be equidistant from every vertex, and since segments AV and DV are perpendicular, then triangle ADV is a 45-45-90 right triangle with the right angle at V. This means that both AV and DV can be written as \frac{AD}{\sqrt{2}} = \frac{4+2\sqrt{2}}{\sqrt{2}} = 2\sqrt{2} + 2. Finally, since IV is perpendicular to base ABCDEFGH, then AIV is a right triangle. Applying Pythagorean Theorem yields IV^{2} = (2\sqrt{2} + 2)^{2} - (8+4\sqrt{2}) = 4+4\sqrt{2}. However, initially we had scaled each of the sides by 2\sqrt{2}, so we have to divide the answer by the square of that, so the real answer is then \frac{1+\sqrt{2}}{2}. Therefore the answer is then \boxed{\textbf{(B) }\frac{1+\sqrt2}{2}}
+
+~mathwizard123123
+
+==Solution 5 (Vectors)==
+
+Consider the vectors \vec{AV} and \vec{DV}.
+If we use a coordinate plane where one of the axes is parallel to one of the sides of the octagon, we can calculate each of the vectors to be
+\vec{AV} = \left\langle \frac{1}{2}, \frac{1+\sqrt{2}}{2}, h \right\rangle
+\vec{DV} = \left\langle \frac{1}{2}, \frac{-1-\sqrt{2}}{2}, h \right\rangle
+Now, we must have \vec{AV} \cdot \vec{DV} = 0 if the vectors are perpendicular to each other, so
+\left\langle \frac{1}{2}, \frac{-1-\sqrt{2}}{2}, h \right\rangle \cdot \left\langle \frac{1}{2}, \frac{1+\sqrt{2}}{2}, h \right\rangle = \frac{1}{4} - \frac{3 + 2\sqrt{2}}{4} + h^2 = 0
+h^2=\frac{2+2\sqrt{2}}{4}=\frac{1+\sqrt{2}}{2}
+
+Yielding answer choice \boxed{B}.
+
+~tkl
+
+==Only B and D looks normal , guess one using掐头去尾
+
+==Video Solution 1 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=G-PzTyKqqV4
+
+==See also==
+{{AMC12 box|year=2024|ab=B|num-b=22|num-a=24}}
+{{MAA Notice}}

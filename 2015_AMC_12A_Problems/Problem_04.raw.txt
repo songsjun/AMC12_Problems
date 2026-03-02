@@ -1,0 +1,38 @@
+{{duplicate|[[2015 AMC 12A Problems|2015 AMC 12A #4]] and [[2015 AMC 10A Problems|2015 AMC 10A #6]]}}
+==Problem==
+
+The sum of two positive numbers is <math> 5 </math> times their difference. What is the ratio of the larger number to the smaller number?
+
+<math> \textbf{(A)}\ \frac{5}{4}\qquad\textbf{(B)}\ \frac{3}{2}\qquad\textbf{(C)}\ \frac{9}{5}\qquad\textbf{(D)}\ 2 \qquad\textbf{(E)}\ \frac{5}{2} </math>
+
+==Solution 1==
+
+Let <math>a</math> be the bigger number and <math>b</math> be the smaller.
+
+<math>a + b = 5(a - b)</math>.
+
+Multiplying out gives <math>a + b = 5a - 5b</math> and rearranging gives <math>4a = 6b</math> and factorised into <math>2a = 3b</math> and then solving gives
+
+<math>\frac{a}{b} = \frac32</math>, so the answer is <math>\boxed{\textbf{(B) }\frac32}</math>.
+
+==Solution 2==
+
+Without loss of generality, let the two numbers be <math>3</math> and <math>2</math>, as they clearly satisfy the condition of the problem. The ratio of the larger to the smaller is <math>\boxed{\textbf{(B) }\frac32}</math>.
+
+==Video Solution (CREATIVE THINKING)==
+https://youtu.be/GLfDY92_td0
+
+~Education, the Study of Everything
+
+
+
+
+==Video Solution==
+https://youtu.be/JLKoh-Nb0Os
+
+~savannahsolver
+
+==See Also==
+{{AMC10 box|year=2015|ab=A|num-b=5|num-a=7}}
+{{AMC12 box|year=2015|ab=A|num-b=3|num-a=5}}
+{{MAA Notice}}

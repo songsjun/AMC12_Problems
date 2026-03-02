@@ -1,0 +1,85 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2008_AMC_12A_Problems/Problem_15&action=raw
+
+Published Time: Sat, 30 Sep 2023 08:19:05 GMT
+
+Markdown Content:
+{{duplicate|[[2008 AMC 12A Problems|2008 AMC 12A #15]] and [[2008 AMC 10A Problems/Problem 24|2008 AMC 10A #24]]}}
+==Problem==
+Let k={2008}^{2}+{2}^{2008}. What is the units digit of k^2+2^k?
+
+\mathrm{(A)}\ 0\qquad\mathrm{(B)}\ 2\qquad\mathrm{(C)}\ 4\qquad\mathrm{(D)}\ 6\qquad\mathrm{(E)}\ 8
+
+==Solution==
+k \equiv 2008^2 + 2^{2008} \equiv 8^2 + 2^4 \equiv 4+6 \equiv 0 \pmod{10}. 
+
+So, k^2 \equiv 0 \pmod{10}. Since k = 2008^2+2^{2008}   is a multiple of four and the units digit of powers of two repeat in cycles of four, 2^k \equiv 2^4 \equiv 6 \pmod{10}. 
+
+Therefore, k^2+2^k \equiv 0+6 \equiv 6 \pmod{10}. So the units digit is 6 \Rightarrow \boxed{D}.
+
+===Note===
+Another way to get k \equiv 0 \pmod{10} is to find the cycles of the last digit.
+
+For 2008^2, we need only be concerned with the last digit 8 since the other digits do not affect the last digit. Since 8^{2} = 64, the last digit of 2008^2 is 4.
+
+For 2^{2008}, note that the last digit cycles through the pattern {2, 4, 8, 6}. (You can try to see this by calculating the first powers of 2.)
+
+Since 2008 is a multiple of 4, the last digit of 2^{2008} is evidently 6.
+
+Continue as follows.
+
+~mathboy282
+
+Mathboy282,
+That is actually what solution 1 is explaining in the first sentence but I think yours is a more detailed and easier to comprehend explanation.
+
+@graceandmymommath, I will offer my own solution below. Thanks for the comment.
+
+==Solution 2==
+I am going to share another approach to this problem.
+
+A units digit k for an integer n implies n \equiv k \pmod{10}
+
+Let us take this step by step. First, we consider k^2.
+
+Note that k^2 = \left(2008^2 + 2^{2008}\right)^2 = 2008^4 + 2 \cdot 2008^2 \cdot 2^{5016}. Now we calculate k^2 \pmod{10}
+
+Before continuing, though, we must take note of the following:
+
+ \begin{align*} 2^1 &\equiv 2 \pmod {10} \\ 2^2 &\equiv 4 \pmod {10} \\ 2^3 &\equiv 8 \pmod {10} \\ 2^4 &\equiv 6 \pmod {10} \end{align*} 
+
+Now, we continue with the calculation.
+
+ \begin{align*} 2008^4 + 2 \cdot 2008^2 \cdot 2^{5016} &\equiv 8^4 + 2 \cdot 8^2 \cdot 2^{2008} + 2^{5016} \pmod{10} \\ &\equiv 8^4 + 2^1 \cdot 2^6 \cdot 2^{2008} + 2^{5016} \pmod{10} \\ &\equiv 8^4 + 2^{1+6+2008} + 2^{5016} \pmod{10} \\ &\equiv 6 + 2^{2015} + 6 \pmod{10} \\ &\equiv 6 + 2^{3} + 6 \pmod{10} \\ &\equiv 6 + 8 + 6 \pmod{10} \\ &\equiv 20 \pmod{10} \\ &\equiv 0 \pmod{10} \\ \end{align*} 
+
+We do the same with 2^k. However, we just need to find k \pmod 4 in order to do this calculation since we have the table of 2^k \pmod 10.
+
+ \begin{align*} 2008^2 + 2^{2008} &\equiv 8^2 \pmod{4} \\ &\equiv 64 \pmod 4\\ &\equiv 0 \pmod 4 \end{align*} 
+
+This implies that 
+ \begin{align*} 2^k &\equiv 2^{4} \pmod{10} \\ &\equiv 6 \pmod{10} \end{align*} 
+
+Thus, 
+ \begin{align*} k^2 + 2^k &\equiv 6+0 \pmod{10}\\ &\equiv \boxed{\textbf{(D) }6} \pmod{10} \end{align*} 
+
+~mathboy282
+
+==Solution 3 (when you are limited on time)==
+By unit digit arithmetic, the unit digit of k^2+2^k need to be either 4 or 6. Hence, we can guess one of them for a 50% of getting it right.
+This should only take 20 seconds or less. ~peelybonehead
+
+Note: this solution is not recommended and is only advised when you have <5 minutes left.
+
+== Video Solution by OmegaLearn ==
+https://youtu.be/-H4n-QplQew?t=36
+
+~ pi_is_3.14
+
+==Solution 2 (Video solution)==
+Video: https://youtu.be/Ib-onAecb1I
+
+==See Also== 
+{{AMC12 box|year=2008|ab=A|num-b=14|num-a=16}}
+{{AMC10 box|year=2008|ab=A|num-b=23|num-a=25}}
+{{MAA Notice}}

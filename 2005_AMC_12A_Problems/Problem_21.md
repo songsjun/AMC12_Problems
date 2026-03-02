@@ -1,0 +1,17 @@
+# 2005 AMC 12A Problem 21
+
+## Problem
+How many ordered triples of integers (a,b,c), with a $\geq 2,$ b $\geq 1,$ and c $\geq 0,$ satisfy both $\log_{a}$b = $c^{2005}$ and a + b + $c = 2005$?
+
+
+$$\mathrm{(A)} \ 0 \qquad \mathrm{(B)} \ 1 \qquad \mathrm{(C)} \ 2 \qquad \mathrm{(D)} \ 3 \qquad \mathrm{(E)} \ 4$$
+
+## Solution
+$$a^{c^{2005}} = b$$
+
+[Casework](https://artofproblemsolving.com/wiki/index.php/Casework) upon c:
+
+*$c = 0$: Then a^0 = b $\Longrightarrowb = 1$. Thus we get (2004,1,0).
+*$c = 1$: Then a^1 = b $\Longrightarrow$ a = b. Thus we get (1002,1002,1).
+*c $\ge 2$: Then the exponent of a becomes huge, and since a $\ge 2$ there is no way we can satisfy the second condition. Hence we have two ordered triples $\mathrm{(C)}.$
+## See also

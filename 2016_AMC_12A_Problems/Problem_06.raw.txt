@@ -1,0 +1,36 @@
+== Problem ==
+
+A triangular array of <math>2016</math> coins has <math>1</math> coin in the first row, <math>2</math> coins in the second row, <math>3</math> coins in the third row, and so on up to <math>N</math> coins in the <math>N</math>th row. What is the sum of the digits of <math>N</math>?
+
+<math>\textbf{(A)}\ 6\qquad\textbf{(B)}\ 7\qquad\textbf{(C)}\ 8\qquad\textbf{(D)}\ 9\qquad\textbf{(E)}\ 10</math>
+
+== Solution 1==
+
+We are trying to find the value of <math>N</math> such that <cmath>1+2+3\cdots+(N-1)+N=\frac{N(N+1)}{2}=2016.</cmath> Noticing that <math>\frac{63\cdot 64}{2}=2016,</math> we have <math>N=63,</math> so our answer is <math>\boxed{\textbf{(D) } 9}.</math>
+
+Notice that we were attempting to solve <math>\frac{N(N+1)}{2} = 2016 \Rightarrow N(N+1) = 2016\cdot2 = 4032</math>. Approximating <math>N(N+1) \approx N^2</math>, we were looking for a perfect square that is close to, but less than, <math>4032</math>. Since <math>63^2 = 3969</math>, we see that <math>N = 63</math> is a likely candidate.  Multiplying <math>63\cdot64</math> confirms that our assumption is correct.
+
+== Solution 2 (Adding but somewhat more concise) ==
+
+Knowing that each row number can stand for the number of coins there are in the row, we can just add until we get <math>2016</math>.
+Notice that <math>1 + 2 + 3 \cdots + 10 = 55.</math> Knowing this, we can say that <math>11 + 12 \cdots + 20 = 155</math> and <math>21 + \cdots +30 =255</math> and so on. This is a quick way to get to the point that N is between 60 and 70. By subtracting from the sum of the number from 1 through 70, we learn that when we subtract <math>70, 69, 68, 67, 66, 65,</math>and <math>64, N = 63.</math> Adding those two digits, we get the answer <math>\boxed{\textbf{(D) } 9}.</math> - CorgiARMY
+
+== Solution 3 (Brute force) ==
+If you continue from solution one's conclusion that <cmath>\frac{N(N+1)}{2}=2016</cmath>, the equation can be simplified to:
+<cmath>{N(N+1)}=4032</cmath> 
+now we can factorize 4032 into 2^6, 3^2, and 7, this means that N, and N+1 have to be made from some combination of these numbers, and we can try out values until we get that n is 63, and n+1 is 64. Adding the digits of N, we get that the answer is, <math>\boxed{\textbf{(D) } 9}.</math>
+-LIUGRA001
+
+==Video Solution==
+https://youtu.be/XXX4_oBHuGk?t=543
+
+~IceMatrix
+
+https://youtu.be/jJZxzzU1bBk
+
+~savannahsolver
+
+==See Also==
+{{AMC10 box|year=2016|ab=A|num-b=8|num-a=10}}
+{{AMC12 box|year=2016|ab=A|num-b=5|num-a=7}}
+{{MAA Notice}}

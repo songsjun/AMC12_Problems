@@ -1,0 +1,117 @@
+# 2024 AMC 12A Problem 15
+
+## Problem
+The roots of $x^3 +2x^2$ - x + 3 are p, q, and r. What is the value of $(p^2 + 4)(q^2 + 4)(r^2 + 4)$?$\textbf{(A) } 64 \qquad \textbf{(B) } 75 \qquad \textbf{(C) } 100 \qquad \textbf{(D) } 125 \qquad \textbf{(E) } 144$
+
+## Solution 1
+You can factor $(p^2 + 4)(q^2 + 4)(r^2 + 4)$ as ($p+2i)(p-2i)(q+2i)(q-2i)(r+2i)(r-2$i).
+
+For any polynomial f(x), you can create a new polynomial f(x+a), which will have roots that instead have the value a subtracted.
+
+Substituting $x-2$i and $x+2$i into x for the first polynomial, gives you 10$i-5$ and -10$i-5$ as c for both equations. Multiplying 10$i-5$ and -10$i-5$ together gives you $\boxed{\textbf{(D) }125}.$
+
+*~ev2028*
+
+*~Latex by eevee9406*
+## Solution 2
+Let $f(x) = x^3+2x^2$ - x + 3 = (x - p)(x - q)(x - r) = -(p - x)(q - x)(r - x). Then
+$$(p^2 + 4)(q^2 + 4)(r^2 + 4)=(p+2i)(p-2i)(q+2i)(q-2i)(r+2i)(r-2i)=f(2i)f(-2i).$$
+We find that f($2i)=-8i-8-2i+3=-10i-5$ and f(-$2i)=8i-8+2i+3=10i-5$, so f$(2i)$f(-$2i)=(-5-10i)(-5+10i)=(-5)^2-(10i)^2=25+100=\boxed{\textbf{(D) }125}.$
+*~eevee9406*
+## Solution 3
+First, denote that
+p+q+r=-2, pq+pr+qr=-1, pqr=-3
+Then we expand the expression
+$$(p^2+4)(q^2+4)(r^2+4)$$
+=(pqr)^2+$4((pq)^2+(pr)^2+(qr)^2)+4^2(p^2+q^2+r^2)+4^3$
+$=(-3)^2+4((pq+pr+qr)^2-2$pqr(p+q+r))+$4^2((p+q+r)^2-2(pq+pr+qr))+4^3$
+
+$$
+=(-3)^2+4((-1)^2-2(-3)(-2))+4^2((-2)^2-2(-1))+4^3
+=\fbox{(D) 125}
+$$
+
+*~lptoggled*
+## Solution 4 (Newton's Sums and Vieta's)
+Expand the expression:
+
+
+$$(p^2 + 4)(q^2 + 4)(r^2 + 4) = (p^2q^2r^2) + 4(q^2r^2 + p^2r^2 + p^2q^2) + 16(p^2 + q^2 + r^2) + 64.$$
+
+
+By Vieta's we have pqr = -3. Therefore, $p^2q^2r^2 = (-3)^2 = 9.$ We use Newton's Sums to quickly compute $p^2 + q^2 + r^2$:
+
+$$S_2 + 2S_1 + 2(-1) = 0$$
+
+By Vieta's again, $S_1$ = p + q + r = -2 which means $S_2 = p^2 + q^2 + r^2 = 6.$
+
+Now all we need is $q^2r^2+p^2r^2 +p^2q^2$. Vieta's also tells us that pq + qr + pr = -1, so we can take this equation and square both sides:
+
+$(pq + qr + pr)^2 =q^2r^2+p^2r^2 +p^2q^2 +2(qpr^2 + q^2rp + p^2rq)$ = 1.
+
+We know pqr = -3 so we can substitute this in:
+
+$$(pq + qr + pr)^2 = q^2r^2 + p^2r^2 + p^2q^2 -6(r + p + q) = 1.$$
+
+We also know p + q + r = -2, which means $q^2r^2+p^2r^2 +p^2q^2$ = -11.
+
+So the answer is just 9 + $4(-11)+16(6)+64 =\boxed{125}.$
+
+*~grogg007*
+## Solution 5 (Reduction of power)
+The motivation for this solution is the observation that (p+c)(q+c)(r+c) is easy to compute for any constant c, since (p+c)(q+c)(r+c)=-f(-c) (*), where f is the polynomial given in the problem. The idea is to transform the expression involving $p^2, q^2, r^2$ into one involving p, q, r.
+
+Since p is a root of f,
+$$p^3+2p^2-p+3=0\implies p^3+2p^2=p^2(p+2)=p-3,$$
+which gives us that $p^2=\frac{p-3}{p+2}.$ Then
+$$p^2+4=\frac{p-3}{p+2} + 4 = \frac{5p+5}{p+2}=5\cdot \frac{p+1}{p+2}.$$
+Since q and r are also roots of f, the same analysis holds, so
+
+
+$$
+\begin{align*}
+(p^2 + 4)(q^2 + 4)(r^2 + 4)&= \left(5\cdot \frac{p+1}{p+2}\right)\left(5\cdot \frac{q+1}{q+2}\right)\left(5\cdot \frac{r+1}{r+2}\right)\\
+&= 125 \frac{(p+1)(q+1)(r+1)}{(p+2)(q+2)(r+2)}\\
+&= 125 \frac{-f(-1)}{-f(-2)} \\
+&= 125\cdot 1\\
+&=\boxed{\textbf{(D) }125}.
+\end{align*}
+$$
+
+
+(*) This is because
+$$(p+c)(r+c)(q+c)=(-1)^3(-c-p)(-c-r)(-c-q)=-f(-c),$$
+since
+$$f(x)=(x-p)(x-q)(x-r)$$
+for all x.
+
+*~tsun26*
+*~KSH31415 (final step and clarification)*
+## Solution 6 (Cheesing it out)
+Expanding the expression
+$$(p^2 + 4)(q^2 + 4)(r^2 + 4)$$
+gives us
+(pqr)^2+$4p^2q^2+4p^2r^2+4q^2r^2+16p^2+16q^2+16r^2+64$
+
+Notice that everything other than (pqr)^2 is a multiple of 4. Solving for (pqr)^2 using vieta's formulas, we get 9. Since 9 is $1\pmod4,$ the answer should be as well. The only answer that is $1\pmod4$ is $\boxed{\textbf{(D) }125}.$
+
+*~callyaops*
+## Solution 7
+Suppose y = x^2 + 4
+
+then $x =\pm \sqrt{y - 4}.$ Substitute $x =\sqrt{y - 4}$ into $x^3 +2x^2$ - x + 3 = 0 (It is same for $x =-\sqrt{y - 4}$ because the squares $in (p^2 + 4)(q^2 + 4)(r^2 + 4))$
+
+($\sqrt{y - 4})^3 + 2(\sqrt{y - 4})^2 - \sqrt{y - 4} + 3 = 0 \implies (y - 5)^2(y - 4) = (-2y + 5)^2$ whose constant is 125
+
+according to Vieta's theorem, $y_1y_2y_3 = 125$
+
+
+$$y_1y_2y_3 = 125 \implies (x_1^2 + 4)(x_2^2 + 4)(x_3^2 + 4) = 125 \implies (p^2 + 4)(q^2 + 4)(r^2 + 4) = \boxed{\textbf{(D) }125}.$$
+
+
+*~JiYang*
+## Video Solution, Fast, Quick, Easy!
+https://youtu.be/g4xdfcFgwGo
+
+*~MathKatana*
+## See also

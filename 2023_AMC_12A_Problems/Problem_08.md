@@ -1,0 +1,94 @@
+# 2023 AMC 12A Problem 8
+
+> This problem is the same as [2023 AMC 10A #10](https://artofproblemsolving.com/wiki/index.php/2023_AMC_10A_Problems/Problem_10) and [2023 AMC 12A #8](https://artofproblemsolving.com/wiki/index.php/2023_AMC_12A_Problems/Problem_8).
+## Problem
+Maureen is keeping track of the mean of her quiz scores this semester. If Maureen scores an 11 on the next quiz, her mean will increase by 1. If she scores an 11 on each of the next three quizzes, her mean will increase by 2. What is the mean of her quiz scores currently?
+$\textbf{(A) }4\qquad\textbf{(B) }5\qquad\textbf{(C) }6\qquad\textbf{(D) }7\qquad\textbf{(E) }8$
+## Solution 1
+Let a represent the amount of tests taken previously and x the mean of the scores taken previously.
+
+We can write the following equations:
+
+
+$$
+\frac{ax+11}{a+1}=x+1\qquad (1)
+\frac{ax+33}{a+3}=x+2\qquad (2)
+$$
+
+
+Multiplying equation (1) by $(a+1)$ and solving, we get:
+
+$$
+ax+11=ax+a+x+1
+11=a+x+1
+a+x=10\qquad (3)
+$$
+
+
+Multiplying equation (2) by $(a+3)$ and solving, we get:
+
+$$
+ax+33=ax+2a+3x+6
+33=2a+3x+6
+2a+3x=27\qquad (4)
+$$
+
+
+Solving the system of equations for (3) and (4), we find that $a=3$ and $x=\boxed{\textbf{(D) }7}.$
+
+*~Larry Page (Yes, it's really me)*
+## Solution 2 (Variation on Solution 1)
+Suppose Maureen took n tests with an average of m.
+
+If she takes another test, her new average is $\frac{(nm+11)}{(n+1)}=m+1$
+
+Cross-multiplying: nm+11=nm+n+$m+1$, so n+$m=10$.
+
+If she takes 3 more tests, her new average is $\frac{(nm+33)}{(n+3)}=m+2$
+
+Cross-multiplying: nm+33=nm+$2n+3m+6$, so $2n+3$m=27.
+
+But $2n+3$m can also be written as $2(n+m)+m=20$+m. Therefore $m=27-20=\boxed{\textbf{(D) }7}$
+
+*~Dilip ~megaboy6679 (latex)*
+## Solution 3 (do this if you are bored)
+Let s represent the sum of Maureen's test scores previously and t be the number of scores taken previously.
+
+So, $\frac{s+11}{t+1} = \frac{s}{t}+1$ and $\frac{s+33}{t+3} = \frac{s}{t}+2$
+
+We can use the first equation to write s in terms of t.
+
+We then substitute this into the second equation: $\frac{-t^2+10t+33}{t+3} = \frac{-t^2+10t}{t}+2$
+
+From here, we should solve for t: multiply both sides by (t) and then $(t+3)$, combining like terms to get $t^2-3t=0$. Factorize to get $t=0$ or $t=3$, and therefore $t=3$ (makes sense for the problem).
+
+We substitute this to get $s=21$.
+
+Therefore, the solution to the problem is $\frac{21}{3}= \boxed{\textbf{(D) }7}$
+
+*~Larry Page*
+## Solution 4 (Testing Answer Choices)
+Let's consider all the answer choices. If the average is 8, then, we can assume that all her test choices were 8. We can see that she must have gotten 8 twice, in order for another score of 11 to bring her average up by one. However, adding three 11's will not bring her score up to 10. Continuing this process for the answer choices, we see that the answer is $\boxed{\textbf{(D) }7}$
+*~andliu766 (minor wording edit by mihikamishra)*
+## Solution 5
+Let n be the number of existing quizzes. So after one more test, score 11 has $n+1$ extra points to distribute to $n+1$ quizzes. Also, after three more quizzes, there will be $3(n+1)$ extra points to distribute to the $n+3$ quizzes. So 3$n+3=2(n+3)$. This means $n=3. n+1$ extra points means original mean (average) is 7
+
+*~Pratima*
+## Video Solution by Little Fermat
+https://youtu.be/h2Pf2hvF1wE?si=_o_QjH-jv2f3b_T0&t=2074
+*~little-fermat*
+## Video Solution by Math-X (First understand the problem!!!)
+https://youtu.be/GP-DYudh5qU?si=fQ77Xhb7x1EP_Ieh&t=2361 ~Math-X
+## Video Solution by Power Solve (easy to digest!)
+https://www.youtube.com/watch?v=ZUgo3-BKt30
+## Video Solution (🚀 Just 3 min 🚀)
+https://youtu.be/J99XkR9tK74
+
+*~Education, the Study of Everything*
+## Video Solution by CosineMethod [🔥Fast and Easy🔥]
+https://www.youtube.com/watch?v=1QJ_BQOfZtg
+## Video Solution
+https://youtu.be/VzgNmdKp8UE
+
+*~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)*
+## See Also

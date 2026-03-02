@@ -1,0 +1,47 @@
+# 2006 AMC 12B Problem 8
+
+## Problem
+The lines x = $\frac 14$y + a and y = $\frac 14$x + b intersect at the point (1,2). What is a + b?
+
+
+$$\text {(A) } 0 \qquad \text {(B) } \frac 34 \qquad \text {(C) } 1 \qquad \text {(D) } 2 \qquad \text {(E) } \frac 94$$
+
+## Solution 1
+$$4x-4a=y$$
+
+$$4x-4a=\frac{1}{4}x+b$$
+
+$$4\cdot1-4a=\frac{1}{4}\cdot1+b=2$$
+
+$$a=\frac{1}{2}$$
+
+$$b=\frac{7}{4}$$
+
+$$a+b=\frac{9}{4} \Rightarrow \fbox{(E)}$$
+## Solution 2
+Add both equations:
+
+
+$$
+\begin{cases}x=\frac{1}{4}y+a\\ y=\frac{1}{4}x+b \end{cases}
+$$
+
+
+Simplify:
+
+$$\frac{4}{4}(x+y)=\frac{1}{4}(x+y)+(a+b)$$
+
+Isolate our solution:
+
+$$\frac{3}{4}(x+y)=a+b$$
+
+Substitute the point of intersection [$x=1, y=2$]
+
+$$a+b=\frac{3}{4}\cdot3=\frac{9}{4} \Rightarrow \fbox{(E)}$$
+## Solution 3
+Plugging in (1,2) into the first equation, and solving for a we get a as $\frac{1}{2}.$
+
+Doing the same for the second equation for the second equation, we get b as $\frac{7}{4}$
+
+Adding a+b = $\frac{1}{2} + \frac{7}{4} = \frac{9}{4} \Rightarrow$\fbox{(E)}
+## See also

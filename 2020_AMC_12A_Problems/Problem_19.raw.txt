@@ -1,0 +1,93 @@
+{{duplicate|[[2020 AMC 12A Problems|2020 AMC 12A #19]] and [[2020 AMC 10A Problems|2020 AMC 10A #21]]}}
+
+== Problem ==
+There exists a unique strictly increasing sequence of nonnegative integers <math>a_1 < a_2 < … < a_k</math> such that<cmath>\frac{2^{289}+1}{2^{17}+1} = 2^{a_1} + 2^{a_2} + … + 2^{a_k}.</cmath>What is <math>k?</math>
+
+<math>\textbf{(A) } 117 \qquad \textbf{(B) } 136 \qquad \textbf{(C) } 137 \qquad \textbf{(D) } 273 \qquad \textbf{(E) } 306</math>
+
+== Solution 1 ==
+First, substitute <math>2^{17}</math> with <math>x</math>. 
+Then, the given equation becomes <math>\frac{x^{17}+1}{x+1}=x^{16}-x^{15}+x^{14}...-x^1+x^0</math> by sum of powers factorization.
+Now consider only <math>x^{16}-x^{15}</math>. This equals <math>x^{15}(x-1)=x^{15} \cdot (2^{17}-1)</math>.
+Note that <math>2^{17}-1</math> equals <math>2^{16}+2^{15}+...+1</math>, by difference of powers factorization (or by considering the expansion of <math>2^{17}=2^{16}+2^{15}+...+2^{2}+2 + 2</math>).
+Thus, we can see that <math>x^{16}-x^{15}</math> forms the sum of 17 different powers of 2. 
+Applying the same method to each of <math>x^{14}-x^{13}</math>, <math>x^{12}-x^{11}</math>, ... , <math>x^{2}-x^{1}</math>, we can see that each of the pairs forms the sum of 17 different powers of 2. This gives us <math>17 \cdot 8=136</math>.
+But we must count also the <math>x^0</math> term. 
+Thus, Our answer is <math>136+1=\boxed{\textbf{(C) } 137}</math>.
+
+~seanyoon777
+
+== Solution 2 (Intuitive) ==
+Multiply both sides by <math>2^{17}+1</math> to get <cmath>2^{289}+1=2^{a_1} + 2^{a_2} + … + 2^{a_k} + 2^{a_1+17} + 2^{a_2+17} + … + 2^{a_k+17}.</cmath>
+
+Notice that <math>a_1 = 0</math>, since there is a <math>1</math> on the LHS. However, now we have an extra term of <math>2^{18}</math> on the right from <math>2^{a_1+17}</math>. To cancel it, we let <math>a_2 = 18</math>. The two <math>2^{18}</math>'s now combine into a term of <math>2^{19}</math>, so we let <math>a_3 = 19</math>. And so on, until we get to <math>a_{18} = 34</math>. Now everything we don't want telescopes into <math>2^{35}</math>. We already have that term since we let <math>a_2 = 18 \implies a_2+17 = 35</math>. Everything from now on will automatically telescope to <math>2^{52}</math>. So we let <math>a_{19}</math> be <math>52</math>.
+
+As you can see, we will have to add <math>17</math> <math>a_n</math>'s at a time, then "wait" for the sum to automatically telescope for the next <math>17</math> numbers, etc, until we get to <math>2^{289}</math>. We only need to add <math>a_n</math>'s between odd multiples of <math>17</math> and even multiples. The largest even multiple of <math>17</math> below <math>289</math> is <math>17\cdot16</math>, so we will have to add a total of <math>17\cdot 8</math> <math>a_n</math>'s. However, we must not forget we let <math>a_1=0</math> at the beginning, so our answer is <math>17\cdot8+1 = \boxed{\textbf{(C) } 137}</math>.
+
+== Solution 3 ==
+In order to shorten expressions, <math>\#</math> will represent <math>16</math> consecutive <math>0</math>s when expressing numbers. <br>
+<br>
+Think of the problem in binary. We have <br>
+<math>\frac{1\#0\#0\#0\#0\#0\#0\#0\#0\#0\#0\#0\#0\#0\#0\#0\#0\#1_2}{1\#1_2}</math> <br>
+Note that <br>
+<math>(2^{17} + 1) (2^0 + 2^{34} + 2^{68} + \cdots + 2^{272}) = 2^0(2^{17} + 1) + 2^{34}(2^{17} + 1) + 2^{68}(2^{17} + 1) + \cdots 2^{272}(2^{17} + 1)</math> <br>
+<math>= 1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1_2</math> <br>
+and <br>
+<math>(2^{17} + 1) (2^{17} + 2^{51} + 2^{85} + \cdots + 2^{255}) = 2^{17}(2^{17} + 1) + 2^{51}(2^{17} + 1) + 2^{85}(2^{17} + 1) + \cdots 2^{255}(2^{17} + 1)</math> <br>
+<math>= 1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#0_2</math> <br>
+<br>
+Since <br>
+<math>\phantom{=\ } 1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1_2</math> <br>
+<math>-\ \phantom{1\#} 1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#1\#0_2</math> <br>
+<math>= 1\#0\#0\#0\#0\#0\#0\#0\#0\#0\#0\#0\#0\#0\#0\#0\#0\#1_2</math> <br>
+this means that<br>
+<math>(2^{17} + 1) (2^0 + 2^{34} + 2^{68} + \cdots + 2^{272}) - (2^{17} + 1) (2^{17} + 2^{51} + 2^{85} + \cdots + 2^{255}) = 2^{289} + 1</math><br>
+so <br>
+<math>\frac{2^{289}+1}{2^{17}+1} = (2^0 + 2^{34} + 2^{68} + \cdots + 2^{272}) - (2^{17} + 2^{51} + 2^{85} + \cdots + 2^{255})</math> <br>
+<math>= 2^0 + (2^{34} - 2^{17}) + (2^{68} - 2^{51}) + \cdots + (2^{272} - 2^{255})</math> <br>
+<br>
+Expressing each of the pairs of the form <math>2^{n + 17} - 2^n</math> in binary, we have <br>
+<math>\phantom{=\ } 1000000000000000000 \cdots 0_2</math> <br>
+<math>-\ \phantom{10000000000000000} 10 \cdots 0_2</math> <br>
+<math>= \phantom{1} 111111111111111110 \cdots 0_2</math> <br>
+or <br>
+<math>2^{n + 17} - 2^n = 2^{n + 16} + 2^{n + 15} + 2^{n + 14} + \cdots + 2^{n}</math> <br>
+This means that each pair has <math>17</math> terms of the form <math>2^n</math>. <br>
+<br>
+Since there are <math>8</math> of these pairs, there are a total of <math>8 \cdot 17 = 136</math> terms. Accounting for the <math>2^0</math> term, which was not in the pair, we have a total of <math>136 + 1 = \boxed{\textbf{(C) } 137}</math> terms. ~[[User:emerald_block|emerald_block]]
+
+== Solution 4 (Similar to Solution 3) ==
+We can first look at smaller similar cases in binary. We can treat the initial problem as <math>\frac{2^{n^2} + 1}{2^n + 1}</math> where <math>n=17</math>. We can first look at the case <math>n=3</math> or <math>\frac{2^9 + 1}{2^3 + 1}</math>, which is equivalent to <math>\frac{1000000001_2}{1001_2}</math>. If we do long division we find that this equals <math>111001_2</math>. Then we can also look at the case <math>n=5</math> or <math>\frac{2^{25}+1}{2^5+1}</math>. Doing long division on this in binary gives us a quotient that is a repeating pattern of 5 zeros and 5 ones. This pattern does hold, as <math>111\text{... n ones ...}1_2 * 10\text{... n-1 zeroes ...}01_2 = (10_2)^{2n} - 1</math>. Then at the end, there is a remainder of <math>10\text{... n-1 zeroes ...}01_2</math>, which is the same as the denominator of the original fraction. Thus, for the original problem, there are <math>\frac{17-1}{2}</math> repeats of 17 zeroes and 17 ones, giving <math>8 * 17 + 1 = \boxed{\textbf{(C) }137}</math>.
+~Hi2937
+
+== Solution 5 (Psychology) ==
+The two answers that are close to each other are <math>136</math> and <math>137</math>. Since it seems more likely to forget a case than to overcount something in this context, the right answer is most likely <math>\boxed{\textbf{(C) }137}</math>.
+
+== Video Solutions ==
+
+=== Video Solution 1 (Simple)===
+https://youtu.be/f7FibYTNSm8
+
+~Education The Study of Everything
+
+=== Video Solution 2 (Richard Rusczyk)===
+https://artofproblemsolving.com/videos/amc/2020amc10a/511
+
+=== Video Solution 3 ===
+https://www.youtube.com/watch?v=FsCOVzhjUtE&list=PLLCzevlMcsWNcTZEaxHe8VaccrhubDOlQ&index=3 ~ MathEx
+
+=== Video Solution 4 ===
+https://youtu.be/Ozp3k2464u4
+
+~IceMatrix
+
+=== Video Solution 5 ===
+https://youtu.be/oDSLaQM6L1o
+
+~savannahsolver
+
+==See Also==
+
+{{AMC10 box|year=2020|ab=A|num-b=20|num-a=22}}
+{{AMC12 box|year=2020|ab=A|num-b=18|num-a=20}}
+{{MAA Notice}}

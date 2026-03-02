@@ -1,0 +1,76 @@
+{{duplicate|[[2020 AMC 12A Problems|2020 AMC 12A #8]] and [[2020 AMC 10A Problems|2020 AMC 10A #11]]}}
+
+==Problem==
+
+What is the median of the following list of <math>4040</math> numbers<math>?</math>
+<cmath>1, 2, 3, \ldots, 2020, 1^2, 2^2, 3^2, \ldots, 2020^2</cmath>
+<math> \textbf{(A)}\ 1974.5\qquad\textbf{(B)}\ 1975.5\qquad\textbf{(C)}\ 1976.5\qquad\textbf{(D)}\ 1977.5\qquad\textbf{(E)}\ 1978.5 </math>
+
+==Solution 1==
+We can see that <math>44^2=1936</math> which is less than 2020. Therefore, there are <math>2020-44=1976</math> of the <math>4040</math> numbers greater than <math>2020</math>. Also, there are <math>2020+44=2064</math> numbers that are less than or equal to <math>2020</math>. 
+
+Since there are <math>44</math> duplicates/extras, it will shift up our median's placement down <math>44</math>. Had the list of numbers been <math>1,2,3, \dots, 4040</math>, the median of the whole set would be <math>\dfrac{1+4040}{2}=2020.5</math>. 
+
+Thus, our answer is <math>2020.5-44=\boxed{\textbf{(C)}\ 1976.5}</math>.
+
+~aryam
+
+~Additions by BakedPotato66
+
+== Solution 2 ==
+As we are trying to find the median of a <math>4040</math>-term set, we must find the average of the <math>2020</math>th and <math>2021</math>st terms.
+
+Since <math>45^2 = 2025</math> is slightly greater than <math>2020</math>, we know that the <math>44</math> perfect squares <math>1^2</math> through <math>44^2</math> are less than <math>2020</math>, and the rest are greater. Thus, from the number <math>1</math> to the number <math>2020</math>, there are <math>2020 + 44 = 2064</math> terms. Since <math>44^2</math> is <math>44 + 45 = 89</math> less than <math>45^2 = 2025</math> and <math>84</math> less than <math>2020</math>, we will only need to consider the perfect square terms going down from the <math>2064</math>th term, <math>2020</math>, after going down <math>84</math> terms. Since the <math>2020</math>th and <math>2021</math>st terms are only <math>44</math> and <math>43</math> terms away from the <math>2064</math>th term, we can simply subtract <math>44</math> from <math>2020</math> and <math>43</math> from <math>2020</math> to get the two terms, which are <math>1976</math> and <math>1977</math>. Averaging the two, we get <math>\boxed{\textbf{(C)}\ 1976.5}.</math> 
+
+~[[User:emerald_block|emerald_block]]
+
+== Solution 3 ==
+We want to know the <math>2020</math>th term and the <math>2021</math>st term to get the median.
+
+We know that <math>44^2=1936</math>. So, numbers <math>1^2, 2^2, \ldots,44^2</math> are in between <math>1</math> and <math>1936</math>.
+
+So, the sum of <math>44</math> and <math>1936</math> will result in <math>1980</math>, which means that <math>1936</math> is the <math>1980</math>th number.
+
+Also, notice that <math>45^2=2025</math>, which is larger than <math>2021</math>.
+
+Then the <math>2020</math>th term will be <math>1936+40 = 1976</math>, and similarly the <math>2021</math>th term will be <math>1977</math>.
+
+Solving for the median of the two numbers, we get <math>\boxed{\textbf{(C)}\ 1976.5}</math>
+
+~toastybaker
+
+== Solution 4 ==
+We note that <math>44^2 = 1936</math>, which is the largest square less than <math>2020</math>, which means that there are <math>44</math> additional terms before <math>2020</math>. This makes <math>2020</math> the <math>2064</math>th term. To find the median, we need the <math>2020</math>th and <math>2021</math>st term. We note that every term before <math>2020</math> is one less than the previous term (That is, we subtract <math>1</math> to get the previous term.). If <math>2020</math> is the <math>2064</math>th term, than <math>2020 - 44</math> is the <math>(2064 - 44)</math>th term. So, the <math>2020</math>th term is <math>1976</math>, and the <math>2021</math>st term is <math>1977</math>, and the average of these two terms is the median, or <math>\boxed{\textbf{(C)}\ 1976.5}</math>.
+
+~primegn
+
+==Solution 5 (Decreasing Order)==
+To find the median, we sort the <math>4040</math> numbers in decreasing order, then average the <math>2020</math>th and the <math>2021</math>st numbers of the sorted list.
+
+Since <math>45^2=2025</math> and <math>44^2=1936,</math> the first <math>2021</math> numbers of the sorted list are <cmath>\underbrace{2020^2,2019^2,2018^2,\ldots,46^2,45^2}_{1976\mathrm{ \ numbers}}\phantom{ },\phantom{ }\underbrace{2020,2019,2018,\ldots,1977,1976}_{45\mathrm{ \ numbers}}\phantom{ },</cmath> from which the answer is <math>\frac{1977+1976}{2}=\boxed{\textbf{(C)}\ 1976.5}.</math>
+
+~MRENTHUSIASM
+
+==Video Solution by Education, The Study of Everything==
+https://youtu.be/luMQHhp_Rfk
+
+==Video Solution by TheBeautyOfMath==
+https://youtu.be/ZGwAasE32Y4
+
+~IceMatrix
+
+==Video Solution by WhyMath==
+https://youtu.be/B0RPkcjdkPU
+
+~savannahsolver
+
+== Video Solution by OmegaLearn ==
+https://youtu.be/xqo0PgH-h8Y?t=363
+
+~ pi_is_3.14
+
+==See Also==
+
+{{AMC10 box|year=2020|ab=A|num-b=10|num-a=12}}
+{{AMC12 box|year=2020|ab=A|num-b=7|num-a=9}}
+{{MAA Notice}}

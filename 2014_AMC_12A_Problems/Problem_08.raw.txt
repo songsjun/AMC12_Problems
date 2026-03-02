@@ -1,0 +1,61 @@
+{{duplicate|[[2014 AMC 12A Problems|2014 AMC 12A #8]] and [[2014 AMC 10A Problems|2014 AMC 10A #11]]}}
+
+==Problem==
+
+A customer who intends to purchase an appliance has three coupons, only one of which may be used:
+
+Coupon 1: <math>10\%</math> off the listed price if the listed price is at least <math>\textdollar50</math>
+
+Coupon 2: <math>\textdollar 20</math> off the listed price if the listed price is at least <math>\textdollar100</math>
+
+Coupon 3: <math>18\%</math> off the amount by which the listed price exceeds <math>\textdollar100</math>
+
+For which of the following listed prices will coupon <math>1</math> offer a greater price reduction than either coupon <math>2</math> or coupon <math>3</math>?
+
+<math>\textbf{(A) }\textdollar179.95\qquad
+\textbf{(B) }\textdollar199.95\qquad
+\textbf{(C) }\textdollar219.95\qquad
+\textbf{(D) }\textdollar239.95\qquad
+\textbf{(E) }\textdollar259.95\qquad</math>
+
+==Solution 1==
+Let the listed price be <math>x</math>. Since all the answer choices are above <math>\textdollar100</math>, we can assume <math>x > 100</math>. Thus the discounts after the coupons are used will be as follows:
+
+Coupon 1: <math>x\times10\%=.1x</math>
+
+Coupon 2: <math>20</math>
+
+Coupon 3: <math>18\%\times(x-100)=.18x-18</math>
+
+
+For coupon <math>1</math> to give a greater price reduction than the other coupons, we must have <math>.1x>20\implies x>200</math> and <math>.1x>.18x-18\implies.08x<18\implies x<225</math>.
+
+The only choice that satisfies such conditions is <math>\boxed{\textbf{(C)}\ \textdollar219.95}</math>
+
+==Solution 2 (Using The Answers)==
+For coupon <math>1</math> to be the most effective, we want 10% of the price to be greater than 20. This clearly occurs if the value is over 200. For coupon 1 to be more effective than coupon 3, we want to minimize the value over 200, so <math>\boxed{\textbf{(C) }\textdollar219.95}</math> is the smallest answer choice over 200.
+
+==Solution 3==
+Since all the answer choices are above <math>\$100</math>, let the price be <math>\$100 + x</math>, where <math>x > 0</math>. Then, the discount from Coupon 1 is <math>\$10 + \frac{x}{10}</math>, the discount from Coupon 2 is <math>\$20</math>, and the discount from Coupon 3 is <math>\frac{9}{50}x</math>. Thus we obtain the following inequalities: 
+\begin{align*}
+&10 + \frac{x}{10} > 20 \\
+&10 + \frac{x}{10} > \frac{9}{50}x
+\end{align*}
+Solving them, we obtain <math>x > 100</math> and <math>x < 125</math>. Thus the price is between <math>\$200</math> and <math>\$225\Rightarrow \boxed{\text{(C)}}</math>.
+
+==Video Solutions==
+===Video Solution 1===
+https://youtu.be/aGEB3ykW1BM
+
+~savannahsolver
+
+===Video Solution 2===
+https://youtu.be/rJytKoJzNBY
+
+==See Also==
+
+{{AMC10 box|year=2014|ab=A|num-b=10|num-a=12}}
+{{AMC12 box|year=2014|ab=A|num-b=7|num-a=9}}
+{{MAA Notice}}
+
+[[Category: Introductory Algebra Problems]]

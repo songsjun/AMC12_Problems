@@ -1,0 +1,111 @@
+# 2015 AMC 12A Problem 18
+
+## Problem
+The zeros of the function $f(x) = x^2-ax+2a$ are integers. What is the sum of the possible values of a?
+
+$\textbf{(A)}\ 7 \qquad\textbf{(B)}\ 8 \qquad\textbf{(C)}\ 16 \qquad\textbf{(D)}\ 17 \qquad\textbf{(E)}\ 18$
+## Solution 1
+The problem asks us to find the sum of every integer value of a such that the roots of $x^2 - ax +2a = 0$ are both integers.
+
+The quadratic formula gives the roots of the quadratic equation: $x=\frac{a\pm\sqrt{a^2-8a}}{2}$
+
+As long as the numerator is an even integer, the roots are both integers. But first of all, the radical term in the numerator needs to be an integer; that is, the discriminant $a^2 -8a$ equals $k^2,$ for some nonnegative integer k.
+
+$$a^2-8a=k^2$$
+
+$$a(a-8)=k^2$$
+
+$$((a-4)+4)((a-4)-4)=k^2$$
+
+$$(a-4)^2-4^2=k^2$$
+
+$$(a-4)^2=k^2+4^2$$
+
+From this last equation, we are given a hint of the Pythagorean theorem. Thus, (k,4,|$a-4$|) must be a Pythagorean triple unless $k = 0$.
+
+In the case $k=0$, the equation simplifies to |$a-4$|=4. From this equation, we have $a=0$,8. For both $a=0$ and $a=8, \frac{a\pm\sqrt{a^2-8a}}{2}$ yields two integers, so these values satisfy the constraints from the original problem statement. (Note: the two zero roots count as "two integers.")
+
+If k is a positive integer, then only one Pythagorean triple could match the triple (k,4,|a - 4|) because the only Pythagorean triple with a 4 as one of the values is the classic (3,4,5) triple. Here, $k=3$ and |$a-4$|=5. Hence, a=-1,9. Again, $\frac{a\pm\sqrt{a^2-8a}}{2}$ yields two integers for both a=-1 and $a=9$, so these two values also satisfy the original constraints.
+
+There are a total of four possible values for a: -1,0,8, and 9. Hence, the sum of all of the possible values of a is $\boxed{\textbf{(C) }16}.$
+## Solution 2
+By the quadratic formula, the roots r can be represented by
+$$r=\frac{a\pm\sqrt{a^2-8a}}{2}$$
+For $r\in\mathbb{Z},a\in\mathbb{Z},$ since $\frac{\sqrt{a^2-8a}}{2}$ and $\frac{a}{2}$ will have different mantissas (mantissae?).
+
+Now observe the discriminant $\sqrt{a^2-8a}=\sqrt{a(a-8)}$ and have two cases.
+
+**Positive a**
+
+a$\geq8$ and $a\leq0,$ since $1\geq$ a $\geq7$ gives imaginary roots. Testing positive a values, quickly see that $a\leq9.$ After 16 and 36, the difference between the closest nonzero factor pairs of perfect squares exceeds 8. For $8\geq$ a $\geq9,a=8$,9. Checking both yields an integer.
+
+**Negative a**
+
+We can instead test with $\sqrt{-a(8-a)}.$ If $b=8$-a, we have our original expression. Thus, for the same reasons, $b=8,9\implies 8,9=8-a.$ a=-1 (0 does not affect the answer).
+
+$$-1+8+9=16\implies\boxed{\textbf{(C) }16}$$
+
+(Solution by BJHHar)
+## Solution 3
+Let m and n be the roots of $x^2-ax+2a$
+
+By Vieta's Formulas, n+m=a and $mn=2a$
+
+Substituting gets us $n+m=\frac{mn}{2}$
+
+$$2n-mn+2m=0$$
+
+Using Simon's Favorite Factoring Trick:
+
+$$n(2-m)+2m=0$$
+
+$$-n(2-m)-2m=0$$
+
+$$-n(2-m)-2m+4=4$$
+
+$$(2-n)(2-m)=4$$
+
+This means that the values for (m,n) are (0,0),(4,4),(3,6),(1,-2) giving us a values of -1,0,8, and 9. Adding these up gets $\boxed{\textbf{(C) }16}.$
+## Solution 4
+The quadratic formula gives $x =\frac{a \pm \sqrt{a(a-8)}}{2}.$ For x to be an integer, it is necessary (and sufficient!) that a$(a-8)$ to be a perfect square. So we have a$(a-8)= b^2$; this is a quadratic in itself and the quadratic formula gives $a = 4\pm \sqrt{16 + b^2}$
+
+We want $16 + b^2 to$ be a perfect square. From smartly trying small values of b, we find $b = 0, b = 3$ as solutions, which correspond to a = -1, 0, 8, 9. These are the only ones; if we want to make sure then we must hand check up to $b=8$. Indeed, for b $\geq 9$ we have that the differences between consecutive squares are greater than 16 so we can't have $b^2 + 16$ be a perfect square. So summing our values for a we find $\boxed{16 \textbf{ (C)}}.$ as the answer.
+
+Additional note: You can use the quadratic and plug in squares for a (since for $b^2 to$ be an integer a would have to be some square), and eventually you can notice a limit to get the answer~
+## Solution 5
+First of all, we know that a is the sum of the quadratic's two roots, by Vieta's formulas. Thus, a must be an integer. Then, we notice that the discriminant $a^2-8a$ must be equal to a perfect square so that the roots are integers. Thus, a$(a-8)=b^2$ where b is an integer.
+
+We can complete the square and rearrange to get $(a-4)^2-b^2=16.$ Let's define $m=a-4$, just to make things a little easier to write, so now we have (m+b)(m-b)=16. We can now list out the integer factor pairs of 16 and the resulting values of m and b. (Note that m and b must both be integers)
+
+$$(m+b)(m-b)=16$$
+
+16*1=16 $\Rightarrow$ Doesn't work
+
+$$8*2=16 \Rightarrow m=5, b=3$$
+
+$$4*4=16 \Rightarrow m=4, b=0$$
+
+$$2*8=16 \Rightarrow m=5, b=-3$$
+
+1*16=16 $\Rightarrow$ Doesn't work
+
+-16*-1=16 $\Rightarrow$ Doesn't work
+
+$$-8*-2=16 \Rightarrow m=-5, b=-3$$
+
+$$-4*-4=16 \Rightarrow m=-4, b=0$$
+
+$$-2*-8=16 \Rightarrow m=-5, b=-3$$
+
+-1*-16=16 $\Rightarrow$ Doesn't work
+
+We want the possible values of m, which are -5,-4,4, and 5. As $m+4$=a, a can equal -1,0,8, or 9. Adding all of that up gets us our answer, $\boxed{\textbf{(C) }16}.$
+
+(Solution by Curious_crow)
+## Solution 6 (big fast)
+Let our roots be r and s. By vieta's formulas, we have that r+s=a and $rs =2a$. Thus, rs = 2$r+2$s, or $(r-2)(s-2) = 4$.
+
+4 can only be obtained from (2,2), (1,4), (-2,-2), or (-1,-4), giving us -1,0,8 and 9, which add up to $\boxed{\textbf{(C)}16}$
+
+*~skibbysiggy*
+## See Also

@@ -1,0 +1,75 @@
+{{duplicate|[[2022 AMC 10B Problems/Problem 6|2022 AMC 10B #6]] and [[2022 AMC 12B Problems/Problem 3|2022 AMC 12B #3]]}}
+
+==Problem==
+How many of the first ten numbers of the sequence <math>121, 11211, 1112111, \ldots</math> are prime numbers?
+
+<math>\textbf{(A) } 0 \qquad \textbf{(B) }1 \qquad \textbf{(C) }2 \qquad \textbf{(D) }3 \qquad \textbf{(E) }4</math>
+
+==Solution 1 (Generalization)==
+The <math>n</math>th term of this sequence is
+<cmath>\sum_{k=n}^{2n}10^k + \sum_{k=0}^{n}10^k = 10^n\sum_{k=0}^{n}10^k + \sum_{k=0}^{n}10^k = \left(10^n+1\right)\sum_{k=0}^{n}10^k.</cmath>
+It follows that the terms are
+<cmath>\begin{align*}
+121 &= 11\cdot11, \\
+11211 &= 101\cdot111, \\
+1112111 &= 1001\cdot1111, \\
+& \ \vdots
+\end{align*}</cmath>
+Therefore, there are <math>\boxed{\textbf{(A) } 0}</math> prime numbers in this sequence.
+
+~MRENTHUSIASM
+
+==Solution 2 (Detailed Explanation of Solution 1)==
+
+Denote this sequence as <math>a_{n}</math>, then we can find that
+<cmath>\begin{align*}
+a_{1} &= 121 = 10^2 + 2\cdot10 + 1 = (10^2 + 10) + (10 + 1), \\
+a_{2} &= 11211 = (10^4 + 10^3 + 10^2) + (10^2 + 10 + 1), \\
+a_{3} &= 1112111 = (10^6 + 10^5 + 10^4 + 10^3) + (10^3 + 10^2 + 10 + 1), \\
+& \ \vdots
+\end{align*}</cmath>
+So, we can induct that the general term is
+<cmath>\begin{align*}
+a_n &= (10^{2n} + 10^{2n-1} + \ldots + 10^{n+1} + 10^n) + (10^n + 10^{n-1} + \ldots +10 + 1) \\
+&= 10^n\cdot(10^n + 10^{n-1} + \ldots +10 + 1) + (10^n + 10^{n-1} + \ldots +10 + 1) \\
+&= \left(10^n+1\right)\sum_{k=0}^{n}10^k.
+\end{align*}</cmath>
+Therefore, there are <math>\boxed{\textbf{(A) } 0}</math> prime numbers in this sequence.
+
+~PythZhou
+
+==Solution 3 (Simple Sums)==
+
+Observe how 
+<cmath>\begin{align*}
+121 &= 110 + 11, \\
+11211 &= 11100 + 111, \\
+1112111 &= 1111000 + 1111, \\
+& \ \vdots
+\end{align*}</cmath>
+all take the form of <cmath>\underbrace{111\ldots}_{n+1}\underbrace{00\ldots}_{n} + \underbrace{111\ldots}_{n+1} = \underbrace{111\ldots}_{n+1}(10^{n} + 1).</cmath>
+Factoring each of the sums, we have <cmath>11(10+1), 111(100+1), 1111(1000+1), \ldots</cmath> respectively. With each number factored, there are <math>\boxed{\textbf{(A) } 0}</math> primes in the set.
+
+~ab2024
+
+==Solution 4 (Educated Guess)==
+
+Note that <math>121</math> is divisible by <math>11</math> and <math>11211</math> is divisible by <math>3</math>. Because this is Problem 6 of the AMC 10, we assume we do not need to check two-digit prime divisibility or use obscure theorems. Therefore, the answer is <math>\boxed{\textbf{(A) } 0}.</math>
+
+~Dhillonr25
+
+==Video Solution(1-16)==
+https://youtu.be/SCwQ9jUfr0g
+
+~~Hayabusa1
+
+==Video Solution by Interstigation==
+https://youtu.be/_KNR0JV5rdI?t=562
+
+==Video Solution by Math4All999==
+https://youtu.be/5QYh3hNaDa0?feature=shared
+
+== See Also ==
+{{AMC10 box|year=2022|ab=B|num-b=5|num-a=7}}
+{{AMC12 box|year=2022|ab=B|num-b=2|num-a=4}}
+{{MAA Notice}}

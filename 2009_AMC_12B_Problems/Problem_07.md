@@ -1,0 +1,22 @@
+# 2009 AMC 12B Problem 7
+
+> This problem is the same as [2009 AMC 10B #8](https://artofproblemsolving.com/wiki/index.php/2009_AMC_10B_Problems) and [2009 AMC 12B #7](https://artofproblemsolving.com/wiki/index.php/2009_AMC_12B_Problems).
+## Problem
+In a certain year the price of gasoline rose by 20\% during January, fell by 20\% during February, rose by 25\% during March, and fell by x\% during April. The price of gasoline at the end of April was the same as it had been at the beginning of January. To the nearest integer, what is x
+
+
+$$\mathrm{(A)}\ 12\qquad \mathrm{(B)}\ 17\qquad \mathrm{(C)}\ 20\qquad \mathrm{(D)}\ 25\qquad \mathrm{(E)}\ 35$$
+
+## Solution
+Let p be the price at the beginning of January.  The price at the end of March was (1.2)(0.8)(1.25)$p =1.2p$. Because the price at the end of April was p, the price decreased by $0.2p$ during April, and the percent decrease was
+$$x = 100 \cdot \frac{0.2p}{1.2p} = \frac {100}{6} \approx 16.7.$$
+So to the nearest integer x is $\boxed{17}.$  The answer is $\mathrm{(B)}.$
+## Solution 2
+Without loss of generality, we can assume the price at the beginning of January was \$100.
+
+When it rose by 20\%, it became \$120, when it fell by 20\%, it became \$96, and when it rose by 25\%, it became \$120 again.
+
+In order for the price at the end of April to be the same as it was at the beginning of January (\$100), the price must decrease by \$20.
+
+20 is $\frac{1}{6}$th of 120, and $\frac{1}{6} \approx 0.167 \approx 17$\% So to the nearest integer, $x = 17$ and the answer is $\boxed{\textbf{(B) } 17}.$ ~azc1027
+## See also

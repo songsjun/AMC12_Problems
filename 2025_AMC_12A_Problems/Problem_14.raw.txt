@@ -1,0 +1,114 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2025_AMC_12A_Problems/Problem_14&action=raw
+
+Published Time: Mon, 29 Dec 2025 04:52:45 GMT
+
+Markdown Content:
+== Problem==
+Points F, G, and H are collinear with G between F and H. The ellipse with foci at G and H is internally tangent to the ellipse with foci at F and G, as shown below.
+
+ /* Made by Mathemagician108 */ import graph; unitsize(0.15 inch); draw(ellipse((0,0), 12, 4)); draw(ellipse((8,0), 4, 1.45)); pair F = (-6,0); pair G = (6,0); pair H = (10,0); dot(F^^G^^H); label("$F$", F, 1.5*S, p=fontsize(8pt)); label("$G$", G, 1.5*S, p=fontsize(8pt)); label("$H$", H, 1.5*S, p=fontsize(8pt)); 
+
+The two ellipses have the same eccentricity e, and the ratio of their areas is 2025. (Recall that the eccentricity of an ellipse is e = \tfrac{c}{a}, where c is the distance from the center to a focus, and 2a is the length of the major axis.) What is e?
+
+\textbf{(A)}~\frac35\qquad\textbf{(B)}~\frac{16}{25}\qquad\textbf{(C)}~\frac45\qquad\textbf{(D)}~\frac{22}{23}\qquad\textbf{(E)}~\frac{44}{45}
+
+== Solution 1(Simple) ==
+Let the outer ellipse be ellipse 1, and the inner ellipse be ellipse 2. Let a_1, b_1, and c_1, correspond to the semimajor axis, semiminor axis, and focal distance of ellipse 1, respectively. Similarly, let a_2, b_2, and c_2 correspond to the semimajor axis, semiminor axis, and focal distance of ellipse 2, respectively.
+
+Ellipses with the same eccentricity are similar, so \frac{a_1}{a_2} = \sqrt{2025} = 45 because the ratio of semimajor axes between similar ellipses is equal to the square root of the ratio between their areas. Notice how
+a_1 = c_1 + c_2 + a_2.
+Substituting from the eccentricity equation,
+a_1 = ea_1 + ea_2 + a_2.
+Rearranging gives us
+a_1 - ea_1 = ea_2 + a_2
+a_1(1-e) = a_2(1+e)
+\frac{a_1}{a_2} = \frac{1+e}{1-e} = 45.
+Solving for e then yields \boxed{\text{(D) }\dfrac{22}{23}}.
+
+~Kevin Wang
+~Edits by pythagoreanMath
+
+==Conic Sections Solution==
+[[File:2025amc12aq14sol2.png | center | 650px]]
+Let  A  and  B  be the centers of the ellipses with foci  F, G  and foci  G, H  respectively. Then, say  AQ=p ,  AP = q ,  BS=r , and  BR=s . Through area formula of ellipse ( ab\pi , where  a  is half the major axis and  b  is half the minor axis), the area of the ellipse with center at  A  is  \pi pq  and with center at  B  is  \pi rs . Then, we have  \frac{\pi pq}{\pi rs} = 2025 , in which  \frac{pq}{rs} = 2025 .
+
+Additionally, when two ellipses have the same eccentricity, that essentially means the ellipses are stretched the same amount. Therefore,  \frac{p}{q} = \frac{r}{s} , in which  ps = qr , and  p=\frac{qr}{s} .
+
+From the previous equation  \frac{pq}{rs}=2025 , we have  pq=2025rs , in which  \frac{q^2r}{s} = 2025rs , in which  q^2r = 2025rs^2 , in which  q^2 = 2025s^2 , and  q=45s  (  \neg -45  as length cannot be negative). Similarly,  p = 45r .
+
+[[File:Hellomynameisamc12aq14.png | center | 650px]]
+
+Connect  F  to  P  and  G  to  R . We form two similar triangles  PAF  and  RBG  (through ASA). We just need to determine the length  BG , and the problem is solved. Notice that  \frac{RB}{PA} = \frac{BG}{AF} . because  RB:PA = 45:1 ,  BG:AF = 1:45 , and if  AF = 45x ,  BG = x . To solve for  x , we connect  B  to the tangency point of both ellipses ( W ). Then,  AW = 45r  and  BW = r , so  AB=44r . We found that  AF = 45x , and through definition of foci,  AG = 45x .  GB = x , so  AB=46x . However,  AB = 44r , so  46x=44r ,  x = \frac{22r}{23} .
+
+The length of the major axis is  2r , and because eccentricity is  \frac{c}{a} , where in our case,  c=x  and  a=r , we have  \frac{22r}{23r} , or \boxed{\frac{22}{23}}.
+
+~Pinotation
+
+== Solution 2 ==
+
+We label the outer ellipse as Ellipse 1 and the inner ellipse as Ellipse 2. Let the focal distance of Ellipse 1 be 2c_1 and the major axis be 2a_1. Similarly, Ellipse 2 has a focal distance of 2c_2 and a major axis of 2a_2. 
+
+We label the rightmost vertex of both ellipses as I. Because I lies on Ellipse 1, the sum of the lengths of FI and GI equals 2a_1. The length of FI can be written as c_2+a_2+2c_1, and the length of GI can be written as c_2+a_2. Therefore, 
+(c_2+a_2+2c_1) + (c_2+a_2) = 2a_1
+2c_2+2a_2+2c_1 = 2a_1
+c_2+a_2+c_1=a_1.
+Substituting a_1 = c_1/e and a_2 = c_2/e, we get
+c_2 + \frac{c_2}{e} + c_1=\frac{c_1}{e}
+c_2e + c_2 + c_1e = c_1
+c_2(e+1) = c_1(1-e)
+\frac{c_1}{c_2} = \frac{1+e}{1-e}
+We now take into account the information regarding the ratio of the ellipses' areas. Because the area of an ellipse with semi-major axis 2a and eccentricity e can be written as \pi a^2\sqrt{1-e^2}, we get that:
+\frac{\text{Area}_1}{{\text{Area}_2}} = \frac{a_1^2\sqrt{1-e^2}}{a_2^2\sqrt{1-e^2}} = \frac{a_1^2}{a_2^2} = 2025.
+
+Therefore, \frac{a_1}{a_2} = 45. Because a_1 = c_1/e and a_2 = c_2/e, then \frac{c_1/e}{c_2/e} = \frac{c_1}{c_2}=45 as well.
+
+Substituting this into the equation found earlier, we get that \frac{c_1}{c_2} = \frac{1+e}{1-e} = 45
+1+e = 45-45e
+46e = 44
+e = \boxed{\frac{22}{23}}.
+
+~lprado
+
+==Solution 3 (No area formulas!)==
+
+In the larger ellipse, let a be half the major axis (also called the semi-major axis) and b be half the minor axis (also called the semi-minor axis), and c be the distance between its center and a focus. Since we are given that 2025 = 45^2 is the ratio of the areas of the two ellipses, it follows that the linear scale factor of the two is 45:1. Therefore, the semi-major axis of the smaller ellipse is \frac{1}{45}a and its semi-minor axis is \frac{1}{45}b. Furthermore, the distance between a focus of the smaller ellipse and its center is \frac{1}{45}c. There are now two ways to express the length of the major axis of the large ellipse: 2a and a + c + \frac{1}{45}c + \frac{1}{45}a. Setting these equal, we now have an expression of degree 1 entirely in terms of a and c. Some algebra gives us:
+
+a-\frac{1}{45}a=c+\frac{1}{45}c
+
+\frac{44}{45}a=\frac{46}{45}c
+
+44a=46c
+
+e=\frac{c}{a}=\boxed{\text{(D) }\dfrac{22}{23}}.
+
+Note that this method did not require you to know the area formula of an ellipse (which, incidentally, is \pi a b ).
+
+~[[User:dg6665|dg6665]]
+
+== Solution 4 (Similarity) ==
+
+Parametrize the bigger ellipse with a,c as defined in the problem, and the smaller ellipse with a',c'. Note that the ellipses have the same eccentricity, so they are similar with ratio k^2=2025 or k=45. We wish to find e=\frac{c}{a}=\frac{c'}{a'}.
+
+Looking at the figure, we can decompose the semi-major axis a of the bigger ellipse as
+a=c+c'+a'
+Using c=kc'=45c' and a=45a' and rearranging gives us:
+45a'-a'=44a'=45c'+c'=46c'
+Thus e=\frac{c'}{a'}=\frac{44}{46}=\boxed{\textbf{(D)}~\frac{22}{23}}.
+
+~imosilver
+
+==Video Solution by StressedPineapple==
+https://youtube.com/watch?v=NWBPm3lThH4&t=28s
+
+==Video Solution by SpreadTheMathLove==
+https://www.youtube.com/watch?v=dAeyV60Hu5c
+
+==See Also==
+{{AMC12 box|year=2025|ab=A|num-b=13|num-a=15}}
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

@@ -1,0 +1,33 @@
+# 2002 AMC 12B Problem 12
+
+> This problem is the same as [2002 AMC 12B #12](https://artofproblemsolving.com/wiki/index.php/2002_AMC_12B_Problems) and [2002 AMC 10B #16](https://artofproblemsolving.com/wiki/index.php/2002_AMC_10B_Problems).
+## Problem
+For how many integers n is $\dfrac$ n{20-n} the [square](https://artofproblemsolving.com/wiki/index.php/perfect_square) of an integer?
+
+
+$$\mathrm{(A)}\ 1 \qquad\mathrm{(B)}\ 2 \qquad\mathrm{(C)}\ 3 \qquad\mathrm{(D)}\ 4 \qquad\mathrm{(E)}\ 10$$
+
+## Solution 1
+Let $x^2 =\frac{n}{20-n}$ , with x $\ge 0 (n$ote that the solutions x < 0 do not give any additional solutions for n). Then rewriting, $n =\frac{20x^2}{x^2 + 1}.$ Since $\text{gcd}(x^2, x^2 + 1) = 1,$ it follows that $x^2 + 1$ divides 20. Listing the factors of 20, we find that $x = 0$, 1, 2 , 3 are the only $\boxed{\mathrm{(D)}\ 4}$ solutions (respectively yielding $n = 0$, 10, 16, 18).
+## Solution 2
+For n<0 and n>20 the fraction is negative, for $n=20$ it is not defined, and for $n\in\{1,\dots,9\}$ it is between 0 and 1.
+
+Thus we only need to examine $n=0$ and $n\in\{10,\dots,19\}$.
+
+For $n=0$ and $n=10$ we obviously get the squares 0 and 1 respectively.
+
+For prime n the fraction will not be an integer, as the denominator will not contain the prime in the numerator.
+
+This leaves $n\in\{12,14,15,16,18\}$, and a quick substitution shows that out of these only $n=16$ and $n=18$ yield a square. Therefore, there are only $\boxed{\mathrm{(D)}\ 4}$ solutions (respectively yielding $n = 0$, 10, 16, 18).
+## Solution 3
+If $\frac{n}{20-n} =k^2 \ge 0,$ then n $\ge 0$ and 20-n > 0, otherwise $\frac{n}{20-n}$ will be negative. Thus 0 $\le$ n $\le 19$ and 0 = $\frac{0}{20-(0)} \le \frac{n}{20-n} \le \frac{19}{20-(19)} = 19$ Checking all k for which 0 $\lek^2 \le 19,$ we have 0, 1, 2, 3 as the possibilities. $\boxed{(D)}$
+
+*~Nafer*
+## Solution 4
+For all integers $x, x^2$ is always a positive integer. So solve for $\frac{n}{20-n} = 0,$ getting $n=0$ and $\frac{n}{20-n} = 1,$ getting $n =10$. For all values n less than 0 and greater than 20, the value $\frac{n}{20-n}$ is negative, so now try values of n between 10 and 20. Quick substitution finds 0, 10, 16, and 18 which yields $x=0, x=1, x=2$, and $x=3$ respectively. 4 values, or $\boxed{(D)}$
+## Solution 5
+Simon's Favourite Factoring Trick.
+
+Since $\frac{n}{20-n}$ is an integer k, we multiply both sides by 20-n. This gives us $n=20k^2-nk^2.$ We subtract $20k^2$ on both sides, then add $nk^2$ on both sides as a prerequisite for using Simon's Favorite Factoring Trick. We have $(k^2+1)(n-20)=20$. We then consider the different factors of 20 that $k^2+1$ can be. It could be 1,2,4,5,10, and 20. After checking case by case, we then are able to identify that there are 4 such k values that also yield an integer n value, meaning that there are 4 values, so the correct answer is  $\boxed{(D)}$
+*~CharmaineMa0729201*
+## See also

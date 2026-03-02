@@ -1,0 +1,33 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2016_AMC_12B_Problems/Problem_18&action=raw
+
+Published Time: Sun, 10 Nov 2024 05:30:28 GMT
+
+Markdown Content:
+==Problem==
+
+What is the area of the region enclosed by the graph of the equation x^2+y^2=|x|+|y|?
+
+\textbf{(A)}\ \pi+\sqrt{2} \qquad\textbf{(B)}\ \pi+2 \qquad\textbf{(C)}\ \pi+2\sqrt{2} \qquad\textbf{(D)}\ 2\pi+\sqrt{2} \qquad\textbf{(E)}\ 2\pi+2\sqrt{2}
+
+==Solution==
+Consider the case when x \geq 0,  y \geq 0. 
+x^2+y^2=x+y 
+(x - \frac{1}{2})^2+(y - \frac{1}{2})^2=\frac{1}{2}
+Notice the circle intersects the axes at points (0, 1) and (1, 0). Find the area of this circle in the first quadrant. The area is made of a semi-circle with radius of \frac{\sqrt{2}}{2} and a triangle:
+A = \frac{\pi}{4} +\frac{1}{2}
+
+draw((0,-1.5)--(0,1.5),EndArrow);draw((-1.5,0)--(1.5,0),EndArrow);draw((0,1)--(1,0)--(0,-1)--(-1,0)--cycle,dotted);draw(arc((1/2,1/2),sqrt(2)/2,135, 315),dotted);for(int i=0;i<4;++i){draw(rotate(i*90,(0,0))*arc((1/2,1/2),sqrt(2)/2,-45,135)); dot(rotate(i*90,(0,0))*(1/2,1/2));}
+
+Because of symmetry, the area is the same in all four quadrants. The answer is \boxed{\textbf{(B)}\ \pi + 2}
+
+==Video Solution by CanadaMath (Problem 11-20)==
+Fast Forward to 33:32 for problem 18
+https://www.youtube.com/watch?v=4osvFatUv1o
+
+~THEMATHCANADIAN
+
+==See Also==
+{{AMC12 box|year=2016|ab=B|num-b=17|num-a=19}}
+{{MAA Notice}}

@@ -1,0 +1,36 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2009_AMC_12B_Problems/Problem_10&action=raw
+
+Published Time: Mon, 28 Jun 2021 21:36:21 GMT
+
+Markdown Content:
+{{duplicate|[[2009 AMC 10B Problems|2009 AMC 10B #19]] and [[2009 AMC 12B Problems|2009 AMC 12B #10]]}}
+
+== Problem ==
+A particular 12-hour digital clock displays the hour and minute of a day. Unfortunately, whenever it is supposed to display a 1, it mistakenly displays a 9. For example, when it is 1:16 PM the clock incorrectly shows 9:96 PM. What fraction of the day will the clock show the correct time?
+
+\mathrm{(A)}\ \frac 12\qquad \mathrm{(B)}\ \frac 58\qquad \mathrm{(C)}\ \frac 34\qquad \mathrm{(D)}\ \frac 56\qquad \mathrm{(E)}\ \frac {9}{10}
+
+== Solution ==
+=== Solution 1 ===
+The clock will display the incorrect time for the entire hours of 1, 10, 11 and 12.  So the correct hour is displayed \frac 23 of the time.  The minutes will not display correctly whenever either the tens digit or the ones digit is a 1, so the minutes that will not display correctly are 10, 11, 12, \dots, 19 and 01, 21, 31, 41, and 51.  This amounts to fifteen of the sixty possible minutes for any given hour.  Hence the fraction of the day that the clock shows the correct time is \frac 23 \cdot \left(1 - \frac {15}{60}\right) = \frac 23 \cdot \frac 34 = \boxed{\frac 12}.  The answer is \mathrm{(A)}.
+
+=== Solution 2 ===
+The required fraction is the number of correct times divided by the total times. There are 60 minutes in an hour and 12 hours on a clock, so there are 720 total times.
+
+We count the correct times directly; let a correct time be x:yz, where x is a number from 1 to 12 and y and z are digits, where y<6. There are 8 values of x that will display the correct time: 2, 3, 4, 5, 6, 7, 8, and 9. There are five values of y that will display the correct time: 0, 2, 3, 4, and 5. There are nine values of z that will display the correct time: 0, 2, 3, 4, 5, 6, 7, 8, and 9. Therefore there are 8\cdot 5\cdot 9=40\cdot 9=360 correct times.
+
+Therefore the required fraction is \frac{360}{720}=\frac{1}{2}\Rightarrow \boxed{\mathrm{(A)}}.
+
+==Video Solution==
+https://www.youtube.com/watch?v=VNJrZ-ABtS4
+
+https://youtu.be/rmRQK_flGOM
+
+~savannahsolver
+
+== See also ==
+{{AMC10 box|year=2009|ab=B|num-b=18|num-a=20}}
+{{AMC12 box|year=2009|ab=B|num-b=9|num-a=11}}
+{{MAA Notice}}

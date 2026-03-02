@@ -1,0 +1,41 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2019_AMC_12B_Problems/Problem_18&action=raw
+
+Published Time: Sat, 12 Nov 2022 23:30:15 GMT
+
+Markdown Content:
+==Problem==
+Square pyramid ABCDE has base ABCD, which measures 3 cm on a side, and altitude AE perpendicular to the base, which measures 6 cm. Point P lies on BE, one third of the way from B to E; point Q lies on DE, one third of the way from D to E; and point R lies on CE, two thirds of the way from C to E. What is the area, in square centimeters, of \triangle{PQR}?
+
+\textbf{(A) } \frac{3\sqrt2}{2} \qquad\textbf{(B) } \frac{3\sqrt3}{2} \qquad\textbf{(C) } 2\sqrt2 \qquad\textbf{(D) } 2\sqrt3 \qquad\textbf{(E) } 3\sqrt2
+
+==Solution 1 (coordinate bash)==
+
+Using the given data, we can label the points A(0, 0, 0), B(3, 0, 0), C(3, 3, 0), D(0, 3, 0), and E(0, 0, 6). We can also find the points P = B + \frac{1}{3} \overrightarrow{BE} = (3,0,0) + \frac{1}{3}(-3, 0, 6) = (3,0,0) + (-1,0,2) = (2, 0, 2). Similarly, Q = (0, 2, 2) and R = (1, 1, 4).
+
+Using the distance formula, PQ = \sqrt{\left(-2\right)^2 + 2^2 + 0^2} = 2\sqrt{2}, PR = \sqrt{\left(-1\right)^2 + 1^2 + 2^2} = \sqrt{6}, and QR = \sqrt{1^2 + \left(-1\right)^2 + 2^2} = \sqrt{6}. Using Heron's formula, or by dropping an altitude from P to find the height, we can then find that the area of \triangle{PQR} is \boxed{\textbf{(C) }2\sqrt{2}}.
+
+''Note'': After finding the coordinates of P,Q, and R, we can alternatively find the vectors \overrightarrow{PQ}=[-2,2,0] and \overrightarrow{PR}=[-1,1,2], then apply the formula \text{area} = \frac{1}{2}\left|\overrightarrow{PQ} \times \overrightarrow{PR}\right|. In this case, the cross product equals [4,4,0], which has magnitude 4\sqrt{2}, giving the area as 2\sqrt{2} like before.
+
+==Solution 2==
+
+As in Solution 1, let A=(0, 0, 0), B=(3, 0, 0), C=(3, 3, 0), D=(0, 3, 0), and E=(0, 0, 6), and calculate the coordinates of P, Q, and R as P=(2,0,2), Q=(0,2,2), R=(1,1,4). Now notice that the plane determined by \triangle PQR is perpendicular to the plane determined by ABCD. To see this, consider the ''bird's-eye view'', looking down upon P, Q, and R projected onto ABCD:
+ unitsize(40); for(int i =0; i<=3; ++i) { draw((0,i)--(3,i)); draw((i,0)--(i,3)); } label("$A$", (0,0), SW); label("$B$", (3,0), SE); label("$C$", (3,3), NE); label("$D$", (0,3), NW); label("$P$", (2,0), S); label("$Q$", (0,2), W); label("$R$", (1,1), NE); dot((2,0)); dot((0,2)); dot((1,1)); draw((0,2)--(2,0)); 
+Additionally, we know that PQ is parallel to the plane determined by ABCD, since P and Q have the same z-coordinate. Hence the height of \triangle PQR is equal to the z-coordinate of R minus the z-coordinate of P, giving 4-2= 2. By the distance formula, \overline{PQ} = 2\sqrt{2}, so the area of \triangle PQR is \frac{1}{2} \cdot 2\sqrt{2} \cdot 2 = \boxed{\textbf{(C) } 2\sqrt{2}}.
+
+==Solution 3 (geometry)==
+
+By the Pythagorean Theorem, we can calculate EB=ED=3\sqrt{5},EC=3\sqrt{6},ER= \sqrt{6}, and EP=EQ=2 \sqrt{5}. Now by the Law of Cosines in \triangle BEC, we have
+\cos{\left(\angle BEC\right)}=\frac{EB^2+EC^2-BC^2}{2 \cdot EB \cdot EC}=\frac{5}{\sqrt{30}}.
+
+Similarly, by the Law of Cosines in \triangle EPR, we have
+PR^2=ER^2+EP^2-2 \cdot ER \cdot EP \cdot \cos{\left(\angle BEC\right)}=6, so PR=\sqrt{6}. Observe that \triangle ERP \cong \triangle ERQ (by ''side-angle-side''), so QR=PR=\sqrt{6}.
+
+Next, notice that PQ is parallel to DB, and therefore \triangle EQP is similiar to \triangle EDB. Thus we have \frac{QP}{DB}=\frac{EP}{EB}=\frac{2}{3}. Since DB=3\sqrt{2}, this gives PQ=2 \sqrt{2}.
+
+Now we have the three side lengths of isosceles \triangle PQR: PR=QR=\sqrt{6}, PQ=2 \sqrt{2}. Letting the midpoint of PQ be S, RS is the perpendicular bisector of PQ, and so can be used as a height of \triangle PQR (taking PQ as the base). Using the Pythagorean Theorem again, we have RS=\sqrt{PR^2-PS^2}=2, so the area of \triangle PQR is \frac{1}{2} \cdot PQ \cdot RS = \frac{1}{2} \cdot 2\sqrt{2} \cdot 2 = \boxed{\textbf{(C) } 2 \sqrt{2}}.
+
+==See Also==
+{{AMC12 box|year=2019|ab=B|num-b=17|num-a=19}}
+{{MAA Notice}}

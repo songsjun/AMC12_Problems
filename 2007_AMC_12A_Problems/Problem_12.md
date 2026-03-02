@@ -1,0 +1,34 @@
+# 2007 AMC 12A Problem 12
+
+> This problem is the same as [2007 AMC 12A #12](https://artofproblemsolving.com/wiki/index.php/2007_AMC_12A_Problems) and [2007 AMC 10A #16](https://artofproblemsolving.com/wiki/index.php/2007_AMC_10A_Problems/Problem_16).
+## Problem
+Integers a, b, c, and d, not necessarily distinct, are chosen independently and at random from 0 to 2007, inclusive. What is the [probability](https://artofproblemsolving.com/wiki/index.php/probability) that ad-bc is [even](https://artofproblemsolving.com/wiki/index.php/even)?
+
+
+$$\mathrm{(A)}\ \frac 38\qquad \mathrm{(B)}\ \frac 7{16}\qquad \mathrm{(C)}\ \frac 12\qquad \mathrm{(D)}\ \frac 9{16}\qquad \mathrm{(E)}\ \frac 58$$
+
+## Solution 1
+The only time when ad-bc is even is when ad and bc are of the same [parity](https://artofproblemsolving.com/wiki/index.php/parity). The chance of ad being odd is $\frac 12 \cdot \frac 12 = \frac 14,$ since the only way to have ad be odd is to have both a and d be odd. As a result, ad has a $\frac 34$ probability of being even. bc also has a $\frac 14$ chance of being odd and a $\frac34$ chance of being even. Therefore, the probability that ad-bc will be even is $\left(\frac 14\right)^2+\left(\frac 34\right)^2=\boxed$ {$\mathrm{(E )} \frac 58$\ }.
+## Solution 2 (casework)
+If we don't know our parity rules, we can check and see that ad-bc is only even when ad and bc are of the same [parity](https://artofproblemsolving.com/wiki/index.php/parity) (as stated above). From here, we have two cases.
+
+Case 1: odd-odd (which must be o $\cdot$ o-o $\cdot$ o). The probability for this to occur is $\left(\frac 12\right)^4 = \frac 1{16},$ because each integer has a $\frac 12$ chance of being odd.
+
+Case 2: even-even (which occurs in 4 cases: (e $\cdot$ e-e $\cdot$ e), (o $\cdot$ e-o $\cdot$ e) (alternating of any kind), and (e $\cdot$ e-o $\cdot$ e) with its reverse, (o $\cdot$ e-e $\cdot$ e).
+
+Our first subcase of case 2 has a chance of $\frac 1{16} (s$ame reasoning as above).
+
+Our second subcase of case 2 has a $\frac 14$ chance, since only the 2nd and 4th flip matter (or 1st and 3rd).
+
+Our third subcase of case 2 has a $\frac 18$ chance, because the 1st, 2nd, and either 3rd or 4th flip matter.
+
+Our fourth subcase of case 2 has a $\frac 18$ chance, because it's the same, just reversed.
+
+We sum these, and get our answer of $\frac 1{16} + \frac 1{16} + \frac 14 + \frac 18 + \frac 18 = \boxed$ {$\mathrm{(E )} \frac 58$\ }.
+
+*~Dynosol*
+## Video Solution
+https://youtu.be/a2ZPFLkRrK4
+
+*~savannahsolver*
+## See also

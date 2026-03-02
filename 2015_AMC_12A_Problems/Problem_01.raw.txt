@@ -1,0 +1,27 @@
+{{duplicate|[[2015 AMC 12A Problems|2015 AMC 12A #1]] and [[2015 AMC 10A Problems|2015 AMC 10A #1]]}}
+==Problem==
+
+What is the value of <math>(2^0-1+5^2-0)^{-1}\times5?</math>
+
+<math> \textbf{(A)}\ -125\qquad\textbf{(B)}\ -120\qquad\textbf{(C)}\ \frac{1}{5}\qquad\textbf{(D)}\ \frac{5}{24}\qquad\textbf{(E)}\ 25</math>
+
+==Solution==
+<math>(2^0-1+5^2-0)^{-1}\times5 = (1-1+25-0)^{-1} \times 5 = 25^{-1} \times 5 = \frac{1}{25} \times 5 = \boxed{\textbf{(C) } \, \frac{1}{5}}</math>.
+
+==Video Solution (CREATIVE THINKING)==
+ https://youtu.be/yH4KLfe9p88
+
+~Education, the Study of Everything
+
+
+
+
+==Video Solution==
+https://youtu.be/UdENmDoPGHU
+
+~savannahsolver
+
+==See Also==
+{{AMC10 box|year=2015|ab=A|before=First Problem|num-a=2}}
+{{AMC12 box|year=2015|ab=A|before=First Problem|num-a=2}}
+{{MAA Notice}}

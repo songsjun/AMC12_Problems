@@ -1,0 +1,173 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2022_AMC_12A_Problems/Problem_22&action=raw
+
+Published Time: Mon, 01 Dec 2025 01:13:10 GMT
+
+Markdown Content:
+==Problem==
+
+Let c be a real number, and let z_1 and z_2 be the two complex numbers satisfying the equation
+z^2 - cz + 10 = 0. Points z_1, z_2, \frac{1}{z_1}, and \frac{1}{z_2} are the vertices of (convex) quadrilateral \mathcal{Q} in the complex plane. When the area of \mathcal{Q} obtains its maximum possible value, c is closest to which of the following?
+
+\textbf{(A) }4.5 \qquad\textbf{(B) }5 \qquad\textbf{(C) }5.5 \qquad\textbf{(D) }6\qquad\textbf{(E) }6.5
+
+==Solution 1==
+
+Because c is real, z_2 = \bar z_1.
+We have
+ \begin{align*} 10 & = z_1 z_2 \\ & = z_1 \bar z_1 \\ & = |z_1|^2 , \end{align*} 
+where the first equality follows from Vieta's formula.
+
+Thus, |z_1| = \sqrt{10}.
+
+We have
+ \begin{align*} c & = z_1 + z_2 \\ & = z_1 + \bar z_1 \\ & = 2 {\rm Re}(z_1), \end{align*} 
+where the first equality follows from Vieta's formula.
+
+Thus, {\rm Re}(z_1) = \frac{c}{2}.
+
+We have
+ \begin{align*} \frac{1}{z_1} & = \frac{1}{10}\cdot\frac{10}{z_1} \\ & = \frac{1}{10}\cdot\frac{z_1 z_2}{z_1} \\ & = \frac{z_2}{10} \\ & = \frac{\bar z_1}{10}. \end{align*} 
+where the second equality follows from Vieta's formula.
+
+We have
+ \begin{align*} \frac{1}{z_2} & = \frac{1}{10}\cdot\frac{10}{z_2} \\ & = \frac{1}{10}\cdot\frac{z_1 z_2}{z_2} \\ & = \frac{z_1}{10}. \end{align*} 
+where the second equality follows from Vieta's formula.
+
+Therefore,
+ \begin{align*} {\rm Area} \ Q & = \frac{1}{2} \left| {\rm Re}(z_1) \right| \cdot 2 \left| {\rm Im}(z_1) \right| \cdot \left( 1 - \frac{1}{10^2} \right) \\ & = \frac{1}{2} |c| \sqrt{10 - \frac{c^2}{4}} \left( 1 - \frac{1}{10^2} \right) \\ & = \frac{1 - \frac{1}{10^2}}{4} \sqrt{c^2 \left( 40 - c^2 \right)} \\ & \leq \frac{1 - \frac{1}{10^2}}{4} \cdot \frac{c^2 + \left( 40 - c^2 \right)}{2} \\ & = \frac{1 - \frac{1}{10^2}}{4} \cdot 20 , \end{align*} 
+where the inequality follows from the AM-GM inequality, and it is augmented to an equality if and only if c^2 = 40 - c^2.
+Thus, |c| = 2 \sqrt{5} \approx \boxed{\textbf{(A) 4.5}}.
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+==Solution 2 (Trapezoid)==
+Since c, which is the sum of roots z_1 and z_2, is real, z_1=\overline{z_2}. 
+
+Let z_1=a+bi. Then z_2=a-bi. Note that the product of the roots is 10 by Vieta's, so z_1z_2=(a+bi)(a-bi)=a^2+b^2=10.
+
+Thus, \frac{1}{z_2}=\frac{1}{a-bi}\cdot\frac{a+bi}{a+bi}=\frac{a+bi}{a^2+b^2}=\frac{a+bi}{10}. With the same process, \frac{1}{z_1}=\frac{a-bi}{10}.
+
+So, our four points are a+bi,\frac{a+bi}{10},a-bi, and \frac{a-bi}{10}. WLOG let a+bi be in the first quadrant and graph these four points on the complex plane. Notice how quadrilateral Q is a trapezoid with the real axis as its axis of symmetry. It has a short base with endpoints \frac{a+bi}{10} and \frac{a-bi}{10}, so its length is \left|\frac{a+bi}{10} - \frac{a-bi}{10}\right| =\frac{b}{5}. Likewise, its long base has endpoints a+bi and a-bi, so its length is |(a+bi)-(a-bi)|=2b. 
+
+The height, which is the distance between the two lines, is the difference between the real values of the two bases \implies h= a-\frac{a}{10}=\frac{9a}{10}.
+
+Plugging these into the area formula for a trapezoid, we are trying to maximize \frac12\cdot\left(2b+\frac{b}{5}\right)\cdot\frac{9a}{10}=\frac{99ab}{100}. Thus, the only thing we need to maximize is ab.
+
+With the restriction that a^2+b^2=(a-b)^2+2ab=10, ab is maximized when a=b=\sqrt{5}. 
+
+Remember, c is the sum of the roots, so c=z_1+z_2=2a=2\sqrt5=\sqrt{20}\approx\boxed{4.5} 
+
+~quacker88
+
+==Solution 3 (Fast)==
+Like the solutions above we can know that |z_1| = |z_2| = \sqrt{10} and z_1=\overline{z_2}.
+
+Let z_1=\sqrt{10}e^{i\theta} where 0<\theta<\pi, then z_2=\sqrt{10}e^{-i\theta}, \frac{1}{z_1}=\frac{1}{\sqrt{10}}e^{-i\theta} , \frac{1}{z_2}= \frac{1}{\sqrt{10}}e^{i\theta}.
+
+On the basis of symmetry, the area A of \mathcal{Q} is the difference between two isoceles triangles,so
+
+2A=10\sin2\theta-\frac{1}{10}\sin2\theta\leq10-\frac{1}{10}. The inequality holds when 2\theta=\frac{\pi}{2}, or \theta=\frac{\pi}{4}.
+
+Thus, c= 2 {\rm Re} \ z_1 =2 \sqrt{10} \cos\frac{\pi}{4}=\sqrt{20} \approx \boxed{\textbf{(A) 4.5}}.
+
+~PluginL
+
+==Solution 4 (Calculus Finish)==
+
+Like in Solution 3, we find that Q = \frac12\cdot\left(2b+\frac{b}{5}\right)\cdot\frac{9a}{10}= \frac{99}{100}ab, thus, Q is maximized when ab is maximized. ab = a \cdot \sqrt{10 - a^2} = \sqrt{10a^2 - a^4}, let f(a) = \sqrt{10a^2 - a^4}.
+
+By the Chain Rule and the Power Rule, f'(a) = \frac12 \cdot (10a^2 - a^4)^{-\frac12} \cdot (10(2a)-4a^3)) = \frac{20a-4a^3}{ 2\sqrt{10a^2 - a^4} } = \frac{10a-2a^3}{ \sqrt{10a^2 - a^4} }
+
+f'(a) = 0, 10a-2a^3 = 0, a \neq 0, a^2 = 5, a = \sqrt{5}
+
+\because f'(a) = 0 when a = \sqrt{5}, f'(a) is positive when a < \sqrt{5}, and f'(a) is negative when a > \sqrt{5}
+
+\therefore f(a) has a local maximum when a = \sqrt{5}.
+
+Notice that ab = \frac{ (a+b)^2 - (a^2+b^2) }{2} = \frac{c^2 - 10}{2}, \frac{c^2 - 10}{2} = 5, c = \sqrt{2 \cdot 5 + 10} = \sqrt{20} \approx \boxed{\text{(A) 4.5}}
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+==Solution 5 (calculus but it's bash)==
+
+Note that z=\dfrac c2\pm\dfrac{\sqrt{c^2-40}}2, so let z_1=\dfrac c2+\dfrac{\sqrt{c^2-40}}2 and z_2=\dfrac c2-\dfrac{\sqrt{c^2-40}}2. Taking a look at the answer choices, they range between c=4.5 to c=6.5, and in that range, c^2 is always less than 40. Thus, c^2-40<0 for our possible answer choices; we can then rewrite z_1 and z_2 as \dfrac c2+\dfrac{\sqrt{40-c^2}}2i and \dfrac c2-\dfrac{\sqrt{40-c^2}}2i, respectively, with real coefficients. 
+
+Let us compute \dfrac1z: 
+
+\dfrac1z=\dfrac1{\frac c2\pm\frac{\sqrt{c^2-40}}2}=\dfrac{\frac c2\mp\frac{\sqrt{c^2-40}}2}{\left(\frac c2\right)^2-\left(\frac{\sqrt{c^2-40}}2\right)^2}=\dfrac{\frac c2\mp\frac{\sqrt{c^2-40}}2}{\frac{c^2}4-\frac{c^2-40}4}=\dfrac{2c\mp2\sqrt{c^2-40}}{40}=\dfrac{c\mp\sqrt{c^2-40}}{20}. 
+
+Then, \dfrac1{z_1}=\dfrac{c-\sqrt{c^2-40}}{20}=\dfrac c{20}-\dfrac{\sqrt{40-c^2}}{20}i while \dfrac1{z_2}=\dfrac{c+\sqrt{c^2-40}}{20}=\dfrac c{20}+\dfrac{\sqrt{40-c^2}}{20}i. 
+
+In the complex plane, we can draw a rough sketch of z_1,z_2,\dfrac1{z_1},\dfrac1{z_2}: 
+
+ import graph; unitsize(0.5cm); /*xaxis(Ticks, xmin=-1,xmax=8); yaxis(Ticks, ymin=-11,ymax=11);*/ draw((-1,0)--(8,0)); draw((0,-11)--(0,11)); dot((7,10));dot((7,-10));dot((0.7,1));dot((0.7,-1)); draw((7,10)--(7,-10)--(0.7,-1)--(0.7,1)--cycle); label("$z_1$", (7,10), E); label("$z_2$", (7,-10), E); label("$\frac1{z_2}$", (0.7,1), N); label("$\frac1{z_1}$", (0.7,-1), S); 
+
+Note that, here, our quadrilateral is an isoceles trapezoid. The shorter base length is \left(\dfrac{\sqrt{40-c^2}}{20}-\left(-\dfrac{\sqrt{40-c^2}}{20}\right)\right)=\dfrac1{10}\sqrt{40-c^2}. 
+
+The longer base length is \left(\dfrac{\sqrt{40-c^2}}2-\left(-\dfrac{\sqrt{40-c^2}}2\right)\right)=\sqrt{40-c^2}. 
+
+The average of the two bases is \dfrac{11}{20}\sqrt{40-c^2}. 
+
+The height of our trapezoid (which is horizontal parallel to the x-axis in our diagram above) is simply \dfrac c2-\dfrac c{20}=\dfrac9{20}c. 
+
+Since the area of a trapezoid is the product of the average of its bases and its height, we conclude that our trapezoid's area is \dfrac{99}{400}c\sqrt{40-c^2}, which is a function of c. Thus, let A(c)=\dfrac{99}{400}c\sqrt{40-c^2}. 
+
+Taking the derivative (FINALLY we get to the Calculus part haha, this definitely wasn't clickbait :3 trust me) with respect to c, we find that \dfrac{dA}{dc}=\dfrac{99}{400}\left(\sqrt{40-c^2}+c\left(\dfrac{-2c}{2\sqrt{40-c^2}}\right)\right)=\dfrac{99}{400}\left(\sqrt{40-c^2}-\dfrac{c^2}{\sqrt{40-c^2}}\right). 
+
+To find an extremum, we set the derivative equal to zero: 
+
+\begin{align*}
+\dfrac{dA}{dc}&=\dfrac{99}{400}\left(\sqrt{40-c^2}-\dfrac{c^2}{\sqrt{40-c^2}}\right) \\
+0&=\dfrac{99}{400}\left(\sqrt{40-c^2}-\dfrac{c^2}{\sqrt{40-c^2}}\right) \\
+\sqrt{40-c^2}-\dfrac{c^2}{\sqrt{40-c^2}}&=0 \\
+\sqrt{40-c^2}&=\dfrac{c^2}{\sqrt{40-c^2}} \\
+\left(\sqrt{40-c^2}\right)^2&=c^2 \\
+c^2&=40-c^2 \\
+2c^2&=40 \\
+c^2&=20 \\
+c&=\sqrt{20} \\
+&\approx4.47 \\
+\end{align*}
+
+Clearly, this is very close to \boxed{\textbf{(A)}~4.5}, so we are done. QED. 
+
+~Technodoggo
+(Minor Edits by dolphindesigner)
+
+==Solution 6 (AM-GM Inequality)==
+First and foremost, because z_n is a complex number, and the value of z could be found in terms of c, the given quadratic equation could be solved. WLOG, z_1=\frac{c+\sqrt{c^2-40}}{2} and z_1=\frac{c-\sqrt{c^2-40}}{2}. If c^2-40\ge0, no quadrilateral will form. Thereby, it could be inferred that c^2-40<0.
+
+Each complex number could be represented as a point.
+ \begin{align*} &z_1\left(\frac{c}{2}, \frac{\sqrt{40-c^2}}{2}\right) \\ &z_2\left(\frac{c}{2}, \frac{-\sqrt{40-c^2}}{2}\right) \\ &\frac{1}{z_1}\left(\frac{c}{20}, \frac{c-\sqrt{40-c^2}}{20}\right) \\ &\frac{1}{z_2}\left(\frac{c}{20}, \frac{c+\sqrt{40-c^2}}{20}\right) \end{align*} 
+Notice that vertices form a trapezoid. Therefore, the area of the trapezoid Q could be represented as
+ \frac{\left(\frac{c}{2}-\frac{c}{20}\right)\left\{\left(\frac{\sqrt{40-c^2}}{2}+\frac{\sqrt{40-c^2}}{2}\right)+\left(\frac{c+\sqrt{40-c^2}}{20}-\frac{c-\sqrt{40-c^2}}{20}\right)\right\}}{2}. 
+Since we are finding the maximum value, any desired constant could be multiplied. Multiplying 80 and other constants to the equation above may provide a simplified form.
+ \begin{align*} &(9c)(20\sqrt{40-c^2}+2\sqrt{40-c^2}) \\ \Rightarrow&9c(22\sqrt{40-c^2}) \\ \Rightarrow&c\sqrt{40-c^2} \\ \end{align*} 
+We can use AM-GM Inequality! According to the AM-GM Inequality,
+ 40-c^2+c^2\ge2\sqrt{(40-c^2)\cdot c^2}. 
+\sqrt{(40-c^2)\cdot c^2} reaches maximum when 40-c^2=c^2. In another words, c=\pm2\sqrt{5}. Using 2.2 for the approximation of \sqrt{5}, \max(c)\approx4.4. Thus, the closest value in the answer choice is \boxed{\textbf{(A) }4.5}.
+
+~MaPhyCom
+
+==Video Solution by Math-X (Smart and Simple)==
+https://youtu.be/7yAh4MtJ8a8?si=1NLsu57rYrEPP1A2&t=6893 ~Math-X
+
+==Video Solution by Punxsutawney Phil==
+
+https://youtube.com/watch?v=bbMcdvlPcyA
+
+==Video Solution by Steven Chen==
+
+https://youtu.be/pcB2sg7Ag58
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+== See Also ==
+
+{{AMC12 box|year=2022|ab=A|num-b=21|num-a=23}}
+
+[[Category:Intermediate Algebra Problems]]
+[[Category:Intermediate Geometry Problems]]
+{{MAA Notice}}

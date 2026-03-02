@@ -1,0 +1,29 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2004_AMC_12B_Problems/Problem_21&action=raw
+
+Published Time: Mon, 13 Mar 2023 20:23:34 GMT
+
+Markdown Content:
+== Problem ==
+The graph of 2x^2 + xy + 3y^2 - 11x - 20y + 40 = 0 is an ellipse in the first quadrant of the xy-plane. Let a and b be the maximum and minimum values of \frac yx over all points (x,y) on the ellipse. What is the value of a+b?
+
+\mathrm{(A)}\ 3 \qquad\mathrm{(B)}\ \sqrt{10} \qquad\mathrm{(C)}\ \frac 72 \qquad\mathrm{(D)}\ \frac 92 \qquad\mathrm{(E)}\ 2\sqrt{14}
+
+== Solution ==
+[[Image:2004_12B_AMC-21.png]]
+
+\frac yx represents the slope of a line passing through the origin. It follows that since a line y = mx intersects the ellipse at either 0, 1, or 2 points, the minimum and maximum are given when the line y = mx is a tangent, with only one point of intersection. Substituting,
+2x^2 + x(mx) + 3(mx)^2 - 11x - 20(mx) + 40 = 0
+Rearranging by the degree of x,
+(3m^2 + m + 2)x^2 - (20m + 11)x + 40 = 0
+Since the line y=mx is tangent to the ellipse, we want the discriminant, 
+(20m+11)^2 - 4\cdot 40 \cdot (3m^2 + m + 2) = -80m^2 + 280m - 199 
+to be equal to 0. We want a+b, which is the sum of the roots of the above quadratic. By [[Vieta’s formulas]], that is \frac{280}{80} = \frac{7}{2} \Rightarrow \mathrm{(C)}.
+
+== See also ==
+{{AMC12 box|year=2004|ab=B|num-b=20|num-a=22}}
+
+[[Category:Introductory Algebra Problems]]
+[[Category:Introductory Geometry Problems]]
+{{MAA Notice}}

@@ -1,0 +1,106 @@
+# 2021 AMC 12A Problem 11
+
+## Problem
+A laser is placed at the point (3,5). The laser beam travels in a straight line. Larry wants the beam to hit and bounce off the y-axis, then hit and bounce off the x-axis, then hit the point (7,5). What is the total distance the beam will travel along this path?
+
+$\textbf{(A) }2\sqrt{10} \qquad \textbf{(B) }5\sqrt2 \qquad \textbf{(C) }10\sqrt2 \qquad \textbf{(D) }15\sqrt2 \qquad \textbf{(E) }10\sqrt5$
+## Diagram
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+/* Made by MRENTHUSIASM */ size(200); int xMin = -3; int xMax $= 9$; int yMin = -3; int yMax $= 7$; draw((xMin,0)--(xMax,0),black+linewidth(1.5),EndArrow(5)); draw((0,yMin)--(0,yMax),black+linewidth(1.5),EndArrow(5)); label("$x$",(xMax,0),(2,0)); label("$y$",(0,yMax),(0,2)); pair A = (3,5); pair B = (0,2); pair C = (2,0); pair D = (7,5); draw(A--B--C--D,red); dot(A,linewidth(3.5)); dot(B,linewidth(3.5)); dot(C,linewidth(3.5)); dot(D,linewidth(3.5)); label("$(3,5)$",A,(0,2)); label("$(7,5)$",D,(0,2));
+```
+
+*~MRENTHUSIASM*
+## Solution 1 (Reflections)
+Let A=(3,5) and D=(7,5). Suppose that the beam hits and bounces off the y-axis at B, then hits and bounces off the x-axis at C.
+
+When the beam hits and bounces off a coordinate axis, the angle of incidence and the angle of reflection are congruent. Therefore, we straighten up the path of the beam by reflections:
+
+ 1.   We reflect $\overline{BC}$ about the y-axis to get $\overline{BC'}.$
+
+2.   We reflect $\overline{CD}$ about the x-axis to get $\overline{CD'}$ with D'=(7,-5), then reflect $\overline{CD'}$ about the y-axis to get $\overline{C'D*}$ with D*=(-7,-5).
+
+We obtain the following diagram:
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+/* Made by MRENTHUSIASM */ size(225); int xMin = -9; int xMax $= 9$; int yMin = -7; int yMax $= 7$; draw((xMin,0)--(xMax,0),black+linewidth(1.5),EndArrow(5)); draw((0,yMin)--(0,yMax),black+linewidth(1.5),EndArrow(5)); label("$x$",(xMax,0),(2,0)); label("$y$",(0,yMax),(0,2)); pair A = (3,5); pair B = (0,2); pair C = (2,0); pair D = (7,5); pair E = (-2,0); pair F = (7,-5); pair G = (-7,-5); draw(A--B--C--D,red); draw(B--E,heavygreen+dashed); draw(C--F,heavygreen+dashed); draw(E--G,heavygreen+dashed); dot("$A(3,5)$",A,(0,2),linewidth(3.5)); dot("$B$",B,(-2,0),linewidth(3.5)); dot("$C$",C,(0,-2),linewidth(3.5)); dot("$D(7,5)$",D,(0,2),linewidth(3.5)); dot("$C'$",E,(0,-2),linewidth(3.5)); dot("$D'(7,-5)$",F,(0,-2),linewidth(3.5)); dot("$D''(-7,-5)$",G,(0,-2),linewidth(3.5));
+```
+
+The total distance that the beam will travel is
+
+$$
+\begin{align*} AB+BC+CD&=AB+BC+CD' \\ &=AB+BC'+C'D* \\ &=AD* \\ &=\sqrt{((3-(-7))^2+(5-(-5))^2} \\ &=\boxed{\textbf{(C) }10\sqrt2}. \end{align*}
+$$
+
+*~MRENTHUSIASM (Solution)*
+
+*~JHawk0224 (Proposal)*
+
+*~crystalkqw (Minor edits)*
+## Solution 2 (Parallelogram)
+Define points A,B,C, and D as Solution 1 does. Moreover, let E be a point on $\overline{CD}$ such that $\overline{BE}$ is perpendicular to the y-axis, and F be a point on $\overline{BE}$ such that $\overline{CF}$ is perpendicular to the x-axis, as shown below.
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+/* Made by MRENTHUSIASM */ size(200); int xMin = -3; int xMax $= 9$; int yMin = -3; int yMax $= 7$; draw((xMin,0)--(xMax,0),black+linewidth(1.5),EndArrow(5)); draw((0,yMin)--(0,yMax),black+linewidth(1.5),EndArrow(5)); label("$x$",(xMax,0),(2,0)); label("$y$",(0,yMax),(0,2)); pair A = (3,5); pair B = (0,2); pair C = (2,0); pair D = (7,5); pair E = (4,2); pair F = (2,2); draw(A--B--C--D,red); draw(A--D^^B--E^^C--F,heavygreen+dashed); dot("$A(3,5)$",A,(0,2),linewidth(3.5)); dot("$B$",B,(-2,0),linewidth(3.5)); dot("$C$",C,(0,-2),linewidth(3.5)); dot("$D(7,5)$",D,(0,2),linewidth(3.5)); dot("$E$",E,(2,0),linewidth(3.5)); dot("$F$",F,(0,1.5),linewidth(3.5));
+```
+
+When the beam hits and bounces off a coordinate axis, the angle of incidence and the angle of reflection are congruent, from which $\angle ABF=\angle CBF$ and $\angle BCF=\angle ECF.$ We conclude that $\triangle BCF$\cong$\triangle ECF$ by ASA, so $\angle CBF=\angle CEF.$ It follows that $\angle ABF=\angle CEF$ by transitive, so $\overline{AB}$\parallel$\overline{CD}$ by the Converse of the Alternate Interior Angles Theorem.
+
+Note that $\overline{AD}$\parallel$\overline{BE}.$ Since the opposite sides are parallel, quadrilateral ABED is a parallelogram. From $\triangle BCF$\cong$\triangle ECF,$ we get BF=EF=2, so C=(2,0).
+
+Let B=(0,b). We equate the slopes of $\overline{AB}$ and $\overline{DC}$: $\frac{5-b}{3-0}=\frac{5-0}{7-2},$ from which $b=2$, or B=(0,2).
+
+By the Distance Formula, we have AB=$3\sqrt2,BC=2\sqrt2,$ and CD=$5\sqrt2.$ The total distance that the beam will travel is AB+BC+CD=$\boxed{\textbf{(C) }10\sqrt2}.$
+
+**Remark**
+
+When a straight line hits and bounces off a coordinate axis at point P, the ray entering P and the ray leaving P always have negative slopes. In this problem, $\overline{AB}$ and $\overline{BC}$ have negative slopes; $\overline{BC}$ and $\overline{CD}$ have negative slopes. So, $\overline{AB}$ and $\overline{CD}$ have the same slope, or $\overline{AB}$\parallel$\overline{CD}.$
+
+*~MRENTHUSIASM*
+## Solution 3 (Educated Guess)
+Define points A,B,C, and D as Solution 1 does.
+
+Since choices $\textbf{(B)}, \textbf{(C)},$ and $\textbf{(D)}$ all involve $\sqrt2,$ we suspect that one of them is the correct answer. We take a guess in faith that $\overline{AB},\overline{BC},$ and $\overline{CD}$ all form $45^\circ$ angles with the coordinate axes, from which B=(0,2) and C=(2,0). The given condition D=(7,5) verifies our guess, as shown below.
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+/* Made by MRENTHUSIASM */ size(200); int xMin = -3; int xMax $= 9$; int yMin = -3; int yMax $= 7$; //Draws the horizontal gridlines void horizontalLines() { for (int i = yMin+1; i < yMax; ++i) { draw((xMin,i)--(xMax,i), mediumgray+linewidth(0.4)); } } //Draws the vertical gridlines void verticalLines() { for (int i = xMin+1; i < xMax; ++i) { draw((i,yMin)--(i,yMax), mediumgray+linewidth(0.4)); } } //Draws the horizontal ticks void horizontalTicks() { for (int i = yMin+1; i < yMax; ++i) { draw((-3/16,i)--(3/16,i), black+linewidth(1)); } } //Draws the vertical ticks void verticalTicks() { for (int i = xMin+1; i < xMax; ++i) { draw((i,-3/16)--(i,3/16), black+linewidth(1)); } } horizontalLines(); verticalLines(); horizontalTicks(); verticalTicks(); draw((xMin,0)--(xMax,0),black+linewidth(1.5),EndArrow(5)); draw((0,yMin)--(0,yMax),black+linewidth(1.5),EndArrow(5)); label("$x$",(xMax,0),(2,0)); label("$y$",(0,yMax),(0,2)); pair A = (3,5); pair B = (0,2); pair C = (2,0); pair D = (7,5); draw(A--B--C--D,red); dot(A,linewidth(3.5)); dot(B,linewidth(3.5)); dot(C,linewidth(3.5)); dot(D,linewidth(3.5)); label("$A(3,5)$",A,(0,2),UnFill); label("$B$",B,(-2,0),UnFill); label("$C$",C,(0,-2),UnFill); label("$D(7,5)$",D,(0,2),UnFill);
+```
+
+Following the last paragraph of Solution 2 gives the answer $\boxed{\textbf{(C) }10\sqrt2}.$
+
+*~MRENTHUSIASM*
+## Solution 4 (System of Linear Equations)
+Denote (3, 5) as point P and (7, 5) as point S. Define the point Q on the y-axis that the laser hits as (0, $y_1$) and the point R on the x-axis that the laser hits as ($x_1$,0). The laser will bounce off of the two axes at right angles, so we have that line PQ \parallel RS, meaning they have the same slope which we will denote as k. Line QR will be perpendicular to both PQ and RS, meaning it will have slope $-\frac{1}{k}.$
+
+We can write the equations for lines PQ and RS in point-slope form, and then plug in points Q and R into those respective equations to get equations in terms of our three variables. We can also write the equation for line QR in slope-intercept form and plug in point R. Doing this yields
+
+$$
+\begin{align*} y_1-5&=k(0-3)\\ 0-5&=k(x_1-7)\\ 0&=-\frac{1}{k}x_1+y_1. \end{align*}
+$$
+
+We can simplify this into the following cubic equation in terms of k:
+$$-3k^3+5k^2-7k+5=0.$$
+Luckily, we notice that the coefficients sum up to zero, so $k=1$. Now we can solve for the other two, yielding $x_1=y_1=2$. Now we simply have three $45^{\circ}-45^{\circ}-90^{\circ}$ triangles with leg lengths of 3, 2, and 5, so our final distance is $3\sqrt{2}+2\sqrt{2}+5\sqrt{2}=\boxed{\textbf{(C) }10\sqrt2}.$
+*~Mooshiros*
+## Video Solution by OmegaLearn (Using Reflections and Distance Formula)
+https://youtu.be/e7tNtd-fgeo
+
+*~pi_is_3.14*
+## Video Solution by Hawk Math
+https://www.youtube.com/watch?v=AjQARBvdZ20
+## Video Solution by TheBeautyofMath
+https://youtu.be/ySWSHyY9TwI
+
+*~IceMatrix*
+## Video Solution (Quick and Easy)
+https://youtu.be/Hw-mYGUvflQ
+
+*~Education, the Study of Everything*
+## See also

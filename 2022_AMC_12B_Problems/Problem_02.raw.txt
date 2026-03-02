@@ -1,0 +1,16 @@
+==Solution Made Complicated==
+
+We find that <imath>AP + DP = 5 = AD</imath>.
+Because <imath>ABCD</imath> is a rhombus, we get that AD = AB = 5.
+Notice that using Pythagorean Theorem, we have that <imath> AB^2 = AP^2 + BP^2 </imath>, which simplifies to <imath> 25 = AP^2 + 9 ==> AP = \sqrt{16} = 4 </imath>.
+
+Now, by spliting the rhombus into
+
+==Solution 2==
+
+Notice that <imath>BC = AD = AP + PD = 3 + 2 = 5</imath>.
+Now, because the question tells us <imath>ABCD</imath> is a rhombus, <imath>BC = AB = 5</imath>. Thus, by Pythagorean Theorem on <imath>APB</imath>, <imath>BP = 4</imath>.
+Therefore, <cmath>
+[ABCD] = AD \times BP = 5 \times 4 = \boxed{\text{D 20}}
+</cmath>
+~DUODUOLUO(First time using <imath>\LaTeX</imath>, may have some minor mistakes)

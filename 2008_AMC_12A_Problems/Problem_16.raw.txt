@@ -1,0 +1,62 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2008_AMC_12A_Problems/Problem_16&action=raw
+
+Published Time: Sun, 09 Oct 2022 20:33:51 GMT
+
+Markdown Content:
+== Problem == 
+The numbers \log(a^3b^7), \log(a^5b^{12}), and \log(a^8b^{15}) are the first three terms of an [[arithmetic sequence]], and the 12^\text{th} term of the sequence is \log{b^n}. What is n?
+
+\mathrm{(A)}\ 40\qquad\mathrm{(B)}\ 56\qquad\mathrm{(C)}\ 76\qquad\mathrm{(D)}\ 112\qquad\mathrm{(E)}\ 143
+
+== Solutions ==
+=== Solution 1 ===
+Let A = \log(a) and B = \log(b). 
+
+The first three terms of the arithmetic sequence are 3A + 7B, 5A + 12B, and 8A + 15B, and the 12^\text{th} term is nB. 
+
+Thus, 2(5A + 12B) = (3A + 7B) + (8A + 15B) \Rightarrow A = 2B. 
+
+Since the first three terms in the sequence are 13B, 22B, and 31B, the kth term is (9k + 4)B.
+ 
+Thus the 12^\text{th} term is (9\cdot12 + 4)B = 112B = nB \Rightarrow n = 112\Rightarrow \boxed{D}.
+
+=== Solution 2 ===
+If \log(a^3b^7), \log(a^5b^{12}), and \log(a^8b^{15}) are in [[arithmetic progression]], then a^3b^7, a^5b^{12}, and a^8b^{15} are in [[geometric progression]]. Therefore,
+
+a^2b^5=a^3b^3 \Rightarrow a=b^2
+
+Therefore, a^3b^7=b^{13}, a^5b^{12}=b^{22}, therefore the 12th term in the sequence is b^{13+9*11}=b^{112} \Rightarrow \boxed{D}
+
+=== Solution 3 ===
+\ \text{If a, b, and c are in a arithmetic progression then } b = \frac{a+c}{2} \text{ which means}
+\ \log(a^5b^{12}) = \frac{\log(a^3b^7) + \log(a^8b^{15})}{2}= \frac{\log(a^{11}b^{22})}{2} \text{ therefore}
+\ 2\log(a^5b^{12}) = \log(a^{10}b^{24}) = \log(a^{11}b^{22}) \Rightarrow a=b^2
+\ \text{This means that the Kth term of the series would be } \log(b^{13+9(k-1)})
+\ \text{The 12th term would be } \log(b^{112}) \Rightarrow n=112 \Rightarrow D 
+
+=== Solution 4 (mimimal manipulation)===
+Given the first three terms form an arithmetic progression, we have:
+a = \log(a^3b^7)
+a+d = \log(a^5b^{12})
+a+2d = \log(a^8b^{15}).
+Subtracting the first equation from the second and the third from the second, respectively, gives us these two expressions for d:
+d = \log \left( \frac{a^5b^{12}}{a^3b^7} \right) = \log a^2b^5
+d = \log \left( \frac{a^8b^{15}}{a^5b^{12}} \right) = \log a^3b^3.
+The desired 12th term in the sequence is a+11d, so we can substitute our values for a and d (using either one of our two expressions for d):
+a+11d = \log a^3b^7 + 11\log(a^2b^5)
+ = \log a^3b^7 + \log(a^{22}b^{55})
+ = \log a^{25}b^{62}.
+The answer must be expressed as \log(b^n), however. We're in luck: the two different yet equal expressions for d allow us to express a and b in terms of each other:
+\log a^2b^5 = \log a^3b^3
+a^2b^5 = a^3b^3
+a=b^2.
+Plugging in a=b^2, we have:
+a+11d = \log b^{50}b^{62}
+ = \log b^{112} \Rightarrow \boxed{D}.
+~ Jingwei325 \smiley
+
+== See Also == 
+{{AMC12 box|year=2008|ab=A|num-b=15|num-a=17}}
+{{MAA Notice}}

@@ -1,0 +1,47 @@
+# 2023 AMC 12B Problem 7
+
+## Problem
+For how many integers n does the expression$\sqrt{\frac{\log (n^2) - (\log n)^2}{\log n - 3}}$represent a real number, where log denotes the base 10 logarithm?
+
+$\textbf{(A) }900 \qquad \textbf{(B) }3\qquad \textbf{(C) }902 \qquad \textbf{(D) } 2 \qquad \textbf{(E) }901$
+## Solution
+We have
+
+$$
+\begin{align*} \sqrt{\frac{\log \left( n^2 \right) - \left( \log n \right)^2}{\log n - 3}} & = \sqrt{\frac{2 \log n - \left( \log n \right)^2}{\log n - 3}} \\ & = \sqrt{\frac{\left( \log n \right) \left( 2 - \log n\right)}{\log n - 3}} . \end{align*}
+$$
+
+
+Because n is an integer and $\log$ n is well defined, n must be a positive integer.
+
+Case 1: $n = 1$ or $10^2.$
+
+The above expression is 0. So these are valid solutions.
+
+Case 2: n $\neq 1, 10^2.$
+
+Thus, $\log$ n > 0 and 2 - $\log$ n $\neq 0.$
+To make the above expression real, we must have 2 < $\log$ n < 3.
+Thus, 100 < n < 1000.
+Thus, 101 $\leq$ n $\leq 999.$
+Hence, the number of solutions in this case is 899.
+
+Putting all cases together, the total number of solutions is
+$$\boxed{\textbf{(E) 901}}.$$
+
+*~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)*
+## Solution (Solution 1 Simplified)
+Notice $\log(n^2)$ can be written as $2\log(n).$ Setting $a=\log(n),$ the equation becomes $\sqrt{\frac{2a-a^2}{a-3}}$ which can be written as $\sqrt{\frac{a(2-a)}{a-3}}$
+
+Case 1: a $\ge 3$
+The expression is undefined when $a=3$. For a>3, it is trivial to see that the denominator is positive and the numerator is negative, thus resulting in no real solutions.
+
+Case 2: 2 $\le$ a<3
+For $a=2$, the numerator is zero, giving us a valid solution. When a>2, both the denominator and numerator are negative so all real values of a in this interval is a solution to the equation. All integers of n that makes this true are between $10^2$ and 10^3-1. There are 900 solutions here.
+
+Case 3: 0 The numerator will be positive but the denominator is negative, no real solutions exist. Case 4: $a=0$ The expression evaluates to zero, 1 valid solution exists. Case 5: a<0 All values for a<0 requires 0, no integer solutions exist. Adding up the cases: $900+1=\boxed{\textbf{(E) 901}}$ ~woeIsMe typesetting: paras
+## Solution 3 (3 degree polynominal graph)
+for $\frac{a(2-a)}{a-3} >0$  , transform it into a$(a-2)(a-3) <0$ , use the following graph to quickly confirm 1) a < 0 or 2) 2 < a <3 ~[https://artofproblemsolving.com/wiki/index.php/User:Cyantist luckuso] [thumb|center|600px](https://artofproblemsolving.com/wiki/index.php/Image:2023_AMC12B_P7.PNG)
+## Video Solution
+https://youtu.be/GGdJJzzbivM ~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+## See Also

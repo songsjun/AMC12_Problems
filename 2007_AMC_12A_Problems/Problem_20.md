@@ -1,0 +1,15 @@
+# 2007 AMC 12A Problem 20
+
+## Problem
+Corners are sliced off a unit cube so that the six faces each become regular octagons. What is the total volume of the removed tetrahedra?
+
+
+$$\mathrm{(A)}\ \frac{5\sqrt{2}-7}{3}\qquad \mathrm{(B)}\ \frac{10-7\sqrt{2}}{3}\qquad \mathrm{(C)}\ \frac{3-2\sqrt{2}}{3}\qquad \mathrm{(D)}\ \frac{8\sqrt{2}-11}{3}\qquad \mathrm{(E)}\ \frac{6-4\sqrt{2}}{3}$$
+
+## Solution
+[150px](https://artofproblemsolving.com/wiki/index.php/Image:2007_AMC_12A_Problem_20.png)
+
+Since the sides of a [regular polygon](https://artofproblemsolving.com/wiki/index.php/regular_polygon) are equal in length, we can call each side x. Examine one edge of the unit cube: each contains two slanted diagonal edges of an octagon and one straight edge. The diagonal edges form 45-45-90 $\triangle$ [right triangle](https://artofproblemsolving.com/wiki/index.php/right_triangle)s, making the distance on the edge of the cube $\frac{x}{\sqrt{2}}.$ Thus, 2 $\cdot \frac{x}{\sqrt{2}} +x = 1$, and $x =\frac{1}{\sqrt{2} + 1} \cdot \left(\frac{\sqrt{2} - 1}{\sqrt{2} - 1}\right) = \sqrt{2} - 1.$
+
+Each of the cut off corners is a [pyramid](https://artofproblemsolving.com/wiki/index.php/pyramid), whose volume can be calculated by V = $\frac 13$ Bh. Use the base as one of the three [congruent](https://artofproblemsolving.com/wiki/index.php/congruency_(geometry)) [isosceles triangle](https://artofproblemsolving.com/wiki/index.php/isosceles_triangle)s, with the height being one of the edges of the pyramid that sits on the edges of the cube. The height is $\frac$ x{$\sqrt{2}$} = 1 - $\frac{1}{\sqrt{2}}.$ The base is a 45-45-90 $\triangle$ with leg of length 1 - $\frac{1}{\sqrt{2}},$ making its area $\frac 12\left(1 - \frac 1{\sqrt{2}}\right)^2 = \frac{3 - 2\sqrt{2}}4.$ Plugging this in, we get that the volume of one of the tetrahedra is $\frac 13 \left(1 - \frac{1}{\sqrt{2}}\right)\left(\frac{3 - 2\sqrt{2}}4\right) = \frac{10 - 7\sqrt{2}}{24}.$ Since there are 8 removed corners, we get an answer of $\frac{10 - 7\sqrt{2}}{3} \Longrightarrow \boxed{\mathrm{B}}$
+## See also

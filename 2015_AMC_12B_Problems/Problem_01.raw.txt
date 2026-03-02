@@ -1,0 +1,18 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2015_AMC_12B_Problems/Problem_1&action=raw
+
+Published Time: Tue, 03 Mar 2015 19:45:27 GMT
+
+Markdown Content:
+==Problem==
+What is the value of 2-(-2)^{-2} ?
+
+\textbf{(A) } -2\qquad\textbf{(B) } \dfrac{1}{16}\qquad\textbf{(C) } \dfrac{7}{4}\qquad\textbf{(D) } \dfrac{9}{4}\qquad\textbf{(E) } 6
+
+==Solution==
+2-(-2)^{-2}=2-\frac{1}{(-2)^2}=2-\frac{1}{4}=\frac{8}{4}-\frac{1}{4}=\boxed{\textbf{(C) }\frac{7}{4}}
+
+==See Also==
+{{AMC12 box|year=2015|ab=B|before=First Problem|num-a=2}}
+{{MAA Notice}}

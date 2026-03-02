@@ -1,0 +1,71 @@
+{{duplicate|[[2015 AMC 12A Problems|2015 AMC 12A #19]] and [[2015 AMC 10A Problems|2015 AMC 10A #24]]}}
+==Problem 24==
+For some positive integers <math>p</math>, there is a quadrilateral <math>ABCD</math> with positive integer side lengths, perimeter <math>p</math>, right angles at <math>B</math> and <math>C</math>, <math>AB=2</math>, and <math>CD=AD</math>.  How many different values of <math>p<2015</math> are possible?
+
+<math>\textbf{(A) }30\qquad\textbf{(B) }31\qquad\textbf{(C) }61\qquad\textbf{(D) }62\qquad\textbf{(E) }63</math>
+
+
+
+==Solution 1==
+Let <math>BC = x</math> and <math>CD = AD = y</math> be positive integers. Drop a perpendicular from <math>A</math> to <math>CD</math> to show that, using the Pythagorean Theorem, that
+<cmath>x^2 + (y - 2)^2 = y^2.</cmath>
+Simplifying yields <math>x^2 - 4y + 4 = 0</math>, so <math>x^2 = 4(y - 1)</math>. Thus, <math>y</math> is one more than a perfect square.
+
+The perimeter <math>p = 2 + x + 2y = 2y + 2\sqrt{y - 1} + 2</math> must be less than 2015. Simple calculations demonstrate that <math>y = 31^2 + 1 = 962</math> is valid, but <math>y = 32^2 + 1 = 1025</math> is not. On the lower side, <math>y = 1</math> does not work (because <math>x > 0</math>), but <math>y = 1^2 + 1</math> does work. Hence, there are 31 valid <math>y</math> (all <math>y</math> such that <math>y = n^2 + 1</math> for <math>1 \le n \le 31</math>), and so our answer is <math>\boxed{\textbf{(B) } 31}</math>
+
+==Solution 2==
+Let <math>BC = x</math> and <math>CD = AD = z</math> be positive integers. Drop a perpendicular from <math>A</math> to <math>CD</math>. Denote the intersection point of the perpendicular and <math>CD</math> as <math>E</math>.
+
+<math>AE</math>'s length is <math>x</math>, as well.
+Call <math>ED</math> <math>y</math>.
+By the Pythagorean Theorem,  <math>x^2 + y^2 = (y + 2)^2</math>.
+And so: <math>x^2 = 4y + 4</math>, or <math>y = (x^2-4)/4</math>.
+
+Writing this down and testing, it appears that this holds for all <math>x</math>. However, since there is a dividend of 4, the numerator must be divisible by 4 to conform to the criteria that the side lengths are positive integers.
+In effect, <math>x</math> must be a multiple of 2 to let the side lengths be integers. We test, and soon reach 62. It gives us <math>p = 1988</math>, which is less than 2015. However, 64 gives us <math>2116 > 2015</math>, so we know 62 is the largest we can go up to. Count all the even numbers from 2 to 62, and we get <math>\boxed{\textbf{(B) } 31}</math>.
+
+-jackshi2006
+
+==Solution 3 (Less Counting)==
+Let <math>BC = n</math> and <math>CD = AD = m</math> be positive integers. Drop a perpendicular from <math>A</math> to <math>CD</math>. Denote the intersection point of the perpendicular and <math>CD</math> as <math>E</math>.
+
+<math>AE</math>'s length is <math>n</math>, and <math>ED = m-2</math>
+By the Pythagorean Theorem,  <math>m^2 = (m-2)^2 + n^2</math>
+, therefore <math>n^2 = 4(m-1)</math>
+
+Notice that 4 is already a perfect square and <math>n</math> is an integer, meaning <math>m-1</math> also has to be a perfect square. 
+We can denote <math>m-1</math> as <math>x^2</math>, therefore we have <math>m = x^2 + 1</math>, <math>n = 2x</math>, and each <math>x</math> will correspond to a pair of <math>(n, m)</math>. 
+
+Since <math>p<2015</math>, <math>2 + n + m + m<2015</math> which gives us <math>n+2m<2013</math>. Substituting <math>x</math> will give us <math>2x+2(x^2 + 1) < 2013</math>, simplify this will again give us <math>x^2 + x + 1 < 1006.5</math>
+Try <math>x = 32</math>, <math>x^2 + x + 1 = 1057 > 1006.5</math>, exceeded
+so <math>x</math> must be less than <math>32</math>
+
+When <math>x=31</math>, <math>x^2 + x + 1 = 993 < 1006.5</math>, <math>x=31</math> works for us.
+
+For <math>x</math> in <math>(0, \infty)</math>, <math>f(x) = x^2 + x + 1</math> increases, therefore for any <math>x<31</math>, <math>f(x) < f(31) < 1006.5</math>
+
+Thus, any <math>x</math> in <math>[1, 31]</math> satisfy the condition that <math>x^2 + x + 1 < 1006.5</math>. <math>x</math> needs to be integer, and there are <math>31</math> integers in the interval <math>[1, 31]</math>. 
+
+Each <math>x</math> corresponds to a <math>(n, m)</math>, meaning there are <math>31</math> possible value for different pairs of <math>(n, m)</math> and lead to <math>\boxed{\textbf{(B) } 31}</math> possible values for the perimeter <math>p</math>. 
+
+~ [https://artofproblemsolving.com/wiki/index.php/User:Andy_li0805 Andy_li0805]
+
+== Video Solution by Richard Rusczyk ==
+
+https://artofproblemsolving.com/videos/amc/2015amc10a/398
+
+~ dolphin7
+
+==Video Solution==
+https://youtu.be/9DSv4zn7MyE
+
+~savannahsolver
+
+== See Also ==
+{{AMC10 box|year=2015|ab=A|num-b=23|num-a=25}}
+{{AMC12 box|year=2015|ab=A|num-b=18|num-a=20}}
+
+
+{{MAA Notice}}        
+
+[[Category: Intermediate Geometry Problems]]

@@ -1,0 +1,47 @@
+{{duplicate|[[2022 AMC 10A Problems/Problem 8|2022 AMC 10A #8]] and [[2022 AMC 12A Problems/Problem 6|2022 AMC 12A #6]]}}
+
+==Problem==
+
+A data set consists of <math>6</math> (not distinct) positive integers: <math>1</math>, <math>7</math>, <math>5</math>, <math>2</math>, <math>5</math>, and <math>X</math>. The average (arithmetic mean) of the <math>6</math> numbers equals a value in the data set. What is the sum of all positive values of <math>X</math>?
+
+<math>\textbf{(A) } 10 \qquad \textbf{(B) } 26 \qquad \textbf{(C) } 32 \qquad \textbf{(D) } 36 \qquad \textbf{(E) } 40</math>
+
+==Solution (Casework)==
+
+First, note that <math>1+7+5+2+5=20</math>. There are <math>3</math> possible cases:
+
+'''Case 1: the mean is <math>5</math>.'''
+
+<math>X = 5 \cdot 6 - 20 = 10</math>.
+
+'''Case 2: the mean is <math>7</math>.'''
+
+<math>X = 7 \cdot 6 - 20 = 22</math>.
+
+'''Case 3: the mean is <math>X</math>.'''
+
+<math>X= \frac{20+X}{6} \Rightarrow X=4</math>.
+
+Therefore, the answer is <math>10+22+4=\boxed{\textbf{(D) }36}</math>.
+
+~MrThinker
+
+==Video Solution 1 (Quick and Simple)==
+
+https://youtu.be/8s6SngtEBY4
+
+~Education, the Study of Everything
+
+==Video Solution 2 (Don't fall into the trap)==
+
+https://youtu.be/7yAh4MtJ8a8?si=r_qxJ_xhfngz4Xu6&t=1143
+
+~Math-X
+==Video Solution 4==
+https://youtu.be/35cuytqS9iw
+
+== See Also ==
+
+{{AMC10 box|year=2022|ab=A|num-b=7|num-a=9}}
+{{AMC12 box|year=2022|ab=A|num-b=5|num-a=7}}
+{{MAA Notice}}

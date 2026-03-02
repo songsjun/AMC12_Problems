@@ -1,0 +1,17 @@
+# 2017 AMC 12A Problem 1
+
+## Problem
+Pablo buys popsicles for his friends. The store sells single popsicles for \$1 each, 3-popsicle boxes for \$2, and 5-popsicle boxes for \$3. What is the greatest number of popsicles that Pablo can buy with \$8?
+
+$\textbf{(A)}\ 8\qquad\textbf{(B)}\ 11\qquad\textbf{(C)}\ 12\qquad\textbf{(D)}\ 13\qquad\textbf{(E)}\ 15$
+## Solution
+We can take two 5-popsicle boxes and one 3-popsicle box with \$8. Note that it is optimal since one popsicle is at the rate of \$1 per popsicle, three popsicles at \$\frac{2}{3} per popsicle and finally, five popsicles at \$$\frac{3}{5}$ per popsicle, hence we want as many \$3 sets as possible. It is clear that the above is the optimal method. \boxed{\textbf{D}}.
+## Video Solution (HOW TO THINK CREATIVELY!!!)
+https://youtu.be/VYo0SaDaMVs
+
+*~Education, the Study of Everything*
+## Video Solution
+https://www.youtube.com/watch?v=Ro_koxVqd50
+
+*~Math4All999*
+## See Also

@@ -1,0 +1,33 @@
+{{duplicate|[[2015 AMC 12A Problems|2015 AMC 12A #7]] and [[2015 AMC 10A Problems|2015 AMC 10A #9]]}}
+==Problem==
+Two right circular cylinders have the same volume. The radius of the second cylinder is <math>10\%</math> more than the radius of the first. What is the relationship between the heights of the two cylinders?
+
+<math> \textbf{(A)}\ \text{The second height is } 10\% \text{ less than the first.} \\
+\qquad\textbf{(B)}\ \text{The first height is } 10\% \text{ more than the second.} \\
+\qquad\textbf{(C)}\ \text{The second height is } 21\% \text{ less than the first.} \\
+\qquad\textbf{(D)}\ \text{The first height is } 21\% \text{ more than the second.} \\
+\qquad\textbf{(E)}\ \text{The second height is } 80\% \text{ of the first.} </math>
+
+==Solution==
+Let the radius of the first cylinder be <math>r_1</math> and the radius of the second cylinder be <math>r_2</math>. Also, let the height of the first cylinder be <math>h_1</math> and the height of the second cylinder be <math>h_2</math>. We are told <cmath>r_2=\frac{11r_1}{10}</cmath> <cmath>\pi r_1^2h_1=\pi r_2^2h_2</cmath> Substituting the first equation into the second and dividing both sides by <math>\pi</math>, we get <cmath>r_1^2h_1=\frac{121r_1^2}{100}h_2\implies h_1=\frac{121h_2}{100}.</cmath> Therefore, <math>\boxed{\textbf{(D)}\ \text{The first height is } 21\% \text{ more than the second.}}</math>
+
+==Video Solution (CREATIVE THINKING)==
+https://youtu.be/fx7bYbysB24
+
+~Education, the Study of Everything
+
+
+
+
+
+==Video Solution==
+https://youtu.be/zVCHWxfKErE
+
+~savannahsolver
+
+==See Also==
+{{AMC10 box|year=2015|ab=A|num-b=8|num-a=10}}
+{{AMC12 box|year=2015|ab=A|num-b=6|num-a=8}}
+{{MAA Notice}}
+
+[[Category: Introductory Geometry Problems]]

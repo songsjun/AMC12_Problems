@@ -1,0 +1,30 @@
+# 2016 AMC 12B Problem 5
+
+## Problem
+The War of 1812 started with a declaration of war on Thursday, June 18, 1812. The peace treaty to end the war was signed 919 days later, on December 24, 1814. On what day of the week was the treaty signed?
+
+$\textbf{(A)}\ \text{Friday} \qquad \textbf{(B)}\ \text{Saturday} \qquad \textbf{(C)}\ \text{Sunday} \qquad \textbf{(D)}\ \text{Monday} \qquad \textbf{(E)}\ \text{Tuesday}$
+## Solution
+By: dragonfly
+
+To find what day of the week it is in 919 days, we have to divide 919 by 7 to see the remainder, and then add the remainder to the current day. We get that $\frac{919}{7}$ has a remainder of 2, so we increase the current day by 2 to get $\boxed{\textbf{(B)}\ \text{Saturday}}.$
+
+Note that the dates themselves (and thus leap years) can be ignored, as we only need the number of days that passed to figure out the day of the week.
+## Solution 2 (Highly not recommended)
+1812 is a leap year (divisible by 4, but not divisible by 100 unless divisible by 400), but June is after February so there are no leap days that need to be accounted for.
+
+Since 365 $\equiv 1 \pmod{7},$ the same day after 1 year is 1 weekday ahead. Since 30 $\equiv 2 \pmod{7}$ and 31 $\equiv 3 \pmod{7},$ the same day after 30/31 days is 2/3 weekdays ahead.
+
+- 2 years (2 weekdays) passed, reaching June 18, 1812.
+- June 18-30 and July 1-17 (30 days or 2 weekdays) passed, reaching July 18.
+- July 18-31 and August 1-17 (31 days or 3 weekdays) passed, reaching August 18.
+- August-September (3 weekdays) passed.
+- September-October (2 weekdays) passed.
+- October-November (3 weekdays) passed.
+- November-December (2 weekdays) passed, reaching December 18.
+- 6 days passed, reaching December 24.
+
+This gives a total of 2+2+3+3+2+3+2+6 $\equiv 2 \pmod{7}$ weekdays passing, which gets from Thursday to $\boxed{\textbf{(B)}\ \text{Saturday}}.$ ~emerald_block
+## Solution 3 (Doomsday)
+Since [https://en.wikipedia.org/wiki/Doomsday_rule doomsday] of 2000 is 2 (Tuesday) and 2000 is a multiple of 400, counting down by 100-year intervals gets that doomsday of 1800 is 2+1+2 $\equiv 5.$ Counting up by 4-year intervals, doomsday of 1812 is $5-3\cdot2 \equiv 6.$ Doomsday of 1814 is then $6+2\cdot1 \equiv 1,$ so December 12 is weekday 1. December 24 is then weekday 1+12 $\equiv 6 = \boxed{\textbf{(B)}\ \text{Saturday}}.$ ~emerald_block
+## See Also

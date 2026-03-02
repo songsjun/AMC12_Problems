@@ -1,0 +1,24 @@
+# 2006 AMC 12B Problem 21
+
+## Problem
+Rectangle ABCD has area 2006.  An ellipse with area $2006\pi$ passes through A and C and has foci at B and D.  What is the perimeter of the rectangle? (The area of an ellipse is ab$\pi$ where $2a$ and $2b$ are the lengths of the axes.)
+
+
+$$\mathrm{(A)}\ \frac {16\sqrt {2006}}{\pi} \qquad \mathrm{(B)}\ \frac {1003}4 \qquad \mathrm{(C)}\ 8\sqrt {1003} \qquad \mathrm{(D)}\ 6\sqrt {2006} \qquad \mathrm{(E)}\ \frac {32\sqrt {1003}}\pi$$
+
+## Solution
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(7cm); real $l=10, w=7$, ang=asin(w/sqrt(l*l+w*w))*180/pi; draw((-l,-w)--(l,-w)--(l,w)--(-l,w)--cycle); draw(rotate(ang)*ellipse((0,0),2*$l+2$*w,l*w*2/sqrt(l^2+w^2))); draw(rotate(ang)*((0,0)--(2$l+2$w,0)),red); draw(rotate(ang+90)*((0,0)--(l*w*2/sqrt(l^2+w^2),0)),red); label("$A$",(-l,w),NW); label("$B$",(-l,-w),SW); label("$C$",(l,-w),SE); label("$D$",(l,w),SE); // Made by chezbgone2
+```
+
+
+Let the rectangle have side lengths l and w.  Let the axis of the ellipse on which the foci lie have length $2a$, and let the other axis have length $2b$.  We have
+$$lw=ab=2006$$
+From the definition of an ellipse, l+w=$2a\Longrightarrow \frac{l+w}{2}=a.$  Also, the diagonal of the rectangle has length $\sqrt{l^2+w^2}.$  Comparing the lengths of the axes and the distance from the foci to the center, we have
+
+$$a^2=\frac{l^2+w^2}{4}+b^2\Longrightarrow \frac{l^2+2lw+w^2}{4}=\frac{l^2+w^2}{4}+b^2\Longrightarrow \frac{lw}{2}=b^2\Longrightarrow b=\sqrt{1003}$$
+
+Since ab=2006, we now know $a\sqrt{1003}=2006\Longrightarrowa=2\sqrt{1003}$ and because $a=\frac{l+w}{2},$ or one-fourth of the rectangle's perimeter, we multiply by four to get an answer of $\boxed{8\sqrt{1003}}.$
+## See also

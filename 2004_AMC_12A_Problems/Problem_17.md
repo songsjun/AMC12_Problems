@@ -1,0 +1,46 @@
+# 2004 AMC 12A Problem 17
+
+> This problem is the same as [2004 AMC 12A #17](https://artofproblemsolving.com/wiki/index.php/2004_AMC_12A_Problems) and [2004 AMC 10A #24](https://artofproblemsolving.com/wiki/index.php/2004_AMC_10A_Problems/Problem_24).
+## Problem
+Let f be a function with the following properties:
+
+(i) f(1) = 1, and
+
+(ii) f($2n) = n \cdot$ f(n) for any positive integer n.
+
+What is the value of f$(2^{100})$?
+
+
+$$\textbf {(A)}\ 1 \qquad \textbf {(B)}\ 2^{99} \qquad \textbf {(C)}\ 2^{100} \qquad \textbf {(D)}\ 2^{4950} \qquad \textbf {(E)}\ 2^{9999}$$
+
+## Solution 1 (Forward)
+From (ii), note that
+
+$$
+\begin{alignat*}{8} f(2) &= 1\cdot f(1) &&= 1, \\ f\left(2^2\right) &= 2\cdot f(2) &&= 2, \\ f\left(2^3\right) &= 2^2\cdot f\left(2^2\right) &&= 2^{2+1}, \\ f\left(2^4\right) &= 2^3\cdot f\left(2^3\right) &&= 2^{3+2+1}, \end{alignat*}
+$$
+
+and so on.
+
+In general, we have $f\left(2^n\right)=2^{(n-1)+(n-2)+(n-3)+\cdots+3+2+1}$ for any positive integer n.
+
+Therefore, the answer is
+
+$$
+\begin{align*} f\left(2^{100}\right)&=2^{99+98+97+\cdots+3+2+1} \\ &=2^{99\cdot100/2} \\ &= \boxed{\textbf {(D)}\ 2^{4950}}. \end{align*}
+$$
+
+*~MRENTHUSIASM*
+## Solution 2 (Backward)
+Applying (ii) repeatedly, we have
+
+$$
+\begin{align*} f\left(2^{100}\right) &= 2^{99} \cdot f\left(2^{99}\right) \\ &= 2^{99} \cdot 2^{98} \cdot f\left(2^{98}\right) \\ &= 2^{99} \cdot 2^{98} \cdot 2^{97} \cdot f\left(2^{97}\right) \\ &= \cdots \\ &= 2^{99} \cdot 2^{98} \cdot 2^{97} \cdots 2^{3} \cdot 2^{2} \cdot 2^{1} \cdot 1 \cdot f(1) \\ &= 2^{99} \cdot 2^{98} \cdot 2^{97} \cdots 2^{3} \cdot 2^{2} \cdot 2^{1} \cdot 1 \cdot 1 \\ &=2^{99 + 98 + 97 + \cdots + 3 + 2 + 1} \\ &=2^{99\cdot100/2} \\ &= \boxed{\textbf {(D)}\ 2^{4950}}. \end{align*}
+$$
+
+*~Azjps (Fundamental Logic)*
+
+*~MRENTHUSIASM (Reconstruction)*
+## Video Solution
+https://youtu.be/qj5hBxYWalI
+## See also

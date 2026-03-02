@@ -1,0 +1,169 @@
+==Problem==
+How many ordered triples <imath>(x,y,z)</imath> of positive integers satisfy <imath>\text{lcm}(x,y) = 72, \text{lcm}(x,z) = 600,</imath> and <imath>\text{lcm}(y,z)=900</imath>?
+
+<imath>\textbf{(A)}\ 15\qquad\textbf{(B)}\ 16\qquad\textbf{(C)}\ 24\qquad\textbf{(D)}\ 27\qquad\textbf{(E)}\ 64</imath>
+
+==Solution 1==
+
+We prime factorize <imath>72,600,</imath> and <imath>900</imath>. The prime factorizations are <imath>2^3\times 3^2</imath>, <imath>2^3\times 3\times 5^2</imath> and <imath>2^2\times 3^2\times 5^2</imath>, respectively. Let <imath>x=2^a\times 3^b\times 5^c</imath>, <imath>y=2^d\times 3^e\times 5^f</imath> and <imath>z=2^g\times 3^h\times 5^i</imath>. We know that <cmath>\max(a,d)=3</cmath> <cmath>\max(b,e)=2</cmath> <cmath>\max(a,g)=3</cmath> <cmath>\max(b,h)=1</cmath> <cmath>\max(c,i)=2</cmath> <cmath>\max(d,g)=2</cmath> <cmath>\max(e,h)=2</cmath> and <imath>c=f=0</imath> since <imath>\text{lcm}(x,y)</imath> isn't a multiple of 5. Since <imath>\max(d,g)=2</imath> we know that <imath>a=3</imath>. We also know that since <imath>\max(b,h)=1</imath> that <imath>e=2</imath>. So now some equations have become useless to us...let's take them out. <cmath>\max(b,h)=1</cmath> <cmath>\max(d,g)=2</cmath> are the only two important ones left. We do casework on each now. If <imath>\max(b,h)=1</imath> then <imath>(b,h)=(1,0),(0,1)</imath> or <imath>(1,1)</imath>. Similarly if <imath>\max(d,g)=2</imath> then <imath>(d,g)=(2,0),(2,1),(2,2),(1,2),(0,2)</imath>. Thus our answer is <imath>5\times 3=\boxed{\textbf{(A) }15}.</imath>
+
+==Solution 2==
+
+It is well known that if the <imath>\text{lcm}(a,b)=c</imath> and <imath>c</imath> can be written as <imath>p_1^ap_2^bp_3^c\dots</imath>, then the highest power of all prime numbers <imath>p_1,p_2,p_3\dots</imath> must divide into either <imath>a</imath> and/or <imath>b</imath>. Or else a lower <imath>c_0=p_1^{a-\epsilon}p_2^{b-\epsilon}p_3^{c-\epsilon}\dots</imath> is the <imath>\text{lcm}</imath>.
+
+Start from <imath>x</imath>:<imath>\text{lcm}(x,y)=72</imath> so <imath>8\mid x</imath> or <imath>9\mid x</imath> or both. But <imath>9\nmid x</imath> because <imath>\text{lcm}(x,z)=600</imath> and <imath>9\nmid 600</imath>.
+So <imath>x=8,24</imath>.
+
+<imath>y</imath> can be <imath>9,18,36</imath> in both cases of <imath>x</imath> but NOT <imath>72</imath> because <imath>\text{lcm}(y,z)=900</imath> and <imath>72\nmid 900</imath>.
+
+So there are six sets of <imath>x,y</imath> and we will list all possible values of <imath>z</imath> based on those.
+
+<imath>25\mid z</imath> because <imath>z</imath> must source all powers of <imath>5</imath>. <imath>z\in\{25,50,75,100,150,300\}</imath>. <imath>z\ne\{200,225\}</imath> because of <imath>\text{lcm}</imath> restrictions.
+
+By different sourcing of powers of <imath>2</imath> and <imath>3</imath>,
+
+<cmath>(8,9):z=300</cmath>
+<cmath>(8,18):z=300</cmath>
+<cmath>(8,36):z=75,150,300</cmath>
+<cmath>(24,9):z=100,300</cmath>
+<cmath>(24,18):z=100,300</cmath>
+<cmath>(24,36):z=25,50,75,100,150,300</cmath>
+
+<imath>z=100</imath> is "enabled" by <imath>x</imath> sourcing the power of <imath>3</imath>. <imath>z=75,150</imath> is uncovered by <imath>y</imath> sourcing all powers of <imath>2</imath>. And <imath>z=25,50</imath> is uncovered by <imath>x</imath> and <imath>y</imath> both at full power capacity.
+
+Counting the cases, <imath>1+1+3+2+2+6=\boxed{\textbf{(A) }15}.</imath>
+
+==Solution 3 (Less Casework!)==
+As said in previous solutions, start by factoring <imath>72, 600,</imath> and <imath>900</imath>. The prime factorizations are as follows: <cmath>72=2^3\cdot 3^2,</cmath> <cmath>600=2^3\cdot 3\cdot 5^2,</cmath> <cmath> \text{and } 900=2^2\cdot 3^2\cdot 5^2</cmath>
+To organize <imath>x,y, \text{ and } z</imath> and their respective LCMs in a simpler way, we can draw a triangle as follows such that <imath>x,y, \text{and } z</imath> are the vertices and the LCMs are on the edges. 
+
+<asy>
+//Variable Declarations
+defaultpen(0.45);
+size(200pt);
+fontsize(15pt);
+pair X, Y, Z;
+real R;
+path tri;
+
+//Variable Definitions
+R = 1;
+X = R*dir(90);
+Y = R*dir(210);
+Z = R*dir(-30);
+tri = X--Y--Z--cycle;
+
+//Diagram
+draw(tri);
+label("$x$",X,N);
+label("$y$",Y,SW);
+label("$z$",Z,SE);
+label("$2^33^25^0$",X--Y,2W);
+label("$2^33^15^2$",X--Z,2E);
+label("$2^23^25^2$",Y--Z,2S);
+</asy>
+
+Now we can split this triangle into three separate ones for each of the three different prime factors <imath>2,3, \text{and } 5</imath>.
+
+<asy>
+//Variable Declarations
+defaultpen(0.45);
+size(200pt);
+fontsize(15pt);
+pair X, Y, Z;
+real R;
+path tri;
+
+//Variable Definitions
+R = 1;
+X = R*dir(90);
+Y = R*dir(210);
+Z = R*dir(-30);
+tri = X--Y--Z--cycle;
+
+//Diagram
+draw(tri);
+label("$x$",X,N);
+label("$y$",Y,SW);
+label("$z$",Z,SE);
+label("$2^3$",X--Y,2W);
+label("$2^3$",X--Z,2E);
+label("$2^2$",Y--Z,2S);
+</asy>
+
+Analyzing for powers of <imath>2</imath>, it is quite obvious that <imath>x</imath> must have <imath>2^3</imath> as one of its factors since neither <imath>y \text{ nor } z</imath> can have a power of <imath>2</imath> exceeding <imath>2</imath>. Turning towards the vertices <imath>y</imath> and <imath>z</imath>, we know at least one of them must have <imath>2^2</imath> as its factors. Therefore, we have <imath>5</imath> ways for the powers of <imath>2</imath> for <imath>y \text{ and } z</imath> since the only ones that satisfy the previous conditions are for ordered pairs <imath>(y,z) \{(2,0)(2,1)(0,2)(1,2)(2,2)\}</imath>.
+
+<asy>
+//Variable Declarations
+defaultpen(0.45);
+size(200pt);
+fontsize(15pt);
+pair X, Y, Z;
+real R;
+path tri;
+
+//Variable Definitions
+R = 1;
+X = R*dir(90);
+Y = R*dir(210);
+Z = R*dir(-30);
+tri = X--Y--Z--cycle;
+
+//Diagram
+draw(tri);
+label("$x$",X,N);
+label("$y$",Y,SW);
+label("$z$",Z,SE);
+label("$3^2$",X--Y,2W);
+label("$3^1$",X--Z,2E);
+label("$3^2$",Y--Z,2S);
+</asy>
+
+Using the same logic as we did for powers of <imath>2</imath>, it becomes quite easy to note that <imath>y</imath> must have <imath>3^2</imath> as one of its factors. Moving onto <imath>x \text{ and } z</imath>, we can use the same logic to find the only ordered pairs <imath>(x,z)</imath> that will work are <imath>\{(1,0)(0,1)(1,1)\}</imath>.
+
+The final and last case is the powers of <imath>5</imath>.
+
+<asy>
+//Variable Declarations
+defaultpen(0.45);
+size(200pt);
+fontsize(15pt);
+pair X, Y, Z;
+real R;
+path tri;
+
+//Variable Definitions
+R = 1;
+X = R*dir(90);
+Y = R*dir(210);
+Z = R*dir(-30);
+tri = X--Y--Z--cycle;
+
+//Diagram
+draw(tri);
+label("$x$",X,N);
+label("$y$",Y,SW);
+label("$z$",Z,SE);
+label("$5^0$",X--Y,2W);
+label("$5^2$",X--Z,2E);
+label("$5^2$",Y--Z,2S);
+</asy>
+
+This is actually quite a simple case since we know <imath>z</imath> must have <imath>5^2</imath> as part of its factorization while <imath>x \text{ and } y</imath> cannot have a factor of <imath>5</imath> in their prime factorization.
+
+Multiplying all the possible arrangements for prime factors <imath>2,3, \text{ and } 5</imath>, we get the answer:
+<cmath>5\cdot3\cdot1=\boxed{\textbf{(A) }15}</cmath>
+
+(Diagrams by ColtsFan10)
+
+==Solution 4==
+The least common multiples with <imath>x</imath> in it are <imath>\text{lcm}(x,y)</imath> and <imath>\text{lcm}(x,z)</imath>. Since <imath>\text{lcm}(y,z)</imath> is without a multiple of <imath>8</imath>, and <imath>\text{lcm}(x,y)</imath> and <imath>\text{lcm}(x,z)</imath> are, we know <imath>x</imath> must be some constant, let's say, <imath>k</imath>, so <imath>x = 8\times k</imath>. Doing the same for <imath>y</imath> and <imath>z</imath>, where you are trying to find the multiples that they are not in vs. what they are in. For <imath>y</imath> you will see that it's lowest is <imath>9</imath>, and for <imath>z</imath> it's <imath>25</imath>. Now in <imath>\text{lcm}</imath>, the <imath>\text{lcm}</imath> of <imath>2</imath> and <imath>3</imath> and <imath>2</imath> and <imath>6</imath> are the same because the <imath>6</imath> can be simplified to <imath>3</imath> since both numbers share a factor of <imath>2</imath> and therefore one can lose it so you don't accidentally overshoot your <imath>\text{lcm}</imath>. For example, <imath>x</imath> can also be <imath>24(3\times 8)</imath>, because when you do <imath>\text{lcm}(x,y)</imath> a factor of <imath>3</imath> from <imath>24</imath> and the <imath>3</imath> from <imath>9</imath>(assuming that it is <imath>9</imath>, but in any other case where it isn't it should still be ending up with <imath>\text{lcm}(x,y) = 72</imath>) match up, and so one factor of <imath>3</imath> is removed, and it's now going to give you an output of <imath>72</imath>. Doing so you find that <imath>x</imath> can be <imath>8</imath> and <imath>24</imath>, <imath>y</imath> can be <imath>9,18</imath> and <imath>36</imath>, <imath>z</imath> can be <imath>25,50,75,100,150</imath> or <imath>300</imath>. Now you can choose a value from these lists to be put in <imath>(x,y,z)</imath>. However if you choose say <imath>x = 8</imath> and <imath>z = 25</imath> the least common multiple is <imath>200</imath>, not <imath>600</imath>. for this kind of case you may need to force a number to have a certain other multiple to be able to reach the desired <imath>\text{lcm}</imath>. If you do casework on <imath>x</imath>, since it has only <imath>8</imath> and <imath>24</imath>, you'll find that there are <imath>\boxed{\textbf{(A) }15}</imath> solutions      
+
+==Video Solution by AoPS Deven Ware==
+https://youtu.be/ja1KZ8tVwI8?si=hXhWIWnbUH9Llync
+
+==See Also==
+
+{{AMC10 box|year=2016|ab=A|num-b=24|after=Last Problem}}
+{{AMC12 box|year=2016|ab=A|num-b=21|num-a=23}}
+{{MAA Notice}}

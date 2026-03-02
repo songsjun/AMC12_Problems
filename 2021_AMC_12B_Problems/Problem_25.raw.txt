@@ -1,0 +1,151 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2021_AMC_12B_Problems/Problem_25&action=raw
+
+Published Time: Tue, 19 Aug 2025 21:14:35 GMT
+
+Markdown Content:
+{{duplicate|[[2021 AMC 10B Problems#Problem 25|2021 AMC 10B #25]] and [[2021 AMC 12B Problems#Problem 25|2021 AMC 12B #25]]}}
+
+==Problem==
+Let S be the set of lattice points in the coordinate plane, both of whose coordinates are integers between 1 and 30, inclusive. Exactly 300 points in S lie on or below a line with equation y=mx. The possible values of m lie in an interval of length \frac ab, where a and b are relatively prime positive integers. What is a+b?
+
+\textbf{(A)} ~31 \qquad \textbf{(B)} ~47 \qquad \textbf{(C)} ~62\qquad \textbf{(D)} ~72 \qquad \textbf{(E)} ~85
+
+==Solution 1==
+
+First, we find a numerical representation for the number of lattice points in S that are under the line y=mx.  For any value of x, the highest lattice point under y=mx is \lfloor mx \rfloor.  Because every lattice point from (x, 1) to (x, \lfloor mx \rfloor) is under the line, the total number of lattice points under the line is \sum_{x=1}^{30}(\lfloor mx \rfloor). 
+
+Now, we proceed by finding lower and upper bounds for m.  To find the lower bound, we start with an approximation. If 300 lattice points are below the line, then around \frac{1}{3} of the area formed by S is under the line. By using the formula for a triangle's area, we find that when x=30, y \approx 20.  Solving for m assuming that (30, 20) is a point on the line, we get m = \frac{2}{3}.  Plugging in m to \sum_{x=1}^{30}(\lfloor mx \rfloor),  we get:
+
+\sum_{x=1}^{30}(\lfloor \frac{2}{3}x \rfloor) = 0 + 1 + 2 + 2 + 3 + \cdots + 18 + 18 + 19 + 20
+
+We have a repeat every 3 values (every time y=\frac{2}{3}x goes through a lattice point). Thus, we can use arithmetic sequences to calculate the value above:
+
+\sum_{x=1}^{30}(\lfloor \frac{2}{3}x \rfloor) = 0 + 1 + 2 + 2 + 3 + \cdots + 18 + 18 + 19 + 20=\frac{20(21)}{2} + 2 + 4 + 6 + \cdots + 18 =210 + \frac{20}{2}\cdot 9=300
+
+This means that \frac{2}{3} is a possible value of m.  Furthermore, it is the lower bound for m.  This is because y=\frac{2}{3}x goes through many points (such as (21, 14)). If m was lower, y=mx would no longer go through some of these points, and there would be less than 300 lattice points under it.
+
+Now, we find an upper bound for m.  Imagine increasing m slowly and rotating the line y=mx,  starting from the lower bound of m=\frac{2}{3}. The upper bound for m occurs when y=mx intersects a lattice point again (look at this problem to get a better idea of what's happening: https://artofproblemsolving.com/wiki/index.php/2011_AMC_10B_Problems/Problem_24).
+
+In other words, we are looking for the first m > \frac{2}{3} that is expressible as a ratio of positive integers \frac{p}{q} with q \le 30.  For each q=1,\dots,30, the smallest multiple of \frac{1}{q} which exceeds \frac{2}{3} is 1, \frac{2}{2}, \frac{3}{3}, \frac{3}{4}, \frac{4}{5}, \cdots , \frac{19}{27}, \frac{19}{28}, \frac{20}{29}, \frac{21}{30} respectively, and the smallest of these is \frac{19}{28}. 
+
+Alternatively, see the method of finding upper bounds in solution 2.
+
+The lower bound is \frac{2}{3} and the upper bound is \frac{19}{28}.  Their difference is \frac{1}{84},  so the answer is 1 + 84 = \boxed{85}. 
+
+~JimY
+~Minor edits by sl_hc
+
+An alternative would be using Farey fractions and the mediant theorem to find the upper bound. \frac{2}{3} and \frac{7}{10} gives \frac{9}{13}, and so on using Farey addition. 
+
+The above alternative can be made quicker by using a different Farey sequence rule. The Farey sequence rule states that if \frac{a}{b} and \frac{c}{d} are adjacent in a Farey sequence, we have bc - ad = 1 (see https://en.wikipedia.org/wiki/Farey_sequence#Farey_neighbours). We use the rule with a = 2, b = 3, so we have 3c - 2d = 1. Starting with d = 30 (since d ≤ 30), we see that c would be noninteger and the same can be shown for d = 29. When d = 28, c = 19 so the range is [\frac{2}{3}, \frac{19}{28}] => \frac{1}{84} => \boxed{85}
+
+~Alternative suggested by Gyingo
+
+An alternative approach with the same methodology can be done using Pick's Theorem. Wikipedia page: https://en.wikipedia.org/wiki/Pick%27s_theorem. It's a formula to find the number of lattice points strictly inside a polygon. Approximation of the lower bound is still necessary.
+
+==Solution 2==
+Based on area ratios between a square of side length 30 and a triangle with base 30, we estimate that the slope m of the line we want is approximately \frac{2}{3}. Following this estimate, we see if there are approximately 30 \cdot 30 - 300 = 600 lattice points above the line y=\frac{2}{3}x.
+
+Counting the number of lattice points with x=1 above the line, the number of lattice points with x=2 above the line, and so on, we find that the total number of lattice points above the line is 30+29+28+28+27+26+26 \ldots+ 10, with the even integers repeating every third term. We see that the average of the 30 terms is 20, which means that exactly 20 \cdot 30 = 600 lattice points above the line as desired. This gives a lower bound because any decrease in the slope of the line would cause points that were already on the line to shift to being above it.
+
+To find the upper bound, notice that each lattice point less than 1 unit above the line is either \frac{1}{3} or \frac{2}{3} above. Since the slope through a point is the y-coordinate divided by the x-coordinate, a shift in the slope will increase the y-value of the higher x-coordinates more than the y-value of the lower x-coordinates. So, we turn our attention to x=28, 29, 30 for which the line y=\frac{2}{3}x intersects at y= \frac{56}{3}, \frac{58}{3}, 20. The point (30,20) is already counted, and we can clearly see that if we slowly increase the slope of the line, we will first hit the point (28,19) since (28, \frac{56}{3}) is the closest to it. The equation of the line which goes through both the origin and (28,19) is y=\frac{19}{28}x. This gives an upper bound of m=\frac{19}{28}. 
+
+Taking the upper bound of m and subtracting the lower bound yields \frac{19}{28}-\frac{2}{3}=\frac{1}{84}. The answer is therefore 1+84= \boxed{\textbf{(E)} ~85}.
+
+~theAJL ~Minor edits by Eric_Zang
+===Diagram===
+ /* Created by Brendanb4321 */ import graph; size(16cm); defaultpen(fontsize(9pt)); xaxis(0,30,Ticks(1.0)); yaxis(0,25,Ticks(1.0)); draw((0,0)--(30,20)); draw((0,0)--(30,30/28*19), dotted); for (int i = 1; i<=30; ++i) { for (int j = 1; j<=2/3*i+1; ++j) { dot((i,j)); } } dot((28,19), red); label("$m=2/3$", (32,20)); label("$m=19/28$", (32.3,20.8)); 
+
+==Solution 3==
+As the procedure shown in the Solution 1, the lower bound of m  is  \frac{2}{3}. 
+Here I give a more logic way to show how to find the upper bound of m. 
+Denote N=\sum_{x=1}^{30}(\lfloor mx \rfloor)  as the number of lattice points in S.
+
+N = \lfloor m \rfloor+\lfloor 2m \rfloor+\lfloor 3m \rfloor+\cdots+\lfloor 30m \rfloor = 300 .
+
+Let m = \frac{2}{3}+k . for \forall x_{i}\le 30, x\in N^{*}, \lfloor mx_{i} \rfloor = \lfloor \frac{2}{3}x+xk \rfloor. 
+
+Our target is finding the minimum value of k which can increase one unit of \lfloor mx_{i} \rfloor .
+
+Notice that:
+
+When  x_{i} = 3n, \lfloor mx_{i} \rfloor = \lfloor 2n+(3n)k \rfloor  We don't have to discuss this case.
+
+When  x_{i} = 3n+1, \lfloor mx_{i} \rfloor = \lfloor 2n+\frac{2}{3}+(3n+1)k \rfloor, k_{min1}=\frac{1}{3(3n+1)}. 
+
+When  x_{i} = 3n+2, \lfloor mx_{i} \rfloor = \lfloor 2n+1+\frac{1}{3}+(3n+2)k \rfloor, k_{min2}=\frac{2}{3(3n+2)}.   
+
+Here n\in N^{*}, n \le 9.
+
+Denote  k_{min}=min\left \{k_{min1},k_{min2} \right \}. 
+
+Obviously k_{min1}  and k_{min2} are decreasing. Let's considering the situation when n=9.
+
+k_{min}=min\left\{\frac{1}{84},\frac{2}{87}\right\}=\frac{1}{84}.
+
+This means that the answer is just \frac{1}{84}, so a+b=85.  Choose \boxed{E}.
+
+~PythZhou.
+
+==Solution 4==
+
+It's easier to calculate the number of lattice points inside a rectangle with vertices (0,0), (p,0), (p,q), (0,q). Those lattice points are divided by the diagonal y = \frac{p}{q} \cdot x into 2 halves. In this problem the number of lattice points on or below the diagonal and x \ge 1 is
+ \frac{1}{2} [(p+1)(q+1) - d] + d - (p+1), d is the number of lattice points on the diagonal, d \ge 2
+
+(p+1)(q+1) is the total number of lattice points inside the rectangle. Subtract the number of lattice points on the diagonal, divided by 2 is the number of lattice points below the diagonal, add the number of lattice points on the diagonal, and subtract the lattice points on the x axis, then we get the total number of lattice points on or below the diagonal and x \ge 1.
+
+There are 900 lattice points in total. 300 is \frac{1}{3} of 900. The x coordinate of the top-right vertex of the rectangle is 30, \frac{1}{2} \cdot 30 \cdot 20 = 300. I guess the y coordinate of the top-right vertex of the rectangle is 20. Now I am going to verify that.  The slope of the diagonal is \frac{20}{30} = \frac{2}{3}, there are 11 lattice points on the diagonal. Substitute (p,q)=(30, 20), d=11 to the above formula:
+
+ \frac{1}{2} [(30+1)(10+1) - 11] + 11 - (30+1) = 300
+
+Because there are 11 lattice points on line y = \frac{2}{3}x, if m < \frac{2}{3}, then the number of lattice points on or below the line is less than 300. So m = \frac{2}{3} is the lower bound.
+
+Now I am going to calculate the upper bound. From \frac{b}{a} < \frac{b+1}{a+1},
+
+\frac{2}{3} = \frac{18}{27} < \frac{19}{28}
+
+\frac{2}{3} = \frac{20}{30} < \frac{21}{31} < \frac{19}{28}
+
+ /* Created by Brendanb4321, modified by isabelchen */ import graph; size(18cm); defaultpen(fontsize(9pt)); xaxis(0,31,Ticks(1.0)); yaxis(0,22,Ticks(1.0)); draw((0,0)--(30,20)); draw((0,0)--(30,30*19/28), dotted); draw((0,0)--(31,31*21/31), dotted); for (int i = 1; i<=31; ++i) { for (int j = 1; j<=2/3*i+1; ++j) { dot((i,j)); } } dot((28,19), red); dot((31,21), blue); label("$m=2/3$", (33,20)); label("$m=21/31$", (33,21)); label("$m=19/28$", (33,22)); 
+
+If m = \frac{21}{31}, I will calculate by using the rectangle with blue vertex (p,q) = (31, 21), then subtract lattice points on line x = 31, which is 21. There are 2 lattice points on the diagonal, d=2.
+
+ \frac{1}{2} [(31+1)(21+1) - 2] + 2 - (31+1) - 21 = 300, same as that of m = \frac{2}{3}
+
+If m = \frac{19}{28}, I will calculate by using the rectangle with red vertex (p,q) = (28, 19), then add lattice points on line x = 29 and x = 30, which is 19 + 20 = 39. There are 2 lattice points on the diagonal, d=2.
+
+ \frac{1}{2} [(28+1)(19+1) - 2] + 2 - (28+1) + 39 = 301, 1 more than that of m = \frac{2}{3}
+
+When m increases, more lattice points falls below the line y = mx. Any value larger than \frac{19}{28} has more than 301 lattice points on or below y = \frac{19}{28} x. So the upper bound is \frac{19}{28}.
+
+\frac{19}{28}-\frac{2}{3}=\frac{1}{84}, \boxed{\textbf{(E)} ~85}.
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+==Solution 5==
+
+The lower bound of m is \frac23 = \frac{20}{30}. Inside the rectangle with vertices (0,0), (30,0), (30,20), (0, 20) and diagonal y = \frac23 x, there are (30-1)(20-1) = 551 lattice points inside, not including the edges. There are 9 lattice points on diagonal y = \frac23 x inside the rectangle, 551 + 9 = 560. Half of the 560 lattice points are below diagonal y = \frac23 x, 560 \cdot \frac12 = 280. There are 20 lattice points on edge x = 30, 280 + 20 = 300. Once m < \frac23, the 9 lattice points on diagonal y = \frac23 x will be above the new diagonal, making the number of lattice points on and below the diagonal less than 300.
+
+Now we are going to calculate the upper bound by the following formula:
+ The number of lattice points inside rectangle (0,0), (a,0), (a, b), (0, b) and below diagonal y = \frac{b}{a}x is \frac{(a-1)(b-1)}{2}, where a and b are relatively prime.
+ There are (a-1)(b-1) lattice points inside the rectangle. Because a and b are relatively prime, the only lattice points on the diagonal are (0,0) and (a,b). By symmetry, half of the lattice points are below the diagonal.
+
+ /* Created by isabelchen */ import graph; size(8cm); defaultpen(fontsize(9pt)); xaxis(0,8); yaxis(0,6); draw((0,0)--(7,5)); draw((7,0)--(7,5)); draw((0,5)--(7,5)); dot((0,0)); dot((1,0)); dot((2,0)); dot((3,0)); dot((4,0)); dot((5,0)); dot((6,0)); dot((7,0)); dot((8,0)); dot((0,1)); dot((1,1)); dot((2,1)); dot((3,1)); dot((4,1)); dot((5,1)); dot((6,1)); dot((7,1)); dot((8,1)); dot((0,2)); dot((1,2)); dot((2,2)); dot((3,2)); dot((4,2)); dot((5,2)); dot((6,2)); dot((7,2)); dot((8,2)); dot((0,3)); dot((1,3)); dot((2,3)); dot((3,3)); dot((4,3)); dot((5,3)); dot((6,3)); dot((7,3)); dot((8,3)); dot((0,4)); dot((1,4)); dot((2,4)); dot((3,4)); dot((4,4)); dot((5,4)); dot((6,4)); dot((7,4)); dot((8,4)); dot((0,5)); dot((1,5)); dot((2,5)); dot((3,5)); dot((4,5)); dot((5,5)); dot((6,5)); dot((7,5)); dot((8,5)); dot((0,6)); dot((1,6)); dot((2,6)); dot((3,6)); dot((4,6)); dot((5,6)); dot((6,6)); dot((7,6)); dot((8,6)); label("$(0,0)$", (0,0), SW); label("$(a, b)$", (7,5), NE); dot((7,0)); label("$a$", (7,0), S); dot((0,5)); label("$b$", (0,5), W); 
+
+\frac{2}{3} = \frac{20}{30} < \frac{21}{31} < \frac{19}{28}
+
+When a = 31, b = 21, \frac{(31-1)(21-1)}{2} = 300.
+
+When a = 28, b = 19, \frac{(28-1)(19-1)}{2} = 243. Below the line y = \frac{19}{28} x, there are 19 lattice points on line x = 28, 19 lattice points on line x = 29, 20 lattice points on line x = 30, 243 + 19 + 19 + 20 = 301. 
+
+More lattice points fall below the line y = mx as m increases. There are more than 301 lattice points on and below the line for any m greater than \frac{19}{28}. Therefore, the upper bound is \frac{19}{28}.
+
+\frac{19}{28}-\frac{2}{3}=\frac{1}{84}, so 1+84=\boxed{\textbf{(E)} ~85}.
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+===Remark===
+
+\lfloor \frac{b}{a} k \rfloor is the number of lattice points on line x = k, below line y = \frac{b}{a} x and above the x axis, where k is an integer and 0. Therefore, \sum_{k=1}^{a-1} \lfloor \frac{b}{a} k \rfloor is the number of lattice points inside the rectangle (0,0), (a,0), (a, b), (0, b), below diagonal y = \frac{b}{a} x. If a and b are relatively prime, \sum_{k=1}^{a-1} \lfloor \frac{b}{a} k \rfloor = \frac{(a-1)(b-1)}{2}, as explained in solution 5. This problem is about finding the upper and lower bound of \frac{b}{a}, given \sum_{k=1}^{30} \lfloor \frac{b}{a} k \rfloor = 300. The same problem can have geometric representation as stated in the original problem, or algebraic representation as stated here. ~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen] ==Solution 6== As the procedure shown in the Solution 1, the lower bound of m  is  \frac{2}{3}, whose equation is 2x - 3y = 0. Now, we are going to find the upper bound of m. The signed distance between a point (x_0,\ y_0) and the line 2x - 3y = 0 is d = \frac{2x_0 - 3y_0}{\sqrt{2^2 + 3^3}} If (x_0,\ y_0) is the lowest lattice point above the line, then it should have the largest values of coordinates among all the solutions of 2x_0 - 3y_0 = 1, because among the points with the shortest distance from the line, the slope of the farthest point to the origin is the smallest. Solve the inequality:2x - 3y = 1,\ 1 \leq x \leq 30 We obtain (x_0,\ y_0) = (28,\ 19), so the upper bound of m = \frac{19}{28}. \frac{19}{28}-\frac{2}{3}=\frac{1}{84}, \boxed{\textbf{(E)} ~85}. ~[https://artofproblemsolving.com/wiki/index.php/User:Reda_mandymath reda_mandymath] ==Video Solution- Easy to Understand, In Chinese== https://youtu.be/PC8fIZzICFg ~hippopotamus1 ==Video Solution by Interstigation (In-Depth, Straight-forward)== https://youtu.be/aAogEAOcL2Y ~Interstigation ==See Also== {{AMC12 box|year=2021|ab=B|num-b=24|after=Last problem}} [[Category:Intermediate Geometry Problems]] {{AMC10 box|year=2021|ab=B|num-b=24|after=Last problem}} {{MAA Notice}}

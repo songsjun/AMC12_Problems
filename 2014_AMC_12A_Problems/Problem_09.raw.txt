@@ -1,0 +1,55 @@
+{{duplicate|[[2014 AMC 12A Problems|2014 AMC 12A #9]] and [[2014 AMC 10A Problems|2014 AMC 10A #10]]}}
+==Problem==
+
+Five positive consecutive integers starting with <math>a</math> have average <math>b</math>. What is the average of <math>5</math> consecutive integers that start with <math>b</math>?
+
+<math> \textbf{(A)}\ a+3\qquad\textbf{(B)}\ a+4\qquad\textbf{(C)}\ a+5\qquad\textbf{(D)}\ a+6\qquad\textbf{(E)}\ a+7</math>
+
+==Solution 1==
+Let <math>a=1</math>. Our list is <math>\{1,2,3,4,5\}</math> with an average of <math>15\div 5=3</math>. Our next set starting with <math>3</math> is <math>\{3,4,5,6,7\}</math>. Our average is <math>25\div 5=5</math>.
+
+Therefore, we notice that <math>5=1+4</math> which means that the answer is <math>\boxed{\textbf{(B)}\ a+4}</math>.
+
+==Solution 2==
+
+We are given that <cmath>b=\frac{a+a+1+a+2+a+3+a+4}{5}</cmath>
+<cmath>\implies b =a+2</cmath>
+
+We are asked to find the average of the 5 consecutive integers starting from <math>b</math> in terms of <math>a</math>. By substitution, this is <cmath>\frac{a+2+a+3+a+4+a+5+a+6}5=a+4</cmath>
+
+Thus, the answer is <math> \boxed{\textbf{(B)}\ a+4} </math>
+
+==Solution 3 (fast)==
+We know from experience (or logical reasoning) that the average of <math>5</math> consecutive numbers is the <math>3^\text{rd}</math> one or the <math>1^\text{st} + 2</math>. With the logic, we find that <math>b=a+2</math>. Therefore, <math>b+2=(a+2)+2=\boxed{a+4}</math>.
+
+~MathFun1000
+
+==Solution 4==
+The list of numbers is <math>\left\{a,\ a+1,\ b,\ a+3,\ a+4\right\}</math> so <math>b=a+2</math>. The new list is <math>\left\{a+2,\ a+3,\ a+4,\ a+5,\ a+6\right\}</math> and the average is <math>a+4 \Longrightarrow \boxed{\textbf{(B) } a+4}</math>.
+
+~JH. L
+
+==Video Solution (CREATIVE THINKING)==
+ https://youtu.be/GonWHjrROzI
+
+~Education, the Study of Everything
+
+
+
+
+==Video Solutions==
+===Video Solution 1===
+https://youtu.be/wBdD6Ge8FuE
+
+~savannahsolver
+
+===Video Solution 2===
+https://youtu.be/rJytKoJzNBY
+
+==See Also==
+
+{{AMC10 box|year=2014|ab=A|num-b=9|num-a=11}}
+{{AMC12 box|year=2014|ab=A|num-b=8|num-a=10}}
+{{MAA Notice}}
+
+[[Category: Introductory Algebra Problems]]

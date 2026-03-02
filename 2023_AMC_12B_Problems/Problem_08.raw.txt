@@ -1,0 +1,30 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2023_AMC_12B_Problems/Problem_8&action=raw
+
+Published Time: Fri, 31 Oct 2025 15:08:30 GMT
+
+Markdown Content:
+==Problem==
+How many nonempty subsets B of \{0, 1, 2, 3, \cdots, 12\} have the property that the number of elements in B is equal to the least element of B? For example, B = \{4, 6, 8, 11\} satisfies the condition.
+
+\textbf{(A) } 256 \qquad\textbf{(B) } 136 \qquad\textbf{(C) } 108 \qquad\textbf{(D) } 144 \qquad\textbf{(E) } 156
+
+==Solution==
+There is no way to have a set with 0. If a set is to have its lowest element as 1, it must have only 1 element: 1. If a set is to have its lowest element as 2, it must have 2, and the other element will be chosen from the natural numbers between 3 and 12, inclusive. To calculate this, we do \binom{10}{1}. If the set is the have its lowest element as 3, the other 2 elements will be chosen from the natural numbers between 4 and 12, inclusive. To calculate this, we do \binom{9}{2}. We can see a pattern emerge, where the top is decreasing by 1 and the bottom is increasing by 1. In other words, we have to add 1 + \binom{10}{1} + \binom{9}{2} + \binom{8}{3} + \binom{7}{4} + \binom{6}{5}. This is 1+10+36+56+35+6 = \boxed{\textbf{(D) 144}}.
+
+~lprado
+
+==Note:==
+In general, i.e. when the number is not 13, the answer is F_{n-1}.
+-Mr Sharkman
+
+==Video Solution==
+
+https://youtu.be/r9HCzaxLNlc
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+==See Also==
+{{AMC12 box|year=2023|ab=B|num-b=7|num-a=9}}
+{{MAA Notice}}

@@ -1,0 +1,47 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2020_AMC_12A_Problems/Problem_6&action=raw
+
+Published Time: Fri, 10 Sep 2021 10:14:50 GMT
+
+Markdown Content:
+==Problem==
+
+In the plane figure shown below, 3 of the unit squares have been shaded. What is the least number of additional unit squares that must be shaded so that the resulting figure has two lines of symmetry?
+
+ import olympiad; unitsize(25); filldraw((1,3)--(1,4)--(2,4)--(2,3)--cycle, gray(0.7)); filldraw((2,1)--(2,2)--(3,2)--(3,1)--cycle, gray(0.7)); filldraw((4,0)--(5,0)--(5,1)--(4,1)--cycle, gray(0.7)); for (int i = 0; i < 5; ++i) { for (int j = 0; j < 6; ++j) { pair A = (j,i); } } for (int i = 0; i < 5; ++i) { for (int j = 0; j < 6; ++j) { if (j != 5) { draw((j,i)--(j+1,i)); } if (i != 4) { draw((j,i)--(j,i+1)); } } } 
+
+\textbf{(A) } 4 \qquad \textbf{(B) } 5 \qquad \textbf{(C) } 6 \qquad \textbf{(D) } 7 \qquad \textbf{(E) } 8
+
+== Solution 1 (Graphical) ==
+
+The two lines of symmetry must be horizontally and vertically through the middle. We can then fill the boxes in like so:
+
+ import olympiad; unitsize(25); filldraw((1,3)--(1,4)--(2,4)--(2,3)--cycle, gray(0.7)); filldraw((0,3)--(0,4)--(1,4)--(1,3)--cycle, gray(0.9)); filldraw((3,3)--(3,4)--(4,4)--(4,3)--cycle, gray(0.9)); filldraw((4,3)--(4,4)--(5,4)--(5,3)--cycle, gray(0.9)); filldraw((2,2)--(2,3)--(3,3)--(3,2)--cycle, gray(0.9)); filldraw((2,1)--(2,2)--(3,2)--(3,1)--cycle, gray(0.7)); filldraw((3,0)--(4,0)--(4,1)--(3,1)--cycle, gray(0.9)); filldraw((1,0)--(2,0)--(2,1)--(1,1)--cycle, gray(0.9)); filldraw((4,0)--(5,0)--(5,1)--(4,1)--cycle, gray(0.7)); filldraw((0,0)--(1,0)--(1,1)--(0,1)--cycle, gray(0.9)); for (int i = 0; i < 5; ++i) { for (int j = 0; j < 6; ++j) { pair A = (j,i); } } for (int i = 0; i < 5; ++i) { for (int j = 0; j < 6; ++j) { if (j != 5) { draw((j,i)--(j+1,i)); } if (i != 4) { draw((j,i)--(j,i+1)); } } } 
+
+where the light gray boxes are the ones we have filled. Counting these, we get \boxed{\textbf{(D) } 7} total boxes. 
+
+~ciceronii
+
+==Solution 2 (Analytical)==
+We label the three shaded unit squares A,B, and C, then construct the two lines of symmetry of the resulting figure, as shown below:
+ import olympiad; unitsize(25); filldraw((1,3)--(1,4)--(2,4)--(2,3)--cycle, gray(0.7)); filldraw((2,1)--(2,2)--(3,2)--(3,1)--cycle, gray(0.7)); filldraw((4,0)--(5,0)--(5,1)--(4,1)--cycle, gray(0.7)); for (int i = 0; i < 5; ++i) { for (int j = 0; j < 6; ++j) { pair A = (j,i); } } for (int i = 0; i < 5; ++i) { for (int j = 0; j < 6; ++j) { if (j != 5) { draw((j,i)--(j+1,i)); } if (i != 4) { draw((j,i)--(j,i+1)); } } } draw((-1,2)--(6,2),linewidth(2)+red); draw((2.5,-1)--(2.5,5),linewidth(2)+red); label("$A$",(1.5,3.5)); label("$B$",(2.5,1.5)); label("$C$",(4.5,0.5)); 
+Note that:
+
+ 1.   Since the centers of A and C are on neither line of symmetry, A and C each contribute 4 shaded unit squares to the resulting figure.
+
+2.   Since the center of B is on one line of symmetry, B contributes 2 shaded unit squares to the resulting figure.
+
+The shaded unit squares contributed by A,B, and C are all distinct, so we need to shade at least 4+4+2-3=\boxed{\textbf{(D) } 7} unit squares in addition, as shown below:
+ import olympiad; unitsize(25); filldraw((1,3)--(1,4)--(2,4)--(2,3)--cycle, gray(0.7)); filldraw((0,3)--(0,4)--(1,4)--(1,3)--cycle, gray(0.9)); filldraw((3,3)--(3,4)--(4,4)--(4,3)--cycle, gray(0.9)); filldraw((4,3)--(4,4)--(5,4)--(5,3)--cycle, gray(0.9)); filldraw((2,2)--(2,3)--(3,3)--(3,2)--cycle, gray(0.9)); filldraw((2,1)--(2,2)--(3,2)--(3,1)--cycle, gray(0.7)); filldraw((3,0)--(4,0)--(4,1)--(3,1)--cycle, gray(0.9)); filldraw((1,0)--(2,0)--(2,1)--(1,1)--cycle, gray(0.9)); filldraw((4,0)--(5,0)--(5,1)--(4,1)--cycle, gray(0.7)); filldraw((0,0)--(1,0)--(1,1)--(0,1)--cycle, gray(0.9)); for (int i = 0; i < 5; ++i) { for (int j = 0; j < 6; ++j) { pair A = (j,i); } } for (int i = 0; i < 5; ++i) { for (int j = 0; j < 6; ++j) { if (j != 5) { draw((j,i)--(j+1,i)); } if (i != 4) { draw((j,i)--(j,i+1)); } } } draw((-1,2)--(6,2),linewidth(2)+red); draw((2.5,-1)--(2.5,5),linewidth(2)+red); label("$A$",(1.5,3.5)); label("$B$",(2.5,1.5)); label("$C$",(4.5,0.5)); label("$A'$",(3.5,3.5)); label("$A'$",(1.5,0.5)); label("$A'$",(3.5,0.5)); label("$B'$",(2.5,2.5)); label("$C'$",(0.5,0.5)); label("$C'$",(0.5,3.5)); label("$C'$",(4.5,3.5)); 
+~MRENTHUSIASM
+
+==Video Solution==
+https://youtu.be/fzZzGqNqW6U
+
+~IceMatrix
+
+==See Also==
+
+{{AMC12 box|year=2020|ab=A|num-b=5|num-a=7}}
+{{MAA Notice}}

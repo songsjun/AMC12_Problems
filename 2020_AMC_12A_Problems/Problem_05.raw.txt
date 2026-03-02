@@ -1,0 +1,78 @@
+{{duplicate|[[2020 AMC 12A Problems|2020 AMC 12A #5]] and [[2020 AMC 10A Problems|2020 AMC 10A #7]]}}
+
+==Problem==
+The <math>25</math> integers from <math>-10</math> to <math>14,</math> inclusive, can be arranged to form a <math>5</math>-by-<math>5</math> square in which the sum of the numbers in each row, the sum of the numbers in each column, and the sum of the numbers along each of the main diagonals are all the same. What is the value of this common sum?
+
+<math>\textbf{(A) }2 \qquad\textbf{(B) } 5\qquad\textbf{(C) } 10\qquad\textbf{(D) } 25\qquad\textbf{(E) } 50</math>
+
+== Solution 1 == 
+
+Without loss of generality, consider the five rows in the square. Each row must have the same sum of numbers, meaning that the sum of all the numbers in the square divided by <math>5</math> is the total value per row. The sum of the <math>25</math> integers is <math>-10+-9+...+14=11+12+13+14=50</math>, and the common sum is <math>\frac{50}{5}=\boxed{\text{(C) }10}</math>.
+
+==Solution 2==
+
+Take the sum of the middle 5 values of the set (they will turn out to be the mean of each row). We get <math>0 + 1 + 2 + 3 + 4 = \boxed{\textbf{(C) } 10}</math> as our answer.
+~Baolan
+
+==Solution 3==
+
+Taking the average of the first and last terms, <math>-10</math> and <math>14</math>, we have that the mean of the set is <math>2</math>. There are 5 values in each row, column or diagonal, so the value of the common sum is <math>5\cdot2</math>, or <math>\boxed{\textbf{(C) } 10}</math>. 
+~Arctic_Bunny, edited by KINGLOGIC
+
+==Solution 4==
+
+Let us consider the horizontal rows.  Since there are five of them, each with constant sum <math>x</math>, we can add up the 25 numbers in 5 rows for a sum of <math>5x</math>.  Since the sum of the 25 numbers used is <math>-10-9-8-\cdots{}+12+13+14+15=11+12+13+14+15=50</math>, <math>5x=50</math> and <math>x=\boxed{\textbf{(C) }10}</math>. 
+~cw357
+
+==Solution 5==
+
+The mean of the set of numbers is <math>(14-10) \div 2 = 2</math>. The numbers around it must be equal (i.e. if the mean of <math>1</math>, <math>2</math>, <math>3</math>, <math>4</math>, and <math>5</math> is <math>3</math>, then <math>2+4=1+5</math>.)
+One row of the square would be 
+<cmath>\square  \square  2  \square  \square </cmath>
+
+Adding the numbers would be 
+
+<cmath> 0, 1, 2, 3, 4</cmath>
+
+with a sum of <math>\boxed {\textbf {(C) }10}</math>.
+
+<!-- Very bad and trivial solution :( -->
+
+==Solution 6==
+If the sum of each row, column, and diagonal is x, then we have a total of 12x for the sum. The sum of the rows and columns is the sum of all the numbers doubled, which is <math>50\cdot2=100</math>. Therefore <math>100+2x=12x</math>, <math>100=10x</math>, and <math>x=\boxed{10}</math>.
+~MC413551
+
+==Solution 7==
+A cool thing to find is that with magic squares, the smallest and largest number are either in the same row, column and diagonal to balance the equation out. To continue doing this, the other numbers in that same line form an arithmetic sequence. With our A term generally being 1, and our last term being n^2. The d = n+1, by working out the a+(n-1)d formula. For a 5x5, d = 6. To apply this we start with A being -10, and our last term being 14. We increase by increments by 6 to get the 5 numbers in our line is -10, -4, 2, 8, 14. This adds up to <math>\boxed {\textbf {(C) }10}</math>.
+
+(Note the goal of this solution was just to point out something I found that I thought was cool, I don't advise using it in actual competitions)
+
+-CubiksRube
+
+==Video Solution 1==
+
+Education, the Study of Everything
+
+https://youtu.be/Zf4HCY-y5Z4
+
+==Video Solution 2==
+https://youtu.be/JEjib74EmiY
+
+~IceMatrix
+[starts from 1.08 in the video]
+
+==Video Solution 3==
+https://youtu.be/PHHBIiIlCY0
+
+~savannahsolver
+
+== Video Solution 4 by OmegaLearn==
+https://youtu.be/mgEZOXgIZXs?t=1
+
+~ pi_is_3.14
+
+==See Also==
+
+{{AMC10 box|year=2020|ab=A|num-b=6|num-a=8}}
+{{AMC12 box|year=2020|ab=A|num-b=4|num-a=6}}
+{{MAA Notice}}

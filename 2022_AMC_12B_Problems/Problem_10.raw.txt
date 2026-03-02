@@ -1,0 +1,55 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2022_AMC_12B_Problems/Problem_10&action=raw
+
+Published Time: Sat, 28 Oct 2023 02:16:29 GMT
+
+Markdown Content:
+==Problem==
+
+Regular hexagon ABCDEF has side length 2. Let G be the midpoint of \overline{AB}, and let H be the midpoint of \overline{DE}. What is the perimeter of GCHF?
+
+ \textbf{(A)}\ 4\sqrt3 \qquad \textbf{(B)}\ 8 \qquad \textbf{(C)}\ 4\sqrt5 \qquad \textbf{(D)}\ 4\sqrt7 \qquad \textbf{(E)}\ 12
+
+==Diagram==
+ /* Made by MRENTHUSIASM */ size(200); pair A, B, C, D, E, F, G, H; A = dir(120); B = dir(60); C = dir(0); D = dir(-60); E = dir(-120); F = dir(180); G = midpoint(A--B); H = midpoint(D--E); filldraw(G--C--H--F--cycle,yellow); draw(polygon(6)); dot("$A$",A,1.5*A,linewidth(4)); dot("$B$",B,1.5*B,linewidth(4)); dot("$C$",C,1.5*C,linewidth(4)); dot("$D$",D,1.5*D,linewidth(4)); dot("$E$",E,1.5*E,linewidth(4)); dot("$F$",F,1.5*F,linewidth(4)); dot("$G$",G,1.5*dir(90),linewidth(4)); dot("$H$",H,1.5*dir(-90),linewidth(4)); 
+~MRENTHUSIASM
+
+==Solution 1 ==
+Let the center of the hexagon be O. \triangle AOB, \triangle BOC, \triangle COD, \triangle DOE, \triangle EOF, and \triangle FOA are all equilateral triangles with side length 2. Thus, CO = 2, and GO = \sqrt{AO^2 - AG^2} = \sqrt{3}. By symmetry, \angle COG = 90^{\circ}. Thus, by the Pythagorean theorem, CG = \sqrt{2^2 + \sqrt{3}^2} = \sqrt{7}. Because CO = OF and GO = OH, CG = HC = FH = GF = \sqrt{7}. Thus, the solution to our problem is \sqrt{7} + \sqrt{7} + \sqrt{7} + \sqrt{7} = \boxed{\textbf{(D)}\ 4\sqrt7}.
+
+~mathboy100
+
+==Solution 2==
+
+Consider triangle AFG. Note that AF = 2, AG = 1, and \angle GAF = 120 ^{\circ} because it is an interior angle of a regular hexagon. (See note for details.) 
+
+By the [[Law of Cosines]], we have: 
+\begin{align*} FG^2 &= AG^2 + AF^2 - 2 \cdot AG \cdot AF \cdot \cos \angle GAF \\ FG^2 &= 1^2 + 2^2 - 2 \cdot 1 \cdot 2 \cdot \cos 120 ^{\circ} \\ FG^2 &= 5 + 4 \cdot \left( \frac 12 \right) \\ FG^2 &= 7 \\ FG &= \sqrt 7. \end{align*}
+By [[SAS Congruence]], triangles AFG, BCG, CDH, and EFH are congruent, and by [[CPCTC]], quadrilateral GCHF is a rhombus. Therefore, the perimeter of GCHF is 4 \cdot FG = \boxed{\textbf{(D)}\ 4\sqrt7}.
+
+Note: The sum of the interior angles of any polygon with n sides is given by 180 ^{\circ} (n - 2). Therefore, the sum of the interior angles of a hexagon is 720 ^{\circ}, and each interior angle of a regular hexagon measures \frac{720 ^{\circ}}{6} = 120 ^{\circ}.
+
+== Solution 3 ==
+
+We use a coordinates approach. Letting the origin be the center of the hexagon, we can let A = (-1, \sqrt{3}), B = (1, \sqrt{3}), C = (2, 0), D = (1, -\sqrt{3}), E = (-1, -\sqrt{3}), F = (-2, 0). Then, G = (0, \sqrt{3}) and H = (0, -\sqrt{3}).
+
+We use the distance formula four times to get CH, HF, FG, \text{ and } GC.
+\begin{alignat*}{8} CH^2 &= (2-0)^2 + (0-(-\sqrt{3}))^2 &&= 7 &&\rightarrow CH &&= \sqrt{7}, \\ HF^2 &= (0-(-2))^2 + (-\sqrt{3}-0)^2 &&= 7 &&\rightarrow HF &&= \sqrt{7}, \\ FG^2 &= (-2-0)^2 + (0-\sqrt{3})^2 &&= 7 &&\rightarrow FG &&= \sqrt{7}, \\ GC^2 &= (0-2)^2 + (\sqrt{3}-0)^2 &&= 7 &&\rightarrow GC &&= \sqrt{7}. \end{alignat*}
+Thus, the perimeter of GCHF = CH + HF + FG + GC = \sqrt{7} + \sqrt{7} + \sqrt{7} + \sqrt{7} = \boxed{\textbf{(D)}\ 4\sqrt7}.
+
+~sirswagger21
+
+Note: the last part of this solution could have been simplified by noting that CH = HF = FG = GC = \sqrt{7}.
+
+== Solution 4 ==
+Note that triangles \triangle{GAF}, \triangle{FEH}, \triangle{HDC}, and \triangle{CBG} are all congruent, since they have side lengths of 1 and 2 and an included angle of 120^{\circ}. 
+
+By the Law of Cosines, FG=\sqrt{1^2+2^2-2\cdot{1}\cdot{-\frac{1}{2}}}=\sqrt{7}. Therefore, FG+GC+CH+HF=4\cdot{FG}=\boxed{\textbf{(D)}\ 4\sqrt7}.
+
+-Benedict T (countmath1)
+
+== Solution 5 (Answer Choices + Pythagorean Theorem Extension) ==
+Like the previous solutions, note that \triangle{GAF}, \triangle{FEH}, \triangle{HDC}, and \triangle{CBG} are all congruent by SAS. It follows that quadrilateral GCHF is a rhombus. 
+
+Recall the Pythagorean Theorem, which states a^2+b^2=c^2 for all right triangles, where c is the hypotenuse of the triangle. However, by drawing a quick diagram of an obtuse triangle, we can see that a^2+b^2, in any given obtuse triangle. Since ABCDEF is a regular hexagon, all of its angles are obtuse. It follows that \triangle{GAF} is an obtuse triangle. Using the extended Pythagorean Theorem for obtuse triangles, we have: AG^2+AF^2 Since GCHF is a rhombus, the perimeter is 4GF. This eliminates all answer choices but D and E, since in all of those options GF<\sqrt{5}. Lastly, E is eliminated due to the triangle inequality, as 1+2 is not greater than 12/4=3. Hence, the answer is \boxed{\textbf{(D)}\ 4\sqrt7}. ~SwordOfJustice ==Video Solution 1 by mop 2024== https://youtu.be/ezGvZgBLe8k&t=0s ~r00tsOfUnity ==Video Solution 2 (Under 1 min!)== https://youtu.be/XUIm4yOwVd0 ~Education, the Study of Everything ==Video Solution 3 by SpreadTheMathLove== https://www.youtube.com/watch?v=6I3ZNpI7qwE ==Video Solution(1-16)== https://youtu.be/SCwQ9jUfr0g ~~Hayabusa1 == See Also == {{AMC12 box|year=2022|ab=B|num-b=9|num-a=11}} {{MAA Notice}}

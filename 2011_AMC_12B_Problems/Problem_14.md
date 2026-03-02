@@ -1,0 +1,41 @@
+# 2011 AMC 12B Problem 14
+
+## Problem
+A segment through the focus F of a parabola with vertex V is perpendicular to $\overline{FV}$ and intersects the parabola in points A and B. What is $\cos\left(\angle AVB\right)$?
+
+$\textbf{(A)}\ -\frac{3\sqrt{5}}{7} \qquad \textbf{(B)}\ -\frac{2\sqrt{5}}{5} \qquad \textbf{(C)}\ -\frac{4}{5} \qquad \textbf{(D)}\ -\frac{3}{5} \qquad \textbf{(E)}\ -\frac{1}{2}$
+## Solution  1
+Name the directrix of the parabola l. Define d(X,k) to be the distance between a point X and a line k.
+
+Now we remember the geometric definition of a parabola: given any line l (called the directrix) and any point F (called the focus), the *parabola* corresponding to the given directrix and focus is the locus of the points that are equidistant from F and l. Therefore FV=d(V,l). Let this distance be d. Now note that d(F,l)=$2d$, so d(A,l)=d(B,l)=$2d$. Therefore AF=BF=$2d$. We now use the [Pythagorean Theorem](https://artofproblemsolving.com/wiki/index.php/Pythagorean_Theorem) on triangle AFV; AV=$\sqrt{AF^2+FV^2}=d\sqrt{5}.$ Similarly, BV=d$\sqrt{5}.$ We now use the [Law of Cosines](https://artofproblemsolving.com/wiki/index.php/Law_of_Cosines):
+
+$AB^2=AV^2+VB^2-2AV\cdot VB\cos{\angle AVB}\Rightarrow 16d^2=10d^2-10d^2\cos{\angle AVB}$
+
+$$\Rightarrow \cos{\angle AVB}=-\frac{3}{5}$$
+
+This shows that the answer is $\boxed{\textbf{(D)}}.$
+## Solution 2
+WLOG we can assume that the parabola is y=x^2. Therefore V = (0,0) and F = (0,$\frac{1}{4}).$ Also A = ($-\frac{1}{2},\frac{1}{4})$ and B = ($\frac{1}{2},\frac{1}{4}).$
+
+AB = 1 and AV = VB = $\sqrt{(\frac{1}{2})^2+(\frac{1}{4})^2} = \frac{\sqrt{5}}{4}$ by the pythagorean theorem.
+
+Now using the law of cosines on $\triangle AVB$ we have:
+
+$AB^2 = 2AV^2-2AV^2\cos(\angle AVB) = 2AV^2(1-\cos(\angle AVB))$
+
+1 = $\frac{5}{8} (1-\cos(\angle AVB))$
+
+Thus, $\cos(\angle AVB) = \boxed{\textbf{(D)} -\frac{3}{5}}.$
+
+(solution by mihirb)
+## Solution 3
+After assuming that the parabola is x^2,find the points A and B, which are +/- 1,2,1/4.Now treat them as vectors,take the dot product,then find the magnitudes and multiply them.A well known definition of the dot product says that the quotient of the two is the cosine of the angle between them.This will give you D.
+## Solution 4
+As we know, an expression for the equation of a parabola is $y-k=\frac{1}{4a}(x-h)^2,$ where (h,k) is the vertex and a is the distance from the focus to the vertex, here F to V. The length of the latus rectum, or $\overline{AB}$ here, is equal to |$4a$|. This means that AF=BF=$2a$ since F is the midpoint of AB. Then we can use right Triangle VAF to figure out that VA=$\frac{a\sqrt{5}}{4}.$ Now we can use the fact that $\cos{\angle AVB}=\cos{2 \angle AVF}$ and use the double angle formula. This results in $\cos{2 \angle AVF}=2{\cos}^2{\angle AVF}-1.$ We can find $\cos{\angle AVF}$ from right triangle AVF using the Pythagorean Theorem, which is $\frac{a}{\sqrt{5}}.$ Evaulating the expression, we find that $\cos{2 \angle AVF}=\frac{-3}{5}.$
+
+*~Indefintense*
+## Solution 5
+Start by drawing a nice diagram. Next, let the directrix of the parabola be \ell. We then also let the intersection of line FV and directrix \ell be X. We can now let FV=VX=x. Now, we draw a segment from A perpendicular to \ell and call the foot of this altitude Y. Since AY=$2x$, AF=$2x$. Similarly, BF=$2x$. So, AV=BV=x$\sqrt5.$ So, LoC states that $1$6$x^2=10x^2-10x^2\cos{\angle{AVB}} \Longrightarrow \cos{\angle{AVB}}=\boxed{-\dfrac{3}{5}}.$
+
+*~jb2015007*
+## See also

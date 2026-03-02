@@ -1,0 +1,89 @@
+# 2023 AMC 12A Problem 6
+
+## Problem
+Points A and B lie on the graph of $y=\log_{2}$x. The midpoint of $\overline{AB}$ is (6, 2). What is the positive difference between the x-coordinates of A and B?
+
+$\textbf{(A)}~2\sqrt{11}\qquad\textbf{(B)}~4\sqrt{3}\qquad\textbf{(C)}~8\qquad\textbf{(D)}~4\sqrt{5}\qquad\textbf{(E)}~9$
+## Solution 1
+Let A(6+m,2+n) and B(6-m,2-n), since (6,2) is their midpoint. Thus, we must find $2m$. We find two equations due to A,B both lying on the function $y=\log_{2}$x. The two equations are then $\log_{2}(6+m)=2+n$ and $\log_{2}(6-m)=2-n.$ Now add these two equations to obtain $\log_{2}(6+m)+\log_{2}(6-m)=4.$ By logarithm rules, we get $\log_{2}((6+m)(6-m))=4.$ By raising 2 to the power of  both sides, we obtain (6+m)(6-m)=16. We then get $36-m^2=$16 $\rightarrowm^2=20 \rightarrowm=2\sqrt{5}.$ Since we're looking for $2m$, we obtain (2)($2\sqrt{5})=\boxed{\textbf{(D) }4\sqrt{5}}$
+
+*~amcrunner (yay, my first AMC solution)*
+## Solution 2
+We have $\frac{x_A + x_B}{2} = 6$ and $\frac{\log_2 x_A + \log_2 x_B}{2} = 2.$ The first equation becomes $x_A+x_B = 12$, and the second becomes $\log_2(x_A x_B) = 4,$ so $x_Ax_B = 16$.
+Then
+
+$$
+\begin{align*} \left| x_A - x_B \right| & = \sqrt{\left( x_A + x_B \right)^2 - 4 x_A x_B} \\ & = \boxed{\textbf{(D) } 4 \sqrt{5}}. \end{align*}
+$$
+
+
+*~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)*
+## Solution 3
+Basically, we can use the midpoint formula
+
+assume that the points are $(x_1,y_1)$ and $(x_2,y_2)$
+
+assume that the points are ($x_1,\log_{2}(x_1))$ and ($x_2,\log_{2}(x_2))$
+
+midpoint formula is ($\frac{x_1+x_2}{2},\frac{\log_{2}(x_1)+\log_{2}(x_2)}{2})$
+
+thus
+
+$$
+x_1+x_2=12
+x_2=12-x_1
+$$
+
+and
+
+$$
+\log_{2}(x_1)+\log_{2}(x_2)=4
+\log_{2}(x_1)+\log_{2}(12-x_1)=\log_{2}(16)
+$$
+
+
+$$\log_{2}((12x_1-x_1^2)/16)=0$$
+
+since
+$$2^0=1$$
+so,
+
+$$12x_1-x_1^2=16$$
+
+$$12x_1-x_1^2-16=0$$
+for simplicity lets say $x_1$ = x
+
+$12x-x^2=16.$ We rearrange to get $x^2-12x+16=0$.
+
+put this into quadratic formula and you should get
+
+$$x_1=6+2\sqrt{5}$$
+Therefore,
+$$x_1=6+2\sqrt{5}-(6-2\sqrt{5})$$
+
+which equals $6-6+4\sqrt{5}=\boxed{\textbf{(D) }4\sqrt{5}}$
+## Solution 4
+Similar to above, but solve for $x = 2^y$ in terms of y:
+
+$$(2^{y}+2^{2+(2-y)})/2= 6$$
+
+$$2^y + 2^{4-y} = 12$$
+
+$$(2^y)^2 + 2^4 = 12(2^y)$$
+
+$$x^2 -12x + 16 = 0$$
+
+Distance between roots of the quadratic is the discriminant: $\sqrt{{12}^2 - 4(1)(16)} = \sqrt{80} = \boxed{\textbf{(D) }4\sqrt{5}}$
+
+*~oinava*
+## Video Solution (easy to understand) by Power Solve
+https://youtu.be/YXIH3UbLqK8?si=HZSSwpFx7AisyTVm&t=434
+## Video Solution 1
+https://youtu.be/R_OdhW85yUc
+
+*~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)*
+## Video Solution 2 (🚀 Under 3 min 🚀)
+https://youtu.be/DOXmoQlMS7Y
+
+*~Education, the Study of Everything*
+## See Also

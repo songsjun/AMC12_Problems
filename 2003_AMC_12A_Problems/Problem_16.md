@@ -1,0 +1,21 @@
+# 2003 AMC 12A Problem 16
+
+## Problem
+A point P is chosen at random in the interior of equilateral triangle ABC. What is the probability that $\triangle ABP$ has a greater area than each of $\triangle ACP$ and $\triangle BCP$?
+
+$\textbf{(A)}\ \frac{1}{6}\qquad\textbf{(B)}\ \frac{1}{4}\qquad\textbf{(C)}\ \frac{1}{3}\qquad\textbf{(D)}\ \frac{1}{2}\qquad\textbf{(E)}\ \frac{2}{3}$
+## Solution
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+draw((0,10)--(8.660254037844385792,-5)--(-8.660254037844385792,-5)--cycle); dot((1.2,-0.68)); label("$P$",(1.2,-0.68),N);
+```
+### Solution 1
+After we pick point P, we realize that ABC is symmetric for this purpose, and so the probability that ACP is the greatest area, or ABP or BCP, are all the same. Since they add to 1, the probability that ABP has the greatest area is $\boxed{\mathrm{(C)}\ \dfrac{1}{3}}$
+### Solution 2
+We will use geometric probability. Let us take point P, and draw the perpendiculars to BC, CA, and AB, and call the feet of these perpendiculars D, E, and F respectively. The area of $\triangle ACP$ is simply $\frac{1}{2}$* AC * PF. Similarly we can find the area of triangles BCP and ABP. If we add these up and realize that it equals the area of the entire triangle, we see that no matter where we choose P, PD + PE + PF = the height of the triangle. Setting the area of triangle ABP greater than ACP and BCP, we want PF to be the largest of PF, PD, and PE. We then realize that PF = PD = PE when P is the incenter of $\triangle ABC.$ Let us call the incenter of the triangle Q. If we want PF to be the largest of the three, by testing points we realize that P must be in the interior of quadrilateral QDCE. So our probability (using geometric probability) is the area of QDCE divided by the area of ABC. We will now show that the three quadrilaterals, QDCE, QEAF, and QFBD are congruent. As the definition of point Q yields, QF = QD = QE. Since ABC is equilateral, Q is also the circumcenter of $\triangle ABC,$ so QA = QB = QC. By the Pythagorean Theorem, BD = DC = CE = EA = AF = FB. Also, angles BDQ, BFQ, CEQ, CDQ, AFQ, and AEQ are all equal to $90^\circ.$ Angles DBF, FAE, ECD are all equal to 60 degrees, so it is now clear that quadrilaterals QDCE, QEAF, QFBD are all congruent. Summing up these areas gives us the area of $\triangle ABC. QDCE$ contributes to a third of that area so $\frac{[QDCE]}{[ABC]}=\boxed{\mathrm{(C)}\ \dfrac{1}{3}}.$
+## Solution 3 (Solution 1 but simpler)
+Due to symmetry, we notice that the probability one triangle is greater than the other is $\frac{1}{2}.$ For two triangles this gives $\frac{1}{2}*\frac{1}{2} = \frac{1}{4}.$ However, the probability of one triangle being greater than the other, depends on knowing whether one triangle is greater or less than the other. This means the probability is less than $\frac{1}{2}$ but greater than $\frac{1}{4}$ giving $\boxed{\mathrm{(C)}\ \dfrac{1}{3}}.$
+
+*~PeterDoesPhysics*
+## See Also

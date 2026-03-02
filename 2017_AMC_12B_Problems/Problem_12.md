@@ -1,0 +1,15 @@
+# 2017 AMC 12B Problem 12
+
+## Problem
+What is the sum of the roots of $z^{12}=64$ that have a positive real part?
+
+$\textbf{(A)}\ 2 \qquad \textbf{(B)}\ 4 \qquad \textbf{(C)}\ \sqrt{2}+2\sqrt{3} \qquad \textbf{(D)}\ 2\sqrt{2}+\sqrt{6} \qquad \textbf{(E)}\ (1+\sqrt{3}) + (1+\sqrt{3})i$
+## Solution 1
+The root of any polynomial of the form $z^n = a$ will have all n of it roots will have magnitude $\sqrt$[n]{a} and be the vertices of a regular n-gon in the complex plane (This concept is known as the roots of unity). For the equation $z^{12} = 64$, it is easy to see $\pm\sqrt{2}$ and $\pm$ {i} $\sqrt{2}$ as roots. Graphing these in the complex plane, we have four vertices of a regular dodecagon. Since the roots must be equally spaced, besides $\sqrt{2},$ there are four more roots with positive real parts lying in the first and fourth quadrants. We also know that the angle between these roots is $30^{\circ}$. We only have to find the real parts of the roots lying in the first quadrant, because the imaginary parts would cancel out with those from the fourth quadrant. We have two 30-60-90 triangles (the triangles formed by connecting the origin to the roots, and dropping a perpendicular line from each root to the real-axis), both with hypotenuse $\sqrt{2}.$ This means that one has base $\frac{\sqrt{2}}{2}$ and the other has base $\frac{\sqrt{6}}{2}.$ Adding these and multiplying by two, we get the sum of the four roots as $\sqrt{2} + \sqrt{6}.$ However, we have to add in the original solution of $\sqrt{2},$ so the answer is $\boxed{\textbf{(D) }2\sqrt{2} + \sqrt{6}}.$
+
+Solution by vedadehhc
+## Solution 2
+$z^{12}=64$ has a factor of $\sqrt{2},$ so we need to remember to multiply our solution below, using the Roots of Unity. We notice that the sum of the complex parts of all these roots is 0, because the points on the complex plane are symmetric. The roots with re(z)>0 are $e^{0i}$, $e^{\frac{\pm\pi}{6}i}$, and $e^{\frac{\pm\pi}{3}i}$ by the Roots of Unity. Their real parts are $\cos(0), \pm\cos(\frac{\pi}{6}),$ and $\pm\cos(\frac{\pi}{3}).$ Their sum is 1+2($\frac{\sqrt{3}}{2}+\frac{1}{2})=1+\sqrt{3}+1=2+\sqrt{3}.$ But, remember to multiply by $\sqrt{2}.$ The answer is $\sqrt{2}(2+\sqrt{3})=\boxed{\textbf{(D)}\ 2\sqrt{2}+\sqrt{6}}.$
+
+Solution by TheUltimate123
+## See Also

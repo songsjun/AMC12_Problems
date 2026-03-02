@@ -1,0 +1,26 @@
+# 2011 AMC 12A Problem 21
+
+## Problem
+Let $f_{1}(x)=\sqrt{1-x},$ and for integers n $\geq 2,$ let $f_{n}(x)=f_{n-1}($\sqrt{n^2 - x})$.$ If N is the largest value of n for which the domain of $f_{n}$ is nonempty, the domain of $f_{N}$ is $\{c\}$. What is N+c?
+
+$\textbf{(A)}\ -226 \qquad \textbf{(B)}\ -144 \qquad \textbf{(C)}\ -20 \qquad \textbf{(D)}\ 20 \qquad \textbf{(E)}\ 144$
+## Solution 1
+The domain of $f_{1}(x)=\sqrt{1-x}$ is defined when $x\leq1.$
+$$f_{2}(x)=f_{1}\left(\sqrt{4-x}\right)=\sqrt{1-\sqrt{4-x}}$$
+
+Applying the domain of $f_{1}(x)$ and the fact that square roots must be positive, we get $0\leq\sqrt{4-x}\leq1.$ Simplifying, the domain of $f_{2}(x)$ becomes $3\leqx\leq4.$
+
+Repeat this process for $f_{3}(x)=\sqrt{1-\sqrt{4-\sqrt{9-x}}}$ to get a domain of $-7\leqx\leq0.$
+
+For $f_{4}(x)$, since square roots must be nonnegative, we can see that the negative values of the previous domain will not work, so $\sqrt{16-x}=0.$ Thus we now arrive at 16 being the only number in the of domain of $f_4$ x that defines x. However, since we are looking for the largest value for n for which the domain of $f_{n}$ is nonempty, we must continue checking until we arrive at a domain that is empty.
+
+We continue with $f_{5}(x)$ to get a domain of $\sqrt{25-x}=16 \implies$ x=-231. Since square roots cannot be negative, this is the last nonempty domain. We add to get $5-231=\boxed{\textbf{(A)}\ -226}.$
+## Solution 2
+We start with smaller values. Notice that $f_4(x) = \sqrt{1-\sqrt{4-\sqrt{9-\sqrt{16-x}}}}.$ Notice that the mess after $\sqrt{1-(mess)}$ must be greater than 0, since it's a square root, and less than 1, since otherwise the inside of the larger square root on the outside would be negative.
+
+Continuing, we get that $\sqrt{16-x} = 0,$ which means $x=16$ is the only value in the domain of $f_4(x)$. Now we move on to $f_5(x)$. The only change with $f_5(x)$ is replacing the x from $f_4(x)$ with $\sqrt{25-x}.$ Since we had $x=16 in f_4(x), in f_5(x)$, $\sqrt{25-x} = 16,$ forcing x=-231.
+
+Clearly, we can't move on from here, since $f_6(x)$ would replace x with $\sqrt{36-x},$ and we would need -$231 =\sqrt{36-x},$ but a square root can never be negative, so N=5, c=-231, and the answer is $5-231 =\boxed{\textbf{(A) }-226}.$
+
+*~skibbysiggy*
+## See also

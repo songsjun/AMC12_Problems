@@ -1,0 +1,67 @@
+==Problem==
+Samia set off on her bicycle to visit her friend, traveling at an average speed of <math>17</math> kilometers per hour. When she had gone half the distance to her friend's house, a tire went flat, and she walked the rest of the way at <math>5</math> kilometers per hour. In all it took her <math>44</math> minutes to reach her friend's house. In kilometers rounded to the nearest tenth, how far did Samia walk?
+
+<math>\textbf{(A)}\ 2.0\qquad\textbf{(B)}\ 2.2\qquad\textbf{(C)}\ 2.8\qquad\textbf{(D)}\ 3.4\qquad\textbf{(E)}\ 4.4</math>
+
+==Solution 1==
+Let's call the distance that Samia had to travel in total as <math>2x</math>, so that we can avoid fractions. We know that the length of the bike ride and how far she walked are equal, so they are both <math>\frac{2x}{2}</math>, or <math>x</math>.
+<cmath></cmath>
+She bikes at a rate of <math>17</math> kph, so she travels the distance she bikes in <math>\frac{x}{17}</math> hours. She walks at a rate of <math>5</math> kph, so she travels the distance she walks in <math>\frac{x}{5}</math> hours.
+<cmath></cmath>
+The total time is <math>\frac{x}{17}+\frac{x}{5} = \frac{22x}{85}</math>. This is equal to <math>\frac{44}{60} = \frac{11}{15}</math> of an hour. Solving for <math>x</math>, we have:
+<cmath></cmath>
+<cmath>\frac{22x}{85} = \frac{11}{15}</cmath>
+<cmath>\frac{2x}{85} = \frac{1}{15}</cmath>
+<cmath>30x = 85</cmath>
+<cmath>6x = 17</cmath>
+<cmath>x = \frac{17}{6}</cmath>
+<cmath></cmath>
+Since <math>x</math> is the distance of how far Samia traveled by both walking and biking, and we want to know how far Samia walked to the nearest tenth, we have that Samia walked about <math>\boxed{\bold{(C)} 2.8}</math>.
+
+~ Lukiebear
+
+==Solution 2 (Approximations)==
+
+Notice that Samia walks <math>\frac {17}{5}</math> times slower than she bikes, and that she walks and bikes the same distance. Thus, the fraction of the total time that Samia will be walking is
+<cmath>\frac{\frac{17}{5}}{\frac{17}{5}+\frac{5}{5}} = \frac{17}{22}</cmath> 
+Then, multiply this by the time
+<cmath>\frac{17}{22} \cdot 44 \text{minutes} = 34 \text{minutes} </cmath>
+34 minutes is a little greater than <math>\frac {1}{2}</math> of an hour so Samia traveled 
+<cmath>\sim \frac {1}{2} \cdot 5 = 2.5 \text{kilometers}</cmath> The answer choice a little greater than 2.5 is <math>\boxed{\bold{(C)} 2.8}</math>. (Note that we could've multiplied <math>\frac {34}{60}=\frac {17}{30}</math> by <math>5</math> and gotten the exact answer as well)
+
+==Solution 3 (Harmonic Mean)==
+
+Since the distance between biking and walking is equal, we can use the given rates' harmonic mean to find the average speed.
+
+<cmath>\frac{2ab}{a+b}\implies\frac{2 \cdot 17 \cdot 5}{17+5}=\frac{85}{11}\text{kph}</cmath>
+
+Then, multiplying by <math>\frac{11}{15}</math> hours gives the overall distance <math>\frac{17}{3}</math> kilometers. Samia only walks half of that, so  <math>\frac{17}{6}\approx \boxed{\textbf{(C) }2.8}</math> kilometers.
+
+~mn28407
+
+==Solution 4==
+
+Since the distance traveled by bicycle and foot are equal, we can substitute the time traveled by bike, or <math>b</math>, as <math>\frac{5}{17}</math> of the time traveled by foot, or <math>f</math>
+
+Accordingly, we have <math>\frac{22}{17}f=44</math>
+This comes out to <math>f=34</math>
+This means that Samia traveled <math>34</math> minutes on foot, and hence, <math>44-34=10</math> minutes on bicycle
+
+Because <math>10</math> minutes on bike yields <math>\frac{17}{6}</math> kilometers, and distance on bike = distance on foot, we have the final answer of <math>\frac{17}{6} \approx \boxed{2.8}</math>
+
+==Video Solutions==
+i) https://youtu.be/YPVE2TgCswo
+
+~savannahsolver
+
+ii) https://youtu.be/XRfOULUmWbY?t=124
+
+~IceMatrix
+
+==See Also==
+
+{{AMC10 box|year=2017|ab=B|num-b=6|num-a=8}}
+{{AMC12 box|year=2017|ab=B|num-b=3|num-a=5}}
+{{MAA Notice}}
+
+[[Category:Introductory Algebra Problems]]

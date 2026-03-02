@@ -1,0 +1,74 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2019_AMC_12A_Problems/Problem_21&action=raw
+
+Published Time: Fri, 08 Aug 2025 16:21:00 GMT
+
+Markdown Content:
+== Problem ==
+Let z=\frac{1+i}{\sqrt{2}}.What is \left(z^{1^2}+z^{2^2}+z^{3^2}+\dots+z^{{12}^2}\right) \cdot \left(\frac{1}{z^{1^2}}+\frac{1}{z^{2^2}}+\frac{1}{z^{3^2}}+\dots+\frac{1}{z^{{12}^2}}\right)?
+
+\textbf{(A) } 18 \qquad \textbf{(B) } 72-36\sqrt2 \qquad \textbf{(C) } 36 \qquad \textbf{(D) } 72 \qquad \textbf{(E) } 72+36\sqrt2
+
+== Solutions 1(Using Modular Functions) ==
+Note that z = \mathrm{cis }(45^{\circ}).
+
+Also note that z^{k} = z^{k + 8} for all positive integers k because of De Moivre's Theorem. Therefore, we want to look at the exponents of each term modulo 8.
+
+1^2, 5^2, and 9^2 are all 1 \pmod{8}
+
+2^2, 6^2, and 10^2 are all 4 \pmod{8}
+
+3^2, 7^2, and 11^2 are all 1 \pmod{8}
+
+4^2, 8^2, and 12^2 are all 0 \pmod{8}
+
+Therefore,
+
+z^{1^2} = z^{5^2} = z^{9^2} = \mathrm{cis }(45^{\circ})
+
+z^{2^2} = z^{6^2} = z^{10^2} = \mathrm{cis }(180^{\circ}) = -1
+
+z^{3^2} = z^{7^2} = z^{11^2} = \mathrm{cis }(45^{\circ})
+
+z^{4^2} = z^{8^2} = z^{12^2} = \mathrm{cis }(0^{\circ}) = 1
+
+The term thus \left(z^{1^2}+z^{2^2}+z^{3^2}+\dots+z^{{12}^2}\right) simplifies to 6\mathrm{cis }(45^{\circ}), while the term \left(\frac{1}{z^{1^2}}+\frac{1}{z^{2^2}}+\frac{1}{z^{3^2}}+\dots+\frac{1}{z^{{12}^2}}\right) simplifies to \frac{6}{\mathrm{cis }(45^{\circ})}. Upon multiplication, the \mathrm{cis }(45^{\circ}) cancels out and leaves us with \boxed{\textbf{(C) }36}.
+
+== Solution 2(Using Magnitudes and Conjugates to our Advantage) ==
+We know that if |z|=1 then \bar{z}=\frac{1}{z}. So the expression is equal to \left(z^1+z^4+z^9+...+z^{144}\right)\left(\bar{z}^1+\bar{z}^4+\bar{z}^9+...+\bar{z}^{144}\right) We also know that z=e^{\frac{i\pi}{4}} and \bar{z}=e^{\frac{i7\pi}{4}}. Then, by De Moivre's Theorem, we have \left(e^{\frac{i\pi}{4}}+e^{i\pi}+...+e^{2i\pi}\right)\left(e^{\frac{i7\pi}{4}}+e^{i7\pi}+...+e^{2i\pi}\right) = 
+ \left(\sum_{n=1}^{12} \cos\left(\frac{n^2\pi}{4}\right) + i \sum_{n=1}^{12} \sin\left(\frac{n^2\pi}{4}\right)\right) \cdot \left(\sum_{n=1}^{12} \cos\left(\frac{7n^2\pi}{4}\right) + i \sum_{n=1}^{12} \sin\left(\frac{7n^2\pi}{4}\right)\right) = 
+ (3\sqrt{2} + 3\sqrt{2}i)(3\sqrt{2} - 3\sqrt{2}i) = \boxed{36}.
+
+~[[User:grogg007|grogg007]], unknown
+
+== Solution 3 (Bashing) ==
+We first calculate that z^4 = -1. After a bit of calculation for the other even powers of z, we realize that they cancel out add up to zero. Now we can simplify the expression to \left(z^{1^2} + z^{3^2} + ... + z^{11^2}\right)\left(\frac{1}{z^{1^2}} + \frac{1}{z^{3^2}} + ... + \frac{1}{z^{11^2}}\right). Then, we calculate the first few odd powers of z. We notice that z^1 = z^9, so the values cycle after every 8th power. Since all of the odd squares are a multiple of 8 away from each other, z^1 = z^9 = z^{25} = ... = z^{121}, so z^{1^2} + z^{3^2} + ... + z^{11^2} = 6z^{1^2}, and \frac{1}{z^{1^2}} + \frac{1}{z^{3^2}} + ... + \frac{1}{z^{11^2}} = \frac{6}{z^{1^2}}. When multiplied together, we get 6 \cdot 6 = \boxed{\textbf{(C) } 36} as our answer.
+
+== Solution 4 (this is what people would write down on their scratch paper) ==
+z=\mathrm{cis }(\pi/4)
+
+Perfect squares mod 8: 1,4,1,0,1,4,1,0,1,4,1,0
+
+1/z=\overline{z}=\mathrm{cis }(7\pi/4)
+
+6\mathrm{cis }(\pi/4)\cdot 6\mathrm{cis }(7\pi/4)=\boxed{36}
+
+~ MathIsFun286
+
+== Video Solution1 ==
+https://youtu.be/58pxV5Lkiks
+
+~ Education, the Study of Everything
+
+== Solution 5 ==
+We notice that z = e^{\pi i/4} and \frac1z = \overline{z} = e^{-\pi i/4}. We then see that: z^4 = e^{\pi i} = -1. This means that: z^{(2n)^2} = z^{4n^2} = (-1)^{n^2}. In the first summation, there are 6 even exponents, and the -1's will cancel among those. This means that: \sum_{k=1}^{12} z^{k^2} = \sum_{m=0}^5 z^{(2m+1)^2}. We can simplify z^{(2m+1)^2} to get: z^{(2m+1)^2} = z^{4m^2} \cdot z^{4m} \cdot z = (-1)^{m^2} \cdot (-1)^{m} \cdot z. We know that m^2 and m will have the same parity so the -1's multiply into a 1, so what we get left is: \sum_{m=0}^5 z^{(2m+1)^2} = \sum_{m=0}^5 z = 6z. Now, for the conjugates, we notice that: \overline{z}^4 = \overline{z^4} = -1. This means that: \overline{z}^{(2n)^2} = (-1)^{n^2}. Therefore: \sum_{k=1}^{12}\overline{z}^{k^2} = \sum_{m=0}^5 \overline{z}^{(2m+1)^2}. Now, we see that: \overline{z}^{(2m+1)^2} = \overline{z}^{4m^2} \cdot \overline{z}^{4m} \cdot z = (-1)^{m^2} \cdot (-1)^{m} \cdot \overline{z}. Again, m^2 and m have the same parity, so the -1's multiply into a 1, leaving us with \overline{z}. Therefore: \sum_{m=0}^5 \overline{z}^{(2m+1)^2} = \sum_{m=0}^5 \overline{z} = 6\overline{z}. Now, what we have is: 6z \cdot 6\overline{z} = 6e^{\pi i/4} \cdot 6e^{-\pi i/4} = 6 \cdot 6 = \boxed{\textbf{(C) }36} 
+
+~ ap246
+
+=== Video Solution by Richard Rusczyk ===
+https://artofproblemsolving.com/videos/amc/2019amc12a/493
+
+== See Also ==
+{{AMC12 box|year=2019|ab=A|num-b=20|num-a=22}}
+{{MAA Notice}}

@@ -1,0 +1,140 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2022_AMC_12B_Problems/Problem_19&action=raw
+
+Published Time: Sun, 21 Sep 2025 17:19:05 GMT
+
+Markdown Content:
+== Problem ==
+
+In \triangle{ABC} medians \overline{AD} and \overline{BE} intersect at G and \triangle{AGE} is equilateral. Then \cos(C) can be written as \frac{m\sqrt p}n, where m and n are relatively prime positive integers and p is a positive integer not divisible by the square of any prime. What is m+n+p?
+
+\textbf{(A) }44 \qquad \textbf{(B) }48 \qquad \textbf{(C) }52 \qquad \textbf{(D) }56 \qquad \textbf{(E) }60
+
+== Diagram ==
+ import geometry; unitsize(2cm); real arg(pair p) { return atan2(p.y, p.x) * 180/pi; } pair G=(0,0),E=(1,0),A=(1/2,sqrt(3)/2),D=1.5*G-0.5*A,C=2*E-A,B=2*D-C; pair t(pair p) { return rotate(-arg(dir(B--C)))*p; } path t(path p) { return rotate(-arg(dir(B--C)))*p; } void d(path p, pen q = black+linewidth(1.5)) { draw(t(p),q); } void o(pair p, pen q = 5+black) { dot(t(p),q); } void l(string s, pair p, pair d) { label(s, t(p),d); } d(A--B--C--cycle); d(A--D); d(B--E); o(A); o(B); o(C); o(D); o(E); o(G); l("$A$",A,N); l("$B$",B,SW); l("$C$",C,SE); l("$D$",D,S); l("$E$",E,NE); l("$G$",G,NW); 
+
+==Solution 1 (Law of Cosines)==
+
+Let AG=AE=EG=2x. Since E is the midpoint of \overline{AC}, we must have EC=2x.
+
+Since the centroid splits the median in a 2:1 ratio, GD=x and BG=4x.
+
+Applying Law of Cosines on \triangle ADC and \triangle{}AGB yields AB=\sqrt{28}x and CD=BD=\sqrt{13}x. Finally, applying Law of Cosines on \triangle ABC yields \cos(C)=\frac{5}{2\sqrt{13}}=\frac{5\sqrt{13}}{26}. The requested sum is 5+13+26=44.
+
+==Solution 2 (Law of Cosines: One Fewer Step) ==
+
+Let AG = 1. Since \frac{BG}{GE}=2 (as G is the centroid), BE = 3. Also, EC = 1 and \angle{BEC} = 120^{\circ}. By the law of cosines (applied on \triangle BEC), BC = \sqrt{13}.
+
+Applying the law of cosines again on \triangle BEC gives \cos{\angle{C}} = \frac{1 + 13 - 9}{2\sqrt{13}} = \frac{5\sqrt{13}}{26}, so the answer is \fbox{\textbf{(A)}\ 44}.
+
+~[[User:Bxiao31415 | Bxiao31415]]
+
+==Solution 3 (Law of Cosine)==
+
+Let AG = AE = GE = CE = 1. Since G is the centroid, DG = \frac12, BG = 2.
+
+\angle BGD = \angle AGE = 60^{\circ}
+
+By the Law of Cosine in \triangle BGD
+
+BD^2 = BG^2 + DG^2 - 2 \cdot BG \cdot DG \cdot \cos \angle BGD
+
+BD = \sqrt {2^2 + \left( \frac{1}{2} \right)^2 - 2 \cdot 2 \cdot \frac12 \cdot \cos \angle BGD} = \frac{\sqrt{13}}{2}, \quad CD = \frac{\sqrt{13}}{2}
+
+By the Law of Cosine in \triangle ACD
+
+AD^2 = AC^2 + CD^2 - 2 \cdot AC \cdot CD \cdot \cos \angle C
+
+\cos \angle C = \frac{ AC^2 + CD^2 - AD^2 }{ 2 \cdot AC \cdot CD } = \frac{ 2^2 + \left( \frac{\sqrt{13}}{2} \right)^2 - \left( \frac{3}{2} \right)^2 }{ 2 \cdot 2 \cdot \frac{\sqrt{13}}{2} } = \frac{ 5 \sqrt{13} }{26}
+
+ 5 + 13 + 26 = \boxed{\textbf{(A) }44}
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+==Solution 4 (Barycentric Coordinates)==
+Using reference triangle \triangle AGE, we can let A=(1,0,0),G=(0,1,0),E=(0,0,1),C=(-1,0,2),D=(-\tfrac{1}{2},\tfrac{3}{2},0),B=(0,3,-2). If we move A,B,C each over by (1,0,-2), leaving \angle C unchanged, we have A=(2,0,-2),B=(1,3,-4),C=(0,0,0). The angle \theta between vectors \overrightarrow{CA} and \overrightarrow{CB} satisfies \cos\theta=\frac{(2)(1)+(0)(3)+(-2)(-4)}{\sqrt{\left[2^{2}+0^{2}+(-2)^{2}\right]\left[1^{2}+3^{2}+(-4)^{2}\right]}}=\frac{10}{\sqrt{8\cdot 26}}=\frac{10}{4\sqrt{13}}=\frac{5\sqrt{13}}{26}, giving the answer, 5+13+26=\boxed{\textbf{(A)}~44}.
+
+~r00tsOfUnity
+
+==Solution 5 (Coordinate Bash)==
+
+Let \(A\) be at \((0,0)\), with \(E\) at \((1,0)\) and \(G\) at \((\tfrac{1}{2},\tfrac{\sqrt{3}}{2})\). Because \(\triangle AGE\) is equilateral, the equation of line \(AD\) is \(y=x\sqrt{3}\), and the equation for \(BE\) is \(y=-x\sqrt{3}+\sqrt{3}\). Because \(BE\) is a median, we know that \(C\) is at \((2,0)\).  
+
+Therefore, the equation for line \(BC\) is \(y=m(x-2)\), where \(m\) is the slope of the line. Since \(AD\) is also a median, \(D\) is the midpoint of \(\overline{BC}\).  
+
+To find \(m\), solve for the coordinates of \(D\) in terms of \(m\):  
+
+x\sqrt{3}=mx-2m  
+x(m-\sqrt{3})=2m  
+x=\frac{2m}{m-\sqrt{3}}  
+
+The \(y\)-value of \(D\) is then \(y=x\sqrt{3}\):  
+
+y=\frac{2m\sqrt{3}}{m-\sqrt{3}}  
+
+Because \(D\) is the midpoint of \(\overline{BC}\) and \(y_C=0\), the \(y\)-value of \(B\) is double that of \(D\):  
+
+y_B=\frac{4m\sqrt{3}}{m-\sqrt{3}}  
+
+Now use the equation for line \(BE\) to express \(B\):  
+
+mx-2m=-x\sqrt{3}+\sqrt{3}  
+x(m+\sqrt{3})=2m+\sqrt{3}  
+x_B=\frac{2m+\sqrt{3}}{m+\sqrt{3}}  
+
+Plug this back into \(BE\) to find \(y_B\):  
+
+y_B=\frac{-2m-\sqrt{3}}{m+\sqrt{3}}+\sqrt{3}=\frac{-m\sqrt{3}}{m+\sqrt{3}}  
+
+Equating the two expressions for \(y_B\):  
+
+-\frac{m\sqrt{3}}{m+\sqrt{3}}=\frac{4m\sqrt{3}}{m-\sqrt{3}}  
+-\sqrt{3}m^2+3m=4\sqrt{3}m^2+12m  
+5\sqrt{3}m^2+9m=0  
+m(5m\sqrt{3}+9)=0  
+
+Since \(m\neq0\), we have  
+
+m=-\frac{3\sqrt{3}}{5}.  
+
+Now find \(B\):  
+
+-x\sqrt{3}+\sqrt{3}=-\frac{3\sqrt{3}}{5}x+\frac{6\sqrt{3}}{5}  
+\frac{-2\sqrt{3}}{5}x=\frac{\sqrt{3}}{5}  
+x_B=-\frac{1}{2}  
+
+Plug this into \(BE\) to get  
+
+y_B=\frac{3\sqrt{3}}{2}.  
+
+Since we’re asked to find \(\cos\angle C\), extend \(\overline{AC}\) to \(F\) where \(F=(-\frac{1}{2},0)\), forming right triangle \(\triangle BFC\). Using the Pythagorean theorem for \(\overline{BC}\):  
+
+\left(\frac{5}{2}\right)^2+\left(\frac{3\sqrt{3}}{2}\right)^2=BC^2,\quad BC=\sqrt{13}.  
+
+Thus  
+
+\cos\angle C=\frac{\frac{5}{2}}{\sqrt{13}}=\frac{5\sqrt{13}}{26}.  
+
+The problem asks for \(m+n+p\), so \(5+13+26=\boxed{44}\). 
+
+~Voidling
+
+==Video Solution by MOP 2024==
+https://youtu.be/QNjvpYI1V5g
+
+~r00tsOfUnity
+
+==Video Solution (Just 3 min!)==
+https://youtu.be/Q54sH65AJa4
+
+_~Education, the Study of Everything_
+
+==Video Solution(Length & Angle Chasing)==
+https://youtu.be/JVDlHCSPF6k
+
+~Hayabusa1
+
+== See Also ==
+{{AMC12 box|year=2022|ab=B|num-b=18|num-a=20}}
+{{MAA Notice}}

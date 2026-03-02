@@ -1,0 +1,49 @@
+==Problem==
+For some positive integer <imath>n</imath>, the number <imath>110n^3</imath> has <imath>110</imath> positive integer divisors, including <imath>1</imath> and the number <imath>110n^3</imath>. How many positive integer divisors does the number <imath>81n^4</imath> have?
+
+<imath>\textbf{(A) }110\qquad\textbf{(B) }191\qquad\textbf{(C) }261\qquad\textbf{(D) }325\qquad\textbf{(E) }425</imath>
+
+
+==Solution 1==
+Since the prime factorization of <math>110</math> is <math>2 \cdot 5 \cdot 11</math>, we have that the number is equal to <math>2 \cdot 5 \cdot 11 \cdot n^3</math>.  This has <math>2 \cdot 2 \cdot 2=8</math> factors when <math>n=1</math>.  This needs a multiple of 11 factors, which we can achieve by setting <math>n=2^3</math>, so we have <math>2^{10} \cdot 5 \cdot 11</math> has <math>44</math> factors.  To achieve the desired <math>110</math> factors, we need the number of factors to also be divisible by <math>5</math>, so we can set <math>n=2^3 \cdot 5</math>, so <math>2^{10} \cdot 5^4 \cdot 11</math> has <math>110</math> factors.  Therefore, <math>n=2^3 \cdot 5</math>.  In order to find the number of factors of <math>81n^4</math>, we raise this to the fourth power and multiply it by <math>81</math>, and find the factors of that number.  We have <math>3^4 \cdot 2^{12} \cdot 5^4</math>, and this has <math>5 \cdot 13 \cdot 5=\boxed{\textbf{(D) }325}</math> factors.
+
+==Solution 2==
+<imath>110n^3</imath> clearly has at least three distinct prime factors, namely 2, 5, and 11.
+
+The number of factors of <imath>p_1^{n_1}\cdots p_k^{n_k}</imath> is <imath>(n_1+1)\cdots(n_k+1)</imath> when the <imath>p</imath>'s are distinct primes. This tells us that none of these factors can be 1. The number of factors is given as 110. The only way to write 110 as a product of at least three factors without <imath>1</imath>s is <imath>2\cdot 5\cdot 11</imath>.
+
+We conclude that <imath>110n^3</imath> has only the three prime factors 2, 5, and 11 and that the multiplicities are 1, 4, and 10 in some order.  I.e., there are six different possible values of <imath>n</imath> all of the form <imath>n=p_1\cdot p_2^3</imath>.
+
+<imath>81n^4</imath> thus has prime factorization <imath>81n^4=3^4\cdot p_1^4\cdot p_2^{12}</imath> and a factor count of <imath>5\cdot5\cdot13=\boxed{\textbf{(D) }325}</imath>
+
+The expression <imath>110n^3</imath> has at least three distinct prime factors, namely <imath>2, 5,</imath> and <imath>11</imath>.
+
+If a number has prime factorization <imath>p_1^{n_1}\cdots p_k^{n_k},</imath> then its number of positive divisors is <imath>(n_1+1)\cdots(n_k+1),</imath> where the <imath>p_i</imath> are distinct primes. In particular, none of these factors can be equal to <imath>1</imath>.
+
+We are told that <imath>110n^3</imath> has exactly <imath>110</imath> positive divisors. The only way to express <imath>110</imath> as a product of at least three integers greater than <imath>1</imath> is <imath>110 = 2\cdot 5\cdot 11.</imath> Therefore, <imath>110n^3</imath> has exactly three distinct prime factors, which must be <imath>2, 5,</imath> and <imath>11,</imath> and their corresponding exponents are <imath>1, 4,</imath> and <imath>10</imath> in some order.
+
+It follows that <imath>n^3</imath> contributes exponents <imath>3</imath> and <imath>9</imath> to two of these primes, so <imath>n^3 = p_1^3\cdot p_2^9</imath> for distinct primes <imath>p_1, p_2 \in \{2,5,11\}.</imath> Hence, <imath>n = p_1\cdot p_2^3.</imath> There are six possible values of <imath>n</imath> of this form.
+
+Now consider <imath>81n^4.</imath> Since <imath>81 = 3^4</imath> and <imath>n^4 = p_1^4\cdot p_2^{12},</imath> we obtain <imath>81n^4 = 3^4\cdot p_1^4\cdot p_2^{12}.</imath> Applying the divisor formula yields <imath>(4+1)(4+1)(12+1)=5\cdot5\cdot13=\boxed{\textbf{(D) }325}.</imath>
+
+==Video Solution==
+https://youtu.be/hAEsBh64VSY
+
+~savannahsolver
+
+== Video Solution by OmegaLearn ==
+https://youtu.be/ZhAZ1oPe5Ds?t=3694
+
+~ pi_is_3.14
+
+==Video Solution==
+https://www.youtube.com/watch?v=IxIinK0p8o4&list=PLyhPcpM8aMvJewbDgg6W1h6WjWqP-v4Uy&index=2
+
+- AMBRIGGS
+
+==See Also==
+{{AMC10 box|year=2016|ab=A|num-b=21|num-a=23}}
+{{AMC12 box|year=2016|ab=A|num-b=17|num-a=19}}
+
+[[Category:Intermediate Number Theory Problems]]
+{{MAA Notice}}

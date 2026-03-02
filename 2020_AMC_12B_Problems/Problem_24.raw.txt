@@ -1,0 +1,251 @@
+{{duplicate|[[2020 AMC 10B Problems|2020 AMC 10B #25]] and [[2020 AMC 12B Problems|2020 AMC 12B #24]]}}
+
+==Problem==
+
+Let <imath>D(n)</imath> denote the number of ways of writing the positive integer <imath>n</imath> as a product<cmath>n = f_1\cdot f_2\cdots f_k,</cmath>where <imath>k\ge1</imath>, the <imath>f_i</imath> are integers strictly greater than <imath>1</imath>, and the order in which the factors are listed matters (that is, two representations that differ only in the order of the factors are counted as distinct). For example, the number <imath>6</imath> can be written as <imath>6</imath>, <imath>2\cdot 3</imath>, and <imath>3\cdot2</imath>, so <imath>D(6) = 3</imath>. What is <imath>D(96)</imath>?
+
+<imath>\textbf{(A) } 112 \qquad\textbf{(B) } 128 \qquad\textbf{(C) } 144 \qquad\textbf{(D) } 172 \qquad\textbf{(E) } 184</imath>
+ 
+==Solution 1==
+
+Note that <imath>96 = 2^5 \cdot 3</imath>. Since there are at most six not necessarily distinct factors <imath>>1</imath> multiplying to <imath>96</imath>, we have six cases: <imath>k=1, 2, ..., 6.</imath> Now we look at each of the six cases.
+
+
+<imath>k=1</imath>: We see that there is <imath>1</imath> way, merely <imath>96</imath>.
+
+<imath>k=2</imath>: This way, we have the <imath>3</imath> in one slot and <imath>2</imath> in another, and symmetry. The four other <imath>2</imath>'s leave us with <imath>5</imath> ways and symmetry doubles us so we have <imath>10</imath>.
+
+<imath>k=3</imath>: We have <imath>3, 2, 2</imath> as our baseline. We need to multiply by <imath>2</imath> in <imath>3</imath> places, and see that we can split the remaining three powers of <imath>2</imath> in a manner that is <imath>3-0-0</imath>, <imath>2-1-0</imath> or <imath>1-1-1</imath>. A <imath>3-0-0</imath> split has <imath>6 + 3 = 9</imath> ways of happening (<imath>24-2-2</imath> and symmetry; <imath>2-3-16</imath> and symmetry), a <imath>2-1-0</imath> split has <imath>6 \cdot 3 = 18</imath> ways of happening (due to all being distinct) and a <imath>1-1-1</imath> split has <imath>3</imath> ways of happening (<imath>6-4-4</imath> and symmetry) so in this case we have <imath>9+18+3=30</imath> ways.
+
+<imath>k=4</imath>: We have <imath>3, 2, 2, 2</imath> as our baseline, and for the two other <imath>2</imath>'s, we have a <imath>2-0-0-0</imath> or <imath>1-1-0-0</imath> split. The former grants us <imath>4+12=16</imath> ways (<imath>12-2-2-2</imath> and symmetry and <imath>3-8-2-2</imath> and symmetry) and the latter grants us also <imath>12+12=24</imath> ways (<imath>6-4-2-2</imath> and symmetry and <imath>3-4-4-2</imath> and symmetry) for a total of <imath>16+24=40</imath> ways.
+
+<imath>k=5</imath>: We have <imath>3, 2, 2, 2, 2</imath> as our baseline and one place to put the last two: on another two or on the three. On the three gives us <imath>5</imath> ways due to symmetry and on another two gives us <imath>5 \cdot 4 = 20</imath> ways due to symmetry. Thus, we have <imath>5+20=25</imath> ways.
+
+<imath>k=6</imath>: We have <imath>3, 2, 2, 2, 2, 2</imath> and symmetry and no more twos to multiply, so by symmetry, we have <imath>6</imath> ways.
+
+
+Thus, adding, we have <imath>1+10+30+40+25+6=\boxed{\textbf{(A) } 112}</imath>.
+
+~kevinmathz
+
+==Solution 2==
+
+As before, note that <imath>96=2^5\cdot3</imath>, and we need to consider 6 different cases, one for each possible value of <imath>k</imath>, the number of factors in our factorization. However, instead of looking at each individually, find a general form for the number of possible factorizations with <imath>k</imath> factors. First, the factorization needs to contain one factor that is itself a multiple of <imath>3</imath>. There are <imath>k</imath> to choose from. That leaves <imath>k-1</imath> slots left to fill, each of which must contain at least one factor of <imath>2</imath>. Once we have filled in a <imath>2</imath> to each of the remaining slots, we're left with <imath>5-(k-1)=6-k</imath> twos. 
+
+Consider the remaining <imath>6-k</imath> factors of <imath>2</imath> left to assign to the <imath>k</imath> factors. Using stars and bars, the number of ways to do this is:
+<cmath>{{(6-k)+k-1}\choose{6-k}}={5\choose{6-k}}</cmath> This makes <imath>k{5\choose{6-k}}</imath> possibilities for each k.
+
+To obtain the total number of factorizations, add all possible values for k: <cmath>\sum_{k=1}^6 k{5\choose{6-k}}=1+10+30+40+25+6=\boxed{\textbf{(A) } \text{112}}.</cmath>
+
+~Continuous_Pi
+
+==Solution 3==
+
+Begin by examining <imath>f_1</imath>. <imath>f_1</imath> can take on any value that is a factor of <imath>96</imath> except <imath>1</imath>. For each choice of <imath>f_1</imath>, the resulting <imath>f_2...f_k</imath> must have a product of <imath>96/f_1</imath>. This means the number of ways the rest <imath>f_a</imath>, <imath>1<a<=k</imath> can be written by the scheme stated in the problem for each <imath>f_1</imath> is equal to <imath>D(96/f_1)</imath>, since the product of <imath>f_2 \cdot f_3... \cdot f_k=x</imath> is counted as one valid product if and only if <imath>f_1 \cdot x=96</imath>, the product <imath>x</imath> has the properties that factors are greater than <imath>1</imath>, and differently ordered products are counted separately.
+
+For example, say the first factor is <imath>2</imath>. Then, the remaining numbers must multiply to <imath>48</imath>, so the number of ways the product can be written beginning with <imath>2</imath> is <imath>D(48)</imath>. To add up all the number of solutions for every possible starting factor, <imath>D(96/f_1)</imath> must be calculated and summed for all possible <imath>f_1</imath>, except <imath>96</imath> and <imath>1</imath>, since a single <imath>1</imath> is not counted according to the problem statement. The <imath>96</imath> however, is counted, but only results in <imath>1</imath> possibility, the first and only factor being <imath>96</imath>. This means 
+
+<imath>D(96)=D(48)+D(32)+D(24)+D(16)+D(12)+D(8)+D(6)+D(4)+D(3)+D(2)+1</imath>. 
+
+Instead of calculating D for the larger factors first, reduce <imath>D(48)</imath>, <imath>D(32)</imath>, and <imath>D(24)</imath> into sums of <imath>D(m)</imath> where <imath>m<=16</imath> to ease calculation. Following the recursive definition <imath>D(n)=(</imath>sums of <imath>D(c))+1</imath> where c takes on every divisor of n except for 1 and itself, the sum simplifies to 
+
+<imath>D(96)=(D(24)+D(16)+D(12)+D(8)+D(6)+D(4)+D(3)+D(2)+1)</imath>
++<imath>(D(16)+D(8)+D(4)+D(2)+1)+D(24)+D(16)+D(12)+D(8)+D(6)+D(4)+D(3)+D(2)+1.</imath>
+
+<imath>D(24)=D(12)+D(8)+D(6)+D(4)+D(3)+D(2)+1</imath>, so the sum further simplifies to 
+
+<imath>D(96)=3D(16)+4D(12)+5D(8)+4D(6)+5D(4)+4D(3)+5D(2)+5</imath>, after combining terms. From quick casework,
+
+<imath>D(16)=8, D(12)=8, D(8)=4, D(6)=3, D(4)=2, D(3)=1</imath> and <imath>D(2)=1</imath>. Substituting these values into the expression above, 
+
+<imath>D(96)=3 \cdot 8+4 \cdot 8+5 \cdot 4+4 \cdot 3+5 \cdot 2+4 \cdot 1+5 \cdot 1+5=\boxed{\textbf{(A) } 112}</imath>.  
+
+~monmath a.k.a Fmirza
+
+==Solution 4==
+Note that <imath>96 = 3 \cdot 2^5</imath>, and that <imath>D</imath> of a perfect power of a prime is relatively easy to calculate. Also note that you can find <imath>D(96)</imath> from <imath>D(32)</imath> by simply totaling the number of ways there are to insert a <imath>3</imath> into a set of numbers that multiply to <imath>32</imath>.
+
+First, calculate <imath>D(32)</imath>. Since <imath>32 = 2 \cdot 2 \cdot 2 \cdot 2 \cdot 2</imath>, all you have to do was find the number of ways to divide the <imath>2</imath>'s into groups, such that each group has at least one <imath>2</imath>. By stars and bars, this results in <imath>1</imath> way with five terms, <imath>4</imath> ways with four terms, <imath>6</imath> ways with three terms, <imath>4</imath> ways with two terms, and <imath>1</imath> way with one term. (The total, <imath>16</imath>, is not needed for the remaining calculations.)
+
+Then, to get <imath>D(96)</imath>, in each possible <imath>D(32)</imath> sequence, insert a <imath>3</imath> somewhere in it, either by placing it somewhere next to the original numbers (in one of <imath>n+1</imath> ways, where <imath>n</imath> is the number of terms in the <imath>D(32)</imath> sequence), or by multiplying one of the numbers by <imath>3</imath> (in one of <imath>n</imath> ways). There are <imath>2+1=3</imath> ways to do this with one term, <imath>3+2=5</imath> with two, <imath>7</imath> with three, <imath>9</imath> with four, and <imath>11</imath> with five.
+
+The resulting number of possible sequences is <imath>3 \cdot 1 + 5 \cdot 4 + 7 \cdot 6 + 9 \cdot 4 + 11 \cdot 1 = \boxed{\textbf{(A) }112}</imath>. ~[[User:emerald_block|emerald_block]]
+
+==Solution 5 (Minimal Casework)==
+Consider the arrangement of the prime factors of 96 in a line <imath>(2,2, 2, 2, 2, 3)</imath>.  An arrangement of factors can be created by placing "dividers" to group primes.  For example, <imath>(2, 2, |, 2, 2, 2, |, 3)</imath> is equivalent to the arrangement <imath>4 \cdot 8 \cdot 3</imath>.  Because there are <imath>6</imath> ways to order the prime factors, and <imath>2^5</imath> ways to place dividers, this gives us an initial <imath>6 \cdot  2^5</imath> ways to arrange divisors.  
+
+However, through this method, we overcount cases where <imath>3</imath> is combined with another factor.  For example, the arrangement <imath>4 \cdot 6 \cdot 4</imath> can be written as <imath>(2, 2, |, 2, 3, |, 2, 2)</imath> or <imath>(2, 2, |, 3, 2, |, 2, 2)</imath>.  Precisely, we double count any case with <imath>6</imath> as a factor, triple count any case with <imath>12</imath>, quadruple count any case with <imath>24</imath>, etc.    
+
+Now, consider all cases where <imath>3</imath> must be grouped with at least one <imath>2</imath>.  This can be expressed in the same "line" format as <imath>(2, 2, 2, 2, 6)</imath>, where dividers can again be placed to group divisors.  In this case, there are <imath>5</imath> ways to order divisors, and <imath>2^4</imath> ways to place dividers, so we have an <imath>5 \cdot 2^4</imath> possible sequences for this case.  Notice that in this format, we double count cases where <imath>12</imath> is a factor, we triple count cases where <imath>24</imath> is a factor, etc.  Precisely, for any case counted <imath>n</imath> times in the first step, it is counted <imath>n - 1</imath> times in this step.  Thus, if we subtract, we count each case exactly once.  
+
+So, we get:
+
+<imath>6 \cdot  2^5 - 5 \cdot 2^4 = \boxed{\textbf{(A) }112}</imath>. ~[[User:hdai1122|hdai1122]]
+
+==Solution 6 (Another Fast Way)==
+
+First we factor <imath>32</imath> into <imath>m</imath> numbers <imath>g_1, \cdots, g_m</imath> where <imath>g_i>1,i=1,\ldots,m</imath>. By applying stars and bars there are <imath>\binom{5-1}{m-1}</imath> ways. Then we can either insert <imath>3</imath> into each of the <imath>m+1</imath> spaces between (or beyond) <imath>g_i</imath>'s, or multiply it to one of the <imath>g_i</imath>'s, a total of <imath>2m+1</imath> ways. Hence the answer to the problem is
+
+<cmath>
+\sum_{m=1}^5 (2m+1)\binom{5-1}{m-1} = \sum_{n=0}^4 (2n+3) \binom{4}{n} = 8\sum_{n=0}^4 \frac{n}{4} \binom{4}{n} + 3 \sum_{n=0}^4 \binom{4}{n} = 8 \sum_{n=0}^4 \binom{3}{n-1} + 3\sum_{n=0}^4 \binom{4}{n} = 8 \cdot 2^3 + 3\cdot 2^4 = \boxed{\textbf{(A) }112}.
+</cmath>
+
+~ asops
+
+==Solution 7 (Integer Partition)==
+
+Note that <imath>96 = 2^5 \cdot 3</imath>. <imath>D(n)</imath> depends on dividing <imath>2^5</imath> into different terms, which is the [https://en.wikipedia.org/wiki/Partition_(number_theory) integer partition] of <imath>5</imath>.
+
+Divide <imath>96</imath> into <imath>1</imath> term:
+
+There is only one way. <imath>\underline{\textbf{1}}</imath>
+
+
+Divide <imath>96</imath> into <imath>2</imath> terms:
+
+ Case <imath>1</imath>: <imath>3</imath> is alone
+ <imath>(2^5,3)</imath> has <imath>{\textbf{2}}</imath> different arrangements.
+
+ Case <imath>2</imath>: <imath>3</imath> is with <imath>2^n</imath>
+ <imath>5 = 1 + 4 = 2 + 3</imath>. For <imath>(2, 2^4)</imath> and <imath>(2^2, 2^3)</imath>, <imath>3</imath> can be with any term from the <imath>2</imath> tuples, and the number of  arrangement of the <imath>2</imath> terms is <imath>2</imath>. <imath>2 \cdot 2 \cdot 2 = {\textbf{8}}</imath>
+
+<imath>2 + 8 = \underline{\textbf{10}}</imath>
+
+
+Divide <imath>96</imath> into <imath>3</imath> terms:
+
+ Case <imath>1</imath>: <imath>3</imath> is alone
+ <imath>5 = 2 + 3 = 1 + 4</imath>. For <imath>(2^2, 2^3, 3)</imath> and <imath>(2, 2^4, 3)</imath>, there are <imath>3!</imath> arrangements each. <imath>2 \cdot 3! = {\textbf{12}}</imath>
+
+ Case <imath>2</imath>: <imath>3</imath> is with <imath>2^n</imath>
+ <imath>5 = 1 + 1 + 3 = 1 + 2 + 2</imath>. For <imath>(2, 2, 2^3)</imath> and <imath>(2, 2^2, 2^2)</imath>, <imath>3</imath> can be with any term from the <imath>2</imath> tuples. If <imath>3</imath> is with <imath>2^3</imath> for the first tuple, or <imath>2</imath> for the second tuple, the number of arrangements is <imath>3</imath> for each. If <imath>3</imath> is with <imath>2</imath> for the first tuple, or <imath>2^2</imath> for the second tuple, the number of arrangements is <imath>6</imath> for each. <imath>2 \cdot 3 + 2 \cdot 6 = {\textbf{18}}</imath>
+
+<imath>12 + 18 = \underline{\textbf{30}}</imath>
+
+
+Divide <imath>96</imath> into <imath>4</imath> terms:
+
+ Case <imath>1</imath>: <imath>3</imath> is alone
+ <imath>5 = 1 + 1 + 3 = 1 + 2 + 2</imath>. For <imath>(2, 2, 2^3, 3)</imath> and <imath>(2, 2^2, 2^2, 3)</imath>, there are <imath>\frac{4!}{2!}</imath> arrangements each. <imath>2 \cdot \frac{4!}{2!} = {\textbf{24}}</imath>
+
+ Case <imath>2</imath>: <imath>3</imath> is with <imath>2^n</imath>
+ <imath>5 = 1 + 1 + 1 + 2</imath>. For <imath>(2, 2, 2, 2^2)</imath>, <imath>3</imath> can be with any term from the tuple. If <imath>3</imath> is with <imath>2^2</imath>, the number of arrangements is <imath>\frac{4!}{3!}</imath>. If <imath>3</imath> is with <imath>2</imath>, the number of arrangements is <imath>\frac{4!}{2!}</imath>.
+ <imath>\frac{4!}{3!} + \frac{4!}{2!} = {\textbf{16}}</imath>
+
+<imath>24 + 16 = \underline{\textbf{40}}</imath>
+
+
+Divide <imath>96</imath> into <imath>5</imath> terms:
+
+When dividing <imath>5</imath> into <imath>5</imath> parts there are <imath>2</imath> cases.
+
+ Case <imath>1</imath>: <imath>3</imath> is alone
+ <imath>5 = 1 + 1 + 1 + 2</imath>. For <imath>(2, 2, 2, 2^2, 3)</imath>, there are <imath>\frac{5!}{3!}</imath> arrangements. <imath>\frac{5!}{3!} = {\textbf{20}}</imath>
+
+ Case <imath>2</imath>: <imath>3</imath> is with <imath>2^n</imath>
+ <imath>5 = 1 + 1 + 1 + 1 + 1</imath>. For <imath>(2, 2, 2, 2, 2)</imath>, <imath>3</imath> can only be with <imath>2</imath>. The number of arrangements is <imath>\frac{5!}{4!} = \textbf{5}</imath>
+
+<imath>20 + 5 = \underline{\textbf{25}}</imath>
+
+
+Divide <imath>96</imath> into <imath>6</imath> terms:
+
+<imath>5 = 1 + 1 + 1 + 1 + 1</imath>. The number of arrangements of <imath>(2, 2, 2, 2, 2, 3)</imath> is <imath>\frac{6!}{5!} = \underline{\textbf{6}}</imath>
+
+
+<imath> 1 + 10 + 30 + 40 + 25 + 6 = \boxed{\textbf{(A) }112}</imath>
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+==Solution 8==
+
+Ignore the <imath>3</imath> first and first count <imath>2^{x_1+x_2+...+x^n}=32</imath> which <imath>x_1+x_2+...+x_n=5</imath>. This implies that <imath>n</imath> is less than or equal to <imath>5</imath>. Now, we can see that <imath>3</imath> can lie between the two <imath>x_i, x_{i+1}</imath>, or contribute to one of them. This gives <imath>2k+1</imath> if <imath>x_1+...+x_k=5</imath>. Now, just sum up gives <imath>\binom{5-1}{5-1}\cdot 11+\binom{5-1}{4-1}\cdot 9+\binom{5-1}{3-1}\cdot 7+\binom{5-1}{2-1}\cdot 5+\binom{5-1}{1-1}\cdot 3=\boxed{112}</imath>.
+
+==Solution 9 (Cleanest Algebra)==
+Consider how we partition the factors of <imath>96 = 2^5\cdot 3</imath>. For each <imath>k</imath>, there are two cases. Either we can put the <imath>2</imath>s into <imath>k</imath> nonzero parts, so that the <imath>3</imath> shares a partition with some <imath>2</imath>s, which can be done in <imath>k\binom{5-(k-1)+(k-1)-1}{k-2} = k\binom{4}{k-2}</imath> ways, or we can put the <imath>2</imath>s into <imath>k-1</imath> nonzero parts and put the <imath>3</imath> in its own partition, which can be done in <imath>k\binom{5-k+k-1}{k-1} = k\binom{4}{k-1}</imath> ways. Summing over all <imath>k</imath>, we have 
+<cmath>\sum_{k=1}^6 k\binom{4}{k-2} + \sum_{k=1}^6 k\binom{4}{k-1}.</cmath> 
+
+But <imath>\sum_{k=1}^6 k\binom{4}{k-2} = 2\binom{4}{0}+3\binom{4}{1} + \dots + 6\binom{4}{4} = 4 \cdot \sum_{i=0}^4 \binom{4}{i} = 4 \cdot 2^4 = 64</imath>. Similarly, <imath>\sum_{k=1}^6 k\binom{4}{k-1} = 3\cdot 2^4 = 48</imath>. So our answer is <imath>64+48 = \boxed{\textbf{(A) }112}</imath>.
+
+~InsetIowa9
+
+==Solution 10 (Word Arrangements and Brute Forcing)==
+
+After careful inspection we notice that for each respect value of k, there are a certain number of unique set of numbers that form total word arrangements. Using case work we can deduce that for each respective k value:
+
+k = 1:
+96
+
+k = 2:
+2 48, 
+3 32, 
+4 24, 
+6 16, 
+8 12
+
+k = 3:
+2 6 8, 
+2 3 16, 
+3 4 8, 
+2 4 12, 
+2 2 24, 
+4 4 6
+
+k = 4:
+2 2 3 8, 
+2 3 4 4, 
+2 2 2 12, 
+2 2 4 6
+
+k = 5:
+2 2 2 3 4, 
+2 2 2 2 6
+
+k = 6:
+2 2 2 2 2 3
+
+Using the word arrangement formula (<imath>\frac{n!}{f1!f2!...fn!}</imath>, where <imath>n</imath> is the total number of letters in the word, and <imath>f</imath> is the frequency of each respective letter for instance in "aabc" the letter "a" has a frequency of 2, b has 1, and c has 1)  for each respective set of unique integers we obtain the sum <imath>1 + 10 + 30 + 40 + 25 + 6 = 112 = \boxed{\textbf{(A) }112}</imath>
+
+~PeterDoesPhysics
+
+== Solution 11 (Grid with Labels)==
+This question is like [[2010 AMC 8 Problems/Problem 25|2010 AMC 8 problem 25]], if we treat each prime factor of <imath>96 = 2^5 \cdot 3</imath> as a step, this is a recursive problem of climbing stairs.
+
+The stair can be designed like
+<asy> size(8cm); defaultpen(fontsize(10pt)); draw((0, 1) -- (5, 1) ^^ (1, 0) -- (1, 1) ^^ (2, 0) -- (2, 1) ^^ (3, 0) -- (3, 1) ^^ (4, 0) -- (4, 1) ^^ (5, 0) -- (5, 1)); draw((0, 2) -- (0, 0) -- (6, 0), Arrows); label("2", (6, 0), E); label("3", (0, 2), N); label("start", (0, 0), SW); label("end", (5, 1), NE);</asy>
+
+In this grid, we can only take any number of steps to the right or up, so the number of each point is the sum of all numbers to its left and below it. We label the points to obtain number of paths.
+<asy> size(8cm); defaultpen(fontsize(10pt)); draw((0, 1) -- (5, 1) ^^ (1, 0) -- (1, 1) ^^ (2, 0) -- (2, 1) ^^ (3, 0) -- (3, 1) ^^ (4, 0) -- (4, 1) ^^ (5, 0) -- (5, 1)); draw((0, 2) -- (0, 0) -- (6, 0), Arrows); label("2", (6, 0), E); label("3", (0, 2), N); label("start", (0, 0), SW); label("end", (5, 1), NE); label("1", (0, 0), NW); label("1", (1, 0), NW); label("2", (2, 0), NW); label("4", (3, 0), NW); label("8", (4, 0), NW); label("16", (5, 0), NW); label("1", (0, 1), NW); label("3", (1, 1), NW); label("8", (2, 1), NW); label("20", (3, 1), NW); label("48", (4, 1), NW); label("112", (5, 1), NW);</asy>
+
+The result is <imath>\boxed{\textbf{(A) }112}</imath>
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Reda_mandymath reda_mandymath]
+
+== Solution 12 (The simplest solution)==
+
+There are <imath>2^4=16</imath> ways of placing (or not placing) <imath>\times</imath>’s between five <imath>2</imath>’s. These placements can be grouped into <imath>8</imath> pairs such that in each pair, the total number of <imath>\times</imath>’s is <imath>4</imath>.
+
+In each pair, there are <imath>4+2=6</imath> powers of <imath>2</imath> and <imath>6+2=8</imath> spaces between/beyond these powers. We can either multiply <imath>3</imath> with one of the powers, or place <imath>3</imath> in the spaces between/beyond the powers (so that we have a single <imath>3</imath> in the product), giving a total of <imath>6+8=14</imath> ways of decomposing <imath>96</imath> into products greater than <imath>1</imath>.
+
+The answer is then <imath>8\cdot 14=112</imath>.
+
+~ asops
+
+== Video Solution by OmegaLearn ==
+https://youtu.be/8WrdYLw9_ns?t=995
+
+~ pi_is_3.14
+
+
+== Video Solution by MathEx ==
+https://www.youtube.com/watch?v=977F9lBb37E
+
+
+== Video Solution == 
+Video is 4:29 long Uses casework. https://youtu.be/fR3VL7g90QM 
+Mark888
+
+==See Also==
+{{AMC10 box|year=2020|ab=B|num-b=24|after=Last Problem}}
+{{AMC12 box|year=2020|ab=B|num-b=23|num-a=25}}
+{{MAA Notice}}

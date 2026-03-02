@@ -1,0 +1,41 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2007_AMC_12B_Problems/Problem_25&action=raw
+
+Published Time: Mon, 17 Jul 2023 23:46:44 GMT
+
+Markdown Content:
+==Problem==
+Points A,B,C,D and E are located in 3-dimensional space with AB=BC=CD=DE=EA=2 and \angle ABC=\angle CDE=\angle DEA=90^o. The plane of \triangle ABC is parallel to \overline{DE}. What is the area of \triangle BDE?
+
+\mathrm {(A)} \sqrt{2}\qquad \mathrm {(B)} \sqrt{3}\qquad \mathrm {(C)} 2\qquad \mathrm {(D)} \sqrt{5}\qquad \mathrm {(E)} \sqrt{6}
+
+==Solution 1==
+[[File:2007 AMC 12B Problem 25.png|center]]
+Link to graph: https://www.math3d.org/pHFSD6vRi
+
+Let A=(0,0,0), and B=(2,0,0). Since EA=2, we could let C=(2,0,2), D=(2,2,2), and E=(2,2,0). Now to get back to A we need another vertex F=(0,2,0). Now if we look at this configuration as if it was two dimensions, we would see a square missing a side if we don't draw FA. Now we can bend these three sides into an equilateral triangle, and the coordinates change: A=(0,0,0), B=(2,0,0), C=(2,0,2), D=(1,\sqrt{3},2), and E=(1,\sqrt{3},0). Checking for all the requirements, they are all satisfied. Now we find the area of triangle BDE. The side lengths of this triangle are 2, 2, 2\sqrt{2}, which is an isosceles right triangle. Thus the area of it is \frac{2\cdot2}{2}=2\Rightarrow \mathrm{(C)}.
+
+==Solution 2==
+
+Similar to solution 1, we allow 
+A=(0,0,0), B=(2,0,0), and C=(0,2,0). This creates the isosceles right triangle on the plane of z=0
+
+Now, note that \angle CDE=\angle DEA=90^o. This means that there exists some vector DE parallel to the plane of ABC that forms two right angles with AE and CD. By definition, this is the cross product of the two vectors AE and CD. Finding this cross product, we take the determinant of vectors
+
+AE= and
+
+CD= *Note that z is constant because the line is parallel to the plane*
+
+to get (y_1-y_2)zi+(x_1-x_2)zj+(x_1y_2-y_1x_2)k
+
+Because there can be no movement in the z direction, the k unit vector must be zero. Also, because the i unit vector must be orthogonal and also 0. Thus, the vector of line DE is simply 2tj+2k
+
+From this, you can figure out that line BE=2, and the area of BDE=\frac{2\cdot2}{2}=2\Rightarrow \mathrm{(C)}.
+
+==See also==
+{{AMC12 box|year=2007|ab=B|num-b=24|after=Last Problem}}
+
+[[Category:Introductory Geometry Problems]]
+[[Category:Area Problems]]
+{{MAA Notice}}

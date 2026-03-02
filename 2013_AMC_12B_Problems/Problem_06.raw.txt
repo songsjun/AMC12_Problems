@@ -1,0 +1,33 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2013_AMC_12B_Problems/Problem_6&action=raw
+
+Published Time: Fri, 02 Jan 2026 06:32:44 GMT
+
+Markdown Content:
+{{duplicate|[[2013 AMC 12B Problems|2013 AMC 12B #6]] and [[2013 AMC 10B Problems|2013 AMC 10B #11]]}}
+
+==Problem==
+Real numbers x and y satisfy the equation x^2+y^2=10x-6y-34. What is x+y?
+
+\text{(A)}\ 1 \qquad \text{(B)}\ 2 \qquad \text{(C)}\ 3 \qquad \text{(D)}\ 6 \qquad \text{(E)}\ 8
+
+==Solution 1==
+If we move every term dependent on x or y to the LHS, we get x^2 - 10x + y^2 + 6y = -34. Adding 34 to both sides, we have x^2 - 10x + y^2 + 6y + 34 = 0. We can split the 34 into 25 and 9 to get (x - 5)^2 + (y + 3)^2 = 0. Notice this is a circle with radius 0, which only contains one point. So, the only point is (5, -3), so the sum is 5 + (-3) = 2 \implies \boxed{\textbf{(B)}}. ~ asdf334
+
+==Solution 2==
+If we move every term including x or y to the LHS, we get x^2 - 10x + y^2 + 6y = -34.  We can complete the square to find that this equation becomes (x - 5)^2 + (y + 3)^2 = 0.  Since the square of any real number is nonnegative, we know that the sum is greater than or equal to 0.  Equality holds when the value inside the parhentheses is equal to 0.  We find that (x,y) = (5,-3) and the sum we are looking for is 5+(-3)=2 \implies \boxed{\textbf{(B)}}.  - Honestly
+
+== Video Solution ==
+https://youtu.be/ba6w1OhXqOQ?t=1810
+
+==Video Solution==
+https://youtu.be/a-3CAo4CoWc
+
+–no one
+
+==See Also==
+
+{{AMC12 box|year=2013|ab=B|num-b=5|num-a=7}}
+{{AMC10 box|year=2013|ab=B|num-b=10|num-a=12}}
+{{MAA Notice}}

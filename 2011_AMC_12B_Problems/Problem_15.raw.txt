@@ -1,0 +1,57 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2011_AMC_12B_Problems/Problem_15&action=raw
+
+Published Time: Sun, 28 Sep 2025 21:21:25 GMT
+
+Markdown Content:
+==Problem 15==
+
+How many positive two-digit integers are factors of 2^{24}-1?
+
+\textbf{(A)}\ 4 \qquad \textbf{(B)}\ 8 \qquad \textbf{(C)}\ 10 \qquad \textbf{(D)}\ 12 \qquad \textbf{(E)}\ 14
+
+~ pi_is_3.14
+
+== Solution ==
+
+Repeating [[difference of squares]]:
+
+2^{24}-1=(2^{12}+1)(2^{6}+1)(2^{3}+1)(2^{3}-1)
+  
+2^{24}-1=(2^{12}+1)\cdot65\cdot9\cdot7
+
+2^{24}-1 = (2^{12} +1) * 5 * 13 * 3^2 * 7
+
+The sum of cubes formula gives us: 
+
+2^{12}+1=(2^4+1)(2^8-2^4+1)
+
+2^{12}+1 = 17\cdot241
+
+A quick check shows 241 is prime. Thus, the only factors to be concerned about are 3^2\cdot5\cdot7\cdot13\cdot17, since multiplying by 241 will make any factor too large.
+
+Multiplying 17 by 3 or 5 will give a two-digit factor; 17 itself will also work. The next smallest factor, 7, gives a three-digit number.  Thus, there are 3 factors that are multiples of 17.
+
+Multiplying 13 by 3, 5, or 7 will also give a two-digit factor, as well as 13 itself. Higher numbers will not work, giving 4 additional factors.
+
+Multiply 7 by 3, 5, or  3^2 for a two-digit factor. There are no more factors to check, as all factors which include 13 are already counted. Thus, there are an additional 3 factors.
+
+Multiply 5 by 3 or 3^2 for a two-digit factor. All higher factors have been counted already, so there are 2 more factors.
+
+Thus, the total number of factors is 3+4+3+2=\boxed{\textbf{(D) }12}
+
+The 12 two-digit factors are 13, 15, 17, 21, 35, 39, 45, 51, 63, 65, 85, and 91.
+
+== Video Solution by OmegaLearn ==
+https://youtu.be/mgEZOXgIZXs?t=770
+==Video Solution by WhyMath==
+https://youtu.be/5f4yNbRtDOA
+
+~savannahsolver
+
+== See also ==
+{{AMC12 box|year=2011|ab=B|num-b=14|num-a=16}}
+
+[[Category:Introductory Number Theory Problems]]
+{{MAA Notice}}

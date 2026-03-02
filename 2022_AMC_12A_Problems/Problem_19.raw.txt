@@ -1,0 +1,220 @@
+{{duplicate|[[2022 AMC 10A Problems/Problem 22|2022 AMC 10A #22]] and [[2022 AMC 12A Problems/Problem 19|2022 AMC 12A #19]]}}
+
+==Problem==
+
+Suppose that <math>13</math> cards numbered <math>1, 2, 3, \ldots, 13</math> are arranged in a row. The task is to pick them up in numerically increasing order, working repeatedly from left to right. In the example below, cards <math>1, 2, 3</math> are picked up on the first pass, <math>4</math> and <math>5</math> on the second pass, <math>6</math> on the third pass, <math>7, 8, 9, 10</math> on the fourth pass, and <math>11, 12, 13</math> on the fifth pass. For how many of the <math>13!</math> possible orderings of the cards will the <math>13</math> cards be picked up in exactly two passes?
+
+<asy>
+size(11cm);
+draw((0,0)--(2,0)--(2,3)--(0,3)--cycle);
+label("7", (1,1.5));
+draw((3,0)--(5,0)--(5,3)--(3,3)--cycle);
+label("11", (4,1.5));
+draw((6,0)--(8,0)--(8,3)--(6,3)--cycle);
+label("8", (7,1.5));
+draw((9,0)--(11,0)--(11,3)--(9,3)--cycle);
+label("6", (10,1.5));
+draw((12,0)--(14,0)--(14,3)--(12,3)--cycle);
+label("4", (13,1.5));
+draw((15,0)--(17,0)--(17,3)--(15,3)--cycle);
+label("5", (16,1.5));
+draw((18,0)--(20,0)--(20,3)--(18,3)--cycle);
+label("9", (19,1.5));
+draw((21,0)--(23,0)--(23,3)--(21,3)--cycle);
+label("12", (22,1.5));
+draw((24,0)--(26,0)--(26,3)--(24,3)--cycle);
+label("1", (25,1.5));
+draw((27,0)--(29,0)--(29,3)--(27,3)--cycle);
+label("13", (28,1.5));
+draw((30,0)--(32,0)--(32,3)--(30,3)--cycle);
+label("10", (31,1.5));
+draw((33,0)--(35,0)--(35,3)--(33,3)--cycle);
+label("2", (34,1.5));
+draw((36,0)--(38,0)--(38,3)--(36,3)--cycle);
+label("3", (37,1.5));
+</asy>
+<math>\textbf{(A) } 4082 \qquad \textbf{(B) } 4095 \qquad \textbf{(C) } 4096 \qquad \textbf{(D) } 8178 \qquad \textbf{(E) } 8191</math>
+
+==Solution 1 (Casework)==
+For <math>1\leq k\leq 12,</math> suppose that cards <math>1, 2, \ldots, k</math> are picked up on the first pass. It follows that cards <math>k+1,k+2,\ldots,13</math> are picked up on the second pass.
+
+<b>Once we pick the spots for the cards on the first pass, there is only one way to arrange all <math>\boldsymbol{13}</math> cards.</b> 
+
+For each value of <math>k,</math> there are <math>\binom{13}{k}-1</math> ways to pick the <math>k</math> spots for the cards on the first pass: We exclude the arrangement
+<asy>
+size(11cm);
+draw((0,0)--(2,0)--(2,3)--(0,3)--cycle);
+label("1", (1,1.5));
+draw((3,0)--(5,0)--(5,3)--(3,3)--cycle);
+label("2", (4,1.5));
+draw((6,0)--(8,0)--(8,3)--(6,3)--cycle);
+label("3", (7,1.5));
+draw((9,0)--(11,0)--(11,3)--(9,3)--cycle);
+label("4", (10,1.5));
+draw((12,0)--(14,0)--(14,3)--(12,3)--cycle);
+label("5", (13,1.5));
+draw((15,0)--(17,0)--(17,3)--(15,3)--cycle);
+label("6", (16,1.5));
+draw((18,0)--(20,0)--(20,3)--(18,3)--cycle);
+label("7", (19,1.5));
+draw((21,0)--(23,0)--(23,3)--(21,3)--cycle);
+label("8", (22,1.5));
+draw((24,0)--(26,0)--(26,3)--(24,3)--cycle);
+label("9", (25,1.5));
+draw((27,0)--(29,0)--(29,3)--(27,3)--cycle);
+label("10", (28,1.5));
+draw((30,0)--(32,0)--(32,3)--(30,3)--cycle);
+label("11", (31,1.5));
+draw((33,0)--(35,0)--(35,3)--(33,3)--cycle);
+label("12", (34,1.5));
+draw((36,0)--(38,0)--(38,3)--(36,3)--cycle);
+label("13", (37,1.5));
+</asy>
+in which the cards are arranged such that the first pass consists of all <math>13</math> cards.
+
+Therefore, the answer is <cmath>\sum_{k=1}^{12}\left[\binom{13}{k}-1\right] = \left[\sum_{k=1}^{12}\binom{13}{k}\right]-12 = \left[\sum_{k=0}^{13}\binom{13}{k}\right]-14 = 2^{13} - 14 = \boxed{\textbf{(D) } 8178}.</cmath>
+
+~MRENTHUSIASM
+
+==Solution 2 (Casework)==
+
+Since the <math>13</math> cards are picked up in two passes, the first pass must pick up the first <math>n</math> cards and the second pass must pick up the remaining cards <math>m</math> through <math>13</math>. 
+Also note that if <math>m</math>, which is the card that is numbered one more than <math>n</math>, is placed before <math>n</math>, then <math>m</math> will not be picked up on the first pass since cards are picked up in order. Therefore we desire <math>m</math> to be placed before <math>n</math> to create a second pass, and that after the first pass, the numbers <math>m</math> through <math>13</math> are lined up in order from least to greatest.
+
+To construct this, <math>n</math> cannot go in the <math>n</math>th position because all cards <math>1</math> to <math>n-1</math> will have to precede it and there will be no room for <math>m</math>. Therefore <math>n</math> must be in slots <math>n+1</math> to <math>13</math>.
+Let's do casework on which slot <math>n</math> goes into to get a general idea for how the problem works.
+
+'''Case 1:''' With <math>n</math> in spot <math>n+1</math>, there are <math>n</math> available slots before <math>n</math>, and there are <math>n-1</math> cards preceding <math>n</math>. Therefore the number of ways to reserve these slots for the <math>n-1</math> cards is <math>\binom{n}{n-1}</math>. Then there is only <math>1</math> way to order these cards (since we want them in increasing order). Then card <math>m</math> goes into whatever slot is remaining, and the <math>13-m</math> cards are ordered in increasing order after slot <math>n+1</math>, giving only <math>1</math> way. Therefore in this case there are <math>\binom{n}{n-1}</math> possibilities.
+
+'''Case 2:''' With <math>n</math> in spot <math>n+2</math>, there are <math>n+1</math> available slots before <math>n</math>, and there are <math>n-1</math> cards preceding <math>n</math>. Therefore the number of ways to reserve slots for these cards are <math>\binom{n+1}{n-1}</math>. Then there is one way to order these cards. Then cards <math>m</math> and <math>m+1</math> must go in the remaining two slots, and there is only one way to order them since they must be in increasing order. Finally, cards <math>m+2</math> to <math>13</math> will be ordered in increasing order after slot <math>n+1</math>, which yields <math>1</math> way. Therefore, this case has <math>\binom{n+1}{n-1}</math> possibilities.
+
+I think we can see a general pattern now. With <math>n</math> in slot <math>x</math>, there are <math>x-1</math> slots to distribute to the previous <math>n-1</math> cards, which can be done in <math>\binom{x-1}{n-1}</math> ways. Then the remaining cards fill in in just <math>1</math> way. Since the cases of <math>n</math> start in slot <math>n+1</math> and end in slot <math>13</math>, this sum amounts to:
+<cmath>\binom{n}{n-1}+\binom{n+1}{n-1}+\binom{n+2}{n-1} + \cdots + \binom{12}{n-1}</cmath> for any <math>n</math>.
+
+Hmmm ... where have we seen this before?
+
+We use wishful thinking to add a term of <math>\binom{n-1}{n-1}</math>:
+<cmath>\binom{n-1}{n-1}+\binom{n}{n-1}+\binom{n+1}{n-1}+\binom{n+2}{n-1} + \cdots + \binom{12}{n-1}</cmath>
+
+This is just the hockey stick identity! Applying it, this expression is equal to <math>\binom{13}{n}</math>. However, we added an extra term, so subtracting it off, the total number of ways to order the <math>13</math> cards for any <math>n</math> is <cmath>\binom{13}{n}-1</cmath>
+
+Finally, to calculate the total for all <math>n</math>, we sum from <math>n=0</math> to <math>13</math>. This yields us:
+
+<cmath>\sum_{n=0}^{13} \binom{13}{n}-1 \implies \sum_{n=0}^{13} \binom{13}{n} - \sum_{n=0}^{13} 1</cmath>
+<cmath>\implies 2^{13} - 14 = 8192 - 14 = 8178 = \boxed{\textbf{(D) } 8178}.</cmath>
+
+~KingRavi
+
+==Solution 3 (Recursion)==
+To solve this problem, we can use recursion on <math>n</math>. Let <math>A_n</math> be the number of arrangements for <math>n</math> numbers. Now, let's look at how these arrangements are related to <math>A_{n-1}</math> by case work on the first number <math>a_1</math>.
+
+If <math>a_1 = 1</math>, the remaining <math>n-1</math> numbers from <math>2</math> to <math>n</math> are arranged in the same way just like number 1 to <math>n-1</math> in the case of <math>n-1</math> numbers. So there are <math>A_{n-1}</math> arrangements.
+
+If <math>a_1 = 2</math>, then we need to choose 1 position from position 2 to <math>n-1</math> to put 1, and all remaining numbers must be arranged in increasing order, so there are <math>\binom{n-1}{1}</math> such arrangements.
+
+If <math>a_1 = k</math>, then we need to choose <math>k-1</math> positions from position 2 to <math>n-1</math> to put <math>1, 2,\cdots k-1</math>, and all remaining numbers must be arranged in increasing order, so there are <math>\binom{n-1}{k-1}</math> such arrangements.
+
+So we can write 
+<cmath>
+A_n = A_{n-1} + \binom{n-1}{1} + \binom{n-1}{2} + \cdots + \binom{n-1}{n-1}
+</cmath>
+which can be simplified to
+<cmath>
+A_n = A_{n-1} + 2^{n-1} - 1
+</cmath> 
+We can solve this recursive sequence by summing up <math>n-1</math> lines of the recursive formula
+<cmath>A_n - A_{n-1} = 2^{n-1} - 1</cmath>
+<cmath>A_{n-1} - A_{n-2} = 2^{n-2} - 1</cmath>
+<cmath>\cdots</cmath>
+<cmath>A_2 - A_{1} = 2^{1} - 1</cmath>
+to get
+<cmath>
+A_n - A_1 = \sum_{k=1}^{n-1} (2^k - 1) = 2^n - 2 - (n-1) = 2^n - n - 1
+</cmath>
+since <math>A_1=0</math>, we have
+<cmath>
+A_n = 2^n - n - 1
+</cmath>
+and <math>A_{13} = 2^{13} - 14 = \boxed{\textbf{(D) } 8178}</math>.
+
+
+-- Dan Li
+
+==Solution 4 (Engineer's Induction)==
+When we have <math>3</math> cards arranged in a row, after listing out all possible arrangements, we see that we have <math>4</math> arrangements: <math>(1, 3, 2), (2, 1, 3), (2, 3, 1),</math> and <math>(3, 1, 2)</math>. When we have <math>4</math> cards, we find <math>11</math> possible arrangements: <math>(1, 2, 4, 3), (1, 3, 2, 4), (1, 3, 4, 2), (1, 4, 2, 3), (2, 1, 3, 4), (2, 3, 1, 4), (2, 3, 4, 1), (3, 1, 2, 4), (3, 1, 4, 2), (3, 4, 1, 2),</math> and <math>(4, 1, 2, 3).</math> Hence, we recognize the pattern that for <math>n</math> cards, we have <math>2^n - n - 1</math> valid arrangements, so our answer is <math>2^{13} - 13 - 1 = \boxed{\textbf{(D) } 8178}.</math> Note that this also works for <math>2</math> cards being arranged in a row. <math>(2,1)</math> Here, only one works, and following the formula, it checks out.
+
+~eibc ~LoadingNoob
+
+==Solution 5 (Subsets Bijection)==
+Notice that for each card "position", we can choose for it to be picked up on the first or second pass, for a total of <math>2^{13}</math> options. However, if all of the cards selected to be picked up first are before all of the cards to be picked up second, then this means that the list is in consecutive ascending order (and thus all cards will be picked up on the first pass instead). This can happen in 14 ways, so our answer is <math>2^{13}-14=\boxed{\textbf{(D) } 8178}</math>.
+
+~pooh_bear
+
+==Solution 6 (10 Seconds Solution)==
+To satisfy the condition the question provided, we can arrange the numbers between 1 and 13 into 3 groups. Though writing out the groups is not necessary, below is a basic 'format'. 
+(# of elements in 1st group, # of elements in the 2nd group, # of elements in the 3rd group)
+(1,1,11)
+=(1,2,10)
+=(1,3,9)
+=(1,4,8)
+=(1,5,7)
+=(1,6,6)
+=(2,2,9)
+=(2,3,8)
+=(2,4,7)
+=(2,3,8)
+=(2,4,7)
+=(2,5,6)
+=(3,3,7)
+=(3,4,6)
+=(3,5,5)
+
+Then to arrange these groups we need to multiply the final value by 3!. Hence, we know that the answer should be a multiple of 3!, which is 6. Since D is the only answer choice that is a multiple of 6, the answer is <imath>\boxed{D}</imath>.
+~minor edit(Marshall_Huang)
+
+==Video Solution (Interactive Teaching Approach)==
+
+https://www.youtube.com/watch?v=AVRo_ZbqfUE
+
+~MathkidsbyMax
+
+==Video Solution ==
+https://youtu.be/j2J_m2N7-hI
+
+<i>~Education, the Study of Everything</i>
+
+== Video Solution by ThePuzzlr == 
+https://youtu.be/p9xNduqTKLM
+
+~ MathIsChess
+
+==Video Solution by OmegaLearn (Combinatorial Identities and Overcounting)==
+
+https://youtu.be/gW8gPEEHSfU
+
+~ pi_is_3.14
+
+==Video Solution by Steven Chen==
+
+https://youtu.be/ZGqrs5eg6-s
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+== Video Solution by MRENTHUSIASM (English & Chinese) ==
+
+https://youtu.be/XZ4HuX-WUN4
+
+~MRENTHUSIASM
+
+==Video Solution by Math-X (Smart and Simple) ==
+https://youtu.be/7yAh4MtJ8a8?si=BzGQ7jkWHjlZOmpw&t=5547 
+
+~Math-X
+
+== See Also ==
+
+{{AMC10 box|year=2022|ab=A|num-b=21|num-a=23}}
+{{AMC12 box|year=2022|ab=A|num-b=18|num-a=20}}
+
+[[Category:Intermediate Combinatorics Problems]]
+{{MAA Notice}}

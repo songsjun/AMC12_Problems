@@ -1,0 +1,26 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2007_AMC_12A_Problems/Problem_7&action=raw
+
+Published Time: Fri, 05 Apr 2024 20:40:40 GMT
+
+Markdown Content:
+==Problem==
+Let a, b, c, d, and e be five consecutive terms in an arithmetic sequence, and suppose that a+b+c+d+e=30. Which of a, b, c, d, or e can be found?
+
+\textrm{(A)} \ a\qquad \textrm{(B)}\ b\qquad \textrm{(C)}\ c\qquad \textrm{(D)}\ d\qquad \textrm{(E)}\ e
+
+==Solution==
+Let f be the common difference between the terms.
+
+* a=c-2f
+* b=c-f
+* c=c
+* d=c+f
+* e=c+2f
+a+b+c+d+e=5c=30, so c=6. But we can't find any more variables, because we don't know what f is. So the answer is \textrm{C}.
+
+==See also==
+{{AMC12 box|year=2007|num-b=6|num-a=8|ab=A}}
+[[Category:Introductory Algebra Problems]]
+{{MAA Notice}}

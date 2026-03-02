@@ -1,0 +1,45 @@
+{{duplicate|[[2012 AMC 12A Problems|2012 AMC 12A #13]] and [[2012 AMC 10A Problems|2012 AMC 10A #19]]}}
+
+==Problem 19==
+
+Paula the painter and her two helpers each paint at constant, but different, rates. They always start at 8:00 AM, and all three always take the same amount of time to eat lunch. On Monday the three of them painted 50% of a house, quitting at 4:00 PM. On Tuesday, when Paula wasn't there, the two helpers painted only 24% of the house and quit at 2:12 PM. On Wednesday Paula worked by herself and finished the house by working until 7:12 P.M. How long, in minutes, was each day's lunch break?
+
+<math> \textbf{(A)}\ 30\qquad\textbf{(B)}\ 36\qquad\textbf{(C)}\ 42\qquad\textbf{(D)}\ 48\qquad\textbf{(E)}\ 60 </math>
+
+==Solution==
+Let Paula work at a rate of <math>p</math>, the two helpers work at a combined rate of <math>h</math>, and the time it takes to eat lunch be <math>L</math>, where <math>p</math> and <math>h</math> are in house/hours and L is in hours. Then the labor on Monday, Tuesday, and Wednesday can be represented by the three following equations:
+
+<cmath>(8-L)(p+h)=50</cmath>
+
+<cmath>(6.2-L)h=24</cmath>
+
+<cmath>(11.2-L)p=26</cmath>
+
+With three equations and three variables, we need to find the value of <math>L</math>.
+Adding the second and third equations together gives us <math>6.2h+11.2p-L(p+h)=50</math>. Subtracting the first equation from this new one gives us <math>-1.8h+3.2p=0</math>, so we get <math>h=\frac{16}{9}p</math>. 
+Plugging into the second equation:
+
+<cmath>(6.2-L)\frac{16}{9}p=24</cmath>
+<cmath>(6.2-L)p=\frac{27}{2}</cmath>
+
+We can then subtract this from the third equation:
+
+<cmath>5p=26-\frac{27}{2}</cmath>
+<cmath>p=\frac{5}{2}</cmath>
+Plugging <math>p</math> into our third equation gives: <cmath>L=\frac{4}{5}</cmath>
+
+Converting <math>L</math> from hours to minutes gives us <math>L=48</math> minutes, which is <math>\boxed{\textbf{(D)}\ 48}</math>.
+
+==Solution 2 (Modular Arithmetic)==
+Because Paula worked from <cmath>8:00 \text{A.M.}</cmath> to <cmath>7:12 \text{P.M.}</cmath>, she worked for 11 hours and 12 minutes = 672 minutes. Since there is <math>100-50-24=26</math>% of the house left, we get the equation <math>26a=672</math>. Because <math>672</math> is <math>22</math> mod <math>26</math>, looking at our answer choices, the only answer that is <math>22</math> <math>\text{mod}</math> <math>26</math> is <math>48</math>. So the answer is <math>\boxed{\textbf{(D)}\ 48}</math>.
+
+==Solution 3 (GCD)==
+We factor out the equations to be <math>(8-n)\left(\frac{1}{p}+\frac{1}{h}\right)=\frac{1}{2},\left(\frac{31}{5}-n\right)\left(\frac{1}{h}\right)=\frac{6}{25} \text{ and } \left(\frac{56}{5}-n\right)\left(\frac{1}{p}=\frac{13}{50}\right)</math>, where n is the number of hours for the break, p is the time Paula requires, and h is the time her helpers require. We find that when we select <math>\mathbf{D}</math>, we have them being <math>10.4</math> and <math>5.4</math>, which correspond to being multiples of 13 and 6. Checking, we find that this satisfies the first equation, so multiplying <math>0.8\cdot 60= \boxed{48.}</math>
+
+== See Also ==
+
+{{AMC10 box|year=2012|ab=A|num-b=18|num-a=20}}
+{{AMC12 box|year=2012|ab=A|num-b=12|num-a=14}}
+
+[[Category:Introductory Algebra Problems]]
+{{MAA Notice}}

@@ -1,0 +1,22 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2013_AMC_12B_Problems/Problem_2&action=raw
+
+Published Time: Tue, 27 Jan 2015 21:02:02 GMT
+
+Markdown Content:
+{{duplicate|[[2013 AMC 12B Problems|2013 AMC 12B #2]] and [[2013 AMC 10B Problems|2013 AMC 10B #2]]}}
+
+==Problem==
+Mr. Green measures his rectangular garden by walking two of the sides and finds that it is 15 steps by 20 steps. Each of Mr. Green's steps is 2 feet long. Mr. Green expects a half a pound of potatoes per square foot from his garden. How many pounds of potatoes does Mr. Green expect from his garden?
+
+\textbf{(A)}\ 600 \qquad \textbf{(B)}\ 800 \qquad \textbf{(C)}\ 1000 \qquad \textbf{(D)}\ 1200 \qquad \textbf{(E)}\ 1400
+
+==Solution==
+
+Since each step is 2 feet, his garden is 30 by 40 feet.  Thus, the area of 30(40) = 1200 square feet.  Since he is expecting \frac{1}{2} of a pound per square foot, the total amount of potatoes expected is 1200 \times \frac{1}{2} = \boxed{\textbf{(A) }600}
+
+== See also ==
+{{AMC10 box|year=2013|ab=B|num-b=1|num-a=3}}
+{{AMC12 box|year=2013|ab=B|num-b=1|num-a=3}}
+{{MAA Notice}}

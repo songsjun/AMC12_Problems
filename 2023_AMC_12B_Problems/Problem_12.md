@@ -1,0 +1,31 @@
+# 2023 AMC 12B Problem 12
+
+## Problem
+For complex number u = a+bi and v = c+di (where $i=\sqrt{-1}),$ define the binary operation
+
+u $\otimes$ v = ac + bdi
+
+Suppose z is a complex number such that $z\otimes$ z = $z^{2}+40$. What is |z|?
+
+$\textbf{(A) }2\qquad\textbf{(B) }5\qquad\textbf{(C) }\sqrt{5}\qquad\textbf{(D) }\sqrt{10}\qquad\textbf{(E) }5\sqrt{2}$
+## Solution 1
+let z = a+bi.
+
+$$z \otimes z = a^{2}+b^{2}i.$$
+
+This is equal to $z^{2} + 40 = a^{2}-b^{2}+40+2$abi
+
+Since the real values have to be equal to each other, $a^{2}-b^{2}+40 = a^{2}$.
+Simple algebra shows $b^{2} = 40$, so b = $\pm 2\sqrt{10}.$
+
+The imaginary components must also equal each other, meaning $b^{2} = 2$ab, or $b =2a$. This means $a =\frac{b}{2} = \pm \sqrt{10}.$
+
+Thus, the magnitude of z is  $\sqrt{a^{2}+b^{2}} = \sqrt{10+40} = \sqrt{50} = 5\sqrt{2}$
+$$=\text{\boxed{\textbf{(E) }5\sqrt{2}}}$$
+
+*~Failure.net*
+## Video Solution
+https://youtu.be/Yw3W2ptPWYQ
+
+*~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)*
+## See Also

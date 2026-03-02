@@ -1,0 +1,13 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2004_AMC_12A_Problems/Problem_5&action=raw
+
+Published Time: Wed, 12 Jul 2017 19:48:41 GMT
+
+Markdown Content:
+==Problem==
+The graph of the line y=mx+b is shown. Which of the following is true?
+
+[[Image:2004 AMC 12A Problem 5.png]]
+
+\mathrm {(A)} mb<-1 \qquad \mathrm {(B)} -1  0 1 ==Solution== The line appears to have a slope of -\dfrac{1}{2} and y-intercept of \dfrac{4}{5} up. \dfrac{4}{5}\cdot \dfrac{-1}{2}=\dfrac{-4}{10} \Rightarrow \mathrm {(B)} ==See also== {{AMC12 box|year=2004|ab=A|num-b=4|num-a=6}} {{MAA Notice}}

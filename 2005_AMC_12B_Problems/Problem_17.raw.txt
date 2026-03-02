@@ -1,0 +1,30 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2005_AMC_12B_Problems/Problem_17&action=raw
+
+Published Time: Tue, 22 Dec 2020 01:18:05 GMT
+
+Markdown Content:
+== Problem ==
+
+How many distinct four-tuples (a,b,c,d) of rational numbers are there with
+
+a\cdot\log_{10}2+b\cdot\log_{10}3+c\cdot\log_{10}5+d\cdot\log_{10}7=2005?
+
+ \mathrm{(A)}\ 0 \qquad \mathrm{(B)}\ 1 \qquad \mathrm{(C)}\ 17 \qquad \mathrm{(D)}\ 2004 \qquad \mathrm{(E)}\ \text{infinitely many} 
+
+== Solution ==
+
+Using the laws of [[logarithms]], the given equation becomes
+
+\log_{10}2^{a}+\log_{10}3^{b}+\log_{10}5^{c}+\log_{10}7^{d}=2005
+\Rightarrow \log_{10}{2^{a}\cdot 3^{b}\cdot 5^{c}\cdot 7^{d}}=2005
+\Rightarrow 2^{a}\cdot 3^{b}\cdot 5^{c}\cdot 7^{d} = 10^{2005}
+
+As a,b,c,d must all be rational, and there are no powers of 3 or 7 in 10^{2005}, b=d=0. Then 2^{a}\cdot 5^{c}=2^{2005}\cdot 5^{2005} \Rightarrow a=c=2005.
+
+Only the four-tuple (2005,0,2005,0) satisfies the equation, so the answer is \boxed{1} \Rightarrow \mathrm{(B)}.
+
+== See also ==
+{{AMC12 box|year=2005|ab=B|num-b=16|num-a=18}}
+{{MAA Notice}}

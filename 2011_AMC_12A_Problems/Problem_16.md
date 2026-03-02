@@ -1,0 +1,153 @@
+# 2011 AMC 12A Problem 16
+
+## Problem
+Each vertex of convex pentagon ABCDE is to be assigned a color. There are 6 colors to choose from, and the ends of each diagonal must have different colors. How many different colorings are possible?
+
+$\textbf{(A)}\ 2520 \qquad \textbf{(B)}\ 2880 \qquad \textbf{(C)}\ 3120 \qquad \textbf{(D)}\ 3250 \qquad \textbf{(E)}\ 3750$
+## Solution
+We can do some casework when working our way around the pentagon from A to E. At each stage, there will be a makeshift diagram.
+
+1.) For A, we can choose any of the 6 colors.
+
+         A : 6
+
+2.) For B, we can either have the same color as A, or any of the other 5 colors. We do this because each vertex of the pentagon is affected by the 2 opposite vertices, and D will be affected by both A and B.
+
+       A : 6
+  B:1        B:5
+
+3.) For C, we cannot have the same color as A. Also, we can have the same color as B (E will be affected), or any of the other 4 colors. Because C can't be the same as A, it can't be the same as B if B is the same as A, so it can be any of the 5 other colors.
+
+       A : 6
+  B:1        B:5
+  C:5     C:4   C:1
+
+4.) D is affected by A and B. If they are the same, then D can be any of the other 5 colors. If they are different, then D can be any of the (6-2)=4 colors.
+
+       A : 6
+  B:1        B:5
+  C:5     C:4   C:1
+  D:5     D:4   D:4
+
+5.) E is affected by B and C. If they are the same, then E can be any of the other 5 colors. If they are different, then E can be any of the (6-2)=4 colors.
+
+       A : 6
+  B:1        B:5
+  C:5     C:4   C:1
+  D:5     D:4   D:4
+  E:4     E:4   E:5
+
+6.) Now, we can multiply these three paths and add them:
+
+$$(6\times1\times5\times5\times4)+(6\times5\times4\times4\times4)+(6\times5\times1\times4\times5) =600+1920+600=3120$$
+
+
+7.) Our answer is C!
+## Solution 2
+Right off the bat, we can analyze three things:
+
+1.) There can only be two of the same color on the pentagon.
+
+2.) Any pair of the same color can only be next to each other on the pentagon.
+
+3.) There can only be two different pairs of same colors on the pentagon at once.
+
+Now that we know this, we can solve the problem by using three cases: no same color pairs,  one same color pair, and two same color pairs.
+
+1.) If there are no color pairs, it is a simple permutation: six different colors in five different spots. We count 6!=720 cases. No rotation is necessary because all permutations are accounted for.
+
+2.)If there is one color pair, we must count 6 possibilities for the pair(as one element), 5 for the third vertex, 4 for the fourth vertex, and 3 for the fifth vertex.
+
+We get $6\times5\times4\times3=360.$
+
+However, there are 5 different locations the pair could be at. Therefore we get $360\times5=1800$ possibilities for one pair.
+
+3.)If there are two color pairs, we must count 6 possibilities for the first pair(as one element), 5 possibilities for the next pair(as one element), and 4 possibilities for the final vertex.
+
+We get $6\times5\times4=120.$
+
+Once again, there are 5 different rotations in the pentagon that we must account for. Therefore we get $120\times5=600$  possibilities for two pairs.
+
+5.) If we add all of three cases together, we get $720+1800+600=3120$. The answer is C.
+
+Solution by gsaelite
+## Solution 3
+This solution essentially explains other ways of thinking about the cases stated in Solution 2.
+
+Case 1:
+
+$${6\choose5} \cdot 5!$$
+
+5 colors need to be chosen from the group of 6. Those 5 colors have 5! distinct arrangements on the pentagon's vertices.
+
+Case 2:
+
+$${6\choose4} \cdot4\cdot5\cdot3!$$
+
+4 colors need to be chosen from the group of 6. Out of those 4 colors, one needs to be chosen to form a pair of 2 identical colors. Then, for arranging this layout onto the pentagon, one of the five sides (same thing as pair of adjacent vertices) of the pentagon needs to be established for the pair. The remaining 3 unique colors can be arranged 3! different ways on the remaining 3 vertices.
+
+Case 3:
+
+$${6\choose3} \cdot {3\choose2} \cdot5\cdot2$$
+
+3 colors need to be chosen from the group of 6. Out of those 3 colors, 2 need to be chosen to be the pairs. Then, for arranging this layout onto the pentagon, start out by thinking about the 1 color that is not part of a pair, as it makes things easier. It can be any one of the 5 vertices of the pentagon. The remaining 2 pairs of colors can only be arranged 2 ways on the remaining 4 vertices.
+
+Solving each case and adding them up gets you 3120. $\boxed{C}$
+## Video Solution
+https://youtu.be/FThly7dRBIE
+
+*~IceMatrix*
+## Solution 4
+We can order the vertices of pentagon ABCDE arbitrarily. This means that besides for the first and last vertices, the previous vertex and the next vertex of any vertex have diagonals (such as A,C,E,B,D where C shares diagonals with A and E, E shares diagonals with C and B, etc.).
+
+The first point can be one of 6 colors as we have no designated restraints on it. From there, the next three points can be five colors each since the only color restraint is that of the previous color (i.e. if the first point was blue, then the next point can be any of the other 5 colors, such as purple, and the point after that can be any color except purple, which is 5 colors).
+
+The last point is the trickiest because we need to consider the second to last vertex and the first vertex. The third vertex has a $\frac{1}{5}$ chance of being the same color as the first vertex, guaranteeing that the second to last vertex is a different color from the first vertex, leaving the last vertex with 4 possible colors. The remaining $\frac{4}{5}$ times where the third to last vertex is a different color from the first vertex, there is a $\frac{4}{5}$ chance that the second to last vertex is a different color from the first vertex and a $\frac{1}{5}$ chance that they are the same color, so there are 4 and 5 possibilities for the last vertex respectively.
+
+Our answer is now
+$6\times5^3\times(\frac{4}{5}\times(\frac{4}{5}\times4+\frac{1}{5}\times5)+\frac{1}{5}\times4)=3120,$ which is $\boxed{C}.$
+
+*~Randomlygenerated*
+## Solution 5
+Start at an arbitrary vertex (call this $A_1$) and draw a "star" by connecting the vertices at each of the 5 diagonals of the pentagon. For each vertex you visit when you're drawing the star, label those successively as $A_2, A_3, A_4$,  and $A_5$. Let the 6 colors be the numbers 1, 2, ..., 6 for simplicity.
+
+Then, this problem basically boils down to finding the number of sequences $A_1, A_2, A_3, A_4, A_5$ such that (1) 1 $\leq A_i \leq 6$ for each 1 $\leq$ i $\leq 6,  (2)$ no two adjacent terms are equal, and (3) $A_1\neq A_5.$
+
+Observe that the number of such sequences satisfying conditions (1) and (2) is N = 6 $\cdot 5^4. (s$ince $A_1$ can be freely chosen, while there are only 5 choices for each of $A_2, ..., A_5$ because none of those can be equal to the previous term)
+
+To find the number of sequences satisfying all three conditions, we can use complimentary counting and subtract the number of sequences M that satisfy (1) and (2) but NOT (3) from N.
+
+In other words, we're looking for the sequences with $A_1=A_5$ that satisfy (1) and (2).
+
+Fix $A_1=A_5$ = X, where X $\in\{1, 2, 3, 4, 5, 6\}$.
+
+For each value of X, there are three possible forms of the sequence:
+
+\bullet X A B C X, where A, B, C are distinct from X and A, B, C themselves are also distinct.
+There are 5 $\cdot 4 \cdot 3 = 60$ ways to assign the values of A, B, C in this case.
+
+\bullet  X A B A X, where A and B are distinct from X and A and B themselves are also distinct.
+There are 5 $\cdot 4 = 20$ ways to assign the values of A and B in this case.
+
+\bullet  X $y_1 X y_2$ X, where $y_1$ and $y_2$ are both distinct from X but $y_1$ and $y_2$ themselves are not necessarily distinct. There are $5^2 = 25$ ways to assign the values of $y_1$ and $y_2$ in this case.
+
+Thus, for each value of X, there are $60 + 20 + 25 = 105$ possible such sequences.
+
+Since X can be arbitrarily chosen, we obtain that M = 6 $\cdot 105 = 630.$
+Thus, our final answer, the number of sequences satisfying conditions (1), (2), and (3) is 6 $\cdot 5^4 - 630 = \boxed{3120}.$
+
+*~fidgetboss_4000*
+## Solution 6 (highly braindead)
+By case work on each vertice, starting from the top vertice and going in a clockwise direction with each subsequent vertice, we get the answer to be 6*( (5*( (4 * 4 * 4) + (1 * 4 * 5) )) + (1*( (5 * 5 * 4) )) ) = $\boxed{3120},$ or C.
+
+Some more explanation: each of the first three points split off into two cases where either they are the same color to the last point or they are different, like the second point in this example: 6 * (5*(...) + 1*(...))
+## Solution 7
+If randomly coloring each vertex, we will have $6^5$ that many ways,with one diagonal has two same coloring vertices, we will have $5\cdot 6^4$ that many ways,
+with two diagonals have the same coloring vertices, we will have $10\cdot 6^3$ that many ways, with three diagonals have the same coloring vertices, we will have $10\cdot 6^2$ that many ways,
+with four diagonals have the same coloring vertices, we will have $5\cdot 6^1$ that many ways, with five diagonals have the same coloring vertices, we will have 6 that many ways,
+by principle of inclusion and exclusion, so the answer = $6^5-5\cdot 6^4+10\cdot 6^3-10\cdot 6^2+5\cdot 6^1-6=3120,$
+
+answer is $\boxed{\mathbf (C) }$
+
+*~szhangmath*
+## See also

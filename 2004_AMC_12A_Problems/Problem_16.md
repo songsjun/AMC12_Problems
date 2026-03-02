@@ -1,0 +1,43 @@
+# 2004 AMC 12A Problem 16
+
+## Problem
+The set of all real numbers x for which
+
+$$\log_{2004}(\log_{2003}(\log_{2002}(\log_{2001}{x})))$$
+
+is defined is $\{x\mid x > c\}$. What is the value of c?
+
+
+$$\textbf {(A) } 0\qquad \textbf {(B) }2001^{2002} \qquad \textbf {(C) }2002^{2003} \qquad \textbf {(D) }2003^{2004} \qquad \textbf {(E) }2001^{2002^{2003}}$$
+
+## Solution 1
+For all real numbers a,b, and c such that b>1, note that:
+
+ 1.   $\log_b$ a is defined if and only if a>0.
+
+2.   $\log_b$ a>c if and only if a>$b^c.$
+
+Therefore, we have
+
+$$
+\begin{align*} \log_{2004}(\log_{2003}(\log_{2002}(\log_{2001}{x}))) \text{ is defined} &\implies \log_{2003}(\log_{2002}(\log_{2001}{x}))>0 \\ &\implies \log_{2002}(\log_{2001}{x})>1 \\ &\implies \log_{2001}{x}>2002 \\ &\implies x>2001^{2002}, \end{align*}
+$$
+
+from which $c=\boxed{\textbf {(B) }2001^{2002}}.$
+
+*~Azjps ~MRENTHUSIASM*
+## Solution 2
+Let
+
+$$
+\begin{align*} x &= 2001^a, \\ a &= 2002^b, \\ b &= 2003^c, \\ c &= 2004^d. \end{align*}
+$$
+
+It follows that x = $2001^{2002^{2003^{2004^d}}}$.
+The smallest value of x occurs when $d\rightarrow -\infty,$ so this expression becomes
+$$x = 2001^{2002^{2003^0}} = 2001^{2002^1} = \boxed{\textbf {(B) }2001^{2002}}.$$
+## Video Solution (Logical Thinking)
+https://youtu.be/46c-VN1QzWk
+
+*~Education, the Study of Everything*
+## See also

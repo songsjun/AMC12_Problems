@@ -1,0 +1,144 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2021_AMC_12A_Problems/Problem_4&action=raw
+
+Published Time: Tue, 15 Jul 2025 13:14:37 GMT
+
+Markdown Content:
+{{duplicate|[[2021 AMC 10A Problems/Problem 7|2021 AMC 10A #7]] and [[2021 AMC 12A Problems/Problem 4|2021 AMC 12A #4]]}}
+
+==Problem==
+Tom has a collection of 13 snakes, 4 of which are purple and 5 of which are happy. He observes that
+
+* all of his happy snakes can add,
+
+* none of his purple snakes can subtract, and
+
+* all of his snakes that can't subtract also can't add.
+
+Which of these conclusions can be drawn about Tom's snakes?
+
+\textbf{(A) } Purple snakes can add.
+
+\textbf{(B) } Purple snakes are happy.
+
+\textbf{(C) } Snakes that can add are purple.
+
+\textbf{(D) } Happy snakes are not purple.
+
+\textbf{(E) } Happy snakes can't subtract.
+
+==Solution 1 (Comprehensive Explanation of Logic)==
+We are given that
+\begin{align*} \text{happy}&\Longrightarrow\text{can add}, &(1) \\ \text{purple}&\Longrightarrow\text{cannot subtract}, \hspace{15mm} &(2) \\ \text{cannot subtract}&\Longrightarrow\text{cannot add}. &(3) \end{align*}
+Two solutions follow from here:
+
+===Solution 1.1 (Intuitive)===
+Combining (2) and (3) gives
+\begin{align*} \text{happy}&\Longrightarrow\text{can add}, &(1) \\ \lefteqn{\underbrace{\phantom{\text{purple}\Longrightarrow\text{cannot subtract}}}_{(2)}}\text{purple}&\Longrightarrow\overbrace{\text{cannot subtract}\Longrightarrow\text{cannot add}}^{(3)}. \hspace{2.5mm} &(*) \end{align*}
+Clearly, the answer is \boxed{\textbf{(D)}}.
+
+~MRENTHUSIASM (credit given to abhinavg0627)
+
+===Solution 1.2 (Rigorous)===
+_**Recall that every conditional statement \boldsymbol{p\Longrightarrow q} is always logically equivalent to its contrapositive \boldsymbol{\lnot q\Longrightarrow\lnot p.}**_
+
+Combining (1),(2) and (3) gives \lefteqn{\underbrace{\phantom{\text{purple}\Longrightarrow\text{cannot subtract}}}_{(2)}}\text{purple}\Longrightarrow\overbrace{\text{cannot subtract}\Longrightarrow\lefteqn{\underbrace{\phantom{\text{cannot add}\Longrightarrow\text{not happy}}}_{\text{Contrapositive of }(1)}}\text{cannot add}}^{(3)}\Longrightarrow\text{not happy}. \hspace{15mm}(**) Applying the hypothetical syllogism to (**), we conclude that \text{purple}\Longrightarrow\text{not happy}, whose contrapositive is \text{happy}\Longrightarrow\text{not purple}. Therefore, the answer is \boxed{\textbf{(D)}}.
+
+**Remark**
+
+The conclusions in the other choices do not follow from (**):
+
+\textbf{(A) }\text{purple}\Longrightarrow\text{can add}
+
+\textbf{(B) }\text{purple}\Longrightarrow\text{happy}
+
+\textbf{(C) }\text{can add}\Longrightarrow\text{purple}
+
+\textbf{(E) }\text{happy}\Longrightarrow\text{cannot subtract}
+
+~MRENTHUSIASM
+
+==Solution 2 (Process of Elimination)==
+From Solution 1.1, we can also see this through the process of elimination. 
+Statement A is false because purple snakes cannot add. B is false as well  because since happy snakes can add and purple snakes can not add, purple snakes are not happy snakes. E is false using the same reasoning, purple snakes are not happy snakes so happy snakes can subtract since purple snakes cannot subtract. C is false since snakes that can add are happy, not purple. That leaves statement D. \boxed{\textbf{(D)}} is the only correct statement.
+
+~Bakedpotato66
+
+==Solution 3 (Rigorous)==
+We first convert each statement to "If X, then Y" form:
+
+* If a snake is happy, then it can add.
+
+* If a snake is purple, then it can't subtract.
+
+* If a snake can't subtract, then it can't add.
+
+Now, we simply check the truth value for each statement: 
+
+ 1.   Combining the last two propositions, we have * If a snake is purple, then it can't add. 
+Thus, \textbf{(A)} is never true.
+
+2.   From the last part, we found that * If a snake is purple, then it can't add. 
+Also, since the contrapositive of a proposition has the same truth value as the proposition itself, we know, from the first statement, that * If a snake can't add, then it isn't happy.
+
+Combining these two propositions, we find that * If a snake is purple, then it isn't happy. Purple snakes are not happy.
+
+Thus, \textbf{(B)} is never true.
+
+3.   From part \textbf{(A)}, we found that "If a snake is purple, then it can't add." This implies its contrapositive, "If a snake can add, then it is not purple." is true, meaning \textbf{(C)} is NEVER true. [Thanks again to MRENTHUSIASM for pointing this out!]
+
+4.   From the first statement, we have * If a snake is happy, then it can add.
+From the contrapositive of the third statement, we have * If a snake can add, then it can subtract.
+
+Then, from the contrapositive of the second statement, we have * If a snake can subtract, then it is not purple.
+
+Combining all of these yields * If a snake is happy, then it is not purple.
+
+Thus, \textbf{(D)} is always true.
+
+5.   From the first proposition, we have * If a snake is happy, then it can add. 
+From the contrapositive of the third proposition, we have * If a snake can add, then it can subtract.
+
+Combining these two propositions gives * If a snake is happy, then it can subtract.
+
+Thus, \textbf{(E)} is never true.
+
+Therefore, \boxed{\textbf{(D)}} is our answer.
+
+~ Peace09 (My First Wiki Solution!)
+
+~ MRENTHUSIASM (Revision Suggestions and Code Adjustments)
+
+==Video Solution (Simple & Quick)==
+https://youtu.be/hJKHaIcyIxA
+
+~ Education the Study of Everything
+
+==Video Solution by Hawk Math==
+https://www.youtube.com/watch?v=P5al76DxyHY
+
+== Video Solution by OmegaLearn (Using Logic to Eliminate Choices) ==
+https://youtu.be/Mofw3VXHPyg
+
+~ pi_is_3.14
+
+==Video Solution==
+https://youtu.be/uDJv06-cNrI
+
+~savannahsolver
+
+==Video Solution by TheBeautyofMath==
+https://youtu.be/s6E4E06XhPU?t=202 (AMC10A)
+
+https://youtu.be/rEWS75W0Q54?t=353 (AMC12A)
+
+~IceMatrix
+
+==Video Solution by The Learning Royal==
+https://youtu.be/AWjOeBFyeb4
+
+==See also==
+{{AMC10 box|year=2021|ab=A|num-b=6|num-a=8}}
+{{AMC12 box|year=2021|ab=A|num-b=3|num-a=5}}
+{{MAA Notice}}

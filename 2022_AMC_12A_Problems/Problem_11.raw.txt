@@ -1,0 +1,69 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2022_AMC_12A_Problems/Problem_11&action=raw
+
+Published Time: Wed, 25 Sep 2024 06:00:51 GMT
+
+Markdown Content:
+==Problem==
+
+What is the product of all real numbers x such that the distance on the number line between \log_6x and \log_69 is twice the distance on the number line between \log_610 and 1?
+
+\textbf{(A) } 10 \qquad \textbf{(B) } 18 \qquad \textbf{(C) } 25 \qquad \textbf{(D) } 36 \qquad \textbf{(E) } 81
+
+==Solution 1==
+Let a = 2 \cdot |\log_6 10 - 1| = |\log_6 9 - \log_6 x| = \left|\log_6 \frac{9}{x}\right| .
+
+ \pm a = \log_6 \frac{9}{x} \implies 6^{\pm a} = b^{\pm 1} = \frac{9}{x} \implies x = 9 \cdot b^{\pm 1}  
+
+ 9b^1 \cdot 9b^{-1} = \boxed{81}.
+
+~ oinava
+
+==Solution 2==
+First, notice that there must be two such numbers: one greater than \log_69 and one less than it. Furthermore, they both have to be the same distance away, namely 2(\log_610 - 1). Let these two numbers be \log_6a and \log_6b. Because they are equidistant from \log_69, we have \frac{\log_6a + \log_6b}{2} = \log_69. Using log properties, this simplifies to \log_6{\sqrt{ab}} = \log_69. We then have \sqrt{ab} = 9, so ab = \boxed{\textbf{(E) } 81}.
+
+~ jamesl123456
+
+==Solution 3 (Logarithmic Rules and Casework)==
+
+In effect we must find all x such that \left|\log_6 9 - \log_6 x\right| = 2d where d = \log_6 10 - 1.
+
+Notice that by log rules
+ d = \log_6 10 - 1 = \log_6 \frac{10}{6} 
+Using log rules again,
+ 2d = 2\log_6 \frac{10}{6} = \log_6 \frac{25}{9} 
+
+Now we proceed by casework for the distinct values of x.
+
+===Case 1===
+ \log_6 9 - \log_6 x_1 = 2d 
+Subbing in for 2d and using log rules,
+ \log_6 \frac{9}{x_1} = \log_6 \frac{25}{9} 
+From this we may conclude that
+ \frac{9}{x_1} = \frac{25}{9} \implies x_1 = \frac{81}{25} 
+
+===Case 2===
+ \log_6 9 - \log_6 x_2 = -2d 
+Subbing in for -2d and using log rules,
+ \log_6 \frac{9}{x_2} = \log_6 \frac{9}{25} 
+From this we conclude that
+ \frac{9}{x_2} = \frac{9}{25} \implies x_2 = 25 
+
+Finding the product of the distinct values,
+x_1x_2 = \boxed{\textbf{(E) } 81}
+
+~Spektrum
+
+==Video Solution 1 (Quick and Simple)==
+https://youtu.be/2sqyO4SlFfc
+
+~Education, the Study of Everything
+
+==Video Solution 1 (Understand the question first)==
+https://youtu.be/7yAh4MtJ8a8?si=CsVGUSiyUiT4nNI0&t=2076
+
+~Math-X
+== See Also ==
+{{AMC12 box|year=2022|ab=A|num-b=10|num-a=12}}
+{{MAA Notice}}

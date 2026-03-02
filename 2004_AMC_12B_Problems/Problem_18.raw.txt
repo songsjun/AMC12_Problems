@@ -1,0 +1,45 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2004_AMC_12B_Problems/Problem_18&action=raw
+
+Published Time: Sat, 27 Aug 2016 20:29:52 GMT
+
+Markdown Content:
+== Problem ==
+
+Points A and B are on the parabola y=4x^2+7x-1, and the origin is the midpoint of AB. What is the length of AB?
+
+ \mathrm{(A)}\ 2\sqrt5 \qquad \mathrm{(B)}\ 5+\frac{\sqrt2}{2} \qquad \mathrm{(C)}\ 5+\sqrt2 \qquad \mathrm{(D)}\ 7 \qquad \mathrm{(E)}\ 5\sqrt2 
+
+== Solution ==
+
+Let the coordinates of A be (x_A,y_A). As A lies on the parabola, we have y_A=4x_A^2+7x_A-1.
+As the origin is the midpoint of AB, the coordinates of B are (-x_A,-y_A).
+We need to choose x_A so that B will lie on the parabola as well. In other words, we need -y_A = 4(-x_A)^2 + 7(-x_A) - 1.
+
+Substituting for y_A, we get: -4x_A^2 - 7x_A + 1 = 4(-x_A)^2 + 7(-x_A) - 1.
+
+This simplifies to 8x_A^2 - 2 = 0, which solves to x_A = \pm 1/2. Both roots lead to the same pair of points: (1/2,7/2) and (-1/2,-7/2). Their distance is \sqrt{ 1^2 + 7^2 } = \sqrt{50} = \boxed{5\sqrt2}.
+
+==Alternate Solution==
+Let the coordinates of A and B be (x_A, y_A) and (x_B, y_B), respectively. Since the median of the points lies on the origin, x_A + x_B = y_A + y_B = 0 and expanding y_A + y_B, we find:
+4x_A^2 + 7x_A - 1 + 4x_B^2 + 7x_B - 1 = 0
+4(x_A^2 + x_B^2) + 7(x_A + x_B) = 2
+x_A^2 + x_B^2 = \frac{1}{2}.
+
+It also follows that (x_A + x_B)^2 = 0. Expanding this, we find:
+x_A^2 + 2x_A x_B + x_B^2 = 0
+\frac{1}{2} + 2x_A x_B = 0
+x_A x_B = -\frac{1}{4}.
+
+To find the distance between the points, \sqrt{(x_A - x_B)^2 + (y_A - y_B)^2} must be found. Expanding y_A - y_B:
+y_A - y_B = 4x_A^2 + 7x_A - 1 - 4x_B^2 - 7x_B + 1
+= 4(x_A^2 - x_B^2) + 7(x_A - x_B)
+= 4(x_A + x_B)(x_A - x_B) + 7(x_A - x_B)
+= 7(x_A - x_B)
+we find the distance to be \sqrt{50(x_A - x_B)^2}. Expanding this yields 5\sqrt{2(x_A^2 + x_B^2 - 2x_A x_B)} = \boxed{5\sqrt{2}}.
+
+== See Also ==
+
+{{AMC12 box|year=2004|ab=B|num-b=17|num-a=19}}
+{{MAA Notice}}

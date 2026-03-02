@@ -1,0 +1,29 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2006_AMC_12B_Problems/Problem_15&action=raw
+
+Published Time: Sun, 06 Oct 2019 20:40:27 GMT
+
+Markdown Content:
+== Problem ==
+Circles with centers  O and  P have radii 2 and 4, respectively, and are externally tangent.  Points  A and  B are on the circle centered at  O, and points  C and  D are on the circle centered at  P, such that  \overline{AD} and  \overline{BC} are common external tangents to the circles.  What is the area of hexagon  AOBCPD?
+
+ // from amc10 problem series unitsize(0.4 cm); defaultpen(linewidth(0.7) + fontsize(11)); pair A, B, C, D; pair[] O; O[1] = (6,0); O[2] = (12,0); A = (32/6,8*sqrt(2)/6); B = (32/6,-8*sqrt(2)/6); C = 2*B; D = 2*A; draw(Circle(O[1],2)); draw(Circle(O[2],4)); draw((0.7*A)--(1.2*D)); draw((0.7*B)--(1.2*C)); draw(O[1]--O[2]); draw(A--O[1]); draw(B--O[1]); draw(C--O[2]); draw(D--O[2]); label("$A$", A, NW); label("$B$", B, SW); label("$C$", C, SW); label("$D$", D, NW); dot("$O$", O[1], SE); dot("$P$", O[2], SE); label("$2$", (A + O[1])/2, E); label("$4$", (D + O[2])/2, E);
+
+ \textbf{(A) } 18\sqrt {3} \qquad \textbf{(B) } 24\sqrt {2} \qquad \textbf{(C) } 36 \qquad \textbf{(D) } 24\sqrt {3} \qquad \textbf{(E) } 32\sqrt {2}
+
+== Solution ==
+
+Draw the altitude from O onto DP and call the point H. Because \angle OAD and \angle ADP are right angles due to being tangent to the circles, and the altitude creates \angle OHD as a right angle. ADHO is a rectangle with OH bisecting DP. The length OP is 4+2 and HP has a length of 2, so by pythagorean's, OH is \sqrt{32}.
+
+2 \cdot \sqrt{32} + \frac{1}{2}\cdot2\cdot \sqrt{32} = 3\sqrt{32} = 12\sqrt{2}, which is half the area of the hexagon, so the area of the entire hexagon is 2\cdot12\sqrt{2} = \boxed{(B)24\sqrt{2}}
+
+== Solution 2 == 
+
+ADPO and OPBC are congruent right trapezoids with legs 2 and 4 and with OP equal to 6. Draw an altitude from O to either DP or CP, creating a rectangle with width 2 and base x, and a right triangle with one leg 2, the hypotenuse 6, and the other x. Using
+the [[Pythagorean theorem]], x is equal to 4\sqrt{2}, and x is also equal to the height of the trapezoid. The area of the trapezoid is thus \frac{1}{2}\cdot(4+2)\cdot4\sqrt{2} = 12\sqrt{2}, and the total area is two trapezoids, or \boxed{24\sqrt{2}}.
+
+== See also ==
+{{AMC12 box|year=2006|ab=B|num-b=14|num-a=16}}
+{{AMC10 box|year=2006|ab=B|num-b=23|num-a=25}}
+{{MAA Notice}}

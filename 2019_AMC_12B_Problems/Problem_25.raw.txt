@@ -1,0 +1,110 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2019_AMC_12B_Problems/Problem_25&action=raw
+
+Published Time: Mon, 14 Jul 2025 05:48:34 GMT
+
+Markdown Content:
+==Problem==
+
+Let ABCD be a convex quadrilateral with BC=2 and CD=6. Suppose that the centroids of \triangle ABC,\triangle BCD, and \triangle ACD form the vertices of an equilateral triangle. What is the maximum possible value of the area of ABCD?
+
+\textbf{(A) } 27 \qquad\textbf{(B) } 16\sqrt3 \qquad\textbf{(C) } 12+10\sqrt3 \qquad\textbf{(D) } 9+12\sqrt3 \qquad\textbf{(E) } 30
+
+==Solution 1 (vectors)==
+Place an origin at A, and assign position vectors of B = \vec{p} and D = \vec{q}. Since AB is not parallel to AD, vectors \vec{p} and \vec{q} are linearly independent, so we can write C = m\vec{p} + n\vec{q} for some constants m and n. Now, recall that the centroid of a triangle \triangle XYZ has position vector \frac{1}{3}\left(\vec{x}+\vec{y}+\vec{z}\right). 
+
+Thus the centroid of \triangle ABC is g_1 = \frac{1}{3}(m+1)\vec{p} + \frac{1}{3}n\vec{q}; the centroid of \triangle BCD is g_2 = \frac{1}{3}(m+1)\vec{p} + \frac{1}{3}(n+1)\vec{q}; and the centroid of \triangle ACD is g_3 = \frac{1}{3}m\vec{p} + \frac{1}{3}(n+1)\vec{q}. 
+
+Hence \overrightarrow{G_{1}G_{2}} = \frac{1}{3}\vec{q}, \overrightarrow{G_{2}G_{3}} = -\frac{1}{3}\vec{p}, and \overrightarrow{G_{3}G_{1}} = \frac{1}{3}\vec{p} - \frac{1}{3}\vec{q}. For \triangle G_{1}G_{2}G_{3} to be equilateral, we need \left|\overrightarrow{G_{1}G_{2}}\right| = \left|\overrightarrow{G_{2}G_{3}}\right| \Rightarrow \left|\vec{p}\right| = \left|\vec{q}\right| \Rightarrow AB = AD. Further, \left|\overrightarrow{G_{1}G_{2}}\right| = \left|\overrightarrow{G_{1}G_{3}}\right| \Rightarrow \left|\vec{p}\right| = \left|\vec{p} - \vec{q}\right| = BD. Hence we have AB = AD = BD, so \triangle ABD is equilateral.
+
+Now let the side length of \triangle ABD be k, and let \angle BCD = \theta. By the Law of Cosines in \triangle BCD, we have k^2 = 2^2 + 6^2 - 2 \cdot 2 \cdot 6 \cdot \cos{\theta} = 40 - 24\cos{\theta}. Since \triangle ABD is equilateral, its area is \frac{\sqrt{3}}{4}k^2 = 10\sqrt{3} - 6\sqrt{3}\cos{\theta}, while the area of \triangle BCD is \frac{1}{2} \cdot 2 \cdot 6 \cdot \sin{\theta} = 6 \sin{\theta}. Thus the total area of ABCD is 10\sqrt{3} + 6\left(\sin{\theta} - \sqrt{3}\cos{\theta}\right) = 10\sqrt{3} + 12\left(\frac{1}{2} \sin{\theta} - \frac{\sqrt{3}}{2}\cos{\theta}\right) = 10\sqrt{3}+12\sin{\left(\theta-60^{\circ}\right)}, where in the last step we used the subtraction formula for \sin. Alternatively, we can use calculus to find the local maximum. Observe that \sin{\left(\theta-60^{\circ}\right)} has maximum value 1 when e.g. \theta = 150^{\circ}, which is a valid configuration, so the maximum area is 10\sqrt{3} + 12(1) = \boxed{\textbf{(C) } 12+10\sqrt3}.
+
+==Solution 2==
+
+Let G_1, G_2, G_3 be the centroids of ABC, BCD, and CDA respectively, and let M be the midpoint of BC. A, G_1, and M are collinear due to well-known properties of the centroid. Likewise, D, G_2, and M are collinear as well. Because (as is also well-known) 3MG_1 = AM and 3MG_2 = DM, we have \triangle MG_1G_2\sim\triangle MAD. This implies that AD is parallel to G_1G_2, and in terms of lengths, AD = 3G_1G_2. (SAS Similarity)
+
+We can apply the same argument to the pair of triangles \triangle BCD and \triangle ACD, concluding that AB is parallel to G_2G_3 and AB = 3G_2G_3. Because 3G_1G_2 = 3G_2G_3 (due to the triangle being equilateral), AB = AD, and the pair of parallel lines preserve the 60^{\circ} angle, meaning \angle BAD = 60^\circ. Therefore \triangle BAD is equilateral.
+
+At this point, we can finish as in Solution 1, or, to avoid using trigonometry, we can continue as follows:
+
+Let BD = 2x, where 2 < x < 4 due to the Triangle Inequality in \triangle BCD. By breaking the quadrilateral into \triangle ABD and \triangle BCD, we can create an expression for the area of ABCD. We use the formula for the area of an equilateral triangle given its side length to find the area of \triangle ABD and Heron's formula to find the area of \triangle BCD.
+
+After simplifying,
+
+[ABCD] = x^2\sqrt 3 + \sqrt{36 - (x^2-10)^2}
+
+Substituting k = x^2 - 10, the expression becomes
+
+[ABCD] = k\sqrt{3} + \sqrt{36 - k^2} + 10\sqrt{3}
+
+We can ignore the 10\sqrt{3} for now and focus on k\sqrt{3} + \sqrt{36 - k^2}.
+
+By the Cauchy-Schwarz inequality,
+
+\left(k\sqrt 3 + \sqrt{36-k^2}\right)^2 \leq \left(\left(\sqrt{3}\right)^2+1^2\right)\left(\left(k\right)^2 + \left(\sqrt{36-k^2}\right)^2\right)
+
+The RHS simplifies to 12^2, meaning the maximum value of k\sqrt{3} + \sqrt{36 - k^2} is 12.
+
+Thus the maximum possible area of ABCD is \boxed{\textbf{(C) }12 + 10\sqrt{3}}.
+
+==Solution 3 (Complex Numbers)==
+Let A, B, C, and D correspond to the complex numbers a, b, c, and d, respectively. Then, the complex representations of the centroids are (a+b+c)/3, (b+c+d)/3, and (a+c+d)/3. The pairwise distances between the centroids are \lvert (d-a)/3 \rvert, \lvert (b-a)/3 \rvert, and \lvert (b-d)/3 \rvert, all equal. Thus, \lvert (b-a)/3 \rvert=\lvert (d-a)/3 \rvert=\lvert (b-d)/3 \rvert, so \lvert (b-a) \rvert=\lvert (d-a) \rvert=\lvert (b-d) \rvert. Hence, \triangle DBA is equilateral.
+
+By the Law of Cosines,
+[ABCD]=[ABD]+[BCD]=\frac{(\sqrt{2^2+6^2-2 \cdot 2 \cdot 6 \cos(\angle BCD)})^2 \cdot \sqrt{3}}{4}+1/2 \cdot 2 \cdot 6 \sin(\angle BCD).
+
+[ABCD]=10\sqrt{3}+6(\sin{\angle BCD}-\sqrt{3}\cos(\angle BCD))= 10\sqrt{3}+12\sin(\angle BCD-60^{\circ}) \le 12 + 10\sqrt{3}. Thus, the maximum possible area of ABCD is \boxed{\textbf{(C) }12 + 10\sqrt{3}}.
+
+~ Leo.Euler
+
+==Solution 4 (Homothety)==
+Let G_1, G_2, and G_3 be the centroids of \triangle ABC, \triangle BCD, and \triangle ACD, respectively, and let X, Y, and Z be the midpoints of \overline{AB}, \overline{BD}, and \overline{AD}, respectively. Note that G_1, G_2, and G_3 are \frac{2}{3} of the way from C to X, Y, and Z, respectively, by a well-known property of centroids. Then a homothety centered at C with ratio \frac{3}{2} maps G_1, G_2, and G_3 to X, Y, and Z, respectively, implying that \triangle XYZ is equilateral too. But \triangle XYZ is the medial triangle of \triangle ABD, so \triangle ABD is also equilateral. We may finish with the methods in the solutions above.
+
+~ numberwhiz
+
+While the solutions above have attempted the problem in general, knowing the fact that \triangle ABD is equilateral greatly reduces the effort to find the final answer, hence I propose an alternative after this.
+
+Let AB = BD = AD = x and \angle BCD = \theta. By cosine rule on \triangle BCD :
+x^2 = 40 - 24\cos \theta
+Thus, the total area of the quadrilateral is supposedly :
+\frac{\sqrt{3}}{4}(x^2) + \frac{1}{2}(2)(6)\sin \theta
+\implies \frac{\sqrt{3}}{4}(40 - 24\cos \theta) + 6\sin \theta
+\implies 6(\sin \theta - \sqrt{3}\cos \theta) + 10\sqrt{3} \geq 12 + 10\sqrt{3}
+Where the inequality comes from a common trigonometric identity, (\sin \theta - \sqrt{3}\cos \theta) \geq \sqrt{1^2 + \big(\sqrt{3}\big)^2} = 2.
+
+~ SouradipClash_03
+
+==Video Solution by MOP 2024==
+https://youtu.be/c26N2w2MMQE
+
+~r00tsOfUnity
+
+===Solution 5===
+ 
+  
+Let X, Y, Z be the centroids of \triangle ABC, \triangle BCD, \triangle ACD respectively, then
+
+ XZ//BD, since EX=\frac13 EB, EZ=\frac13 ED,
+
+ XY//GE, since BX=\frac23BE, BY=\frac23BG, EG//AD by midsegment theorem, so XY//AD
+
+ Similarly, YZ//AB,
+
+ So \triangle ABD is an equilateral triangle
+
+ Assume \alpha=\angle BCD, then BD^2=BC^2+CD^2-2\cdot BC\cdot CD\cos \alpha=40-24\cos\alpha, the area
+
+ [ABCD]=[ABD]+[BCD]=\frac{\sqrt3}4 BD^2+\frac12\cdot BC\cdot CD\sin\alpha=
+
+10\sqrt3+6(\sin\alpha-\sqrt3\cos \alpha)=10\sqrt3+12\sin(\alpha-60^\circ)
+
+ The maximal value happens when \sin(\alpha-60^\circ)=1, and the value is 10\sqrt3+12, and the answer is \boxed{\textbf{(C)} 12+10\sqrt3}.
+
+ import graph; size(11.42cm); real labelscalefactor = 0.5; /* changes label-to-point distance */ pen dps = linewidth(0.7) + fontsize(10); defaultpen(dps); /* default pen style */ pen dotstyle = black; /* point style */ real xmin = -1.58, xmax = 9.84, ymin = -7.74, ymax = 8.48; /* image dimensions */ /* draw figures */ draw((0.,0.)--(4.,0.), linewidth(2.)); draw((2.,3.4641016151377544)--(4.,0.), linewidth(2.)); draw((0.,0.)--(2.,3.4641016151377544), linewidth(2.)); draw((4.,0.)--(5.,1.), linewidth(2.)); draw((5.,1.)--(2.,3.4641016151377544), linewidth(2.)); draw((0.,0.)--(5.,1.), linewidth(2.)); draw((2.5,0.5)--(4.,0.), linewidth(2.)); draw((4.,0.)--(3.5,2.232050807568877), linewidth(2.)); draw((2.,3.4641016151377544)--(2.5,0.5), linewidth(2.)); draw((0.,0.)--(3.5,2.232050807568877), linewidth(2.)); draw((0.,0.)--(4.5,0.5), linewidth(2.)); draw((2.,3.4641016151377544)--(4.5,0.5), linewidth(2.)); draw((2.333333333333333,1.4880338717125845)--(3.,0.3333333333333333), linewidth(2.) + linetype("2 2")); draw((3.666666666666666,1.488033871712585)--(3.,0.3333333333333333), linewidth(2.) + linetype("2 2")); /* dots and labels */ dot((0.,0.),dotstyle); label("$A$", (-0.2,-0.18), NE * labelscalefactor); dot((4.,0.),dotstyle); label("$B$", (3.98,-0.3), NE * labelscalefactor); dot((2.,3.4641016151377544),dotstyle); label("$D$", (1.86,3.62), NE * labelscalefactor); dot((5.,1.),dotstyle); label("$C$", (5.06,0.92), NE * labelscalefactor); dot((2.5,0.5),linewidth(4.pt) + dotstyle); label("$E$", (2.2,0.5), NE * labelscalefactor); dot((4.5,0.5),linewidth(4.pt) + dotstyle); label("$F$", (4.52,0.3), NE * labelscalefactor); dot((3.5,2.232050807568877),linewidth(4.pt) + dotstyle); label("$G$", (3.58,2.4), NE * labelscalefactor); dot((2.333333333333333,1.4880338717125845),linewidth(4.pt) + dotstyle); label("$Z$", (2.06,1.44), NE * labelscalefactor); dot((3.,0.3333333333333333),linewidth(4.pt) + dotstyle); label("$X$", (2.92,0.04), NE * labelscalefactor); dot((3.666666666666666,1.488033871712585),linewidth(4.pt) + dotstyle); label("$Y$", (3.76,1.5), NE * labelscalefactor); clip((xmin,ymin)--(xmin,ymax)--(xmax,ymax)--(xmax,ymin)--cycle); 
+
+~szhangmath
+
+==See Also==
+{{AMC12 box|year=2019|ab=B|num-b=24|after=Last Problem}}
+{{MAA Notice}}

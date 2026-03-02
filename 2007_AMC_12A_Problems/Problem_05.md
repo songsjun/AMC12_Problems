@@ -1,0 +1,15 @@
+# 2007 AMC 12A Problem 5
+
+> This problem is the same as [2007 AMC 12A #5](https://artofproblemsolving.com/wiki/index.php/2007_AMC_12A_Problems) and [2007 AMC 10A #7](https://artofproblemsolving.com/wiki/index.php/2007_AMC_10A_Problems/Problem_7).
+## Problem
+Last year Mr. Jon Q. Public received an inheritance. He paid 20\% in federal taxes on the inheritance, and paid 10\% of what he had left in state taxes. He paid a total of \textdollar10500 for both taxes. How many dollars was his inheritance?
+
+
+$$(\mathrm {A})\ 30000 \qquad (\mathrm {B})\ 32500 \qquad(\mathrm {C})\ 35000 \qquad(\mathrm {D})\ 37500 \qquad(\mathrm {E})\ 40000$$
+
+## Solution 1
+After paying his taxes, he has 0.8*0.9=0.72 of his earnings left. Since 10500 is 0.28 of his income, he got a total of $\frac{10500}{0.28}=$37500\ $\mathrm{(D)}.$
+## Solution 2
+Let his total inheritance be a number x. The amount of tax he has to pay at first can be represented as $0.2x$. The amount of money he has left over after this expense can be written as $0.8x$. He then has to pay 10\% tax on this remaining amount, which can be written as $0.1(0.8x)=0.08x$. The combined expense of these taxes is 10500, so $0.2x+0.08x = 10500 \Longrightarrow 0.28$x = 10500. Therefore $x =\frac{10500}{0.28}$\ = 37500 $\mathrm{(D)}.$ Ankitamc (talk) 13:32, 17 January 2021 (EST)AnkitAmc.
+*~edited by mobius247*
+## See also

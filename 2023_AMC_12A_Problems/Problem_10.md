@@ -1,0 +1,123 @@
+# 2023 AMC 12A Problem 10
+
+## Problem
+Positive real numbers x and y satisfy $y^3=x^2$ and $(y-x)^2=4y^2$. What is x+y?
+$\textbf{(A) }12\qquad\textbf{(B) }18\qquad\textbf{(C) }24\qquad\textbf{(D) }36\qquad\textbf{(E) }42$
+## Solution 1
+Because y^3=x^2, set $x=a^3, y=a^2 (a\neq 0).$ Put them $in (y-x)^2=4y^2$ we get $(a^2(a-1))^2=4a^4$ which implies $a^2-2a+1=4$. Solve the equation to get $a=3$ or -1. Since x and y are positive, $a=3$ and $x+y=3^3+3^2=\boxed{\textbf{(D)} 36}.$
+
+*~plasta*
+## Solution 2
+Let's take the second equation and square root both sides. This will obtain $y-x =\pm2$y. Solving the case where y-x=+$2y$, we'd find that x=-y. This is known to be false because both x and y have to be positive, and x=-y implies that at least one of the variables is not positive. So we instead solve the case where y-x=-$2y$. This means that $x=3y$. Inputting this value into the first equation, we find $y^3 =$ (3y)^2$$, from which $y=9$.
+
+This means that $x=3y=3(9)=27$. Therefore, $x+y=9+27=\boxed{36}$
+
+*~lprado*
+## Solution 3: Quadratic formula
+First, expand:
+
+$$(y-x)^2 = 4y^2$$
+
+$$y^2-2xy+x^2 = 4y^2$$
+
+$$y^2-2yx+x^2 = 4y^2$$
+
+$$x^2-2xy-3y^2 = 0$$
+
+$$x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}$$
+
+consider
+
+$$
+a=1
+b=-2y
+c=-3y^2
+$$
+
+
+$$x=\frac{2y\pm\sqrt{(-2y)^2-4(1)(-3y^2)}}{2a}$$
+
+$$x=\frac{2y\pm\sqrt{16y^2}}{2a}$$
+
+$$\frac{2y+4y}{2} or \frac{2y-4y}{2}$$
+
+$x=y+2$y and $x=y-2$y
+
+$x=3y$ and x=-y
+
+we can see both x and y will be positive in $x=3y$
+
+now do same as solution 2
+
+$$
+y^3 = (3y)^2
+y^3 = 9y^2
+y=9
+$$
+
+This means that $x=3y=3(9)=27$. Therefore, $x+y=9+27=\boxed{36}$
+
+alternate solving similar to solution $5(~soapedya)$: you can also factor at $x^2-2xy-3y^2 = 0$ into ($x-3$y)(x+y) = 0
+
+Since x+$y = 0$ would result in one of them being negative (or just look at the answer choices; it is not 0), $x-3$y = 0 so $x =3y$. plugging back into $y^3 = x^2$ gives $y = 9$ and then $x=27$, so x+y is $\boxed{36}.$
+## Solution 4: Substitution
+Since a^2 = |a|$^2,$ we can rewrite the second equation as $(x-y)^2=4y^2$
+
+Let u=x+y. The second equation becomes
+
+
+$$
+(u-2y)^2 = 4y^2
+u^2 - 4uy = 0
+u = 4y
+x+y = 4y
+x = 3y.
+$$
+
+
+Substituting this into the first equation, we have
+
+
+$$
+y^3 = (3y)^2,
+so x = 9.
+$$
+
+
+Hence $x = 27$ and x + $y =\boxed{\textbf{(D)} 36}.$
+
+*~Benedict T (countmath1)*
+## Solution 5: Difference of Squares
+We will use the difference of squares in the second equation.
+
+
+$$
+(y-x)^2=4y^2
+(y-x)^2-(2y)^2=0
+(y-x-2y)(y-x+2y)=0
+-(x+y)(3y-x)=0
+$$
+
+
+Since x and y are positive, x+y is non-zero. Thus, $3y$=x.
+
+Substituting into the first equation:
+
+
+$$
+y^3=x^2
+y^3=9y^2
+y=9, x=27 \rightarrow x+y=\boxed{\textbf{(D)} 36}
+$$
+
+## Video Solution (easy to digest) by Power Solve
+https://youtu.be/YXIH3UbLqK8?si=ia236Rh1UU681RNT&t=1279
+## Video Solution (⚡ Under 3 minutes ⚡)
+https://youtu.be/G63hRr9bkzI
+
+*~Education, the Study of Everything*
+## Video Solution
+https://youtu.be/OqlerYo-uPU
+
+*~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)*
+## See also

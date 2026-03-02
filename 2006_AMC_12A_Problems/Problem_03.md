@@ -1,0 +1,12 @@
+# 2006 AMC 12A Problem 3
+
+> This problem is the same as [2006 AMC 12A #3](https://artofproblemsolving.com/wiki/index.php/2006_AMC_12A_Problems) and [2006 AMC 10A #3](https://artofproblemsolving.com/wiki/index.php/2006_AMC_10A_Problems/Problem_3).
+## Problem
+The ratio of Mary's age to Alice's age is 3:5. Alice is 30 years old. How old is Mary?
+
+$\textbf{(A)}\ 15\qquad\textbf{(B)}\ 18\qquad\textbf{(C)}\ 20\qquad\textbf{(D)}\ 24\qquad\textbf{(E)}\ 50$
+## Solution 1
+Let m be Mary's age. Then $\frac{m}{30}=\frac{3}{5}.$ Solving for m, we obtain $m=\boxed{\textbf{(B) }18}.$
+## Solution 2
+We can see this is a combined ratio of 8, (5+3). We can equalize by doing $30\div5=6,$ and $6\cdot3=\boxed{\textbf{(B) }18}.$ With the common ratio of 8 and difference ratio of 6, we see $6\cdot8=30+18.$ Therefore, we can see our answer is correct.
+## See also

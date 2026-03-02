@@ -1,0 +1,48 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2014_AMC_12A_Problems/Problem_13&action=raw
+
+Published Time: Fri, 04 Nov 2022 08:49:16 GMT
+
+Markdown Content:
+==Problem==
+
+A fancy bed and breakfast inn has 5 rooms, each with a distinctive color-coded decor.  One day 5 friends arrive to spend the night.  There are no other guests that night.  The friends can room in any combination they wish, but with no more than 2 friends per room.  In how many ways can the innkeeper assign the guests to the rooms?
+
+\textbf{(A) }2100\qquad \textbf{(B) }2220\qquad \textbf{(C) }3000\qquad \textbf{(D) }3120\qquad \textbf{(E) }3125\qquad
+
+==Solution 1==
+
+We can discern three cases.
+
+'''Case 1:''' Each room houses one guest. In this case, we have 5 guests to choose for the first room, 4 for the second, ..., for a total of 5!=120 assignments.
+
+'''Case 2:''' Three rooms house one guest; one houses two. We have \binom{5}{3} ways to choose the three rooms with 1 guest, and \binom{2}{1} to choose the remaining one with 2. There are 5\cdot4\cdot3 ways to place guests in the first three rooms, with the last two residing in the two-person room, for a total of \binom{5}{3}\binom{2}{1}\cdot5\cdot4\cdot3=1200 ways.
+
+'''Case 3:''' Two rooms house two guests; one houses one. We have \binom{5}{2} to choose the two rooms with two people, and \binom{3}{1} to choose one remaining room for one person. Then there are 5 choices for the lonely person, and \binom{4}{2} for the two in the first two-person room. The last two will stay in the other two-room, so there are \binom{5}{2}\binom{3}{1}\cdot5\cdot\binom{4}{2}=900 ways.
+
+In total, there are 120+1200+900=2220 assignments, or \boxed{\textbf{(B)}}.
+
+(Solution by AwesomeToad16)
+
+==Solution 2==
+
+We can work in reverse by first determining the number of combinations in which there are more than 2 friends in at least one room. There are three cases:
+
+'''Case 1:''' Three friends are in one room. Since there are 5 possible rooms in which this can occur, we are choosing three friends from the five, and the other two friends can each be in any of the four remaining rooms,
+there are 5\cdot\binom{5}{3}\cdot4\cdot4 = 800 possibilities.
+
+'''Case 2:''' Four friends are in one room. Again, there are 5 possible rooms, we are choosing four of the five friends, and the other one can be in any of the other four rooms, so there are 5\cdot\binom{5}{4}\cdot4= 100 possibilities.
+
+'''Case 3:''' Five friends are in one room. There are 5 possible rooms in which this can occur, so there are 5 possibilities.
+
+Since there are 5^5 = 3125 possible combinations of the friends, the number fitting the given criteria is 3125 - (800+100+5) = \boxed{2220}.
+
+== Video Solution by OmegaLearn ==
+https://youtu.be/kxgUdv_L-ys?t=13
+
+~ pi_is_3.14
+
+==See Also==
+{{AMC12 box|year=2014|ab=A|num-b=12|num-a=14}}
+{{MAA Notice}}

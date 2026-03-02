@@ -1,0 +1,64 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2021_AMC_12B_Problems/Problem_6&action=raw
+
+Published Time: Wed, 19 Jul 2023 03:51:24 GMT
+
+Markdown Content:
+{{duplicate|[[2021 AMC 10B Problems#Problem 10|2021 AMC 10B #10]] and [[2021 AMC 12B Problems#Problem 6|2021 AMC 12B #6]]}}
+
+==Problem==
+An inverted cone with base radius 12 \mathrm{cm} and height 18 \mathrm{cm} is full of water. The water is poured into a tall cylinder whose horizontal base has radius of 24 \mathrm{cm}. What is the height in centimeters of the water in the cylinder?
+
+\textbf{(A)} ~1.5 \qquad\textbf{(B)} ~3 \qquad\textbf{(C)} ~4 \qquad\textbf{(D)} ~4.5 \qquad\textbf{(E)} ~6
+
+==Solution 1==
+The volume of a cone is \frac{1}{3} \cdot\pi \cdot r^2 \cdot h where r is the base radius and h is the height. The water completely fills up the cone so the volume of the water is \frac{1}{3}\cdot18\cdot144\pi = 6\cdot144\pi.
+
+The volume of a cylinder is \pi \cdot r^2 \cdot h so the volume of the water in the cylinder would be 24\cdot24\cdot\pi\cdot h.
+
+We can equate these two expressions because the water volume stays the same like this 24\cdot24\cdot\pi\cdot h = 6\cdot144\pi. We get 4h = 6 and h=\frac{6}{4}.
+
+So the answer is \boxed{\textbf{(A)} ~1.5}.
+
+~abhinavg0627
+
+==Solution 2==
+The water completely fills up the cone. For now, assume the radius of both cone and cylinder are the same. Then the cone has \frac{1}{3} of the volume of the cylinder, and so the height is divided by 3. Then, from the problem statement, the radius is doubled, meaning the area of the base is quadrupled (since 2^2 = 4).
+
+Therefore, the height is divided by 3 and divided by 4, which is 18 \div 3 \div 4 = \boxed{\textbf{(A)} ~1.5}.
+
+~PureSwag
+
+==Video Solution by Punxsutawney Phil==
+https://youtube.com/watch?v=qpvS2PVkI8A&t=509s
+
+== Video Solution by OmegaLearn (3D Geometry - Cones and Cylinders) ==
+https://youtu.be/4JhZLAORb8c
+
+~ pi_is_3.14
+
+==Video Solution by Hawk Math==
+https://www.youtube.com/watch?v=VzwxbsuSQ80
+
+==Video Solution by TheBeautyofMath==
+https://youtu.be/GYpAm8v1h-U?t=1068 (for AMC 10B)
+
+https://youtu.be/kuZXQYHycdk (for AMC 12B)
+
+~IceMatrix
+
+==Video Solution by Interstigation==
+https://youtu.be/DvpN56Ob6Zw?t=897
+
+~Interstigation
+
+==Video Solution (Under 2 min!)==
+https://youtu.be/6O32bUIvNEo
+
+~Education, the Study of Everything
+
+==See Also==
+{{AMC12 box|year=2021|ab=B|num-b=5|num-a=7}}
+{{AMC10 box|year=2021|ab=B|num-b=9|num-a=11}}
+{{MAA Notice}}

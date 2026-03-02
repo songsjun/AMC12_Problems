@@ -1,0 +1,48 @@
+{{duplicate|[[2014 AMC 12A Problems|2014 AMC 12A #11]] and [[2014 AMC 10A Problems|2014 AMC 10A #15]]}}
+==Problem==
+
+David drives from his home to the airport to catch a flight.  He drives <math>35</math> miles in the first hour, but realizes that he will be <math>1</math> hour late if he continues at this speed.  He increases his speed by <math>15</math> miles per hour for the rest of the way to the airport and arrives <math>30</math> minutes early.  How many miles is the airport from his home?
+
+<math>\textbf{(A) }140\qquad
+\textbf{(B) }175\qquad
+\textbf{(C) }210\qquad
+\textbf{(D) }245\qquad
+\textbf{(E) }280\qquad</math>
+
+
+==Solution 1==
+Note that he drives at <math>50</math> miles per hour after the first hour and continues doing so until he arrives.
+
+Let <math>d</math> be the distance still needed to travel after <math>1</math> hour. We have that <math>\dfrac{d}{50}+1.5=\dfrac{d}{35}</math>, where the <math>1.5</math> comes from <math>1</math> hour late decreased to <math>0.5</math> hours early.
+
+Simplifying gives <math>7d+525=10d</math>, or <math>d=175</math>.
+
+Now, we must add an extra <math>35</math> miles traveled in the first hour, giving a total of <math>\boxed{\textbf{(C) } 210}</math> miles.
+
+==Solution 2 (Answer Choices)==
+Instead of spending time thinking about how one can set up an equation to solve the problem, one can simply start checking the answer choices.
+Quickly checking, we know that neither choice <math>\textbf{(A)}</math> or choice <math>\textbf{(B)}</math> work, but <math>\textbf{(C)}</math> does. We can verify as follows. After <math>1</math> hour at <math>35 \text{ mph}</math>, David has <math>175</math> miles left. This then takes him <math>3.5</math> hours at <math>50 \text{ mph}</math>. But <math>210/35 = 6 \text{ hours}</math>. Since <math>1+3.5 = 4.5 \text{ hours}</math> is <math>1.5</math> hours less than <math>6</math>, our answer is <math>\boxed{\textbf{(C)} \: 210}</math>.
+
+==Solution 3==
+
+Let the total distance be <math>d</math>, and let the time taken after the speed change be <math>t</math>. 
+Then <math>d=35(t+1)</math>. Since 1 hour has passed, and he increased his speed by <math>15</math> miles per hour, and he had already traveled <math>35</math> miles, the new equation is <math>d-35=50(t-1-\frac{1}{2})=50(t-\frac{3}{2})</math>. Solving, <math>d=35t+35=50t-40</math>, <math>15t=75</math>, <math>t=5</math>, and <math>d=35(5+1)=35\cdot 6=210 \Longrightarrow \boxed{\textbf{(C) } 210}</math>.
+
+~JH. L
+
+==Video Solutions==
+i) (https://youtu.be/FyOhLdpeBLM?si=OY741QZ_WKpPMSDN)  [By WhyMath]
+
+ii) (https://youtu.be/UcE9-Hc3S9s?si=cuR-qhCD4Kn3D3sJ) [By Forbest Academy]
+
+iii) (https://youtu.be/eO6j_BQDyA4?si=mZg3B9pnqVjYfiP1) [By Ashley Shen (in Chinese)]
+
+~helloall35AAD
+
+==See Also==
+
+{{AMC10 box|year=2014|ab=A|num-b=14|num-a=16}}
+{{AMC12 box|year=2014|ab=A|num-b=10|num-a=12}}
+{{MAA Notice}}
+
+[[Category: Introductory Algebra Problems]]

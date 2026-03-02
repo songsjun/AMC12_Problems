@@ -1,0 +1,133 @@
+# 2021 AMC 12A Problem 10
+
+> This problem is the same as [2021 AMC 10A #12](https://artofproblemsolving.com/wiki/index.php/2021_AMC_10A_Problems/Problem_12) and [2021 AMC 12A #10](https://artofproblemsolving.com/wiki/index.php/2021_AMC_12A_Problems/Problem_10).
+## Problem
+Two right circular cones with vertices facing down as shown in the figure below contain the same amount of liquid. The radii of the tops of the liquid surfaces are 3 cm and 6 cm. Into each cone is dropped a spherical marble of radius 1 cm, which sinks to the bottom and is completely submerged without spilling any liquid. What is the ratio of the rise of the liquid level in the narrow cone to the rise of the liquid level in the wide cone?
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(350); defaultpen(linewidth(0.8)); real h1 = 10, $r = 3.1, s=0.75$; pair P = (r,h1), Q = (-r,h1), Pp = s * P, Qp = s * Q; path e = ellipse((0,h1),r,0.9), ep = ellipse((0,h1*s),r*s,0.9); draw(ellipse(origin,r*($s-0$.1),0.8)); fill(ep,gray(0.8)); fill(origin--Pp--Qp--cycle,gray(0.8)); draw((-r,h1)--(0,0)--(r,h1)^^e); draw(subpath(ep,0,reltime(ep,0.5)),linetype("4 4")); draw(subpath(ep,reltime(ep,0.5),reltime(ep,1))); draw(Qp--(0,Qp.y),Arrows(size=8)); draw(origin--(0,12),linetype("4 4")); draw(origin--(r*($s-0$.1),0)); label("$3$",(-0.9,h1*s),N,fontsize(10)); real h2 = 7.5, $r = $6, $s=0.6, d = 14$; pair P = (d+$r-$0.05,h2-0.15), Q = (d-$r+0$.05,h2-0.15), Pp = s * P + (1-s)*(d,0), Qp = s * Q + (1-s)*(d,0); path e = ellipse((d,h2),r,1), ep = ellipse((d,h2*$s+0$.09),r*s,1); draw(ellipse((d,0),r*($s-0$.1),0.8)); fill(ep,gray(0.8)); fill((d,0)--Pp--Qp--cycle,gray(0.8)); draw(P--(d,0)--Q^^e); draw(subpath(ep,0,reltime(ep,0.5)),linetype("4 4")); draw(subpath(ep,reltime(ep,0.5),reltime(ep,1))); draw(Qp--(d,Qp.y),Arrows(size=8)); draw((d,0)--(d,10),linetype("4 4")); draw((d,0)--(d+r*($s-0$.1),0)); label("$6$",(d-r/4,h2*$s-0$.06),N,fontsize(10));
+```
+
+
+$\textbf{(A) }1:1 \qquad \textbf{(B) }47:43 \qquad \textbf{(C) }2:1 \qquad \textbf{(D) }40:13 \qquad \textbf{(E) }4:1$
+## Solution 1 (Algebra)
+**Initial Scenario**
+
+Let the heights of the narrow cone and the wide cone be $h_1$ and $h_2$, respectively. We have the following table:
+
+$$
+\begin{array}{cccccc} & \textbf{Base Radius} & \textbf{Height} & & \textbf{Volume} & \\ [2ex] \textbf{Narrow Cone} & 3 & h_1 & & \frac13\pi(3)^2h_1=3\pi h_1 & \\ [2ex] \textbf{Wide Cone} & 6 & h_2 & & \hspace{2mm}\frac13\pi(6)^2h_2=12\pi h_2 & \end{array}
+$$
+
+Equating the volumes gives $3\pi$ h_$1=12\pih_2$, which simplifies to $\frac{h_1}{h_2}=4.$
+
+Furthermore, by similar triangles:
+
+- For the narrow cone, the ratio of the base radius to the height is $\frac{3}{h_1},$ which always remains constant.
+
+- For the wide cone, the ratio of the base radius to the height is $\frac{6}{h_2},$ which always remains constant.
+
+Two solutions follow from here:
+### Solution 1.1 (Properties of Fractions)
+**Final Scenario**
+
+For the narrow cone and the wide cone, let their base radii be $3x$ and $6y$ (for some x,y>1), respectively. By the similar triangles discussed above, their heights must be $h_1x$ and $h_2y$, respectively. We have the following table:
+
+$$
+\begin{array}{cccccc} & \textbf{Base Radius} & \textbf{Height} & & \textbf{Volume} & \\ [2ex] \textbf{Narrow Cone} & 3x & h_1x & & \frac13\pi(3x)^2(h_1x)=3\pi h_1 x^3 & \\ [2ex] \textbf{Wide Cone} & 6y & h_2y & & \hspace{2.0625mm}\frac13\pi(6y)^2(h_2y)=12\pi h_2 y^3 & \end{array}
+$$
+
+Recall that $\frac{h_1}{h_2}=4.$ Equating the volumes gives $3\pih_1x^3=12\pih_2 y^3,$ which simplifies $to x^3=y^3,$ or x=y.
+
+Finally, the requested ratio is $\frac{h_1 x - h_1}{h_2 y - h_2}=\frac{h_1 (x-1)}{h_2 (y-1)}=\frac{h_1}{h_2}=\boxed{\textbf{(E) }4:1}.$
+**Remarks**
+
+ 1.   This solution uses the following property of fractions:
+For unequal positive numbers a,b,c and d, if $\frac$ ab = $\frac$ cd = k, then $\frac{a\pm c}{b\pm d}=\frac{bk\pm dk}{b\pm d}=\frac{(b\pm d)k}{b\pm d}=k.$
+
+2.   This solution shows that, regardless of the shape or the volume of the solid dropped into each cone, the requested ratio stays the same as long as the solid sinks to the bottom and is completely submerged without spilling any liquid.
+
+*~MRENTHUSIASM*
+### Solution 1.2 (Bash)
+**Final Scenario**
+
+For the narrow cone and the wide cone, let their base radii be $r_1$ and $r_2$, respectively; let their rises of the liquid levels be $\Deltah_1$ and $\Deltah_2$, respectively. We have the following table:
+
+$$
+\begin{array}{cccccc} & \textbf{Base Radius} & \textbf{Height} & & \textbf{Volume} & \\ [2ex] \textbf{Narrow Cone} & r_1 & h_1+\Delta h_1 & & \frac13\pi r_1^2(h_1+\Delta h_1) & \\ [2ex] \textbf{Wide Cone} & r_2 & h_2+\Delta h_2 & & \frac13\pi r_2^2(h_2+\Delta h_2) & \end{array}
+$$
+
+By the similar triangles discussed above, we get
+
+$$
+\begin{align*} \frac{3}{h_1}&=\frac{r_1}{h_1+\Delta h_1} &\implies \quad r_1&=\frac{3}{h_1}(h_1+\Delta h_1), & \hspace{10mm} (1) \\ \frac{6}{h_2}&=\frac{r_2}{h_2+\Delta h_2} &\implies \quad r_2&=\frac{6}{h_2}(h_2+\Delta h_2). & (2) \end{align*}
+$$
+
+The volume of the marble dropped into each cone is $\frac43\pi(1)^3=\frac43\pi.$
+
+Now, we set up an equation for the volume of the narrow cone, then express $\Deltah_1$ in terms of $h_1$:
+
+$$
+\begin{align*} \frac13\pi r_1^2(h_1+\Delta h_1) &= 3\pi h_1+\frac43\pi \\ \frac13 r_1^2(h_1+\Delta h_1) &= 3h_1+\frac43 \\ \frac13\left(\frac{3}{h_1}(h_1+\Delta h_1)\right)^2(h_1+\Delta h_1) &= 3h_1+\frac43 &&\text{by }(1) \\ \frac{3}{h_1^2}(h_1+\Delta h_1)^3 &= 3h_1+\frac43 \\ (h_1+\Delta h_1)^3 &= h_1^3 + \frac{4h_1^2}{9} \\ \Delta h_1 &= \sqrt[3]{h_1^3 + \frac{4h_1^2}{9}}-h_1. \end{align*}
+$$
+
+Next, we set up an equation for the volume of the wide cone, then express $\Deltah_2$ in terms of $h_2$:
+$$\frac13\pi r_2^2(h_2+\Delta h_2) = 12\pi h_2+\frac43\pi.$$
+Using a similar process from above, we get $\Deltah_2=\sqrt$[3]{h_$2^3+\frac{h_2^2}{9}$}-$h_2$.
+Recall that $\frac{h_1}{h_2}=4.$ Therefore, the requested ratio is
+
+$$
+\begin{align*} \frac{\Delta h_1}{\Delta h_2}&=\frac{\sqrt[3]{h_1^3 + \frac{4h_1^2}{9}}-h_1}{\sqrt[3]{h_2^3+\frac{h_2^2}{9}}-h_2} \\ &=\frac{\sqrt[3]{(4h_2)^3 + \frac{4(4h_2)^2}{9}}-4h_2}{\sqrt[3]{h_2^3+\frac{h_2^2}{9}}-h_2} \\ &=\frac{\sqrt[3]{4^3\left(h_2^3 + \frac{h_2^2}{9}\right)}-4h_2}{\sqrt[3]{h_2^3+\frac{h_2^2}{9}}-h_2} \\ &=\frac{4\sqrt[3]{h_2^3+\frac{h_2^2}{9}}-4h_2}{\sqrt[3]{h_2^3+\frac{h_2^2}{9}}-h_2} \\ &=\boxed{\textbf{(E) }4:1}. \end{align*}
+$$
+
+*~MRENTHUSIASM*
+## Solution 2 (Approximate Cones with Cylinders)
+The heights of the cones are not given, so suppose the heights are very large (i.e. tending towards infinity) in order to approximate the cones as cylinders with base radii 3 and 6 and infinitely large height. Then the base area of the wide cylinder is 4 times that of the narrow cylinder. Since we are dropping a ball of the same volume into each cylinder, the water level in the narrow cone/cylinder should rise $\boxed{\textbf{(E) } 4}$ times as much.
+
+*~scrabbler94*
+## Solution 3 (Calculus)
+The volume of the shorter cone can be expressed as V_$1=3\pih_1$, and the volume of the larger cone can be expressed as V_$2=12\pih_2$. We also know that the volume changes by $\frac{4\pi}{3},$ because the volume of the 1cm sphere is $\frac{4\pi}{3}.$
+
+Taking the derivative of the equations, we get: dV_$1=3\pi(dh_1)=\frac{4\pi}{3}$ and dV_$2=12\pi(dh_2)=\frac{4\pi}{3}.$
+
+Therefore, dh_$1=\frac{4\pi}{3}\cdot\frac{1}{3\pi}=\frac{4}{9}$ and dh_$2=\frac{4\pi}{3}\cdot\frac{1}{12\pi}=\frac{1}{9}.$ The ratio is $\frac{4}{9}$:$\frac{1}{9}$ giving us the answer of $\boxed{\textbf{(E) }4:1}.$
+
+*~aurellia*
+## Solution 4 (Extremely Quick Observation)
+Note that as long as the volumes are equal, the ratio of the heights of Cone 2 to Cone 1 is always 1:4. We can prove this as follows:
+
+If we fix Cone 2 to have a certain height, then the volume of the cone is $\frac{1}{3}\cdot36\pi{h_1}=12\pi{h_1}.$ Now if Cone 1 has the same volume, its height would be $\frac{12\pi{h_1}}{\frac{1}{3}\cdot9\pi}=\frac{12\pi{h_1}}{3\pi}=4$h_1.
+
+So the answer is $\boxed{\textbf{(E) } 4 : 1}$
+
+Minor edits by: T3CHN0B14D3
+## Remark
+You can cheese this by letting $r_1$ and $r_2$ be some small integers. I recommend 4 and 1.
+
+*~AndrewZhong2012*
+## Video Solution (Simple and Quick)
+https://youtu.be/TgjvviBALac
+
+*~Education, the Study of Everything*
+## Video Solution by Aaron He (Algebra)
+https://www.youtube.com/watch?v=xTGDKBthWsw&t=10m20s
+## Video Solution by OmegaLearn (Similar Triangles, 3D Geometry - Cones)
+https://youtu.be/4Iuo7cvGJr8
+
+*~pi_is_3.14*
+## Video Solution by TheBeautyofMath
+First-this is not the most efficient solution. I did not perceive the shortcut before filming though I suspected it.
+
+https://youtu.be/t-EEP2V4nAE?t=231 (for AMC 10A)
+
+https://youtu.be/cckGBU2x1zg?t=814 (for AMC 12A)
+
+*~IceMatrix*
+## Video Solution by WhyMath
+https://youtu.be/c-5-8PnCvCk
+
+*~savannahsolver*
+## See also

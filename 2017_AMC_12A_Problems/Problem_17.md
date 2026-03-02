@@ -1,0 +1,38 @@
+# 2017 AMC 12A Problem 17
+
+## Problem
+There are 24 different complex numbers z such that $z^{24}=1$. For how many of these is $z^6 a$ real number?
+
+$\textbf{(A)}\ 0 \qquad\textbf{(B)}\ 4 \qquad\textbf{(C)}\ 6 \qquad\textbf{(D)}\ 12 \qquad\textbf{(E)}\ 24$
+## Solution 1
+Note that these z such that $z^{24}=1$ are $e^{\frac{ni\pi}{12}}$ for integer $0\leq$ n<24. So
+
+$$z^6=e^{\frac{ni\pi}{2}}$$
+
+This is real if $\frac{n}{2}\in \mathbb{Z}$\Leftrightarrow (n is even). Thus, the answer is the number of even $0\leq$ n<24 which is $\boxed{(D)=\ 12}.$
+## Solution 2
+$$z = \sqrt[24]{1} = 1^{\frac{1}{24}}$$
+
+By [Euler's identity](https://artofproblemsolving.com/wiki/index.php/Euler's_identity), $1 =e^{0 \times i}=\cos (0+2k\pi) +$ i $\sin(0+2k\pi),$ where k is an integer.
+
+Using [De Moivre's Theorem](https://artofproblemsolving.com/wiki/index.php/De_Moivre's_Theorem), we have $z =1^{\frac{1}{24}}$ = {$\cos (\frac{k\pi}{12}) +$ i $\sin (\frac{k\pi}{12})$}, where 0 $\leq$ k<24 that produce 24 unique results.
+
+Using De Moivre's Theorem again, we have $z^6 = {\cos (\frac{k\pi}{2}) +$ i $\sin (\frac{k\pi}{2})$}
+
+For $z^6 to$ be real, $\sin(\frac{k\pi}{2})$ has to equal 0 to negate the imaginary component. This occurs whenever $\frac{k\pi}{2}$ is an integer multiple of $\pi,$ requiring that k is even. There are exactly $\boxed{12}$ even values of k on the interval 0 $\leq$ k<24, so the answer is $\boxed{(D)}.$
+## Solution 3
+From the start, recall from the Fundamental Theorem of Algebra that $z^{24} = 1$ must have 24 solutions (and these must be distinct since the equation factors into 0 = ($z-1)(z^{23}+z^{22}+z^{21}$... + z + 1)), or notice that the question is simply referring to the 24th roots of unity, of which we know there must be 24. Notice that $1 =z^{24}= (z^6)^4,$ so for any solution $z, z^6$ will be one of the 4th roots of unity (1, i, -1, or -i). Then 6 solutions z will satisfy $z^6 = 1, 6$ will satisfy z^6 = -1 (and this is further justified by knowledge of the 6th roots of unity), so there must be $\boxed{(D) \: 12}$ such z.
+## Solution 4 (Quick)
+Let $a\in\mathbb{R}$ and $a = z^6.$ We have
+$$a^4 = 1 \implies a = 1,-1.$$
+$z^6 =\pm 1$ has 6 solutions for 1 and -1 respectively, so $6+6=\boxed{(D)\ 12}.$
+*~svyn*
+## Solution 5 (Visual Roots of Unity)
+Because $z^{24} = 1$, we can plot these points on the Argand plane as a regular 24-gon, as shown:
+[Image:2017AMC12aP17.png](https://artofproblemsolving.com/wiki/index.php/Image:2017AMC12aP17.png)
+These are a graphical representation of all 24 values of z, as stated in the problem. Now, we want $z^6 to$ be real. The only 2 cases where this happens are if $z^6 = 1$ or z^6 = -1. Squaring both sides for the latter equation, we get $z^{12}=1$, which, if one were to square root it, would give us a system of both $z^6 = 1$ and $z^6 = -1,$ just as we desire. We can plot the points for $z^{12}=1$ on an Argand plane again, giving us:
+[Image:2017AMC12aP17-p2.png](https://artofproblemsolving.com/wiki/index.php/Image:2017AMC12aP17-p2.png)
+We note that all of these points are also on the first Argand plane, and counting the points nets us $\boxed{(D)\ 12}$ total values for z.
+*~yingkai_0_*
+Credit to Michael Andrejkovics for providing the GeoGebra widget used to make these diagrams!
+## See Also

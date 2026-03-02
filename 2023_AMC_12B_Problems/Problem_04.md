@@ -1,0 +1,32 @@
+# 2023 AMC 12B Problem 4
+
+> This problem is the same as [2023 AMC 10B #4](https://artofproblemsolving.com/wiki/index.php/2023_AMC_10B_Problems/Problem_4) and [2023 AMC 12B #4](https://artofproblemsolving.com/wiki/index.php/2023_AMC_12B_Problems/Problem_4).
+## Problem
+Jackson's paintbrush makes a narrow strip with a width of 6.5 millimeters. Jackson has enough paint to make a strip 25 meters long. How many square centimeters of paper could Jackson cover with paint?
+
+$\textbf{(A) } 162,500 \qquad\textbf{(B) } 162.5 \qquad\textbf{(C) }1,625 \qquad\textbf{(D) }1,625,000 \qquad\textbf{(E) } 16,250$
+## Solution 1
+6.5 millimeters is equal to 0.65 centimeters. 25 meters is 2500 centimeters. The answer is 0.65 $\times 2500,$ so the answer is $\boxed{\textbf{(C) 1,625}}.$
+
+*~Failure.net*
+## Solution 2 (Scientific Form)
+6.5 millimeters can be represented as 65 $\times 10^{-2}$ centimeters. 25 meters is 25 $\times 10^{2}$ centimeters. Multiplying out these results in (65 $\times 10^{-2}) \times (25 \times 10^{2}),$ which is 65 $\times 25$ making the answer $\boxed{\textbf{(C) 1,625}}.$
+
+*~darrenn.cp*
+## Remark
+A good way to remember metric conversions is with the phrase ** "King Henry Died By Drinking Chocolate Milk" ** (Kilo, Hecto, Deka, Basic units, Deci, Centi, Milli). As you read from left to right you divide by 10. So 1 meter (which is a basic unit) is equivalent to 1000 millimeters, or 100 centimeters.
+
+~[https://artofproblemsolving.com/wiki/index.php/User:grogg007 grogg007]
+## Video Solution 1 by SpreadTheMathLove
+https://www.youtube.com/watch?v=SUnhwbA5_So
+## Video Solution by Math-X (First understand the problem!!!)
+https://youtu.be/EuLkw8HFdk4?si=mEwHK_VyAr1h0O1A&t=808
+
+*~Math-X*
+## Video Solution
+https://youtu.be/BZ1zeFvw5hU
+
+*~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)*
+## Video Solution by Interstigation
+https://youtu.be/gDnmvcOzxjg?si=cYB6uChy7Ue0UT4L
+## See also

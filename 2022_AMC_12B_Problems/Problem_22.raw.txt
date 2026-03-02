@@ -1,0 +1,202 @@
+{{duplicate|[[2022 AMC 10B Problems/Problem 23|2022 AMC 10B #23]] and [[2022 AMC 12B Problems/Problem 22|2022 AMC 12B #22]]}}
+
+==Problem==
+Ant Amelia starts on the number line at <math>0</math> and crawls in the following manner. For <math>n=1,2,3,</math> Amelia chooses a time duration <math>t_n</math> and an increment <math>x_n</math> independently and uniformly at random from the interval <math>(0,1).</math> During the <math>n</math>th step of the process, Amelia moves <math>x_n</math> units in the positive direction, using up <math>t_n</math> minutes. If the total elapsed time has exceeded <math>1</math> minute during the <math>n</math>th step, she stops at the end of that step; otherwise, she continues with the next step, taking at most <math>3</math> steps in all. What is the probability that Amelia’s position when she stops will be greater than <math>1</math>?
+
+<math>\textbf{(A) }\frac{1}{3} \qquad \textbf{(B) }\frac{1}{2} \qquad \textbf{(C) }\frac{2}{3} \qquad \textbf{(D) }\frac{3}{4} \qquad \textbf{(E) }\frac{5}{6}</math>
+
+==Solution 1 (Geometric Probability)==
+
+Let <math>x</math> and <math>y</math> be random variables that are independently and uniformly distributed in the interval <math>(0,1).</math> Note that <cmath>P(x+y\leq 1)=\frac{\frac12\cdot1^2}{1^2}=\frac12,</cmath> as shown below:
+<asy>
+/* Made by MRENTHUSIASM */
+size(200); 
+
+real xMin = -0.25;
+real xMax = 1.25;
+real yMin = -0.25;
+real yMax = 1.25;
+
+//Draws the horizontal ticks
+void horizontalTicks()
+{
+  for (real i = 1; i < yMax; ++i)
+  {
+    draw((-1/32,i)--(1/32,i), black+linewidth(1));
+  }
+}
+
+//Draws the vertical ticks
+void verticalTicks()
+{
+  for (real i = 1; i < xMax; ++i)
+  {
+    draw((i,-1/32)--(i,1/32), black+linewidth(1));
+  }
+}
+
+horizontalTicks();
+verticalTicks();
+label("$0$",(0,0),2*SW);
+label("$1$",(1,0),2*S);
+label("$1$",(0,1),2*W);
+fill((0,0)--(1,0)--(0,1)--cycle,yellow);
+draw((0,1)--(1,1)^^(1,0)--(1,1),dashed);
+draw((0,1)--(1,0));
+draw((xMin,0)--(xMax,0),black+linewidth(1.5),EndArrow(8));
+draw((0,yMin)--(0,yMax),black+linewidth(1.5),EndArrow(8));
+label("$x$",(xMax,0),(2,0));
+label("$y$",(0,yMax),(0,2));
+</asy>
+Let <math>x,y,</math> and <math>z</math> be random variables that are independently and uniformly distributed in the interval <math>(0,1).</math> Note that <cmath>P(x+y+z\leq 1)=\frac{\frac13\cdot\left(\frac12\cdot1^2\right)\cdot1}{1^3}=\frac16,</cmath> as shown below:
+<asy>
+/* Made by MRENTHUSIASM */
+size(200);
+import graph3;
+import solids;
+
+currentprojection=orthographic((0.3,0.1,0.1));
+
+draw(surface((1,0,0)--(0,1,0)--(0,0,1)--cycle),yellow);
+draw(surface((1,0,0)--(0,1,0)--(0,0,0)--cycle),yellow);
+draw(surface((1,0,0)--(0,0,1)--(0,0,0)--cycle),yellow);
+draw(surface((0,1,0)--(0,0,1)--(0,0,0)--cycle),yellow);
+
+draw((0,0,1)--(0,1,1)--(1,1,1)--(1,0,1)--cycle,dashed);
+draw((0,1,0)--(1,1,0)--(1,0,0),dashed);
+draw((0,1,1)--(0,1,0)^^(1,1,1)--(1,1,0)^^(1,0,1)--(1,0,0),dashed);
+draw((-0.5,0,0)--(1.5,0,0),linewidth(1.25),EndArrow3(10));
+draw((0,-0.5,0)--(0,1.5,0),linewidth(1.25),EndArrow3(10));
+draw((0,0,-0.5)--(0,0,1.5),linewidth(1.25),EndArrow3(10));
+draw((-0.1,0,1)--(0.1,0,1),linewidth(1));
+draw((0,1,-0.1)--(0,1,0.1),linewidth(1));
+draw((1,-0.1,0)--(1,0.1,0),linewidth(1));
+label("$x$",(1.5,0,0),4*dir((1.5,0,0)));
+label("$y$",(0,1.5,0),2*dir((0,1.5,0)));
+label("$z$",(0,0,1.5),2*dir((0,0,1.5)));
+label("$0$",(0,0,0),2*dir((0,0.5,-0.5)));
+label("$1$",(1,0,0),4*dir((0,-1,0)));
+label("$1$",(0,1,0),4*dir((0,0,-1)));
+label("$1$",(0,0,1),5*dir((-1,0,0)));
+draw((1,0,0)--(0,1,0)--(0,0,1)--cycle);
+</asy>
+We have two cases:
+<ol style="margin-left: 1.5em;">
+  <li>Amelia takes exactly <math>2</math> steps.</li><p>
+We need <math>x_1+x_2>1</math> and <math>t_1+t_2>1.</math> So, the probability is <cmath>P(x_1+x_2>1)\cdot P(t_1+t_2>1)=\left(1-\frac12\right)\cdot\left(1-\frac12\right)=\frac14.</cmath>
+  <li>Amelia takes exactly <math>3</math> steps.</li><p>
+We need <math>x_1+x_2+x_3>1</math> and <math>t_1+t_2\leq1.</math> So, the probability is <cmath>P(x_1+x_2+x_3>1)\cdot P(t_1+t_2\leq1)=\left(1-\frac16\right)\cdot\frac12=\frac{5}{12}.</cmath>
+</ol>
+Together, the answer is <math>\frac14 + \frac{5}{12} = \boxed{\textbf{(C) }\frac{2}{3}}.</math>
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+~MRENTHUSIASM
+
+==Solution 2 (Generalization and Induction)==
+
+We can in fact find the probability that any number of randomly distributed numbers on the interval <math>[0, 1]</math> sum to more than <math>1</math> using geometric probability, as shown in the video below.
+
+If we graph the points that satisfy <math>x + y < 1</math>, <math>0 < x, y < 1</math>, we get the triangle with points <math>(0, 0)</math>, <math>(1, 0)</math>, and <math>(0, 1)</math>. If we graph the points that satisfy <math>x + y + z < 1</math>, <math>0 < x, y, z < 1</math>, we get the tetrahedron with points <math>(0, 0, 0)</math>, <math>(1, 0, 0)</math>, <math>(0, 1, 0)</math>, and <math>(0, 0, 1)</math>.
+
+Of course, the probability of either of these cases happening is simply the area/volume of the points we graphed divided by the total area of the graph, which is always <math>1</math> (this would be much simpler than my calculus proof above).
+
+Thus, we can now solve for the probability that the sum is less than one for <math>n</math> numbers using induction.
+
+<math>\textbf{Claim:}</math> The probability that the sum is less than one is <math>\frac{1}{n!}</math>.
+
+<math>\textbf{Base Case:}</math> For just <math>1</math> number, the probability is <math>1</math>.
+
+<math>\textbf{Induction step:}</math> Suppose that the probability for <math>n</math> numbers is <math>\frac{1}{n!}</math>. We will prove that the probability for <math>n+1</math> numbers is <math>\frac{1}{(n+1)!}</math>. To prove this, we consider that the area of an <math>n+1</math>-dimensional tetrahedron is simply the area/volume of the base times the height divided by <math>n+1</math>. 
+
+Of course, the area of the base is <math>\frac{1}{n!}</math>, and the height is <math>1</math>, and thus, we obtain <math>\frac{1}{n! \cdot (n+1)} = \frac{1}{(n+1)!}</math> as our volume (this may be hard to visualize for higher dimensions). The induction step is complete.
+
+The probability of the sum being less than <math>1</math> is <math>\frac{1}{n!}</math>, and the probability of the sum being more than <math>1</math> is <math>\frac{n!-1}{n!}</math>. This trivializes the problem. The answer is <cmath>\frac{1}{2} \cdot \frac{2! - 1}{2!} + \frac{1}{2} \cdot \frac{3! - 1}{3!} = \boxed{\textbf{(C) }\frac{2}{3}}.</cmath>
+
+~mathboy100
+
+==Solution 3 (Observations)==
+There are two cases: Amelia takes two steps or three steps. 
+
+The former case has a probability of <math>\frac{1}{2}</math>, as stated in Solution 1, and thus the latter also has a probability of <math>\frac{1}{2}</math>. 
+
+The probability that Amelia passes <math>1</math> after two steps is also <math>\frac{1}{2}</math>, as it is symmetric to the probability above.
+
+Thus, if the probability that Amelia passes <math>1</math> after three steps is <math>x</math>, our total probability is <math>\frac{1}{2} \cdot \frac{1}{2} + \frac{1}{2} \cdot x</math>. We know that <math>0 < x < 1</math>, and it is relatively obvious that <math>x > \frac{1}{2}</math> (because the probability that <math>x > \frac{3}{2}</math> is <math>\frac{1}{2}</math>). This means that our total probability is between <math>\frac{1}{2}</math> and <math>\frac{3}{4}</math>, non-inclusive, so the only answer choice that fits is <math>\boxed{\textbf{(C) }\frac{2}{3}}</math>.
+
+~mathboy100
+
+==Remark (Calculus)==
+It is not immediately clear why three random numbers between <math>0</math> and <math>1</math> have a probability of <math>\frac{5}{6}</math> of summing to more than <math>1</math>. Here is a proof:
+
+Let us start by finding the probability that two random numbers between <math>0</math> and <math>1</math> have a sum of more than <math>x</math>, where <math>0 \leq x \leq 1</math>. 
+
+Suppose that our two numbers are <math>y</math> and <math>z</math>. Then, the probability that <math>y > x</math> (which means that <math>y + z > x</math>) is <math>1 - x</math>, and the probability that <math>y < x</math> is <math>x</math>.
+
+If <math>y < x</math>, the probability that <math>y + z > x</math> is <math>1 - x + y</math>. This is because the probability that <math>y + z < x</math> is equal to the probability that <math>z < x - y</math>, which is <math>x - y</math>, so our total probability is <math>1 - (x - y) = 1 - x + y</math>.
+
+Let us now find the average of the probability that <math>y + z > x</math> when <math>y < x</math>. Since <math>y</math> is a random number between <math>0</math> and <math>x</math>, its average is <math>\frac{x}{2}</math>. Thus, our average is <math>1 - x + \frac{1}{2} = 1 - \frac{x}{2}</math>. 
+
+Hence, our total probability is equal to 
+<cmath>1(1-x) + \left(1 - \frac{x}{2}\right)(x) = 1 - \frac{1}{2}x^2.</cmath>
+Now, let us find the probability that three numbers uniformly distributed between <math>0</math> and <math>1</math> sum to more than <math>1</math>.
+
+Let our three numbers be <math>a</math>, <math>b</math>, and <math>c</math>. Then, the probability that <math>a + b + c > 1</math> is equal to the probability that <math>b + c</math> is greater than <math>1 - a</math>, which is equal to <math>1 - \frac{1}{2}(1 - a)^2</math>. 
+
+To find the total probability, we must average over all values of <math>a</math>. This average is simply equal to the area under the curve <math>1 - \frac{1}{2}(1-x)^2</math> from <math>0</math> to <math>1</math>, all divided by <math>1</math>. We can compute this value using integrals:
+<cmath>\begin{align*}
+\frac{\int_0^1 \! 1 - \frac{1}{2}(1 - x)^2 \mathrm{d}x}{1} &= \int_0^1 \! 1 - \frac{1}{2}(1 - x)^2 \mathrm{d}x \\
+&= 1 - \frac{1}{2}\int_0^1 \! (1 - x)^2 \mathrm{d}x \\
+&= 1 - \frac{1}{2}\int_0^1 \! x^2 \mathrm{d}x \\
+&= 1 - \frac{1}{2}\left(\frac{1}{3}\right) \\
+&= \frac{5}{6}.
+\end{align*}</cmath>
+For those who don't know calculus, <math>\int_m^n \! f(x) \mathrm{d}x</math> is the area under the curve <math>f(x)</math> from <math>m</math> to <math>n</math>.
+
+~mathboy100
+
+==Remark (Rigorous Calculus)==
+
+In the language of probability, we have three random variables <math>X</math>, <math>Y</math>, <math>Z</math>, each independent and uniformly distributed over the interval <math>(0, 1)</math>. We are interested in the probability that <math>X+Y+Z>1</math>, or <math>P(X+Y+Z>1)</math>.
+
+It follows from the definition of the joint probability density function <math>f(x, y, z)</math> that (we assume that <math>0<x, y, z<1</math>):
+\begin{align}
+P(X+Y+Z>1)=\iiint_{x+y+z>1} f(x,y,z) \,dx\,dy\,dz.
+\end{align}
+Since <math>X, Y, Z</math> are independent, we have <math>f(x, y, z)=f_X(x)*f_Y(y)*f_Z(z)</math>, where <math>f_X(x), f_Y(y), f_Z(z)</math> represent the probability densities of <math>X, Y, Z</math> respectively. Recall that <math>X, Y, Z</math> are uniformly distributed over the interval <math>(0, 1)</math>. Hence, <math>f_X(x)=f_Y(y)=f_Z(z)=1</math>.
+
+It remains to evaluate the following triple integral
+\begin{align}
+\iiint_{x+y+z>1} \,dx\,dy\,dz=\frac{5}{6}.
+\end{align}
+Therefore, <math>P(X+Y+Z>1)=\frac{5}{6}</math>.
+
+~tsun26
+
+== Video Solution by OmegaLearn Using Geometric Probability ==
+https://youtu.be/-AqhcVX8mTw
+
+~ pi_is_3.14
+
+==Video Solution==
+
+https://youtu.be/WsA94SmsF5o
+
+~ThePuzzlr
+
+https://youtu.be/qOxnx_c9kVo
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+==Video Solution by The Power of Logic (#22 and #23)==
+https://youtu.be/rZaJSTbs7jY
+
+==Video Solution by Interstigation==
+https://youtu.be/KRkNnlszdEg
+
+~Interstigation
+
+==See Also==
+{{AMC10 box|year=2022|ab=B|num-b=22|num-a=24}}
+{{AMC12 box|year=2022|ab=B|num-b=21|num-a=23}}
+{{MAA Notice}}

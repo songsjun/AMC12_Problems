@@ -1,0 +1,82 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2020_AMC_12B_Problems/Problem_10&action=raw
+
+Published Time: Sat, 08 Nov 2025 18:48:06 GMT
+
+Markdown Content:
+==Problem==
+In unit square ABCD, the inscribed circle \omega intersects \overline{CD} at M, and \overline{AM} intersects \omega at a point P different from M. What is AP?
+
+\textbf{(A) } \frac{\sqrt5}{12} \qquad \textbf{(B) } \frac{\sqrt5}{10} \qquad \textbf{(C) } \frac{\sqrt5}{9} \qquad \textbf{(D) } \frac{\sqrt5}{8} \qquad \textbf{(E) } \frac{2\sqrt5}{15}
+
+==Diagram==
+ /* Made by MRENTHUSIASM */ size(180); pair A, B, C, D, M, O, P; O = origin; A = (-1/2,-1/2); B = (-1/2,1/2); C = (1/2,1/2); D = (1/2,-1/2); M = midpoint(C--D); path p; p = Circle(O,1/2); P = intersectionpoints(A--M,p)[0]; dot("$\omega$",O,1.5*N,linewidth(4)); dot("$A$",A,1.5*SW,linewidth(4)); dot("$B$",B,1.5*NW,linewidth(4)); dot("$C$",C,1.5*NE,linewidth(4)); dot("$D$",D,1.5*SE,linewidth(4)); dot("$M$",M,1.5*E,linewidth(4)); dot("$P$",P,1.5*N,linewidth(4)); draw(A--B--C--D--cycle^^A--M^^p); 
+~MRENTHUSIASM
+
+==Solution 1 (Similar Triangles)==
+Call the midpoint of \overline{AB} point N. Draw in \overline{NM} and \overline{NP}. Note that \angle{NPM}=90^{\circ} due to Thales's Theorem.
+ /* Made by QIDb602; edited by MRENTHUSIASM */ size(180); pair A, B, C, D, M, N, O, P; O = origin; A = (-1/2,-1/2); B = (-1/2,1/2); C = (1/2,1/2); D = (1/2,-1/2); M = midpoint(C--D); N = midpoint(A--B); path p; p = Circle(O,1/2); P = intersectionpoints(A--M,p)[0]; fill(N--A--M--cycle,yellow); dot("$\omega$",O,1.5*(0,1),linewidth(4)); dot("$A$",A,1.5*SW,linewidth(4)); dot("$B$",B,1.5*NW,linewidth(4)); dot("$C$",C,1.5*NE,linewidth(4)); dot("$D$",D,1.5*SE,linewidth(4)); dot("$M$",M,1.5*E,linewidth(4)); dot("$N$",N,1.5*W,linewidth(4)); dot("$P$",P,1.5*dir(60),linewidth(4)); markscalefactor=0.00625; draw(rightanglemark(A,N,M),red); draw(rightanglemark(N,P,A),red); draw(A--B--C--D--cycle^^A--M^^P--N--M^^p); 
+Using the Pythagorean theorem, AM=\frac{\sqrt{5}}{2}. Now we just need to find AP using similar triangles \triangle APN\sim\triangle ANM:
+\begin{align*} \frac{AP}{AN}&=\frac{AN}{AM} \\ \frac{AP}{1/2}&=\frac{1/2}{\sqrt5/2} \\ AP&=\boxed{\textbf{(B) } \frac{\sqrt5}{10}}. \end{align*}
+~QIDb602
+
+==Solution 2 (Inscribed Angle Theorem and Pythagorean Theorem)==
+Let N be the midpoint of \overline{AB}, from which \angle ANM=90^\circ. Note that \angle NPM=90^\circ by the Inscribed Angle Theorem.
+
+We have the following diagram:
+ /* Made by MRENTHUSIASM */ size(180); pair A, B, C, D, M, N, O, P; O = origin; A = (-1/2,-1/2); B = (-1/2,1/2); C = (1/2,1/2); D = (1/2,-1/2); M = midpoint(C--D); N = midpoint(A--B); path p; p = Circle(O,1/2); P = intersectionpoints(A--M,p)[0]; fill(N--P--A--cycle,yellow); fill(N--P--M--cycle,green); dot("$\omega$",O,1.5*(0,1),linewidth(4)); dot("$A$",A,1.5*SW,linewidth(4)); dot("$B$",B,1.5*NW,linewidth(4)); dot("$C$",C,1.5*NE,linewidth(4)); dot("$D$",D,1.5*SE,linewidth(4)); dot("$M$",M,1.5*E,linewidth(4)); dot("$N$",N,1.5*W,linewidth(4)); dot("$P$",P,1.5*dir(60),linewidth(4)); markscalefactor=0.00625; draw(rightanglemark(A,N,M),red); draw(rightanglemark(N,P,A),red); draw(A--B--C--D--cycle^^A--M^^P--N--M^^p); 
+Since AN=\frac12 and NM=1, we get AM=\frac{\sqrt5}{2} by the Pythagorean Theorem. 
+
+Let AP=x. It follows that PM=\frac{\sqrt5}{2}-x. Applying the Pythagorean Theorem to right \triangle ANP gives NP^2=\left(\frac12\right)^2-x^2, and applying the Pythagorean Theorem to right \triangle MNP gives NP^2=1^2-\left(\frac{\sqrt5}{2}-x\right)^2. Equating the expressions for NP^2 produces
+\begin{align*} \left(\frac12\right)^2-x^2&=1^2-\left(\frac{\sqrt5}{2}-x\right)^2 \\ \frac14-x^2&=1-\frac54+\sqrt5x-x^2 \\ \frac12&=\sqrt5x. \end{align*}
+Finally, dividing both sides by \sqrt5 and then rationalizing the denominator, we obtain x=\frac{1}{2\sqrt5}=\boxed{\textbf{(B) } \frac{\sqrt5}{10}}.
+
+~MRENTHUSIASM
+
+==Solution 3 (Power of a Point)==
+Let circle \omega intersect \overline{AB} at point N. By Power of a Point, we have AN^2=AP\cdot AM. We know AN=\frac{1}{2} because N is the midpoint of \overline{AB}, and we can easily find AM by the Pythagorean Theorem, which gives us AM=\sqrt{1^2+\left(\frac{1}{2}\right)^2}=\frac{\sqrt{5}}{2}. Our equation is now \frac{1}{4}=AP\cdot \frac{\sqrt{5}}{2}, or AP=\frac{2}{4\sqrt{5}}=\frac{1}{2\sqrt{5}}=\frac{\sqrt{5}}{2\cdot 5}, thus our answer is 
+\boxed{\textbf{(B) } \frac{\sqrt5}{10}}.
+
+~Argonauts16
+
+==Solution 4 (Trigonometry)==
+Let O be the center of the circle and the point of tangency between \omega and \overline{AD} be represented by K. We know that \overline{AK} = \overline{KD} = \overline{DM} = \frac{1}{2}. Consider the right triangle \bigtriangleup ADM. Let \measuredangle AMD = \theta. 
+
+Since \omega is tangent to \overline{DC} at M, \measuredangle PMO = 90 - \theta. Now, consider \bigtriangleup POM. This triangle is iscoceles because \overline{PO} and \overline{OM} are both radii of \omega. Therefore, \measuredangle POM = 180 - 2(90 - \theta) = 2\theta. 
+
+We can now use Law of Cosines on \angle{POM} to find the length of {PM} and subtract it from the length of {AM} to find {AP}. Since \cos{\theta} = \frac{1}{\sqrt{5}} and \sin{\theta} = \frac{2}{\sqrt{5}}, the double angle formula tells us that \cos{2\theta} = -\frac{3}{5}. We have
+ PM^2 = \frac{1}{2} - \frac{1}{2}\cos{2\theta} \implies PM = \frac{2\sqrt{5}}{5}. 
+By Pythagorean theorem, we find that AM = \frac{\sqrt{5}}{2} \implies AP=\boxed{\textbf{(B) } \frac{\sqrt5}{10}}.
+
+~awesome1st
+
+==Solution 5 (Trigonometry)==
+Take O as the center and draw segment ON perpendicular to AM, ON\cap AM=N, link OM. Then we have OM\parallel AD. So \angle DAM=\angle OMA. Since AD=2AM=2OM=1, we have \cos\angle DAM=\cos\angle OMP=\frac{2}{\sqrt{5}}. As a result, NM=OM\cos\angle OMP=\frac{1}{2}\cdot \frac{2}{\sqrt{5}}=\frac{1}{\sqrt{5}}. Thus PM=2NM=\frac{2}{\sqrt{5}}=\frac{2\sqrt{5}}{5}. Since AM=\frac{\sqrt{5}}{2}, we have AP=AM-PM=\boxed{\textbf{(B) } \frac{\sqrt5}{10}}.
+
+~FANYUCHEN20020715
+
+==Solution 6 (Coordinate Geometry)==
+
+Place circle \omega in the Cartesian plane such that the center lies on the origin. Then we can easily find the equation for \omega as x^2+y^2=\frac{1}{4}, because it is not translated and the radius is \frac{1}{2}. 
+
+We have A=\left(-\frac{1}{2}, \frac{1}{2}\right) and M=\left(0, -\frac{1}{2}\right). The slope of the line passing through these two points is \frac{\frac{1}{2}+\frac{1}{2}}{-\frac{1}{2}-0}=\frac{1}{-\frac{1}{2}}=-2, and the y-intercept is simply M. This gives us the line passing through both points as y=-2x-\frac{1}{2}. 
+
+We substitute this into the equation for the circle to get x^2+\left(-2x-\frac{1}{2}\right)^2=\frac{1}{4}, or x^2+4x^2+2x+\frac{1}{4}=\frac{1}{4}. Simplifying gives x(5x+2)=0. The roots of this quadratic are x=0 and x=-\frac{2}{5}, but if x=0 we get point M, so we only want x=-\frac{2}{5}.
+
+We plug this back into the linear equation to find y=\frac{3}{10}, and so P=\left(-\frac{2}{5}, \frac{3}{10}\right). Finally, we use distance formula on A and P to get AP=\sqrt{\left(-\frac{5}{10}+\frac{4}{10}\right)^2+\left(\frac{5}{10}-\frac{3}{10}\right)^2}=\sqrt{\frac{1}{100}+\frac{4}{100}}=\boxed{\textbf{(B) } \frac{\sqrt5}{10}}.
+
+~Argonauts16
+
+==Video Solution (HOW TO THINK CREATIVELY!!!)==
+https://youtu.be/gd6VvCKMdu4
+
+~Education, the Study of Everything
+
+==Video Solution by TheBeautyOfMath==
+https://www.youtube.com/watch?v=6ujfjGLzVoE&t=891s
+
+==See Also==
+
+{{AMC12 box|year=2020|ab=B|num-b=9|num-a=11}}
+{{MAA Notice}}

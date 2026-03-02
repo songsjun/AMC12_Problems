@@ -1,0 +1,54 @@
+# 2010 AMC 12A Problem 17
+
+> This problem is the same as [2010 AMC 12A #17](https://artofproblemsolving.com/wiki/index.php/2010_AMC_12A_Problems) and [2010 AMC 10A #19](https://artofproblemsolving.com/wiki/index.php/2010_AMC_10A_Problems).
+## Problem
+Equiangular hexagon ABCDEF has side lengths AB=CD=EF=1 and BC=DE=FA=r. The area of $\triangle ACE$ is 70\% of the area of the hexagon. What is the sum of all possible values of r?
+
+$\textbf{(A)}\ \frac{4\sqrt{3}}{3} \qquad \textbf{(B)} \frac{10}{3} \qquad \textbf{(C)}\ 4 \qquad \textbf{(D)}\ \frac{17}{4} \qquad \textbf{(E)}\ 6$
+## Solution 1
+It is clear that $\triangle ACE$ is an equilateral triangle. From the [Law of Cosines](https://artofproblemsolving.com/wiki/index.php/Law_of_Cosines) on $\triangle ABC,$ we get that $AC^2 = r^2+1^2-2r\cos{\frac{2\pi}{3}} =r^2+r+1$. Therefore, the area of $\triangle ACE$ is $\frac{\sqrt{3}}{4}(r^2+r+1)$ by area of an equilateral triangle.
+
+If we extend BC, DE and FA so that FA and BC meet at X, BC and DE meet at Y, and DE and FA meet at Z, we find that hexagon ABCDEF is formed by taking equilateral triangle XYZ of side length $r+2$ and removing three equilateral triangles, ABX, CDY and EFZ, of side length 1. The area of ABCDEF is therefore
+
+$$\frac{\sqrt{3}}{4}(r+2)^2-\frac{3\sqrt{3}}{4} = \frac{\sqrt{3}}{4}(r^2+4r+1).$$
+
+Based on the initial conditions,
+
+
+$$\frac{\sqrt{3}}{4}(r^2+r+1) = \frac{7}{10}\left(\frac{\sqrt{3}}{4}\right)(r^2+4r+1)$$
+
+
+Simplifying this gives us $r^2-6r+1 = 0$. By [Vieta's Formulas](https://artofproblemsolving.com/wiki/index.php/Vieta's_Formulas) we know that the sum of the possible value of r is $\boxed{\textbf{(E)}\ 6}.$
+## Solution 2
+Step 1: Use [Law of Cosines](https://artofproblemsolving.com/wiki/index.php/Law_of_Cosines) in the same manner as the previous solution to get AC=$\sqrt{r^2+r+1}.$
+
+Step 2: $\triangle{ABC}$~$\triangle{CDE}$~$\triangle{EFA}$ via SAS congruency. Using the formula [ABC]=$\frac{ab \sin C}{2}= \frac{r \sqrt{3}}{4}.$ The area of the hexagon is equal to [ACE] + 3[ABC]. We are given that 70\% of this area is equal to [ACE]; solving for AC in terms of r gives AC=$\sqrt{7r}.$
+
+Step 3: $\sqrt{7r}=\sqrt{r^2+r+1} \impliesr^2-6r+1=0$ and by [Vieta's Formulas](https://artofproblemsolving.com/wiki/index.php/Vieta's_Formulas) , we get $\boxed{\textbf{E}}.$
+
+Note: To verify that the quadratic $r^2-6r+1$ has two positive roots, we can either solve for the roots directly or note that discriminant is positive, and there are no negative roots (because then $r^2, -6r$, 1 would all be positive).
+## Solution 3
+Find the area of the triangle ACE as how it was done in solution 1. Find the sum of the areas of the congruent  triangles ABC, CDE, EFA as how it was done in solution 2. The sum of these areas is the area of the hexagon, hence the areas of the congruent  triangles ABC, CDE, EFA is 30\% of the area of the hexagon. Hence $\frac{7}{3}$ times the latter is equal to the triangle ACE. Hence $\frac{7}{3}\cdot\frac{3\sqrt{3}}{4}r=\frac{\sqrt{3}}{4}(r^2+r+1).$ We can simplify this to $7r=r^2+r+1\impliesr^2-6r+1=0$. By Vieta's, we get the sum of all possible values of r is $-\frac{-6}{1}=6\text{ or } \boxed{\textbf{E}}.$
+*~vsamc*
+## Solution 4 (no trig)
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+import graph; size(8cm); pen dps = fontsize(10); defaultpen(dps); real $r = 0.7$; // Define hexagon vertices clockwise with AB on top pair A = (0, 0); pair B = (1, 0); pair C = B + r * dir(-60); pair D = C + dir(-120); pair E = D + r * dir(180); pair F = E + dir(120); // Draw the hexagon draw(A--B--C--D--E--F--cycle); // Draw triangle ACE draw(A--C--E--cycle); // Draw line CF draw(C--F); // Drop perpendiculars from B and E to CF pair foot_B = foot(B, C, F); pair foot_E = foot(E, C, F); // Draw perpendiculars (dashed) draw(B--foot_B, dashed); draw(E--foot_E, dashed); // Right angle markers (smaller) draw(rightanglemark(B, foot_B, C, 4)); draw(rightanglemark(E, foot_E, C, 4)); // Vertex labels label("$A$", A, NW); label("$B$", B, NE); label("$C$", C, SE); label("$D$", D, S); label("$E$", E, SW); label("$F$", F, NW); // Feet labels label("$P$", foot_B, S); label("$Q$", foot_E, N); // Side length labels label("$1$", midpoint(A--B), N); label("$r$", midpoint(B--C), dir(45)); label("$1$", midpoint(C--D), E); label("$r$", midpoint(D--E), S); label("$1$", midpoint(E--F), W); label("$r$", midpoint(F--A), W);
+```
+
+Drawing not to scale.*
+To find r, we'll form an equation by finding the area of hexagon ABCDEF and $\triangle{ACE}$ separately. First, connect a directly opposite diagonal such as CF. Because the hexagon is equiangular, edges AF and BC protrude from points A and B at the same angle but in opposite directions and equal length. This places points C and F at the same "height" relative to segment AB, so segment CF is parallel to AB and also DE (opposite sides are parallel since you rotated through three $120^\circ$ angles between each other).
+
+Next, we'll calculate the area of isosceles trapezoids ABCF and CDEF. Drop a perpendicular down from B to CF, and call the intersection to CF, P. Because adjacent angles between parallel sides in a trapezoid sum to $180^\circ$ and $\angle ABC = 120^\circ, \angle BCP = 60^\circ$ meaning $\triangle{BPC}$ is a 30-60-90 right triangle. Now we get BP = $\frac{\sqrt{3}}{2}$r and CP = $\frac{r}{2}. CF$ is equal to AB + 2CP = $r+1$. Hence, the area of trapezoid ABCF is $\frac{1}{2} \cdot \frac{\sqrt{3}}{2}$r $\cdot (r+1+1) = \frac{\sqrt{3}}{4}$ r(r+2)$$. Similarly, on trapezoid CDEF we find $\triangle EQF$ is 30-60-90, and EQ = $\frac{\sqrt{3}}{2}, FQ = \frac{1}{2}.$ Then, area of CDEF is $\frac{\sqrt{3}}{4} (2r + 1).$ Thus, the area of the hexagon is the sum of the two areas, $\frac{\sqrt{3}}{4} (r^2 + 4r + 1).$
+
+Next, notice that $\triangle ACE$ is equilateral. And by Pythagorean theorem in $\triangle CQE,$ side CE = $\sqrt{r^2 + r + 1}.$ Applying area of equilateral triangle formula, area $\triangle ACE = \frac{\sqrt{3}}{4} (r^2 + r + 1).$ Using this area and the area given from 70% of the area of the hexagon, we get the equation $\frac{7}{10} \cdot \frac{\sqrt{3}}{4} (r^2 + 4r + 1) = \frac{\sqrt{3}}{4} (r^2 + r + 1).$ Simplifying, we get the quadratic $r^2-6r+1=0$, which by Vieta's yields the answer 6, $\boxed{\textbf{E}}.$
+
+*~henry*
+### Proof Triangle ACE is Equilateral.
+We know $\triangle{ABC}, \triangle{CDE},$ and $\triangle{EFA}$ are congruent by SAS, so the side opposite the 120 degree angle is also the same (since the triangles are congruent). Thus $\triangle{ACE}$ is equilateral.
+Q.E.D.
+*~mathboy282*
+## Video Solution 2
+https://youtu.be/rsURe5Xh-j0?t=961
+## See also

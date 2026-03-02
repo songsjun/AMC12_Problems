@@ -1,0 +1,182 @@
+{{duplicate|[[2024 AMC 10B Problems/Problem 24|2024 AMC 10B #23]] and [[2024 AMC 12B Problems/Problem 18|2024 AMC 12B #18]]}}
+
+==Problem==
+The Fibonacci numbers are defined by <math>F_1 = 1, F_2 = 1,</math> and <math>F_n = F_{n-1} + F_{n-2}</math> for <math>n \geq 3.</math> What is <cmath>{\frac{F_2}{F_1}} + {\frac{F_4}{F_2}} + {\frac{F_6}{F_3}} + ... + {\frac{F_{20}}{F_{10}}}?</cmath>
+<math>\textbf{(A) } 318 \qquad\textbf{(B) } 319 \qquad\textbf{(C) } 320 \qquad\textbf{(D) } 321 \qquad\textbf{(E) } 322</math>
+
+==Solution 1 (Brute Force)==
+The first <imath>20</imath> terms are <imath>F_n = 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765</imath>
+
+So the answer is <imath>1 +  3 + 4 + 7 + 11 + 18 + 29 + 47 + 76 + 123 =  \boxed{(B) 319} </imath>. 
+*Do not do this unless you have no other option or no time to find a smarter way
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Cyantist luckuso]
+
+==Solution 2 (Pattern)==
+Plug in a few numbers to see if there is a pattern. List out a few Fibonacci numbers, and then try them on the equation. You'll find that <math>{\frac{F_2}{F_1}} = {\frac{1}{1}} = 1, {\frac{F_4}{F_2}} = {\frac{3}{1}} = 3, {\frac{F_6}{F_3}} = {\frac{8}{2}} = 4,</math> and <math>{\frac{F_8}{F_4}} = {\frac{21}{3}} = 7.</math> The pattern is that then ten fractions are in their own leapfrog sequence with the starting two terms being <math>1</math> and <math>3</math>, which can be written as <math>G_1 = 1, G_2 = 3, G_n = G_{n-1} + G_{n-2}</math> for <math>n \geq 3.</math> The problem is asking for the sum of the ten terms <math>G_1 + G_2 + G_3 + ... + G_{10}</math>, and after adding up the first ten terms <math>1 + 3 + 4 + 7 + 11 + 18 + 29 + 47 + 76 + 123</math>, you arrive at the solution <math>\boxed{\textbf{(B) }319}.</math>
+
+~Cattycute
+
+==Note== 
+
+The terms <math>1, 3, 4, 7 \cdots , 76, 123</math> are actually part of a sequence called the Lucas Numbers.
+
+~NXC
+
+==Solution 3 (Characteristic Equation and Recurrence Relationship) ==
+
+Using characteristic equation <math>x^2=x+1</math> and starting terms <math>F_1 =1, F_2=1</math>, we get <math>F_n=\frac{1}{\sqrt{5}} (A^n- B^n) </math>, A= <math>\frac{1+\sqrt{5}}{2}</math> , B = <math>\frac{1-\sqrt{5}}{2}</math> 
+
+Define a new sequence (this is actually a Lucas sequence) <cmath>  L_n = \frac{F_{2n}}{F_{n}} = \frac{A^{2n} - B^{2n}}{A^{n} - B^{n}} =A^n+B^n </cmath>
+
+Given that <math>L_n</math> has the same 2 roots (A,B) as the characteristic equation <math>x^2=x+1</math> it implies that <math>  L_{n}  =L_{n-1}  + L_{n-2} </math>. It can also be verified below. 
+Noticing <math> A^2 = A + 1 </math> and <math> B^2 = B + 1 </math>, 
+Therefore,
+<cmath>
+L_n = A^n + B^n  =  A^2 \cdot A^{n-2} + B^2 \cdot B^{n-2}  =  (A +1) \cdot A^{n-2} + (B+1) \cdot B^{n-2} = (A^{n-1} + B^{n-1}) + (A^{n-2} + B^{n-2}) = L_{n-1} + L_{n-2} .
+</cmath>
+
+Calculating the first 10 terms using the recurrence relation <math>  L_{n}  =L_{n-1}  + L_{n-2} </math> and the initial values <math> L_1 = 1 </math> and <math> L_2 = 3 </math>, we get:
+<cmath>
+L_1 = 1, \quad L_2 = 3, \quad L_3 = 4, \quad L_4 = 7, \quad L_5 = 11 </cmath>
+
+<cmath>\quad L_6 = 18, \quad L_7 = 29, \quad L_8 = 47, \quad L_9 = 76, \quad L_{10} = 123
+</cmath>
+
+So the answer is <math> 1 + 3 + 4 + 7 + 11 + 18 + 29 + 47 + 76 + 123 = \boxed{\textbf{(B) }319} </math>. 
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Cyantist luckuso]
+
+==Solution 3 (Generic Lucas Sequence Sum Formula) ==
+ 
+<cmath>
+S_k = \sum_{n=1}^{k} L_n = \sum_{n=1}^{k} (A^n + B^n) = \sum_{n=1}^{k} A^n + \sum_{n=1}^{k} B^n = \frac{A(1 - A^k)}{1 - A} + \frac{B(1 - B^k)}{1 - B}
+</cmath>
+
+Recall the sum formula for a geometric series:
+<cmath>
+\sum_{n=1}^{k} r^n = r + r^2 + \cdots + r^k = \frac{r(1 - r^k)}{1 - r}, \quad \text{for } r \neq 1
+</cmath>
+   
+To simplify further, notice that:
+<imath> A = \frac{1 + \sqrt{5}}{2} </imath> and <imath> B = \frac{1 - \sqrt{5}}{2} </imath> are roots of <imath> x^2 = x + 1 </imath>, so:
+<cmath>
+1 - A = B \quad \text{and} \quad 1 - B = A.
+</cmath>
+
+<cmath>
+S_k = \frac{A(1 - A^k)}{B} + \frac{B(1 - B^k)}{A} = \frac{A^{k+2} - A^2 + B^{k+2} - B^2}{A \cdot B}  =  \frac{A^{k+2}  + B^{k+2} -   (A^2+  B^2) }{A \cdot B}  = A^{k+2}  + B^{k+2} -3 = L_{n+2} - 3
+</cmath>
+
+This formula <imath>S_k =  A^{k+2}  + B^{k+2} - 3 </imath> gives us a direct way to calculate the sum of <imath> L_n </imath> for any <imath> k </imath>.
+
+<cmath>L_{2n} = (A^n + B^n)^2 - 2 \cdot (AB)^n = L_{n} - 2 \cdot (-1) ^n</cmath>
+<cmath>L_{2n+1} = (A^n + B^n)(A^{n+1} + B^{n+1}) -  (AB)^n(A+B) = L_{n}L_{n+1} - (-1)^n</cmath>
+
+<cmath>L_{12} = (L_{6} )^2 -2 = (L_{3}^2 + 2 )^2 -2  = (4^2 + 2 )^2 - 2  = 324 - 2 = 322  </cmath>
+
+Hence, <cmath>\sum_{n=1}^{10} = L_{12} -3 = 322 - 3 =  \boxed{(B) 319} </cmath>
+
+*Please do not do this on an actually exam in AMC 10 and only do it when you have no time in AMC 12
+
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Cyantist luckuso]
+
+==Solution 4==
+
+Remember that for any <math> n\ge0 </math>, <cmath> \frac{F_{2n}}{F_{n}} = L_{n} </cmath>
+This can be found in 9.4.3 (b) of Inter Counting ( Serengeti 22)
+
+so the answer is <math> 1 + 3 + 4 + 7 + 11 + 18 + 29 + 47 + 76 + 123 = \boxed{(B) 319} </math>.
+
+~Apollo08 (first solution)
+
+==Solution 5 (Fibonacci Identities)==
+
+If you are well-versed in identities relating Fibonacci numbers (or spot this pattern by induction) then you may see that
+
+<cmath>
+F_{2n}=F_{n}(F_{n-1}+F_{n+1})
+</cmath>
+
+Then we can say that the sum required is just <math>(F_0+F_1+...+F_9)+(F_2+F_3+...+F_{11})</math> (and we take <math>F_0=0</math>). There is not much we can do to aid our calculation, so we directly calculate the answer using the sequence <math>1</math>, <math>1</math>, <math>2</math>, <math>3</math>, <math>5</math>, <math>8</math>, <math>13</math>, <math>21</math>, <math>34</math>, <math>55</math>, <math>89</math>. You should get <math>\boxed{(B) 319}</math>.
+
+(If you are interested, this identity can be proved using the inductive process as well as using the fact <math>F_{n}F_{n+1}-F_{n-2}F_{n-1}=F_{2n-1}</math>.)
+
+-lisztepos
+
+== Solution 6 ==
+This solution is motivated by solution 3.
+
+The explicit formula for Fibonacci numbers is
+<cmath>
+F_n = \frac{1}{\sqrt{5}} \left( \frac{1 + \sqrt{5}}{2} \right)^n - \frac{1}{\sqrt{5}} \left( \frac{1 - \sqrt{5}}{2} \right)^n
+</cmath>
+Therefore,
+<cmath>
+F_{2n} = \frac{1}{\sqrt{5}} \left( \frac{1 + \sqrt{5}}{2} \right)^{2n} - \frac{1}{\sqrt{5}} \left( \frac{1 - \sqrt{5}}{2} \right)^{2n}
+</cmath>
+Using the explicit formulas, the equation for <math>\frac{F_{2n}}{F_n}</math> could be computed.
+<cmath>
+\begin{align*}
+    \frac{F_{2n}}{F_n}
+    &= \frac{\frac{1}{\sqrt{5}} \left( \frac{1 + \sqrt{5}}{2} \right)^n - \frac{1}{\sqrt{5}} \left( \frac{1 - \sqrt{5}}{2} \right)^n}{\frac{1}{\sqrt{5}} \left( \frac{1 + \sqrt{5}}{2} \right)^{2n} - \frac{1}{\sqrt{5}} \left( \frac{1 - \sqrt{5}}{2} \right)^{2n}} \\
+    &= \left( \frac{1 + \sqrt{5}}{2} \right)^n + \left( \frac{1 - \sqrt{5}}{2} \right)^n
+\end{align*}
+</cmath>
+The square roots in the numbers <math>\frac{1 + \sqrt{5}}{2}</math> and <math>\frac{1 - \sqrt{5}}{2}</math> could be removed by adding or multiplying the numbers. Therefore, let <math>\alpha = \frac{1 + \sqrt{5}}{2}</math> and <math>\beta = \frac{1 - \sqrt{5}}{2}</math>.
+
+
+Notice that <math>\alpha + \beta = 1</math> and <math>\alpha\beta = -1</math>. In other words, <math>\alpha</math> and <math>\beta</math> are the roots of the equation <math>x^2 - x - 1 = 0</math>.
+<cmath>
+\begin{align*}
+    \alpha^2 &= \alpha + 1 \\
+    \beta^2 &= \beta + 1 \\
+    \alpha^2 \alpha^n &= \alpha^{n + 1} + \alpha^n \\
+    \beta^2 \beta^n &= \beta^{n + 1} + \beta^n
+\end{align*}
+</cmath>
+Let <math>a_i = \alpha^i</math> and <math>b_i = \beta^i</math> for convenience. Notice that <math>a_{n + 2} + b_{n + 2} = a_{n + 1} + b_{n + 1} + a_n + b_n</math>. Let <math>f_n = a_n + b_n</math>. Observe that <math>f_{n + 2} = f_{n + 1} + f_n</math>.
+
+
+<math>f_1 = 1</math> and <math>f_2 = 3</math> are known. Moreover, <math>f_n</math> share the property of Fibonacci numbers. Note that every sequence <math>F_n</math> that forms a new term by adding two previous terms have the following property.
+<cmath>
+\sum_{k=1}^{n} F_k = F_{n+2} - F_2 \qquad (n \geq 1)
+</cmath>
+Therefore,
+<cmath>
+\sum_{k=1}^{10} F_k = F_{12} - 3.
+</cmath>
+Moreover, <math>\{f_n\}_{n=1}^\infty \coloneq \{ 1, 3, 4, 7, 11, 18, 29, 47, 76, 123, 199, 322, \dots \}</math>.
+Therefore, <math>322 - 3 = \boxed{\textbf{(B) }319}</math>.
+
+~MaPhyCom
+
+==Solution 7 (Lots of Identities)==
+
+Of course, olympiad algebra mains recall that for any <math> n\ge0 </math>, <cmath> \frac{F_{2n}}{F_{n}} = L_{n} </cmath> where <math>L_{n}</math> denotes the Lucas numbers. A well known Fibonacci identity is that
+<cmath>
+\sum_{k=1}^{n} F_k = F_{n+2} - F_2 \qquad (n \geq 1)
+</cmath>
+Now we also know <cmath> L_{n} = F_{n-1}+F_{n+1} </cmath> which further nukes the problem if you do not feel like calculating Lucas numbers. Either way, we should get an answer of <math>\boxed{\textbf{(B) }319}</math>.
+
+Remark: All proofs of these identities are on Wikipedia.
+
+~gold duck
+
+==Video Solution 1 by Pi Academy (In Less Than 3 Mins ⚡🚀)==
+
+https://youtu.be/YjQ9Q93RCu4?feature=shared
+
+~ Pi Academy
+
+==Video Solution 2 by Innovative Minds==
+https://www.youtube.com/watch?v=7KEk5VbxwAU
+
+==Video Solution 3 by SpreadTheMathLove==
+https://youtu.be/ag4IC3e2Oqo?si=xhi4l1Jel40naI4g
+
+==See also==
+{{AMC10 box|year=2024|ab=B|num-b=22|num-a=24}}
+{{AMC12 box|year=2024|ab=B|num-b=17|num-a=19}}
+{{MAA Notice}}

@@ -1,0 +1,37 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2017_AMC_12A_Problems/Problem_8&action=raw
+
+Published Time: Sat, 14 Sep 2024 11:34:03 GMT
+
+Markdown Content:
+==Problem==
+
+The region consisting of all points in three-dimensional space within 3 units of line segment \overline{AB} has volume 216 \pi. What is the length AB?
+
+ \textbf{(A)}\ 6 \qquad\textbf{(B)}\ 12 \qquad\textbf{(C)}\ 18 \qquad\textbf{(D)}\ 20 \qquad\textbf{(E)}\ 24 
+
+==Solution==
+
+Let the length AB be L. Then, we see that the region is just the union of the cylinder with central axis \overline{AB} and radius 3 and the two hemispheres connected to each face of the cylinder (also with radius 3). Thus the volume is
+
+9\pi L + \frac{4}{3}\pi(3)^3 = 9\pi L + 36\pi ( = 216\pi)
+
+9\pi L = 180\pi
+
+L = \boxed{(D)=\ 20}
+
+==Video Solution (HOW TO THINK CREATIVELY!!!)==
+https://youtu.be/9D2iKHI3FMk
+
+~Education, the Study of Everything
+
+==Video Solution==
+https://youtu.be/LGOtggQwSFU
+
+~Math4All999
+
+==See Also==
+{{AMC10 box|year=2017|ab=A|num-b=10|num-a=12}}
+{{AMC12 box|year=2017|ab=A|num-b=7|num-a=9}}
+{{MAA Notice}}

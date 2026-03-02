@@ -1,0 +1,41 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2013_AMC_12A_Problems/Problem_12&action=raw
+
+Published Time: Fri, 25 Dec 2020 23:06:03 GMT
+
+Markdown Content:
+== Problem==
+
+The angles in a particular triangle are in arithmetic progression, and the side lengths are 4,5,x. The sum of the possible values of x equals a+\sqrt{b}+\sqrt{c} where a, b, and c are positive integers. What is a+b+c?
+
+ \textbf{(A)}\ 36\qquad\textbf{(B)}\ 38\qquad\textbf{(C)}\ 40\qquad\textbf{(D)}\ 42\qquad\textbf{(E)}\ 44
+
+==Solution==
+
+Because the angles are in an arithmetic progression, and the angles add up to  180^{\circ} , the second largest angle in the triangle must be  60^{\circ} . Also, the side opposite of that angle must be the second longest because of the angle-side relationship. Any of the three sides,  4 ,  5 , or  x , could be the second longest side of the triangle.
+
+The law of cosines can be applied to solve for  x  in all three cases.
+
+When the second longest side is  5 , we get that  5^2 = 4^2 + x^2 - 2(4)(x)\cos 60^{\circ} , therefore  x^2 - 4x - 9 = 0 . By using the quadratic formula, 
+ x = \frac {4 + \sqrt{16 + 36}}{2} , therefore  x = 2 + \sqrt{13} .
+
+When the second longest side is  x , we get that  x^2 = 5^2 + 4^2 - 40\cos 60^{\circ} , therefore  x = \sqrt{21} .
+
+When the second longest side is  4 , we get that  4^2 = 5^2 + x^2 - 2(5)(x)\cos 60^{\circ} , therefore  x^2 - 5x + 9 = 0 . Using the quadratic formula, 
+ x = \frac {5 + \sqrt{25 - 36}}{2} . However,  \sqrt{-11}  is not real, therefore the second longest side cannot equal  4 .
+
+Adding the two other possibilities gets  2 + \sqrt{13} + \sqrt{21} , with  a = 2, b=13 , and  c=21 .  a + b + c = 36 , which is answer choice \text{(A)}.
+
+==Video Solution==
+https://www.youtube.com/watch?v=XQpQaomC2tA
+
+(NOTE: Problem 12 starts at 8:50 in the youtube video  ~jyang66)
+
+~sugar_rush
+
+== See also ==
+{{AMC12 box|year=2013|ab=A|num-b=11|num-a=13}}
+
+[[Category:Introductory Geometry Problems]]
+{{MAA Notice}}

@@ -1,0 +1,15 @@
+# 2012 AMC 12A Problem 3
+
+## Problem
+A box 2 centimeters high, 3 centimeters wide, and 5 centimeters long can hold 40 grams of clay.  A second box with twice the height, three times the width, and the same length as the first box can hold n grams of clay.  What is n?
+
+$\textbf{(A)}\ 120\qquad\textbf{(B)}\ 160\qquad\textbf{(C)}\ 200\qquad\textbf{(D)}\ 240\qquad\textbf{(E)}\ 280$
+## Solution 1
+The first box has volume $2\times3\times5=30\text{ cm}^3,$ and the second has volume ($2\times2)\times(3\times3)\times(5)=180\text{ cm}^3.$  The second has a volume that is 6 times greater, so it holds $6\times40=\boxed{\textbf{(D)}\ 240}$ grams.
+## Solution 2 (faster)
+Note that we don't need to consider the two individual volumes at all, just the ratio between them. We just need to multiply the original mass of clay by this ratio.
+The volume of the second box is $2\times3\times1 = 6$ times greater than the first.
+Therefore we get that the second box holds a weight of $6\times 40=\boxed{\textbf{(D)}\ 240}$ grams of clay.
+
+*~rawr3507*
+## See Also

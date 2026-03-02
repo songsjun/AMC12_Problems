@@ -1,0 +1,22 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2008_AMC_12B_Problems/Problem_8&action=raw
+
+Published Time: Thu, 04 Jul 2013 14:53:57 GMT
+
+Markdown Content:
+==Problem==
+Points B and C lie on \overline{AD}. The length of \overline{AB} is 4 times the length of \overline{BD}, and the length of \overline{AC} is 9 times the length of \overline{CD}. The length of \overline{BC} is what fraction of the length of \overline{AD}?
+
+\textbf{(A)}\ \frac {1}{36} \qquad \textbf{(B)}\ \frac {1}{13} \qquad \textbf{(C)}\ \frac {1}{10} \qquad \textbf{(D)}\ \frac {5}{36} \qquad \textbf{(E)}\ \frac {1}{5}
+
+==Solution==
+Since \overline{AB}=4\overline{BD} and \overline{AB}+\overline{BD}=\overline{AD}, \overline{AB}=\frac{4}{5}\overline{AD}.  
+
+Since \overline{AC}=9\overline{CD} and \overline{AC}+\overline{CD}=\overline{AD},  \overline{AC}=\frac{9}{10}\overline{AD}. 
+
+Thus, \overline{BC}=\overline{AC}-\overline{AB}=\left(\frac{9}{10}-\frac{4}{5}\right)\overline{AD} = \frac {1}{10}\overline{AD} \Rightarrow C. 
+
+==See Also==
+{{AMC12 box|year=2008|ab=B|num-b=7|num-a=9}}
+{{MAA Notice}}

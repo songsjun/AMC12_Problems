@@ -1,0 +1,98 @@
+{{duplicate|[[2011 AMC 12B Problems|2011 AMC 12B #16]] and [[2011 AMC 10B Problems|2011 AMC 10B #20]]}}
+
+== Problem==
+
+Rhombus <math>ABCD</math> has side length <math>2</math> and <math>\angle B = 120</math>°. Region <math>R</math> consists of all points inside the rhombus that are closer to vertex <math>B</math> than any of the other three vertices. What is the area of <math>R</math>?
+
+<math> \textbf{(A)}\ \frac{\sqrt{3}}{3} \qquad\textbf{(B)}\ \frac{\sqrt{3}}{2} \qquad\textbf{(C)}\ \frac{2\sqrt{3}}{3} \qquad\textbf{(D)}\ 1 + \frac{\sqrt{3}}{3} \qquad\textbf{(E)}\ 2</math>
+[[Category: Introductory Geometry Problems]]
+
+== Solution 1==
+
+Suppose that <math>P</math> is a point in the rhombus <math>ABCD</math> and let <math>\ell_{BC}</math> be the [[perpendicular bisector]] of <math>\overline{BC}</math>. Then <math>PB < PC</math> if and only if <math>P</math> is on the same side of <math>\ell_{BC}</math> as <math>B</math>. The line <math>\ell_{BC}</math> divides the plane into two half-planes; let <math>S_{BC}</math> be the half-plane containing <math>B</math>. Let us define similarly <math>\ell_{BD},S_{BD}</math> and <math>\ell_{BA},S_{BA}</math>. Then <math>R</math> is equal to <math>ABCD \cap S_{BC} \cap S_{BD} \cap S_{BA}</math>. The region turns out to be an irregular pentagon. We can make it easier to find the area of this region by dividing it into four triangles:
+
+<asy>
+unitsize(8mm);
+defaultpen(linewidth(0.8pt)+fontsize(10pt));
+dotfactor=4;
+
+pair A=(4,0), B=(2,2sqrt(3)), C=(-2,2sqrt(3)), D=(0,0), E=(B+C)/2, F=(B+C+D)/3, G=(A+C)/2, H=(A+B+D)/3, I=(A+B)/2;
+fill((0,2sqrt(3))--B--(3,sqrt(3))--(2,(2sqrt(3))/3)--(0,(4sqrt(3))/3)--cycle,gray);
+draw(A--B--C--D--cycle);
+draw(D--(0,2sqrt(3))); draw(D--(3,sqrt(3))); draw(A--C); draw(F--B--H); draw(B--G);
+
+label("$A$",A,SE);label("$B$",B,NE);label("$C$",C,NW);label("$D$",D,SW);
+label("$E$",E,N);label("$F$",F,SW);label("$G$",G,SW);label("$H$",H,S);label("$I$",I,NE);
+label("$2$",(D--C),SW);
+</asy>
+Since <math>\triangle BCD</math> and <math>\triangle BAD</math> are equilateral, <math>\ell_{BC}</math> contains <math>D</math>, <math>\ell_{BD}</math> contains <math>A</math> and <math>C</math>, and <math>\ell_{BA}</math> contains <math>D</math>. Then <math>\triangle BEF \cong \triangle BGF \cong \triangle BGH \cong \triangle BIH</math> with <math>BE = 1</math> and <math>EF = \frac{1}{\sqrt{3}}</math> so <math>[BEF] = \frac{1}{2}\cdot 1 \cdot \frac{\sqrt{3}}{3}</math>. Multiply this by 4 and it turns out that the pentagon has area <math>\boxed{(C)\frac{2\sqrt{3}}{3}}</math>.
+
+== Solution 2==
+
+We follow the steps shown above until we draw pentagon <math>BIHFE</math>. We know that rhombus <math>ABCD</math> can be divided into equilateral triangles <math>\triangle ABD</math> and <math>\triangle CBD</math>. Using the <math>30-60-90</math> special right triangle rules, we find the height of the equilateral triangles (and the height of the rhombus) to be <math>\sqrt{3}</math>. Therefore, the area of <math>ABCD</math> is <math>2\sqrt{3}</math>. We now have to take off the areas <math>\triangle CDA</math>, <math>\triangle CEF</math>, and <math>\triangle AIH</math> to get the desired shape. <math>\triangle CDA</math> is just half of <math>ABCD</math> <math>(\sqrt {3})</math> and <math>\triangle AIH</math> and <math>\triangle CEF</math> are each <math>\frac{\sqrt {3}}{6}</math>, for a total area of <math>2\sqrt {3}-\sqrt {3}-\frac{\sqrt{3}}{6}-\frac{\sqrt{3}}{6}=\boxed{(C)\frac{2\sqrt{3}}{3}}</math>.
+
+== Solution 3==
+
+We split rhombus <math>ABCD</math> into two equilateral triangles, <math>ABD</math> and <math>BCD</math>. In triangle <math>ABD</math>, the probability that a randomly selected point is closer to <math>B</math> than either other point is <math>\frac{1}{3}</math> *. Similarly, in triangle <math>BCD</math>, the same principle applies. Thus, the area of the region closer to <math>B</math> than <math>A</math>, <math>C</math>, or <math>D</math> is <math>\frac{1}{3} [ABD] + \frac{1}{3} [BCD]</math>. Since <math>ABD</math> and <math>BCD</math> are congruent, we have <math>\frac{1}{3} [ABD] + \frac{1}{3} [BCD] = \frac{2}{3} [ABD] = \frac{2}{3} \cdot \frac{s^2\sqrt{3}}{4} = \frac{2}{3} \cdot \frac{(2)^2\sqrt{3}}{4} = \boxed{\frac{2\sqrt3}{3} = C}</math>, and we are done.
+
+\*See note
+
+== Solution 4 ==
+<asy>
+unitsize(8mm);
+defaultpen(linewidth(0.8pt)+fontsize(10pt));
+dotfactor=4;
+
+pair A=(4,0), B=(2,2sqrt(3)), C=(-2,2sqrt(3)), D=(0,0), E=(B+C)/2, F=(B+C+D)/3, G=(A+B+D)/3, H=(A+B)/2;
+fill((0,2sqrt(3))--B--(3,sqrt(3))--(2,(2sqrt(3))/3)--(0,(4sqrt(3))/3)--cycle,gray);
+draw(A--B--C--D--cycle);
+draw(D--(0,2sqrt(3))); draw(D--(3,sqrt(3))); draw(A--C); draw(F--B--H); draw(B--G);
+
+label("$A$",A,SE);label("$B$",B,NE);label("$C$",C,NW);label("$D$",D,SW);
+label("$E$",E,N);label("$F$",F,SW);label("$G$",G,S);label("$H$",H,E);
+label("$2$",(D--C),SW);
+</asy>
+Since <math>H</math> and <math>E</math> are halfway between <math>AB</math> and <math>CB</math>, respectively, we know that <math>\overline{BH}=\overline{BE}=1</math>. By symmetry, <math>\Delta BFG</math> is equilateral, so <math>\angle FBG=60^\circ\implies\angle EBF=\angle HBG=30^\circ</math> and therefore <math>\Delta EBF</math> and <math>\Delta HBG</math> are 30-60-90 right triangles. 
+Thus, <math>[\Delta EBF]=[\Delta BFG]=\dfrac1{2\sqrt3}</math>. 
+We know that <math>\overline{FB}=\overline{GB}=\dfrac2{\sqrt3}</math>, so therefore <math>[\Delta BFG]=\dfrac{\sqrt3}4\left(\dfrac2{\sqrt3}\right)^2=\dfrac1{\sqrt3}</math>. 
+Summing these three regions, we get <math>\dfrac1{2\sqrt3}+\dfrac1{2\sqrt3}+\dfrac1{\sqrt3}=\boxed{\textbf{(C)}~\dfrac{2\sqrt3}3}</math>. 
+~ Technodoggo, Asymptote diagram modified from Solution 1
+
+== Solution 5 ==
+<asy>
+unitsize(8mm);
+defaultpen(linewidth(0.8pt)+fontsize(10pt));
+dotfactor=4;
+
+pair A=(4,0), B=(2,2sqrt(3)), C=(-2,2sqrt(3)), D=(0,0), E=(B+C)/2, F=(B+C+D)/3, G=(A+B+D)/3, H=(A+B)/2;
+fill((0,2sqrt(3))--B--(3,sqrt(3))--(2,(2sqrt(3))/3)--(0,(4sqrt(3))/3)--cycle,gray);
+draw(A--B--C--D--cycle);
+draw(D--F); draw(D--G); draw(F--C); draw(A--G); draw(F--B); draw(B--G);
+draw(B--D);
+
+label("$A$",A,SE);label("$B$",B,NE);label("$C$",C,NW);label("$D$",D,SW);
+label("$E$",E,N);label("$F$",F,SW);label("$G$",G,S);label("$H$",H,E);
+label("$2$",(D--C),SW);
+</asy>
+To keep it simple, break rhombus <math>ABCD</math> into two triangles, <math>ABD</math> and <math>BCD</math>. To see the area closest to the point <math>B</math>, notice that a third of each triangle, which contains all the points nearest to <math>B</math> in each triangle, is easily visualizable. Thus, a third of rhombus <math>ABCD</math> must be found.
+
+We find the total area of rhombus <math>ABCD</math>, which we can again split into two congruent equilateral triangles with side length <math>2</math>. Using the formula of equilateral triangles and then multiplying by <math>\dfrac{1}{3}</math>:
+<cmath>\dfrac{\sqrt{3}}{4}\cdot 2^2 \cdot 2 \cdot \dfrac{1}{3} = 2\sqrt{3} \cdot \dfrac{1}{3} = \boxed{\textbf{(C)}~\dfrac{2\sqrt{3}}{3}}</cmath>
+-NSAoPS, diagram modified from Solution 1.
+
+==Note==
+There is an intuitive explanation for why the shaded region is one third of the rhombus. Consider one of the equilateral triangles; the figure is symmetrical, so one half of the shaded region should be in the triangle. Note that the perpendicular bisectors we constructed in previous solutions to deliminate <math>R</math> must be medians, as the triangle is equilateral. Therefore, recalling that the three intersecting medians of a triangle divide it into 6 smaller triangles of equal area, we observe that the shaded region in the equilateral triangles includes precisely two of these smaller triangles. We can repeat this with the other equilateral triangle that forms the rhombus, and thus we conclude that the shaded area is one third of the rhombus's total area. 
+
+~LeonQS
+
+==Video Solution by TheBeautyofMath==
+https://youtu.be/gCmQlaiEG5A
+
+~IceMatrix
+
+== See Also==
+
+{{AMC10 box|year=2011|ab=B|num-b=19|num-a=21}}
+
+{{AMC12 box|year=2011|ab=B|num-b=15|num-a=17}}
+{{MAA Notice}}

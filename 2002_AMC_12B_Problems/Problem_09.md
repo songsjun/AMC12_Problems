@@ -1,0 +1,31 @@
+# 2002 AMC 12B Problem 9
+
+## Problem
+If a,b,c,d are positive real numbers such that a,b,c,d form an increasing arithmetic sequence and a,b,d form a geometric sequence, then $\frac$ ad is
+
+
+$$\mathrm{(A)}\ \frac 1{12} \qquad\mathrm{(B)}\ \frac 16 \qquad\mathrm{(C)}\ \frac 14 \qquad\mathrm{(D)}\ \frac 13 \qquad\mathrm{(E)}\ \frac 12$$
+
+## Solution
+### Solution 1
+We can let $a=1, b=2, c=3$, and $d=4. \frac{a}{d}=\boxed{\frac{1}{4}} \Longrightarrow \mathrm{(C)}$
+### Solution 2
+As a, b, d is a geometric sequence, let b=ka and d=$k^2a$ for some k>0.
+
+Now, a, b, c, d is an arithmetic sequence. Its difference is b-a=$(k-1)$a. Thus d=a + $3(k-1)$a = (3k-2)$$a.
+
+Comparing the two expressions for d we get $k^2=3k-2$. The positive solution is $k=2$, and $\frac{a}{d}=\frac{a}{k^2a}=\frac{1}{k^2}=\boxed{\frac{1}{4}} \Longrightarrow \mathrm{(C)}.$
+### Solution 3
+Letting n be the common difference of the arithmetic progression, we have
+b = a + n, c = a + $2n$, d = a + $3n$. We are given that b / a = d / b, or
+$$\frac{a + n}{a} = \frac{a + 3n}{a + n}.$$
+Cross-multiplying, we get
+
+$$
+a^2 + 2an + n^2 = a^2 + 3an
+n^2 = an
+n = a
+So \frac{a}{d} = \frac{a}{a + 3n} = \frac{a}{4a} = \boxed{\frac{1}{4}} \Longrightarrow \mathrm{(C)}.
+$$
+
+## See also

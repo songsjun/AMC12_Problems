@@ -1,0 +1,61 @@
+# 2003 AMC 12A Problem 17
+
+## Problem
+Square ABCD has sides of length 4, and M is the midpoint of $\overline{CD}. A$ circle with radius 2 and center M intersects a circle with radius 4 and center A at points P and D. What is the distance from P to $\overline{AD}$?
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+pair A,B,C,D,M,P; D=(0,0); C=(10,0); B=(10,10); A=(0,10); M=(5,0); P=(8,4); dot(M); dot(P); draw(A--B--C--D--cycle,linewidth(0.7)); draw((5,5)..D--C..cycle,linewidth(0.7)); draw((7.07,2.93)..B--A--D..cycle,linewidth(0.7)); label("$A$",A,NW); label("$B$",B,NE); label("$C$",C,SE); label("$D$",D,SW); label("$M$",M,S); label("$P$",P,N);
+```
+
+
+$\textbf{(A)}\ 3 \qquad \textbf{(B)}\ \frac {16}{5} \qquad \textbf{(C)}\ \frac {13}{4} \qquad \textbf{(D)}\ 2\sqrt {3} \qquad \textbf{(E)}\ \frac {7}{2}$
+## Solution 2
+APMD obviously forms a kite. Let the intersection of the diagonals be E. AE+EM=AM=$2\sqrt{5}$ Let AE=x. Then, EM=$2\sqrt{5}-x.$
+
+By Pythagorean Theorem, DE^2=4^2-AE^2=2^2-EM^2. Thus, 16-x^2=4-($2\sqrt{5}-x)^2.$ Simplifying, $x=\frac{8}{\sqrt{5}}.$ By Pythagoras again, DE=$\frac{4}{\sqrt{5}}.$ Then, the area of ADP is DE$\cdot AE=\frac{32}{5}.$
+
+Using 4 instead as the base, we can drop a altitude from P. $\frac{32}{5}=\frac{bh}{2}. \frac{32}{5}=\frac{4h}{2}.$ Thus, the horizontal distance is  $\frac{16}{5} \implies \boxed{\textbf{(B)}\frac{16}{5}}$
+
+*~BJHHar*
+## Solution 3
+Note that P is merely a reflection of D over AM. Call the intersection of AM and DP X. Drop perpendiculars from X and P to AD, and denote their respective points of intersection by J and K. We then have $\triangle DXJ\sim\triangle DPK,$ with a scale factor of 2. Thus, we can find XJ and double it to get our answer. With some analytical geometry, we find that XJ=$\frac{8}{5},$ implying that PK=$\frac{16}{5}.$
+## Solution 4
+As in Solution 2, draw in DP and AM and denote their intersection point X. Next, drop a perpendicular from P to AD and denote the foot as Z. AP \cong AD as they are both radii and similarly DM \cong MP so APMD is a kite and DX \perp XM by a well-known theorem.
+
+Pythagorean theorem gives us AM=2 $\sqrt{5}.$ Clearly $\triangle XMD \sim \triangle XDA \sim \triangle DMA \sim \triangle ZDP$ by angle-angle and $\triangle XMD$\cong $\triangle XMP$ by Hypotenuse Leg.
+Manipulating similar triangles gives us PZ=$\frac{16}{5}$
+## Solution 5
+Using the double-angle formula for sine, what we need to find is AP$\cdot \sin(DAP) = AP\cdot 2\sin( DAM) \cos(DAM) = 4\cdot 2\cdot \frac{2}{\sqrt{20}}\cdot\frac{4}{\sqrt{20}} = \frac{16}{5}.$
+## Solution 6(LoC)
+We use the Law of Cosines:
+
+$$32-32 \cos \theta = 8 + 8 \cos \theta$$
+
+$$\frac{3}{5} = \cos \theta$$
+
+$$2 + 2*\frac{3}{5} = \frac{16}{5}$$
+## Solution 7
+Let H be the foot of the perpendicular from P to CD, and let HD = x. Then we have HC = 4-x, and PH = 4 - $\sqrt{16 - x^2}.$ Since $\triangle DHP \sim \triangle PHC,$ we have $HP^2 = DH\cdot HC,$ or $-x^2 +4x = $16 - $8\sqrt{16-x^2}.$ Solving gives $x =\frac{16}{5}.$
+## Solution 8
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(8cm, 8cm); pair A,B,C,D,M,P,Q,R; D = (0,0); C = (10,0); B = (10,10); A = (0,10); M = (5,0); P = (8,4); Q = (D+P)/2; R = (0,4); dot(M); dot(P); draw(A--B--C--D--cycle,linewidth(0.7)); draw((5,5)..D--C..cycle,linewidth(0.7)); draw((7.07,2.93)..B--A--D..cycle,linewidth(0.7)); draw(A--M,linewidth(0.7)); draw(A--P,linewidth(0.7)); draw(D--P,linewidth(0.7)); draw(R--P,linewidth(0.7)); label("$A$",A,NW); label("$B$",B,NE); label("$C$",C,SE); label("$D$",D,SW); label("$M$",M,S); label("$P$",P,N); label("$Q$",Q,W); label("$R$",R,W); draw(rightanglemark(M, Q, P), linewidth(.5));
+```
+
+
+Draw AM, DP, and PR. PR is parallel with CD
+
+[AMD] = $\frac12 \cdot AD \cdot DM = 4, AM = \sqrt{AD^2 + DM^2} = 2 \sqrt{5}$
+
+$\triangle ADQ \sim \triangle AMD$ by AA, [ADQ] = [AMD] $\cdot \left( \frac{AD}{AM} \right) ^2 = 4 \cdot \left( \frac{2 \sqrt{5}}{5} \right)^2 = \frac{16}{5}$
+
+$\triangle ADQ$\cong $\triangle APQ,$ [APD] = 2 $\cdot$ [ADQ] = 2 $\cdot \frac{16}{5} = \frac{32}{5}$
+
+PR = $\frac{2 \cdot [APD]}{AD} = \frac{2 \cdot \frac{32}{5}}{4} = \boxed{\textbf{(B) } \frac{16}{5} }$
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+## See Also

@@ -1,0 +1,117 @@
+{{duplicate|[[2018 AMC 10A Problems/Problem 9|2018 AMC 10A #9]] and [[2018 AMC 12A Problems/Problem 8|2018 AMC 12A #8]]}}
+
+==Problem==
+
+All of the triangles in the diagram below are similar to isosceles triangle <math>ABC</math>, in which <math>AB=AC</math>. Each of the <math>7</math> smallest triangles has area <math>1,</math> and <math>\triangle ABC</math> has area <math>40</math>. What is the area of trapezoid <math>DBCE</math>?
+
+<asy>
+unitsize(5);
+dot((0,0));
+dot((60,0));
+dot((50,10));
+dot((10,10));
+dot((30,30));
+draw((0,0)--(60,0)--(50,10)--(30,30)--(10,10)--(0,0));
+draw((10,10)--(50,10));
+label("$B$",(0,0),SW);
+label("$C$",(60,0),SE);
+label("$E$",(50,10),E);
+label("$D$",(10,10),W);
+label("$A$",(30,30),N);
+draw((10,10)--(15,15)--(20,10)--(25,15)--(30,10)--(35,15)--(40,10)--(45,15)--(50,10));
+draw((15,15)--(45,15));
+</asy>
+
+<math>\textbf{(A) }   16   \qquad        \textbf{(B) }   18   \qquad    \textbf{(C) }   20   \qquad   \textbf{(D) }  22 \qquad  \textbf{(E) }   24 </math>
+
+==Solution 1==
+Let <math>x</math> be the area of <math>ADE</math>. Note that <math>x</math> is comprised of the <math>7</math> small isosceles triangles and a triangle similar to <math>ADE</math> with side length ratio <math>3:4</math> (so an area ratio of <math>9:16</math>). Thus, we have <cmath>x=7+\dfrac{9}{16}x.</cmath> This gives <math>x=16</math>, so the area of <math>DBCE=40-x=\boxed{(E) 24}</math>.
+
+==Solution 2==
+Let the base length of the small triangle be <math>x</math>. Then, there is a triangle <math>ADE</math> encompassing the 7 small triangles and sharing the top angle with a base length of <math>4x</math>. Because the area is proportional to the square of the side, let the base <math>BC</math> be <math>\sqrt{40}x</math>. The ratio of the area of triangle <math>ADE</math> to triangle <math>ABC</math> is <math>\left(\frac{4x}{\sqrt{40}x}\right)^2 = \frac{16}{40}</math>. The problem says the area of triangle <math>ABC</math> is <math>40</math>, so the area of triangle <math>ADE</math> is <math>16</math>. So the area of trapezoid <math>DBCE</math> is <math>40 - 16 = \boxed{24}</math>.
+
+==Solution 3==
+Notice <math>\big[DBCE\big]=\big[ABC\big]-\big[ADE\big]</math>.
+Let the base of the small triangles of area 1 be <math>x</math>, then the base length of <math>\Delta ADE=4x</math>. Notice, <math>\left(\frac{DE}{BC}\right)^2=\frac{1}{40}\implies \frac{x}{BC}=\frac{1}{\sqrt{40}}</math>, then <math>4x=\frac{4BC}{\sqrt{40}}\implies \big[ADE\big]=\left(\frac{4}{\sqrt{40}}\right)^2\cdot \big[ABC\big]=\frac{2}{5}\big[ABC\big]</math>
+Thus, <math>\big[DBCE\big]=\big[ABC\big]-\big[ADE\big]=\big[ABC\big]\left(1-\frac{2}{5}\right)=\frac{3}{5}\cdot 40=\boxed{24}.</math>
+
+<asy>
+unitsize(5);
+dot((0,0));
+dot((60,0));
+dot((50,10));
+dot((10,10));
+dot((30,30));
+draw((0,0)--(60,0)--(50,10)--(30,30)--(10,10)--(0,0));
+draw((10,10)--(50,10));
+label("$B$",(0,0),SW);
+label("$C$",(60,0),SE);
+label("$E$",(50,10),E);
+label("$D$",(10,10),W);
+label("$A$",(30,30),N);
+draw((10,10)--(15,15)--(20,10)--(25,15)--(30,10)--(35,15)--(40,10)--(45,15)--(50,10));
+draw((15,15)--(45,15));
+</asy>
+
+==Solution 4==
+The area of <math>ADE</math> is 16 times the area of the small triangle, as they are similar and their side ratio is <math>4:1</math>. Therefore the area of the trapezoid is <math>40-16=\boxed{24}</math>.
+
+==Solution 5==
+You can see that we can create a "stack" of 5 triangles congruent to the 7 small triangles shown here, arranged in a row above those 7, whose total area would be 5. Similarly, we can create another row of 3, and finally 1 more at the top, as follows. We know this cumulative area will be <math>7+5+3+1=16</math>, so to find the area of such trapezoid <math>BCED</math>, we just take <math>40-16=\boxed{24}</math>, like so. 
+
+==Solution 6==
+The combined area of the small triangles is <math>7</math>, and from the fact that each small triangle has an area of <math>1</math>, we can deduce that the larger triangle above has an area of <math>9</math> (as the sides of the triangles are in a proportion of <math>\frac{1}{3}</math>, so will their areas have a proportion that is the square of the proportion of their sides, or <math>\frac {1}{9}</math>). Thus, the combined area of the top triangle and the trapezoid immediately below is <math>7 + 9 = 16</math>. The area of trapezoid <math>BCED</math> is thus the area of triangle <math>ABC-16 =\boxed{24}</math>. 
+
+==Solution 7==
+You can assume for the base of one of the smaller triangles to be <math>\frac{1}{a}</math> and the height to be <math>2a</math>, giving an area of 1. The larger triangle above the 7 smaller ones then has base <math>\frac{3}{a}</math> and height <math>6a</math>, giving it an area of <math>9</math>. Then the area of triangle <math>ADE</math> is <math>16</math> and <math>40-16=\boxed{24}</math>.
+
+==Solution 8==
+You can construct another trapezoid directly above the one shown, with it's bottom length as the top length of the original. Its area would then be 9/16 of the original. Repeating this process infinitely gives us the sequence <math>7\cdot\left(1+\left(\frac{9}{16}\right)+\left(\frac{9}{16}\right)^2+\left(\frac{9}{16}\right)^3\dots\right)</math> . Using the infinite geometric series sum formula gives us <math>7\cdot\left(\frac{1}{1-\frac{9}{16}}\right)=7\cdot\frac{16}{7}=16</math>. The triangle's area would thus be <math>40-16=\boxed{24}</math>.  
+
+-ConcaveTriangle
+
+==Solution 9 (weird)==
+Note that the area of an isosceles triangle is equivalent to the square of its height. Using this information, the height of the smallest isosceles triangle is <math>1</math>, and thus its base is <math>2.</math> 
+
+Let <math>h</math> be the height of the top triangle. We can set up a height-to-base similarity ratio, using the top triangle and <math>\triangle{ADE}</math>. The top triangle has a base of <math>3\cdot{2}=6</math>, and <math>DE=4\cdot{2}=8.</math> The height of <math>\triangle{ADE}</math> is <math>h+1</math>, therefore our ratio is <math>\frac{h}{6}=\frac{h+1}{8}</math>, which yields <math>h=3</math> as our answer. 
+
+To find the area of the trapezoid, we can take the area of <math>\triangle{ABC}</math> and subtract the area of <math>\triangle{ADE},</math> whose base is <math>8</math> and height <math>3+1=4</math>. It follows that the area of <math>\triangle{ADE}=16</math>, and subtracting this from <math>40</math> gives us <math>40-16=\boxed{\text{D) }24}</math>.
+
+-Benedict T (countmath1)
+
+==Solution 10 (Pretty standard)==
+Since each of the smallest triangles have area <math>1</math>, we have the combined area of them is <math>7</math>. Also, we know that every triangle is similar to big one. Therefore the triangle above the stack of triangles has area of <math>3^2 = 9</math>, because the side length is <math>3</math>, so we can just square it to find the area. Now to find the area of trapezoid <math>BCDE</math> we can just do: <cmath>40-(9+7) = 40-16=\boxed{\text{E) }24}</cmath>
+-jb2015007
+
+==Video Solution (HOW TO THINK CREATIVELY!)==
+https://youtu.be/lgkkomUwSs0
+
+~Education, the Study of Everything
+
+
+
+==Video Solutions==
+
+https://youtu.be/HJALwsbHZXc
+
+~Whiz
+
+https://youtu.be/ZiZVIMmo260
+
+~IceMatrix
+
+https://youtu.be/tq4rWskQDh8
+
+~savannahsolver
+
+https://youtu.be/4_x1sgcQCp4?t=2959
+
+~pi_is_3.14
+
+==See Also==
+
+{{AMC10 box|year=2018|ab=A|num-b=8|num-a=10}}
+{{AMC12 box|year=2018|ab=A|num-b=7|num-a=9}}
+{{MAA Notice}}
+
+[[Category:Introductory Geometry Problems]]

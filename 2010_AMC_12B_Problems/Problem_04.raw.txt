@@ -1,0 +1,31 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2010_AMC_12B_Problems/Problem_4&action=raw
+
+Published Time: Wed, 03 Aug 2022 15:24:04 GMT
+
+Markdown Content:
+{{duplicate|[[2010 AMC 12B Problems|2010 AMC 12B #4]] and [[2010 AMC 10B Problems|2010 AMC 10B #5]]}}
+
+== Problem ==
+A month with 31 days has the same number of Mondays and Wednesdays. How many of the seven days of the week could be the first day of this month?
+
+\textbf{(A)}\ 2 \qquad \textbf{(B)}\ 3 \qquad \textbf{(C)}\ 4 \qquad \textbf{(D)}\ 5 \qquad \textbf{(E)}\ 6
+
+== Solution ==
+31 \equiv 3 \pmod {7} so the week cannot start with Saturday, Sunday, Tuesday or Wednesday as that would result in an unequal number of Mondays and Wednesdays. Therefore, Monday, Thursday, and Friday are valid so the answer is \boxed{B}.
+
+==Video Solution==
+https://youtu.be/4u7WqHb42M0
+
+~Education, the Study of Everything
+
+==Video Solution==
+https://youtu.be/uAc9VHtRRPg?t=329
+
+~IceMatrix
+
+== See also ==
+{{AMC12 box|year=2010|num-b=3|num-a=5|ab=B}}
+{{AMC10 box|year=2010|num-b=4|num-a=6|ab=B}}
+{{MAA Notice}}

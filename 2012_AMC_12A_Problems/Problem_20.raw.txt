@@ -1,0 +1,34 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2012_AMC_12A_Problems/Problem_20&action=raw
+
+Published Time: Wed, 06 Feb 2019 00:59:06 GMT
+
+Markdown Content:
+== Problem ==
+Consider the polynomial
+
+P(x)=\prod_{k=0}^{10}(x^{2^k}+2^k)=(x+1)(x^2+2)(x^4+4)\cdots (x^{1024}+1024)
+
+The coefficient of x^{2012} is equal to 2^a. What is a?
+
+\textbf{(A)}\ 5\qquad\textbf{(B)}\ 6\qquad\textbf{(C)}\ 7\qquad\textbf{(D)}\ 10\qquad\textbf{(E)}\ 24 
+
+== Solution 1==
+Every term in the expansion of the product is formed by taking one term from each factor and multiplying them all together. Therefore, we pick a power of x or a power of 2 from each factor.
+
+Every number, including 2012, has a unique representation by the sum of powers of two, and that representation can be found by converting a number to its binary form. 2012 = 11111011100_2, meaning 2012 = 1024 + 512 + 256 + 128 + 64 + 16 + 8 + 4. 
+
+Thus, the x^{2012} term was made by multiplying x^{1024} from the (x^{1024} + 1024) factor, x^{512} from the (x^{512} + 512) factor, and so on. The only numbers not used are 32, 2, and 1.
+
+Thus, from the (x^{32} + 32), (x^2+2), (x+1) factors, 32, 2, and 1 were chosen as opposed to x^{32}, x^2, and x. 
+
+Thus, the coefficient of the x^{2012} term is 32 \times 2 \times 1 = 64 = 2^6. So the answer is 6 \rightarrow \boxed{B}.
+
+== Solution 2 ==
+The degree of P(x) is 1024+512+256+\cdots+1=2047. We want to find the coefficient of x^{2012}, so we need to omit the powers of 2 that add up to 2047-2012=35. We find that 35=2^0+2^1+2^5. From here, we know that the answer is 2^0\cdot2^1\cdot2^5=2^6. Therefore, the answer is \boxed{(B)\:6.}
+
+==See Also==
+
+{{AMC12 box|year=2012|ab=A|num-b=19|num-a=21}}
+{{MAA Notice}}

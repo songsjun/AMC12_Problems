@@ -1,0 +1,34 @@
+# 2011 AMC 12A Problem 12
+
+## Problem
+A power boat and a raft both left dock A on a river and headed downstream. The raft drifted at the speed of the river current. The power boat maintained a constant speed with respect to the river. The power boat reached dock B downriver, then immediately turned and traveled back upriver. It eventually met the raft on the river 9 hours after leaving dock A. How many hours did it take the power boat to go from A to B?
+
+$\textbf{(A)}\ 3 \qquad \textbf{(B)}\ 3.5 \qquad \textbf{(C)}\ 4 \qquad \textbf{(D)}\ 4.5 \qquad \textbf{(E)}\ 5$
+## Solution
+### Solution 1
+WLOG, let the speed of the river be 0. This is allowed because the problem never states that the speed of the current has to have a magnitude greater than 0. In this case, when the powerboat travels from A to B, the raft remains at A. Thus the trip from A to B takes the same time as the trip from B to the raft. Since these times are equal and sum to 9 hours, the trip from A to B must take half this time, or 4.5 hours. The answer is thus $\boxed{\textbf{D}}.$
+
+Remark: This is equivalent to viewing the problem from the raft's perspective.
+### Solution 2
+What's important in this problem is to consider everything in terms of the power boat and the raft, since that is how the problem is given to us. Think of the blue arrow as the power boat and the red arrow as the raft in the following three diagrams, which represent different time intervals of the problem.
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(8cm,8cm); pair A, B; A=(-3,4); B=(3,4); draw(A--B); label("$A$",A,S); label("$B$",B,S); arrow((-2.5,6.4),dir(180),blue); arrow((-2.5,6.2),dir(180),red); pair A, B; A=(-3,5); B=(3,5); draw(A--B); label("$A$",A,S); label("$B$",B,S); arrow((2.6,5.4),dir(360),blue); arrow((-0.5,5.2),dir(180),red); pair A, B; A=(-3,6); B=(3,6); draw(A--B); label("$A$",A,S); label("$B$",B,S); arrow((.3,4.4),dir(360),blue); arrow((1.1,4.2),dir(180),red);
+```
+
+
+Thinking about the distance covered as their distances with respect to each other, they are 0 distance apart in the first diagram when they haven't started to move yet, some distance d apart in the second diagram when the power boat reaches B, and again 0 distance apart in the third diagram when they meet. Therefore, with respect to each other, the boat and the raft cover a distance of d on the way there, and again cover a distance of d on when drawing closer. This makes sense, because from the 1st diagram to the second, the raft moves in the same direction as the boat, while from the 2nd to the 3rd, the boat and raft move in opposite directions.
+
+Let b denote the speed of the power boat (only the power boat, not factoring in current) and r denote the speed of the raft, which, as given by the problem, is also equal to the speed of the current. Thus, from A to B, the boat travels at a velocity of b+r, and on the way back, travels at a velocity of -(b-r)=r-b, since the current aids the boat on the way there, and goes against the boat on the way back. With respect to the raft then, the boat's velocity from A to B becomes (r+b)-r=b, and on the way back it becomes (r-b)-r=-b. Since the boat's velocities with respect to the raft are exact opposites, b and -b, we therefore know that the boat and raft travel apart from each other at the same rate that they travel toward each other.
+
+From this, we have that the boat travels a distance d at rate b with respect to the raft both on the way to B and on the way back. Thus, using $\dfrac{distance}{speed}=t$ime, we have $\dfrac{2d}{b}=9\text{ hours},$ and to see how long it took to travel half the distance, we have $\dfrac{d}{b}=4.5\text{ hours}\implies\boxed{\textbf{D}}$
+### Solution 3
+Let t be the time it takes the power boat to go from A to B in hours, r be the speed of the river current (and thus also the raft), and p to be the speed of the power boat with respect to the river.
+
+Using d = rt, the raft covers a distance of $9r$, the distance from A to B is (p + r)t, and the distance from B to where the raft and power boat met up is (9 - t)(p - r).
+
+Then, $9r$ + (9 - t)(p - r) = (p + r)t. Solving for t, we get $t = 4.5$, which is $\boxed{\textbf{D}}.$
+## See also

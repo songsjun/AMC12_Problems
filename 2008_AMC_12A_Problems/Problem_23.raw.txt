@@ -1,0 +1,54 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2008_AMC_12A_Problems/Problem_23&action=raw
+
+Published Time: Tue, 24 Feb 2026 15:04:17 GMT
+
+Markdown Content:
+==Problem==
+The solutions of the equation z^4+4z^3i-6z^2-4zi-i=0 are the vertices of a convex polygon in the complex plane. What is the area of the polygon?
+
+\mathrm{(A)}\ 2^{\frac{5}{8}}\qquad\mathrm{(B)}\ 2^{\frac{3}{4}}\qquad\mathrm{(C)}\ 2\qquad\mathrm{(D)}\ 2^{\frac{5}{4}}\qquad\mathrm{(E)}\ 2^{\frac{3}{2}}
+
+==Solution 1==
+Looking at the coefficients, we are immediately reminded of the binomial expansion of {\left(x+1\right)}^{4}.
+
+Modifying this slightly, we can write the given equation as:
+ {\left(z+i\right)}^{4}=1+i=2^{\frac{1}{2}}\cos \frac {\pi}{4} + 2^{\frac{1}{2}}i\sin \frac {\pi}{4} 
+We can apply a translation of -i and a rotation of -\frac{\pi}{4} (both operations preserve area) to simplify the problem:
+z^{4}=2^{\frac{1}{2}}
+
+Because the roots of this equation are created by rotating \frac{\pi}{2} radians successively about the origin, the quadrilateral is a square.
+
+We know that half the diagonal length of the square is {\left(2^{\frac{1}{2}}\right)}^{\frac{1}{4}}=2^{\frac{1}{8}}
+
+Therefore, the area of the square is
+ \frac{{\left( 2 \cdot 2^{\frac{1}{8}}\right)}^2}{2}=\frac{2^{\frac{9}{4}}}{2}=2^{\frac{5}{4}} \Rightarrow D. 
+
+==Solution 2 (Algebraic approach via Sum-to-Product Identity)==
+
+Observing the coefficients of the given equation z^4 + 4iz^3 - 6z^2 - 4iz - i = 0, we notice its similarity to the binomial expansion of (z+i)^4. 
+Recall that:
+(z+i)^4 = z^4 + 4iz^3 + 6(i)^2z^2 + 4(i)^3z + i^4 = z^4 + 4iz^3 - 6z^2 - 4iz + 1
+Thus, the original equation can be rewritten as:
+(z+i)^4 - 1 - i = 0 \implies (z+i)^4 = 1+i
+Let w = z+i. In polar form, 1+i = \sqrt{2} e^{i\frac{\pi}{4}}. The four roots for w are given by:
+w_k = \left(2^{\frac{1}{2}}\right)^{\frac{1}{4}} e^{i\left(\frac{\pi/4 + 2k\pi}{4}\right)} = 2^{\frac{1}{8}} e^{i\left(\frac{\pi}{16} + \frac{k\pi}{2}\right)}, \quad k \in \{0, 1, 2, 3\}
+Since z_k = w_k - i, the side length s of the square formed by these vertices is the distance between two adjacent roots, such as z_0 and z_1. Note that the constant translation -i cancels out when taking the difference:
+s = |z_1 - z_0| = |w_1 - w_0| = 2^{\frac{1}{8}} \left| e^{i\frac{9\pi}{16}} - e^{i\frac{\pi}{16}} \right|
+Expanding using Euler's formula e^{i\theta} = \cos\theta + i\sin\theta:
+e^{i\frac{9\pi}{16}} - e^{i\frac{\pi}{16}} = \left( \cos\frac{9\pi}{16} - \cos\frac{\pi}{16} \right) + i \left( \sin\frac{9\pi}{16} - \sin\frac{\pi}{16} \right)
+Applying the sum-to-product identities:
+* \cos A - \cos B = -2\sin\frac{A+B}{2}\sin\frac{A-B}{2}
+* \sin A - \sin B = 2\cos\frac{A+B}{2}\sin\frac{A-B}{2}
+Setting A = \frac{9\pi}{16} and B = \frac{\pi}{16}, we have \frac{A+B}{2} = \frac{5\pi}{16} and \frac{A-B}{2} = \frac{\pi}{4}:
+e^{i\frac{9\pi}{16}} - e^{i\frac{\pi}{16}} = -2\sin\frac{5\pi}{16}\sin\frac{\pi}{4} + i \left( 2\cos\frac{5\pi}{16}\sin\frac{\pi}{4} \right) = 2\sin\frac{\pi}{4} \left( -\sin\frac{5\pi}{16} + i\cos\frac{5\pi}{16} \right)
+The magnitude of the term in the parentheses is \sqrt{(-\sin\theta)^2 + (\cos\theta)^2} = 1. Given \sin\frac{\pi}{4} = 2^{-\frac{1}{2}}, the side length is:
+s = 2^{\frac{1}{8}} \cdot \left| 2 \cdot 2^{-\frac{1}{2}} \cdot 1 \right| = 2^{\frac{1}{8}} \cdot 2^{\frac{1}{2}} = 2^{\frac{5}{8}}
+The area of the square is s^2:
+\text{Area} = (2^{\frac{5}{8}})^2 = 2^{\frac{10}{8}} = 2^{\frac{5}{4}}
+The answer is \text{(D)}.
+
+==See Also==
+{{AMC12 box|year=2008|ab=A|num-b=22|num-a=24}}
+{{MAA Notice}}

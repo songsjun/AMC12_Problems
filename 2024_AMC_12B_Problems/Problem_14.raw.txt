@@ -1,0 +1,71 @@
+{{duplicate|[[2024 AMC 10B Problems/Problem 18|2024 AMC 10B #18]] and [[2024 AMC 12B Problems/Problem 14|2024 AMC 12B #14]]}}
+
+==Problem ==
+How many different remainders can result when the <imath>100</imath>th power of an integer is
+divided by <imath>125</imath>?
+
+<imath>\textbf{(A) } 1 \qquad\textbf{(B) } 2 \qquad\textbf{(C) } 5 \qquad\textbf{(D) } 25 \qquad\textbf{(E) } 125</imath>
+
+==Solution 1==
+First note that the [[Euler's totient function]] of <imath>125</imath> is <imath>100</imath>. We can set up two cases, which depend on whether a number is relatively prime to <imath>125.</imath>
+
+If <imath>n</imath> is relatively prime to <imath>125</imath>, then <imath>n^{100} \equiv 1 \pmod{125}</imath> because of [[Euler's Totient Theorem]]. 
+
+If <imath>n</imath> is not relatively prime to <imath>125</imath>, it must have a factor of <imath>5</imath>. Express <imath>n</imath> as <imath>5m</imath>, where <imath>m</imath> is some integer. Then <imath>n^{100} \equiv (5m)^{100} \equiv 5^{100}\cdot m^{100} \equiv 125 \cdot 5^{97} \cdot m^{100} \equiv 0 \pmod{125}</imath>.
+
+Therefore, <imath>n^{100}</imath> can only be congruent to <imath>0</imath> or <imath>1 \pmod{125}</imath>. Our answer is <imath>\boxed{2}</imath>.
+
+~lprado
+
+==Sidenote: Proof of Euler's Theorem==
+
+Euler's Theorem states that <imath>a^{\phi(n)}\equiv 1\pmod{n}</imath>, where <imath>\phi(n)</imath> is Euler's totient function, which counts the number of positive integers <imath>x</imath> such that <imath>1\le x \le n</imath> and <imath>\gcd(x,n)=1</imath>. Note that this only works for positive integer <imath>a</imath> such that <imath>\gcd(a,n)=1.</imath>
+
+Consider the set of distinct positive integers <imath>S=\{x_1,x_2,\ldots x_{\phi(n)}\}</imath> such that <imath>1\le x_i\le n</imath> and <imath>\gcd(x_i,n)=1.</imath> Multiply all terms by <imath>a</imath> to create <imath>aS=\{ax_1,ax_2,\ldots ax_{\phi(n)}\}.</imath> First, we prove that <imath>\gcd(ax_i,n)=1</imath> for any <imath>x_i</imath> using contradiction. Let <imath>p</imath> be a prime such that <imath>p \mid ax_i</imath> and <imath>p \mid n.</imath> This means that either <imath>p \mid a</imath> or <imath>p \mid x_i,</imath> which is not possible since both <imath>\gcd(a,n)</imath> and <imath>\gcd(x_i,n)=1.</imath>  Next we show that no two elements in set <imath>aS</imath> are congruent modulo <imath>n.</imath> Let <imath>x_i</imath> and <imath>x_j</imath> exist such that <imath>ax_i\equiv ax_j \pmod{n}.</imath> Multiplying both sides by <imath>a^{-1}</imath>(which exists) gives <imath>x_i\equiv x_j\pmod{n}.</imath> This means that if <imath>x_i \not\equiv x_j \pmod{n},</imath> then <imath>ax_i \not\equiv ax_j \pmod{n}.</imath> Now we multiply all terms in each set, and note that each residue appears exactly once in both sets, so we have: <cmath>a^{\phi(n)}\cdot \prod_{i=1}^{\phi(n)} x_i \equiv \prod_{i=1}^{\phi(n)} x_i \pmod{n}.</cmath> Because each <imath>x_i</imath> has the property that <imath>\gcd(x_i,n)=1,</imath> we must have that <imath>\gcd(\prod_{i=1}^{\phi(n)} x_i,n)=1.</imath> Then multiplying both sides by the inverse of product thereof gives <imath>a^{\phi(n)}\equiv 1\pmod{n}.</imath> <imath>\blacksquare</imath>
+
+~nevergonnagiveup
+
+==Solution 2 (No Totient)==
+
+Note that
+
+<cmath>(5+n)^{100} = {100 \choose 0} 5^{100} + {100 \choose 1} 5^{99} n + {100 \choose 2} 5^{98} n^2 + \cdots + {100 \choose 97} 5^3 n^{97} + {100 \choose 98} 5^2 n^{98} + {100 \choose 99} 5 n^{99} + {100 \choose 100} n^{100}.</cmath>
+
+Taking this mod <imath>125</imath>, we can ignore most of the terms except the for the last <imath>3</imath>:
+
+<cmath>{100 \choose 98} 5^2 n^{98} + {100 \choose 99} 5 n^{99} + {100 \choose 100} n^{100} \equiv 4950 \cdot 5^2 n^{98} + 100 \cdot 5 n^{99} + n^{100} \equiv n^{100} \pmod {125},</cmath>
+
+so <imath>(5+n)^{100} \equiv n^{100}</imath>. Substituting <imath>-n</imath> for <imath>n</imath>, we get <imath>(5-n)^{100} \equiv n^{100}</imath>. Therefore, the remainders when divided by <imath>125</imath> repeat every <imath>5</imath> integers, so we only need to check the <imath>100</imath>th powers of <imath>0, 1, 2, 3, 4</imath>. But we have that <imath>(5-1)^{100} \equiv 1^{100}</imath> and <imath>(5-2)^{100} \equiv 2^{100}</imath>, so we really only need to check <imath>0, 1, 2</imath>. We know that <imath>0, 1</imath> produce different remainders, so the answer to the problem is either <imath>2</imath> or <imath>3</imath>. But <imath>3</imath> is not an answer choice, so the answer is <imath>\boxed{\textbf{(B) } 2}</imath>.
+
+==Solution 3 (Binomial Theorem)==
+
+~Kathan
+[[Image: 2024_AMC_12B_P18.jpeg|thumb|center|600px|]]
+
+==Solution 4 ==
+Firstly, I interpreted the problem algebraically. In other words, let <imath>{x}</imath> be an integer. Since we're raising it to the <imath>{100}</imath>th power and <imath>{100}</imath> is even, we don't have to worry about negative values of <imath>{x}</imath>. Now, we break <imath>{125}</imath> into three factors of <imath>{5}</imath>. I first considered this when we're dividing by <imath>{5}</imath>. Okay so we can write the problem as below:
+
+<imath>x^{100}\equiv r \bmod{5}</imath>. Now, in the world of mod(5), everything is much easier to figure out. Take <imath>x\equiv 0 \bmod{5}</imath>. Now, obviously <imath>x^{100}</imath> will bring up a remainder of <imath>{0}</imath> if <imath>{x}</imath> itself is a multiple of 5. Now, <imath>x\equiv 1 \bmod{5}</imath>. In this case, notice how <imath>1^{100}</imath> is congruent to 1 in the mod(5) world. So in this case, we would have a remainder of 1. Considering <imath>x\equiv 2 \bmod{5}</imath>, it's a little more tricky. Notice <imath>2^{100}</imath> is equal to <imath>1024^{10}</imath> and <imath>{1024}</imath> is 1 less than a multiple of 5. So <imath>{1024}</imath> will be congruent to  <imath>-1 \bmod{5}</imath> and raising it to the power of 10 will bring up a remainder of 1 yet again. Similarly, is <imath>x\equiv 3 \bmod{5}</imath> or <imath>x\equiv 4 \bmod{5}</imath>, you would notice both these cases will bring up a remainder of 1 again. So in the mod(5) world, we seem to only have remainders of <imath>{0}</imath> and <imath>{1}</imath>. Interesting!
+Therefore, since <imath>{125}</imath> is just <imath>{3}</imath> factors of <imath>{5}</imath>, we may say that in mod(125), we would have the same exact remainders namely <imath>{0}</imath> and <imath>{1}</imath>. Therefore, we would only have <imath>{2}</imath> possible remainders. This brings an answer of <imath>\boxed{\textbf{(B)} \; 2}</imath>.
+
+~ilikemath247365
+
+==Video Solution 1 by Pi Academy (Fast and Easy ⚡🚀)==
+
+https://youtu.be/c6nhclB5V1w?feature=shared
+
+~ Pi Academy
+
+==Video Solution 2 (Fast!)==
+https://www.youtube.com/watch?v=S7l_Yv2Sd7E
+
+==Video Solution 3 by TheBeautyofMath==
+https://youtu.be/KhD5-zDNoKM
+*Please do not use this unless you have a lot of time and enough brain power to calculate a lot of Totient.
+
+~IceMatrix ~Marshall_Huang (minor edits)
+
+==See also==
+{{AMC10 box|year=2024|ab=B|num-b=17|num-a=19}}
+{{AMC12 box|year=2024|ab=B|num-b=13|num-a=15}}
+{{MAA Notice}}

@@ -1,0 +1,78 @@
+# 2022 AMC 12A Problem 3
+
+## Problem
+Five rectangles, A, B, C, D, and E, are arranged in a square as shown below. These rectangles have dimensions $1\times6, 2\times4, 5\times6, 2\times7,$ and $2\times3,$ respectively. (The figure is not drawn to scale.) Which of the five rectangles is the shaded one in the middle?
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(150); currentpen = black+1.25bp; fill((3,2.5)--(3,4.5)--(5.3,4.5)--(5.3,2.5)--cycle,gray); draw((0,0)--(7,0)--(7,7)--(0,7)--(0,0)); draw((3,0)--(3,4.5)); draw((0,4.5)--(5.3,4.5)); draw((5.3,7)--(5.3,2.5)); draw((7,2.5)--(3,2.5));
+```
+
+$\textbf{(A) }A\qquad\textbf{(B) }B \qquad\textbf{(C) }C \qquad\textbf{(D) }D\qquad\textbf{(E) }E$
+## Solution 1 (Area and Perimeter of Square)
+The area of this square is equal to $6 + 8 + 30 + 14 + 6 = 64$, and thus its side lengths are 8. The sum of the dimensions of the rectangles are $2 + 7 + 5 + 6 + 2 + 3 + 1 + 6 + 2 + 4 = 38$. Thus, because the perimeter of the square is 32, the rectangle on the inside must have a perimeter of 6 $\cdot 2 = 12.$ The only rectangle that works is $\boxed{\textbf{(B) }B}.$
+
+*~mathboy100*
+## Solution 2 (Perimeter of Square)
+Note that the perimeter of the square is the sum of four pairs of dimensions (eight values are added). Adding up all dimensions gives us $2+7+5+6+2+3+1+6+2+4=38$. We know that as the square's side length is an integer, the perimeter must be divisible by 4. Testing out by subtracting all five pairs of dimensions from 38, only $2\times4$ works since $38-2-4=32=8\cdot4,$ which corresponds with $\boxed{\textbf{(B) }B}.$
+
+*~iluvme*
+## Solution 3 (Observations)
+Note that rectangle D must be on the edge. Without loss of generality, let the top-left rectangle be D, as shown below:
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(175); currentpen = black+1.25bp; fill((3,2.5)--(3,4.5)--(5.3,4.5)--(5.3,2.5)--cycle,gray); draw((0,0)--(7,0)--(7,7)--(0,7)--(0,0)); draw((3,0)--(3,4.5)); draw((0,4.5)--(5.3,4.5)); draw((5.3,7)--(5.3,2.5)); draw((7,2.5)--(3,2.5)); label("$7$",midpoint((0,7)--(5.3,7)),N,blue); label("$x$",midpoint((5.3,7)--(7,7)),N,blue); label("$2$",midpoint((0,4.5)--(0,7)),W,blue); label("$x+5$",midpoint((0,0)--(0,4.5)),W,blue); label("$D$",midpoint((0,7)--(5.3,4.5)),red);
+```
+
+It is clear that $x=1$, so we can determine Rectangle A.
+
+Continuing with a similar process, we can determine Rectangles C,E, and B, in this order. The answer is $\boxed{\textbf{(B) }B}$ as shown below.
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(175); currentpen = black+1.25bp; fill((3,2.5)--(3,4.5)--(5.3,4.5)--(5.3,2.5)--cycle,gray); draw((0,0)--(7,0)--(7,7)--(0,7)--(0,0)); draw((3,0)--(3,4.5)); draw((0,4.5)--(5.3,4.5)); draw((5.3,7)--(5.3,2.5)); draw((7,2.5)--(3,2.5)); label("$7$",midpoint((0,7)--(5.3,7)),N,blue); label("$1$",midpoint((5.3,7)--(7,7)),N,blue); label("$2$",midpoint((0,4.5)--(0,7)),W,blue); label("$6$",midpoint((0,0)--(0,4.5)),W,blue); label("$6$",midpoint((7,7)--(7,2.5)),E,blue); label("$2$",midpoint((7,2.5)--(7,0)),E,blue); label("$2$",midpoint((5.3,4.5)--(5.3,7)),E,blue); label("$4$",midpoint((5.3,4.5)--(5.3,2.5)),E,blue); label("$1$",midpoint((5.3,2.5)--(7,2.5)),S,blue); label("$5$",midpoint((0,4.5)--(3,4.5)),N,blue); label("$2$",midpoint((3,4.5)--(5.3,4.5)),N,blue); label("$5$",midpoint((0,0)--(3,0)),S,blue); label("$3$",midpoint((3,0)--(7,0)),S,blue); label("$2$",midpoint((3,0)--(3,2.5)),W,blue); label("$4$",midpoint((3,2.5)--(3,4.5)),W,blue); label("$2$",midpoint((3,2.5)--(5.3,2.5)),S,blue); label("$D$",midpoint((0,7)--(5.3,4.5)),red); label("$A$",midpoint((5.3,7)--(7,2.5)),red); label("$C$",midpoint((0,4.5)--(3,0)),red); label("$E$",midpoint((3,2.5)--(7,0)),red); label("$B$",midpoint((3,4.5)--(5.3,2.5)),red);
+```
+
+*~MRENTHUSIASM*
+## Solution 4 (Observations)
+Let's label some points:
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(175); currentpen = black+1.25bp; fill((3,2.5)--(3,4.5)--(5.3,4.5)--(5.3,2.5)--cycle,gray); draw((0,0)--(7,0)--(7,7)--(0,7)--(0,0)); draw((3,0)--(3,4.5)); draw((0,4.5)--(5.3,4.5)); draw((5.3,7)--(5.3,2.5)); draw((7,2.5)--(3,2.5)); label("$A$",(0,0),SW); label("$B$",(3,0),S); label("$C$",(7,0),SE); label("$D$",(7,2.5),(1,0)); label("$E$",(7,7),NE); label("$F$",(5.5,7),N); label("$G$",(0,7),NW); label("$H$",(0,4.5),W);
+```
+
+By finding the dimensions of the middle rectangle, we need to find the dimensions of the other four rectangles. We have a rule: AB + BC = CD + DE = EF + FG = GH + AH.
+Let's make a list of all dimensions of the rectangles from the diagram. We have to fill in the dimensions from up above, but still apply to the rule:
+
+$$
+\begin{align*} AB&\times AH \\ CD&\times BC \\ EF&\times DE \\ GH&\times FG \end{align*}
+$$
+
+By applying the rule, we get AB=2, BC=6, CD=5, DE=3, EF=2, FG=6, GH=1, and AH=7.
+
+By substitution, we get this list
+
+$$
+\begin{align*} 2&\times 7 \\ 5&\times 6 \\ 2&\times 3 \\ 1&\times 6 \\ \end{align*}
+$$
+
+(This also tells us that the diagram is not drawn to scale.)
+
+Notice how the only dimension not used in the list was $2\times 4$ and that corresponds with B so the answer is, $\boxed{\textbf{(B) }B}.$
+
+*~ghfhgvghj10 & Education, the study of everything.*
+## Video Solution (Creativity)
+https://youtu.be/YNJ_0dq7gU4
+
+*~Education, the Study of Everything*
+## Video Solution (Smart and Simple)
+https://youtu.be/7yAh4MtJ8a8?si=mFXNAtcL16AYj139&t=445
+
+*~Math-X*
+## See Also

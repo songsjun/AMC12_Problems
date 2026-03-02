@@ -1,0 +1,92 @@
+{{duplicate|[[2020 AMC 12A Problems|2020 AMC 12A #7]] and [[2020 AMC 10A Problems|2020 AMC 10A #10]]}}
+
+==Problem==
+
+Seven cubes, whose volumes are <math>1</math>, <math>8</math>, <math>27</math>, <math>64</math>, <math>125</math>, <math>216</math>, and <math>343</math> cubic units, are stacked vertically to form a tower in which the volumes of the cubes decrease from bottom to top. Except for the bottom cube, the bottom face of each cube lies completely on top of the cube below it. What is the total surface area of the tower (including the bottom) in square units?
+
+<math> \textbf{(A)}\ 644\qquad\textbf{(B)}\ 658\qquad\textbf{(C)}\ 664\qquad\textbf{(D)}\ 720\qquad\textbf{(E)}\ 749 </math>
+
+==Solution 1==
+
+The volume of each cube follows the pattern of <math>n^3</math>, for <math>n</math> is between <math>1</math> and <math>7</math>.
+
+We see that the total surface area can be comprised of three parts: the sides of the cubes, the tops of the cubes, and the bottom of the <math>7\times 7\times 7</math> cube (which is just <math>7 \times 7 = 49</math>). The sides areas can be measured as the sum <math>4\sum_{n=1}^{7} n^2</math>, giving us <math>560</math>. Structurally, if we examine the tower from the top, we see that it really just forms a <math>7\times 7</math> square of area <math>49</math>. Therefore, we can say that the total surface area is <math>560 + 49 + 49 = \boxed{\textbf{(B) }658}</math>.
+Alternatively, for the area of the tops, we could have found the sum <math>\sum_{n=2}^{7}((n)^{2}-(n-1)^{2})</math>, giving us <math>49</math> as well.
+
+~ciceronii
+
+Note: The area on top and bottom are 49 because the largest area is 49, and the other cubes are "inscribed" in it.
+
+
+==Solution 2==
+
+It can quickly be seen that the side lengths of the cubes are the integers from 1 to 7 inclusive.
+
+First, we will calculate the total surface area of the cubes, ignoring overlap. This value is <math>6 ( 1^2 + 2^2 + \cdots + 7^2 ) = 6\sum_{n=1}^{7} n^2 = 6 \left( \frac{7(7 + 1)(2 \cdot 7 + 1)}{6} \right) = 7 \cdot 8 \cdot 15 = 840</math>. Then, we need to subtract out the overlapped parts of the cubes. Between each consecutive pair of cubes, one of the smaller cube's faces is completely covered, along with an equal area of one of the larger cube's faces. The total area of the overlapped parts of the cubes is thus equal to <math>2\sum_{n=1}^{6} n^2 = 182</math>. Subtracting the overlapped surface area from the total surface area, we get <math>840 - 182 = \boxed{\textbf{(B) }658}</math>. ~[[User:emerald_block|emerald_block]]
+
+==Solution 3 (a bit more tedious than other solutions)==
+It can be seen that the side lengths of the cubes using cube roots are all integers from <math>1</math> to <math>7</math>, inclusive.
+
+Only the cubes with side length <math>1</math> and <math>7</math> have <math>5</math> faces in the surface area and the rest have <math>4</math>. Also, since the cubes are stacked, we have to find the difference between each <math>n^2</math> and <math>(n-1)^2</math> side length as <math>n</math> ranges from <math>7</math> to <math>2</math>. 
+
+We then come up with this: <math>5(49)+13+4(36)+11+4(25)+9+4(16)+7+4(9)+5+4(4)+3+5(1)</math>. 
+
+We then add all of this and get <math>\boxed{\textbf{(B) }658}</math>.
+
+~aryam, edited by taarunganesh
+
+==Solution 4==
+Notice that the surface area of the top cube is <math>6s^2</math> and the others are <math>4s^2</math>. Then we can directly compute. The edge length for the first cube is <math>7</math> and has a surface area of <math>294</math>. The surface area of the next cube is <math>144</math>. The surface area of the next cube <math>100</math>. The surface area of the next cube is <math>64</math>. The surface area of the next cube is <math>36</math>. The surface area of the next cube is <math>16</math>. The surface area of the next cube is <math>4</math>. We then sum up <math>294+144+100+64+36+16+4</math> to get <math>\boxed{\textbf{(B) }658}</math>.
+~smartatmath
+
+==Solution 5==
+First of all, compute the area of the sides, excluding the top and bottoms, of the cubes. The side lengths (cube root the volumes) are 1, 2, 3, 4, 5, 6, 7. 
+Each cube's area of the sides can be calculated with <math>4(</math>area of one side<math>)</math>=<math>4(l^2)</math> so in total that is <math>4(1+4+16+...+49)</math>
+so 
+<math>4(140)=560</math>
+the area of all the sides of the cubes is <math>560</math>. 
+Then, calculate the bottom face of the largest cube, <math>7*7=49</math>. 
+Now, notice that if you stack the cubes up on top of each other, and look directly down on them, the tops of the cubes showing add up to the area of the bottom cube, the 7x7. Therefore, the sum of the area of the tops of the cubes is <math>7*7=49</math>. 
+
+Now add them all up: <math>49+49+560=658.</math> Therefore, the answer is <math>\boxed{\textbf{(B) }658}</math>. 
+
+~Hermanboxcar5
+
+==Solution 6 (Similar to Solution 2, without notation)==
+Firstly, calculate the total surface area for all the cubes. Knowing that the area of each square of each cube are <math>2^2,3^2,4^2,5^2,6^2,7^2,</math> we have <math>6(1+4+9+16+25+36+49)=6(140)=840.</math> When you stack these cubes, the top square of each are subtracted by the square area of the cube above it. Meanwhile, the bottom square of each (except the 7x7x7 cube) won't be counted because of the stacking. So, we have to subtract <math>2(1+4+9+16+25+36)=2(91)=182</math> from <math>840</math>, getting <math>\boxed{\textbf{(B) }658}.</math>
+
+~Yelechi
+
+==Solution 7 (Going from Bottom to Top)==
+The surface area of the bottom cube is the bottom face, the 4 side faces, and the top face minus the bottom face of the next cube. Therefore, the surface area of the bottom cube is 6 faces minus the bottom face of the next cube. That will be <math>6 \cdot 49-36</math>. For the next cube, we take the 4 side faces and the top face, and subtract the bottom face of the next cube. Therefore, the surface area of the next cube will be 5 of its faces minus the bottom face of the next cube. That will be <math>5 \cdot 36-25</math>. We can do the next cube the same way. It will end up  as <math>5 \cdot 25-16</math>. From here we start noticing a pattern. The next will be <math>5 \cdot 16-9</math>, and then <math>5 \cdot 9-4</math>, next <math>5 \cdot 4-1</math>, and to include the top cube, we have to add <math>5 \cdot 1</math>, which is basically <math>5 \cdot 1-0</math>. Now, putting it all together, we get <math>6 \cdot 49-36+5 \cdot 36-25+5 \cdot 25-16+5 \cdot 16-9+5 \cdot 9-4+5 \cdot 4-1+5 \cdot 1-0=6 \cdot 49+5(36+25+16+9+4+1)-(36+25+16+9+4+1)=6 \cdot 49+4(36+25+16+9+4+1)=294+4(91)=294+364=\boxed{\textbf{(B) }658}</math>.
+
+~NXC
+
+==Video Solution 1==
+
+Education, The Study of Everything
+
+https://youtu.be/tIubHgoWW_M
+
+==Video Solution 2==
+https://youtu.be/JEjib74EmiY
+
+~IceMatrix
+
+==Video Solution 3==
+https://youtu.be/ZZB8KiqHbD4
+
+~savannahsolver
+
+== Video Solution by OmegaLearn==
+https://youtu.be/FDgcLW4frg8?t=3319
+
+~ pi_is_3.14
+
+==See Also==
+
+{{AMC10 box|year=2020|ab=A|num-b=9|num-a=11}}
+{{AMC12 box|year=2020|ab=A|num-b=6|num-a=8}}
+
+[[Category: Introductory Geometry Problems]]
+{{MAA Notice}}

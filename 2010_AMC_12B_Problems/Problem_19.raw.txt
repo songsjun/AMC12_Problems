@@ -1,0 +1,101 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2010_AMC_12B_Problems/Problem_19&action=raw
+
+Published Time: Thu, 24 Jul 2025 15:17:39 GMT
+
+Markdown Content:
+{{duplicate|[[2010 AMC 12B Problems|2010 AMC 12B #19]] and [[2010 AMC 10B Problems|2010 AMC 10B #24]]}}
+
+== Problem ==
+A high school basketball game between the Raiders and Wildcats was tied at the end of the first quarter. The number of points scored by the Raiders in each of the four quarters formed an increasing geometric sequence, and the number of points scored by the Wildcats in each of the four quarters formed an increasing arithmetic sequence. At the end of the fourth quarter, the Raiders had won by one point. Neither team scored more than 100 points. What was the total number of points scored by the two teams in the first half?
+
+\textbf{(A)}\ 30 \qquad \textbf{(B)}\ 31 \qquad \textbf{(C)}\ 32 \qquad \textbf{(D)}\ 33 \qquad \textbf{(E)}\ 34
+
+== Solution 1 ==
+Let a,ar,ar^{2},ar^{3} be the quarterly scores for the Raiders. We know r > 1 because the sequence is said to be increasing. We also know that each of a, ar, ar^2, ar^3 is an integer. We start by showing that '''r must also be an integer.'''
+
+Suppose not, and say r = m/n where m>n>1, and \gcd(m,n)=1. Then n, n^2, n^3 must all divide a so a=n^3k for some integer k. Then S_R = n^3k + n^2mk + nm^2k + m^3k < 100 and we see that even if k=1 and n=2, we get m < 4, which means that the only option for r is r=3/2. A quick check shows that even this doesn't work. Thus r must be an integer.
+
+Let a, a+d, a+2d, a+3d be the quarterly scores for the Wildcats. Let S_W = a+(a+d) + (a+2d)+(a+3d) = 4a+6d. Let S_R = a+ar+ar^2+ar^3 = a(1+r)(1+r^2). Then S_R<100 implies that r<5, so r\in \{2, 3, 4\}. The Raiders win by one point, soa(1+r)(1+r^2) = 4a+6d+1.
+*If r=4 we get 85a = 4a+6d+1 which means 3(27a-2d) = 1, which is not possible with the given conditions.
+*If r=3 we get 40a = 4a+6d+1 which means 6(6a-d) = 1, which is also not possible with the given conditions.
+*If r=2 we get 15a = 4a+6d+1 which means 11a-6d = 1. Reducing modulo 6 we get a \equiv 5\pmod{6}. Since 15a<100 we get a<7. Thus a=5. It then follows that d=9.
+Then the quarterly scores for the Raiders are 5, 10, 20, 40, and those for the Wildcats are 5, 14, 23, 32. Also S_R = 75 = S_W + 1. The total number of points scored by the two teams in the first half is 5+10+5+14=\boxed{\textbf{(E)}\ 34}.
+
+Note if you don't realize while taking the test that r might not be an integer: since an answer is achieved through casework on the integer value of r and since there is only one right answer, the proof of r being an integer can be skipped on the test (it takes up time).
+
+== Solution 2 ==
+Let a,ar,ar^{2},ar^{3} be the quarterly scores for the Raiders. We know that the Raiders and Wildcats both scored the same number of points in the first quarter so let a,a+d,a+2d,a+3d be the quarterly scores for the Wildcats. The sum of the Raiders scores is a(1+r+r^{2}+r^{3}) and the sum of the Wildcats scores is 4a+6d. Now we can narrow our search for the values of a,d, and r. Because points are always measured in positive integers, we can conclude that a and d are positive integers. We can also conclude that r is a positive integer by writing down the equation:
+
+a(1+r+r^{2}+r^{3})=4a+6d+1
+
+Now we can start trying out some values of r. We try r=2, which gives
+
+15a=4a+6d+1
+
+11a=6d+1
+
+We need the smallest multiple of 11 (to satisfy the <100 condition) that is \equiv 1 \pmod{6}. We see that this is 55, and therefore a=5 and d=9.
+
+So the Raiders' first two scores were 5 and 10 and the Wildcats' first two scores were 5 and 14. 
+
+5+10+5+14=34 \longrightarrow \boxed{\textbf{(E)}}
+
+== Solution 3 (Quick Solve?) ==
+
+It should become apparent that the geometric ratio is less than or equal to 2 (try the first quarter 1, ratio 3). Obviously, the ratio is more than 1, so we try the ratio of 2
+
+1, 2, 4, 8 - The Raiders 
+
+1, ?, ?, ? - The Wildcats
+
+To find the ?s, we need the sum of the raiders, which is 15. 15-1=14, and \frac{14}2=7. So the last term is 7-1=6. But, now we can't have integrated 2nd and 3rd quarter scores, so we stop.
+
+2, 4, 8, 16 - The Raiders, this also fails (try it out)
+
+The same goes for 3, 6, 12, 24, and 4, 8, 16, 32. With 5, 10, 20, 40 we get:
+
+5, 10, 20, 40 - The Raiders
+
+5, ?, ?, ? - The wildcats
+
+5+10+20+40=75, 75-1=74, \frac{74}2=37, 37-5=32
+
+5, ?, ?, 32 - The Wildcats.
+
+Now, we can finish the arithmetic progression:
+
+5, 14, 23, 32 - The Wildcats
+
+Thus our answer is 5+10+5+14=34
+
+~ firebolt360
+
+==Solution 4 (solution 2 variant)== 
+Raiders: a, am, am^2, am^3 
+
+Wildcats: a, a + n, a + 2n, a + 3n, 
+
+where a represents both teams' score in the first quarter. Let the Raiders finish with a score of r. We know 4a + 6n + 1 = a(1 + m + m^2 + m^3) = r. Since r \le 100, 1 + m + m^2 + m^3 can either be 4, 15, 40, or 85. Solve for a in both equations in terms of r and set them equal to each other:
+
+\frac{r - (6n + 1)}{4} = \frac{r}{1 + m + m^2 + m^3}. We know 1 + m + m^2 + m^3 can't be 4 because then n would be a fraction. So let's try 15:
+ 
+\frac{r - (6n + 1)}{4} = \frac{r}{15} \implies 11r = 90n + 15. We know r has to be a multiple of 15 for a to be an integer. After some guess and check with the first few multiples of 15, we find that if r = 75, n = 9. Then a = 5. Since this whole case is based on 1 + m + m^2 + m^3 = 15, m = 2. So our answer is 3a + am + n = \boxed{34}.
+
+~[[User:Grogg007|grogg007]]
+
+== ᴠɪᴅᴇᴏ ѕᴏʟᴜᴛɪᴏɴ ʙʏ ᴘɪ ᴀᴄᴀᴅᴇᴍʏ ==
+https://youtu.be/TJpr5vEyRPY?si=yUjhX6nqxaR-sw03
+
+~ Pi Academy
+
+== Video Solution 2 ==
+https://youtu.be/krRrPxRdgD0
+
+~IceMatrix
+
+== See also ==
+{{AMC12 box|year=2010|num-b=18|num-a=20|ab=B}}
+{{AMC10 box|year=2010|num-b=23|num-a=25|ab=B}}
+{{MAA Notice}}

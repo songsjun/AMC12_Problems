@@ -1,0 +1,85 @@
+# 2012 AMC 12B Problem 21
+
+## Problem 21
+Square AXYZ is inscribed in equiangular hexagon ABCDEF with X on $\overline{BC}, Y$ on $\overline{DE},$ and Z on $\overline{EF}.$ Suppose that AB=40, and EF=$41($\sqrt{3}-1)$.$ What is the side-length of the square?
+
+$\textbf{(A)}\ 29\sqrt{3} \qquad\textbf{(B)}\ \frac{21}{2}\sqrt{2}+\frac{41}{2}\sqrt{3} \qquad\textbf{(C)}\ \ 20\sqrt{3}+16 \qquad\textbf{(D)}\ 20\sqrt{2}+13 \sqrt{3} \qquad\textbf{(E)}\ 21\sqrt{6}$
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(200); defaultpen(linewidth(1)); pair A=origin,B=(2.5,0),C=B+2.5*dir(60), D=C+1.75*dir(120),E=D-(3.19,0),F=E-1.8*dir(60); pair X=waypoint(B--C,0.345),Z=rotate(90,A)*X,Y=rotate(90,Z)*A; draw(A--B--C--D--E--F--cycle); draw(A--X--Y--Z--cycle,linewidth(0.9)+linetype("2 2")); dot("$A$",A,W,linewidth(4)); dot("$B$",B,dir(0),linewidth(4)); dot("$C$",C,dir(0),linewidth(4)); dot("$D$",D,dir(20),linewidth(4)); dot("$E$",E,dir(100),linewidth(4)); dot("$F$",F,W,linewidth(4)); dot("$X$",X,dir(0),linewidth(4)); dot("$Y$",Y,N,linewidth(4)); dot("$Z$",Z,W,linewidth(4));
+```
+
+
+(diagram by djmathman)
+## Solution 1
+We can, \textsc{wlog}, assume Y coincides with D and CD\parallel AF as before. In which case, we will have BC=EF=$41($\sqrt{3}-1)$.$ So we have square AXDZ inscribed in equiangular hexagon ABCDEF with X on $\overline{BC}$ and Z on $\overline{EF}.$
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(200); defaultpen(fontsize(10)+linewidth(1)); pair A=origin,B=(2.5,0),C=B+2.5*dir(60), D=C+1.75*dir(120),E=D-(3.19,0),F=E-1.8*dir(60); pair X=waypoint(B--C,0.345),Z=rotate(90,A)*X,Y=rotate(90,Z)*A; pair Cp=extension(B,C,Y,Y+dir(-60)); draw(A--B--Cp--Y--E--F--cycle); draw(A--X--Y--Z--cycle,linewidth(0.9)+linetype("2 2")); dot("$A$",A,W,linewidth(4)); dot("$B$",B,dir(0),linewidth(4)); dot("$C$",Cp,dir(0),linewidth(4)); dot("$E$",E,dir(100),linewidth(4)); dot("$F$",F,W,linewidth(4)); dot("$X$",X,dir(0),linewidth(4)); dot("$D$",Y,N,linewidth(4)); dot("$Z$",Z,W,linewidth(4)); label("$u$", B--X, SE);label("$v$", X--Cp, SE); label("$40$", A--B, S); label("$s$", A--X, NW); label("$s$", Y--X, SW);
+```
+
+Let $\angle BXA = \theta$; then $\angle BAX=60^\circ -\theta.$ Let BX=u. In $\triangle ABX$ we have
+
+$$
+\begin{align} \frac{2s}{\sqrt{3}}=\frac{u}{\sin(60^\circ-\theta)}=\frac {40}{\sin\theta} \end{align}
+$$
+
+We also have $\angle CXD=90^\circ - \theta$ and $\angle CDX = \theta-30^\circ.$ Let CX=v. In $\triangle CDX$ we have
+
+$$
+\begin{align}\tag{2} \frac{2s}{\sqrt{3}}=\frac{v}{\sin(\theta-30^\circ)}=\frac {CD}{\cos\theta} \end{align}
+$$
+
+Now BC=$u+v=41($\sqrt{3}-1)$.$ From (1) and (2) we get$\begin{align*} 41(\sqrt{3}-1)$ &= $\frac{2s}{\sqrt{3}}\left(\sin(60^\circ-\theta)+\sin(\theta-30^\circ)\right)$ \\ &= $\frac{2s}{\sqrt{3}} \cdot \frac{\sqrt{3}-1}2\cdot (\sin\theta + \cos\theta) \end{align*}$
+From (1) we get $s\sin\theta = 20\sqrt{3}$ and therefore $s\cos\theta = \sqrt{s^2-3\cdot 20^2}.$ Thus
+$41($\sqrt{3}-1)$ = \frac{\sqrt{3}-1}{\sqrt{3}}(20\sqrt{3}+\sqrt{s^2-3\cdot 20^2})$which simplifies to$3\cdot 21^2 = s^2-3\cdot 20^2.$Since (20, 21, 29) is a Pythagorean triple, we get $s=29\sqrt{3},$ i.e. \framebox{A}.
+## Solution 2
+Extend AF and YE so that they meet at G. Then $\angle FEG=\angle GFE=60^{\circ},$ so $\angle FGE=60^{\circ}$ and because AB is parallel to YE. Also, since AX is parallel and equal to YZ, we get $\angle BAX = \angle ZYE,$ hence $\triangle ABX$ is congruent to $\triangle YEZ.$ We now get YE=AB=40.
+
+Let $a_1=EY=40, a_2$=AF, and $a_3$=EF.
+
+Drop a perpendicular line from A to the line of EF that meets line EF at K, and a perpendicular line from Y to the line of EF that meets EF at L, then $\triangle AKZ$ is congruent to $\triangle ZLY$ since $\angle YZL$ is complementary to $\angle KZA.$ Then we have the following equations:
+
+
+$$
+\frac{\sqrt{3}}{2}a_2 = AK=ZL = ZE+\frac{1}{2} a_1
+\frac{\sqrt{3}}{2}a_1 = YL =ZK = ZF+\frac{1}{2} a_2
+$$
+
+
+The sum of these two yields that
+
+
+$$
+\frac{\sqrt{3}}{2}(a_1+a_2) = \frac{1}{2} (a_1+a_2) + ZE+ZF = \frac{1}{2} (a_1+a_2) + EF
+\frac{\sqrt{3}-1}{2}(a_1+a_2) = 41(\sqrt{3}-1)
+a_1+a_2=82
+a_2=82-40=42.
+$$
+
+
+So, we can now use the law of cosines in $\triangle AGY$:
+
+
+$$
+2AZ^2 = AY^2 = AG^2 + YG^2 - 2AG\cdot YG \cdot \cos 60^{\circ}
+= (a_2+a_3)^2 + (a_1+a_3)^2 - (a_2+a_3)(a_1+a_3)
+= (41\sqrt{3}+1)^2 + (41\sqrt{3}-1)^2 - (41\sqrt{3}+1)(41\sqrt{3}-1)
+= 6 \cdot 41^2 + 2 - 3 \cdot 41^2 + 1 = 3 (41^2 + 1) = 3\cdot 1682
+AZ^2 = 3 \cdot 841 = 3 \cdot 29^2
+$$
+
+
+Therefore AZ = $29\sqrt{3}$ ... \framebox{A}
+## Solution 3
+First, we want to angle chase. Set  equal to a degrees. Now the key idea is that you want to relate the numbers that you have. You know $\overline{AB} = 40$ and that $\overline{EZ} + \overline{ZF} = 41(\sqrt{3}-1).$ We proceed with the Law of Sines. Call the side length of the square x. Then we are going to set a constant k equal to $\frac{\sin 120^{\circ}}{x},$ and this is consistent for every triangle in the diagram because all the angles of the hexagon are equiangular (and so they are all $120^{\circ}$). Then we get the following process: $\frac{\sin(90-a)}{40} =k\cos$ a = $40k\frac{\sin(a-30)}{\overline{EZ}} =k\sin(a-30) = \overline{EZ}\cdotk\frac{\sin(60-a)}{\overline{ZF}} =k\sin(60-a) = \overline{ZF}\cdotk\sin(a-30) + \sin(60-a) =k\cdot 41(\sqrt{3}-1)$ And now expanding using our trig formulas, we get: ($\sin$ a + $\cos$ a)($\frac{\sqrt{3}-1}{2} =k\cdot 41(\sqrt{3}-1)\sin$ a + $\cos$ a = $82k\sina =42k$ And so now we have a triangle where $\cosa =40k$ and $\sina =42k$. Put them in a triangle where the hypotenuse is 1. Then, by the Pythagorean Theorem, we get: $\sqrt{(40k)^2 + (42k)^2} = 1 3364k^2 = 1 k =\frac{1}{58}$ And since $k =\frac{\sin(120^{\circ})}{x},$ then: $x =\frac{\sqrt{3}}{2}\cdot58x =\boxed{29\sqrt{3}}$ Solution by IronicNinja
+## Solution 4
+Let EZ = x, $\angle XAB = \alpha\angle BAX = \angle EYZ, AX = YZ, \angle ZEY = \angle XBA, \triangle BAX$\cong $\triangle EYZ$ by AAS, BX = EZ = $x\angle AXB = 180^\circ - 120^\circ - \alpha = 60^\circ - \alpha\frac{XB}{\sin \angle XAB} = \frac{AX}{\sin \angle ABX} = \frac{AB}{\angle AXB}, \frac{x}{\sin \alpha} = \frac{AX}{\sin 120^\circ} = \frac{40}{\sin (60^\circ - \alpha)}\angle ZAF = 120^\circ - 90^\circ - \alpha = 30^\circ - \alpha ZF = 41(\sqrt{3} - 1) -$ x, $\frac{ZF}{\sin \angle ZAF} = \frac{AZ}{ \sin \angle ZFA}, \frac{41(\sqrt{3} - 1) - x}{\sin (30^\circ - \alpha)} = \frac{AZ}{ \sin 120^\circ}\frac{x}{\sin \alpha} = \frac{41(\sqrt{3} - 1) - x}{\sin (30^\circ - \alpha)}= \frac{40}{\sin(60^\circ - \alpha)}40 \cdot \sin \$alpha = x($\sin 60^\circ \cos \alpha - \cos 60^\circ \sin \alpha) (1)$x($\sin 30^\circ \cos \alpha - \cos 30^\circ \sin \alpha) =$ [41(\sqrt{3} - 1)- x] $\sin \alpha (2)$ By simplifying (1) we get, $\frac{\sqrt{3}}{2} \cdot$ x $\cdot \cos \alpha - \frac{\sin \alpha}{2} \cdotx = 40\cdot \sin \alpha (3)$ By simplifying (2) we get, $\frac{\cos \alpha}{2} \cdot$ x + $\frac{2 - \sqrt{3}}{2} \cdot \sin \alpha \cdotx =41($\sqrt{3} - 1)$\sin \alpha  (4)$ By $\sqrt{3} \cdot (4) - (3)$ we get, $\frac{2\sqrt{3} - 3 +1}{2} \cdot \sin \alpha \cdot$ x = [41(3-\sqrt{3}) - 40] $\sin \alpha(\sqrt{3} - 1)$x = 83 - $41\sqrt{3},x = 21\sqrt{3} - 20$ By the law of cosine AX = $\sqrt{(21 \sqrt{3} - 20)^2 + 40^2 - 2 \cdot (21 \sqrt{3} - 20) 40 \cdot \cos 120^\circ} = \boxed{\textbf{(A) } 29 \sqrt{3}}$ ~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+## Video Solution by Richard Rusczyk
+https://artofproblemsolving.com/videos/amc/2012amc12b/273 ~dolphin7
+## See Also

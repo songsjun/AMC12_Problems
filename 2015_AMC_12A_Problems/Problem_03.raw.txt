@@ -1,0 +1,38 @@
+{{duplicate|[[2015 AMC 12A Problems|2015 AMC 12A #3]] and [[2015 AMC 10A Problems|2015 AMC 10A #5]]}}
+==Problem==
+
+Mr. Patrick teaches math to <math> 15 </math> students. He was grading tests and found that when he graded everyone's test except Payton's, the average grade for the class was <math> 80 </math>. After he graded Payton's test, the test average became <math> 81 </math>. What was Payton's score on the test?
+
+<math> \textbf{(A)}\ 81\qquad\textbf{(B)}\ 85\qquad\textbf{(C)}\ 91\qquad\textbf{(D)}\ 94\qquad\textbf{(E)}\ 95 </math>
+
+==Solution==
+
+If the average of the first <math>14</math> peoples' scores was <math>80</math>, then the sum of all of their tests is <math>14 \cdot 80 = 1120</math>.  When Payton's score was added, the sum of all of the scores became <math>15 \cdot 81 = 1215</math>.  So, Payton's score must be <math>1215-1120 = \boxed{\textbf{(E) }95}</math>
+
+==Alternate Solution==
+
+The average of a set of numbers is the value we get if we evenly distribute the total across all entries. So assume that the first <math>14</math> students each scored <math>80</math>. If Payton also scored an <math>80</math>, the average would still be <math>80</math>. In order to increase the overall average to <math>81</math>, we need to add one more point to all of the scores, including Payton's. This means we need to add a total of <math>15</math> more points, so Payton needs <math>80+15 = \boxed{\textbf{(E) }95}</math>
+
+==Video Solution (CREATIVE THINKING)==
+ https://youtu.be/TZtbmvFyGic
+
+~Education, the Study of Everything
+
+
+
+
+
+==Video Solution==
+https://youtu.be/ev6z2stLJkA
+
+~savannahsolver
+
+== Video Solution by OmegaLearn ==
+https://youtu.be/HISL2-N5NVg?t=3425
+
+~ pi_is_3.14
+
+==See also==
+{{AMC10 box|year=2015|ab=A|num-b=4|num-a=6}}
+{{AMC12 box|year=2015|ab=A|num-b=2|num-a=4}}
+{{MAA Notice}}

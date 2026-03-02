@@ -1,0 +1,248 @@
+{
+  "total_repos": 48,
+  "total_success": 1200,
+  "total_errors": 0,
+  "total_skipped": 0,
+  "repos": {
+    "2002_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2002_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2003_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2003_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2004_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2004_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2005_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2005_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2006_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2006_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2007_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2007_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2008_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2008_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2009_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2009_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2010_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2010_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2011_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2011_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2012_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2012_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2013_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2013_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2014_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2014_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2015_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2015_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2016_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2016_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2017_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2017_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2018_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2018_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2019_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2019_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2020_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2020_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2021_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2021_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2022_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2022_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2023_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2023_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2024_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2024_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2025_AMC_12A_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    },
+    "2025_AMC_12B_Problems": {
+      "success": 25,
+      "errors": 0,
+      "skipped": 0
+    }
+  }
+}

@@ -1,0 +1,31 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2004_AMC_12B_Problems/Problem_5&action=raw
+
+Published Time: Sat, 22 Oct 2022 23:22:46 GMT
+
+Markdown Content:
+{{duplicate|[[2004 AMC 12B Problems|2004 AMC 12B #5]] and [[2004 AMC 10B Problems|2004 AMC 10B #7]]}}
+== Problem ==
+On a trip from the United States to Canada, Isabella took d U.S. dollars. At the border she exchanged them all, receiving 10 Canadian dollars for every 7 U.S. dollars. After spending 60 Canadian dollars, she had d Canadian dollars left. What is the sum of the digits of d? 
+
+\mathrm{(A)\ }5\qquad\mathrm{(B)\ }6\qquad\mathrm{(C)\ }7\qquad\mathrm{(D)\ }8\qquad\mathrm{(E)\ }9
+
+== Solution 1 ==
+
+Isabella had 60+d Canadian dollars. Setting up an equation we get d=\frac{7}{10}\cdot(60+d), which solves to d=140, and the sum of digits of d is \boxed{\mathrm{(A)}\ 5}.
+
+== Solution 2 ==
+
+Each time Isabella exchanges 7 U.S. dollars, she gets 7 Canadian dollars and 3 Canadian dollars extra. Isabella received a total of 60 Canadian dollars extra, therefore she exchanged 7 U.S. dollars \frac{60}{3}=20 times. Thus d=7\cdot20=140, and the sum of the digits is \boxed{\mathrm{(A)}\ 5}.
+
+== Video Solution 1==
+https://youtu.be/WVK4SZAoD5E
+
+~Education, the Study of Everything
+
+== See Also ==
+
+{{AMC12 box|year=2004|ab=B|num-b=4|num-a=6}}
+{{AMC10 box|year=2004|ab=B|num-b=6|num-a=8}}
+{{MAA Notice}}

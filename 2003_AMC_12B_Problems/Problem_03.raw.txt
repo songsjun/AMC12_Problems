@@ -1,0 +1,28 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2003_AMC_10B_Problems/Problem_4&action=raw
+
+Published Time: Sun, 05 Jan 2014 04:11:19 GMT
+
+Markdown Content:
+{{duplicate|[[2003 AMC 12B Problems|2003 AMC 12B #3]] and [[2003 AMC 10B Problems|2003 AMC 10B #4]]}}
+
+==Problem==
+
+Rose fills each of the rectangular regions of her rectangular flower bed with a different type of flower. The lengths, in feet, of the rectangular regions in her flower bed are as shown in the figure. She plants one flower per square foot in each region. Asters cost  \ 1 each, begonias  \ 1.50 each, cannas  \ 2 each, dahlias  \ 2.50 each, and Easter lilies  \ 3 each. What is the least possible cost, in dollars, for her garden?
+
+ unitsize(5mm); defaultpen(linewidth(.8pt)+fontsize(8pt)); draw((6,0)--(0,0)--(0,1)--(6,1)); draw((0,1)--(0,6)--(4,6)--(4,1)); draw((4,6)--(11,6)--(11,3)--(4,3)); draw((11,3)--(11,0)--(6,0)--(6,3)); label("1",(0,0.5),W); label("5",(0,3.5),W); label("3",(11,1.5),E); label("3",(11,4.5),E); label("4",(2,6),N); label("7",(7.5,6),N); label("6",(3,0),S); label("5",(8.5,0),S);
+
+\textbf{(A) } 108 \qquad\textbf{(B) } 115 \qquad\textbf{(C) } 132 \qquad\textbf{(D) } 144 \qquad\textbf{(E) } 156 
+
+==Solution==
+
+The areas of the five regions from greatest to least are 21,20,15,6 and 4.
+
+If we want to minimize the cost, we want to maximize the area of the cheapest flower and minimize the area of the most expensive flower. Doing this, the cost is 1\cdot21+1.50\cdot20+2\cdot15+2.50\cdot6+3\cdot4, which simplifies to  \ 108.
+Therefore the answer is \boxed{\textbf{(A) } 108}.
+
+==See Also==
+{{AMC12 box|year=2003|ab=B|num-b=2|num-a=4}}
+{{AMC10 box|year=2003|ab=B|num-b=3|num-a=5}}
+{{MAA Notice}}

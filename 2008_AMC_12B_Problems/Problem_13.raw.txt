@@ -1,0 +1,30 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2008_AMC_12B_Problems/Problem_13&action=raw
+
+Published Time: Thu, 04 Jul 2013 14:54:26 GMT
+
+Markdown Content:
+==Problem==
+
+Vertex E of equilateral \triangle{ABE} is in the interior of unit square ABCD. Let R be the region consisting of all points inside ABCD and outside \triangle{ABE} whose distance from AD is between \frac{1}{3} and \frac{2}{3}. What is the area of R? 
+
+\textbf{(A)}\ \frac{12-5\sqrt3}{72} \qquad \textbf{(B)}\ \frac{12-5\sqrt3}{36} \qquad \textbf{(C)}\ \frac{\sqrt3}{18} \qquad \textbf{(D)}\ \frac{3-\sqrt3}{9} \qquad \textbf{(E)}\ \frac{\sqrt3}{12}
+
+==Solution==
+The region is the shaded area:
+
+ pair A,B,C,D,E; A=(0,1); B=(1,1); C=(1,0); D=(0,0); E=(1/2,1-sqrt(3)/2); draw(A--B--C--D--cycle); label("A",A,NW); dot(A); label("B",B,NE); dot(B); label("C",C,SE); dot(C); label("D",D,SW); dot(D); draw(A--E--B--cycle); label("E",E,S); dot(E); draw((1/3,0)--(1/3,1)); draw((2/3,0)--(2/3,1)); fill((1/3,0)--(1/3,1-sqrt(3)/3)--E--(2/3,1-sqrt(3)/3)--(2/3,0)--cycle,Black);
+We can find the area of the shaded region by subtracting the pentagon from the middle third of the square.  The area of the middle third of the square is \left(\frac13\right)(1)=\frac13.  The pentagon can be split into a rectangle and an equilateral triangle.
+
+The base of the equilateral triangle is \frac13 and the height is \left(\frac13\right)\left(\frac12\right)(\sqrt{3})=\frac{\sqrt{3}}{6}.  Thus, the area is \left(\frac{\sqrt3}{6}\right)\left(\frac13\right)\left(\frac12\right)=\frac{\sqrt3}{36}.
+
+The base of the rectangle is \frac13 and the height is the height of the equilateral triangle minus the height of the smaller equilateral triangle.  This is:
+\frac{\sqrt3}{2}-\frac{\sqrt3}{6}=\frac{\sqrt3}{3}
+Therefore, the area of the shaded region is
+\frac13-\frac{\sqrt3}{9}-\frac{\sqrt3}{36}=\boxed{\text{(B) }\frac{12-5\sqrt3}{36}}.
+
+==See Also==
+
+{{AMC12 box|year=2008|ab=B|num-b=12|num-a=14}}
+{{MAA Notice}}

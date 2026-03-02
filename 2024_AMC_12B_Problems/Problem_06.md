@@ -1,0 +1,66 @@
+# 2024 AMC 12B Problem 6
+
+## Problem
+The national debt of the United States is on track to reach $5\times10^{13}$ dollars by 2033. How many digits does this number of dollars have when written as a numeral in base 5? (The approximation of $\log_{10} 5$ as 0.7 is sufficient for this problem)
+
+$\textbf{(A) } 18 \qquad\textbf{(B) } 20 \qquad\textbf{(C) } 22 \qquad\textbf{(D) } 24 \qquad\textbf{(E) } 26$
+## Solution 1
+Generally, the number of digits of number n in base b is
+$$\lfloor \log_b n \rfloor + 1.$$
+In this question, it is $\lfloor \log_{5} (5\times 10^{13})\rfloor+1.$
+Note that
+
+$$
+\begin{align*} \log_{5} (5\times 10^{13}) &= 1+\frac{13}{\log_{10} 5} \\ &\approx 1+\frac{13}{0.7} \\ &\approx 19.5 \end{align*}
+$$
+
+Hence, our answer is \fbox{$\textbf{(B)} 20$}
+
+*~tsun26 (small modification by notknowanything)*
+## Solution 2
+We see that $5\times 10^{13} = 2^{13} \cdot 5^{14}$ and $2^{13} = 8192$. Converting this to base 5 gives us 230232 (trust me it doesn't take that long). So the final number in base 5 is 230232 with 14 zeroes at the end, which gives us $6 + 14 = 20$ digits. So the answer is \fbox{$\textbf{(B)} 20$}.
+
+*~sidkris*
+
+Note - Base Conversion Step
+
+To convert the number 8192 from base 10 to base 5, we follow these steps:
+
+1. Divide the number by 5 repeatedly, noting the quotient and remainder each time.
+
+2. Stop when the quotient becomes 0, then read the remainders from bottom to top.
+
+ 8192 $\div 5 = 1638 \text{ remainder } 2$
+ 1638 $\div 5 = 327 \text{ remainder } 3$
+ 327 $\div 5 = 65 \text{ remainder } 2$
+ 65 $\div 5 = 13 \text{ remainder } 0$
+ 13 $\div 5 = 2 \text{ remainder } 3$
+ 2 $\div 5 = 0 \text{ remainder } 2$
+
+Now, reading the remainders from bottom to top: 2, 3, 0, 2, 3, 2 .
+
+Thus, 8192 in base 5 is:
+
+$$\boxed{230232_5}$$
+~[https://artofproblemsolving.com/wiki/index.php/User:Cyantist luckuso]
+
+Note - an approximation you can use here to convert 8192 to base 5: since $5^5 = 3125$ and $5^6 = 15625,$ we automatically know that you need 6 digits to represent $2^{13}$ in base 5.
+
+*~RushilYeole*
+## Solution 3
+
+$$5 \times 10^{13} = 5 \times (5^{13} \times 2^{13}) = 2^{13} \times 5^{14} = 8192 \times 5^{14}.$$
+
+
+$5^5 = 3125$ and 5^6 = 15625 (or just notice that it must be > 8192) $\implies 5^5 < 8192 < 5^6 \implies 5^{19} < 5 \times 10^{13} < 5^{20}.$
+
+Since an integer x has n base-a digits when it satisfies $a^{n-1}\le$ x < $a^n,$ it follows that 5 $\times 10^{13}$ requires \fbox{$\textbf{(B)} 20$} base-5 digits.
+
+*~drnez*
+## Video Solution 1 by SpreadTheMathLove
+https://www.youtube.com/watch?v=FUsMSwb-JUc
+## Video Solution 2 by TheBeautyofMath
+https://youtu.be/AKLPjTRPF4Q
+
+*~IceMatrix*
+## See also

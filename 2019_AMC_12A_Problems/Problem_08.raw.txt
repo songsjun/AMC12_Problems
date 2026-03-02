@@ -1,0 +1,80 @@
+{{duplicate|[[2019 AMC 10A Problems|2019 AMC 10A #14]] and [[2019 AMC 12A Problems|2019 AMC 12A #8]]}}
+
+== Problem ==
+
+For a set of four distinct lines in a plane, there are exactly <math>N</math> distinct points that lie on two or more of the lines. What is the sum of all possible values of <math>N</math>?
+
+<math>\textbf{(A) } 14 \qquad \textbf{(B) } 16 \qquad \textbf{(C) } 18 \qquad \textbf{(D) } 19 \qquad \textbf{(E) } 21</math>
+
+==Solution==
+
+It is possible to obtain <math>0</math>, <math>1</math>, <math>3</math>, <math>4</math>, <math>5</math>, and <math>6</math> points of intersection, as demonstrated in the following figures:
+
+
+<asy>
+unitsize(2cm);
+real d = 2.5;
+draw((-1,.6)--(1,.6),Arrows);
+draw((-1,.2)--(1,.2),Arrows);
+draw((-1,-.2)--(1,-.2),Arrows);
+draw((-1,-.6)--(1,-.6),Arrows);
+
+draw((-1+d,0)--(1+d,0),Arrows);
+draw((0+d,1)--(0+d,-1),Arrows);
+draw(dir(45)+(d,0)--dir(45+180)+(d,0),Arrows);
+draw(dir(135)+(d,0)--dir(135+180)+(d,0),Arrows);
+dot((0+d,0));
+
+draw((-1+2*d,sqrt(3)/3)--(1+2*d,sqrt(3)/3),Arrows);
+draw((-1/4-1/2+2*d, sqrt(3)/12-sqrt(3)/2)--(-1/4+1/2+2*d,sqrt(3)/12+sqrt(3)/2),Arrows);
+draw((1/4+1/2+2*d, sqrt(3)/12-sqrt(3)/2)--(1/4-1/2+2*d,sqrt(3)/12+sqrt(3)/2),Arrows);
+draw((-1+2*d,-sqrt(3)/6)--(1+2*d,-sqrt(3)/6),Arrows);
+dot((0+2*d,sqrt(3)/3));
+dot((-1/2+2*d,-sqrt(3)/6));
+dot((1/2+2*d,-sqrt(3)/6));
+
+draw((-1/3,1-d)--(-1/3,-1-d),Arrows);
+
+draw((1/3,1-d)--(1/3,-1-d),Arrows);
+draw((-1,-1/3-d)--(1,-1/3-d),Arrows);
+draw((-1,1/3-d)--(1,1/3-d),Arrows);
+dot((1/3,1/3-d));
+dot((-1/3,1/3-d));
+dot((1/3,-1/3-d));
+dot((-1/3,-1/3-d));
+
+draw((-1+d,sqrt(3)/12-d)--(1+d,sqrt(3)/12-d),Arrows);
+draw((-1/4-1/2+d, sqrt(3)/12-sqrt(3)/2-d)--(-1/4+1/2+d,sqrt(3)/12+sqrt(3)/2-d),Arrows);
+draw((1/4+1/2+d, sqrt(3)/12-sqrt(3)/2-d)--(1/4-1/2+d,sqrt(3)/12+sqrt(3)/2-d),Arrows);
+draw((-1+d,-sqrt(3)/6-d)--(1+d,-sqrt(3)/6-d),Arrows);
+dot((0+d,sqrt(3)/3-d));
+dot((-1/2+d,-sqrt(3)/6-d));
+dot((1/2+d,-sqrt(3)/6-d));
+dot((-1/4+d,sqrt(3)/12-d));
+dot((1/4+d,sqrt(3)/12-d));
+
+draw((-1/4-1/2+2*d, sqrt(3)/12-sqrt(3)/2-d)--(-1/4+1/2+2*d,sqrt(3)/12+sqrt(3)/2-d),Arrows);
+draw((1/4+1/2+2*d, sqrt(3)/12-sqrt(3)/2-d)--(1/4-1/2+2*d,sqrt(3)/12+sqrt(3)/2-d),Arrows);
+draw(dir(30)+(2*d,-d)--dir(30+180)+(2*d,-d),Arrows);
+draw(dir(150)+(2*d,-d)--dir(-30)+(2*d,-d),Arrows);
+dot((0+2*d,0-d));
+dot((0+2*d,sqrt(3)/3-d));
+dot((-1/2+2*d,-sqrt(3)/6-d));
+dot((1/2+2*d,-sqrt(3)/6-d));
+dot((-1/4+2*d,sqrt(3)/12-d));
+dot((1/4+2*d,sqrt(3)/12-d));
+</asy>
+
+It is clear that the maximum number of possible intersections is <math>{4 \choose 2} = 6</math>, since each pair of lines can intersect at most once. In addition, by looking at the answer choices, we know that we cannot have 7 points of intersection or else our answer would be greater than the given answer choices. Our answer is given by the sum <math>0+1+3+4+5+6=\boxed{\textbf{(D)} 19}</math>.
+
+==Video Solution 1==
+https://youtu.be/-0s2xGhU8wM
+
+~Education, the Study of Everything
+
+==See Also==
+
+{{AMC10 box|year=2019|ab=A|num-b=13|num-a=15}}
+{{AMC12 box|year=2019|ab=A|num-b=7|num-a=9}}
+{{MAA Notice}}
+[[Category: Introductory Combinatorics Problems]]

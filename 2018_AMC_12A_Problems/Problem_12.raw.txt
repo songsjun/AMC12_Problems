@@ -1,0 +1,80 @@
+{{duplicate|[[2018 AMC 10A Problems/Problem 17|2018 AMC 10A #17]] and [[2018 AMC 12A Problems/Problem 12|2018 AMC 12A #12]]}}
+
+== Problem ==
+Let <math>S</math> be a set of <math>6</math> integers taken from <math>\{1,2,\dots,12\}</math> with the property that if <math>a</math> and <math>b</math> are elements of <math>S</math> with <math>a<b</math>, then <math>b</math> is not a multiple of <math>a</math>. What is the least possible value of an element in <math>S</math>?
+
+<math>\textbf{(A)}\ 2\qquad\textbf{(B)}\ 3\qquad\textbf{(C)}\ 4\qquad\textbf{(D)}\ 5\qquad\textbf{(E)}\ 7</math>
+
+== Solution 1 ==
+We start with <math>2</math> because <math>1</math> is not an answer choice. We would have to include every odd number except <math>1</math> to fill out the set, but then <math>3</math> and <math>9</math> would violate the rule, so that won't work.
+
+Experimentation with <math>3</math> shows it's likewise impossible. You can include <math>7,11,</math> and either <math>5</math> or <math>10</math> (which are always safe). But after adding either <math>4</math> or <math>8</math> we have no more valid numbers.
+
+Finally, starting with <math>4,</math> we find that the sequence <math>4,5,6,7,9,11</math> works, giving us <math>\boxed{\textbf{(C)}\ 4}.</math>
+
+==Solution 2==
+We know that all odd numbers except <math>1,</math> namely <math>3, 5, 7, 9, 11,</math> can be used.
+
+Now we have <math>7</math> possibilities to choose from for the last number (out of <math>1, 2, 4, 6, 8, 10, 12</math>). We can eliminate <math>1, 2, 10,</math> and <math>12,</math> and we have <math>4, 6, 8</math> to choose from. However, <math>9</math> is a multiple of <math>3.</math> Now we have to take out either <math>3</math> or <math>9</math> from the list. If we take out <math>9,</math> none of the numbers would work, but if we take out <math>3,</math> we get <cmath>4, 5, 6, 7, 9, 11.</cmath>
+The least number is <math>4,</math> so the answer is <math>\boxed{\textbf{(C)}\ 4}.</math>
+
+==Solution 3==
+We can get the multiples for the numbers in the original set with multiples in the same original set
+<cmath>\begin{align*}
+1&: \ \text{all elements of }\{1,2,\dots,12\} \\
+2&: \ 4,6,8,10,12 \\
+3&: \ 6,9,12 \\
+4&: \ 8,12 \\
+5&: \ 10 \\
+6&: \ 12
+\end{align*}</cmath>
+It will be safe to start with <math>5</math> or <math>6</math> since they have the smallest number of multiples as listed above, but since the question asks for the least, it will be better to try others.
+
+Trying <math>4,</math> we can get <math>4,5,6,7,9,11.</math> So <math>4</math> works.
+Trying <math>3,</math> it won't work, so the least is <math>4.</math> This means the answer is <math>\boxed{\textbf{(C)}\ 4}.</math>
+
+==Solution 4==
+We partition <math>\{1,2,\ldots,12\}</math> into six nonempty subsets such that for every subset, each element is a multiple of all elements less than or equal to itself: <cmath>\{1,2,4,8\}, \ \{3,6,12\}, \ \{5,10\}, \ \{7\}, \ \{9\}, \ \{11\}.</cmath>
+Clearly, <math>S</math> must contain exactly one element from each subset:
+
+* For <math>\{5,10\},</math> we can select either <math>5</math> or <math>10.</math>
+
+* For <math>\{3,6,12\},</math> we can select either <math>6</math> or <math>12.</math> Recall that since <math>9\in S,</math> we cannot select <math>3.</math>
+
+* For <math>\{1,2,4,8\},</math> we can select either <math>4</math> (provided that <math>12\not\in S</math>) or <math>8.</math> Recall that since either <math>6\in S</math> or <math>12\in S,</math> we can select neither <math>1</math> nor <math>2.</math>
+
+If <math>4\in S,</math> then the possibilities of <math>S</math> are <math>\{4,5,6,7,9,11\}</math> or <math>\{4,6,7,9,10,11\}.</math> So, the least possible value of an element in <math>S</math> is <math>\boxed{\textbf{(C)}\ 4}.</math>
+
+<u><b>Remark</b></u>
+
+There exist multiple such partitions of <math>\{1,2,\ldots,12\}</math> into six nonempty subsets, one of which is <cmath>\{1,2,6,12\}, \ \{3,9\}, \ \{4,8\}, \ \{5,10\}, \ \{7\}, \ \{11\}.</cmath>
+Regardless of which partition we use, we will conclude that to minimize the least element of <math>S,</math> the only possibilities for <math>S</math> are <math>\{4,5,6,7,9,11\}</math> or <math>\{4,6,7,9,10,11\}.</math>
+
+~MRENTHUSIASM
+
+==Solution 5==
+
+We start with 2 as 1 is not an answer option. Our set would be <math>\{2,3,5,7,11\}</math>. We realize we cannot add 12 to the set because 12 is a multiple of 3. Our set only has 5 elements, so starting with 2 won't work. 
+
+We try 3 next. Our set becomes <math>\{3,4,5,7,11\}</math>. We run into the same issue as before so starting with 3 won't work.
+
+We then try 4. Our set becomes <math>\{4,5,6,7,9,11\}</math>. We see we have 6 elements with none being multiples of each other. Therefore our answer is <math>\boxed{\textbf{(C)}\ 4}.</math>
+
+~[https://artofproblemsolving.com/wiki/index.php/User:South South]
+
+==Video Solution==
+https://youtu.be/M22S82Am2zM
+
+~IceMatrix
+
+==Video Solution==
+https://youtu.be/QtqBEZAgXpk
+
+~savannahsolver
+
+==See Also ==
+{{AMC10 box|year=2018|ab=A|num-b=16|num-a=18}}
+{{AMC12 box|year=2018|ab=A|num-b=11|num-a=13}}
+{{MAA Notice}}
+
+[[Category:Introductory Number Theory Problems]]

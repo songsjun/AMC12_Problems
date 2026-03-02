@@ -1,0 +1,40 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2003_AMC_12A_Problems/Problem_18&action=raw
+
+Published Time: Fri, 20 Jun 2025 23:02:07 GMT
+
+Markdown Content:
+{{duplicate|[[2003 AMC 12A Problems|2003 AMC 12A #18]] and [[2003 AMC 10A Problems|2003 AMC 10A #25]]}}
+== Problem ==
+Let n be a 5-digit number, and let q and r be the quotient and the remainder, respectively, when n is divided by 100. For how many values of n is q+r divisible by 11? 
+
+ \mathrm{(A) \ } 8180\qquad \mathrm{(B) \ } 8181\qquad \mathrm{(C) \ } 8182\qquad \mathrm{(D) \ } 9000\qquad \mathrm{(E) \ } 9090 
+
+== Solution 1 ==
+
+When a 5-digit number is divided by 100, the first 3 digits become the quotient, q, and the last 2 digits become the remainder, r. 
+
+Therefore, q can be any integer from 100 to 999 inclusive, and r can be any integer from 0 to 99 inclusive. 
+
+For each of the 9\cdot10\cdot10=900 possible values of q, there are at least \left\lfloor \frac{100}{11} \right\rfloor = 9 possible values of r such that q+r \equiv 0\pmod{11}. 
+
+Since there is 1 "extra" possible value of r that is congruent to 0\pmod{11}, each of the \left\lfloor \frac{900}{11} \right\rfloor = 81 values of q that are congruent to 0\pmod{11} have 1 more possible value of r such that q+r \equiv 0\pmod{11}. 
+
+Therefore, the number of possible values of n such that q+r \equiv 0\pmod{11} is 900\cdot9+81\cdot1=8181 \Rightarrow\boxed{(B)} .
+
+== Solution 2 ==
+
+Notice that q+r\equiv0\pmod{11}\Rightarrow100q+r\equiv0\pmod{11}. This means that any number whose quotient and remainder sum is divisible by 11 must also be divisible by 11. Therefore, there are \frac{99990-10010}{11}+1=8181 possible values. The answer is \boxed{\textbf{(B) }8181}.
+
+== Solution 3 ==
+Let abcde be the five digits of n. Then q = abc and r = de. By the divisibility rules of 11, q = a - b + c \pmod{11} and r = -d + e \pmod{11}, so q + r = a - b + c - d + e = abcde = n \pmod{11}. Thus, n must be divisble by 11. There are \frac{99990 - 10010}{11} + 1 = 8181 five-digit multiples of 11, so the answer is \boxed{\textbf{(B) }8181}.
+==Video Solution 1==
+https://youtu.be/OpGHj-B0_hg?t=672
+
+~IceMatrix
+
+==See Also==
+{{AMC10 box|year=2003|ab=A|num-b=24|after=Last Question}}
+{{AMC12 box|year=2003|ab=A|num-b=17|num-a=19}}
+{{MAA Notice}}

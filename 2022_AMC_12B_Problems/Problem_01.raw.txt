@@ -1,0 +1,42 @@
+{{duplicate|[[2022 AMC 10B Problems/Problem 1|2022 AMC 10B #1]] and [[2022 AMC 12B Problems/Problem 1|2022 AMC 12B #1]]}}
+
+==Problem==
+Define <math>x\diamond y</math> to be <math>|x-y|</math> for all real numbers <math>x</math> and <math>y.</math> What is the value of <cmath>(1\diamond(2\diamond3))-((1\diamond2)\diamond3)?</cmath>
+
+<math> \textbf{(A)}\ {-}2 \qquad
+\textbf{(B)}\ {-}1 \qquad
+\textbf{(C)}\ 0 \qquad
+\textbf{(D)}\ 1 \qquad
+\textbf{(E)}\ 2</math>
+
+== Solution 1 == 
+We have <cmath>\begin{align*}
+(1\diamond(2\diamond3))-((1\diamond2)\diamond3) &= |1-|2-3|| - ||1-2|-3| \\
+&= |1-1| - |1-3| \\
+&= 0-2 \\
+&= \boxed{\textbf{(A)}\ {-}2}.
+\end{align*}</cmath>
+~MRENTHUSIASM
+
+== Solution 2 ==
+Observe that the <math>\diamond</math> function is simply the positive difference between two numbers. Thus, we evaluate: the difference between <math>2</math> and <math>3</math> is <math>1;</math> the difference between <math>1</math> and <math>1</math> is <math>0;</math> the difference between <math>1</math> and <math>2</math> is <math>1;</math> the difference between <math>1</math> and <math>3</math> is <math>2;</math> and finally, <math>0-2=\boxed{\textbf{(A)}\ {-}2}.</math> 
+
+~Technodoggo
+
+==Video Solution (⚡️Solved in 50 seconds⚡️)==
+https://youtu.be/4xOeX0aQF3U
+
+~Education, the Study of Everything
+
+==Video Solution(1-16)==
+https://youtu.be/SCwQ9jUfr0g
+
+~~Hayabusa1
+==Video Solution by Interstigation==
+https://youtu.be/_KNR0JV5rdI
+
+== See Also ==
+
+{{AMC10 box|year=2022|ab=B|before=First Problem|num-a=2}}
+{{AMC12 box|year=2022|ab=B|before=First Problem|num-a=2}}
+{{MAA Notice}}

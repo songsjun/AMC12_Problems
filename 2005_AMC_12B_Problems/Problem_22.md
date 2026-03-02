@@ -1,0 +1,66 @@
+# 2005 AMC 12B Problem 22
+
+## Problem
+A sequence of complex numbers $z_{0}$, $z_{1}$, $z_{2}$, ... is defined by the rule
+
+$$z_{n+1} = \frac {iz_{n}}{\overline {z_{n}}},$$
+
+where $\overline$ {$z_{n}$} is the [complex conjugate](https://artofproblemsolving.com/wiki/index.php/complex_conjugate) of $z_{n}$ and $i^{2}$=-1. Suppose that |$z_{0}$|=1 and $z_{2005}=1$. How many possible values are there for $z_{0}$?
+
+$\textbf{(A)}\ 1 \qquad \textbf{(B)}\ 2 \qquad \textbf{(C)}\ 4 \qquad \textbf{(D)}\ 2005 \qquad \textbf{(E)}\ 2^{2005}$
+## Solution 1
+Since |$z_0$|=1, let $z_0=e^{i\theta_0}$, where $\theta_0$ is an [argument](https://artofproblemsolving.com/wiki/index.php/argument) of $z_0$.
+We will prove by induction that $z_n=e^{i\theta_n}$, where $\theta_n=2^n(\theta_0+\frac{\pi}{2})-\frac{\pi}{2}.$
+
+Base Case: trivial
+
+Inductive Step: Suppose the formula is correct for $z_k$, then
+
+$$z_{k+1}=\frac{iz_k}{\overline {z_k}}=i e^{i\theta_k} e^{i\theta_k}=e^{i(2\theta_k+\pi/2)}$$
+
+Since
+
+$$2\theta_k+\frac{\pi}{2}=2\cdot 2^n(\theta_0+\frac{\pi}{2})-\pi+\frac{\pi}{2}=2^{n+1}(\theta_0+\frac{\pi}{2})-\frac{\pi}{2}=\theta_{n+1}$$
+
+the formula is proven
+
+$z_{2005}=1\Rightarrow \theta_{2005}=2k\pi,$ where k is an integer. Therefore,
+
+$$
+2^{2005}(\theta_0+\frac{\pi}{2})=(2k+\frac{1}{2})\pi
+\theta_0=\frac{k}{2^{2004}}\pi+\left(\frac{1}{2^{2006}}-\frac{1}{2}\right)\pi
+$$
+
+The value of $\theta_0$ only matters [modulo](https://artofproblemsolving.com/wiki/index.php/modulo) $2\pi.$ Since $\frac{k+2^{2005}}{2^{2004}}\pi\equiv\frac{k}{2^{2004}}\pi\mod 2\pi,$ k can take values from 0 to $2^{2005}-1$, so the answer is $2^{2005}\Rightarrow\boxed{\mathrm{E}}$
+## Solution 2
+Let $z_0=\cos \theta +i\sin \$theta = $e^{i\theta}$.
+
+$$
+z_1 = \frac {iz_{0}}{\overline {z_{0}}} = \frac{i(\cos \theta + i\sin \theta)}{\cos \theta - i\sin \theta} = i(\cos \theta + i\sin \theta)^2 = i(\cos 2\theta + i\sin 2\theta) = ie^{i2\theta}
+z_2 = \frac {iz_{1}}{\overline {z_{1}}} = \frac {i(ie^{i2\theta})}{-ie^{-i2\theta}} = -ie^{i4\theta}
+z_3 = \frac {iz_{2}}{\overline {z_{2}}} = \frac {i(-ie^{i4\theta})}{ie^{-i4\theta}} = -ie^{i8\theta}
+$$
+
+
+Repeating through this recursive process, we can quickly see that for n>1
+$$z_n = -i \cdot e^{i2^n\theta}$$
+Plugging in $n=2005$, we get $z_{2005}$ = -$ie^{i2^{2005}\theta} = 1$
+Rearranging terms, we see that $e^{i2^{2005}\theta}$=i.
+This means that $e^{i2^{2005}\theta}$ lies at point i on the unit circle in the complex plane, which happens when $2^{2005}\theta = \frac{\pi}{2} + 2k\pi.$ Solving for $\theta,$ we get $\theta=\frac{\pi(2k+\frac{1}{2})}{2^{2005}}$ where $k = 0,1,2...2^{2005}-1$. So the answer is $2^{2005}\Rightarrow\boxed{\mathrm{E}}. ($Author: Patrick Yin)
+## Solution 3
+Note that for any complex number z, we have |z|=|$\overline$ z|. Therefore, the magnitude of $\frac{iz_n}{|z_n|}$ is always 1, meaning that all of the numbers in the sequence $z_k$ are of magnitude 1.
+
+Another property of complex numbers is that $z\overline$ z=|z|^$2.$ For the numbers in our sequence, this means $z\overlinez=1$, so $\overlinez=z^{-1}$. Rewriting our recursive condition with these facts, we now have
+$$z_{n+1}=\frac{iz_n}{z_n^{-1}}=iz_n^2.$$
+Solving for $z_n$ here, we obtain
+$$z_n=\frac{\pm\sqrt{z_{n+1}}}i=-i\cdot(\pm\sqrt{z_{n+1}}).$$
+It is seen that there are two values of $z_n$ which correspond to one value of $z_{n+1}$. That means that there are two possible values of $z_{2004}$, four possible values of $z_{2003}$, and so on. Therefore, there are $2^{2005}$ possible values of $z_0$, giving the answer as $\boxed{\mathrm{(E)}\text{ }2^{2005}}.$
+## Solution 4 (more accurate solution 2)
+Let $z_0=e^{i\theta}$. Then z_$1=\frac{iz_0}{\overline{z_0}}=\frac{ie^{i\theta}}{e^{-i\theta}}=ie^{i2\theta}$, z_$2=\frac{iz_1}{\overline{z_1}}-e^{i2^2 \theta},$ z_$3=\frac{iz_2}{\overline{z_2}}=-ie^{i2^3 \theta}$, z_$4=\frac{iz_3}{\overline{z_3}}=e^{i2^4\theta}.$ Now we see that every for every positive integer $4k$, $z_{4k}=e^{i2^{4k}\theta}$ so $z_{2004}=e^{i2^{2004}\theta}$ and $z_{2005}=ie^{i2^{2005}\theta}=1 \iffe^{i(2^{2005}\theta + \frac{\pi}{2})}=1$, which has $2^{2005}$ solutions of the form $\theta=\frac{\frac{3\pi}{2}+2\pi k}{2^{2005}}$ for k $\in\{0, 1, \dots 2^{2005}-1\}$. $\implies \boxed{\mathrm{E}}$
+
+*~bomberdoodles*
+## Video Solution
+https://youtu.be/hKGwHUN8gQg?si=pCj35pPwVa-aaC3w
+
+*~MathProblemSolvingSkills.com*
+## See Also

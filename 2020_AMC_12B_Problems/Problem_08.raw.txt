@@ -1,0 +1,113 @@
+{{duplicate|[[2020 AMC 10B Problems|2020 AMC 10B #9]] and [[2020 AMC 12B Problems|2020 AMC 12B #8]]}}
+
+== Problem ==
+
+How many ordered pairs of integers <math>(x, y)</math> satisfy the equation <cmath>x^{2020}+y^2=2y?</cmath>
+
+<math>\textbf{(A) } 1 \qquad\textbf{(B) } 2 \qquad\textbf{(C) } 3 \qquad\textbf{(D) } 4 \qquad\textbf{(E) } \text{infinitely many}</math>
+
+== Solutions ==
+=== Solution 1 ===
+Rearranging the terms and and completing the square for <math>y</math> yields the result <math>x^{2020}+(y-1)^2=1</math>. Then, notice that <math>x</math> can only be <math>0</math>, <math>1</math> and <math>-1</math> because any value of <math>x^{2020}</math> that is greater than 1 will cause the term <math>(y-1)^2</math> to be less than <math>0</math>, which is impossible as <math>y</math> must be real. Therefore, plugging in the above values for <math>x</math> gives the ordered pairs <math>(0,0)</math>, <math>(1,1)</math>, <math>(-1,1)</math>, and <math>(0,2)</math> gives  a  total  of <math>\boxed{\textbf{(D) }4}</math> ordered pairs.
+
+=== Solution 2 ===
+Bringing all of the terms to the LHS, we see a quadratic equation <cmath>y^2 - 2y + x^{2020} = 0</cmath> in terms of <math>y</math>. Applying the quadratic formula, we get <cmath>y = \frac{2\pm\sqrt{4-4\cdot1\cdot x^{2020}}}{2}=\frac{2\pm\sqrt{4(1-x^{2020})}}{2}.</cmath> In order for <math>y</math> to be real, which it must be given the stipulation that we are seeking integral answers, we know that the discriminant, <math>4(1-x^{2020})</math> must be nonnegative. Therefore, <cmath>4(1-x^{2020}) \geq 0 \implies x^{2020} \leq 1.</cmath> Here, we see that we must split the inequality into a compound, resulting in <math>-1 \leq x \leq 1</math>. 
+
+The only integers that satisfy this are <math>x \in \{-1,0,1\}</math>. Plugging these values back into the quadratic equation, we see that <math>x = \{-1,1\}</math> both produce a discriminant of <math>0</math>, meaning that there is only 1 solution for <math>y</math>. If <math>x = \{0\}</math>, then the discriminant is nonzero, therefore resulting in two solutions for <math>y</math>. 
+
+Thus, the answer is <math>2 \cdot 1 + 1 \cdot 2 = \boxed{\textbf{(D) }4}</math>.
+
+~Tiblis
+
+=== Solution 3: Solve for x first ===
+Set it up as a quadratic in terms of y:
+<cmath>y^2-2y+x^{2020}=0</cmath>
+Then the discriminant is
+<cmath>\Delta = 4-4x^{2020}</cmath>
+This will clearly only yield real solutions when <math>|x^{2020}| \leq 1</math>, because the discriminant must be positive.
+Then <math>x=-1,0,1</math>. Checking each one:
+<math>-1</math> and <math>1</math> are the same when raised to the 2020th power:
+<cmath>y^2-2y+1=(y-1)^2=0</cmath>
+This has only has solutions <math>1</math>, so <math>(\pm 1,1)</math> are solutions.
+Next, if <math>x=0</math>:
+<cmath>y^2-2y=0 \Rightarrow y(y-2)=0</cmath>
+Which has 2 solutions, so <math>(0,2)</math> and <math>(0,0)</math>.
+
+These are the only 4 solutions, so our answer is <math>\boxed{\textbf{(D) } 4}</math>.
+
+~edits by BakedPotato66
+
+=== Solution 4: Solve for y first ===
+Move the <math>y^2</math> term to the other side to get <math>x^{2020}=2y-y^2 = y(2-y)</math>. 
+
+Because <math>x^{2020} \geq 0</math> for all <math>x</math>, then <math>y(2-y) \geq 0 \Rightarrow y = 0,1,2</math>. 
+
+If <math>y=0</math> or <math>y=2</math>, the right side is <math>0</math> and therefore <math>x=0</math>. 
+
+When <math>y=1</math>, the right side become <math>1</math>, therefore <math>x=1,-1</math>. 
+
+Our solutions are <math>(0,2)</math>, <math>(0,0)</math>, <math>(1,1)</math>, <math>(-1,1)</math>. These are the only <math>4</math> solutions, so the answer is <math>\boxed{\textbf{(D) } 4}</math> 
+
+- wwt7535
+
+~ edits by BakedPotato66
+
+=== Solution 5: Similar to solution 4===
+Since <math>x^{2020}</math> and <math>y^2</math> are perfect squares, they are both nonnegative. That means <math>y^2</math> plus a nonnegative number equals <math>2y</math>, which means <math>y^2 \leq 2y.</math> The only possible integer values for <math>y</math> are <math>0, 1, 2</math>.
+
+For <math>y=0</math>, <math>x</math> can only be <math>0</math>.
+
+For <math>y=1</math>, <math>x^2=1</math> so <math>x=1, -1</math>.
+
+For <math>y=2</math>, <math>x</math> can only be <math>0</math> as well.
+
+This gives us the solutions <math>(0, 0)</math>, <math>(1, 1)</math>, <math>(-1, 1)</math>, and <math>(0, 2)</math>. These are the only solutions, so there is a total of <math>\boxed{\textbf{(D) } 4}</math> ordered pairs.
+
+- kc1374
+
+=== Solution 6: (Casework)===
+We see that <math>x</math> has to be <math>1</math>, <math>0</math>, or <math>-1</math>, as any other integer would make this value too large. We also know that because <math>2020</math> is even, both <math>-1</math>, and <math>1</math> for <math>x</math> will yield the same <math>x^{2020}</math> value of <math>1</math>. 
+
+'''Case 1''': <math>x=0</math>. This gives us that <math>y^2 = 2y</math>. Dividing both sides by <math>y</math> gives us <math>y = 2</math>. Additionally, we know intuitively that <math>y = 0</math> is also a case, which gives us 2 possibilities for this case.
+
+'''Case 2''': <math>x = 1</math> or <math>-1</math>. This gives us that <math>1 + y^2 = 2y</math>. Bringing the <math>2y</math> to the other side, we have a simple quadratic.  <math>y^2-2y + 1 = 0</math>. Factor to get <math>(y-1)^2 = 0</math> so <math>y = 1</math>. Because this works for <math>x</math> as <math>-1</math> and <math>1</math>, there are 2 possibilities for this case.
+
+Adding the cases gets us our final answer of <math>\boxed{\textbf{(D) } 4}</math> ordered pairs.
+~iluvme
+
+
+=== Solution 7: (Casework)===
+We can move the <math>y^2</math> term to the other side to obtain <math>x^{2020} = 2y - y^2</math>, which can be easily factored into <math>x^{2020} = (2-y)y</math>. If we raise each side to the power 1/2020, we get <math>x = ((2-y)(y))^{1/2020}</math>. Since we're dealing with integer values, the inside of the square root and thus <math>(2-y)y</math> must be greater than <math>0</math>. For this to happen, <math>y</math> must be between <math>0</math> and <math>2</math> inclusive. Testing each integer value, we get the cases:
+
+<math>\textbf{Case 1}</math>: When <math>y=0</math>, then <math>y(2-y)</math> is also 0, and since the square root of <math>0</math> is <math>0</math>, <math>x</math> must also be <math>0</math>. So our first pair of solutions is <math>(0,0)</math>. 
+
+<math>\textbf{Case 2}</math>: When <math>y=1</math>, then <math>y(2-y)</math> is also 1. The possible values for <math>x</math> are <math>1</math> and <math>-1</math>, so we get 2 more pairs of solutions: <math>(1, -1)</math> and <math>(1,1)</math>. 
+
+<math>\textbf{Case 3}</math>: When <math>y=2</math>, then <math>y(2-y)</math> is <math>0</math>, and since the square root of <math>0</math> is <math>0</math>, <math>x</math> must also be <math>0</math> - so we get one more pair of solutions, <math>(2,0)</math>
+
+If we count all these pairs(<math>(0,0),(1,-1),(1,1),(2,0)</math>), we have 4 pairs of solutions, so our answer is  <math>\boxed{\textbf{(D) } 4}</math> ordered pairs. 
+
+- youtube.com/indianmathguy
+
+===Video Solution (HOW TO CREATIVELY PROBLEM SOLVE!!!)===
+https://youtu.be/FfATkdxncG4
+
+~Education, the Study of Everything
+
+===Video Solution 1 by TheBeautyOfMath===
+https://youtu.be/6ujfjGLzVoE
+
+===Video Solution by WhyMath===
+https://youtu.be/7dQ423hhgac
+
+~savannahsolver
+
+===Video Solution by Sohil Rathi===
+https://youtu.be/zfChnbMGLVQ?t=4251
+
+== See Also ==
+
+{{AMC10 box|year=2020|ab=B|num-b=8|num-a=10}}
+{{AMC12 box|year=2020|ab=B|num-b=7|num-a=9}}
+{{MAA Notice}}
+[[Category: Introductory Algebra Problems]]

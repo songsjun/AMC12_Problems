@@ -1,0 +1,137 @@
+{{duplicate|[[2012 AMC 12A Problems|2012 AMC 12A #14]] and [[2012 AMC 10A Problems|2012 AMC 10A #18]]}}
+
+== Problem 18 ==
+
+The closed curve in the figure is made up of 9 congruent circular arcs each of length <math>\frac{2\pi}{3}</math>, where each of the centers of the corresponding circles is among the vertices of a regular hexagon of side 2. What is the area enclosed by the curve?
+
+<asy>
+unitsize(2cm);
+defaultpen(fontsize(6pt));
+dotfactor=4;
+label("$\circ$",(0,1));
+label("$\circ$",(0.865,0.5));
+label("$\circ$",(-0.865,0.5));
+label("$\circ$",(0.865,-0.5));
+label("$\circ$",(-0.865,-0.5));
+label("$\circ$",(0,-1));
+dot((0,1.5));
+dot((-0.4325,0.75));
+dot((0.4325,0.75));
+dot((-0.4325,-0.75));
+dot((0.4325,-0.75));
+dot((-0.865,0));
+dot((0.865,0));
+dot((-1.2975,-0.75));
+dot((1.2975,-0.75));
+draw(Arc((0,1),0.5,210,-30));
+draw(Arc((0.865,0.5),0.5,150,270));
+draw(Arc((0.865,-0.5),0.5,90,-150));
+draw(Arc((0.865,-0.5),0.5,90,-150));
+draw(Arc((0,-1),0.5,30,150));
+draw(Arc((-0.865,-0.5),0.5,330,90));
+draw(Arc((-0.865,0.5),0.5,-90,30));
+</asy>
+
+<math>\textbf{(A)}\ 2\pi+6\qquad\textbf{(B)}\ 2\pi+4\sqrt{3}\qquad\textbf{(C)}\ 3\pi+4\qquad\textbf{(D)}\ 2\pi+3\sqrt{3}+2\qquad\textbf{(E)}\ \pi+6\sqrt{3}</math>
+[[Category: Introductory Geometry Problems]]
+
+== Solution 1 ==
+
+<asy>
+unitsize(2cm);
+defaultpen(fontsize(6pt));
+dotfactor=4;
+label("$\circ$",(0,1));
+label("$\circ$",(0.865,0.5));
+label("$\circ$",(-0.865,0.5));
+label("$\circ$",(0.865,-0.5));
+label("$\circ$",(-0.865,-0.5));
+label("$\circ$",(0,-1));
+dot((0,1.5));
+dot((-0.4325,0.75));
+dot((0.4325,0.75));
+dot((-0.4325,-0.75));
+dot((0.4325,-0.75));
+dot((-0.865,0));
+dot((0.865,0));
+dot((-1.2975,-0.75));
+dot((1.2975,-0.75));
+draw(Arc((0,1),0.5,210,-30));
+draw(Arc((0.865,0.5),0.5,150,270));
+draw(Arc((0.865,-0.5),0.5,90,-150));
+draw(Arc((0.865,-0.5),0.5,90,-150));
+draw(Arc((0,-1),0.5,30,150));
+draw(Arc((-0.865,-0.5),0.5,330,90));
+draw(Arc((-0.865,0.5),0.5,-90,30));
+draw((0,1)--(0.865, 0.5)--(0.865,-0.5)--(0,-1)--(-0.865,-0.5)--(-0.865,0.5)--(0,1));
+</asy>
+
+We can draw the hexagon between the centers of the circles, and compute its area. The hexagon is made of <math>6</math> equilateral triangles each with length <math>2</math>, so the area is:
+<cmath>\frac{\sqrt{3}}{4} \cdot 2^2 \cdot 6=6 \sqrt{3}.</cmath>
+Then, we add the areas of the three sectors outside the hexagon:
+<cmath>\frac 23 \pi \cdot 3=2\pi.</cmath>
+We now subtract the areas of the three sectors inside the hexagon but outside the figure (which is <math>\pi</math>) to get the area enclosed in the curved figure:
+<cmath>6 \sqrt{3}+2\pi-\pi=\pi+6\sqrt{3}.</cmath>
+Hence, our answer is <math>\boxed{\textbf{(E)}\ \pi+6\sqrt{3}},</math> and we are done.
+<cmath></cmath>
+(Minor edits, made by dbnl.)
+
+== Solution 2 (Looking at the answer choices) ==
+
+After forming the hexagon using the sectors outside the hexagon, we see three sectors left. Each sector has an area of <math>\frac{\pi}{3},</math> so the three combined make <math>\pi.</math> Since the side length of the hexagon is <math>2,</math> its area doesn't have <math>\pi</math> in it, so we know that the final answer will be <math>\pi + \text{(area of the hexagon)}.</math> Looking at the answer choices, the only answer with only one <math>\pi</math> is <math>\boxed{\textbf{(E)}}.</math>
+
+Also, notice the problem consists of adding and subtracting arcs from a hexagon with an area of <math>6\sqrt{3}</math>. Since all of the arcs have <math>\pi</math> in them, they will not affect the area of the hexagon, which is <math>6\sqrt{3}</math>, in the final answer. Thus, the only possible solution is <math>\boxed{E}</math>. ~Extremelysupercooldude
+
+==Solution 3 (Areas)==
+
+As you can see, this diagram looks like a fidget spinner ;). Fidget spinners aside, we need to add stuff to our diagram to make it look easier. In the directions, they were talking about the centers of each arc create a hexagon, so let's add that to our diagram. 
+
+<asy>
+defaultpen(fontsize(6pt));
+dotfactor=4;
+label("$\circ$",(0,1));
+label("$\circ$",(0.865,0.5));
+label("$\circ$",(-0.865,0.5));
+label("$\circ$",(0.865,-0.5));
+label("$\circ$",(-0.865,-0.5));
+label("$\circ$",(0,-1));
+dot((0,1.5));
+dot((-0.432,0.75));
+dot((0.4325,0.75));
+dot((-0.4325,-0.75));
+dot((0.4325,-0.75));
+dot((-0.865,0));
+dot((0.865,0));
+dot((-1.2975,-0.75));
+dot((1.2975,-0.75));
+draw(Arc((0,1),0.5,210,-30));
+draw(Arc((0.865,0.5),0.5,150,270));
+draw(Arc((0.865,-0.5),0.5,90,-150));
+draw(Arc((0.865,-0.5),0.5,90,-150));
+draw(Arc((0,-1),0.5,30,150));
+draw(Arc((-0.865,-0.5),0.5,330,90));
+draw(Arc((-0.865,0.5),0.5,-90,30));
+draw((0,1)--(0.865, 0.5)--(0.865,-0.5)--(0,-1)--(-0.865,-0.5)--(-0.865,0.5)--(0,1));
+</asy>
+
+The side length of the hexagon is 2 and if we plug it in to the area of a regular hexagon formula <math>\frac{3\sqrt 3}{2}s^2</math> we get <math>6\sqrt 3</math>.
+
+Note that the interior angles of a regular hexagon is 120 because of the formula <math>\frac{180(n-2)}{n}</math> where n is the number of sides. Knowing that, each sector is <math>\frac{1}{3}</math> of a circle. This would mean the three sectors inside the hexagon altogether equal a full circle. Knowing that the radius is 1, we can use the area of a circle <math>\pi r^2</math> and subtract it to <math>6\sqrt 3</math>. Thus we get the total area of <math>6\sqrt 3 - \pi</math>.
+
+
+Notice that we have three sectors exterior to the hexagon. Realize that the central angles of a circle always sum up to 360. Since we know one of the central angles is equal to 120, then we subtract 360 to 120 which gives us 240. Knowing that, each sector is <math>\frac{2}{3}</math> of a circle and since there is 3 of them, <math>\frac{2}{3}*3=2</math> circles. To find the area of those circles, we have to use <math>\pi r^2</math> again, but since there are 2 circles, then it is <math>2\pi r^2</math>, which gives us <math>2\pi</math>. 
+
+Now we have enough information to find the total area, 
+
+<math>(6\sqrt 3 -\pi+2\pi)=\textbf{(E)}\ \pi+6\sqrt{3}</math>
+
+~ghfhgvghj10
+
+== See Also ==
+
+{{AMC10 box|year=2012|ab=A|num-b=17|num-a=19}}
+{{AMC12 box|year=2012|ab=A|num-b=13|num-a=15}}
+
+[[Category:Introductory Geometry Problems]]
+[[Category:Area Problems]]
+{{MAA Notice}}

@@ -1,0 +1,110 @@
+{{duplicate|[[2018 AMC 10A Problems/Problem 18|2018 AMC 10A #18]] and [[2018 AMC 12A Problems/Problem 13|2018 AMC 12A #13]]}}
+
+==Problem==
+How many nonnegative integers can be written in the form <cmath>a_7\cdot3^7+a_6\cdot3^6+a_5\cdot3^5+a_4\cdot3^4+a_3\cdot3^3+a_2\cdot3^2+a_1\cdot3^1+a_0\cdot3^0,</cmath>
+where <imath>a_i\in \{-1,0,1\}</imath> for <imath>0\le i \le 7</imath>?
+
+<imath>\textbf{(A) } 512 \qquad 
+\textbf{(B) } 729 \qquad 
+\textbf{(C) } 1094 \qquad 
+\textbf{(D) } 3281 \qquad 
+\textbf{(E) } 59,048 </imath>
+
+==Solution 1==
+
+This looks like balanced ternary, in which all the integers with absolute values less than <imath>\frac{3^n}{2}</imath> are represented in <imath>n</imath> digits. There are 8 digits. Plugging in 8 into the formula for the balanced ternary gives a maximum bound of <imath>|x|=3280.5</imath>, which means there are 3280 positive integers, 0, and 3280 negative integers. Since we want all nonnegative integers, there are <imath>3280+1=\boxed{3281}</imath> integers or <imath>\boxed{\textbf{D}}</imath>.
+
+==Solution 2==
+
+Note that all numbers formed from this sum are either positive, negative or zero. The number of positive numbers formed by this sum is equal to the number of negative numbers formed by this sum, because of symmetry. There is only one way to achieve a sum of zero, if all <imath>a_i=0</imath>. The total number of ways to pick <imath>a_i</imath> from <imath>i=0, 1, 2, 3, ... 7</imath> is <imath>3^8=6561</imath>. <imath>\frac{6561-1}{2}=3280</imath> gives the number of possible negative integers. The question asks for the number of non-negative integers, so subtracting from the total gives <imath>6561-3280=\boxed{\textbf{(D) } 3281}</imath>. (RegularHexagon, KLBBC minor changes)
+
+==Solution 3 (Answer choices)==
+Note that the number of total possibilities (ignoring the conditions set by the problem) is <imath>3^8=6561</imath>. So, E is clearly unrealistic. 
+
+Note that if <imath>a_7</imath> is 1, then it's impossible for <cmath>a_7\cdot3^7+a_6\cdot3^6+a_5\cdot3^5+a_4\cdot3^4+a_3\cdot3^3+a_2\cdot3^2+a_1\cdot3^1+a_0\cdot3^0,</cmath> to be negative. Therefore, if <imath>a_7</imath> is 1, there are <imath>3^7=2187</imath> possibilities. (We also must convince ourselves that these <imath>2187</imath> different sets of coefficients must necessarily yield <imath>2187</imath> different integer results.)
+
+As A, B, and C are all less than 2187, the answer must be <imath>\boxed{\textbf{(D) } 3281}</imath>
+
+==Solution 4==
+Note that we can do some simple casework:
+If <imath>a_7=1</imath>, then we can choose anything for the other 7 variables, so this give us <imath>3^7</imath>.
+If <imath>a_7=0</imath> and <imath>a_6=1</imath>, then we can choose anything for the other 6 variables, giving us <imath>3^6</imath>.
+If <imath>a_7=0</imath>, <imath>a_6=0</imath>, and <imath>a_5=1</imath>, then we have <imath>3^5</imath>.
+Continuing in this vein, we have <imath>3^7+3^6+\cdots+3^1+3^0</imath> ways to choose the variables' values, except we have to add 1
+because we haven't counted the case where all variables are 0. So our total sum is <imath>\boxed{\textbf{(D) } 3281}</imath>.
+Note that we have counted all possibilities, because the largest positive positive power of 3 must be greater than or equal to the largest negative positive power of 3, for the number to be nonnegative.
+
+==Solution 5 (Casework and Recursion)==
+This solution has a similar idea to that of above.
+We will start off with casework on <imath>a_{7}</imath>:
+If <imath>a_7 = -1</imath>, we can show that there is no way to assign the values of <imath>-1, 0, 1</imath> to the other <imath>a_{i}</imath>'s for <imath>0 \leq i \leq 6</imath>. This is because even if we make all of the other <imath>a_{i}</imath> equal to <imath>1</imath>, we will have that our number is <imath>(-1)(3^{7}) + (3^{6}+3^{5}+...+3^{0}) = -3^{7} + \frac{3^{7}-1}{3-1}</imath>. However, note that since <imath>\frac{3^{7}-1}{3-1} < 3^{7}</imath>, <imath>-3^{7} + \frac{3^{7}-1}{3-1} < 0</imath>.
+If <imath>a_{7}=0</imath>, we can ignore <imath>a_{7}</imath> and pretend like it never even existed. This then simplifies the problem: the question remains the same, except that instead of having <imath>a_{0}...a_{7}</imath>, we only have <imath>a_{0}...a_{6}</imath>. Now, we introduce some notation: let the number of nonnegative integers that can be written in the form of <imath>a_{n} \cdot 3^{n} + ... + a_{0} \cdot 3^{0}</imath> be denoted as <imath>S_{n}</imath>. Then, the problem is asking us for <imath>S_{7}</imath>, and the total number of nonnegative integers we get from this case is <imath>S_{6}</imath>. Let's keep this in mind and revisit this idea later.
+If <imath>a_{7}=1</imath>, we can show that no matter what values we assign to the rest of the <imath>a_{i}</imath>, we will always get a nonnegative integer (we can make this even stricter and say positive integer). This is because of something we figured out in the first case: <imath>\frac{3^{7}-1}{3-1} < 3^{7}</imath>. So, even if we let <imath>a_{i}=-1</imath> for <imath>0 \leq i \leq 6</imath>, we will still have <imath>3^{7} - (3^{6}+...+3^{0}) > 0</imath>. So, for this case, we have <imath>3^7</imath> possible nonnegative integers.
+Totalling up our values from the three cases, we see that <imath>S_{7} = 0 + S_{6} + 3^{7}</imath>. In fact, using the reasoning from the three cases above, we can deduce that, for all positive integers <imath>n</imath>, <imath>S_{n} = 3^{n} + S_{n-1}</imath>. We can now start building up our values for <imath>S</imath>: <imath>S_{0} = 2</imath> (<imath>a_{0} = 0, 1</imath>), <imath>S_{1} = 3^{1}+S_{0} = 5, S_{2} = 14, ..., S_{6}=1094</imath>. So, we have <imath>S_{7} = 2187 + 1094 = \boxed{3281}</imath>, which is answer choice <imath>\boxed{\text{D}}</imath>.
+~advanture
+
+==Solution 6==
+The key is to realize that this question is basically taking place in <imath>a\in\{0,1,2\}</imath> if each value of <imath>a</imath> was increased by <imath>1</imath>, essentially making it into base <imath>3</imath>. Then the range would be from <imath>0\cdot3^7+</imath> <imath>0\cdot3^6+</imath> <imath>0\cdot3^5+</imath> <imath>0\cdot3^4+</imath> <imath>0\cdot3^3+</imath> <imath>0\cdot3^2+</imath> <imath>0\cdot3^1+</imath> <imath>0\cdot3^0=</imath> <imath>0</imath> to <imath>2\cdot3^7+</imath> <imath>2\cdot3^6+</imath> <imath>2\cdot3^5+</imath> <imath>2\cdot3^4+</imath> <imath>2\cdot3^3+</imath> <imath>2\cdot3^2+</imath> <imath>2\cdot3^1+</imath> <imath>2\cdot3^0=</imath> <imath>3^8-1=</imath> <imath>6561-1=</imath> <imath>6560</imath>, yielding <imath>6561</imath> different values. Since the distribution for all <imath>a_i\in \{-1,0,1\}</imath> the question originally gave is symmetrical, we retain the <imath>3280</imath> positive integers and one <imath>0</imath> but discard the <imath>3280</imath> negative integers. Thus, we are left with the answer, <imath>\boxed{\textbf{(D)} 3281}\qquad</imath>.  --anna0kear
+
+==Solution 7==
+First, set <imath>a_i=0</imath> for all <imath>i\geq1</imath>. The range would be the integers for which <imath>[-1,1]</imath>. If <imath>a_i=0</imath> for all <imath>i\geq2</imath>, our set expands to include all integers such that <imath>-4\leq\mathbb{Z}\leq4</imath>. Similarly, when <imath>i\geq3</imath> we get <imath>-13\leq\mathbb{Z}\leq13</imath>, and when <imath>i\geq4</imath> the range is <imath>-40\leq\mathbb{Z}\leq40</imath>. The pattern continues until we reach <imath>i=7</imath>, where <imath>-3280\leq\mathbb{Z}\leq3280</imath>. Because we are only looking for positive integers, we filter out all <imath>\mathbb{Z}<0</imath>, leaving us with all integers between <imath>0\leq\mathbb{Z}\leq3280</imath>, inclusive. The answer becomes <imath>\boxed{\textbf{(D) } 3281}</imath>.  --anna0kear
+
+==Solution 8==
+To get the number of integers, we can get the highest positive integer that can be represented using <cmath>a_7\cdot3^7+a_6\cdot3^6+a_5\cdot3^5+a_4\cdot3^4+a_3\cdot3^3+a_2\cdot3^2+a_1\cdot3^1+a_0\cdot3^0,</cmath>
+where <imath>a_i\in \{-1,0,1\}</imath> for <imath>0\le i \le 7</imath>.
+
+Note that the least nonnegative integer that can be represented is <imath>0</imath>, when all <imath>a_i=0</imath>. The highest number will be the number when all <imath>a_i=1</imath>. That will be <cmath>3^7+3^6+3^5+3^4+3^3+3^2+3^1+3^0=\frac{3^8-1}{3-1}</cmath> <cmath>=3280</cmath>
+
+Therefore, there are <imath>3280</imath> positive integers and <imath>(3280+1)</imath> nonnegative integers (while including <imath>0</imath>) that can be represented. Our answer is <imath>\boxed{\textbf{(D) } 3281}</imath>
+
+~OlutosinNGA
+
+==Solution 9==
+Notice that there are <imath>3^8</imath> options for <imath>a_7, a_6, \cdots a_0</imath> since each <imath>a_i</imath> can take on the value <imath>-1</imath>, <imath>0</imath>, or <imath>1</imath>. Now we want to find how many of them are positive and then we can add one in the end to account for <imath>0</imath> (they are asking for non-negative). 
+
+By symmetry (look out for these on the contest), we see that exactly half of them are positive. So <imath>\lfloor{\tfrac{3^8}{2}}\rfloor = 3280.</imath> Now we will add <imath>1</imath> because of the <imath>0</imath> to account for the non-negative solutions. 
+
+So our final answer is <imath>3280 + 1 = 3281</imath> which is <imath>\boxed{\textbf{(D) } 3281}</imath>.
+
+==Solution 10==
+Obviously, there are <imath>3^8 = 6561</imath> possible, and one of them is 0, so other <imath>6560</imath> are either positive or negative. By the symmetry, we can get the answer is <imath>6560/2 + 1</imath> which is <imath>\boxed{\textbf{(D) } 3281}</imath>.
+
+~ Little
+
+==Solution 11 (2 seconds)==
+The solution has to obviously be smaller than <imath>3^{7-0+1}=3^8</imath> but larger than <imath>3^{(7-0+1)-1} = 3^7.</imath> The only remaining answer is <imath>\boxed{\textbf{(D) } 3281}.</imath>
+~mathboy282
+
+==Solution 12 (Sets)==
+Define Set <imath>S=\{3^0, 3^1, 3^2, 3^3, 3^4, 3^5, 3^6, 3^7\}</imath>.
+
+Suppose <imath>T</imath> is a subset of <imath>S</imath> with <imath>k</imath> values. Then we can express <imath>\sum_{m=0}^{7} a_m3^m</imath> as
+<cmath>\sum_{d \in T} \pm d</cmath>
+
+Even though we can arbitrarily assign <imath>a_d</imath> for all <imath>d \in T</imath> as either <imath>-1</imath> or <imath>1</imath>, because <imath>\sum_{d \in T} \pm d</imath> needs to be nonnegative, for the largest element <imath>n</imath> of <imath>T</imath> <imath>a_n</imath> must be equal to <imath>1</imath>. This means that for any subset <imath>T</imath> with <imath>k</imath> values there are <imath>2^{k-1}</imath> ways to assign <imath>a_d</imath> for all <imath>d \in T</imath>.
+
+Moreover, there are <imath>\binom{8}{k}</imath> subsets <imath>T</imath> of <imath>S</imath> with <imath>k</imath> values. So our total number of positive numbers that could be expressed as <imath>\sum_{m=0}^{7} a_m3^m</imath> is
+<cmath>\sum_{k=1}^{8} \binom{8}{k}2^{k-1}=3280.</cmath>
+
+But wait---the problem is asking for the number of nonnegative numbers, not just positive. So we need to find the cases where <imath>\sum_{m=0}^{7} a_m3^m=0</imath>. Fortunately, this only happens when <imath>T=\emptyset</imath>, so there is only <imath>1</imath> case where this could happen. This could be verified with the fact that <imath>\sum_{m=0}^{7} a_m3^m=0</imath> only occurs when <imath>\{a_0, a_1, a_2, a_3, a_4, a_5, a_6, a_7\}=0</imath>.
+Therefore, the answer is <imath>3280+1=\boxed{\textbf{(D) }3281}</imath>.
+
+~Marchk26
+
+==Video Solution by Pi Academy (FAST and easy)==
+
+https://youtu.be/cTb6AMpit5o?si=dKGnTcQlNHGLLJlD
+
+~ Pi Academy
+
+== Video Solution ==
+https://youtu.be/0xmbHDcUI2w
+
+~IceMatrix
+
+==See Also==
+{{AMC10 box|year=2018|ab=A|num-b=17|num-a=19}}
+{{AMC12 box|year=2018|ab=A|num-b=12|num-a=14}}
+{{MAA Notice}}
+
+[[Category: Intermediate Number Theory Problems]]

@@ -1,0 +1,29 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2018_AMC_12B_Problems/Problem_3&action=raw
+
+Published Time: Sun, 28 May 2023 02:07:26 GMT
+
+Markdown Content:
+== Problem ==
+A line with slope 2 intersects a line with slope 6 at the point (40,30). What is the distance between the x-intercepts of these two lines? 
+
+\textbf{(A) } 5 \qquad \textbf{(B) } 10 \qquad \textbf{(C) } 20 \qquad \textbf{(D) } 25 \qquad \textbf{(E) } 50
+
+== Solution 1 ==
+Using point slope form, we get the equations y-30 = 6(x-40) and y-30 = 2(x-40). Simplifying, we get 6x-y=210 and 2x-y=50. Letting y=0 in both equations and solving for x gives the x-intercepts: x=35 and x=25, respectively. Thus the distance between them is 35-25=\boxed{\textbf{(B) } 10}.
+
+== Solution 2 ==
+In order for the line with slope 2 to travel "up" 30 units (from y=0), it must have traveled 30/2=15 units to the right. Thus, the x-intercept is at x=40-15=25. As for the line with slope 6, in order for it to travel "up" 30 units it must have traveled 30/6=5 units to the right. Thus its x-intercept is at x=40-5=35. Then the distance between them is 35-25=\boxed{\textbf{(B) } 10}.
+
+==Video Solution (HOW TO THINK CRITICALLY!!!)==
+https://youtu.be/2BrH2Dugkjg
+
+~Education, the Study of Everything
+
+==See Also==
+
+{{AMC12 box|year=2018|ab=B|num-b=2|num-a=4}}
+{{MAA Notice}}
+
+[[Category:Introductory Algebra Problems]]

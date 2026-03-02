@@ -1,0 +1,60 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2018_AMC_12B_Problems/Problem_21&action=raw
+
+Published Time: Fri, 30 May 2025 17:00:32 GMT
+
+Markdown Content:
+== Problem ==
+
+In \triangle{ABC} with side lengths AB = 13, AC = 12, and BC = 5, let O and I denote the circumcenter and incenter, respectively. A circle with center M is tangent to the legs AC and BC and to the circumcircle of \triangle{ABC}. What is the area of \triangle{MOI}?
+
+\textbf{(A)}\ \frac52\qquad\textbf{(B)}\ \frac{11}{4}\qquad\textbf{(C)}\ 3\qquad\textbf{(D)}\ \frac{13}{4}\qquad\textbf{(E)}\ \frac72
+
+== Diagram ==
+ /* Made by MRENTHUSIASM */ size(250); pair A, B, C, O, I, M; C = origin; A = (12,0); B = (0,5); C = origin; O = circumcenter(A,B,C); I = incenter(A,B,C); M = (4,4); fill(M--O--I--cycle,yellow); draw(A--B--C--cycle^^circumcircle(A,B,C)^^incircle(A,B,C)^^circle(M,4)^^M--O--I--cycle); dot("$A$",A,1.5*SE,linewidth(4)); dot("$B$",B,1.5*NW,linewidth(4)); dot("$C$",C,1.5*SW,linewidth(4)); dot("$O$",O,1.5*dir((5,12)),linewidth(4)); dot("$I$",I,1.5*S,linewidth(4)); dot("$M$",M,1.5*N,linewidth(4)); 
+~MRENTHUSIASM
+
+== Solution 1 (Coordinate Geometry)==
+
+In this solution, let the brackets denote areas.
+
+We place the diagram in the coordinate plane: Let A=(12,0),B=(0,5), and C=(0,0).
+
+Since \triangle ABC is a right triangle with \angle ACB=90^\circ, its circumcenter is the midpoint of \overline{AB}, from which O=\left(6,\frac52\right). Note that the circumradius of \triangle ABC is \frac{13}{2}. 
+
+Let s denote the semiperimeter of \triangle ABC. The inradius of \triangle ABC is \frac{[ABC]}{s}=\frac{30}{15}=2, from which I=(2,2).
+
+Since \odot M is also tangent to both coordinate axes, its center is at M=(a,a) and its radius is a for some positive number a. Let P be the point of tangency of \odot O and \odot M. As \overline{OP} and \overline{MP} are both perpendicular to the common tangent line at P, we conclude that O,M, and P are collinear. It follows that OM=OP-MP, or \sqrt{(a-6)^2+\left(a-\frac52\right)^2}=\frac{13}{2}-a.
+Solving this equation, we have a=4, from which M=(4,4).
+
+Finally, we apply the Shoelace Theorem to \triangle MOI: [MOI]=\frac12\left|\left(4\cdot\frac52+6\cdot2+2\cdot4\right)-\left(4\cdot6+\frac52\cdot2+2\cdot4\right)\right|=\boxed{\textbf{(E)}\ \frac72}.
+**Remark**
+
+Alternatively, we can use \overline{MI} as the base and the distance from O to \overleftrightarrow{MI} as the height for \triangle MOI:
+
+* By the Distance Formula, we have MI=2\sqrt2.
+
+* The equation of \overleftrightarrow{MI} is x-y+0=0, so the distance from O to \overleftrightarrow{MI} is h_O=\frac{\left|1\cdot6+(-1)\cdot\frac52+0\right|}{\sqrt{1^2+(-1)^2}}=\frac74\sqrt2.
+
+Therefore, we get [MOI]=\frac12\cdot MI\cdot h_O=\frac72.
+~pieater314159 ~MRENTHUSIASM
+
+== Solution 2==
+Let points Q and R be the points of tangency between the incircle and lines AB and BC.  Notice that \angle RIB is half of \angle ABC. Let m\angle ABC = θ. Using the half angle tangent formula and remembering that cos(θ) = \frac{5}{13}, we find that tan(θ/2) = sqrt((1-cosθ)/(1+cosθ)) = \sqrt{\frac{4}{9}} = \frac{2}{3}. Now we can find the length of BC in terms of the radius of the incircle, which will be r.  Using the knowledge that \triangle RIB is right with some trigonometry, we find that BR is 3r/2. We also find that CR is the r, and so we can create the equation BR + CR = BC -> 3r/2 + r = 5 -> 5r/2. We conclude r = 2. We now accept the fact that quadrilateral BQIR is a kite, so BR = BQ = 3.  We also know that O lies on BA and divides BA in half.  Next we determine that MQ = BM - BQ = 13/2 - 3 = 7/2. We also know that IQ has a measure of 2 since it's the radius of circle I 
+
+We know very little about the placement of M, so we work on that.  First, we can conclude that \triangle IOQ is part of \triangle MOI. We guess that M has to be higher up than O. We find the area of \triangle IOQ to be 7/2, which is the highest answer choice. I don't think that M is below \overline{AB}, but if it were to go past \overline{AB} then the answer would be GREATER than 7/2. This means \overline{QO} is on \overline{AB} . Therefore \triangle IOQ=\triangle MOI. The answer must be \boxed{\textbf{(E)}\ \frac72} .
+
+~me
+
+~Judokid (revisions)
+
+== Solution 3==
+The circle with center M is the C-mixtilinear incircle \omega of \triangle ABC. Let T be the intersection between \omega and the circumcircle \Omega. Then, there is a homothety centered at T sending \omega to \Omega. As such, the tangent \overline{AC} gets sent to a parallel tangent to \Omega, which thus must be the arc midpoint M_B of arc {CA}. Thus, by inscribed angle theorem CM_C and BM_B intersect at I, so EF passes through I where E, F are the tangency points of \omega with \overline{BC} and \overline{AC} by Pascal's Theorem. Thus, we see since  \angle BCA = 90 ^{\circ}, r_{\omega} = 2 r_{\text{incircle}} = 4. Set up a coordinate plane and apply Shoelace to obtain [MOI] = \boxed{ \textbf{(E)} \frac{7}{2}}.
+
+==See Also==
+
+{{AMC12 box|year=2018|ab=B|num-b=20|num-a=22}}
+{{MAA Notice}}
+
+[[Category:Intermediate Geometry Problems]]

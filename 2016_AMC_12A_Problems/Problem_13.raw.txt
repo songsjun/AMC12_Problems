@@ -1,0 +1,87 @@
+== Problem ==
+
+Let <math>N</math> be a positive multiple of <math>5</math>. One red ball and <math>N</math> green balls are arranged in a line in random order. Let <math>P(N)</math> be the probability that at least <math>\tfrac{3}{5}</math> of the green balls are on the same side of the red ball. Observe that <math>P(5)=1</math> and that <math>P(N)</math> approaches <math>\tfrac{4}{5}</math> as <math>N</math> grows large. What is the sum of the digits of the least value of <math>N</math> such that <math>P(N) < \tfrac{321}{400}</math>?
+
+<math>\textbf{(A) } 12 \qquad \textbf{(B) } 14 \qquad \textbf{(C) }16 \qquad \textbf{(D) } 18 \qquad \textbf{(E) } 20</math>
+
+==Solution 1==
+Let <math>n = \frac{N}{5}</math>. Then, consider <math>5</math> blocks of <math>n</math> green balls in a line, along with the red ball. Shuffling the line is equivalent to choosing one of the <math>N + 1</math> positions between the green balls to insert the red ball. Less than <math>\frac{3}{5}</math> of the green balls will be on the same side of the red ball if the red ball is inserted inside the middle block of <math>n</math> balls, and there are <math>n - 1</math> positions where this happens. Thus, <math>P(N) = 1 - \frac{n - 1}{N + 1} = \frac{4n + 2}{5n + 1}</math>, so
+
+<cmath>P(N) = \frac{4n + 2}{5n + 1} < \frac{321}{400}.</cmath>
+
+Multiplying both sides of the inequality by <math>400(5n+1)</math>, we have
+
+<cmath>400(4n+2)<321(5n+1),</cmath>
+
+and by the distributive property,
+
+<cmath>1600n+800<1605n+321.</cmath>
+
+Subtracting <math>1600n+321</math> on both sides of the inequality gives us
+
+<cmath>479<5n.</cmath>
+
+Therefore, <math>N=5n>479</math>, so the least possible value of <math>N</math> is <math>480</math>. The sum of the digits of <math>480</math> is <math>\boxed{\textbf{(A) } 12}</math>.
+
+==Solution 2 (Pattern Solution)==
+Let <math>N=5</math>, <math>P(N)=1</math> (Given)
+
+
+Let <math>N=10</math>, <math>P(N)=\frac{10}{11}</math>
+
+
+Let <math>N=15</math>, <math>P(N)=\frac{14}{16}</math>
+
+
+Notice that the fraction can be written as <math>1-\frac{\frac{N}{5}-1}{N+1}</math>
+
+Now it's quite simple to write the inequality as <math>1-\frac{\frac{N}{5}-1}{N+1}<\frac{321}{400}</math>
+
+We can subtract <math>1</math> on both sides to obtain <math>-\frac{\frac{N}{5}-1}{N+1}<-\frac{79}{400}</math>
+
+Dividing both sides by <math>-1</math>, we derive <math>\frac{\frac{N}{5}-1}{N+1}>\frac{79}{400}</math>. (Switch the inequality sign when dividing by <math>-1</math>)
+
+We then cross multiply to get <math>80N - 400 > 79N + 79</math>
+
+Finally we get <math>N > 479</math>
+
+To achieve <math>N = 480</math>
+
+So the sum of the digits of <math>N</math> = <math>\boxed{\textbf{(A) } 12}</math>
+
+==Solution 3==
+We are trying to find the number of places to put the red ball, such that <math>\frac{3}{5}</math> of the green balls or more are on one side of it. Notice that we can put the ball in a number of spaces describable with <math>N</math>: Trying a few values, we see that the ball "works" in places <math>1</math> to <math>\frac{2}{5}N + 1</math> and spaces <math>\frac{3}{5}N+1 </math> to <math>N+1</math>. This is a total of <math>\frac{4}{5}N + 2</math> spaces, over a total possible <math>N + 1</math> places to put the ball. So:
+
+<math>\frac{\frac{4}{5}N + 2}{N+1} = \frac{321}{400} \rightarrow N = 479.</math> And we know that the next value is what we are looking for, so <math>N+1 = 480</math>, and the sum of its digits is <math>\boxed{\textbf{(A) } 12}</math>.
+
+
+==Solution 4==
+Draw <math>N</math> balls as described in the problem. First consider the left side arrangements. Notice that for at least <math>\frac{3}{5}N</math> balls must be to the right of the valid left side arrangements. Since we have <math>N+1</math> balls, we know that there are <math>\frac{2}{5}N+1</math> valid left side arrangements. This also goes for the right side arrangements, for a total of 
+ <math>\frac{4}{5}N + 2</math> spaces, over a total possible <math>N + 1</math> places to put the ball. So:
+
+<math>\frac{\frac{4}{5}N + 2}{N+1} = \frac{321}{400} \rightarrow N = 479.</math> And we know that the next value is what we are looking for, so <math>N+1 = 480</math>, and the sum of its digits is <math>\boxed{\textbf{(A) } 12}</math>.
+
+== Video Solution by Pi Academy ==
+https://youtu.be/iTkJExTiGkM?si=2dEicIJoLsaeWE-y
+
+~ Pi Academy
+
+== Video Solution 2==
+https://youtu.be/YsIPcwuycF0
+
+~IceMatrix
+==Video Solution 3==
+
+https://www.youtube.com/watch?v=iFSTuWCrosY
+
+
+==Video Solution 4==
+
+https://www.youtube.com/watch?v=SRq3-vm5s2s
+
+~MathkidsbyMax
+
+==See Also==
+{{AMC10 box|year=2016|ab=A|num-b=16|num-a=18}}
+{{AMC12 box|year=2016|ab=A|num-b=12|num-a=14}}
+{{MAA Notice}}

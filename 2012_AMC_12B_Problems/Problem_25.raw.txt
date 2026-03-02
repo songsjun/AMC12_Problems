@@ -1,0 +1,55 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2012_AMC_12B_Problems/Problem_25&action=raw
+
+Published Time: Sat, 03 Aug 2024 04:28:01 GMT
+
+Markdown Content:
+== Problem 25 ==
+
+Let S=\{(x,y) : x\in \{0,1,2,3,4\}, y\in \{0,1,2,3,4,5\},\text{ and } (x,y)\ne (0,0)\}. 
+Let T be the set of all right triangles whose vertices are in S. For every right triangle t=\triangle{ABC} with vertices A, B, and C in counter-clockwise order and right angle at A, let f(t)=\tan(\angle{CBA}). What is \prod_{t\in T} f(t)?
+
+\textbf{(A)}\ 1\qquad\textbf{(B)}\ \frac{625}{144}\qquad\textbf{(C)}\ \frac{125}{24}\qquad\textbf{(D)}\ 6\qquad\textbf{(E)}\ \frac{625}{24} 
+
+== Solution 1 ==
+Consider reflections. For any right triangle ABC with the right labeling described in the problem, any reflection A'B'C' labeled that way will give us \tan CBA \cdot \tan C'B'A' = 1. First we consider the reflection about the line y=2.5. Only those triangles \subseteq T that have one vertex at (0,5) do not reflect to a traingle \subseteq T. Within those triangles, consider a reflection about the line y=5-x. Then only those triangles \subseteq T that have one vertex on the line y=0 do not reflect to a triangle \subseteq T. So we only need to look at right triangles that have vertices (0,5), (*,0), (*,*). There are three cases:
+
+Case 1: A=(0,5). Then B=(*,0) is impossible.
+
+Case 2: B=(0,5). Then we look for A=(x,y) such that \angle BAC=90^{\circ} and that C=(*,0). They are: (A=(x,5), C=(x,0)),  (A=(3,2), C=(1,0)) and (A=(4,1), C=(3,0)). The product of their values of \tan \angle CBA is \frac{5}{1}\cdot \frac{5}{2} \cdot \frac{5}{3} \cdot \frac{5}{4} \cdot \frac{1}{4} \cdot \frac{2}{3} = \frac{625}{144}.
+
+Case 3: C=(0,5). Then A=(*,0) is impossible.
+
+Therefore \boxed{\textbf{(B)} \ \frac{625}{144}} is the answer.
+
+== Solution 2 ==
+This is just another way for the reasoning of solution 1. Picture the question to be a grid of unit squares instead of a coordinate system. Note that the restriction, (This is just to make visualization easier.) Define a "cell" to be a rectangle in the set of S. For example, a cell can be (labeled in a red):
+
+ unitsize(0.5 cm); draw((0,1)--(0,5),black); draw((1,0)--(1,5),black); draw((2,0)--(2,5),black); draw((3,0)--(3,5),black); draw((4,0)--(4,5),black); draw((0,1)--(5,1),black); draw((5,0)--(5,5),black); draw((1,0)--(5,0),black); draw((0,2)--(5,2),black); draw((0,3)--(5,3),black); draw((0,4)--(5,4),black); draw((0,5)--(5,5),black); draw((0,1)--(5,1),red); draw((0,1)--(0,5),red); draw((0,5)--(5,5),red); draw((5,5)--(5,1),red); 
+
+Note that choosing any three points and labeling them according to the problem will result in a product of one. For example, with the cell we just labeled, the four triangles we can create are:
+
+ unitsize(0.5 cm); draw((0,1)--(5,1),red); draw((0,1)--(0,5),red); draw((0,5)--(5,5),red); draw((5,5)--(5,1),red); draw((0,1)--(5,1),black); draw((0,1)--(0,5),black); draw((0,5)--(5,1),black); pair A, B, C; A = (0,1); B = (0,5); C = (5,1); 
+
+ unitsize(0.5 cm); draw((0,1)--(5,1),red); draw((0,1)--(0,5),red); draw((0,5)--(5,5),red); draw((5,5)--(5,1),red); draw((0,1)--(5,1),black); draw((5,1)--(5,5),black); draw((5,5)--(0,1),black); 
+
+ unitsize(0.5 cm); draw((0,1)--(5,1),red); draw((0,1)--(0,5),red); draw((0,5)--(5,5),red); draw((5,5)--(5,1),red); draw((0,5)--(5,5),black); draw((5,1)--(5,5),black); draw((0,5)--(5,1),black); 
+
+ unitsize(0.5 cm); draw((0,1)--(5,1),red); draw((0,1)--(0,5),red); draw((0,5)--(5,5),red); draw((5,5)--(5,1),red); draw((0,5)--(5,5),black); draw((0,1)--(0,5),black); draw((0,1)--(5,5),black); 
+
+If we define the longer side to be x and the shorter side to be y, then the product will be \frac{x}{y} \cdot \frac{y}{x} \cdot \frac{x}{y} \cdot \frac{y}{x}=1, and we are done.
+
+Otherwise, the three points are not contained in a "cell." This will result in the solution 1 path as described before. Our three points must take the form (0,5), (*,0), (*,*), where * is a number defined by the boundaries of S. Thus, by the three cases, our answer is \boxed{\textbf{(B)} \ \frac{625}{144}}.
+
+~wesserwes7254
+
+==Video Solution by Richard Rusczyk==
+https://artofproblemsolving.com/videos/amc/2012amc12b/279
+
+~dolphin7
+
+== See Also ==
+
+{{AMC12 box|year=2012|ab=B|num-b=24|after=Last Problem}}
+{{MAA Notice}}

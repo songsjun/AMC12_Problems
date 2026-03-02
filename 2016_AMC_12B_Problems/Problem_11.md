@@ -1,0 +1,24 @@
+# 2016 AMC 12B Problem 11
+
+## Problem
+How many squares whose sides are parallel to the axes and whose vertices have coordinates that are integers lie entirely within the region bounded by the line $y=\pi$ x, the line y=-0.1 and the line $x=5.1$?
+
+$\textbf{(A)}\ 30 \qquad \textbf{(B)}\ 41 \qquad \textbf{(C)}\ 45 \qquad \textbf{(D)}\ 50 \qquad \textbf{(E)}\ 57$
+## Solution
+Solution by $e_power_pi_times_i$
+Revised by Kinglogic and RJ5303707
+
+ Label l; l.p=fontsize(8); xaxis(-1,8,Ticks(l, 1.0)); yaxis(-1,16,Ticks(l, 1.0)); real f(real x) { return x * pi; } D(graph(f,-1/pi,5.1)); D((5.1,-1)--(5.1,16)); D((-1,-0.1)--(8,-0.1)); for(int $x = 0$; x < 5.1; ++x) { for(int $y = 0$; y < 16; ++y) { if(x * pi > y) { D((x,y)); } } }
+(red shows lattice points within the triangle)
+
+If we draw a picture showing the triangle, we see that it would be easier to count the squares vertically and not horizontally. The upper bound is 16 squares ($y=5.1*\pi),$ and the limit for the x-value is 5 squares. First we count the 1*1 squares. In the rightmost column, there are 12 squares with length 1 because $y=4*\pi$ generates squares from (4,0) to (4,$4\pi),$ and continuing on we have 9, 6, and 3 for x-values for 1, 2, and 3 in the equation $y=\pi$ x. So there are $12+9+6+3 = 30$ squares with length 1 in the figure.
+
+For 2*2 squares, each square takes up 2 units left and 2 units up. Squares can also overlap. For 2*2 squares, the rightmost column stretches from (3,0) to (3,$3\pi),$ so there are 8 squares with length 2 in a 2 by 9 box. Repeating the process, the next column stretches from (2,0) to (2,$2\pi),$ so there are 5 squares. Continuing and adding up in the end, there are $8+5+2=15$ squares with length 2 in the figure.
+
+Squares with length 3 in the rightmost column start at (2,0) and end at (2,$2\pi),$ so there are 4 such squares in the right column. As the left row starts at (1,0) and ends at (1,$\pi)$ there are $4+1=5$ squares with length 3. As squares with length 4 would not fit in the triangle, the answer is 30+15+5 which is $\boxed{\textbf{(D)}\ 50}.$
+## Video Solution by CanadaMath (Problem 11-20)
+Fast Forward to 00:00 for problem 11
+https://www.youtube.com/watch?v=4osvFatUv1o
+
+*~THEMATHCANADIAN*
+## See Also

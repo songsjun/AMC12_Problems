@@ -1,0 +1,43 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2014_AMC_12B_Problems/Problem_17&action=raw
+
+Published Time: Tue, 25 Jun 2024 21:53:10 GMT
+
+Markdown Content:
+==Problem==
+Let P be the parabola with equation y=x^2 and let Q = (20, 14). There are real numbers r and s such that the line through Q with slope m does not intersect P if and only if r < m < s. What is r + s?
+
+ \textbf{(A)}\ 1\qquad\textbf{(B)}\ 26\qquad\textbf{(C)}\ 40\qquad\textbf{(D)}\ 52\qquad\textbf{(E)}\ 80 
+
+==Solution 1 (Algebra Based)==
+Let y = m(x - 20) + 14. Equating them:
+
+x^2 = mx - 20m + 14
+
+x^2 - mx + 20m - 14 = 0
+
+For there to be no solutions, the discriminant must be less than zero:
+
+m^2 - 4(20m - 14) < 0
+
+m^2 - 80m + 56 < 0.
+
+So m < 0 for r < m < s where r and s are the roots of m^2 - 80m + 56 = 0 and their sum by Vieta's formulas is \boxed{\textbf{(E)}\ 80}.
+
+==Solution 2 (Calculus-based)==
+
+The line will begin to intercept the parabola when its slope equals that of the parabola at the point of tangency.  Taking the derivative of the equation of the parabola, we get that the slope equals 2x.  Using the slope formula, we find that the slope of the tangent line to the parabola also equals \frac{14-x^2}{20-x}.  Setting these two equal to each other, we get
+2x = \frac{14-x^2}{20-x} \implies x^2-40x+14 = 0
+Solving for x, we get 
+x= 20\pm \sqrt{386}
+The sum of the two possible values for x where the line is tangent to the parabola is 40, and the sum of the slopes of these two tangent lines is equal to 2x, or \boxed{\textbf{(E)}\ 80}.
+
+==Solution 3 (fake)==
+The smaller solution is basically negligible in comparison with the solution with the larger slope. Try some values like of x^2 = y where x = 40 => y = 1600, and slope ~80. Trying a few values leads us to conclude the least possible value is around 80, so the answer is \boxed {\textbf{(E)}\ 80}. 
+
+~Arcticturn
+
+== See also ==
+{{AMC12 box|year=2014|ab=B|num-b=16|num-a=18}}
+{{MAA Notice}}

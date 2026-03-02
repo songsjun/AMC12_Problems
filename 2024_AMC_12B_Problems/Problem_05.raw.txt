@@ -1,0 +1,71 @@
+{{duplicate|[[2024 AMC 10B Problems/Problem 5|2024 AMC 10B #5]] and [[2024 AMC 12B Problems/Problem 5|2024 AMC 12B #5]]}}
+
+==Problem==
+In the following expression, Melanie changed some of the plus signs to minus signs:
+<cmath>1+3+5+7+...+97+99</cmath>
+When the new expression was evaluated, it was negative. What is the least number of plus signs that Melanie could have changed to minus signs?
+
+<math>\textbf{(A) } 14 \qquad\textbf{(B) } 15 \qquad\textbf{(C) } 16 \qquad\textbf{(D) } 17 \qquad\textbf{(E) } 18</math>
+
+==Solution 1==
+
+Recall that the sum of the first <math>n</math> odd numbers is <math>n^2</math>. Thus <cmath>1 + 3 + 5 + 7+ \dots + 97 + 99 = 50^2 = 2500.</cmath>
+
+If we want to minimize the number of sign flips to make the number negative, we must flip the signs corresponding to the values with largest absolute value. This will result in the inequality <cmath>1 + 3 + 5 +\dots + (2n - 3) + (2n - 1) - (2n + 1) - (2n + 3)-\dots - 97 - 99 < 0.</cmath>
+
+The positive section of the sum will contribute <math>n^2</math>, and the negative section will contribute <math>-(2500-n^2) = (n^2 - 2500)</math>. The inequality simplifies to
+<cmath>n^2 + (n^2 - 2500) < 0</cmath>
+<cmath>2n^2 < 2500</cmath>
+<cmath>n^2 < 1250</cmath>
+The greatest positive value of <math>n</math> satisfying the inequality is <math>n = 35</math>, corresponding to <math>35</math> positive numbers, and <math>\boxed{\text{B. } 15}</math> negatives.
+
+ALEX
+
+==Solution 2==
+The formula for the sum of all odd positive integers from <math>1</math> to <math>2n-1</math> is <cmath>1+3+5+...+2n-3+2n-1=n^2.</cmath>Therefore, the given sum evaluates to <cmath>99=2(50)-1\implies 50^2=2500.</cmath> Since we're looking for the minimum possible sign changes, we focus on the largest numbers in the set to change to negative.
+
+If we change the sign of a number <math>n</math> to negative, then the sum decreases by <math>2n</math>. Therefore, we're looking for a subset of numbers that add to greater than <math>2500/2=1250</math>.
+
+Now we look at the answer choices.
+
+<math>\text{(A) }14</math> means that we're changing the signs of the numbers <math>\{73,75,...,99\}</math>, and <math>73+75+...+99=\dfrac{(73+99)\cdot(\frac{99-73}{2}+1)}{2}=1204</math>. 
+
+Now this so slightly happens to be less than <math>1250</math>, and <math>\text{(B) } 15</math> means we're adding <math>71</math> to the set, too. Since <math>71>1250-1204=46</math>, then the answer is <math>\boxed{\text{(B) }15}</math> ~Tacos_are_not_yummy_1
+
+==Solution 3==
+Note that as mentioned above, <math>1 + 3 + 5... + 2n - 1 = n^{2}</math>. So, the sum of the first 50 odd numbers is equal to 2500, and we need to find the smallest integer such that <math>2k^{2} < 50^{2}</math>. Taking the square root, <math>k = 25\sqrt{2}</math>, keeping in mind we need to take the floor <math>2k^{2}</math> needs to be slightly less than 2500. Using an approximation of <math>\sqrt{2} = 1.4, 25 * \frac{7}{5}</math> is 35, so our answer is <math>\boxed{\text{(B) }15}</math>
+~aleyang
+
+==Solution 4 (Simple Algebra)==
+As mentioned above, <math>1 + 3 + 5... + 2n - 1 = n^{2}</math>. This will be especially important in this solution. The sum of the original expression is 2500, so the combined (positive) sum of the negatives must be greater than half of this, i.e. <math>1250</math>. We are looking to minimize the number of negative numbers, so we only convert the last numbers to negatives. Let <math>99 = o_1 = 100-1</math>, <math>97 = o_2 = 100 - 3</math>, and for any <math>n</math>, <math>o_n = 100-(2n-1)</math>. Then the sum of all numbers up till <math>o_n</math> is <math>100n - n^{2}</math>. This sum needs to be greater than 1250, i.e.:
+
+<math>100n-n^{2} > 1250</math>
+
+Testing out <math>n</math> from the solution set yields the minimum value of <math>n=15</math>. The answer is therefore <math>\boxed{\text{(B) }15}</math>.
+
+~mathwizard123123
+~ edit by RoyalPawn38
+
+==Video Solution 1 by Pi Academy (Fast and Easy ⚡🚀)==
+
+https://youtu.be/DIl3rLQQkQQ?feature=shared
+
+~ Pi Academy
+==Video Solution 2 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=24EZaeAThuE
+
+==Video Solution by Daily Dose of Math==
+
+https://youtu.be/rZX4qVEflNg
+
+~Thesmartgreekmathdude
+
+==Video Solution by TheBeautyofMath==
+https://youtu.be/mpnm_r6D3-w?t=1013
+
+~IceMatrix
+
+==See also==
+{{AMC10 box|year=2024|ab=B|num-b=4|num-a=6}}
+{{AMC12 box|year=2024|ab=B|num-b=4|num-a=6}}
+{{MAA Notice}}

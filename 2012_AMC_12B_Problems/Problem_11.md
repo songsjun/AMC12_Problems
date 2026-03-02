@@ -1,0 +1,16 @@
+# 2012 AMC 12B Problem 11
+
+## Problem
+In the equation below, A and B are consecutive positive integers, and A, B, and A+B represent number bases: 132_A+43_B=$69_{A+B}$.
+What is A+B?
+
+$\textbf{(A)}\ 9\qquad\textbf{(B)}\ 11\qquad\textbf{(C)}\ 13\qquad\textbf{(D)}\ 15\qquad\textbf{(E)}\ 17$
+## Solution 1
+Change the equation to base 10: $A^2 + 3A +2 + 4B +3= 6A + 6B + 9  A^2 - 3A - 2B - 4=0$
+
+Either B = A + 1 or B = A - 1, so either $A^2 - 5A - 6, B = A + 1$ or $A^2 - 5A - 2, B = A - 1.$ The second case has no integer roots, and the first can be re-expressed as (A-6)(A+1) = 0, B = A + 1. Since A must be positive, A = 6, B = 7 and A+B = $\boxed{\textbf{(C)}\ 13}$
+## Solution 2 (Answer Choices)
+We can eliminate answer choice $\textbf{(A)}$ because you can't have a 9 in base 9. Now we know that A and B are consecutive, so we can just test answers. You will only have to test at most 8 cases. Eventually, after testing a few cases, you will find that A=6 and B=7. The solution is $\boxed{\mathbf{(C)}\ 13}.$
+
+*~kempwood*
+## See Also

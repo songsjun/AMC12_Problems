@@ -1,0 +1,42 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2008_AMC_12A_Problems/Problem_20&action=raw
+
+Published Time: Sun, 08 Feb 2026 15:00:01 GMT
+
+Markdown Content:
+==Problem==
+Triangle ABC has AC=3, BC=4, and AB=5. Point D is on \overline{AB}, and \overline{CD} bisects the right angle. The inscribed circles of \triangle ADC and \triangle BCD have radii r_a and r_b, respectively. What is r_a/r_b?
+
+\mathrm{(A)}\ \frac{1}{28}\left(10-\sqrt{2}\right)\qquad\mathrm{(B)}\ \frac{3}{56}\left(10-\sqrt{2}\right)\qquad\mathrm{(C)}\ \frac{1}{14}\left(10-\sqrt{2}\right)\qquad\mathrm{(D)}\ \frac{5}{56}\left(10-\sqrt{2}\right)\\\mathrm{(E)}\ \frac{3}{28}\left(10-\sqrt{2}\right)
+
+== Solution 1==
+ import olympiad; size(300); defaultpen(0.8); pair C=(0,0),A=(0,3),B=(4,0),D=(4-2.28571,1.71429); pair O=incenter(A,C,D), P=incenter(B,C,D); picture p = new picture; draw(p,Circle(C,0.2)); draw(p,Circle(B,0.2)); clip(p,B--C--D--cycle); add(p); draw(A--B--C--D--C--cycle); draw(incircle(A,C,D)); draw(incircle(B,C,D)); dot(O);dot(P); label("\(A\)",A,W); label("\(B\)",B,E); label("\(C\)",C,W); label("\(D\)",D,NE); label("\(O_A\)",O,W); label("\(O_B\)",P,W); label("\(3\)",(A+C)/2,W); label("\(4\)",(B+C)/2,S); label("\(\frac{15}{7}\)",(A+D)/2,NE); label("\(\frac{20}{7}\)",(B+D)/2,NE); label("\(45^{\circ}\)",(.2,.1),E); label("\(\sin \theta = \frac{3}{5}\)",B-(.2,-.1),W); 
+
+By the [[Angle Bisector Theorem]], 
+\frac{BD}{4} = \frac{5-BD}{3} \Longrightarrow BD = \frac{20}7
+By [[Law of Sines]] on \triangle BCD, 
+\frac{BD}{\sin 45^{\circ}} = \frac{CD}{\sin \angle B} \Longrightarrow \frac{20/7}{\sqrt{2}/2} = \frac{CD}{3/5} \Longrightarrow CD=\frac{12\sqrt{2}}{7}
+Since the area of a triangle satisfies [\triangle]=rs, where r =  the [[inradius]] and s = the [[semiperimeter]], we have 
+\frac{r_A}{r_B} = \frac{[ACD] \cdot s_B}{[BCD] \cdot s_A}
+
+Since \triangle ACD and \triangle BCD share the [[altitude]] (to \overline{AB}), their areas are the ratio of their bases, or \frac{[ACD]}{[BCD]} = \frac{AD}{BD} = \frac{3}{4}
+The semiperimeters are s_A = \left(3 + \frac{15}{7} + \frac{12\sqrt{2}}{7}\right)\left/\right.2 = \frac{18+6\sqrt{2}}{7} and s_B = \frac{24+ 6\sqrt{2}}{7}. Thus,
+\begin{align*} \frac{r_A}{r_B} &= \frac{[ACD] \cdot s_B}{[BCD] \cdot s_A} = \frac{3}{4} \cdot \frac{(24+ 6\sqrt{2})/7}{(18+6\sqrt{2})/7} \\ &= \frac{3(4+\sqrt{2})}{4(3+\sqrt{2})} \cdot \left(\frac{3-\sqrt{2}}{3-\sqrt{2}}\right) = \frac{3}{28}(10-\sqrt{2}) \Rightarrow \mathrm{(E)}\qquad \blacksquare \end{align*}
+
+-(you could also use stewart's theorem to find the length of cd)
+
+==Solution 2==
+ import olympiad; import geometry; size(300); defaultpen(0.8); pair C=(0,0),A=(0,3),B=(4,0),D=(4-2.28571,1.71429); pair O=incenter(A,C,D), P=incenter(B,C,D); line cd = line(C, D); picture p = new picture; picture q = new picture; picture r = new picture; picture s = new picture; draw(p,Circle(C,0.2)); clip(p,P--C--D--cycle); draw(q, Circle(C, 0.3)); clip(q, O--C--D--cycle); line l1 = perpendicular(O, cd); draw(r, l1); clip(r, C--D--O--cycle); line l2 = perpendicular(P, cd); draw(s, l2); clip(s, C--P--D--cycle); add(p); add(q); add(r); add(s); draw(A--B--C--D--C--cycle); draw(incircle(A,C,D)); draw(incircle(B,C,D)); draw(C--O); draw(C--P); dot(O); dot(P); point inter1 = intersectionpoint(l1, cd); point inter2 = intersectionpoint(l2, cd); dot(inter1); dot(inter2); label("\(A\)",A,W); label("\(B\)",B,E); label("\(C\)",C,W); label("\(D\)",D,NE); label("\(O_a\)",O,W); label("\(O_b\)",P,E); label("\(3\)",(A+C)/2,W); label("\(4\)",(B+C)/2,S); label("\(\frac{15}{7}\)",(A+D)/2,NE); label("\(\frac{20}{7}\)",(B+D)/2,NE); label("\(M\)", inter1, 2W); label("\(N\)", inter2, 2E); 
+
+We start by finding the length of AD and BD as in solution 1. Using the angle bisector theorem, we see that AD = \frac{15}{7} and BD = \frac{20}{7}. Using Stewart's Theorem gives us the equation 5d^2 + \frac{1500}{49} = \frac{240}{7} + \frac{180}{7}, where d is the length of CD. Solving gives us d = \frac{12\sqrt{2}}{7}, so CD = \frac{12\sqrt{2}}{7}.
+
+Call the incenters of triangles ACD and BCD  O_a and O_b respectively. Since O_a is an incenter, it lies on the angle bisector of \angle ACD. Similarly, O_b lies on the angle bisector of \angle BCD. Call the point on CD tangent to O_a M, and the point tangent to O_b N. Since \triangle CO_aM and \triangle CO_bN are right, and \angle O_aCM = \angle O_bCN, \triangle CO_aM \sim \triangle CO_bN. Then, \frac{r_a}{r_b} = \frac{CM}{CN}. 
+
+We now use common tangents to find the length of CM and CN. Let CM = m, and the length of the other tangents be n and p. Since common tangents are equal, we can write that m + n = \frac{12\sqrt{2}}{7}, n + p = \frac{15}{7} and m + p = 3. Solving gives us that CM = m = \frac{6\sqrt{2} + 3}{7}. Similarly, CN = \frac{6\sqrt{2} + 4}{7}. 
+
+We see now that \frac{r_a}{r_b} = \frac{\frac{6\sqrt{2} + 3}{7}}{\frac{6\sqrt{2} + 4}{7}} = \frac{6\sqrt{2} + 3}{6\sqrt{2} + 4} = \frac{60-6\sqrt{2}}{56} = \frac{3}{28}(10 - \sqrt{2}) \Rightarrow \boxed{E}
+
+==See Also==
+{{AMC12 box|year=2008|num-b=19|num-a=21|ab=A}}
+{{MAA Notice}}

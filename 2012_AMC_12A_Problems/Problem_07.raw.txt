@@ -1,0 +1,43 @@
+{{duplicate|[[2012 AMC 12A Problems|2012 AMC 12A #7]] and [[2012 AMC 10A Problems|2012 AMC 10A #10]]}}
+
+== Problem  ==
+
+Mary divides a circle into 12 sectors. The central angles of these sectors, measured in degrees, are all integers and they form an arithmetic sequence. What is the degree measure of the smallest possible sector angle?
+
+<math> \textbf{(A)}\ 5\qquad\textbf{(B)}\ 6\qquad\textbf{(C)}\ 8\qquad\textbf{(D)}\ 10\qquad\textbf{(E)}\ 12 </math>
+[[Category: Introductory Geometry Problems]]
+
+==Solution 1==
+
+Let <math>a_1</math> be the first term of the arithmetic progression and <math>a_{12}</math> be the last term of the arithmetic progression. From the formula of the sum of an arithmetic progression (or arithmetic series), we have <math>12*\frac{a_1+a_{12}}{2}=360</math>, which leads us to <math>a_1 + a_{12} = 60</math>. <math>a_{12}</math>, the largest term of the progression, can also be expressed as <math>a_1+11d</math>, where <math>d</math> is the common difference. Since each angle measure must be an integer, <math>d</math> must also be an integer. We can isolate <math>d</math> by subtracting <math>a_1</math> from <math>a_{12}</math> like so: <math>a_{12}-a_1=a_1+11d-a_1=11d</math>. Since <math>d</math> is an integer, the difference between the first and last terms, <math>11d</math>, must be divisible by <math>11.</math> Since the total difference must be less than <math>60</math>, we can start checking multiples of <math>11</math> less than <math>60</math> for the total difference between <math>a_1</math> and <math>a_{12}</math>. We start with the largest multiple, because the maximum difference will result in the minimum value of the first term. If  the difference is <math>55</math>, <math>a_1=\frac{60-55}{2}=2.5</math>, which is not an integer, nor is it one of the five options given. If the difference is <math>44</math>, <math>a_1=\frac{60-44}{2}</math>, or <math>\boxed{\textbf{(C)}\ 8}</math>
+
+-Solution by Rhiju
+
+== Solution 2==
+
+If we let <math>a</math> be the smallest sector angle and <math>r</math> be the difference between consecutive sector angles, then we have the angles <math>a, a+r, a+2r, \cdots. a+11r</math>. Use the formula for the sum of an arithmetic sequence and set it equal to 360, the number of degrees in a circle.
+
+<cmath>\begin{align*} \frac{a+a+11r}{2}\cdot 12 &= 360\\
+2a+11r &= 60\\
+a &= \frac{60-11r}{2} \end{align*}</cmath>
+
+All sector angles are integers so <math>r</math> must be a multiple of 2. Plug in even integers for <math>r</math> starting from 2 to minimize <math>a.</math> We find this value to be 4 and the minimum value of <math>a</math> to be <math>\frac{60-11(4)}{2} = \boxed{\textbf{(C)}\ 8}</math>
+
+== Solution 3==
+Starting with the smallest term, <math>a - 5x \cdots a, a + x \cdots a + 6x</math> where <math>a</math> is the sixth term and <math>x</math> is the difference. The sum becomes <math>12a + 6x = 360</math> since there are <math>360</math> degrees in the central angle of the circle. The only condition left is that the smallest term in greater than zero. Therefore, <math>a - 5x > 0</math>.
+<cmath>2a + x = 60</cmath>
+<cmath>x = 60 - 2a</cmath>
+<cmath>a - 5(60 - 2a) > 0</cmath>
+<cmath>11a > 300</cmath>
+Since <math>a</math> is an integer, it must be <math>28</math>, and therefore, <math>x</math> is <math>4</math>. <math>a - 5x</math> is <math>\boxed{\textbf{(C)}\ 8}</math>
+
+==Video Solution (CREATIVE THINKING)==
+https://youtu.be/1FyU20KeEKU
+
+~Education, the Study of Everything
+
+== See Also ==
+
+{{AMC10 box|year=2012|ab=A|num-b=9|num-a=11}}
+{{AMC12 box|year=2012|ab=A|num-b=6|num-a=8}}
+{{MAA Notice}}

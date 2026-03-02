@@ -1,0 +1,113 @@
+# 2007 AMC 12A Problem 25
+
+## Problem
+Call a set of integers *spacy* if it contains no more than one out of any three consecutive integers. How many [subset](https://artofproblemsolving.com/wiki/index.php/subset)s of $\{1,2,3,\ldots,12\}$, including the [empty set](https://artofproblemsolving.com/wiki/index.php/empty_set), are spacy?
+
+
+$$\mathrm{(A)}\ 121 \qquad \mathrm{(B)}\ 123 \qquad \mathrm{(C)}\ 125 \qquad \mathrm{(D)}\ 127 \qquad \mathrm{(E)}\ 129$$
+
+## Solution 1
+Let $S_{n}$ denote the number of spacy subsets of $\{ 1, 2, ... n \}$.  We have $S_{0} = 1, S_{1} = 2, S_{2} = 3$.
+
+The spacy subsets of $S_{n + 1}$ can be divided into two groups:
+*A =  those not containing n + 1.  Clearly |A|=$S_{n}$.
+*B =  those containing n + 1. We have |B|=$S_{n - 2}$, since removing n + 1 from any set in B produces a spacy set with all elements at most equal to n - 2, and each such spacy set can be constructed from exactly one spacy set in B.
+Hence,
+
+$$S_{n + 1} = S_{n} + S_{n - 2}$$
+
+From this [recursion](https://artofproblemsolving.com/wiki/index.php/recursion), we find that
+
+{| class="wikitable" border="1px solid"
+|-
+| S(0) || S(1) || S(2) || S(3) || S(4) || S(5) || S(6) || S(7) || S(8) || S(9) || S(10) || S(11) || S(12) ||
+
+|-
+| 1 || 2 || 3 || 4 || 6 || 9 || 13 || 19 || 28 || 41 || 60 || 88 || 129
+|}
+And so the answer is $\boxed{\textbf{(E)}129}.$
+## Solution 2
+Since each of the elements of the subsets must be spaced at least two apart, a divider counting argument can be used.
+
+From the set $\{1,2,3,4,5,6,7,8,9,10,11,12\}$ we choose at most four numbers. Let those numbers be represented by balls. Between each of the balls there are at least two dividers. So for example, o | | o | | o | | o | | represents {1,4,7,10}.
+
+For subsets of size k there must be $2(k - 1)$ dividers between the balls, leaving 12 - k - $2(k - 1) = $12 - $3k + 2$ dividers to be be placed in k + 1 spots between the balls. The number of way this can be done is $\binom{(12 - 3k + 2) + (k + 1) - 1}$k = $\binom{12 - 2k + 2}$k.
+
+Therefore, the number of spacy subsets is $\binom 64 + \binom 83 + \binom{10}2 + \binom{12}1 + \binom{14}0 = \boxed{129}$ .
+## Solution 3
+A shifting argument is also possible, and is similar in spirit to Solution 2. Clearly we can have at most 4 elements. Given any arrangment, we subract $2i-2$ from the i-th element in our subset, when the elements are arranged in increasing order. This creates a [bijection](https://artofproblemsolving.com/wiki/index.php/bijection) with the number of size k subsets of the set of the first 14-$2k$ positive integers. For instance, the arrangment o | | o | | o | | | o | corresponds to the arrangment o o o | o |. Notice that there is no longer any restriction on consectutive numbers. Therefore, we can easily plug in the possible integers 0, 1, 2, 3, 4, 5 for k: {14 $\choose $0} + {12 $\choose 1} + {10 \choose 2} + {8 \choose 3} + {6 \choose 4} = \boxed{129}$
+
+In general, the number of subsets of a set with n elements and with no k consecutive numbers is $\sum^{\lceil{\frac{n}{k}}\rceil}_{i=0}.$
+## Solution 4 (casework)
+Let us consider each size of subset individually. Since each integer in the subset must be at least 3 away from any other integer in the subset, the largest spacy subset contains 4 elements.
+
+First, it is clear that there is 1 spacy set with 0 elements in it, the empty set. Next, there are 12 spacy subsets with 1 element in them, one for each integer 1 through 12.
+
+Now, let us consider the spacy subsets with 2 elements in them. If the smaller integer is 1, the larger integer is any of the 9 integers from 4 to 12. If the smaller integer is 2, the larger integer is any of the 8 integers from 5 to 12. This continues, up to a smaller integer of 9 and 1 choice for the larger integer, 12. This means that there are 9 + 8 + $\cdots + 1 = 45$ spacy subsets with 2 elements.
+
+For spacy subsets with 3 elements, we first consider the middle integer. The smallest such integer is 4, and it allows for 1 possible value for the smaller integer (1) and possible 6 values for the larger integer (7 through 12), for a total of 1 $\cdot 6 = 6$ possible subsets. The next middle integer, 5, allows for 2 smaller integers and 5 larger integers, and this pattern continues up until the middle integer of 9, which has 6 values for the smaller integer and 1 value for the larger integer. This means that there are 1 $\cdot 6 + 2 \cdot 5 + \cdots + 6 \cdot 1 = 56$ spacy subsets with 3 elements.
+
+Lastly, there are 3 main categories for spacy subsets with 4 elements, defined by the difference between their smallest and largest values. The difference ranges from 9 to 11. If it is 9, there is only 1 set of places to put the two middle values (n + 3 and n + 6, where n is the smallest value). Since there are 3 possible sets of smallest and largest values, there are 1 $\cdot 3 = 3$ sets in this category. If the difference is 10, there are now 3 sets of places to put the two middle values (n + 3 and n + 6 or 7, and n + 4 and n + 7). There are 2 possible sets of smallest and largest values, so there are 3 $\cdot 2 = 6$ sets in this category. Finally, if the difference is 11, there are 6 possible sets of places to put the two middle values (n + 3 and n + 6, 7, or 8, n + 4 and n + 7 or 8, and n + 5 and n + 8) and one possible set of smallest and largest values, meaning that there are 6 $\cdot 1 = 6$ sets in this category. Adding them up, there are $3 + 6 + 6 = 15$ spacy subsets with 4 elements.
+
+Adding these all up, we have a total of 1 + 12 + 45 + 56 + $15 =\boxed{\mathrm{(E)}\ 129}$ spacy subsets. ~emerald_block
+
+
+We build a modified version of [Markov's chain](https://artofproblemsolving.com/wiki/index.php/Markov_Chains) to solve this problem. First, start off by representing each element of the chosen subset with a 1, and every other element 0. The possible states are as follows; if the restriction was broken previously or not. For the sake of not over counting, we let the former be its own state (call it "C"), and the latter will be split up into more states. The previous two digits can either be 00, 10, or 01. If a previous digit doesn't exist, it is 0 for obvious reasons. We know that we start off at state "00". We have two options; include the first digit (1) or not (0). Thus, state 00 transitions to state 01 in 1 case and state 00 in 1 case. State 01 transitions to 10 in 1 case and the "C" state in 1 case. State 10 transitions to 00 in 1 case and state "C" in 1 case. Since it doesn't matter where or how many times the restriction is broken for the subset to fail, state "C" can transition to itself in 2 cases.
+
+Notice how this corresponds to a transition matrix of
+
+$$
+\begin{bmatrix} 1 & 1 & 0 & 0\\ 0 & 0 & 1 & 1\\ 1 & 0 & 0 & 1 \\ 0 & 0 & 0 & 2 \\ \end{bmatrix}. Since we start off on state 00, our starting state matrix is
+$$
+
+
+$$
+\begin{bmatrix} 1 & 0 & 0 & 0\\ \end{bmatrix}. We wish to compute the value a+b+c = 4096-d when given f^{12}(\begin{bmatrix} 1 & 0 & 0 & 0\\ \end{bmatrix})=\begin{bmatrix} a & b & c & d\\ \end{bmatrix}, where f(x) is x\times\begin{bmatrix} 1 & 1 & 0 & 0\\ 0 & 0 & 1 & 1\\ 1 & 0 & 0 & 1 \\ 0 & 0 & 0 & 2 \\ \end{bmatrix} Through repeated applications of matrix multiplication, we obtain the output matrix of \begin{bmatrix} 60 & 41 & 28 & 3967\\ \end{bmatrix}. Our answer is thus 60+41+28=\boxed{129}.
+$$
+
+
+**Remark:** [Markov's Chain](https://artofproblemsolving.com/wiki/index.php/Markov_Chains) is more commonly used to calculate probabilities, but it also can be very useful for counting problems with a uniform requirement.
+*~SigmaPiE*
+## Solution 6
+Let $S_{n}$ define the # of spacy subsets.
+
+Set up Recursion with $S_{12}$ by approching from the front and back of $S_{12}$.
+
+Case 1: 1 and 12 are part of $S_{n}$.
+
+If 1 and 12 are part of $S_{n}$, Any number within 2 range of 1 and 12 cannot be in the subset. So $S_{n}$ turns into $S_{6}$ since 1,2,3,10,11,12 does not met the requirement of being spacy.
+
+Case 2: 1 is part of $S_{n}$ and 12 is not.
+
+$S_{n}$ turns into $S_{8}$ since 1,2,3,12 in subset does not met the requirement of being spacy.
+
+The same applies to 12 is part of $S_{n}$ but not 1.
+
+Case 3: 1 and 12 are both not a part of $S_{n}$.
+
+$S_{n}$ turns into $S_{10}$ since 1,12 does not met the requirement of being spacy.
+
+Now we have set up a recursion of
+
+$$S_{k} = S_{k-2} + 2S_{k-4} + S_{k-6}$$
+
+We find that $S_{2} = 3, S_{4} = 6$ and $S_{6} = 13$,
+
+We can use the recursion equation to find that:
+
+$$S_{8} = 13 + 2*6 + 3 = 28$$
+
+$$S_{10} = 28 + 2*13 + 6 = 60$$
+
+$$S_{12} = 60 + 2*28 + 13 = 129$$
+
+So the answer is $\boxed{\textbf{(E)}129}.$
+
+*~toub3490*
+## Video Solution by OmegaLearn
+https://youtu.be/WpSpnx8PPnc?t=1183
+
+*~pi_is_3.14*
+## Video Solutions
+https://youtu.be/HDl_FdA0Jjs?t=492 (by Challenge 25)
+## See Also

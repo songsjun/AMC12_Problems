@@ -1,0 +1,83 @@
+# 2017 AMC 12B Problem 25
+
+## Problem
+A set of n people participate in an online video basketball tournament. Each person may be a member of any number of 5-player teams, but no two teams may have exactly the same 5 members. The site statistics show a curious fact: The average, over all subsets of size 9 of the set of n participants, of the number of complete teams whose members are among those 9 people is equal to the reciprocal of the average, over all subsets of size 8 of the set of n participants, of the number of complete teams whose members are among those 8 people. How many values n, $9\leqn\leq 2017,$ can be the number of participants?
+
+$\textbf{(A) } 477 \qquad \textbf{(B) } 482 \qquad \textbf{(C) } 487 \qquad \textbf{(D) } 557 \qquad \textbf{(E) } 562$
+## Solution
+Let there be T teams. For each team, there are {n$-5\choose 4$} different subsets of 9 players that includes a given full team, so the total number of team-(group of 9) pairs is
+
+$$T{n-5\choose 4}.$$
+
+Thus, the expected value of the number of full teams in a random set of 9 players is
+
+$$\frac{T{n-5\choose 4}}.$$
+
+Similarly, the expected value of the number of full teams in a random set of 8 players is
+
+$$\frac{T{n-5\choose 3}}.$$
+
+The condition is thus equivalent to the existence of a positive integer T such that
+
+$$\frac{T{n-5\choose 4}}\frac{T{n-5\choose 3}} = 1.$$
+
+$$T^2\frac{(n-5)!(n-5)!8!9!(n-8)!(n-9)!}{n!n!(n-8)!(n-9)!3!4!} = 1$$
+
+$$T^2 = \big((n)(n-1)(n-2)(n-3)(n-4)\big)^2 \frac{3!4!}{8!9!}$$
+
+$$T^2 = \big((n)(n-1)(n-2)(n-3)(n-4)\big)^2 \frac{144}{7!7!8\cdot8\cdot9}$$
+
+$$T^2 = \big((n)(n-1)(n-2)(n-3)(n-4)\big)^2 \frac{1}{4\cdot7!7!}$$
+
+$$T = \frac{(n)(n-1)(n-2)(n-3)(n-4)}{2^5\cdot3^2\cdot5\cdot7}$$
+
+Note that this is always less than {n$\choose 5$}, so as long as T is integral, n is a possibility. Thus, we have that this is equivalent to
+
+$$2^5\cdot3^2\cdot5\cdot7\big|(n)(n-1)(n-2)(n-3)(n-4).$$
+
+It is obvious that 5 divides the RHS, and that 7 does if $n\equiv 0,1,2,3,4\mod 7.$ Also, 3^2 divides it if $n\not\equiv 5,8\mod 9.$ One can also bash out that $2^5$ divides it in 16 out of the 32 possible residues $\mod 32.$
+
+Note that 2016 = 7*9*32 so by using all numbers from 2 to 2017, inclusive, it is clear that each possible residue $\mod 7,9,32$ is reached an equal number of times, so the total number of working n in that range is $5\cdot 7\cdot 16 = 560.$ However, we must subtract the number of "working" $2\leqn\leq 8,$ which is 3. Thus, the answer is $\boxed{\textbf{(D) } 557}.$
+
+Alternatively, it is enough to approximate by finding the floor of 2017 $\cdot \frac57 \cdot \frac79 \cdot \frac12 - 3$ to get $\boxed{\textbf{(D) } 557}.$
+## Solution 1.0
+Another way to find the average number of teams in a group of 9 or 8 people is as follows:
+
+Let there be T teams. There are $\binom{n}{5}$ total possible teams. So, the probability of any 5 people being a team is $\frac{T}{\binom{n}{5}}.$ There are $\binom{9}{5}$ possible teams in a group of 9. So, on average, there will be
+$$\frac{T}{\binom{n}{5}} \binom{9}{5}$$
+teams in any group of 9 people. Similarly, on average, there will be
+$$\frac{T}{\binom{n}{5}} \binom{8}{5}$$
+teams in any group of 8 people. So,
+
+$$
+\begin{align*}
+\frac{T}{\binom{n}{5}} \binom{9}{5} = \frac{1}{\frac{T}{\binom{n}{5}} \binom{8}{5}} \implies& \binom{9}{5}\binom{8}{5} T^2 = \binom{n}{5}^2 \\
+\implies& 84T = \binom{n}{5}
+\end{align*}
+$$
+
+Therefore 84 \mid $\binom{n}{5}$ and proceed as shown in solution 1.
+
+FYI, to find n such that 32 \mid n$(n-1)(n-2)(n-3)(n-4)$ without bashing everything:
+Clearly n $\equiv 0, 1, 2, 3, 4 \pmod{32}$ works. Then, do cases.
+
+Case 1: 4 \mid n.
+This will always work, as 4 \mid n, 4 \mid $n-4$, and 2 \mid $n-2$, so 4 $\cdot 4 \cdot 2 = $32\mid n(n-1)(n-2)(n-3)(n-4)$$. So,
+$$n \equiv 0, 4, 8, 12, 16, 20, 24, 28 \pmod{32}$$
+are also solutions.
+
+Case 2: n $\equiv 2 \pmod{4}$
+Then $n-4\equiv 2 \pmod{4}$ as well. n and $n-4$ can only contribute one 2 each, since 4 \nmid n, $n-4$. We need a factor of $2^3 inn-2$ then. So, n $\equiv 2 \pmod{8}.$ Then, we get
+$$n \equiv 2, 10, 18, 26 \pmod{32}.$$
+
+Case 3: 4 \nmid n
+We can only get twos from $n-1$ and $n-3$. Note that one of them can only contribute a single factor of 2, because otherwise 4 \mid $n-1$ and 4 \mid $n-3$, so n has a remainder of both 1 and 3 mod 4, which is impossible. So, one must have a factor of 16. We get n $\equiv 1, 3 \pmod{16}$ so
+$$n \equiv 1, 3, 17, 19 \pmod{32}$$
+
+In all, we get the solutions
+$$n \equiv 0, 1, 2, 3, 4, 8, 10, 16, 17, 18, 19, 20, 24, 26, 28 \pmod{32}$$
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Crazyvideogamez CrazyVideoGamez]
+## Video Solution by Dr. Nal
+https://www.youtube.com/watch?v=2p2qYRWbvV4&feature=emb_logo
+## See Also

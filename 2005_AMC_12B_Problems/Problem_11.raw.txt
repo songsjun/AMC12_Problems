@@ -1,0 +1,53 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2005_AMC_12B_Problems/Problem_11&action=raw
+
+Published Time: Sun, 23 Jun 2024 19:16:33 GMT
+
+Markdown Content:
+{{duplicate|[[2005 AMC 12B Problems|2005 AMC 12B #11]] and [[2005 AMC 10B Problems|2005 AMC 10B #15]]}}
+== Problem ==
+An envelope contains eight bills: 2 ones, 2 fives, 2 tens, and 2 twenties.  Two bills are drawn at random without replacement.  What is the probability that their sum is $20 or more?
+
+\textbf{(A) }\ {{{\frac{1}{4}}}} \qquad \textbf{(B) }\ {{{\frac{2}{5}}}} \qquad \textbf{(C) }\ {{{\frac{3}{7}}}} \qquad \textbf{(D) }\ {{{\frac{1}{2}}}} \qquad \textbf{(E) }\ {{{\frac{2}{3}}}}
+
+== Solution 1==
+The only way to get a total of \$20 or more is if you pick a twenty and another bill, or if you pick both tens. There are a total of \dbinom{8}{2}=\dfrac{8\times7}{2\times1}=28 ways to choose 2 bills out of 8. There are 12 ways to choose a twenty and some other non-twenty bill. There is 1 way to choose both twenties, and also 1 way to choose both tens. Adding these up, we find that there are a total of 14 ways to attain a sum of 20 or greater, so there is a total probability of \dfrac{14}{28}=\boxed{\textbf{(D) }\frac{1}{2}}.
+
+== Solution 2==
+Another way to do this problem is to use [[complementary counting]], i.e. how many ways that the sum is less than 20. Now, you do not have to consider the 2 twenties, so you have 6 bills left. \dbinom{6}{2} = \dfrac{6\times5}{2\times1} = 15 ways. However, you counted the case when you have 2 tens, so you need to subtract 1, and you get 14. Finding the ways to get 20 or higher, you subtract 14 from 28 and get 14. So the answer is \dfrac{14}{28} = \boxed{\textbf{(D) }\dfrac{1}{2}}
+
+==Solution 3==
+
+There are two cases that work, namely getting at least 1 twenty, or getting 2 tens.
+
+Case 1: P(\text{Get at least one twenty}) = 1-P(\text{Do not get a single twenty})=1- \frac{\binom{6}{2}}{\binom{8}{2}}=\frac{28-15}{28}=\frac{13}{28}
+
+Case 2 : P(\text{Get two tens}) = \frac{1}{\binom{8}{2}} = \frac{1}{28}
+
+Summing up our cases, we have \frac{13}{28}+\frac{1}{28}=\frac{14}{28}=\boxed{\textbf{(D) } \dfrac{1}{2}}
+
+==Solution 4==
+
+Note that if a twenty is drawn, anything else that is drawn will create a total greater than 20; The probability of a twenty being drawn first is \frac{1}{4}. The same could be said for drawing anything, and then drawing a twenty. However, we can only draw something that isn't a twenty first (since we've already accounted for the probability of drawing two twenties). 
+
+The probability of drawing a non-twenty first, then a twenty second is \frac{3}{4}\cdot\frac{2}{7}=\frac{3}{14}. Finally, we can draw two tens. The probability of this occuring is \frac{1}{4}\cdot\frac{1}{7}=\frac{1}{28}. 
+
+Adding these three probabilities gives us \frac{1}{4}+\frac{3}{14}+\frac{1}{28}=\boxed{\textbf{(D) } \dfrac{1}{2}}
+
+-Benedict T (countmath1) (edited by AMC_8)
+
+==Solution 5 (Quick if no time)==
+
+We see that there are 2 of each bill. We can simplify the question to only drawing 1 bill out of 4, and trying to draw \$ 10. (Originally you need to draw \$ 20, but the bill is halved, so you need to draw only  \$ 10.) We see that we have 1 of each bill \$1, \$5, \$10, and \$20.
+Thus, we can easily see the solution is \boxed{(D) \frac{1}{2}}.
+
+==Video Solution by WhyMath==
+https://youtu.be/7EOwpzC9C74
+
+~savannahsolver
+
+== See also ==
+{{AMC10 box|year=2005|ab=B|num-b=14|num-a=16}}
+{{AMC12 box|year=2005|ab=B|num-b=10|num-a=12}}
+{{MAA Notice}}

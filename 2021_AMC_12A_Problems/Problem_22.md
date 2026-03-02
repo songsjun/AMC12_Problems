@@ -1,0 +1,66 @@
+# 2021 AMC 12A Problem 22
+
+## Problem
+Suppose that the roots of the polynomial $P(x)=x^3+ax^2+bx+c$ are $\cos \frac{2\pi}7,\cos \frac{4\pi}7,$ and $\cos \frac{6\pi}7,$ where angles are in radians. What is abc?
+
+$\textbf{(A) }{-}\frac{3}{49} \qquad \textbf{(B) }{-}\frac{1}{28} \qquad \textbf{(C) }\frac{\sqrt[3]7}{64} \qquad \textbf{(D) }\frac{1}{32}\qquad \textbf{(E) }\frac{1}{28}$
+## Solution 1 (Complex Numbers and Vieta's Formulas)
+Let $z=e^{\frac{2\pi i}{7}}$. Since z is a 7th root of unity, we have $z^7=1.$ For all integers k, note that $\cos\frac{2k\pi}{7}=$\operatorname{Re}$\left(z^k\right)=$\operatorname{Re}$\left(z^{-k}\right).$
+It follows that
+
+$$
+\begin{alignat*}{4} \cos\frac{2\pi}{7} &= \frac{z+z^{-1}}{2} &&= \frac{z+z^6}{2}, \\ \cos\frac{4\pi}{7} &= \frac{z^2+z^{-2}}{2} &&= \frac{z^2+z^5}{2}, \\ \cos\frac{6\pi}{7} &= \frac{z^3+z^{-3}}{2} &&= \frac{z^3+z^4}{2}. \end{alignat*}
+$$
+
+By geometric series, we conclude that $\sum_{k=0}^{6}z^k=\frac{1-1}{1-z}=0.$
+Alternatively, recall that the 7th roots of unity satisfy the equation $z^7-1=0$. By Vieta's Formulas, the sum of these seven roots is 0.
+
+As a result, we get $\sum_{k=1}^{6}z^k=-1.$
+Let (r,s,t)=$\left(\cos{\frac{2\pi}{7}},\cos{\frac{4\pi}{7}},\cos{\frac{6\pi}{7}}\right).$ By Vieta's Formulas, the answer is
+
+$$
+\begin{align*} abc&=[-(r+s+t)](rs+st+tr)(-rst) \\ &=(r+s+t)(rs+st+tr)(rst) \\ &=\left(\frac{\sum_{k=1}^{6}z^k}{2}\right)\left(\frac{2\sum_{k=1}^{6}z^k}{4}\right)\left(\frac{1+\sum_{k=0}^{6}z^k}{8}\right) \\ &=\frac{1}{32}\left(\sum_{k=1}^{6}z^k\right)\left(\sum_{k=1}^{6}z^k\right)\left(1+\sum_{k=0}^{6}z^k\right) \\ &=\frac{1}{32}(-1)(-1)(1) \\ &=\boxed{\textbf{(D) }\frac{1}{32}}. \end{align*}
+$$
+
+*~MRENTHUSIASM (inspired by Peeyush Pandaya et al)*
+## Solution 2 (Complex Numbers and Trigonometric Identities)
+Let $z=e^{\frac{2\pi i}{7}}$. In Solution 1, we conclude that $\sum_{k=1}^{6}z^k=-1,$ so $\sum_{k=1}^{6}$\operatorname{Re}$\left(z^k\right)=\sum_{k=1}^{6}\cos\frac{2k\pi}{7}=-1.$
+Since $\cos\theta=\cos(2\pi-\theta)$ holds for all $\theta,$ this sum becomes
+
+$$
+\begin{align*} 2\left(\cos\frac{2\pi}{7}+\cos\frac{4\pi}{7}+\cos\frac{6\pi}{7}\right)&=-1\\ \cos\frac{2\pi}{7}+\cos\frac{4\pi}{7}+\cos\frac{6\pi}{7}&=-\frac12. \end{align*}
+$$
+
+Note that $\theta=\frac{2\pi}{7},\frac{4\pi}{7},\frac{6\pi}{7}$ are roots of $\cos\theta+\cos(2\theta)+\cos(3\theta)=-\frac12, \hspace{15mm} ($\bigstar) as they can be verified either algebraically (by the identity $\cos\theta=\cos(-\theta)=\cos(2\pi-\theta))$ or geometrically (by the graph below).
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+/* Made by MRENTHUSIASM */ size(200); int xMin = -2; int xMax $= 2$; int yMin = -2; int yMax $= 2$; int numRays $= 24$; //Draws a polar grid that goes out to a number of circles //equal to big, with numRays specifying the number of rays: void polarGrid(int big, int numRays) { for (int $i = 1$; i < big+1; ++i) { draw(Circle((0,0),i), gray+linewidth(0.4)); } for(int $i=$0;i Let $x=\cos\theta.$ We apply the Double-Angle and Triple-Angle Identities to rewrite (\bigstar) in terms of x, and then rearrange: $\begin{align*}x+\left(2x^2-1\right)+\left($$4x^3-$$3x\right)$&=-$\frac1$2 \\ $4x^3+2x^2-2x-\frac1$2&=0 \\ $x^3+\frac12 x^2 - \frac12 x - \frac1$8 &= 0. $\end{align*}$ Recall that the roots are $x=\cos\frac{2\pi}{7},\cos\frac{4\pi}{7},\cos\frac{6\pi}{7}.$ Therefore, we obtain (a,b,c)=$\left(\frac12,-\frac12,-\frac18\right),$ from which $abc=\boxed{\textbf{(D) }\frac{1}{32}}.$ ~MRENTHUSIASM (inspired by Peeyush Pandaya et al)
+## Solution 3 (Trigonometric Identities)
+We solve for a,b, and c separately:
+```
+
+ 1.   Solve for a: By Vieta's Formulas, we have a = - $\left( \cos \frac{2\pi}7 + \cos \frac{4\pi}7 + \cos \frac{6\pi}7 \right).$
+The real parts of the 7 th roots of unity are 1, $\cos \frac{2\pi}7, \cos \frac{4\pi}7, \cos \frac{6\pi}7, \cos \frac{8\pi}7, \cos \frac{10\pi}7, \cos \frac{12\pi}7$ and they sum to 0.
+
+Note that $\cos\theta=\cos(2\pi-\theta)$ for all $\theta.$ Excluding 1, the other six roots add to $2\left(\cos \frac{2\pi}7 + \cos \frac{4\pi}7 + \cos \frac{6\pi}7\right) = -1,$ from which $\cos \frac{2\pi}7 + \cos \frac{4\pi}7 + \cos \frac{6\pi}7 = -\frac12.$ Therefore, we get a = $-\left(-\frac12\right) = \frac12.$
+
+2.   Solve for b: By Vieta's Formulas, we have b = $\cos \frac{2\pi}7 \cos \frac{4\pi}7 + \cos \frac{2\pi}7 \cos \frac{6\pi}7 + \cos \frac{4\pi}7 \cos \frac{6\pi}7.$
+Note that $\cos \alpha \cos \beta = \frac{ \cos \left(\alpha + \beta\right) + \cos \left(\alpha - \beta\right) }{2}$ for all $\alpha$ and $\beta.$ Therefore, we get $b=\frac{\cos \frac{6\pi}7 + \cos \frac{2\pi}7}2 + \frac{\cos \frac{6\pi}7 + \cos \frac{4\pi}7}2 + \frac{\cos \frac{4\pi}7 + \cos \frac{2\pi}7}2=\cos \frac{2\pi}7 + \cos \frac{4\pi}7 + \cos \frac{6\pi}7=-\frac12.$
+
+ 3.   Solve for c: By Vieta's Formulas, we have c = $-\cos \frac{2\pi}7 \cos \frac{4\pi}7 \cos \frac{6\pi}7=-\cos \frac{2\pi}7 \cos \frac{4\pi}7 \cos \frac{8\pi}7.$
+We multiply both sides by 8 $\sin{\frac{2\pi}{7}},$ then repeatedly apply the angle addition formula for sine: $\begin{align*}$ c $\cdot 8 \sin{\frac{2\pi}{7}}$ &= -8 $\sin{\frac{2\pi}{7}} \cos \frac{2\pi}7 \cos \frac{4\pi}7 \cos \frac{8\pi}$7 \\ &= -4 $\sin \frac{4\pi}7 \cos \frac{4\pi}7 \cos \frac{8\pi}$7 \\ &= -2 $\sin \frac{8\pi}7 \cos \frac{8\pi}$7 \\ &= $-\sin \frac{16\pi}$7 \\ &= $-\sin \frac{2\pi}7. \end{align*}$ Therefore, we get c = $-\frac18.$
+
+ Finally, the answer is $abc=\frac12\cdot\left(-\frac12\right)\cdot\left(-\frac18\right)=\boxed{\textbf{(D) }\frac{1}{32}}.$ ~Tucker
+## Solution 4 (Product-to-Sum Identity)
+Note that the sum of the roots of unity equal zero, so the sum of their real parts equal zero, and \operatorname{Re}$\left(\omega^{m}\right) =$\operatorname{Re}$\left(\omega^{-m}\right).$ We have $\cos \frac{2 \pi}{7} + \cos \frac{4 \pi}{7} + \cos \frac{6 \pi}{7} = \frac12(0 - \cos 0) = -\frac12,$ so $a =\frac{1}{2}.$ By the Product-to-Sum Identity, we have $\begin{align*} \cos \frac{2 \pi}{7} \cos \frac{4 \pi}{7} + \cos \frac{2 \pi}{7} \cos \frac{6 \pi}{7} + \cos \frac{4 \pi}{7} \cos \frac{6 \pi}{7}$ &= $\frac{1}{2} \left(2 \cos \frac{2 \pi}{7} + \cos \frac{4 \pi}{7} + \cos \frac{6 \pi}{7} + \cos \frac{8 \pi}{7} + \cos \frac{10 \pi}{7}\right)$ \\ &= $\frac{1}{2}\left(2 \cos \frac{2 \pi}{7} + 2 \cos \frac{4 \pi}{7} + 2 \cos \frac{6 \pi}{7}\right)$ \\ &= $\cos \frac{2 \pi}{7} + \cos \frac{4 \pi}{7} + \cos \frac{6 \pi}{7}$ \\ &= $-\frac{1}{2}, \end{align*}$ so $b =-\frac{1}{2}.$ By the Product-to-Sum Identity, we have $\begin{align*} \cos \frac{2 \pi}{7} \cos \frac{4 \pi}{7} \cos \frac{6 \pi}{7}$ &= $\frac{1}{2}\cos \frac{6 \pi}{7}\left(\cos \frac{2 \pi}{7} + \cos \frac{6 \pi}{7}\right)$ \\ &= $\frac{1}{4}\left(\cos \frac{4 \pi}{7} + \cos \frac{8 \pi}{7}\right) + \frac{1}{4}\left(1 + \cos \frac{12 \pi}{7}\right)$ \\ &= $\frac{1}{4}\left(1 + \cos\frac{2\pi}{7} + \cos \frac{4\pi}{7} + \cos \frac{6\pi}{7}\right)$ \\ &= $\frac{1}{8}, \end{align*}$ so $c =-\frac{1}{8}.$ Finally, we get $abc=\boxed{\textbf{(D) }\frac{1}{32}}.$ ~ccx09
+## Easy Video Solution by Scholars Foundation Without Complex Numbers and Euler's Identity (Using Trigonometry + Vieta's Formula)
+https://youtu.be/m4N4KN6_tA0
+## Video Solution by OmegaLearn (Euler's Identity + Vieta's Formula)
+https://youtu.be/Im_WTIK0tss ~ pi_is_3.14
+## Video Solution by MRENTHUSIASM (English & Chinese)
+https://youtu.be/X6oqEpFAJBk ~MRENTHUSIASM
+## Video Solution by grogg007
+https://www.youtube.com/watch?v=hP4cpuAszLo
+## See also

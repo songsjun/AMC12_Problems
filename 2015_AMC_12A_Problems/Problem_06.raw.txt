@@ -1,0 +1,53 @@
+{{duplicate|[[2015 AMC 12A Problems|2015 AMC 12A #6]] and [[2015 AMC 10A Problems|2015 AMC 10A #8]]}}
+==Problem==
+
+Two years ago Pete was three times as old as his cousin Claire. Two years before that, Pete was four times as old as Claire. In how many years will the ratio of their ages be <math>2</math> : <math>1</math> ?
+
+<math> \textbf{(A)}\ 2 \qquad\textbf{(B)} \ 4 \qquad\textbf{(C)} \ 5 \qquad\textbf{(D)} \ 6 \qquad\textbf{(E)} \ 8 </math>
+
+==Solution==
+
+This problem can be converted to a system of equations. Let <math>p</math> be Pete's current age and <math>c</math> be Claire's current age. 
+
+The first statement can be written as <math>p-2=3(c-2)</math>. The second statement can be written as <math>p-4=4(c-4)</math>
+
+To solve the system of equations:
+
+
+<math>p=3c-4</math>
+
+<math>p=4c-12</math>
+
+<math>3c-4=4c-12</math>
+
+<math>c=8</math>
+
+<math>p=20.</math>
+
+Let <math>x</math> be the number of years until Pete is twice as old as his cousin.
+
+<math>20+x=2(8+x)</math>
+
+<math>20+x=16+2x</math>
+
+<math>x=4</math>
+
+The answer is <math>\boxed{\textbf{(B) }4}</math>.
+
+==Video Solution (CREATIVE THINKING)==
+https://youtu.be/PL_0kjg62lU
+
+~Education, the Study of Everything
+
+
+
+
+==Video Solution==
+https://youtu.be/g8lPXUg-K_I
+
+~savannahsolver
+
+==See Also==
+{{AMC10 box|year=2015|ab=A|num-b=7|num-a=9}}
+{{AMC12 box|year=2015|ab=A|num-b=5|num-a=7}}
+{{MAA Notice}}

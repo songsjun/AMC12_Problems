@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMC 12 Problem Viewer</title>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['\\(', '\\)']],
+    displayMath: [['\\[', '\\]']],
+    processEscapes: false,
+    processEnvironments: true,
+    tags: 'ams'
+  },
+  options: {
+    skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f5f5f5;
+  color: #333;
+}
+.header {
+  background: #1a1a2e;
+  color: white;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-right: auto;
+}
+.header select, .header button {
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #2a2a4e;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+}
+.header select:hover, .header button:hover {
+  background: #3a3a6e;
+}
+.header .nav-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.header label {
+  font-size: 13px;
+  color: #aaa;
+}
+.problem-nav {
+  display: flex;
+  gap: 2px;
+}
+.problem-nav button {
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  font-size: 12px;
+  text-align: center;
+  border: 1px solid #444;
+  background: #2a2a4e;
+  color: #ccc;
+}
+.problem-nav button.active {
+  background: #4a7fff;
+  color: white;
+  font-weight: bold;
+  border-color: #4a7fff;
+}
+.problem-nav button:hover:not(.active) {
+  background: #3a3a6e;
+}
+.container {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 0 20px;
+}
+.content {
+  background: white;
+  border-radius: 8px;
+  padding: 32px 40px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  line-height: 1.8;
+  font-size: 16px;
+  min-height: 200px;
+}
+.content h1 { font-size: 24px; margin-bottom: 16px; color: #1a1a2e; border-bottom: 2px solid #eee; padding-bottom: 8px; }
+.content h2 { font-size: 20px; margin: 24px 0 12px; color: #2a2a4e; }
+.content h3 { font-size: 17px; margin: 16px 0 8px; color: #444; }
+.content p { margin: 8px 0; }
+.content pre {
+  background: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 12px;
+  overflow-x: auto;
+  font-size: 13px;
+}
+.content code { background: #f0f0f0; padding: 1px 4px; border-radius: 3px; font-size: 14px; }
+.content pre code { background: none; padding: 0; }
+.content blockquote {
+  border-left: 3px solid #4a7fff;
+  padding-left: 16px;
+  color: #555;
+  margin: 12px 0;
+}
+.content em { color: #666; }
+.content a { color: #4a7fff; }
+.status-bar {
+  text-align: center;
+  padding: 8px;
+  color: #888;
+  font-size: 13px;
+}
+.compare-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #4a7fff;
+  text-decoration: none;
+}
+.compare-link:hover { text-decoration: underline; }
+.keyboard-hint {
+  font-size: 11px;
+  color: #666;
+  padding: 4px 8px;
+}
+.loading { color: #999; font-style: italic; padding: 40px; text-align: center; }
+.error { color: #d00; padding: 40px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>AMC 12 Viewer</h1>
+  <div class="nav-group">
+    <label>Year:</label>
+    <select id="yearSelect"></select>
+  </div>
+  <div class="nav-group">
+    <label>Variant:</label>
+    <select id="variantSelect">
+      <option value="A">A</option>
+      <option value="B">B</option>
+    </select>
+  </div>
+  <div class="nav-group">
+    <label>Problem:</label>
+    <div class="problem-nav" id="problemNav"></div>
+  </div>
+  <button onclick="loadPrev()" title="Previous (Left Arrow)">&#9664;</button>
+  <button onclick="loadNext()" title="Next (Right Arrow)">&#9654;</button>
+</div>
+
+<div class="container">
+  <div class="content" id="content">
+    <div class="loading">Select a problem to view...</div>
+  </div>
+  <div class="status-bar" id="statusBar"></div>
+</div>
+
+<script>
+const YEARS = [];
+for (let y = 2025; y >= 2002; y--) YEARS.push(y);
+
+let currentYear = 2025;
+let currentVariant = 'A';
+let currentProblem = 1;
+
+// Build year selector
+const yearSel = document.getElementById('yearSelect');
+YEARS.forEach(y => {
+  const opt = document.createElement('option');
+  opt.value = y;
+  opt.textContent = y;
+  yearSel.appendChild(opt);
+});
+
+// Build problem nav buttons
+const problemNav = document.getElementById('problemNav');
+for (let i = 1; i <= 25; i++) {
+  const btn = document.createElement('button');
+  btn.textContent = i;
+  btn.onclick = () => loadProblem(currentYear, currentVariant, i);
+  problemNav.appendChild(btn);
+}
+
+function updateProblemNav() {
+  const buttons = problemNav.querySelectorAll('button');
+  buttons.forEach((btn, idx) => {
+    btn.classList.toggle('active', idx + 1 === currentProblem);
+  });
+}
+
+function getRepoName(year, variant) {
+  return `${year}_AMC_12${variant}_Problems`;
+}
+
+function getFilePath(year, variant, num) {
+  const repo = getRepoName(year, variant);
+  return `${repo}/Problem_${String(num).padStart(2, '0')}.md`;
+}
+
+function getAopsUrl(year, variant, num) {
+  return `https://artofproblemsolving.com/wiki/index.php/${year}_AMC_12${variant}_Problems/Problem_${num}`;
+}
+
+async function loadProblem(year, variant, num) {
+  currentYear = year;
+  currentVariant = variant;
+  currentProblem = num;
+
+  yearSel.value = year;
+  document.getElementById('variantSelect').value = variant;
+  updateProblemNav();
+
+  const contentEl = document.getElementById('content');
+  const statusEl = document.getElementById('statusBar');
+  contentEl.innerHTML = '<div class="loading">Loading...</div>';
+
+  const filePath = getFilePath(year, variant, num);
+
+  try {
+    const resp = await fetch(filePath);
+    if (!resp.ok) throw new Error(`File not found: ${filePath}`);
+    let md = await resp.text();
+
+    // Protect math from marked parser using robust line-by-line approach
+    const mathBlocks = [];
+    let idx = 0;
+    const lines = md.split('\n');
+    let inDisplayMath = false;
+    let displayMathLines = [];
+    const resultLines = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+
+      if (inDisplayMath) {
+        // Inside display math block - look for closing $$
+        if (trimmed === '$$' || trimmed.endsWith('$$')) {
+          // End of display math
+          let closingContent = trimmed.endsWith('$$') && trimmed !== '$$'
+            ? trimmed.slice(0, -2) : '';
+          if (closingContent) displayMathLines.push(closingContent);
+          const inner = displayMathLines.join('\n');
+          const key = `%%MATHBLOCK${idx}%%`;
+          mathBlocks.push({ key, content: `$$${inner}$$`, display: true });
+          idx++;
+          resultLines.push(key);
+          inDisplayMath = false;
+          displayMathLines = [];
+        } else {
+          displayMathLines.push(line);
+        }
+      } else if (trimmed.startsWith('$$')) {
+        // Line starts with $$ - display math
+        if (trimmed.endsWith('$$') && trimmed.length > 4) {
+          // Single-line display math: $$content$$
+          const inner = trimmed.slice(2, -2);
+          const key = `%%MATHBLOCK${idx}%%`;
+          mathBlocks.push({ key, content: `$$${inner}$$`, display: true });
+          idx++;
+          resultLines.push(key);
+        } else if (trimmed === '$$') {
+          // Start of multi-line display math
+          inDisplayMath = true;
+          displayMathLines = [];
+        } else {
+          // $$ at start with content but no closing $$ - start multi-line
+          inDisplayMath = true;
+          displayMathLines = [trimmed.slice(2)];
+        }
+      } else {
+        // Normal line - protect inline math $...$
+        // Use negative lookbehind/lookahead to avoid matching $$
+        let protectedLine = line.replace(/(?<!\$)\$(?!\$)((?:[^\$\n]|\\\$)+?)\$(?!\$)/g, (m, inner) => {
+          const key = `%%MATHBLOCK${idx}%%`;
+          mathBlocks.push({ key, content: `$${inner}$`, display: false });
+          idx++;
+          return key;
+        });
+        resultLines.push(protectedLine);
+      }
+    }
+
+    md = resultLines.join('\n');
+
+    // Parse markdown
+    let html = marked.parse(md);
+
+    // Restore math using safe delimiters \(...\) and \[...\]
+    // This prevents stray $$ in the source from triggering MathJax
+    mathBlocks.forEach(({ key, content, display }) => {
+      let safe;
+      if (display) {
+        // $$...$$ -> \[...\]
+        const inner = content.slice(2, -2);
+        safe = `\\[${inner}\\]`;
+      } else {
+        // $...$ -> \(...\)
+        const inner = content.slice(1, -1);
+        safe = `\\(${inner}\\)`;
+      }
+      html = html.split(key).join(safe);
+    });
+
+    contentEl.innerHTML = html;
+
+    // Typeset math
+    if (window.MathJax && MathJax.typesetPromise) {
+      await MathJax.typesetPromise([contentEl]);
+    }
+
+    const aopsUrl = getAopsUrl(year, variant, num);
+    statusEl.innerHTML = `${year} AMC 12${variant} Problem ${num} &nbsp;|&nbsp; <a class="compare-link" href="${aopsUrl}" target="_blank">View on AoPS &rarr;</a> &nbsp;|&nbsp; <span class="keyboard-hint">Arrow keys: &larr; prev / &rarr; next</span>`;
+
+    // Update URL hash
+    window.location.hash = `#${year}${variant}P${num}`;
+
+  } catch (e) {
+    contentEl.innerHTML = `<div class="error">Error: ${e.message}</div>`;
+    statusEl.textContent = '';
+  }
+}
+
+function loadPrev() {
+  if (currentProblem > 1) {
+    loadProblem(currentYear, currentVariant, currentProblem - 1);
+  } else if (currentVariant === 'B') {
+    loadProblem(currentYear, 'A', 25);
+  } else {
+    const yIdx = YEARS.indexOf(currentYear);
+    if (yIdx < YEARS.length - 1) {
+      loadProblem(YEARS[yIdx + 1], 'B', 25);
+    }
+  }
+}
+
+function loadNext() {
+  if (currentProblem < 25) {
+    loadProblem(currentYear, currentVariant, currentProblem + 1);
+  } else if (currentVariant === 'A') {
+    loadProblem(currentYear, 'B', 1);
+  } else {
+    const yIdx = YEARS.indexOf(currentYear);
+    if (yIdx > 0) {
+      loadProblem(YEARS[yIdx - 1], 'A', 1);
+    }
+  }
+}
+
+// Event listeners
+yearSel.addEventListener('change', () => loadProblem(+yearSel.value, currentVariant, currentProblem));
+document.getElementById('variantSelect').addEventListener('change', (e) => loadProblem(currentYear, e.target.value, currentProblem));
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'ArrowLeft') { e.preventDefault(); loadPrev(); }
+  if (e.key === 'ArrowRight') { e.preventDefault(); loadNext(); }
+});
+
+// Parse URL hash on load
+function parseHash() {
+  const hash = window.location.hash;
+  const m = hash.match(/#(\d{4})([AB])P(\d+)/);
+  if (m) {
+    return { year: +m[1], variant: m[2], problem: +m[3] };
+  }
+  return null;
+}
+
+window.addEventListener('hashchange', () => {
+  const parsed = parseHash();
+  if (parsed) loadProblem(parsed.year, parsed.variant, parsed.problem);
+});
+
+// Initial load
+const parsed = parseHash();
+if (parsed) {
+  loadProblem(parsed.year, parsed.variant, parsed.problem);
+} else {
+  loadProblem(2025, 'A', 1);
+}
+</script>
+</body>
+</html>

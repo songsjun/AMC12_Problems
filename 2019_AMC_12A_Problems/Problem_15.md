@@ -1,0 +1,38 @@
+# 2019 AMC 12A Problem 15
+
+## Problem
+Positive real numbers a and b have the property that
+$$\sqrt{\log{a}} + \sqrt{\log{b}} + \log \sqrt{a} + \log \sqrt{b} = 100$$
+and all four terms on the left are positive integers, where log denotes the base 10 logarithm. What is ab?
+
+$\textbf{(A) } 10^{52} \qquad \textbf{(B) } 10^{100} \qquad \textbf{(C) } 10^{144} \qquad \textbf{(D) } 10^{164} \qquad \textbf{(E) } 10^{200}$
+## Solution 1
+Since $\sqrt{\log{a}}$ is a positive integer, we get $\loga = x^2$ for some integer x; since $\log \sqrt{a} = \tfrac 12 \log$ a is a positive integer, we get $x=2m$. Thus $a=10^{4m^2}$; similarly $b=10^{4n^2}$. Substituting, we get $2(m+n+m^2+n^2)=$100, i.e. m(m+1)$ + n(n+1) = 50$. It follows that m,n $\le 6.$ The values of m$(m+1)$ for $m=$1,$\ldots$ , 6 are
+{| style="border:0px solid black"
+|-
+| style =”width:85%” | $\qquad$ m || $1\qquad$ || $2\qquad$ || $3\qquad$ || $4\qquad$ || $5\qquad$ || $6\qquad$
+|-
+$$| m(m+1)\qquad$$
+|2
+|6
+|12
+$$|20\qquad$$
+|30
+|42
+|}
+Two of those values must add up to 50 and we see that $20+30=50$, so $m=4, n=5$ and  $ab=10^{4(m^2+n^2)}=10^{4(4^2+5^2)}$, and our answer is $\boxed{\textbf{(D) } 10^{164}}.$
+## Solution 2
+Since all four terms on the left are positive integers, from $\sqrt{\log{a}},$ we know that both $\log{a}$ has to be a perfect square and a has to be a power of ten. The same applies to b for the same reason. Setting a and $b to 10^x$ and $10^y,$ where x and y are the perfect squares, $ab =10^{x+y}$. By listing all the [https://artofproblemsolving.com/wiki/index.php/Perfect_square perfect squares] up to 14^2 (as 15^2 is larger than the largest possible sum of x and y of 200 from answer choice $\text{E}),$ two of those perfect squares must add up to one of the possible sums of x and y given from the answer choices (52, 100, 144, 164, or 200).
+
+Only a few possible sums are seen: $16+36=$52, 36+64=100, 64+100=164, $100+100=200$, and $4+196=200$. By testing each of these (seeing whether $\sqrt{x} + \sqrt{y} + \frac{x}{2} + \frac{y}{2} = 100),$ only the pair $x = 64$ and $y=100$ work. Therefore, a and b are $10^{64}$ and $10^{100}$, and our answer is $\boxed{\textbf{(D) } 10^{164}}.$
+## Solution 3
+Given that $\sqrt{\log{a}}$ and $\sqrt{\log{b}}$ are both integers, a and b must be in the form $10^{m^2}$ and $10^{n^2}$, respectively for some positive integers m and n. Note that $\log \sqrt{a} = \frac{m^2}{2}.$ By substituting for a and b, the equation becomes m + n + $\frac{m^2}{2} + \frac{n^2}{2} = 100.$ After multiplying the equation by 2 and completing the square with respect to m and n, the equation becomes (m + 1)^2 + (n + 1)^2 = 202. Testing squares of positive integers that add $to 202, 11^2 + 9^2$ is the only option. Without loss of generality, let $m = 10$ and $n = 8$. Plugging in m and n to solve for a and b gives us $a =10^{100}$ and $b =10^{64}$. Therefore, $ab =\boxed{\textbf{(D) } 10^{164}}.$
+## Video Solution1
+https://youtu.be/U0jHAadc4MA
+
+*~Education, the Study of Everything*
+## Video Solution by OmegaLearn
+https://youtu.be/RdIIEhsbZKw?t=1250
+
+*~pi_is_3.14*
+## See Also

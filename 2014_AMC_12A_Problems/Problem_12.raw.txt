@@ -1,0 +1,70 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2014_AMC_12A_Problems/Problem_12&action=raw
+
+Published Time: Fri, 24 Jun 2022 03:37:24 GMT
+
+Markdown Content:
+==Problem==
+
+Two circles intersect at points A and B.  The minor arcs AB measure 30^\circ on one circle and 60^\circ on the other circle.  What is the ratio of the area of the larger circle to the area of the smaller circle?
+
+\textbf{(A) }2\qquad \textbf{(B) }1+\sqrt3\qquad \textbf{(C) }3\qquad \textbf{(D) }2+\sqrt3\qquad \textbf{(E) }4\qquad
+[[Category: Introductory Geometry Problems]]
+
+==Solution 1==
+
+Let the radius of the larger and smaller circles be x and y, respectively. Also, let their centers be O_1 and O_2, respectively. Then the ratio we need to find is
+\dfrac{\pi x^2}{\pi y^2} = \dfrac{x^2}{y^2} 
+Draw the radii from the centers of the circles to A and B. We can easily conclude that the 30^{\circ} belongs to the larger circle, and the 60 degree arc belongs to the smaller circle. Therefore, m\angle AO_1B = 30^{\circ} and m\angle AO_2B = 60^{\circ}. Note that \Delta AO_2B is equilateral, so when chord AB is drawn, it has length y. Now, applying the Law of Cosines on \Delta AO_1B:
+ y^2 = x^2 + x^2 - 2x^2\cos{30} = 2x^2 - x^2\sqrt{3} = (2 - \sqrt{3})x^2 
+ \dfrac{x^2}{y^2} = \dfrac{1}{2 - \sqrt{3}} = \dfrac{2 + \sqrt{3}}{4-3} = 2 + \sqrt{3}=\boxed{\textbf{(D)}}
+(Solution by brandbest1)
+
+==Solution 2==
+
+Again, let the radius of the larger and smaller circles be x and y, respectively, and let the centers of these circles be O_1 and O_2, respectively.  Let X bisect segment AB.  Note that \triangle AXO_1 and \triangle AXO_2 are right triangles, with \angle AO_1X=15^{\circ} and \angle AO_2X=30^{\circ}.  We have \sin{15} = \dfrac{AX}{x} and \sin{30} = \dfrac{AX}{y}  and \dfrac{x}{y} = \dfrac{\sin{30}}{\sin{15}}. Since the ratio of the area of the larger circle to that of the smaller circle is simply \dfrac{\pi x^2}{\pi y^2} = \left(\dfrac{x}{y} \right)^2 = \left(\dfrac{\sin{30}}{\sin{15}} \right)^2, we just need to find \sin{30} and \sin{15}. We know \sin{30} = \dfrac{1}{2}, and we can use the angle sum formula or half angle formula to compute \sin{15} = \dfrac{\sqrt{6} - \sqrt{2}}{4}. Plugging this into the previous expression, we get: \left(\dfrac {x}{y} \right)^2 = \left(\dfrac{\dfrac{1}{2}}{\dfrac{\sqrt{6} - \sqrt{2}}{4}} \right)^2 = \left(\dfrac{\sqrt{6} + \sqrt{2}}{2} \right)^2 = 2 + \sqrt{3} =\boxed{\textbf{(D)}}
+(Solution by kevin38017)
+
+==Solution 3==
+
+Let the radius of the smaller and larger circle be r and R, respectively. We see that half the length of the chord is equal to r \sin 30^{\circ}, which is also equal to R \sin 15^{\circ}. Recall that \sin 15^{\circ} = \frac{\sqrt{6} - \sqrt{2}}{4} and \sin 30^{\circ} = \frac{1}{2}. From this, we get r = \frac{\sqrt{6} - \sqrt{2}}{2} R, or r^2 = \frac{8 - 2 \sqrt{12}}{4} R^2 = \left(2 - \sqrt{3}\right) R^2, which is equivalent to R^2 = \left(2 + \sqrt{3}\right) r^2.
+
+(Solution by soy_un_chemisto)
+
+==Solution 4==
+
+As in the previous solutions let the radius of the smaller and larger circles be r and R, respectively. Also, let their centers be O_1 and O_2, respectively. Now draw two congruent chords from points A and B to the end of the smaller circle, creating an isosceles triangle. Label that point X. Recalling the Inscribed Angle Theorem, we then see that m\angle AXB = \frac{m\angle AO_1B}{2} = 30^{\circ}= m\angle AO_2B. Based on this information, we can conclude that triangles AXB and  AO_2B are congruent via ASA Congruence.
+
+Next draw the height of AXB from X to AB. Note we've just created a right triangle with hypotenuse R, base \frac{r}{2}, and height \frac{r\sqrt{3}}{2} + r
+Thus using the Pythagorean Theorem we can express R^2 in terms of r
+R^2 = (\frac{r}{2})^2 + (\frac{r\sqrt{3}}{2} + r)^2 = r^2 + \frac{r^2}{4} + \frac{3r^2}{4} + (2)(\frac{r\sqrt{3}}{2})(r) = 2r^2 + r^2\sqrt{3} = r^2(2 + \sqrt{3})
+
+We can now determine the ratio between the larger and smaller circles:
+\frac{Area [O_2]}{Area [O_1]} = \frac{\pi R^2}{\pi r^2} = \frac{\pi r^2(2 + \sqrt{3})}{\pi r^2} =\boxed{\textbf{(D) } 2 + \sqrt{3}}
+
+(Solution by derekxu)
+
+==Solution 5==
+Let the radius of the larger and smaller circles be R and r, respectively, and let the centers of these circles be O_1 and O_2, respectively. Draw the radii and AB, and note that AB=r because \triangle ABO_1 is equilateral. Also, m\angle O_1AB = m\angle O_1BA = \frac{180^{\circ}-30^{\circ}}{2} = 75^{\circ}. Then, mark point X inside the larger circle such that \angle AXB is a right angle and AX = BX. Notice that \triangle ABX is a 45-45-90 triangle, so AX = BX = \frac{r\sqrt{2}}{2}. Now extend BX to AO_1, and label the intersection Y. Since m\angle YAB = 75^{\circ}, m\angle YAX = 75^{\circ} - 45^{\circ} = 30^{\circ} so this creates 30-60-90 triangle \triangle AYX. Therefore, YX = \frac{r\sqrt{6}}{6} and AY = \frac{r\sqrt{6}}{3}. We can also see that \angle YBO_1 = 75^{\circ}-45^{\circ} = 30^{\circ}=\angle YO_1B, so \triangle YO_1B is an isosceles triangle with YB = YO_1. So YO_1 = \frac{r\sqrt{6}}{6} + \frac{r\sqrt{2}}{2}. This means:
+R = AO_1 = \frac{r\sqrt{6}}{6} + \frac{r\sqrt{2}}{2} + \frac{r\sqrt{6}}{3} = \frac{r(\sqrt{6} + \sqrt{2})}{2}
+Then we can find the ratio:
+\frac{\pi R^2}{\pi r^2} = \frac{\pi [\frac{r(\sqrt{6} + \sqrt{2})}{2}]^2}{\pi r^2} = \frac{(\sqrt{6}+\sqrt{2})}{4}=\frac{8+4\sqrt{3}}{4}=\boxed{\textbf{(D) } 2 + \sqrt{3}}
+
+(Solution by weirdo)
+
+==Solution 6 (using answer choices)==
+
+We will estimate the answer using a wrong method then guess the correct answer choice.
+
+Let the radius of the larger and smaller circles be R and r, respectively. Pretend line AB is equal to the arc length of both circles, then \frac{30^{\circ}}{360^{\circ}}\cdot 2\pi R=\frac{60^{\circ}}{360^{\circ}}\cdot 2\pi r R=2r and the answer to the problem is \frac{\pi R^2}{\pi r^2} = 4
+But, this is only an estimate, the correct answer is not 4, but instead ''about'' 4. We can asume that the closest other answer choice to 4 is correct: \boxed{\textbf{(D) }2+\sqrt3}
+
+(Solution by FlareVa)
+
+==Video Solution==
+https://youtu.be/tdhHKQIWdXY
+
+==See Also==
+{{AMC12 box|year=2014|ab=A|num-b=11|num-a=13}}
+{{MAA Notice}}

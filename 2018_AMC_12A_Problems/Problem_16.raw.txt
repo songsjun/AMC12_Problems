@@ -1,0 +1,192 @@
+{{duplicate|[[2018 AMC 10A Problems/Problem 21|2018 AMC 10A #21]] and [[2018 AMC 12A Problems/Problem 16|2018 AMC 12A #16]]}}
+
+== Problem ==
+
+Which of the following describes the set of values of <math>a</math> for which the curves <math>x^2+y^2=a^2</math> and <math>y=x^2-a</math> in the real <math>xy</math>-plane intersect at exactly <math>3</math> points?
+
+<math>
+\textbf{(A) }a=\frac14 \qquad
+\textbf{(B) }\frac14 < a < \frac12 \qquad
+\textbf{(C) }a>\frac14 \qquad
+\textbf{(D) }a=\frac12 \qquad
+\textbf{(E) }a>\frac12 \qquad
+</math>
+
+== Solution 1 (Algebra) ==
+Substituting <math>y=x^2-a</math> into <math>x^2+y^2=a^2</math>, we get
+<cmath>x^2+(x^2-a)^2=a^2 \implies x^2+x^4-2ax^2=0 \implies x^2(x^2-(2a-1))=0</cmath>
+Since this is a quartic, there are <math>4</math> total roots (counting multiplicity). We see that <math>x=0</math> always has at least one intersection at <math>(0,-a)</math> (and is in fact a double root). 
+
+The other two intersection points have <math>x</math> coordinates <math>\pm\sqrt{2a-1}</math>. We must have <math>2a-1> 0;</math> otherwise we are in the case where the parabola lies entirely below the circle (tangent at the point <math>(0,-a)</math>). This only results in a single intersection point in the real coordinate plane. Thus, we see that <math>\boxed{\textbf{(E) }a>\frac12}</math>.
+
+(projecteulerlover)
+
+== Solution 2 (Algebra) ==
+Substituting <math>y = x^2 - a</math> gives <math>x^2 + (x^2 - a)^2 = a^2</math>, which simplifies to <math>x^2 + x^4 - 2x^2a + a^2 = a^2</math>. This further simplifies to <math>x^2(1 + x^2 - 2a) = 0</math>. Thus, either <math>x^2 = 0</math>, or <math>x^2 - 2a + 1 = 0</math>. 
+
+Since we care about <math>a</math>, we consider the second case. We solve in terms of <math>a</math>, giving <math>a = \frac{x^2}{2} + \frac{1}{2}</math>. We see that in order to find the range in which <math>a</math> lies, we must find the vertex of this equation, which turns out to be <math>\left(0, \frac{1}{2}\right)</math>. Hence, we know that the minimum is <math>\frac{1}{2}</math>, which further implies that <math>\boxed{\textbf{(E) }a>\frac12}</math>.
+
+== Solution 3 (Graphs) ==
+<asy>
+Label f; 
+f.p=fontsize(6);
+xaxis(-2,2,Ticks(f, 0.2)); 
+yaxis(-2,2,Ticks(f, 0.2)); 
+real g(real x) 
+{ 
+return x^2-1; 
+} 
+draw(graph(g, 1.7, -1.7));
+real h(real x) 
+{ 
+return sqrt(1-x^2); 
+} 
+draw(graph(h, 1, -1));
+real j(real x) 
+{ 
+return -sqrt(1-x^2); 
+} 
+draw(graph(j, 1, -1));
+</asy>
+
+Looking at a graph, it is obvious that the two curves intersect at <math>(0, -a)</math>. We also see that if the parabola goes "in" the circle, then by going out of it (as it will), it will intersect five times. This is impossible. Thus, we only look for cases where the parabola becomes externally tangent to the circle. 
+
+We have <math>x^2 - a = -\sqrt{a^2 - x^2}</math>. Squaring both sides and solving yields <math>x^4 - (2a - 1)x^2 = 0</math>. Since <math>x = 0</math> is already accounted for, we only need to find one solution for <math>x^2 = 2a - 1</math>, where the right hand side portion is obviously increasing. Since <math>a = \frac{1}{2}</math> begets <math>x = 0</math> (an overcount), we have <math>\boxed{\textbf{(E) }a>\frac12}</math> as the right answer.
+
+Solution by JohnHankock
+
+== Solution 4 (Graphs) ==
+
+This describes a unit parabola, with a circle centered on the axis of symmetry and tangent to the vertex. As the curvature of the unit parabola at the vertex is <math>2</math>, the radius of the circle that matches it has a radius of <math>\frac{1}{2}</math>. This circle is tangent to an infinitesimally close pair of points, one on each side. Therefore, it is tangent to only <math>1</math> point. When a larger circle is used, it is tangent to <math>3</math> points because the points on either side are now separated from the vertex. Therefore, <math>\boxed{\textbf{(E) }a>\frac12}</math> is correct.
+
+== Solution 5 (Graphs) ==
+Now, let's graph these two equations. We want the blue parabola to be inside this red circle.
+<asy>
+import graph;
+size(6cm);
+draw((0,0)--(0,10),EndArrow);
+draw((0,0)--(0,-10),EndArrow);
+draw((0,0)--(10,0),EndArrow);
+draw((0,0)--(-10,0),EndArrow);
+Label f;
+f.p=fontsize(6);
+xaxis(-10,10);
+yaxis(-10,10);
+real f(real x) 
+{ 
+return x^2-5;
+}
+draw(graph(f,-4,4),blue+linewidth(1));
+draw(circle((0,0),5),red);
+dot(scale(.7)*"$a$",(0,5),NE);
+dot(scale(.7)*"$-a$",(0,-5),N);
+dot(scale(.7)*"$a$",(5,0),NE);
+dot(scale(.7)*"$-a$",(-5,0),SE);
+</asy>
+Then we substitute <math>y</math> into the first equation to get <math>x^2+(x^2-a)^2=a^2</math>. Expanding, we get <math>x^4-2ax^2+x^2=0</math>. Factoring out the <math>x^2</math>, we get <math>x^2(x^2-2a+1)=0</math>. Then we find that <math>x=0</math> or <math>x=\pm\sqrt{2a-1}</math>. Therefore, <math>2a-1>0</math>, which means <math>\boxed{\textbf{(E) }a>\frac12}</math>.
+
+- kante314 -
+~ minor edit by junokim1011 and RJ5303707
+
+== Solution 6 (Calculus) ==
+
+In order to solve for the values of <math>a</math>, we need to just count multiplicities of the roots when the equations are set equal to each other: in other words, take the derivative. We know that <math>\sqrt{a^2 - x^2} = x^2 - a</math>. Now, we take square of both sides, and rearrange to obtain <math>x^4 - (2a - 1)x^2 = 0</math>. Now, we may take the second derivative of the equation to obtain <math>6x^2 - (2a - 1) = 0</math>. Now, we must take discriminant. Since we need the roots of that equation to be real and not repetitive (otherwise they would not intersect each other at three points), the discriminant must be greater than zero. Thus,
+
+<cmath>b^2 - 4ac > 0 \rightarrow 0 - 4(6)(-(2a - 1)) > 0 \rightarrow a > \frac{1}{2}</cmath>
+The answer is <math>\boxed{\textbf{(E) }a>\frac12}</math> and we are done. 
+
+~awesome1st 
+
+(Edited by OlutosinNGA)
+
+== Solution 7 (Calculus) ==
+
+Notice, the equations are of that of a circle of radius a centered at the origin and a parabola translated down by a units. They always intersect at the point <math>(0, a)</math>, and they have symmetry across the <math>y</math>-axis, thus, for them to intersect at exactly <math>3</math> points, it suffices to find the <math>y</math> solution. 
+
+First, rewrite the second equation to <math>y=x^2-a\implies x^2=y+a</math>
+And substitute into the first equation: <math>y+a+y^2=a^2</math> 
+Since we're only interested in seeing the interval in which a can exist, we find the discriminant: <math>1-4a+4a^2</math>. This value must not be less than <math>0</math> (It is the square root part of the quadratic formula). To find when it is <math>0</math>, we find the roots: 
+<cmath>4a^2-4a+1=0 \implies a=\frac{4\pm\sqrt{16-16}}{8}=\frac{1}{2}</cmath>
+Since <math>\lim_{a\to \infty}(4a^2-4a+1)=\infty</math>, our range is <math>\boxed{\textbf{(E) }a>\frac12}</math>.
+
+Solution by ktong
+
+== Solution 8 (Observations) ==
+
+We can see that if <math>a = 1</math>, we know that the points where the two curves intersect are <math>(0, -1), (1, 0)</math> and <math>(-1, 0)</math> .Because there are only <math>3</math> intersections and <math>a > 1/2</math>, as well as <math>a > 1/4</math> we know that either <math>\textbf{(D)}</math> or <math>\textbf{(E)}</math> is the correct answer. Then we can test a number from <math>(1/2, 1/4)</math> to eliminate the remaining answer. So  <math>\boxed{\textbf{(E) }a>\frac12}</math> is the correct answer. 
+
+~josephwidjaja (Solution)
+
+~username_taken12 (Revision)
+
+== Solution 9 (Observations) ==
+Simply plug in <math>a = \frac{1}{2}, \frac{1}{4}, 1</math> and solve the systems. (This shouldn't take too long.) And then realize that only <math>a=1</math> yields three real solutions for <math>x</math>, so we are done and the answer is <math>\boxed{\textbf{(E) }a>\frac12}</math>.
+
+~ ccx09
+
+==Solution 10 (Observations)==
+An ideal solution come to mind is where they intersect at the <math>x</math>-axis at the same time, which is <math>(a, 0)</math> and <math>(-a, 0).</math> Take the root of our <math>y=x^2-a</math> we get <math>x=\sqrt{a}</math>, set them equal we get <math>a=\sqrt{a}.</math> The only answer is <math>1</math> so it only left us with the answer choice <math>\boxed{\textbf{(E) }a>\frac12}</math>.
+
+~@azure123456
+
+==Solution 11 (Curvature, Calculus)==
+From observing the graph of the two functions, we notice that there will be exactly 3 solutions when the curvature of <math>y = x^2-a</math> is greater than the curvature of the circle <math>x^2+y^2 = a^2</math> near <math>x=0</math> (this means the graph of <math>y=x^2-a</math> will reside within the circle). Formally, curvature is the magnitude of the rate of change of the unit tangent in respect to arc length. Let there be function <math>r(x)</math> be a vector-valued function. The unit tangent has formula <math>T(x)=\frac{r'(x)}{|r'(x)|}=\frac{dr}{ds}</math>, and arc length has formula <math>s(t)=\int_b^{t}\sqrt{\left( 1+ \left( \frac{dr}{dx} \right) ^2 \right) }dx</math>. We have the relation <math>\frac{ds}{dx}=\sqrt{\left( 1+ \left( \frac{dr}{dx} \right) ^2 \right) }=|r'(x)|</math>. Our goal, curvature, is <math>\kappa= \left| \frac{d^2r}{ds^2} \right| =\frac{dT}{ds}|=\frac1{|\frac{ds}{dt}|}|\frac{dT}{dt}|</math>. After deriving, we end up with the formula:
+<cmath>\kappa = \frac{y^{\prime\prime}}{(1+(y^{\prime})^2)^\frac{3}{2}}</cmath>
+For a circle, curvature is just the inverse of the radius or <math>1/a</math> in our case. For the parabola, we use the equation above:
+<cmath>\kappa = \frac{y^{\prime\prime}}{(1+(y^{\prime})^2)} = \frac{2}{(1+4x^2)^{1.5}}</cmath>
+where <math>\kappa \approx 2</math> when <math>x \approx 0</math>. Since curvature of the parabola should be greater than that of the circle, <math>2>\frac{1}{a}</math> or answer choice <math>\boxed{\textbf{(E)}a>\frac12}</math>.
+
+~Chupdogs
+
+== Remark ==
+The graph of <imath>x^2+y^2=a^2</imath> is a circle with the center <imath>(0,0)</imath> and the radius <imath>|a|.</imath>
+
+The graph of <imath>y=x^2-a</imath> is an upward-opening parabola with the vertex <imath>(0,-a).</imath>
+
+The circle and the parabola are shown here in Desmos: https://www.desmos.com/calculator/rfeknuhjum
+
+Move the slider around for <imath>\frac12\leq a\leq5</imath> to observe that they intersect at exactly <imath>3</imath> points: <imath>(0,-a)</imath> and <imath>\left(\pm\sqrt{2a-1},a-1\right),</imath> provided that <imath>a>\frac12.</imath>
+
+~MRENTHUSIASM
+
+== Solution 12 (cheap) ==
+We observe that there is more than one value for <imath>a</imath>, so we can eliminate <imath>(A)</imath> and <imath>(D)</imath>. We can also observe that as we increase <imath>a</imath>, the parabola will always intersect the circle at 3 points, which eliminates <imath>(B)</imath>. Finally, we notice that if the <imath>a=1/4</imath> case is not a perfect square, then <imath>(C)</imath> is not the correct answer.
+
+
+
+Substituting <imath>1/4</imath> for <imath>a</imath>, we get:
+
+
+
+<imath>x^2+y^2=(1/4)^2</imath>
+
+<imath>x^2-1/4=y</imath> --> <imath>x^2=y+1/4</imath>
+
+<imath>y^2+y+1/4=(1/4)^2</imath> --> <imath>y^2+y+3/16</imath>
+
+
+
+From this, we can see that the <imath>a=1/4</imath> case is incorrect, so our final answer is <imath>\boxed{\textbf{(E)}a>\frac12}</imath>.
+
+- WB0s0n
+
+== Video Solution by Pi Academy (Fast and easy Algebra) ==
+
+https://youtu.be/UvzCuc_VjAY?si=eITJBLBQMPnl6D7F
+
+~ Pi Academy
+
+
+== Video Solution by Richard Rusczyk ==
+
+https://artofproblemsolving.com/videos/amc/2018amc10a/466
+
+~ dolphin7
+
+== See Also ==
+
+{{AMC10 box|year=2018|ab=A|num-b=20|num-a=22}}
+{{AMC12 box|year=2018|ab=A|num-b=15|num-a=17}}
+{{MAA Notice}}
+
+[[Category:Introductory Algebra Problems]]

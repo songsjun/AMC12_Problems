@@ -1,0 +1,18 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2006_AMC_12B_Problems/Problem_10&action=raw
+
+Published Time: Tue, 19 Jan 2021 17:57:28 GMT
+
+Markdown Content:
+== Problem ==
+In a triangle with integer side lengths, one side is three times as long as a second side, and the length of the third side is 15. What is the greatest possible perimeter of the triangle?
+
+ \text {(A) } 43 \qquad \text {(B) } 44 \qquad \text {(C) } 45 \qquad \text {(D) } 46 \qquad \text {(E) } 47 
+
+== Solution ==
+If the second size has length x, then the first side has length 3x, and we have the third side which has length 15. By the triangle inequality, we have: \\ x+15>3x \Rightarrow 2x<15 \Rightarrow x<7.5 Now, since we want the greatest perimeter, we want the greatest integer x, and if x<7.5 then x=7. Then, the first side has length 3*7=21, the second side has length 7, the third side has length 15, and so the perimeter is 21+7+15=43 \Rightarrow \boxed{\text {(A)}}.
+
+== See also ==
+{{AMC12 box|year=2006|ab=B|num-b=9|num-a=11}}
+{{MAA Notice}}

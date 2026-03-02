@@ -1,0 +1,87 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2020_AMC_12A_Problems/Problem_10&action=raw
+
+Published Time: Thu, 11 Sep 2025 01:36:48 GMT
+
+Markdown Content:
+==Problem==
+
+There is a unique positive integer n such that\log_2{(\log_{16}{n})} = \log_4{(\log_4{n})}.What is the sum of the digits of n?
+
+\textbf{(A) } 4 \qquad \textbf{(B) } 7 \qquad \textbf{(C) } 8 \qquad \textbf{(D) } 11 \qquad \textbf{(E) } 13
+
+==Solution 1 (Properties of Logarithms)==
+
+We can use the fact that \log_{a^b} c = \frac{1}{b} \log_a c. This can be proved by using [[change of base formula | Change of Base Formula]] to base a.
+
+So, the original equation \log_2{(\log_{2^4}{n})} = \log_{2^2}{(\log_{2^2}{n})} becomes \log_2\left({\frac{1}{4}\log_{2}{n}}\right) = \frac{1}{2}\log_2\left({\frac{1}{2}\log_2{n}}\right).
+Using log property of addition, we expand both sides and then simplify:
+\begin{align*} \log_2{\frac{1}{4}}+\log_2{(\log_{2}{n}}) &= \frac{1}{2}\left[\log_2{\frac{1}{2}} +\log_{2}{(\log_2{n})}\right] \\ \log_2{\frac{1}{4}}+\log_2{(\log_{2}{n}}) &= \frac{1}{2}\left[-1 +\log_{2}{(\log_2{n})}\right] \\ -2+\log_2{(\log_{2}{n}}) &= -\frac{1}{2}+ \frac{1}{2}(\log_{2}{(\log_2{n})}). \end{align*}
+Subtracting \frac{1}{2}(\log_{2}{(\log_2{n})}) from both sides and adding 2 to both sides gives us \frac{1}{2}(\log_{2}{(\log_2{n})}) = \frac{3}{2}.
+Multiplying by 2, exponentiating, and simplifying gives us
+\begin{align*} \log_{2}{(\log_2{n})} &= 3 \\ \log_2{n}&=8 \\ n&=256. \end{align*}
+Adding the digits together, we have 2+5+6=\boxed{\textbf{(E) } 13}. 
+
+~quacker88 (Solution)
+
+~MRENTHUSIASM (Reformatting)
+
+==Solution 2 (Properties of Logarithms)==
+We will apply the following logarithmic identity:
+\log_{p^k}{q^k}=\log_{p}{q},
+which can be proven by the [[change of base formula | Change of Base Formula]]: \log_{p^k}{q^k}=\frac{\log_{p}{q^k}}{\log_{p}{p^k}}=\frac{k\log_{p}{q}}{k}=\log_{p}{q}.
+Note that \log_{16}{n}\neq0, so we rewrite the original equation as follows:
+\begin{align*} \log_4{(\log_{16}{n})^2}&=\log_4{(\log_4{n})} \\ (\log_{16}{n})^2&=\log_4{n} \\ (\log_{16}{n})^2&=\log_{16}{n^2} \\ (\log_{16}{n})^2&=2\log_{16}{n} \\ \log_{16}{n}&=2, \end{align*}
+from which n=16^2=256. The sum of its digits is 2+5+6=\boxed{\textbf{(E) } 13}.
+
+~MRENTHUSIASM
+
+==Solution 3 (Properties of Logarithms)==
+Using the change of base formula on the RHS of the initial equation yields 
+ \log_2{(\log_{16}{n})} = \frac{\log_2{(\log_4{n})}}{\log_2{4}}. 
+This means we can multiply each side by 2 for 
+ \log_2{(\log_{16}{n})^2} = \log_2{(\log_4{n})}. 
+Canceling out the logs gives
+ (\log_{16}{n})^2=\log_4{n}. 
+We use change of base on the RHS to see that 
+\begin{align*} (\log_{16}{n})^2&=\frac{ \log_{16}{n}}{\log_{16}{4}} \\ (\log_{16}{n})^2&=2 \log_{16}{n}. \end{align*}
+Substituting in  m = \log_{16}{n}  gives  m^2=2m,  so  m  is either 0 or 2. Since  m=0  yields no solution for n (since this would lead to use taking the log of 0), we get  2 = \log_{16}{n},  or  n=16^2=256,  for the digit-sum of 2 + 5 + 6 = \boxed{\textbf{(E) } 13}.
+
+~aop2014
+
+==Solution 4 (Exponential Form)==
+Suppose \log_2(\log_{16}n)=k\implies\log_{16}n=2^k\implies n=16^{2^k}. Similarly, we have \log_4(\log_4 n)=k\implies \log_4 n=4^k\implies n=4^{4^k}. Thus, we have 16^{2^k}=(4^2)^{2^k}=4^{2^{k+1}} and 4^{4^k}=4^{2^{2k}}, so k+1=2k\implies k=1. Plugging this in to either one of the expressions for n gives 256, and the requested answer is 2+5+6=\boxed{\textbf{(E) } 13}.
+
+==Solution 5 (Guess and Check)==
+We know that, as the answer is an integer, n must be some power of 16. Testing 16 yields
+\begin{align*} \log_2{(\log_{16}{16})} &= \log_4{(\log_4{16})} \\ \log_2{1} &= \log_4{2} \\ 0 &= \frac{1}{2}, \end{align*}
+which does not work. We then try 256, giving us
+\begin{align*} \log_2{(\log_{16}{256})} &= \log_4{(\log_4{256})} \\ \log_2{2} &= \log_4{4} \\ 1 &= 1, \end{align*}
+which holds true. Thus, n = 256, so the answer is 2 + 5 + 6 = \boxed{\textbf{(E) } 13}.
+
+(Don't use this technique unless you absolutely need to! Guess and check methods aren't helpful for learning math.)
+
+~ciceronii (Solution)
+
+~MRENTHUSIASM (Reformatting)
+
+==Video Solution==
+https://youtu.be/fzZzGqNqW6U
+
+~IceMatrix
+
+== Video Solution by OmegaLearn ==
+https://youtu.be/RdIIEhsbZKw?t=814
+
+~ pi_is_3.14
+
+==Video Solution==
+https://youtu.be/EnyzIHcJ8Aw
+
+~Education, the Study of Everything
+
+==See Also==
+
+{{AMC12 box|year=2020|ab=A|num-b=9|num-a=11}}
+{{MAA Notice}}

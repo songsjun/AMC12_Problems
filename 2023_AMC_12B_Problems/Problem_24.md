@@ -1,0 +1,97 @@
+# 2023 AMC 12B Problem 24
+
+## Problem
+Suppose that a, b, c and d are positive integers satisfying all of the following relations.
+
+abcd=$2^6\cdot 3^9\cdot 5^7$
+
+$$
+\text{lcm}(a,b)=2^3\cdot 3^2\cdot 5^3
+\text{lcm}(a,c)=2^3\cdot 3^3\cdot 5^3
+\text{lcm}(a,d)=2^3\cdot 3^3\cdot 5^3
+\text{lcm}(b,c)=2^1\cdot 3^3\cdot 5^2
+\text{lcm}(b,d)=2^2\cdot 3^3\cdot 5^2
+\text{lcm}(c,d)=2^2\cdot 3^3\cdot 5^2
+$$
+
+
+What is $\text{gcd}(a,b,c,d)$?
+
+$\textbf{(A)}~30\qquad\textbf{(B)}~45\qquad\textbf{(C)}~3\qquad\textbf{(D)}~15\qquad\textbf{(E)}~6$
+## Solution 1
+Denote by $\nu_p (x)$ the number of prime factor p in number x.
+
+We index Equations given in this problem from (1) to (7).
+
+First, we compute $\nu_2 (x)$ for x $\in \left\{ a, b, c, d \right\}$.
+
+Equation (5) implies $\max \left\{ \nu_2 (b), \nu_2 (c) \right\} = 1$.
+Equation (2) implies $\max \left\{ \nu_2 (a), \nu_2 (b) \right\} = 3$.
+Equation (6) implies $\max \left\{ \nu_2 (b), \nu_2 (d) \right\} = 2$.
+Equation (1) implies $\nu_2 (a) + \nu_2 (b) + \nu_2 (c) + \nu_2 (d) = 6.$
+
+Therefore, all above jointly imply $\nu_2 (a) = 3, \nu_2 (d) = 2,$ and $\left( \nu_2 (b), \nu_2 (c) \right) = \left( 0 , 1 \right)$ or $\left( 1, 0 \right).$
+
+Second, we compute $\nu_3 (x)$ for x $\in \left\{ a, b, c, d \right\}$.
+
+Equation (2) implies $\max \left\{ \nu_3 (a), \nu_3 (b) \right\} = 2$.
+Equation (3) implies $\max \left\{ \nu_3 (a), \nu_3 (c) \right\} = 3$.
+Equation (4) implies $\max \left\{ \nu_3 (a), \nu_3 (d) \right\} = 3$.
+Equation (1) implies $\nu_3 (a) + \nu_3 (b) + \nu_3 (c) + \nu_3 (d) = 9.$
+
+Therefore, all above jointly imply $\nu_3 (c) = 3, \nu_3 (d) = 3,$ and $\left( \nu_3 (a), \nu_3 (b) \right) = \left( 1 , 2 \right)$ or $\left( 2, 1 \right).$
+
+Third, we compute $\nu_5 (x)$ for x $\in \left\{ a, b, c, d \right\}$.
+
+Equation (5) implies $\max \left\{ \nu_5 (b), \nu_5 (c) \right\} = 2$.
+Equation (2) implies $\max \left\{ \nu_5 (a), \nu_5 (b) \right\} = 3$.
+Thus, $\nu_5 (a) = 3.$
+
+From Equations (5)-(7), we have either $\nu_5 (b) \leq 1$ and $\nu_5 (c) = \nu_5 (d) = 2,$ or $\nu_5 (b) = 2$ and $\max \left\{ \nu_5 (c), \nu_5 (d) \right\} = 2$.
+
+Equation (1) implies $\nu_5 (a) + \nu_5 (b) + \nu_5 (c) + \nu_5 (d) = 7.$
+Thus, for $\nu_5 (b), \nu_5 (c), \nu_5 (d),$ there must be two $2s$ and one 0.
+
+Therefore,
+
+$$
+\begin{align*} {\rm gcd} (a,b,c,d) & = \Pi_{p \in \{ 2, 3, 5\}} p^{\min\{ \nu_p (a), \nu_p(b) , \nu_p (c), \nu_p(d) \}} \\ & = 2^0 \cdot 3^1 \cdot 5^0 \\ & = \boxed{\textbf{(C) 3}}. \end{align*}
+$$
+
+
+*~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)*
+## Solution 2 (GCD/LCM Comparison)
+We are given that abcd $= 2^6 \cdot 3^9 \cdot 5^7,$ and several LCM relations involving pairs of these numbers. Notice that
+
+
+$$\mathrm{lcm}(a,b) \cdot \mathrm{lcm}(c,d) = (2^3 \cdot 3^2 \cdot 5^3) \cdot (2^2 \cdot 3^3 \cdot 5^2) = 2^{5} \cdot 3^{5} \cdot 5^{5}.$$
+
+
+Comparing this product with abcd, we see that
+
+ abcd $= $2^6 $\cdot 3^9 \cdot 5^7 = \mathrm{lcm}(a,b) \cdot \mathrm{lcm}(c,d) \cdot 2^1 \cdot 3^4 \cdot 5^2.$
+
+This additional factor $2^1 \cdot 3^4 \cdot 5^2$ must be accounted for by the overlaps among a, b, c, d, which are their common divisors.
+
+The key observation is that the only prime with a leftover exponent greater than 3 is 3 (specifically, 3^4), which suggests that all four numbers share at least one factor of 3.
+
+For primes 2 and 5, the leftover exponents are too small (1 and 2, respectively) to be shared by all four numbers, since the GCD exponent must be the minimum exponent among a, b, c, d.
+
+Thus, the only possible nontrivial common factor among a, b, c, d is 3.
+
+Therefore,
+
+$$\gcd(a,b,c,d) = \boxed {3}.$$
+
+
+*~Mewoooow*
+*~Latex fix by megacleverstarfish15*
+## Video Solutions
+https://youtu.be/RtkZTYrpE-w
+
+*~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)*
+
+https://www.youtube.com/watch?v=kky_f4JK7y8&feature=youtu.be
+
+*~megacleverstarfish15*
+## See Also

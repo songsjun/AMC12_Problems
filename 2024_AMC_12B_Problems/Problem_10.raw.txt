@@ -1,0 +1,185 @@
+{{duplicate|[[2024 AMC 10B Problems/Problem 15|2024 AMC 10B #15]] and [[2024 AMC 12B Problems/Problem 10|2024 AMC 12B #10]]}}
+
+==Problem==
+A list of <math>9</math> real numbers consists of <math>1</math>, <math>2.2</math>, <math>3.2</math>, <math>5.2</math>, <math>6.2</math>, and <math>7</math>, as well as <math>x</math>, <math>y</math> , and <math>z</math> with <math>x</math> <math>\le</math> <math>y</math> <math>\le</math> <math>z</math>. The range of the list is <math>7</math>, and the mean and the median are both positive integers. How many ordered triples (<math>x</math>, <math>y</math>, <math>z</math>) are possible?
+
+<math>\textbf{(A) } 1 \qquad \textbf{(B) } 2 \qquad \textbf{(C) } 3 \qquad \textbf{(D) } 4 \qquad \textbf{(E) } \text{infinitely many}</math>
+
+==Solution 1 (Main)==
+
+<math>\textbf{First Case}</math>
+
+We start off by knowing that there must exist an ordered pair \( (0,y,z) \) and a big term 7 such that the range is satisfied and the median could also be satisfied. Because \( x \le y \le z \), we say \( x=0 \). Then, we get the sum 24.8. We need \( \frac{24.8 +y +z}{9} \in \mathbb{Z} \). This means that we need the nearest multiple of 9, which is 36, and we get \( y+z = 11.2 \). We need one of these to be the median, WLOG say \( y \). Then, \( y \in \{4,5\} \). So if \( y=4 \), we get \( z=7.2 \), and if \( y=5 \), we get 6.2. We see that if \( z=6.2 \), the range will still remain as 7, and therefore the one ordered triple \( (0,5,6.2) \) satisfies this.
+
+We know that the median can be \( y \), so we have \( y \in \{4,5\} \). We do casework on 4 and 5.
+
+<math>\textbf{Case 1}</math>
+
+Say \( y=4 \). Then, because we already know there exists an ordered triple where \( z \) is not the largest, there must exist at least one ordered triple where \( z \) is, so we say \( z-x=7 \). We also know that the mean must be divisible by 9. Quickly summing each number up we get 24.8. The next number divisible by 9 is 36. We add \( y \) to get 28.8. We then know \( x+z=36-28.8=7.2 \). The smallest values give \( x=0.1 \) and \( z=7.1 \). This satisfies our constraints.
+
+We don't want any errors, so we check the next sum, which is 45. We get then \( 7.2=x+z \) and \( z-x=7 \). This gives \( x=4.6 \) and \( z=11.6 \). This is a contradiction, as \( x \le y \le z \), and the values incrementally become too large, and therefore we only have one ordered triple for this case, which is \( (0.1,4,7.1) \)
+
+<math>\textbf{Case 2}</math>
+
+We now check \( y=5 \). This makes our sum 29.8. The nearest multiple of 9 is 36, again. This gives us \( 6.2 = x+z \) and \( z-x=7 \). Solving gives us -0.4 and 6.6. This however doesn't work, as 6.6 is not the greatest value.
+
+We decide to check the next multiple of 9, which is 45. This gives us \( 15.2 = x+z \) and \( z-x=7 \). This gives us \( x=4.1 \) and \( z=11.1 \). This also doesn't work, as \( x \) becomes incrementally larger, and therefore there are no ordered triples that satisfy this.
+
+<math>\textbf{Last Case}</math>
+
+We have one more case, and that is \(x\) is not the first number, but \( z \) is the last, meaning \( z-1=7 \), and \( z=8 \). This means that \( \frac{24.8+x+y+z}{9} \in \mathbb{Z} \). So, if \( z=8 \), we get 32.8. We again see that we need the nearest multiple of 9 which is 36, and we get \( 3.2 = x+y \). We see that \( x \) and \( y \) still need to be a integer median and 3.2 is too small, so 36 cannot work. We try 45, and see \( 12.2 = x+y \). After some trial and error, we see that \( x=6 \) and \( y=6.2 \), giving us the ordered triple \( (6,6.2,8) \). Continuing as before shows us that \( x \) again incrementally increases, and therefore we have only one ordered triple.
+
+We have <math>\boxed{\textbf{(C) }3}</math> ordered triples. These are \( (0.1,4,7.1) \), \( (0,5,6.2) \), and \( (6,6.2,8) \).
+
+~Pinotation
+
+==Solution 2 (Circular Arrangements)==
+
+This is a more advanced solution, but it gives the answer really fast. Plus, it is always better to expand your knowledge.
+
+This solution is so overpowered that you don't even need to sum the decimals up. :-)
+
+Consider the arrangements like a circle. There are 3 terms; \( x \), \( y \), and \( z \), so we arrange them into a circle. We use the circular gap theorem to solve this, which is 
+<cmath>
+C(nA) = \frac{n}{k} \binom{n-k-1}{k-1}
+</cmath>
+
+We see that there are 3 terms. We need either 1 adjacent from the other, two adjacent from one, or three adjacent.
+
+Also keep in note that if the combinatorial part of \( C(nA) \) is invalid, it is just 0.
+
+We then have \( k \in \{1, 2, 3\} \).
+
+We then have 3 cases,
+
+<math>\textbf{Case 1:}</math> <math>k \in \{1\}</math>
+
+We have \(  \frac{3}{1} \cdot \binom{3-1-1}{1-1} = \frac{3}{1} \cdot 1 = 3 \) ways to do this.
+
+<math>\textbf{Case 2:}</math> <math>k \in \{2\}</math>
+
+We have \( \frac{3}{2} \cdot \binom{3-2-1}{2-1} \). The combinatorial part of this is \( \binom{0}{1} \), which is invalid and therefore 0. Therefore there are \( \frac{3}{2} \times 0 = 0 \) cases.
+
+<math>\textbf{Case 3:}</math> <math>k \in \{3\}</math>
+
+We have \( \frac{3}{3} \cdot \binom{3-3-1}{3-1} \). The combinatorial part of this is \( \binom{-1}{2} \), and again, this is invalid, and therefore 0. There is then \( 1 \times 0 = 0 \) cases.
+
+Our answer is \( 3 + 0 + 0 =  \) <math>\boxed{\textbf{(C) }3}</math>
+
+~Pinotation
+
+===Disclaimer Solution 2===
+This theorem requires practice to use and when to use it. For example, if they said that this list is non circular or is strictly linear, then we may not solve it like this. However, these specifications have not been said in this problem.
+
+For disclaimer, don't use this formula everywhere. A clear example is that in a problem involving linear arrangements, this method will never work.
+
+Below are some practice problems that I highly recommend you try so you can understand this theorem and its applications better.
+
+Check them below.
+
+[https://artofproblemsolving.com/wiki/index.php/2014_AMC_10B_Problems/Problem_24 2014 AMC 10B Q24]
+
+[https://artofproblemsolving.com/wiki/index.php/2017_AMC_10B_Problems/Problem_18?srsltid=AfmBOoorbWvdWI5mJYkf_XsGNK8N7JEX7G2S4w13Uy_lkqkFIXMbqJQc 2017 AMC 10B Q18]
+
+[https://artofproblemsolving.com/wiki/index.php/1983_AIME_Problems/Problem_7?srsltid=AfmBOoo2Rma8yq6kbV0holdmtaa2Zr2ezKPOD6cPyGa0Xs8GcMtwEf3J 1983 AIME Q7]
+
+Also, it is helpful to note \( C_n(A) = \frac{n}{k} \binom{n-k-1}{k-1} \) = \( \binom{n}{2k} \).
+
+~Pinotation
+
+==Solution 3 (AMC 10)==
+The sum of the six existing numbers is <math>24.8</math>. For the mean to be an integer, the sum of the remaining three numbers <math>x,y,z</math> and the remaining six must be divisible by <math>9</math>; thus <math>x+y+z</math> must equal either <math>2.2,11.2,20.2</math>. However, one of <math>x,y,z</math> must be the median since the middle four numbers in the original set are all non-integral. As a result, we can eliminate <math>2.2</math> since the sum would be too small to allow for one of <math>x,y,z</math> to be the median (notice that negative numbers are not permitted since the range would be greater than <math>7</math>). This leaves two cases.
+
+For the <math>x+y+z=20.2</math> case, notice that all three must be less than or equal to <math>8</math> due to the range restriction. However, also notice that <math>y</math> and <math>z</math> must be on the higher end of the range, meaning that the new median would have to fall between the new middle numbers <math>5.2</math> and <math>6.2</math>. Thus <math>x=6</math>, and we can manipulate the numbers to make the range <math>7</math> by making <math>z=8</math> and thus <math>y=6.2</math>, providing one case in <math>(6,6.2,8)</math>.
+
+For the <math>x+y+z=11.2</math> case, we note that the average of the three would fall near the median, signaling that one of the numbers would be the median, one would fall lesser than the median, and one would reach greater than the median. Thus we let the median be <math>y</math>. Since adding a number to each side of the set would not change the median, we know that the median must fall between the two middle numbers <math>3.2,5.2</math>. Then we find two triples <math>(0.1,4,7.1)</math> and <math>(0,5,6.2)</math>, resulting in <math>\boxed{\textbf{(C) }3}</math>.
+
+~eevee9406
+
+==Solution 4 (AMC 12)==
+
+We can do casework on the range. We have four possible cases:
+
+<math>x<1</math>, <math>z<7</math>
+
+<math>x>1</math>, <math>z<7</math>
+
+<math>x<1</math>, <math>z>7</math>
+
+<math>x>1</math>, <math>z>7</math>
+
+These encapsulate all possible values of <math>x</math> and <math>z</math> we can choose, so we're not leaving anything out. As we'll see, the problem will become simpler this way. Since we want integer mean, first note the sum of the values given to be <math>24.8</math>: when we add <math>x,y,z</math>, it must be a multiple of <math>9</math> to yield an integer mean. Also remember that the median of an increasing list of <math>9</math> numbers is the fifth number.
+
+<math>\textbf{Case 1:}</math>
+
+Since <math>x<1</math>, <math>z<7</math>, <math>x</math> must be the minimum of this list of numbers and <math>7</math> is the max: so the range is <math>7-x</math>. This must be equal to <math>7</math>, so <math>x=0</math>. Now we try to make the median an integer.
+With <math>x=0</math>, the fifth smallest number currently is <math>5.2</math>, which is clearly not an integer. But if we stick <math>y</math> or <math>z</math> in between <math>3.2</math> and <math>5.2</math>, then the median will be an integer. So let one of <math>y,z</math> be <math>4</math>: then the sum of all the numbers we have so far is <math>28.8</math>. To make this a multiple of <math>9</math>, the last number has to be <math>7.2</math> to add up to <math>36</math>. However, we said that <math>z<7</math>, so this violates the bounds of this case. So then we set <math>y=5</math>, so our sum is <math>29.9</math>: then <math>z=36-29.9 = 6.2</math>. Here everything checks out, so for this case there is one solution: <math>(0,5,6.2)</math>.
+
+<math>\textbf{Case 2:}</math>
+
+Since <math>x>1</math> and <math>z<7</math>, the minimum is <math>1</math> and the maximum is <math>7</math>. Thus the range is always <math>6</math>, but we need the range to be <math>7</math>, so this case has no solutions.
+
+<math>\textbf{Case 3:}</math>
+
+We have <math>x<1, z>7</math>. Our minimum is <math>x</math> and our maximum is <math>z</math>, so the range is <math>z-x = 7</math>. Since <math>x<1</math>, the median still falls on <math>5.2</math>, so <math>y</math> can be either <math>4</math> or <math>5</math> to make the median an integer. For now, suppose <math>y=4</math>. Our sum is now <math>28.8+x+z</math>, which we set to the nearest multiple of <math>9:</math> <math>36</math>. Thus <math>x+z = 7.2</math>. Now we have a system of equations: we add them to get <math>2z = 14.2 \implies z = 7.1 \implies x = 0.1</math>. Since the values of <math>z</math> and <math>x</math> satisfy our case, this is a possible solution.
+
+Now suppose <math>y=5</math>. Our sum is <math>29.8+x+z</math>, which must be equal to <math>36</math>, so <math>x+z = 6.2</math>. Adding the equations, we have <math>2z = 13.2 \implies z = 6.6</math>. But this violates our assumption that <math>z>7</math>, so this has no solutions.
+
+Therefore this case has one solution: <math>(0.1,4,7.1)</math>.
+
+<math>\textbf{Case 4:}</math>
+
+Since <math>x>1, z>7</math>, the max is <math>z</math> and the min is <math>1</math>. Thus <math>z-1 = 7 \implies z = 8</math>. Now the median is between <math>5.2</math> and <math>6.2</math>, so <math>x</math> or <math>y</math> must take the value <math>6</math>. Our sum is now <math>24.8+6+8 = 38.8</math>, and adding the last number has to equal <math>45</math>. Thus the last number is <math>6.2</math>, and this yields one solution: <math>(6,6.2,8)</math>.
+
+
+
+
+Therefore we've found three solutions. These cases encompass all possible real values of <math>x</math> and <math>z</math>, so we know we've left nothing out. The answer is <math>\boxed{\textbf{(C) }3}</math>
+
+~KingRavi
+
+==Solution 5==
+
+We can start doing casework on the numbers. Notice that the median can either be four, five or six because there has to be one or two numbers on one side. We can start bashing everything out, starting from letting <math>x=a, y=4, z=7+a</math>. Now plugging into the sequence, we get that <math>a, 1, 2.2, 3.2, 4, 5.2, 6.2, 7, 7+a</math>. Notice that the sum of the numbers (not including <math>x, y, z</math> is <math>24.8</math>. To make this mean an integer, <math>x+y+z</math> must have a decimal <math>0.2</math> when added up. Now, plugging in our values into the mean gets us <math>35.8+2a=9k</math> for some integer <math>k</math>. Notice that <math>0\leq a\leq 1</math>, so the only value for <math>a</math> is <math>0.1</math>, so we found our first ordered triplet, <math>(0.1, 4, 7.1)</math>. Let’s make the median <math>5</math> now. Then we have to put <math>x</math> and one side and <math>z</math> on the other to “balance” the numbers, or make it so that there are 4 numbers on each side of <math>5</math>. Now, we can see that <math>x</math> is <math>0</math>, and solving for <math>z</math>, we get that <math>z=6.2</math>. We get our second triple is <math>(0, 5, 6.2)</math>. Now coming to our third case scenario, we use <math>6</math> as the median. Clearly it means that <math>x</math> has to be the median, so that <math>y</math> and <math>z</math> can be on the same side as <math>x</math>. <cmath>1, 2.2, 3.2, 5.2, 6, 6.2, y, 7, z</cmath> We will use this diagram. Notice that <math>z</math> has to be <math>8</math>, and solving for <math>y</math> yields <math>y=6.2</math>, so we found our third and last triplet, <math>(6, 6.2, 8)</math>, meaning that <math>\boxed{C}</math> is the right answer.
+
+~EaZ_Shadow
+
+
+==Solution 6 (Cheese）==
+
+Answer choice E is too big and answer choices A,B are both too small, so get rid of A,B, and E. Then, after checking the answer choices respectively, you get 3 as the final answer. Therefore, the answer is answer choice <imath>\boxed{\textbf{(C) }3}</imath>.
+
+
+Note: The answer to AMC problems is never, EVER infinitely many. Also, the top part wasn't mine, it was somebody else. 
+
+~ PerseverePlayer, ShortPeopleFartalot
+"Worst Solution EVER"
+-CheerfulFrog
+
+==Solution 7 (A (still interesting but slightly better) cheese)==
+
+Ignore the fact that \( x \le y \le z \). Then we know that there should be some ordered pair \((0,y,z)\), \((x,0,z)\), and \((x,y,0)\), where we can permute \( x \), \( y \), or \( z \) such that they do satisfy \( x \le y \le z \). Our answer is then \(\boxed{\textbf{(C) }3}\).
+
+~Pinotation
+
+==Video Solution 1 by Pi Academy (Fast and Easy ⚡🚀)==
+
+https://youtu.be/YqKmvSR1Ckk?feature=shared
+
+~ Pi Academy
+
+==Video Solution 2 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=24EZaeAThuE
+
+==Video Solution 3 by TheBeautyofMath==
+For AMC 10: https://youtu.be/dfF39udgqc8?t=1588 in Rapid Fire
+
+For AMC 12: https://youtu.be/AKLPjTRPF4Q?t=1017 in Rapid Fire
+
+~IceMatrix
+
+==See also==
+{{AMC10 box|year=2024|ab=B|num-b=14|num-a=16}}
+{{AMC12 box|year=2024|ab=B|num-b=9|num-a=11}}
+{{MAA Notice}}
+[[Category: Introductory Algebra Problems]]

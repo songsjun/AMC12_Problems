@@ -1,0 +1,125 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2010_AMC_12B_Problems/Problem_23&action=raw
+
+Published Time: Mon, 01 Sep 2025 04:14:16 GMT
+
+Markdown Content:
+== Problem ==
+Monic quadratic polynomial P(x) and Q(x) have the property that P(Q(x)) has zeros at x=-23, -21, -17, and -15, and Q(P(x)) has zeros at x=-59,-57,-51 and -49. What is the sum of the minimum values of P(x) and Q(x)? 
+
+\textbf{(A)}\ -100 \qquad \textbf{(B)}\ -82 \qquad \textbf{(C)}\ -73 \qquad \textbf{(D)}\ -64 \qquad \textbf{(E)}\ 0
+
+==Solution 1==
+ P(x) = (x - a)^2 - b, Q(x) = (x - c)^2 - d. Notice that  P(x) has roots  a\pm \sqrt {b}, so that the roots of  P(Q(x)) are the roots of  Q(x) = a + \sqrt {b}, a - \sqrt {b}. For each individual equation, the sum of the roots will be  2c (symmetry or Vieta's). Thus, we have  4c = - 23 - 21 - 17 - 15, or  c = - 19. Doing something similar for  Q(P(x)) gives us  a = - 54.
+We now have  P(x) = (x + 54)^2 - b, Q(x) = (x + 19)^2 - d. Since  Q is monic, the roots of  Q(x) = a + \sqrt {b} are "farther" from the axis of symmetry than the roots of  Q(x) = a - \sqrt {b}. Thus, we have  Q( - 23) = - 54 + \sqrt {b}, Q( -21) =- 54 - \sqrt {b}, or  16 - d = - 54 + \sqrt {b}, 4 - d = - 54 - \sqrt {b}. Adding these gives us  20 - 2d = - 108, or  d = 64. Plugging this into  16 - d = - 54 + \sqrt {b}, we get  b = 36.
+The minimum value of  P(x) is  - b, and the minimum value of  Q(x) is  - d. Thus, our answer is  - (b + d) = - 100, or answer  \boxed{\textbf{(A)}}.
+
+== Solution 2 (Bash) ==
+Let P(x) = x^2 + Bx + C and Q(x) = x^2 + Ex + F.
+
+Then P(Q(x)) is (x^2 + Ex + F)^2 + B(x^2 + Ex + F) + C, which simplifies to:
+
+P(Q(x)) = x^4 + 2Ex^3 + (E^2 + 2F + B)x^2 + (2EF + BE)x + (F^2 + BF + C)
+
+We can find Q(P(x)) by simply doing B\Leftrightarrow E and C \Leftrightarrow F to get:
+
+Q(P(x)) = x^4 + 2Bx^3 + (B^2 + 2C + E)x^2 + (2BC + BE)x + (C^2 + EC + F)
+
+The sum of the zeros of P(Q(x)) is -76. From Vieta, the sum is -2E. Therefore, E = 38.
+
+The sum of the zeros of Q(P(x)) is -216. From Vieta, the sum is -2B. Therefore, B = 108.
+
+Plugging in, we get:
+
+P(Q(x)) = x^4 + 76x^3 + (1552 + 2F)x^2 + (76F + 4104)x + (F^2 + 108F + C)
+Q(P(x)) = x^4 + 216x^3 + (11702 + 2C)x^2 + (216C + 4104)x + (C^2 + 38C + F)
+
+Let's tackle the x^2 coefficients, which is the sum of the six double-products possible. Since 23 \cdot (21 + 17 + 15) + 21 \cdot (17 + 15) + 17 \cdot 15 gives the sum of these six double products of the roots of P(Q(x)), we have:
+
+1552 + 2F = 23 \cdot (21 + 17 + 15) + 21 \cdot (17 + 15) + 17 \cdot 15
+
+1552 + 2F = 2146
+
+F = 297
+
+Similarly with Q(P(x)), we get:
+
+11702 + 2C = 59(57 + 51 + 49) + 57(51 + 49) + 51(49)
+
+11702 + 2C = 17462
+
+C = 2880
+
+Thus, our polynomials are P(x) = x^2 + 108x + 2880 and Q(x) = x^2 + 38x + 297.
+
+The minimum value of P(x) happens at x = -\frac{108}{2} = -54, and is 54^2 - 108 \cdot 54 + 2880 = 2880 - 54^2.
+
+The minimum value of Q(x) happens at x = -\frac{38}{2} = -19, and is 19^2 - 38 \cdot 19 + 297 = 297 - 19^2.
+
+The sum of these minimums is 2880 +297 - 54^2 - 19^2 = \boxed{-100}. -srisainandan6
+
+== Solution 3 (Mild Bash) ==
+Let P(x) = x^2 - (a+b)x + ab and Q(x) = x^2 - (c+d)x + cd. Notice that the roots of P(x) are a,b and the roots of Q(x) are c,d. Then we get:
+
+\begin{align*} P(Q(x)) &= a, b \\ x^2 - (c+d)x + cd &= a, b \end{align*}
+The two possible equations are then x^2 - (c+d)x + cd-a=0 and x^2 - (c+d)x + cd-b=0. The solutions are -23, -21, -17, -15. From Vieta's we know that the total sum 2(c+d) = -76 \implies c+d = -38 so the roots are paired -23, -15 and -21, -17. Then, cd - a = 23*15 and cd - b = 21*17.
+
+We can similarly get that ab - c = 59*49 and ab - d = 57*51, and a+b = -108. Add the first two equations to get 2cd - (a+b) = 23*15 + 21*17 \implies cd = \frac{23*15+21*17 - 108}{2} = 297. This means Q(x) = x^2 + 38x + 297.
+
+Once more, we can similarly obtain ab = \frac{59*49 + 57*51 - 38}{2} = 2880. Therefore P(x) = x^2 + 108x + 2880.
+
+Now we can find the minimums to be 19^2 - 19*38 + 297 = -64 and 54^2 - 54*108 + 2880 = -36. Summing, the answer is \boxed{\textbf{(A)} -100}.
+
+~Leonard_my_dude~
+
+== Solution 4 ==
+
+Let P(x) = (x+a)(x+b), Q(x) = (x+c)(x+d). 
+
+P(Q(x)) = (x^2 + cx + dx + cd + a)(x^2 + cx + dx + cd + b)
+
+Q(P(x)) = (x^2 + ax + bx + ab + c)(x^2 + ax + bx + ab + d)
+
+Notice how the coefficient for x has to be the same for the two quadratics that are multiplied to create P(Q(x)), and Q(P(x)).
+
+P(Q(x)) = (x+ 23)(x+ 21)(x+ 17)(x+ 15) = (x^2 + 38x + 345)(x^2 + 38x + 357)
+
+Q(P(x)) = (x+ 59)(x+ 57)(x+ 51)(x+ 49) = (x^2 + 108x + 2891)(x^2 + 108x + 2907)
+
+c + d = 38, cd + a = 345, cd + b = 357, a + b = 108, ab + c = 2891, ab + d = 2907
+
+cd = \frac{345 + 357 - 108}{2} = 297, 297 = 3^3 \cdot 11, c = 27, d = 11
+
+a = 345 - 27*11 = 48, b = 357 - 27*11 = 60
+
+P(x) = (x+48)(x+60) = x^2 + 108x + 2880 = (x+54)^2 - 36
+
+Q(x) = (x+27)(x+11) = x^2 + 38x + 297 = (x+19)^2 -64
+
+-36 -64 = \boxed{\textbf{(A) } -100}.
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+== Solution 5 ==
+
+Because P is a quadratic, then P only has two roots; however, P(Q(x)) has four roots, meaning that two of the values of Q(x) must repeat themselves. 
+
+Notice that the four roots of P(Q(x)) are symmetric around x=-19. This means that Q(x)'s graph has vertex -19; therefore, Q(-17)=Q(-21) and Q(-15)=Q(-23). Similarly, we can deduce that P(x) has vertex -54 such that P(-51)=P(-57) and P(-49)=P(-59). 
+
+If we have P(x)=x^2+bx+c, then since the vertex is -54,\text{ }b=108; similarly, we get that Q(x)=x^2+nx+m=x^2+38x+m. Since the roots of P(x) are Q(-17) and Q(-15) (or Q(-23) and Q(-21), they are all equal), by simplifying we get that the roots of P(x) are m-357 and m-345. 
+
+By Vieta's Formulas, (m-357)+(m-345)=-108, therefore m=297. Similarly, we can get c=2880. By applying the formula for minima, we get that the minimum for Q(x) is -64 and the minimum for P(x) is -36, and therefore the answer is \boxed{-100}. \square
+
+~A7456321
+
+==Video Solution by MOP 2024==
+https://youtu.be/FPhaUQoRtPs
+
+~r00tsOfUnity
+
+==See Also==
+{{AMC12 box|ab=B|year=2010|num-a=24|num-b=22}}
+
+[[Category:Intermediate Algebra Problems]]
+{{MAA Notice}}

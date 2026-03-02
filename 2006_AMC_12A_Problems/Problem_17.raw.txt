@@ -1,0 +1,86 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2006_AMC_12A_Problems/Problem_17&action=raw
+
+Published Time: Fri, 22 Aug 2025 14:34:54 GMT
+
+Markdown Content:
+== Problem ==
+Square ABCD has side length s, a circle centered at E has radius r, and r and s are both rational. The circle passes through D, and D lies on \overline{BE}. Point F lies on the circle, on the same side of \overline{BE} as A. Segment AF is tangent to the circle, and AF=\sqrt{9+5\sqrt{2}}. What is r/s?
+
+ real s = 90; real r = 50; pair e = (r/sqrt(2),r/sqrt(2)); pair f = (4.34, 74.58); draw((-s, 0) -- (-s,-s) -- (0, -s) -- (0,0) -- (-s, 0)); draw(circle(e,r)); draw((-s,0) -- f); dot(e); dot(f); label("A", (-s,0), W); label("B", (-s,-s), W); label("C", (0,-s), E); label("D", (0,0), SW); label("E", e, E); label("F", f, N); 
+
+ \mathrm{(A) \ } \frac{1}{2}\qquad \mathrm{(B) \ } \frac{5}{9}\qquad \mathrm{(C) \ } \frac{3}{5}\qquad \mathrm{(D) \ } \frac{5}{3}\qquad \mathrm{(E) \ } \frac{9}{5}
+
+== Solutions ==
+=== Solution 1 ===
+One possibility is to use the [[coordinate plane]], setting B at the origin. Point A will be (0,s) and E will be \left(s + \frac{r}{\sqrt{2}},\ s + \frac{r}{\sqrt{2}}\right) since B, D, and E are [[collinear]] and contain a diagonal of ABCD. The [[Pythagorean theorem]] results in
+
+AF^2 + EF^2 = AE^2
+
+r^2 + \left(\sqrt{9 + 5\sqrt{2}}\right)^2 = \left(\left(s + \frac{r}{\sqrt{2}}\right) - 0\right)^2 + \left(\left(s + \frac{r}{\sqrt{2}}\right) - s\right)^2
+
+r^2 + 9 + 5\sqrt{2} = s^2 + rs\sqrt{2} + \frac{r^2}{2} + \frac{r^2}{2}
+
+9 + 5\sqrt{2} = s^2 + rs\sqrt{2}
+
+This implies that rs = 5 and s^2 = 9; dividing gives us \frac{r}{s} = \frac{5}{9} \Rightarrow B.
+
+=== Solution 2 ===
+First note that angle \angle AFE is right since \overline{AF} is tangent to the circle. Using the Pythagorean Theorem on \triangle AFE, then, we see
+AE^2 = 9 + 5\sqrt{2} + r^2.
+
+But it can also be seen that \angle BDA = 45^\circ. Therefore, since D lies on \overline{BE}, \angle ADE = 135^\circ. Using the Law of Cosines on \triangle ADE, we see
+
+AE^2 = s^2 + r^2 - 2sr\cos(135^\circ)
+AE^2 = s^2 + r^2 - 2sr\left(-\frac{1}{\sqrt{2}}\right)
+AE^2 = s^2 + r^2 + \sqrt{2}sr
+9 + 5\sqrt{2} + r^2 = s^2 + r^2 + \sqrt{2}sr
+9 + 5\sqrt{2} = s^2 + \sqrt{2}sr.
+
+Thus, since r and s are rational, s^2 = 9 and sr = 5. So s = 3, r = \frac{5}{3}, and \frac{r}{s} = \frac{5}{9}.
+
+=== Solution 3 ===
+(Similar to Solution 1)
+First, draw line AE and mark a point Z that is equidistant from E and D so that \angle{DZE} = 90^\circ and that line \overline{AZ} includes point D. Since DE is equal to the radius r, DZ=EZ=\frac{r}{\sqrt2}=\frac{r\sqrt2}{2}.
+
+Note that triangles \triangle AFE and \triangle AZE share the same hypotenuse (AE), meaning that
+AZ^2+EZ^2=AF^2+EF^2
+Plugging in our values we have:
+\left(s+\frac{r\sqrt{2}}{2}\right)^2+\left(\frac{r\sqrt{2}}{2}\right)^2=\left(\sqrt{9+5\sqrt{2}}\right)^2+r^2
+s^2+sr\sqrt{2}+\frac{r^2}{2}+\frac{r^2}{2}=9+5\sqrt{2}+r^2
+s^2+sr\sqrt{2}=9+5\sqrt{2}
+By logic s=3 and sr=5 \implies r=5/3.
+
+Therefore, \frac{\frac{5}{3}}{3}=\frac{5}{9}=\boxed{B}
+
+===Solution 4 - Alcumus===
+
+Let B=(0,0), C=(s,0), A=(0,s), D=(s,s), and E=\left(s+\frac{r}{\sqrt{2}},s+\frac{r}{\sqrt{2}} \right). Apply the Pythagorean Theorem to \triangle AFE to obtain  r^2+\left(9+5\sqrt{2}\right)=\left(s+\frac{r}{\sqrt{2}}\right)^2+\left(\frac{r}{\sqrt{2}}\right)^2,  from which 9+5\sqrt{2}=s^2+rs\sqrt{2}. Because r and s are rational, it follows that s^2=9 and rs=5, so r/s = \boxed{5/9}.
+
+OR
+
+Extend \overline{AD} past D to meet the circle at G \ne D. Because E is collinear with B and D, \angle EDG = 45^\circ. Also, ED = EG, which implies \angle EGD = 45^\circ, so \triangle EDG is an isosceles right triangle. Thus DG = r\sqrt{2}. By the Power of a Point Theorem,
+\begin{align*} 9+5\sqrt{2} &= AF^2 \\ &= AD\cdot AG\\ & = AD\cdot \left(AD+DG\right) \\ &= s\left(s+r\sqrt{2}\right) \\ &= s^2+rs\sqrt{2}.\end{align*} As in the first solution, we conclude that r/s=\boxed{5/9}.
+
+===Solution 5 - Power of a Point===
+Extend \overline{AD} from D to hit \odot E at G. Let the foot of the altitude of  \triangle DEG be M.
+
+The problem states that point D is on \overline{BE}, so  \angle ADB \cong \angle EDM . As  \angle DAB \cong \angle OMD , we have \triangle DAB \cong \triangle DMO  by AA similarity. Note that \triangle ADB  is isosceles right; this implies that \triangle DMO  is as well. We have that DM = \frac{ r \sqrt{2} }{2} . As \triangle DOG  is clearly isosceles, \overline{OM}  is also a median, so DM = GM , yielding that  DG = r\sqrt{2} .
+
+From here, we consider the power of point A, observing that (AF)^2 = (AD)(AG) , or  9 + 5\sqrt{2} = s(s + r\sqrt{2} ) . Expanding, we get s^2 = 9 and sr = 5, so  s= 3, r = \frac{5}{3} , and \frac{r}{s} = \frac{ \frac{5}{3} }{3} = \frac{5}{9} .
+
+~LeonQS
+
+===Solution 6 - Answer Choices===
+
+(Last minute solution) We roughly measure the distance of r and the distance of y. Since r is clearly less than s, we can eliminate answer choices (D) and (E). Next, if we compare the distances, r seems to be just a little more than half of s, thus eliminating answer choice (A). r is only a little bit bigger than half of s, so we can reasonably assume that their ratio is less than \frac{3}{5}. That leaves us with answer choice \boxed{C} , or \frac{5}{9}.
+
+==Video Solution by SpredTheMathLove==
+https://www.youtube.com/watch?v=N0DCok2ha4M
+
+== See Also ==
+{{AMC12 box|year=2006|ab=A|num-b=16|num-a=18}}
+{{MAA Notice}}
+
+[[Category:Introductory Geometry Problems]]

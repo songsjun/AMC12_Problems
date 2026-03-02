@@ -1,0 +1,22 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2007_AMC_12B_Problems/Problem_7&action=raw
+
+Published Time: Thu, 22 Aug 2024 17:41:18 GMT
+
+Markdown Content:
+==Problem==
+All sides of the [[convex polygon|convex]] [[pentagon]] ABCDE are of equal length, and \angle A = \angle B = 90^{\circ}. What is the degree measure of \angle E? 
+
+\mathrm {(A)}\ 90 \qquad \mathrm {(B)}\ 108 \qquad \mathrm {(C)}\ 120 \qquad \mathrm {(D)}\ 144 \qquad \mathrm {(E)}\ 150
+
+==Solution==
+[[Image:2007_12B_AMC-7.png]]
+
+Since A and B are [[right angle]]s, and AE equals BC, and AECB is a [[square]]. Since the length of ED and CD are also 5, triangle CDE is [[equilateral triangle|equilateral]]. Angle E is therefore 90+60=150 \Rightarrow \mathrm {(E)}
+
+==See Also==
+{{AMC12 box|year=2007|ab=B|num-b=6|num-a=8}}
+
+[[Category:Introductory Geometry Problems]]
+{{MAA Notice}}

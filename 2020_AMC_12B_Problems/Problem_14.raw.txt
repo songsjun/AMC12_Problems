@@ -1,0 +1,60 @@
+{{duplicate|[[2020 AMC 10B Problems|2020 AMC 10B #16]] and [[2020 AMC 12B Problems|2020 AMC 12B #14]]}}
+
+==Problem==
+
+Bela and Jenn play the following game on the closed interval <math>[0, n]</math> of the real number line, where <math>n</math> is a fixed integer greater than <math>4</math>. They take turns playing, with Bela going first. At his first turn, Bela chooses any real number in the interval <math>[0, n]</math>. Thereafter, the player whose turn it is chooses a real number that is more than one unit away from all numbers previously chosen by either player. A player unable to choose such a number loses. Using optimal strategy, which player will win the game?
+
+<math>\textbf{(A)} \text{ Bela will always win.} \qquad \textbf{(B)} \text{ Jenn will always win.} \qquad \textbf{(C)} \text{ Bela will win if and only if }n \text{ is odd.} \\ \textbf{(D)} \text{ Jenn will win if and only if }n \text{ is odd.} \qquad \textbf{(E)} \text { Jenn will win if and only if } n>8.</math>
+
+==Solution 1 (Game Theory)==
+We use game theory.
+
+Notice how they say Optimal Strategy. This means that each player plays the best move in any scene.
+
+We then solve through cases.
+
+We set \( n > 4 \), \( n \) is even. Say \( n = 10 \). Then, we see that Bela could pick either 3 or 4, and then Jenn would be forced to choose either 1(2), 5, or 6. But notice how you can only make one move, and 1 and \( [5,6] \) are on opposite sides. So therefore, Bela will always win.
+
+We set \( n > 4 \), \( n \) is odd. Say \( n = 9 \). This is even easier! Bela could just choose the middle, and then again, Jenn would be forced to pick a move that Bela could just replicate and win. So, Bela will also always win.
+
+Through deduction, our answer is <math>\boxed{\textbf{(A)} \text{ Bela will always win.}}</math>
+
+<math>\textit{But that's just a theory, a game theory!}</math>
+
+~Pinotation
+
+==Solution 2 (Symmetry)==
+If Bela selects the middle number in the range <math>[0, n]</math> and then mirror whatever number Jenn selects, then if Jenn can select a number within the range, so can Bela. Jenn will always be the first person to run out of a number to choose, so the answer is <math>\boxed{\textbf{(A)} \text{ Bela will always win.}}</math>
+
+==Solution 3 (Educated Guess)==
+First of all, realize that the parity of <math>n</math> likely has no effect on the strategy, since Bela obviously wins when <math>n=1</math>, and it's not hard to find a winning strategy for <math>n=2</math> or <math>n=3</math> (start with <math>n/2</math>).  Similarly, there is no reason the strategy would change when <math>n>8.</math>
+
+So we are left with <math>\textbf{(A)}</math> and <math>\textbf{(B)}.</math> From here it is best to try out random numbers and try to find the strategy that will let Bela win, but if you can't find it, realize that it is more likely the answer is <math>\boxed{\textbf{(A)} \text{ Bela will always win}}</math> since Bela has the first move and thus has more control.
+
+==Solution 4 (Simulation)==
+We can just play the game. We can draw a number line to <math>9</math> and assume Bela and Jenn will only play the integer values. From now after playing one round of the game, Bela will win so answers <math>\textbf{(B)},\textbf{(D)},</math> and <math>\textbf{(E)}</math> are eliminated. Now we want to test if Bela will win if <math>n</math> is even so we can draw another number line this time up to <math>10</math>. Now after playing the game, we can find that Bela won yet again so the answer is <math>\boxed{\textbf{(A)} \text{ Bela will always win}}.</math>
+
+-minor edits by jjbros
+
+==Solution 5 (Answer Choices)==
+Play out <math>n=5</math> and <math>n=6</math>. In the first case, Bela can choose <math>0</math> and win, and in the second case, Bela can choose <math>1</math> and win (try it out). This rules out <math>\textbf{(B)}</math>, <math>\textbf{(C)}</math>, and <math>\textbf{(D)}</math>.
+
+Next, consider <math>\textbf{(E)}</math>. Assume for the sake of contradiction that this is true; an alternate way of stating this is that for <math>n>8</math>, the second player always wins (we ignore the "only if" statement). Thus, <math>n=9</math> is a win for the second player. Consider <math>n=11</math>. If Bela chooses <math>11</math>, then the game becomes an <math>n=9</math> case where the first player is instead Jenn. However, by the claim that the second player should win <math>n>8</math>, this game should be a win for Bela, but we have already stated that any games with <math>n>8</math> should be a win for Jenn, which is a contradiction. Thus <math>\textbf{(E)}</math> is incorrect, and so the answer is $\boxed{\textbf{(A)} \text{ Bela will always win}}
+
+~eevee9406
+
+==Video Solution (HOW TO THINK CREATIVELY!!!)==
+https://youtu.be/0mlJhyy1m4M
+
+~Education, the Study of Everything.
+
+==Video Solution by TheBeautyOfMath==
+https://youtu.be/3BvJeZU3T-M
+
+https://youtu.be/0xgTR3UEqbQ
+
+==See Also==
+
+{{AMC10 box|year=2020|ab=B|num-b=15|num-a=17}}
+{{AMC12 box|year=2020|ab=B|num-b=13|num-a=15}}
+{{MAA Notice}}

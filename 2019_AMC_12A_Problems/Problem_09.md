@@ -1,0 +1,59 @@
+# 2019 AMC 12A Problem 9
+
+> This problem is the same as [2019 AMC 10A #15](https://artofproblemsolving.com/wiki/index.php/2019_AMC_10A_Problems) and [2019 AMC 12A #9](https://artofproblemsolving.com/wiki/index.php/2019_AMC_12A_Problems).
+## Problem
+A sequence of numbers is defined recursively by $a_1 = 1, a_2=\frac{3}{7},$ and
+$a_n=\frac{a_{n-2} \cdot a_{n-1}}{2a_{n-2} - a_{n-1}}$for all n $\geq 3$ Then $a_{2019}$ can be written as $\frac{p}{q},$ where p and q are relatively prime positive integers. What is p+q ?
+
+$\textbf{(A) } 2020 \qquad\textbf{(B) } 4039 \qquad\textbf{(C) } 6057 \qquad\textbf{(D) } 6061 \qquad\textbf{(E) } 8078$
+## Solution 1 (Induction)
+Using the recursive formula, we find a_$3=\frac{3}{11},$ a_$4=\frac{3}{15},$ and so on. It appears that $a_n=\frac{3}{4n-1},$ for all n. Setting $n=2019$, we find $a_{2019}=\frac{3}{8075},$ so the answer is $\boxed{\textbf{(E) }8078}.$
+
+To prove this formula, we use induction. We are given that $a_1=1$ and a_$2=\frac{3}{7},$ which satisfy our formula. Now assume the formula holds true for all $n\le$ m for some positive integer m. By our assumption, $a_{m-1}=\frac{3}{4m-5}$ and $a_m=\frac{3}{4m-1}.$ Using the recursive formula, $a_{m+1}=\frac{a_{m-1}\cdot a_m}{2a_{m-1}-a_m}=\frac{\frac{3}{4m-5}\cdot\frac{3}{4m-1}}{2\cdot\frac{3}{4m-5}-\frac{3}{4m-1}}=\frac{\left(\frac{3}{4m-5}\cdot\frac{3}{4m-1}\right)(4m-5)(4m-1)}{\left(2\cdot\frac{3}{4m-5}-\frac{3}{4m-1}\right)(4m-5)(4m-1)}=\frac{9}{6(4m-1)-3(4m-5)}=\frac{3}{4(m+1)-1},$
+so our induction is complete.
+## Solution 2
+We have $\frac{1}{a_n} = \frac{2a_{n-2}-a_{n-1}}{a_{n-2} \cdot a_{n-1}}=\frac{2}{a_{n-1}}-\frac{1}{a_{n-2}},$ in other words, $\frac{1}{a_n}-\frac{1}{a_{n-1}} = \frac{1}{a_{n-1}}-\frac{1}{a_{n-2}}.$ So $\{\frac{1}{a_n}\}$ is an arithmetic sequence with step size $\frac{7}{3}-1=\frac{4}{3},$ which means $\frac{1}{a_{2019}} = 1+2018 \cdot \frac{4}{3} = \frac{8075}{3}.$ Since the numerator and the denominator are relatively prime, the answer is $\boxed{\textbf{(E) } 8078}.$
+
+*~eric2020 (modified by Dolphindesigner)*
+## Solution 3
+It seems reasonable to transform the equation into something else. Let $a_{n}=x, a_{n-1}$=y, and $a_{n-2}$=z. Therefore, we have $x=\frac{zy}{2z-y}$
+
+$$
+2xz-xy=zy
+2xz=y(x+z)
+y=\frac{2xz}{x+z}
+$$
+
+Thus, y is the harmonic mean of x and z. This implies $a_{n}$ is a harmonic sequence or equivalently $b_{n}=\frac{1}{a_{n}}$ is arithmetic. Now, we have $b_{1}=1, b_{2}=\frac{7}{3},b_{3}=\frac{11}{3},$ and so on. Since the common difference is $\frac{4}{3},$ we can express $b_{n}$ explicitly as $b_{n}=\frac{4}{3}(n-1)+1.$ This gives $b_{2019}=\frac{4}{3}(2019-1)+1=\frac{8075}{3}$ which implies $a_{2019}=\frac{3}{8075}=\frac{p}{q}.p+q=\boxed{\textbf{(E) } 8078}$
+*~jakeg314*
+## Solution 4 (Arithmetic Sequence)
+Notice $thata_n =\frac{1}{\frac{2}{a_{n-1}} - \frac{1}{a_{n-2}}}.$Therefore,$\frac{1}{a_n} = \frac{2}{a_{n-1}} - \frac{1}{a_{n-2}},$ \ \ $\implies$ \ \ $\frac{\frac{1}{a_n} + \frac{1}{a_{n-2}}}{2} = \frac{1}{a_{n-1}}.$Therefore, the sequence $b_n=\frac{1}{a_n}$ is an arithmetic sequence. Notice that the common difference of b is $\frac{4}{3},$ and $thereforeb_{2019}$ = $b_1 + $2018 \bigg($\frac{4}{3}$\bigg) = 1 + 2018 \bigg($\frac{4}{3}$\bigg) = $\frac{8075}{3}.$Therefore, we see that $a_{2019}=\frac{3}{8075},$ so that p + $q =\boxed{\text{(E) } 8078}.$
+
+*~Professor-Mom*
+
+Note: This is similar to solutions #2 and #3, although you can notice that in #2's case the new sequence B actually forms an arithmetic sequence.
+## Solution 5 (Characteristic Equation - Overkill but Generic)
+We have $\frac{1}{a_n} = \frac{2a_{n-2}-a_{n-1}}{a_{n-2} \cdot a_{n-1}}=\frac{2}{a_{n-1}}-\frac{1}{a_{n-2}},$
+
+let $b_n=\frac{1}{a_n}$ , then  $b_n=2b_{n-1}-b_{n-2}$
+
+, this is 2nd order linear homogeneous recurrence sequence,
+
+the characteristic equation for this is $x^2 -2x +1 = 0$, which has double root $x=1$
+
+$$so b_n = (c_1 + c_2 \cdot n) \cdot 1^n$$
+
+plug in $b_1=\frac{1}{a_1} = 1 = c_1+c_2\cdot 1,b_2 = \frac{1}{a_2}= \frac{7}{3} =c_1 +c_2\cdot 2$
+
+we solve $c_1=-\frac{1}{3}$ , c_$2=\frac{4}{3},$ so $b_n=-\frac{1}{3} + \frac{4}{3} \cdot$ n
+
+$$so   {b_{2019}} = -\frac{1}{3} + \frac{4}{3} \cdot 2019 = \frac{8075}{3}.$$
+
+$$a_{2019} = \frac{1}{b_{2019}} = \frac{3}{8075}$$
+
+Since the numerator and the denominator are relatively prime, the answer is $\boxed{\textbf{(E) } 8078}.$
+
+*note: characteristic equation is overkill for this simple one but is more generic solution for other parameter values.
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Cyantist luckuso]
+## See Also

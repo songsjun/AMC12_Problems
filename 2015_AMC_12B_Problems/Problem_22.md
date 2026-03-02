@@ -1,0 +1,69 @@
+# 2015 AMC 12B Problem 22
+
+## Problem
+Six chairs are evenly spaced around a circular table. One person is seated in each chair. Each person gets up and sits down in a chair that is not the same and is not adjacent to the chair he or she originally occupied, so that again one person is seated in each chair. In how many ways can this be done?
+
+$\textbf{(A)}\; 14 \qquad\textbf{(B)}\; 16 \qquad\textbf{(C)}\; 18 \qquad\textbf{(D)}\; 20 \qquad\textbf{(E)}\; 24$
+## Solution 1
+Consider shifting every person over three seats left after each person has gotten up and sat back down again, we are doing this because after this transformation we will only have to count the cases in which they will seated either in the same chair or an adjacent chair which will make the problem easier for us. Now, instead of each person being seated not in the same chair and not in an adjacent chair, each person will be seated either in the same chair or an adjacent chair. The problem now becomes the number of ways in which six people can sit down in a chair that is either the same chair or an adjacent chair in a circle.
+
+Consider the similar problem of n people sitting in a chair that is either the same chair or an adjacent chair in a row. Call the number of possibilities for this $F_n$. Then if the leftmost person stays put, the problem is reduced to a row of $n-1$ chairs, and if the leftmost person shifts one seat to the right, the new person sitting in the leftmost seat must be the person originally second from the left, reducing the problem to a row of $n-2$ chairs. Thus, $F_n=F_{n-1}+F_{n-2}$ for n $\geq 3.$ Clearly $F_1 = 1$ and $F_2 = 2$, so $F_3 = 3, F_4 = 5$, and $F_5 = 8$.
+
+Now consider the six people in a circle and focus on one person. If that person stays put, the problem is reduced to a row of five chairs, for which there are $F_5 = 8$ possibilities. If that person moves one seat to the left, then the person who replaces him in his original seat will either be the person originally to the right of him, which will force everyone to simply shift over one seat to the left, or the person originally to the left of him, which reduces the problem to a row of four chairs, for which there are $F_4 = 5$ possibilities, giving $1 + 5 = 6$ possibilities in all. By symmetry, if that person moves one seat to the right, there are another 6 possibilities, so we have a total of $8+6+6 =\boxed{\textbf{(D)}\; 20}$ possibilities.
+## Solution 2
+Label the people sitting at the table A, B, C, D, E, F, and assume that they are initially seated in the order ABCDEF. The possible new positions for A, B, C, D, E, and F are respectively (a dash indicates a non-allowed position):
+
+
+$$
+\begin{tabular}{| c | c | c | c | c | c |} \hline - & - & A & A & A & - \\ \hline - & - & - & B & B & B \\ \hline C & - & - & - & C & C \\ \hline D & D & - & - & - & D \\ \hline E & E & E & - & - & - \\ \hline - & F & F & F & - & - \\ \hline \end{tabular}
+$$
+
+
+The permutations we are looking for should use one letter from each column, and there should not be any repeated letters:
+
+
+$$
+\begin{tabular}{c} CDEFAB \\ CEAFBD \\ CEFABD \\ CEFBAD \\ CFEABD \\ CFEBAD \\ DEAFBC \\ DEAFCB \\ DEFABC \\ DEFACB \\ DEFBAC \\ DFEABC \\ DFEACB \\ DFEBAC \\ EDAFBC \\ EDAFCB \\ EDFABC \\ EDFACB \\ EDFBAC \\ EFABCD \end{tabular}
+$$
+
+
+There are $\boxed{\textbf{(D)}\; 20}$ such permutations.
+## Solution 3
+We can represent each rearrangement as a permutation of the six elements $\{1,2,3,4,5,6\}$ in cycle notation. Note that any such permutation cannot have a 1-cycle, so the only possible types of permutations are 2,2,2-cycles, 4,2-cycles, 3,3-cycles, and 6-cycles. We deal with each case separately.
+
+For 2,2,2-cycles, suppose that one of the 2-cycles switches the people across from each other, i.e. (14), (25), or (36). WLOG, we may assume it to be (14). Then we could either have both of the other 2-cycles be across from each other, giving the permutation (14)(25)(36) or else neither of the other 2-cycles is across from each other, in which case the only possible permutation is (14)(26)(35). This can happen for (25) and (36) as well. So since the first permutation is not counted twice, we find a total of $1+3=4$ permutations that are 2,2,2-cycles where at least one of the 2-cycles switches people diametrically opposite from each other. Otherwise, since the elements in a 2-cycle cannot differ by 1, 3, or 5 mod 6, they must differ by 2 or 4 mod 6, i.e. they must be of the same parity. But since we have three odd and three even elements, this is impossible. Hence there are exactly 4 such permutations that are 2,2,2-cycles.
+
+For 4,2-cycles, we assume for the moment that 1 is part of the 2-cycle. Then the 2-cycle can be (13), (15), or (14). The first two are essentially the same by symmetry, and we must arrange the elements 2, 4, 5, 6 into a 4-cycle. However, 5 must have two neighbors that are not next to it, which is impossible, hence the first two cases yield no permutations. If the 2-cycle is (14), then we must arrange the elements 2, 3, 5, 6 into a 4-cycle. Then 2 must have the neighbors 5 and 6. We find that the 4-cycles (2536) and (2635) satisfy the desired properties, yielding the permutations (14)(2536) and (14)(2635). This can be done for the 2-cycles (25) and (36) as well, so we find a total of 6 such permutations that are 4,2-cycles.
+
+For 3,3-cycles, note that if 1 neighbor 4, then the third element in the cycle will neighbor one of 1 and 4, so this is impossible. Therefore, the 3-cycle containing 1 must consist of elements 1, 3, and 5. Therefore, we obtain the four 3,3-cycles (135)(246), (153)(246), (135)(264), and (153)(264).
+
+For 6-cycles, note that the neighbors of 1 can be 3 and 4, 3 and 5, or 4 and 5. In the first case, we may assume that it looks like ($314\dots) --$ the form ($413\dots)$ is also possible but equivalent to this case. Then we must place the elements 2, 5, and 6. Note that 5 and 6 cannot go together, so 2 must go in between them. Also, 5 cannot neighbor 4, so we are left with one possibility, namely (314625), which has an analogous possibility (413526). In the second case, we assume that it looks like ($315\dots).$ The 2 must go next to the 5, and the 6 must go last (to neighbor the 3), so the only possibility here is (315246), with the analogous possibility (513642). In the final case, we may assume that it looks like ($415\dots).$ Then the 2 and 3 cannot go together, so the 6 must go in between them. Therefore, the only possibility is (415362), with the analogous possibility (514263). We have covered all possibilities for 6-cycles, and we have found 6 of them.
+
+Therefore, there are 4+6+4+6 = $\boxed{\textbf{(D)}\; 20}$ such permutations.
+## Solution 4
+Notice the question is not any different than counting the cases if someone either stays put or moves one seat to the left or right (as in the above solution). WLOG, say the beginning case is ABCDEF (before any transformations). Thus, we can count these cases up:
+
+Case 1: Everyone stays put.
+Then, there is only one case (ABCDEF).
+
+Case 2: Everyone moves.
+Notice that if A moves to the right to B's seat, B has either two options. B can move to the left (to A's seat) or move to the right to C's seat. If B moves to C's seat, C cannot cancel the loop by going to A's seat, since we set the restriction as each person can only move ONE seat to the left/right. The only way to finish this process would be C moving to D, D moving to E, E moving to F, and F moving to A, achieving FABCDE as a case. Of course, A can move left and the same loop would occur but in the opposite direction (BCDEFA). Thus, we achieve two cases.
+
+Case 3: The movement of seats cancel out each other.
+If A moves to B's seat, B can move to A's seat, canceling the cycle. In this case, we would look to C, where this same thing could happen (note, however, that if C moves to D's seat, D cannot move to E's seat as the loop would be unachievable; furthermore, note that C cannot move to B's seat if A is already there since that would mean A would have to move to C's seat which is restricted).
+
+We can count these cases by grouping each pair and then doing subcases:
+
+Subcase 1: AB CD and EF are grouped.
+Here we have 2*2*2 = 8 cases, but they cannot all stay put since we've already counted that possibility in Case 1, and thus there are 7 cases here.
+
+Subcase 2: BC DE and FA are grouped.
+Here again, we have 2*2*2 = 8 cases, and then subtract the overcounted case to get 7 cases.
+
+Subcase 3: There is overlap so that two people do not change.
+If A and B change seats, D and E could change seats, and this would not have been counted by the previous groupings (since its an odd parity grouping + an even parity grouping). Count this simply by listing out the cases, or notice that this just means the two people sitting three seats away not moving. There are three cases of that happening (A and D not moving, B and E not moving, and C and F not moving).
+
+Look back at all our cases. Sum them up to get $1+2+7+7+3 = 20$
+
+iron
+## See Also

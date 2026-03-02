@@ -1,0 +1,45 @@
+# 2016 AMC 12B Problem 15
+
+## Problem
+All the numbers 2, 3, 4, 5, 6, 7 are assigned to the six faces of a cube, one number to each face. For each of the eight vertices of the cube, a product of three numbers is computed, where the three numbers are the numbers assigned to the three faces that include that vertex. What is the greatest possible value of the sum of these eight products?
+
+$\textbf{(A)}\ 312 \qquad \textbf{(B)}\ 343 \qquad \textbf{(C)}\ 625 \qquad \textbf{(D)}\ 729 \qquad \textbf{(E)}\ 1680$
+## Solution 1
+First assign each face the letters a,b,c,d,e,f. The sum of the product of the faces is abc+acd+ade+aeb+fbc+fcd+fde+feb. We can factor this into (a+f)(b+d)(c+e) which is the product of the sum of each pair of opposite faces. In order to maximize (a+f)(b+c)(d+e) we use the numbers $(7+2)(6+3)(5+4) = 9^3$  or $\boxed{\textbf{(D)}\ 729 }.$
+## Solution 2
+We'll proceed from the factoring process above.
+By the AM-GM inequality,
+
+$$\frac{a_1+a_2+a_3}{3}\geq\sqrt[3]{a_1a_2a_3}$$
+
+Cubing both sides,
+
+$$\left(\frac{a_1+a_2+a_3}{3}\right)^3\geq{a_1a_2a_3}$$
+
+Let $a_1=(a+f), a_2$=(b+c), and $a_3$=(d+e). Let's substitute in these values.
+
+$$\left(\frac{a+b+c+d+e+f}{3}\right)^3\geq{(a+f)(b+c)(d+e)}$$
+
+a+b+c+d+e+f is fixed at 27.
+
+$$\left(\frac{27}{3}\right)^3\geq{(a+f)(b+c)(d+e)}$$
+
+$$\boxed{\textbf{(D)}\ 729 }\geq{(a+f)(b+c)(d+e)}$$
+## Solution 3 (really fast)
+First, we see that we want to try and maximize each vertex. Since the multiplication of each vertex is the product of three values, we want to maximize those three values. Doing so, we see that we want them to be as close as possible, giving 4.5^3 (the average of all the values). This gives us the maximum for each vertex, multiplied by the 8 vertices, yields our answer $\boxed{\textbf{(D)}\ 729 }$ Also note that if you cannot evaluate $4.5^3$ quickly, a rough approximation of 5*4.5*4*8 will yield 720, very close to our answer. -rayprati
+
+Note about note above: $4.5=\frac{9}{2}.$ So, we want to evaluate ($\frac{9}{2})^3 \cdot 8 = \frac{729}{8} \cdot 8 = 729.$ So, it’s quite easy to evaluate ~solasky
+## Solution 4
+It is obvious to put 5, 6, and 7 on the faces that share the same vertex. As 4 is the next biggest number, the face with 4 has to be next to the faces with 6 and 7. As 4 is the next biggest number, the face with 3 has to be next to the faces with 5 and 7. making the face with 2 next to the faces with 6 and 5.
+
+Therefore the answer is 7 $\cdot 5 \cdot 6 + 7 \cdot 4 \cdot 6 + 7 \cdot 3 \cdot 5 + 7 \cdot 3 \cdot 4 + 2 \cdot 5 \cdot 6 + 2 \cdot 4 \cdot 6 + 2 \cdot 3 \cdot 5 + 2 \cdot 3 \cdot 4 = \boxed{\textbf{(D)}\ 729 }$
+
+Note: 1680 is impossible to achieve as it requires 210 = 7 $\cdot 6 \cdot 5$ for each vertex.
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+## Video Solution by CanadaMath (Problem 11-20)
+Fast Forward to 17:19 for problem 15
+https://www.youtube.com/watch?v=4osvFatUv1o
+
+*~THEMATHCANADIAN*
+## See Also

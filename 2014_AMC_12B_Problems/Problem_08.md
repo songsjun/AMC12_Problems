@@ -1,0 +1,39 @@
+# 2014 AMC 12B Problem 8
+
+## Problem
+In the addition shown below  A ,  B ,  C , and  D  are distinct digits. How many different values are possible for  D ?
+
+
+$$
+\begin{tabular}{cccccc}&A&B&B&C&B\\ +&B&C&A&D&A\\ \hline &D&B&D&D&D\end{tabular}
+$$
+
+
+$\textbf{(A)}\ 2\qquad\textbf{(B)}\ 4\qquad\textbf{(C)}\ 7\qquad\textbf{(D)}\ 8\qquad\textbf{(E)}\ 9$
+## Solution
+From the first column, we see A+B < 10 because it yields a single digit answer.  From the fourth column, we see that C+D equals D and therefore C = 0.  We know that A+B = D.  Therefore, the number of values D can take is equal to the number of possible sums less than 10 that can be formed by adding two distinct natural numbers.  Letting A=1, and letting B=2,3,4,5,6,7,8, we have
+$$D = 3,4,5,6,7,8,9 \implies \boxed{\textbf{(C)}\ 7}$$
+## Solution (Equation Algorithm)
+It is intuitively obvious, even to the most casual observer that the problem statement can be rewritten as:
+
+10^4A + 10^4B + 10^3B + 10^3C + 10^2B + 10^2A + 10C + 10D + B + A = 10^4D + 10^3B + 10^2D + 10D + D. This equation can be simplified into:
+
+$$10^4A + 10^4B + 10^3C + 10^2B + 10^2A + 10C + B + A = 10^4D + 10^2D + D.$$
+
+Now from here, it should hopefully make sense that A + B = D by looking at the one's digit of both equations. Factoring out A + B gives:
+
+$$10^4(A+B) + 10^3C + 10^2(A+B) + 10C + (B + A) = 10^4D + 10^2D + D.$$
+
+Which equals:
+$$10^4(D) + 10^3C + 10^2(D) + 10C + D = 10^4D + 10^2D + D.$$
+
+This simplifies into:
+$$10^3C + 10C = 0.$$
+
+Therefore C = 0.
+
+This means that A + B = D and D < 10 or else there would be parts carried over in the equation. The positive integers that satisfy this equation are a minimum (2, 1) and a maximum of (4, 5). This means that D = 3 , 4 , 5 , 6 , 7 , 8 , 9. Giving
+$$\boxed{\textbf{(C)}\ 7}$$
+
+*~PeterDoesPhysics*
+## See also

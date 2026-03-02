@@ -1,0 +1,250 @@
+{{duplicate|[[2022 AMC 10B Problems/Problem 17|2022 AMC 10B #17]] and [[2022 AMC 12B Problems/Problem 15|2022 AMC 12B #15]]}}
+
+==Problem==
+
+One of the following numbers is not divisible by any prime number less than <imath>10.</imath> Which is it?
+
+<imath>\textbf{(A) } 2^{606}-1 \qquad\textbf{(B) } 2^{606}+1 \qquad\textbf{(C) } 2^{607}-1 \qquad\textbf{(D) } 2^{607}+1\qquad\textbf{(E) } 2^{607}+3^{607}</imath>
+
+==Solution 1 (Modular Arithmetic)==
+
+For <imath>\textbf{(A)}</imath> modulo <imath>3,</imath>
+<cmath>
+\begin{align*}
+2^{606} - 1 & \equiv (-1)^{606} - 1 \\
+& \equiv 1 - 1 \\
+& \equiv 0 .
+\end{align*}
+</cmath>
+Thus, <imath>2^{606} - 1</imath> is divisible by <imath>3.</imath>
+
+For <imath>\textbf{(B)}</imath> modulo <imath>5,</imath>
+<cmath>
+\begin{align*}
+2^{606} + 1 & \equiv 2^{{\rm Rem} ( 606, \phi(5) )} + 1 \\
+& \equiv 2^{{\rm Rem} ( 606, 4 )} + 1 \\
+& \equiv 2^2 + 1 \\
+& \equiv 0 .
+\end{align*}
+</cmath>
+Thus, <imath>2^{606} + 1</imath> is divisible by <imath>5.</imath>
+
+For <imath>\textbf{(D)}</imath> modulo <imath>3,</imath>
+<cmath>
+\begin{align*}
+2^{607} + 1 & \equiv (-1)^{607} + 1 \\
+& \equiv - 1 + 1 \\
+& \equiv 0 .
+\end{align*}
+</cmath>
+Thus, <imath>2^{607} + 1</imath> is divisible by <imath>3.</imath>
+
+For <imath>\textbf{(E)}</imath> modulo <imath>5,</imath>
+<cmath>
+\begin{align*}
+2^{607} + 3^{607}
+& \equiv 2^{607} + (-2)^{607} \\
+& \equiv 2^{607} - 2^{607} \\
+& \equiv 0 .
+\end{align*}
+</cmath>
+Thus, <imath>2^{607} + 3^{607}</imath> is divisible by <imath>5.</imath>
+
+Therefore, the answer is <imath>\boxed{\textbf{(C) }2^{607} - 1}.</imath>
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+~MrThinker (LaTeX Error)
+
+==Solution 2 (Factoring)==
+We have
+<cmath>\begin{alignat*}{8}
+2^{606}-1 &= 4^{303}-1 &&= (4-1)(4^{302}+4^{301}+4^{300}+\cdots+4^0), \\ 
+2^{606}+1 &= 4^{303}+1 &&= (4+1)(4^{302}-4^{301}+4^{300}-\cdots+4^0), \\ 
+2^{607}+1 & &&= (2+1)(2^{606}-2^{605}+2^{604}-\cdots+2^0), \\
+2^{607}+3^{607} & &&= (2+3)(2^{606}\cdot3^0-2^{605}\cdot3^1+2^{604}\cdot3^2-\cdots+2^0\cdot3^{606}).
+\end{alignat*}</cmath>
+We conclude that <imath>\textbf{(A)}</imath> is divisible by <imath>3</imath>, <imath>\textbf{(B)}</imath> is divisible by <imath>5</imath>,<imath>\textbf{(D)}</imath> is divisible by <imath>3</imath>, and <imath>\textbf{(E)}</imath> is divisible by <imath>5</imath>.
+
+Since all of the other choices have been eliminated, we are left with <imath>\boxed{\textbf{(C) } 2^{607}-1}</imath>.
+
+~not_slay
+
+==Solution 3 (Elimination)==
+Mersenne Primes are primes of the form <imath>2^n-1</imath>, where <imath>n</imath> is prime. Using the process of elimination, we can eliminate every option except for <imath>\textbf{(A)}</imath> and <imath>\textbf{(C)}</imath>. Clearly, <imath>606</imath> isn't prime, so the answer must be <imath>\boxed{\textbf{(C) }2^{607}-1}</imath>.
+
+Note: A organization of computer scientist and mathematicians named Great Internet Mersenne Prime Search (GIMPS) search for the worlds biggest prime numbers. More information can be found on https://www.mersenne.org/primes/
+~hashbrown2009
+
+==Solution 3a (Elimination)==
+
+We examine option E first. <imath>2^{607}</imath> has a units digit of <imath>8</imath> (Taking the units digit of the first few powers of two gives a pattern of <imath>2, 4, 8, 6, 2, 4, 8, 6, 2, 4, 8, 6,\cdots</imath>) and <imath>3^{607}</imath> has a units digit of <imath>7</imath> (Taking the units digit of the first few powers of three gives a pattern of <imath>3, 9, 7, 1, 3, 9, 7, 1, 3, 9, 7, 1,\cdots</imath>). Adding <imath>7</imath> and <imath>8</imath> together, we get <imath>15</imath>, which is a multiple of <imath>5</imath>, meaning that <imath>2^{607}+3^{607}</imath> is divisible by 5.
+
+Next, we examine option D. We take the first few powers of <imath>2</imath> added with <imath>1</imath>:
+<cmath>2^1+1=3</cmath>
+<cmath>2^2+1=5</cmath>
+<cmath>2^3+1=9</cmath>
+<cmath>2^4+1=17</cmath>
+<cmath>2^5+1=33</cmath>
+<cmath>2^6+1=65</cmath>
+<cmath>2^7+1=129</cmath>
+
+We see that the odd powers of <imath>2</imath> added with 1 are multiples of three. If we continue this pattern, <imath>2^{607}+1</imath> will be divisible by <imath>3</imath>. (The reason why this pattern works: When you multiply <imath>2 \equiv2\pmod{3}</imath> by <imath>2</imath>, you obtain <imath>4 \equiv1 \pmod{3}</imath>. Multiplying by <imath>2</imath> again, we get <imath>1\cdot2\equiv2 \pmod{3}</imath>. We see that in every cycle of two powers of <imath>2</imath>, it goes from <imath>2 \pmod{3}</imath> to <imath>1 \pmod{3}</imath> and back to <imath>2 \pmod{3}</imath>.)
+
+Next, we examine option B. We see that <imath>2^{606}</imath> has a units of digits of <imath>4</imath> (Taking the units digit of the first few powers of two gives a pattern of <imath>2, 4, 8, 6, 2, 4, 8, 6, 2, 4, 8, 6,\cdots</imath>). Adding <imath>1</imath> to <imath>4</imath>, we get <imath>5</imath>. Since <imath>2^{606}+1</imath> has a units digit of <imath>5</imath>, it is divisible by <imath>5</imath>.
+
+Lastly, we examine option A. Using the difference of cubes factorization <imath>a^3-b^3=(a-b)(a^2+ab+b^2)</imath>, we have <imath>2^{606}-1^3=(2^{202}-1)(2^{404}+2^{202}+1)</imath>. Since <imath>2^{404}+2^{202}+1\equiv0\pmod{3}</imath> (Every term in the sequence is equivalent to <imath>1\pmod{3}</imath>), <imath>2^{606}-1</imath> is divisible by <imath>3</imath>.
+
+Since we have eliminated every option except C, <imath>\boxed{\text{(C)} \hspace{0.1 in}2^{607}-1}</imath> is not divisible by any prime less than <imath>10</imath>.
+
+~arjken (+ minor LaTeX edits ~TaeKim)
+
+==Solution 3b (Elimination + Number Theory)== 
+
+We know that the prime numbers less than 10 are <imath>2,3,5</imath> and <imath>7</imath>. We can start by testing if any of the answer choices are divisible by <imath>2</imath>. We see that they are all sums of one even number and one odd number, which is simply odd. So, we cannot exclude any answer choices so far. Now, let's check divisibility by <imath>3</imath>. We can use the fact that <imath>2 \equiv -1 \pmod{3}</imath> to our advantage: 
+
+
+
+<imath>(\text{A})\hspace{0.1in} 2^{606}-1</imath>
+<imath> \equiv (-1)^{606} -1 </imath>
+<imath>\equiv 1-1</imath> 
+<imath>\equiv 0 \pmod{3}</imath> 
+
+
+<imath>(\text{B}) \hspace{0.1in} 2^{606}+1</imath>
+<imath> \equiv (-1)^{606} +1</imath>
+<imath>\equiv 1+1</imath>
+<imath>\equiv 2 \pmod{3}</imath>
+
+
+<imath>(\text{C})\hspace{0.1in} 2^{607}-1</imath>
+<imath>\equiv (-1)^{607} -1</imath>
+<imath>\equiv -1 - 1</imath>
+<imath>\equiv -2 \pmod{3}</imath> 
+
+
+<imath>(\text{D})\hspace{0.1in} 2^{607} +1 \equiv (-1)^{607} +1 \equiv -1+1 \equiv 0 \pmod{3}</imath> 
+
+
+<imath>(\text{E}) \hspace{0.1in}  2^{607} + 3^{607} \equiv 2^{607} \equiv (-1)^{607} \equiv -1 \pmod{3}</imath>
+
+
+So, we eliminate choices A and D from divisibility by 3. Now, we move onto divisibility by 5. We can use cycling of powers to find useful remainders. Let's start with choice <imath>B</imath>. 
+
+
+
+<imath>(\text{B}) \hspace{0.1in} 2^{606}+1</imath> 
+
+
+
+We see that the remainders of powers of <imath>2</imath> when divided by <imath>5</imath> cycle in a pattern: <imath>2,4,3,1,2,4,3,1 \dots</imath>. Since the pattern cycles every 4 terms, we use modulo 4 to simplify 606, getting that <imath>606 \equiv 2\pmod{4}</imath>. So, we get that <imath>2^{606}</imath> is congruent modulo 5 to the second term of our pattern, so <imath>2^{606} \equiv{4} \pmod{5}</imath>. Thus, <imath> 2^{606}+1 \equiv 4+1 \equiv 5\equiv 0\pmod{5}</imath>. We now eliminate choice B and compare choices C and E.  
+
+
+<imath>(\text{E}) \hspace{0.1in} 2^{607} + 3^{607}</imath> 
+
+
+
+
+Looking at choice E, we see that we have to do similar cycling for powers of <imath>3</imath>. We get a pattern of <imath>3,4,2,1,3,4,2,1 \dots</imath>. Since this pattern also cycles every 4 terms, we use modulo 4 to simplify 607, getting that <imath>607 \equiv 3\pmod{4}</imath>. Both the power of 3 and the power of 2 have an exponent of 607, so we use the third term (since we just found that <imath>607 \equiv 3\pmod{4}</imath>) in each corresponding 4 term pattern to get that <imath>2^{607} + 3^{607} \equiv 3+2 \equiv 5 \equiv 0\pmod{5}</imath>. We eliminate choice E, and we are left with the correct answer: choice <imath>\boxed{(\text{C}) \hspace{0.1in} 2^{607}-1}</imath>
+
+
+~TaeKim
+
+==Solution 4 (modulo 15 elimination)==
+We proceed by taking the solutions modulo <imath>15</imath>, allowing us to eliminate both multiples of <imath>3</imath> and multiples of <imath>5</imath>.
+
+First, we must identify cycles of powers of 2 modulo 15.
+<imath>
+2^0 \equiv 1, \quad 2^1 \equiv 2, \quad 2^2 \equiv 4, \quad 2^3 \equiv 8, \quad 2^4 \equiv 1 \pmod{15}.
+</imath>
+Thus, the pattern repeats every <imath>4</imath> powers:
+<imath>
+2^n \equiv
+\begin{cases}
+1 &\text{if } n \equiv 0 \pmod{4},\\
+2 &\text{if } n \equiv 1 \pmod{4},\\
+4 &\text{if } n \equiv 2 \pmod{4},\\
+8 &\text{if } n \equiv 3 \pmod{4}.
+\end{cases}
+</imath>
+
+Since <imath>606 \equiv 2 \pmod{4}</imath> and <imath>607 \equiv 3 \pmod{4}</imath>,
+<imath>
+2^{606} \equiv 4 \pmod{15}, \qquad 2^{607} \equiv 8 \pmod{15}.
+</imath>
+
+Now let's look at cycles of powers of 3 mod 15.
+<imath>
+3^0 \equiv 1, \quad 3^1 \equiv 3, \quad 3^2 \equiv 9, \quad 3^3 \equiv 12, \quad 3^4 \equiv 6, \quad 3^5 \equiv 3 \pmod{15}.
+</imath>
+The cycle from here repeats every <imath>4</imath> terms for <imath>n \ge 1</imath>:
+<imath>
+3^n \equiv
+\begin{cases}
+6 &\text{if } n \equiv 0 \pmod{4},\\
+3 &\text{if } n \equiv 1 \pmod{4},\\
+9 &\text{if } n \equiv 2 \pmod{4},\\
+12 &\text{if } n \equiv 3 \pmod{4}.
+\end{cases}
+</imath>
+
+Since <imath>607 \equiv 3 \pmod{4}</imath>,
+<imath>3^{607} \equiv 12 \pmod{15}</imath>.
+
+We then evaluate each option modulo 15.
+
+\begin{aligned}
+\textbf{(A)} &:\; 2^{606}-1 \equiv 4-1 \equiv 3 \pmod{15},\\[6pt]
+\textbf{(B)} &:\; 2^{606}+1 \equiv 4+1 \equiv 5 \pmod{15},\\[6pt]
+\textbf{(C)} &:\; 2^{607}-1 \equiv 8-1 \equiv 7 \pmod{15},\\[6pt]
+\textbf{(D)} &:\; 2^{607}+1 \equiv 8+1 \equiv 9 \pmod{15},\\[6pt]
+\textbf{(E)} &:\; 2^{607}+3^{607} \equiv 8+12 \equiv 20 \equiv 5 \pmod{15}.
+\end{aligned}
+
+The residues divisible by <imath>3</imath> or <imath>5</imath> modulo <imath>15</imath> are 0, 3, 5, 6, 9, 10, 12.
+Among our results, only <imath>7</imath> (from option <imath>\boxed{(\text{C})}</imath>) is not among these, eliminating all the other answer choices.
+
+
+<imath>\boxed{(\text{C}) \hspace{0.1in} 2^{607}-1}</imath> is the number not divisible by any prime less than <imath>10</imath>. \\
+~Loquacious_Autodidact
+
+==Solution 5 (Extremely Illegal Cheese)==
+
+All of the other solutions are extremely long, but this is how to cheese it using some methods that MIGHT be unreliable:
+First, turn 606 to 0 and 607 to 1. Next, Calculate each value, giving you <imath>A=0 B=2 C=1 D=3 E=5</imath>. Now since 2, 3, and 5 are prime, they can be divided by a prime(themselves). 0 doesn't really have multiples, so you can literally ignore it, and since 1 is only divisible by 1, which isnt prime, you get the correct answer, <imath>\boxed{(\text{C})}</imath>.
+
+~SIGMAMATHEMATICIAN
+
+==Video Solution by mop 2024==
+https://youtu.be/ezGvZgBLe8k&t=577s
+
+~r00tsOfUnity
+
+==Video Solution==
+
+https://youtu.be/YF3HPVcVGZk
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+== Video Solution by OmegaLearn Using Digit Cycles ==
+https://youtu.be/k4eLhi9wXO8
+
+~ pi_is_3.14
+
+==Video Solution(1-16)==
+https://youtu.be/SCwQ9jUfr0g
+
+~~Hayabusa1
+==Video Solution by Interstigation==
+https://youtu.be/NSGUJJYD8KA
+
+~Interstigation
+
+==Video Solution by TheBeautyofMath==
+https://youtu.be/UQWqjI4G1hc
+
+~IceMatrix
+== See Also ==
+{{AMC10 box|year=2022|ab=B|num-b=16|num-a=18}}
+{{AMC12 box|year=2022|ab=B|num-b=14|num-a=16}}
+{{MAA Notice}}

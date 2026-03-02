@@ -1,0 +1,223 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2023_AMC_12B_Problems/Problem_23&action=raw
+
+Published Time: Thu, 26 Jun 2025 05:36:58 GMT
+
+Markdown Content:
+==Problem==
+When n standard six-sided dice are rolled, the product of the numbers rolled can be any of 936 possible values. What is n?
+
+\textbf{(A)}~11\qquad\textbf{(B)}~6\qquad\textbf{(C)}~8\qquad\textbf{(D)}~10\qquad\textbf{(E)}~9
+
+==Solution 1==
+
+We start by trying to prove a function of n, and then we can apply the function and equate it to 936 to find the value of n.
+
+It is helpful to think of this problem in the format (1+2+3+4+5+6) \cdot (1+2+3+4+5+6) \dots. Note that if we represent the scenario in this manner, we can think of picking a 1 for one factor and then a 5 for another factor to form their product - this is similar thinking to when we have the factorized form of a polynomial. Unfortunately this is not quite accurate to the problem because we can reach the same product in many ways: for example for n=2, 4 can be reached by picking 1 and 4 or 2 and 2. However, this form gives us insights that will be useful later in the problem.
+
+Note that there are only 3 primes in the set \{1,2,3,4,5,6\}: 2,3, and 5. Thus if we're forming the product of possible values of a dice roll, the product has to be written in the form 2^h \cdot 3^i \cdot 5^j (the choice of variables will become clear later), for integer nonnegative values h,i,j. So now the problem boils down to how many distinct triplets (h,i,j) can be formed by taking the product of n dice values. 
+
+We start our work on representing j: the powers of 5, because it is the simplest in this scenario because there is only one factor of 5 in the set. Because of this, having j fives in our prime factorization of the product is equivalent to picking j factors from the polynomial (1+\dots + 6) \cdots and choosing each factor to be a 5. Now that we've selected j factors, there are n-j factors remaining to choose our powers of 3 and 2. 
+
+Suppose our prime factorization of this product contains i powers of 3. These powers of 3 can either come from a 3 factor or a 6 factor, but since both 3 and 6 contain only one power of 3, this means that a product with i powers of 3 corresponds directly to picking i factors from the polynomial, each of which is either 3 or 6 (but this distinction doesn't matter when we consider only the powers of 3. 
+
+Now we can reframe the problem again. Our method will be as follows: Suppose we choose an arbitrary pair (i,j) that match the requirements, corresponding to the number of 3's and the number of 5's our product will have. Then how many different h values for the powers of 2 are possible?
+
+In the i+j factors we have already chosen, we obviously can't have any factors of 2 in the j factors with 5. However, we can have a factor of 2 pairing with factors of 3, if we choose a 6. The maximal possible power of 2 in these i factors is thus 2^i, which occurs when we pick every factor to be 6. 
+
+We now have n-i-j factors remaining, and we want to allocate these to solely powers of 2. For each of these factors, we can choose either a 1,2, or 4. Therefore the maximal power of 2 achieved in these factors is when we pick 4 for all of them, which is equivalent to 2^{2\cdot (n-i-j)}.
+
+Now if we multiply this across the total n factors (or n dice) we have a total of 2^{2n-2i-2j} \cdot 2^i = 2^{2n-i-2j}, which is the maximal power of 2 attainable in the product for a pair (i,j). Now note that every power of 2 below this power is attainable: we can simply just take away a power of 2 from an existing factor by dividing by 2. Therefore the powers of 2, and thus the h value ranges from h=0 to h=2n-i-2j, so there are a total of 2n+1-i-2j distinct values for h for a given pair (i,j). 
+
+Now to find the total number of distinct triplets, we must sum this across all possible is and js. Lets take note of our restrictions on i,j: the only restriction is that i+j \leq n, since we're picking factors from n dice.
+
+ \sum_{i+j\leq n}^{} 2n+1-i-2j = \sum_{i+j \leq n}^{} 2n+1 - \sum_{i+j \leq n}^{} i+2j
+
+We start by calculating the first term. 2n+1 is constant, so we just need to find out how many pairs there are such that i+j \leq n. Set i to 0: j can range from 0 to n, then set i to 1: j can range from 0 to n-1, etc. The total number of pairs is thus n+1+n+n-1+\dots+1 = \frac{(n+1)(n+2)}{2}. Therefore the left summation evaluates to \frac{(2n+1)(n+1)(n+2)}{2}
+
+Now we calculate \sum_{i+j \leq n}^{} i+2j. This simplifies to \sum_{i+j \leq n}^{} i + 2 \cdot \sum_{i+j \leq n}^{} j. Note that because i+j = n is symmetric with respect to i,j, the sum of i in all of the pairs will be equal to the sum of j in all of the pairs. Thus this is equal to calculating 3 \cdot \sum_{i+j \leq n}^{} i.
+
+In the pairs, i=1 appears for j ranging between 0 and n-1 so the sum here is 1 \cdot (n). Similarly i=2 appears for j ranging from 0 to n-2, so the sum is 2 \cdot (n-1). If we continue the pattern, the sum overall is (n)+2 \cdot (n-1) + 3 \cdot (n-2) + \dots + (n) \cdot 1. We can rearrange this as ((n)+(n-1)+ \dots + 1) + ((n-1)+(n-2)+ \dots + 1)+ ((n-2)+(n-3)+ \dots + 1) + \dots + 1)
+
+ = \frac{(n)(n+1)}{2} + \frac{(n-1)(n)}{2}+ \dots + 1
+
+We can write this in easier terms as \sum_{k=0}^{n} \frac{(k)(k+1)}{2} = \frac{1}{2} \cdot \sum_{k=0}^{n} k^2+k
+=\frac{1}{2} \cdot( \sum_{k=0}^{n} k^2 + \sum_{k=0}^{n} k)
+= \frac{1}{2} \cdot ( \frac{(n)(n+1)(2n+1)}{6} + \frac{(n)(n+1)}{2})
+= \frac{1}{2} \cdot ( \frac{(n)(n+1)(2n+1)}{6} + \frac{3n(n+1)}{6}) = \frac{1}{2} \cdot \frac{n(n+1)(2n+4)}{6}
+ = \frac{n(n+1)(n+2)}{6}
+
+We multiply this by 3 to obtain that \sum_{i+j \leq n}^{} i+2j = \frac{n(n+1)(n+2)}{2}
+
+Thus our final answer for the number of distinct triplets (h,i,j) is:
+\sum_{i+j\leq n}^{} 2n+1-i-2j = \frac{(2n+1)(n+1)(n+2)}{2} - \frac{n(n+1)(n+2)}{2}
+ = \frac{(n+1)(n+2)}{2} \cdot (2n+1-n) = \frac{(n+1)(n+2)}{2} \cdot (n+1)
+ = \frac{(n+1)^2(n+2)}{2}
+
+Now most of the work is done. We set this equal to 936 and prime factorize. 936 = 12 \cdot 78 = 2^3 \cdot 3^2 \cdot 13, so (n+1)^2(n+2) = 936 \cdot 2 = 2^4 \cdot 3^2 \cdot 13. Clearly 13 cannot be anything squared and 2^4 \cdot 3^2 is a perfect square, so n+2 = 13 and n = 11 = \boxed{A}
+
+~KingRavi
+
+==Solution 2==
+
+The product can be written as 
+ \begin{align*} 2^a 3^b 4^c 5^d 6^e & = 2^{a + 2c + e} 3^{b + e} 5^d . \end{align*} 
+
+Therefore, we need to find the number of ordered tuples \left( a + 2c + e, b+e, d \right) where a, b, c, d, e are non-negative integers satisfying a+b+c+d+e \leq n.
+We denote this number as f(n).
+
+Denote by g \left( k \right) the number of ordered tuples \left( a + 2c + e, b+e \right) where \left( a, b, c, e \right) \in \Delta_k with \Delta_k \triangleq \left\{ (a,b,c,e) \in \Bbb Z_+^4: a+b+c+e \leq k \right\}.
+
+Thus,
+ \begin{align*} f \left( n \right) & = \sum_{d = 0}^n g \left( n - d \right) \\ & = \sum_{k = 0}^n g \left( k \right) . \end{align*} 
+
+Next, we compute g \left( k \right).
+
+Denote i = b + e. Thus, for each given i, the range of a + 2c + e is from 0 to 2 k - i.
+Thus, the number of \left( a + 2c + e, b + e \right) is
+ \begin{align*} g \left( k \right) & = \sum_{i=0}^k \left( 2 k - i + 1 \right) \\ & = \frac{1}{2} \left( k + 1 \right) \left( 3 k + 2 \right) . \end{align*} 
+
+Therefore, 
+ \begin{align*} f \left( n \right) & = \sum_{k = 0}^n g \left( k \right) \\ & = \sum_{k=0}^n \frac{1}{2} \left( k + 1 \right) \left( 3 k + 2 \right) \\ & = \frac{3}{2} \sum_{k=0}^n \left( k + 1 \right)^2 - \frac{1}{2} \sum_{k=0}^n \left( k + 1 \right) \\ & = \frac{3}{2} \cdot \frac{1}{6} \left( n+1 \right) \left( n+2 \right) \left( 2n + 3 \right) - \frac{1}{2} \cdot \frac{1}{2} \left( n + 1 \right) \left( n + 2 \right) \\ & = \frac{1}{2} \left( n + 1 \right)^2 \left( n + 2 \right) . \end{align*} 
+
+By solving f \left( n \right) = 936, we get n = \boxed{\textbf{(A) 11}}.
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+==Solution 3 (Cheese)==
+
+The product can be written as
+ \begin{align*} 2^x 3^y 5^z \end{align*} 
+
+Letting n=1, we get (x,y,z)=(0,0,0),(0,0,1),(0,1,0),(1,0,0),(1,1,0),(2,0,0), 6 possible values. But if the only restriction of the product if that 2x\le n,y\le n,z\le n, we can get (2+1)(1+1)(1+1)=12 possible values. We calculate the ratio
+r = \frac{\text{possible values of real situation}}{\text{possible values of ideal situation}} = \frac{6}{12}=0.5.
+
+Letting n=2, we get (x,y,z)=(0,0,0),(0,0,1),(0,0,2),(0,1,0),(0,1,1),(1,0,0),(1,0,1),(1,1,0),(1,1,1),(1,2,0),
+
+(2,0,0),(2,0,1),(2,1,0),(2,2,0),(3,0,0),(3,1,0),(4,0,0), 17 possible values.
+The number of possibilities in the ideal situation is 5*3*3=45, making r = 17/45 \approx 0.378.
+
+Now we can predict the trend of r: as n increases, r decreases.
+Letting
+n=3, you get possible values of ideal situation=7*4*4=112.
+n=4, the number=9*5*5=225.
+
+n=5, the number=11*6*6=396.
+
+n=6, the number=13*7*7=637,637<936 so 6 is not the answer.
+
+n=7, the number=15*8*8=960.
+
+n=8, the number=17*9*9=1377,but 1377*0.378≈521 still much smaller than 936.
+
+n=9, the number=19*10*10=1900,but 1900*0.378≈718 still smaller than 936.
+
+n=10, the number=21*11*11=2541, 2541*0.378≈960 is a little bigger 936, but the quotient of (possible values of real situation)/(possible values of ideal situation) is much smaller than 0.378 now, so 10 is probably not the answer,so the answer is \boxed{\textbf{(A) 11}}.
+
+Check calculation:
+n=11,the number=23*12*12=3312,3312*0.378≈1252 is much bigger than 936.
+
+~Troublemaker
+
+==Solution 4 (Easy computation)==
+
+The key observation is if P=2^a\cdot 3^b \cdot 5^c, then given b and c, a can take any value from 0 to b+2d where d=n-b-c is the number of rolls which is neither divisible by 3 nor 5. We are left to calculate
+ \sum_{b+c\leq n} (b+2d+1)=\sum_{b+c+d=n} (b+2d+1). 
+By symmetry,  \sum_{b+c+d=n} d = \sum_{b+c+d=n} c. Therefore,
+ \sum_{b+c\leq n}(b+2d+1)=\sum_{b+c\leq n}(b+c+d+1)=\sum_{b+c\leq n}(n+1)=(n+1)\binom{n+2}{2}. 
+
+The rest is the same as above.
+
+~asops
+
+==Solution 5 ("normalize" the product) by FireSirius==
+
+The difficulty is that a product can be formed by different combinations of 1,2,...,n. So the key thought of this solution is to set a "normalized" combination for each product.
+
+P=1^{k_1}\cdot 2^{k_2} \cdot 3^{k_3}\cdot 4^{k_4}\cdot 5^{k_5} \cdot 6^{k_6}, with k_1+k_2+...+k_6=n.
+
+For a fixed number of dice, it is easy to see that there are three basic "transformation": 1*6 = 2*3, 1*4 = 2*2, and 2*6 = 3*4, which does not change the number of dice. Other transformation like 1*6*6=3*3*4 can be viewed as a 1*6=2*3 combined with a 2*6=3*4. 
+
+So we can transform any given combination into a "normallised" combination in this way: step 1, if there are 1 and 6, then transorm them into 2*3; step 2, if there are both 1 and 4, then transform them into a 2*2; step3: if there are both 2 and 6, then transform them into 3*4. Until no more basic transformation can be made.
+
+Now begin casework with k_1:
+
+case 1(k_1 <= k_6): all "1"s cancel with "6"s, so the product contains only 2,3,4,5,6. And now:
+
+If "2"s are no more than remaining "6"s: all "2"s cancel with "6"s, so the "nomarlized" product consists of only "3456", with the total number of dice unchanged. No transformation can be made now and it is the same with n stars and 3 bars, so there are C^3_{n+3} ways. 
+
+If "2"s are no less than remaining "6"s: all "6" cancels with "2", so the product consist of only "2345". Again, there are C^3_{n+3} ways.
+
+case 2(k_1>=k_6): all "6" cancels with "1", the remaining numbers are: 1,2,3,4,5; now if "1"s are no less than "4"s, then it can be transformed into product with only "1235"; there are, again, C^3_{n+3} ways. if "1"s are no more than "4", then it is product with only 2,3,4,5, which is already counted before.
+
+So there are three major cases:  "2345", "3456" and "1235", each with C^3_{n+3} ways. There are overlaps: 3^{k_3} 4^{k_4} 5^{k_5}, which has C^2_{n+2} ways, are counted in both "2345" and "3456", and 2^{k_2} 3^{k_3} 5^{k_5}  are counted in both "2345" and "1235".
+
+So, the final number is: 
+ 3C^3_{n+3}-2C^2_{n+2}=\frac{(n+1)^2 (n+2)}{2}, 
+and now any possible product is counted exactly once. And then it is easily to find out n = \boxed{\textbf{(A) 11}}.
+
+~FireSirius
+
+==Solution 6 (defining sequences)==
+
+We define:
+
+a_n is the number of possible products of the results of n dice being rolled.
+
+Now consider a modified five-sided die that excludes 5, having faces 1, 2, 3, 4, and 6. Let the number of possible products of the results of n of these modified dice be equal to b_n.
+
+If in the n rolls of the dice, we roll 5 zero times, then the number of distinct products is equal to b_n. If we roll 5 once, then the number of distinct products is equal to b_{n-1}. In general, if we roll 5 i times, then the number of distinct products is equal to b_{n-i}. Between the different cases of how many times we roll 5, the products are guaranteed to be distinct. This is because in their prime factorizations, the powers of 5 are different, and by the Fundmamental Theorem of Arithmetic, the products must be different as well.
+
+In other words, we have found:
+ a_n=\sum_{i=0}^{n} b_i 
+
+Now let us focus on b_n, and from now on, until otherwise specified, the die will refer to the modified, 5-sided die.
+In these n rolls of the dice, if we roll 3 zero times and 6 zero times, then the product must be a power of 2. It can range from 2^0 to 4^n, which is equal to 2^{2n}. Therefore, there are 2n+1 possible products. If we either roll 3 once or 6 once (not both), then the product must be 3 times a power of 2. This power of 2 can range from 2^0 to 2^{2(n-1)+1}=2^{2n-1}, when we roll one 6 and all other rolls are 4. Therefore, there are 2n products. In general, if we roll 3 and 6 a combined i times, then the product must be in the form 2^k * 3^i, and k ranges from 0 to 2(n-i)+i=2n-i, resulting in 2n-i+1 products.
+
+In other words, we have found:
+ b_n=\sum_{i=0}^{n} 2n-i+1 
+
+We can now calculate b_n. Writing out the full sum, we get:
+ b_n=(2n+1)+(2n)+\cdots+(n+1) 
+This simplifies to:
+ b_n=\frac{(n+1)(3n+2)}{2}=\frac{3n^2+5n+2}{2} 
+
+Now, finally, we can calculate a_n:
+ a_n=\sum_{i=0}^{n} b_i 
+
+ =\sum_{i=0}^{n} \frac{3i^2+5i+2}{2} 
+
+ =\sum_{i=0}^{n} \frac{3i^2}{2} + \sum_{i=0}^{n} \frac{5i}{2} + \sum_{i=0}^{n} 1 
+
+ =\frac{3}{2}*\frac{n(n+1)(2n+1)}{6} + \frac{5}{2}*\frac{n(n+1)}{2} + (n+1) 
+
+ =(n+1)(\frac{n(2n+1)}{4}+\frac{5n}{4}+1) 
+
+ =(n+1)(\frac{2n^2+6n+4}{4}) 
+
+ =\frac{(n+1)^2(n+2)}{2} 
+
+Finally, plugging in a_n=936, we get that n=\boxed{\textbf{(A) 11}}.
+
+~primenumbersfun
+
+==Video Solution 1 by OmegaLearn==
+https://youtu.be/FZG1j95owTo
+
+==Video Solution==
+https://youtu.be/lHtp83x1Hcw?si=DVuGnTC3hAcdmTsF
+
+~MathProblemSolvingSkills.com
+
+==Video Solution==
+
+https://youtu.be/BWb1dS4Jba0
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+==See Also==
+{{AMC12 box|year=2023|ab=B|num-b=22|num-a=24}}
+
+[[Category:Intermediate Combinatorics Problems]]
+{{MAA Notice}}

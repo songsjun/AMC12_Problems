@@ -1,0 +1,48 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2016_AMC_12B_Problems/Problem_12&action=raw
+
+Published Time: Sat, 17 Jan 2026 22:21:18 GMT
+
+Markdown Content:
+==Problem==
+
+All the numbers 1, 2, 3, 4, 5, 6, 7, 8, 9 are written in a 3\times3 array of squares, one number in each square, in such a way that if two numbers are consecutive then they occupy squares that share an edge. The numbers in the four corners add up to 18. What is the number in the center?
+
+\textbf{(A)}\ 5\qquad\textbf{(B)}\ 6\qquad\textbf{(C)}\ 7\qquad\textbf{(D)}\ 8\qquad\textbf{(E)}\ 9
+
+==Solution==
+
+Solution by Mlux:
+Draw a 3\times3 matrix. Notice that no adjacent numbers could be in the corners since two consecutive numbers must share an edge. Now find 4 nonconsecutive numbers that add up to 18. Trying 1+3+5+9 = 18 works. Place each odd number in the corner in a clockwise order. Then fill in the spaces. There has to be a 2 in between the 1 and 3. There is a 4 between 3 and 5.  The final grid should similar to this.
+
+\newline 1, 2, 3\newline 8, 7, 4\newline 9, 6, 5
+
+\boxed{\textbf{(C)}7} is in the middle.
+
+==Solution 2==
+If we color the square like a chessboard, since the numbers alternate between even and odd, and there are five odd numbers and four even numbers, the odd numbers must be in the corners/center, while the even numbers must be on the edges.  Since the odd numbers add up to 25, and the numbers in the corners add up to 18, the number in the center must be 25 - 18 = \boxed{\textbf{(C)}7}.
+
+==Solution 3==
+Note that if a number other than 1 or 9 is in a corner, the two numbers adjacent to it must be the numbers before and after it. Thus, if 1 is in an edge spot that isn't a corner, it will be adjacent to two corners, which isn't possible, because 1 is not consecutive to two other numbers between 1 and 9. Similarly, 9 can't go to an edge spot that isn't a corner. Therefore, two of the corner squares are 1 and 9.
+
+Filling in the table one by one, we can start with this WLOG:
+
+\newline 1, 2, \_ \newline \_, \_, \_ \newline \_, \_, \_ 
+
+Since 3 is not one of the answer choices, it cannot be in the center, so it must go in the corner adjacent to 2. That means the last corner is 18 - 1 - 3 - 9 = 5. Thus, we can keep filling in the table to get:
+
+\newline 1, 2, 3\newline 8, 7, 4\newline 9, 6, 5
+
+And our answer is \boxed{\textbf{(C)}7}.
+
+~~[[User:StrikingTsunamiYT|StrikingTsunami]]
+
+==Video Solution by CanadaMath (Problem 11-20)==
+Fast Forward to 6:20 for problem 12
+https://www.youtube.com/watch?v=4osvFatUv1o
+
+~THEMATHCANADIAN
+
+==See Also==
+{{AMC12 box|year=2016|ab=B|num-b=11|num-a=13}}

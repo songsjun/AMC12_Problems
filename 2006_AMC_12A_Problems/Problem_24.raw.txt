@@ -1,0 +1,123 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2006_AMC_12A_Problems/Problem_24&action=raw
+
+Published Time: Mon, 31 Mar 2025 21:43:35 GMT
+
+Markdown Content:
+== Problem ==
+
+The expression 
+
+(x+y+z)^{2006}+(x-y-z)^{2006}
+
+is simplified by expanding it and combining like terms. How many terms are in the simplified expression?
+
+ \mathrm{(A) \ } 6018\qquad \mathrm{(B) \ } 671,676\qquad \mathrm{(C) \ } 1,007,514\qquad \mathrm{(D) \ } 1,008,016\qquad\mathrm{(E) \ } 2,015,028
+
+== Solution 1==
+By the [[Multinomial Theorem]], the summands can be written as
+
+\sum_{a+b+c=2006}{\frac{2006!}{a!b!c!}x^ay^bz^c}
+
+and
+
+\sum_{a+b+c=2006}{\frac{2006!}{a!b!c!}x^a(-y)^b(-z)^c},
+
+respectively. Since the coefficients of like terms are the same in each expression, each like term either cancel one another out or the coefficient doubles. In each expansion there are:
+
+{2006+2\choose 2} = 2015028
+
+terms without cancellation. For any term in the second expansion to be negative, the parity of the exponents of y and z must be opposite. Now we find a pattern:
+
+if the exponent of y is 1, the exponent of z can be all even integers up to 2004, so there are 1003 terms.
+
+if the exponent of y is 3, the exponent of z can go up to 2002, so there are 1002 terms.
+
+\vdots
+
+if the exponent of y is 2005, then z can only be 0, so there is 1 term.
+
+If we add them up, we get \frac{1003\cdot1004}{2} terms. However, we can switch the exponents of y and z and these terms will still have a negative sign. So there are a total of 1003\cdot1004 negative terms.
+
+By subtracting this number from 2015028, we obtain \boxed{\mathrm{D}} or 1,008,016 as our answer.
+
+==Solution 2==
+
+Alternatively, we can use a [[generating function]] to solve this problem. 
+The goal is to find the generating function for the number of unique terms in the simplified expression (in terms of k). In other words, we want to find f(x) where the coefficient of x^k equals the number of unique terms in (x+y+z)^k + (x-y-z)^k.
+
+First, we note that all unique terms in the expression have the form, Cx^ay^bz^c, where a+b+c=k and C is some constant. Therefore, the generating function for the MAXIMUM number of unique terms possible in the simplified expression of (x+y+z)^k + (x-y-z)^k is
+(1+x+x^2+x^3\cdots)^3 = \frac{1}{(1-x)^3}
+
+Secondly, we note that a certain number of terms of the form, Cx^ay^bz^c, do not appear in the simplified version of our expression because those terms cancel. Specifically, we observe that terms cancel when 1 \equiv b+c\text{ (mod }2\text{)} because every unique term is of the form:
+\binom{k}{a,b,c}x^ay^bz^c+(-1)^{b+c}\binom{k}{a,b,c}x^ay^bz^c
+for all possible a,b,c.
+
+Since the generating function for the maximum number of unique terms is already known, it is logical that we want to find the generating function for the number of terms that cancel, also in terms of k. With some thought, we see that this desired generating function is the following:
+2(x+x^3+x^5\cdots)(1+x^2+x^4\cdots)(1+x+x^2+x^3\cdots) = \frac{2x}{(1-x)^3(1+x)^2}
+
+Now, we want to subtract the latter from the former in order to get the generating function for the number of unique terms in (x+y+z)^k + (x-y-z)^k, our initial goal:
+\frac{1}{(1-x)^3}-\frac{2x}{(1-x)^3(1+x)^2} = \frac{x^2+1}{(1-x)^3(1+x)^2}
+which equals
+(x^2+1)(1+x+x^2\cdots)^3(1-x+x^2-x^3\cdots)^2
+
+The coefficient of x^{2006} of the above expression equals
+\sum_{a=0}^{2006}\binom{2+a}{2}\binom{1+2006-a}{1}(-1)^a + \sum_{a=0}^{2004}\binom{2+a}{2}\binom{1+2004-a}{1}(-1)^a
+
+Evaluating the expression, we get 1008016, as expected.
+
+== Solution 3 ==
+
+Define P such that P=y+z. Then the expression in the problem becomes:
+(x+P)^{2006}+(x-P)^{2006}. 
+
+Expanding this using binomial theorem gives (x^n+Px^{n-1}+...+P^{n-1}x+P^n)+(x^n-Px^{n-1}+...-P^{n-1}x+P^n), where n=2006 (we may omit the coefficients, as we are seeking for the number of terms, not the terms themselves). 
+
+Simplifying gives: 2(x^n+x^{n-2}P^2+...+x^2P^{n-2}+P^n). Note that two terms that come out of different powers of P cannot combine and simplify, as their exponent of x will differ. Therefore, we simply add the number of terms produced from each addend. By the Binomial Theorem, P^k=(y+z)^k will have k+1 terms, so the answer is 1+3+5+...+2007=1004^2=1,008,016 \implies \boxed{D}.
+
+==Solution 4==
+
+Using stars and bars we know that (x+y+z)^{2006} has {2006+2\choose 2}  or 2015028 different terms. Now we need to find out how many of these terms are canceled out by (x-y-z)^{2006}. We know that for any term(let's say x^{a}(-y)^{b}(-z)^{c}) where a+b+c=2006 of the expansion of  (x-y-z)^{2006} is only going to cancel out with the corresponding term x^{a}y^{b}z^{c} if only b is odd and c is even or b is even and c is odd. Now let's do some casework to see how many terms fit this criteria:
+
+Case 1:    a is even  
+
+Now we know that a is even and a+b+c=2006. Thus b+c is also even or both b and c are odd or both b and c are even. This case clearly fails the above criteria and there are 0 possible solutions.
+
+Case 2:    a is odd
+
+Now we know that a is odd and a+b+c=2006. Thus b+c is odd and b is odd and c is even or b is even and c is odd. All terms that have a being odd work.
+
+We now need to figure out how many of the terms have a as a odd number. We know that a can be equal to any number between 0 and 2006. There are 1003 odd numbers between this range and 2007 total numbers. Thus \frac{1003}{2007} of the 2015028 terms will cancel out and  \frac{1004}{2007} of the terms will work. Thus there are (\frac{1004}{2007})(2015028) terms. This number comes out to be 1,008,016 \implies \boxed{D}
+(Author: David Camacho)
+
+==Solution 5==
+Noticing how y and z are negative in the second part of the expression, let x=a and y+z = b. Then we get (a+b)^{2006} + (a-b)^{2006}
+We know that the terms that don't cancel out have even powers of a and b. Our expansion will be in the form of
+2a^{2006} + x_1a^{2004}b^{2} + x_2a^{2002}b^{4} + \cdots + 2b^{2006}
+Note that b^n = (x+y)^n has n+1 terms. Furthermore, the current expression is irreducible as each term has a different x power. Thus, when we write a and b back to their original terms, we will have 1+3+5+ \cdots + 2007 = 1004^2 = 1,008,016 \implies \boxed{D}
+
+-smartguy888
+
+==Solution 6==
+Only consider (x-y-z)^{2006} for now. If a term there is subtracted, it would be canceled out since there is a corresponding positive term in (x+y+z)^{2006}. So the only terms that will appear are the terms with positive coefficients. If one such term is x^{a}y^{b}z^{c}, then b and c are both even or both odd. a + b + c <= 2006, so we can do casework on a:
+a = 0, b = 0, 2, 4... 2006, c = 2006, 2004...0 1004 possibilities.
+a = 1, b = 1, 3, 5... 2005 1003
+a = 2, b = 0, 2, 4... 2004 1003
+a = 3, b = 1, 3, 5... 2003 1002
+a = 4, b = 0, 2, 4... 2002 1002
+a = 5, b = 1, 3, 5... 2001 1001
+.................................
+a = 2004, b = 0, 2 2
+a = 2005, b = 1 1
+a = 2006, b = 0 1.
+So there are 2(1+2+3...+1003) + 1004 total, which is 1003*1004 + 1004 = 1004^2 = 1008016 \implies \boxed{D}
+
+== See also ==
+* [[2006 AMC 12A Problems]]
+
+{{AMC12 box|year=2006|ab=A|num-b=23|num-a=25}}
+{{MAA Notice}}
+
+[[Category:Introductory Algebra Problems]]
+[[Category:Introductory Combinatorics Problems]]

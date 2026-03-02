@@ -1,0 +1,70 @@
+# 2023 AMC 12B Problem 11
+
+## Problem
+What is the maximum area of an isosceles trapezoid that has legs of length 1 and one base twice as long as the other?
+
+$\textbf{(A) }\frac 54 \qquad \textbf{(B) } \frac 87 \qquad \textbf{(C)} \frac{5\sqrt2}4 \qquad \textbf{(D) } \frac 32 \qquad \textbf{(E) } \frac{3\sqrt3}4$
+## Solution 1
+Let the trapezoid be ABCD with AD = BC = 1, \; AB = x, CD = $2x$. Extend AD and BC to meet at point E. Then, notice $\triangle ABE \sim \triangle DCE$ with side length ratio 1:2 and AE = BE = 1. Thus, [DCE] = 4 $\cdot$ [ABE] and [ABCD] = [DCE] - [ABE] = $\frac{3}{4} \cdot$ [DCE].
+
+The problem reduces to maximizing the area of [DCE], an isosceles triangle with legs of length 2. Analyzing the sine area formula, this is clearly maximized when $\angle DEC = 90^{\circ},$ so [DCE] = 2 and [ABCD] = $\frac{3}{4} \cdot 2 = \boxed{\frac{3}{2}}.$
+
+*~PIDay*
+## Solution 2
+Denote by x the length of the shorter base.
+Thus, the height of the trapezoid is
+
+$$
+\begin{align*} \sqrt{1^2 - \left( \frac{x}{2} \right)^2} . \end{align*}
+$$
+
+
+Thus, the area of the trapezoid is
+
+$$
+\begin{align*} \frac{1}{2} \left( x + 2 x \right) \sqrt{1^2 - \left( \frac{x}{2} \right)^2} & = \frac{3}{4} \sqrt{x^2 \left( 4 - x^2 \right)} \\ & \leq \frac{3}{4} \frac{x^2 + \left( 4 - x^2 \right)}{2} \\ & = \boxed{\textbf{(D) } \frac{3}{2}} , \end{align*}
+$$
+
+
+where the inequality follows from the AM-GM inequality and it is binding if and only if $x^2 = 4 - x^2.$
+
+*~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)*
+## Solution 3 (Calculus)
+Derive the expression for area
+$$A = \frac{3}{4}x\sqrt{4-x^2}$$
+as in the solution above. To find the minimum, we can take the derivative with respect to x:
+
+$$\frac{dA}{dx} = \frac{3}{4}\sqrt{4-x^2}+\left(\frac{3x}{4}\right)\frac{-2x}{2\sqrt{4-x^2}} = \frac{6-3x^2}{2\sqrt{4-x^2}}.$$
+
+This expression is equal to zero when $x=\pm\sqrt{2},$ so A has two critical points at $\pm\sqrt{2}.$ But given the bounds of the problem, we can conclude x = $\sqrt{2}$ maximizes A (alternatively you can do first derivative test). Plugging that value back in, we get $A_{\text{max}}$ = $\boxed{(\text{D})\ \frac{3}{2}}.$
+
+*~cantalon*
+
+(Slightly Simpler)
+
+Or rewrite the expression for area to be
+
+$$A = \frac{3}{4}\sqrt{4x^2-x^4}$$
+
+Now to find the minimum, we can just find the minimum of what's inside the square root (since the square root function is increasing). Take the derivative of $4x^2-x^4,$
+$$f'(x)=8x-4x^3.$$
+This is equal to zero at $x=0,\pm\sqrt{2}$ but the solution must be positive so $x=\sqrt{2}.$
+## Solution 4 (Trigonometry)
+Let the length of the shorter base of the trapezoid be $2x$ and the height of the trapezoid be y.
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+unitsize(100); pair A=(-1, 0), B=(1, 0), C=(0.5, 0.5), D=(-0.5, 0.5); draw(A--B--C--D--cycle, black); label("$2x$",(0,0.58),(0,0)); label("$2x$",(0,-0.08),(0,0)); label("$x$",(-0.75,-0.08),(0,0)); label("$x$",(0.75,-0.08),(0,0)); draw(D--(-0.5,0),black); draw(C--(0.5,0),black); label("$y$",(0.58,0.25)); label("$y$",(-0.42,0.25));
+```
+
+
+Each leg has length 1 if and only if $x^2+y^2=1,$ where x and y are positive real numbers. The general solution to this equation is (x,y)=($\cos$ t,$\sin$ t) for any number 0 so that x and y are positive. The area to maximize is $\frac{1}{2}(2x+4x)$y=3xy Hence, we maximize $3\sint\cos$ t for 0.  $\begin{align*} $3xy &= $3\sint\cos$ t \\ &= $\frac{3}{2}(2\sin t\cos t)$ \\ &= $\frac{3}{2}\sin(2t) \end{align*}$  The maximum of $\sin(2t)$ is 1, thus the maximum of 3xy is $\boxed{\text{(D) }\frac{3}{2}}$ which occurs at $t=\frac{\pi}{4},$ satisfying the inequality 0. ~Robabob1
+## Solution 5
+Denote x and $2x$ as the two bases. We can straightforwardly find that the height of the trapezoid is $\sqrt{1-\frac{x^2}{4}}$ by the Pythagorean theorem. The area of this trapezoid is then given by the expression $\frac{x+2x}{2}\cdot\sqrt{1-\frac{x^2}{4}}.$ Let m be the maximum value that this expression achieves. Since x is positive and assuming $m\geq 1,$ we can perform the following operations to maximize $16m^2$, thus $m^2,$ and thus m. We have $\frac{x+2x}{2}\cdot\sqrt{1-\frac{x^2}{4}} =m\frac{9x^2}{4}\cdot\frac{4-x^2}{4} =m^2-9x^4+36x^2 =16m^2$. The maximum vaue of this quartic occurs at $x^2 =\frac{-36}{2(-9)} = 2,$ or when $x =\sqrt{2}.$ It follows that the area of the trapezoid is equal to $\frac{3\sqrt{2}}{2}\cdot\frac{1}{\sqrt{2}} = \boxed{\text{(D) }\frac{3}{2}}. -$Benedict T (countmath1)
+## Video Solution 1 by OmegaLearn
+https://youtu.be/WlXBbaHl-z4
+## Video Solution
+https://youtu.be/e6Et9KBkRy8 ~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+## See Also

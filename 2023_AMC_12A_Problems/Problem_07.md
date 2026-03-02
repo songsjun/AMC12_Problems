@@ -1,0 +1,56 @@
+# 2023 AMC 12A Problem 7
+
+> This problem is the same as [2023 AMC 10A #9](https://artofproblemsolving.com/wiki/index.php/2023_AMC_10A_Problems/Problem_9) and [2023 AMC 12A #7](https://artofproblemsolving.com/wiki/index.php/2023_AMC_12A_Problems/Problem_7).
+## Problem
+A digital display shows the current date as an 8-digit integer consisting of a 4-digit year, followed by a 2-digit month, followed by a 2-digit date within the month. For example, Arbor Day this year is displayed as 20230428. For how many dates in 2023 does each digit appear an even number of times in the 8-digital display for that date?
+
+$\textbf{(A)}~5\qquad\textbf{(B)}~6\qquad\textbf{(C)}~7\qquad\textbf{(D)}~8\qquad\textbf{(E)}~9$
+## Solution 1 (Casework)
+Do careful casework by each month. Make sure to start with 2023. In the month and the date, we need a 0, a 3, and two digits repeated (which has to be 1 and 2 after consideration). After the casework, we get $\boxed{\textbf{(E)}~9}.$
+For curious readers, the numbers (in chronological order) are:
+
+ 20230113
+ 20230131
+ 20230223
+ 20230311
+ 20230322
+ 20231013
+ 20231031
+ 20231103
+ 20231130
+## Solution 2
+There is one 3, so we need one more (three more means that either the month or units digit of the day is 3). For the same reason, we need one more 0.
+
+
+If 3 is the units digit of the month, then the 0 can be in either of the three remaining slots. For the first case (tens digit of the month), then the last two digits must match (11, 22). For the second (tens digit of the day), we must have the other two be 1, as a month can't start with 2 or 0. There are 3 successes this way.
+
+
+If 3 is the tens digit of the day, then 0 can be either the tens digit of the month or the units digit of the day. For the first case, 1 must go in the other slots. For the second, the other two slots must be 1 as well. There are 2 successes here.
+
+
+If 3 is the units digit of the day, then 0 could go in any of the 3 remaining slots again. If it's the tens digit of the day, then the other digits must be 1. If 0 is the units digit of the day, then the other two slots must both be 1. If 0 is the tens digit of the month, then the other two slots can be either both 1 or both 2. In total, there are 4 successes here.
+
+Summing through all cases, there are 3 + 2 + 4 = $\boxed{\textbf{(E)}~9}$ dates.
+
+*~Benedict T (countmath1)*
+## Solution 3
+We start with 2023---- we need an extra 0 and an extra 3. So we have at least one of those extras in the days, except we can have the month 03. We now have 6 possible months 01,02,03,10,11,12. For month 1 we have two cases, we now have to add in another 1, and the possible days are 13,31. For month 2 we need an extra 2 so we can have the day 23 note that we can't use 32 because it is to large. Now for month 3 we can have any number and multiply it by 11 so we have the solution 11,22. For October we need a 1 and a 3 so we have 13,31 as our choices. For November we have two choices which are 03,30.Now for December we have 0 options. Summing 2+1+2+2+2 we get $\boxed{\textbf{(E)}~9}$ solutions.
+
+*~kyogrexu*
+## Video Solution by Little Fermat
+https://youtu.be/h2Pf2hvF1wE?si=RjE2si8uG_p5xO_2&t=1670
+*~little-fermat*
+## Video Solution by Math-X (First understand the problem!!!)
+https://youtu.be/GP-DYudh5qU?si=iDDNwV-Ut5UZSoQu&t=2010
+*~Math-X*
+## Video Solution (easy to digest) by Power Solve
+https://www.youtube.com/watch?v=4TPsTOHKQTw
+## Video Solution 1 by OmegaLearn
+https://youtu.be/xguAy0PV7EA
+## Video Solution by CosineMethod [🔥Fast and Easy🔥]
+https://www.youtube.com/watch?v=a5w_1lN3H4s
+## Video Solution
+https://youtu.be/ShFMyFBxMcY
+
+*~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)*
+## See Also

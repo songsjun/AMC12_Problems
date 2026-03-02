@@ -1,0 +1,30 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2010_AMC_12B_Problems/Problem_22&action=raw
+
+Published Time: Tue, 26 Aug 2025 14:32:50 GMT
+
+Markdown Content:
+== Problem ==
+Let ABCD be a cyclic quadrilateral. The side lengths of ABCD are distinct integers less than 15 such that BC\cdot CD=AB\cdot DA. What is the largest possible value of BD?
+
+\textbf{(A)}\ \sqrt{\dfrac{325}{2}} \qquad \textbf{(B)}\ \sqrt{185} \qquad \textbf{(C)}\ \sqrt{\dfrac{389}{2}} \qquad \textbf{(D)}\ \sqrt{\dfrac{425}{2}} \qquad \textbf{(E)}\ \sqrt{\dfrac{533}{2}}
+
+== Solution ==
+Let AB = a, BC = b, CD = c, and AD = d.  We see that by the Law of Cosines on \triangle ABD and \triangle CBD, we have:
+
+BD^2 = a^2 + d^2 - 2ad\cos{\angle BAD}.  
+
+BD^2 = b^2 + c^2 - 2bc\cos{\angle BCD}.
+
+We are given that ad = bc and ABCD is a cyclic quadrilateral. As a property of cyclic quadrilaterals, opposite angles are supplementary so \angle BAD = 180 - \angle BCD, therefore \cos{\angle BAD} = -\cos{\angle BCD}. So, 2ad\cos{\angle BAD} = -2bc\cos{\angle BCD}. 
+
+Adding, we get 2BD^2 = a^2 + b^2 + c^2 + d^2.
+
+We now look at the equation ad = bc.  Suppose that a = 14.  Then, we must have either b or c equal 7.  Suppose that b = 7.  We let d = 6 and c = 12.  
+
+2BD^2 = 196 + 49 + 36 + 144 = 425, so our answer is \boxed{\textbf{(D)} \sqrt{\frac{425}{2}}}.
+
+== See also ==
+{{AMC12 box|year=2010|num-b=21|num-a=23|ab=B}}
+{{MAA Notice}}

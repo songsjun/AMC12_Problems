@@ -1,0 +1,9 @@
+# 2015 AMC 12A Problem 5
+
+## Problem
+Sreshtha needs to estimate the quantity $\frac{a}{b} -$ c, where a, b, and c are large positive integers. She rounds each of the integers so that the calculation will be easier to do mentally. In which of these situations will her answer necessarily be greater than the exact value of $\frac{a}{b} -$ c?
+
+$\textbf{(A)}\ \text{She rounds all three numbers up.}\\ \qquad\textbf{(B)}\ \text{She rounds } a \text{ and } b \text{ up, and she rounds } c \text{ down.}\\ \qquad\textbf{(C)}\ \text{She rounds } a \text{ and } c \text{ up, and she rounds } b \text{ down.} \\ \qquad\textbf{(D)}\ \text{She rounds } a \text{ up, and she rounds } b \text{ and } c \text{ down.}\\ \qquad\textbf{(E)}\ \text{She rounds } c \text{ up, and she rounds } a \text{ and } b \text{ down.}$
+## Solution
+To maximize our estimate, we want to maximize $\frac{a}{b}$ and minimize c, because both terms are positive values. Therefore we round c down. To maximize $\frac{a}{b},$ round a up and b down. $\Rightarrow \boxed{\textbf{(D)}}$
+## See Also

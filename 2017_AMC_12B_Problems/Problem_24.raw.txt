@@ -1,0 +1,136 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2017_AMC_12B_Problems/Problem_24&action=raw
+
+Published Time: Sun, 09 Nov 2025 05:14:26 GMT
+
+Markdown Content:
+==Problem==
+
+Quadrilateral ABCD has right angles at B and C, \triangle ABC \sim \triangle BCD, and AB > BC. There is a point E in the interior of ABCD such that \triangle ABC \sim \triangle CEB and the area of \triangle AED is 17 times the area of \triangle CEB. What is \tfrac{AB}{BC}?
+
+\textbf{(A) } 1+\sqrt{2} \qquad \textbf{(B) } 2 + \sqrt{2} \qquad \textbf{(C) } \sqrt{17} \qquad \textbf{(D) } 2 + \sqrt{5} \qquad \textbf{(E) } 1 + 2\sqrt{3}
+
+==Diagram==
+
+[[File:2017AMC12BP24.png|300px|center]]
+
+==Solution 1==
+
+Let CD=1, BC=x, and AB=x^2. Note that AB/BC=x. By the Pythagorean Theorem, BD=\sqrt{x^2+1}. Since \triangle BCD \sim \triangle ABC \sim \triangle CEB, the ratios of side lengths must be equal. Since BC=x, CE=\frac{x^2}{\sqrt{x^2+1}} and BE=\frac{x}{\sqrt{x^2+1}}. Let F be a point on \overline{BC} such that \overline{EF} is an altitude of triangle CEB. Note that \triangle CEB \sim \triangle CFE \sim \triangle EFB. Therefore, EF=\frac{x}{x^2+1} and EG=\frac{x^3}{x^2+1}. Since \overline{CF} and \overline{BF} form altitudes of triangles CED and BEA, respectively, the areas of these triangles can be calculated. Additionally, the area of triangle BEC can be calculated, as it is a right triangle. Solving for each of these yields:
+
+\begin{align*}
+[BEC] &=[CED]=[BEA]=\frac{x^3}{2(x^2+1)} \\
+[ABCD] &=[AED]+[DEC]+[CEB]+[BEA] \\
+\frac{(BC)(AB+CD)}{2} &= 17*[CEB]+ [CEB] + [CEB] + [CEB] \\
+\frac{x^3+x}{2} &= \frac{20x^3}{2(x^2+1)} \\
+\frac{x}{x^2+1} &= \frac{20x^3}{x^2+1} \\
+(x^2+1)^2 &=20x^2 \\
+x^4-18x^2+1 &=0 \implies x^2=9+4\sqrt{5}=4+2(2\sqrt{5})+5 \\
+\end{align*}
+
+Therefore, the answer is \boxed{\textbf{(D) } 2+\sqrt{5}}
+
+==Solution 2== 
+Draw line FG through E, with F on BC and G on AD, FG \parallel AB. WLOG let CD=1, CB=x, AB=x^2. By weighted average FG=\frac{1+x^4}{1+x^2}. 
+
+Meanwhile, FE:EG=[\triangle CBE]:[\triangle ADE]=1:17. This follows from comparing the ratios of triangle DEG to CFE and triangle AEG to FEB, both pairs in which the two triangles share a height perpendicular to FG, and have base ratio EG:FE.
+
+FE=\frac{x^2}{1+x^2}. We obtain \frac{1+x^4}{1+x^2}=\frac{18x^2}{1+x^2},
+namely x^4-18x^2+1=0.
+
+The rest is the same as Solution 1.
+
+==Solution 3==
+
+[[File:2017AMC12BP24.png|300px|center]]
+
+Let AB = a, BC = b, AC = \sqrt{a^2+b^2}
+
+Note that E cannot be the intersection of AC and BD, as that would mean [AED] = [CEB]
+
+\because \triangle BCD \sim \triangle ABC, \quad \therefore \frac{CD}{BC} = \frac{BC}{AB}, \quad CD = BC \cdot \frac{BC}{AB} = b \cdot \frac{b}{a} = \frac{b^2}{a}
+
+[CEB] = ( \frac{BC}{AC} )^2 \cdot [ABC] = ( \frac{b}{ \sqrt{a^2+b^2} } )^2 \cdot \frac{ab}{2} = \frac{ab^3}{2(a^2+b^2)}
+
+BF = \frac{ 2[CEB] }{BC} = \frac{ 2 \cdot \frac{ab^3}{ 2(a^2+b^2) } }{b} = \frac{ab^2}{a^2+b^2}
+
+\because \triangle BFE \sim \triangle ABC, \quad \therefore \frac{EF}{BF} = \frac{BC}{AB}, \quad EF = BF \cdot \frac{BC}{AB} = \frac{ab^2}{a^2+b^2} \cdot \frac{b}{a} = \frac{b^3}{a^2+b^2}
+
+EG = FG - EF = b - \frac{b^3}{a^2+b^2} = \frac{a^2b}{a^2+b^2}
+
+[ABCD] = \frac{AB + CD}{2} \cdot BC = \frac{a + \frac{b^2}{a} }{2} \cdot b = \frac{ b(a^2+b^2) }{ 2a }
+
+[ABE] = \frac12 \cdot AB \cdot EF = \frac12 \cdot a \cdot \frac{b^3}{a^2+b^2} = \frac{ab^3}{ 2(a^2+b^2) }
+
+[CDE] = \frac12 \cdot CD \cdot EG = \frac12 \cdot \frac{a^2b}{a^2+b^2} \cdot \frac{a^2b}{a^2+b^2} = \frac{ab^3}{ 2(a^2+b^2) }
+
+ADE = [ABCD] - [ABE] - [CEB] - [CDE] = \frac{ b(a^2+b^2) }{ 2a } - \frac{ab^3}{ 2(a^2+b^2) } - \frac{ab^3}{ 2(a^2+b^2) }- \frac{ab^3}{ 2(a^2+b^2) } = \frac{ b(a^2+b^2)^2 - 3a^2b^3 }{ 2a(a^2+b^2) } 
+
+\frac{ [ADE] }{ [CEB] } = \frac { \frac{ b(a^2+b^2)^2 - 3a^2b^3 }{ 2a(a^2+b^2) } }{ \frac{ab^3}{2(a^2+b^2)} } = \frac{ (a^2 + b^2)^2 - 3a^2b^2 }{ a^2b^2 } = \frac{ a^4 - a^2b^2 + b^4 }{ a^2b^2 } = 17
+
+a^4 - a^2b^2 + b^4 = 17 a^2b^2, \quad a^4 + b^4 = 18 a^2b^2, \quad \frac{a^2}{b^2} + \frac{b^2}{a^2} = 18
+
+Let x = \frac{a}{b},
+
+x^2 + \frac{1}{x^2} = 18, \quad x^4 - 18x^2 + 1 = 0, \quad x^2 = \frac{18 + \sqrt{324-4} }{2} = 9+ 4\sqrt{5}
+
+\frac{a}{b} = \sqrt{ 9+ 4\sqrt{5} } = \sqrt{ 4+ 4\sqrt{5}+5 } = \boxed{\textbf{(D) } 2+ \sqrt{5}}
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+== Solution 4==
+Let A=(-1,4a), B=(-1,0), C=(1,0), D=\bigg(1,\frac{1}{a}\bigg). Then from the similar triangles condition, we compute CE=\frac{4a}{\sqrt{4a^2+1}} and BE=\frac{2}{\sqrt{4a^2+1}}. Hence, the y-coordinate of E is just \frac{BE\cdot CE}{BC}=\frac{4a}{4a^2+1}. Since E lies on the unit circle, we can compute the x coordinate as \frac{1-4a^2}{4a^2+1}. By Shoelace, we want \frac{1}{2}\det\begin{bmatrix} -1 & 4a & 1\\ \frac{1-4a^2}{4a^2+1} & \frac{4a}{4a^2+1} & 1\\ 1 & \frac{1}{a} & 1 \end{bmatrix}=17\cdot\frac{1}{2}\cdot 2 \cdot \frac{4a}{4a^2+1}Factoring out denominators and expanding by minors, this is equivalent to
+\frac{32a^4-8a^2+2}{2a(4a^2+1)}=\frac{68a}{4a^2+1} \Longrightarrow 16a^4-72a^2+1=0This factors as (4a^2-8a-1)(4a^2+8a-1)=0, so a=1+\frac{\sqrt{5}}{2} and so the answer is  \textbf{(D) \ }.
+
+==Solution 5==
+
+Let C = (0,0), D=\left(\frac1a, 0\right), B = (0,1), A = (a,1) where a>1. Because BC = 1, a = \frac{AB}{BC}. Notice that the diagonals are perpendicular with slopes of \frac1a and -a. Let the intersection of AC and BD be F, then \triangle BFC \sim \triangle ABC. However, because ABCD is a trapezoid, \triangleBCF and \triangle ADF share the same area, therefore \triangleBCE is the reflection of \triangleBCF over the perpendicular bisector of BC, which is y=\frac12. We use the linear equations of the diagonals, y = -ax + 1, y = \frac1a x, to find the coordinates of F. -ax+1 = \frac1ax \Longrightarrow x = \frac{1}{a+\frac1a} = \frac{a}{a^2+1} y = \frac1ax = \frac{1}{a^2+1}
+The y-coordinate of E is simply 1-\frac{1}{a^2+1} = \frac{a^2}{a^2+1}
+The area of \triangle BCE is \frac12 \left(\frac{a}{a^2+1} \right). We apply shoelace theorem to solve for the area of \triangle ADE. The coordinates of the triangle are \{(\frac{a}{a^2+1}, \frac{a^2}{a^2+1}), (a,1), (\frac1a, 0)\}, so the area is 
+
+\begin{equation}
+\begin{split}
+\frac12 \left|\frac{a^3}{a^2+1} + \frac1a - \frac{a}{a^2+1} - \frac{a}{a^2+1}\right| & = \frac12 \left|\frac{a^3-2a}{a^2+1} + \frac1a \right| \\
+& = \frac12 \left|\frac{a^4-2a^2}{a(a^2+1)} + \frac{a^2+1}{a(a^2+1)} \right| \\
+& = \frac12 \left( \frac{a^4-a^2+1}{a(a^2+1)}\right).
+\end{split}
+\end{equation}
+
+Finally, we use the property that the ratio of areas equals 17:
+\frac{\frac12\left(\frac{a^4-a^2+1}{a(a^2+1)}\right)}{\frac12\left(\frac{a}{a^2+1}\right)} = 17 \Rightarrow \frac{a^4-a^2+1}{a^2} = 17 \Rightarrow a^4-18a^2+1 = 0
+a^2 = 9+4\sqrt{5} = (2+\sqrt{5})^2 \Longrightarrow a = \boxed{\textbf{(D) } 2+\sqrt{5}}.
+
+~Zeric
+
+==Solution 6 (Proof)==
+
+This solution involves proving \triangle AED \sim \triangle CEB.
+
+Let E' be the intersection of AC and BD. Label points F and G the same way as \textbf{Solution 3}.
+
+\angle AE'D = \angle CE'B = \frac{\pi}{2} = \angle AFE. Additionally, \frac{E'D}{FE} = \frac{E'D}{E'G} = \frac{AE'}{AF}, so \triangle AFE \sim \triangle AE'D by SAS. Therefore, \angle BAC = \angle FAE + \angle EAE' = \angle E'AD + \angle EAE' = \angle EAD.
+
+Next, \angle AFE = \frac{\pi}{2} = \angle EGD because FG \parallel BC. Also, \pi = \angle FEA + \angle AED + \angle DEG = \angle FEA + \angle AED + \angle EAF = \frac{\pi}{2} + \angle AED, so \angle AED = \frac{\pi}{2}. Therefore, \triangle AED \sim \triangle ABC by AA. Since \triangle CEB \sim \triangle ABC, \triangle AED \sim \triangle CEB.
+
+Given \frac{[AED]}{[CEB]} = 17, we deduce that the ratio of corresponding side lengths of AED to CEB must be \sqrt{17}. Now, we set BC = 1, AB = x, and CD = \frac{1}{x}. Using the Pythagorean Theorem, AD = \sqrt{\Big(x-\frac{1}{x}\Big)^2 + 1^2}. Thus, \sqrt{17} = \frac{AD}{CB} = \frac{\sqrt{\Big(x-\frac{1}{x}\Big)^2 + 1^2}}{1}. Solving gives x = 2+\sqrt{5}.
+
+Finally, \frac{AB}{BC} = \frac{2+\sqrt{5}}{1} = \boxed{\textbf{(D) } 2+\sqrt{5}}.
+
+~[[User:Zhixing|Zhixing]]
+
+==Video Solution by MOP 2024==
+https://youtu.be/h92s2BxlohI
+
+~r00tsOfUnity
+
+== Notes==
+1) \sqrt{17} is the most relevant answer choice because it shares numbers with the givens of the problem.
+
+2) It's a very good guess to replace finding the area of triangle AED with the area of the triangle DAF, where F is the projection of D onto AB(then find the closest answer choice).
+
+==See Also==
+{{AMC12 box|year=2017|ab=B|num-b=23|num-a=25}}
+{{MAA Notice}}
+
+[[Category:Intermediate Geometry Problems]]

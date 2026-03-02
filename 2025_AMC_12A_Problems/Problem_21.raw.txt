@@ -1,0 +1,78 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2025_AMC_12A_Problems/Problem_21&action=raw
+
+Published Time: Sun, 21 Dec 2025 21:48:51 GMT
+
+Markdown Content:
+==Problem 21==
+There is a unique ordered triple (a,k,m) of nonnegative integers such that \frac{4^a + 4^{a+k}+4^{a+2k}+\cdots + 4^{a+mk}}{2^a + 2^{a+k} + 2^{a+2k}+ \cdots + 2^{a+mk}} = 964. What is a+k+m? 
+
+\textbf{(A) } 8 \qquad \textbf{(B) } 9 \qquad \textbf{(C)} 10 \qquad \textbf{(D) } 11 \qquad \textbf{(E) } 12
+
+==Solution 1==
+The numerator can be written as 2^{2a} +2^{2a+2k}+...+2^{2a+2mk}, which is actually a sum of geometric series. This can be expressed as 2^{2a} \cdot \frac{1-2^{2k(m+1)}}{1-2^{2k}}. The denominator in the same way can be expressed as 2^a \cdot \frac{1-2^{k(m+1)}}{1-2^k}. 
+
+Doing some algebra on the top and bottom we get:
+
+\begin{equation}
+2^a \cdot \frac{1+2^{k(m+1)}}{1+2^k} = 964
+\end{equation}
+
+The prime factorization of 964 is 241 \cdot 2^2.
+
+Equating 2^a = 2^2, we get a = 2.
+
+Next since 241 is a prime number we equate the latter half of the product to 241.
+\begin{equation}
+\frac{1+2^{k(m+1)}}{1+2^k} = 241
+\end{equation}
+Doing some algebra we get, that 2^k(2^{km}-241) = 240
+
+The closest power of 2 to 241 is 256 which is 2^8. So setting km = 8, we get 2^8-241 = 15
+
+2^k(15) = 240, 2^k = 16, k = 4.
+
+This we know that if k = 4, then 4m = 8, so m = 2.
+
+Finally, we conclude that a = 2, m = 2, and k = 4.
+
+4+2+2 = 8, so the answer is \fbox{A}
+
+~MATHEMATICIAN635
+~Minor Edits by MALICIOUSFISH23
+~Minor edits by KINGFIREBOY
+
+Actually when it comes to 2^k(2^{km}-241) = 240;
+we can directly observe the answer by discovering 2^k is even and 2^{km}-241 must be odd. So, the only available divisors of 240 is 16 and 15.
+And we can have m = 2, and k = 4.
+
+~DRA777
+
+==Solution 1.1==
+
+We start from this equation derived in Solution 1:
+
+\begin{equation}
+\frac{1+2^{k(m+1)}}{1+2^k} = 241
+\end{equation}
+
+Note that 241=256-16+1=16^2-16+1. Also note that this looks similar to the second term in the Sum of Cubes factorization a^3+b^3=(a+b)(a^2-ab+b^2). Specifically, when a=16 and b=1, the right term is 16^2-16+1. Thus, \frac{16^3+1^3}{16+1}=241. We rewrite: \frac{1+2^{12}}{1+2^4}=241
+
+We can then get that m = 2 and k=4, and proceed as above.
+
+~happyfroggy(first time writing solution pls edit)
+
+==Video Solution 1 by OmegaLearn.org==
+https://youtu.be/Cx8BScqcx6U
+
+==Video Solution 2 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=Y9sG6vZPDQo
+
+==See Also==
+{{AMC12 box|year=2025|ab=A|num-b=20|num-a=22}}
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

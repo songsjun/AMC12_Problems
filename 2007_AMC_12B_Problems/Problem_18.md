@@ -1,0 +1,96 @@
+# 2007 AMC 12B Problem 18
+
+## Problem
+Let a, b, and c be digits with $a\ne 0.$ The three-digit integer abc lies one third of the way from the square of a positive integer to the square of the next larger integer. The integer acb lies two thirds of the way between the same two squares. What is a+b+c?
+
+
+$$\mathrm{(A)}\ 10 \qquad \mathrm{(B)}\ 13 \qquad \mathrm{(C)}\ 16 \qquad \mathrm{(D)}\ 18 \qquad \mathrm{(E)}\ 21$$
+
+## Solution 1
+The difference between acb and abc is given by
+
+$$(100a + 10c + b) - (100a + 10b + c) = 9(c-b)$$
+
+The difference between the two squares is three times this amount or
+
+$27(c-b)$
+
+The difference between two consecutive squares is always an odd number, therefore c-b is odd. We will show that c-b must be 1. Otherwise we would be looking for two consecutive squares that are at least 81 apart. But already the equation ($x+1)^2-x^2 =27\cdot 3$ solves to $x=40$, and $40^2$ has more than three digits.
+
+The consecutive squares with common difference 27 are $13^2=169$ and $14^2=196.$ One third of the way between them is 178 and two thirds of the way is 187.
+
+This gives $a=1, b=7, c=8$.
+
+$$a+b+c = 16 \Rightarrow \mathrm{(C)}$$
+## Solution 2
+One-third the distance from $x^2 to$ (x+1)^2$$ is $\frac{(x+1)^2 - x^2}{3} = \frac{2x+1}{3}.$
+
+Since $\frac{2x+1}{3}$ must be an integer, and therefore $2x+1$ must be divisible by 3.
+
+Therefore, x must be 10, 13, 16, 19, 22, 25,  or 28. (1, 4, and 7 don't work because their squares are too small. Similarly if x is greater than 28, the squares are too large.)
+
+Guessing and checking, we find that $x=13$ works, so the integer abc is one-third of the way from 169 to 196, which is 178. $1+7+8 = 16$.
+
+- JN5537
+- edited by numerophile
+## Solution 3
+Let k be the lesser of the two integers. Then the squares of the integers are $k^2$ and $k^2+2k+1$, and the distance between them is $2k+1$. Let this be equivalent to $3d$, so that the one-third of the distance between the squares is equivalent to d. The numbers abc and acb are one-third and two-thirds of the way between $k^2$ and $(k+1)^2$. Therefore, the distance between these two numbers is also one-third the distance between the squares, or d. Setting these equal to each other, we have
+
+$$\frac{2k+1}{3} = 9(c-b)$$
+
+$$\Rightarrow 2k+1 = 27(c-b).$$
+
+Notice that since c and b are digits, their difference is at most 9 and at least 0. Also notice that since acb is greater than abc, c > b. Representing this as an inequality, we have
+
+$$27 \le 27(c-b) \le 243.$$
+
+Substituting $2k+1$, we have
+
+$$27 \le 2k+1 \le 243$$
+
+$$\Rightarrow 13 \le k \le 121.$$
+
+However, we know that abc is a 3-digit number, and since $k^2$ is less than abc, k^2 must be at most 961, or 31^2. Therefore k $\le 31.$ Plugging this back into our inequality, we have
+
+$$13 \le k \le 31$$
+
+$$\Rightarrow 27 \le 2k+1 \le63$$
+
+$$\Rightarrow 27 \le 27(c-b) \le 63$$
+
+$$\Rightarrow 1 \le (c-b) \le \frac{7}{3}.$$
+
+But (c-b) must be an integer, so now we have
+
+$$1 \le (c-b) \le 2$$
+
+$$\Rightarrow 27 \le 27(c-b) \le 54$$
+
+$$\Rightarrow 27 \le 2k+1 \le 54$$
+
+$$\Rightarrow 13 \le k \le\frac{53}{2}$$
+
+k is also an integer, so now we have
+
+$$\Rightarrow 13 \le k \le 26$$
+
+$$\Rightarrow 27 \le 2k+1 \le 53$$
+
+$$\Rightarrow 27 \le 27(c-b) \le 53$$
+
+$$\Rightarrow 1 \le (c-b) \le \frac{53}{27}.$$
+
+Once again, (c-b) must be an integer, so we have
+
+$$1 \le (c-b) \le 1$$
+
+$$\Rightarrow (c-b) = 1$$
+
+$$\Rightarrow 27(c-b) = 27$$
+
+$$\Rightarrow 2k+1 = 27$$
+
+$$\Rightarrow k = 13$$
+
+The two squares are $13^2$ and $14^2,$ or 169 and 196. A third of the distance between them is 9, and $169 +9 = 178. 1 + 7 + 8 = 16\Rightarrow \boxed{\text{C}}.$
+## See Also

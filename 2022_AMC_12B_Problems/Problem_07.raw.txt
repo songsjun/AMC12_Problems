@@ -1,0 +1,46 @@
+{{duplicate|[[2022 AMC 10B Problems/Problem 10|2022 AMC 10B #10]] and [[2022 AMC 12B Problems/Problem 7|2022 AMC 12B #7]]}}
+
+==Problem==
+Camila writes down five positive integers. The unique mode of these integers is <math>2</math> greater than their median, and the median is <math>2</math> greater than their arithmetic mean. What is the least possible value for the mode?
+
+<math>\textbf{(A)}\ 5 \qquad\textbf{(B)}\ 7 \qquad\textbf{(C)}\ 9 \qquad\textbf{(D)}\ 11 \qquad\textbf{(E)}\ 13</math>
+
+==Solution 1 (Variables)==
+Let <math>M</math> be the median. It follows that the two largest integers are both <math>M+2.</math>
+
+Let <math>a</math> and <math>b</math> be the two smallest integers such that <math>a<b.</math> The sorted list is <cmath>a,b,M,M+2,M+2.</cmath>
+Since the median is <math>2</math> greater than their arithmetic mean, we have <math>\frac{a+b+M+(M+2)+(M+2)}{5}+2=M,</math> or <cmath>a+b+14=2M.</cmath>
+Note that <math>a+b</math> must be even. We minimize this sum so that the arithmetic mean, the median, and the unique mode are minimized. Let <math>a=1</math> and <math>b=3,</math> from which <math>M=9</math> and <math>M+2=\boxed{\textbf{(D)}\ 11}.</math>
+
+~MRENTHUSIASM
+
+==Solution 2 (Elimination)==
+
+We can also easily test all the answer choices. (This strategy is generally good to use for multiple-choice questions if you don't have a concrete method to proceed with!)
+
+For answer choice <math>\textbf{(A)},</math> the mode is <math>5,</math> the median is <math>3,</math> and the arithmetic mean is <math>1.</math> However, we can quickly see this doesn't work, as there are five integers, and they can't have an arithmetic mean of <math>1</math> while having a mode of <math>5.</math> 
+
+Trying answer choice <math>\textbf{(B)},</math> the mode is <math>7,</math> the median is <math>5,</math> and the arithmetic mean is <math>3.</math> From the arithmetic mean, we know that all the numbers have to sum to <math>15.</math> We know three of the numbers: <math>\underline{\hspace{3mm}},\underline{\hspace{3mm}},5,7,7.</math> This exceeds the sum of <math>15.</math>
+
+Now we try answer choice <math>\textbf{(C)}.</math> The mode is <math>9,</math> the median is <math>7,</math> and the arithmetic mean is <math>5.</math> From the arithmetic mean, we know that the list sums to <math>25.</math> Three of the numbers are <math>\underline{\hspace{3mm}},\underline{\hspace{3mm}},7,9,9,</math> which is exactly <math>25.</math> However, our list needs positive integers, so this won't work.
+
+Since we were really close on answer choice <math>\textbf{(C)},</math> we can intuitively feel that the answer is probably going to be <math>\textbf{(D)}.</math> We can confirm this by creating a list that satisfies the problem and choose <math>\textbf{(D)}: 1,3,9,11,11.</math>
+
+So, our answer is <math>\boxed{\textbf{(D)}\ 11}.</math>
+
+==Video Solution (🚀 Very Fast 🚀)==
+https://youtu.be/2tx9GEbIRxU
+
+~Education, the Study of Everything
+
+==Video Solution(1-16)==
+https://youtu.be/SCwQ9jUfr0g
+
+~~Hayabusa1
+==Video Solution by Interstigation==
+https://youtu.be/_KNR0JV5rdI?t=1241
+
+== See Also ==
+{{AMC10 box|year=2022|ab=B|num-b=9|num-a=11}}
+{{AMC12 box|year=2022|ab=B|num-b=6|num-a=8}}
+{{MAA Notice}}

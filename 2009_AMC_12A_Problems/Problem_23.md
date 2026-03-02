@@ -1,0 +1,95 @@
+# 2009 AMC 12A Problem 23
+
+## Problem
+[Function](https://artofproblemsolving.com/wiki/index.php/Function)s f and g are [quadratic](https://artofproblemsolving.com/wiki/index.php/quadratic), $g(x) = -$ f(100 - x), and the graph of g contains the [vertex](https://artofproblemsolving.com/wiki/index.php/vertex) of the graph of f. The four x-intercepts on the two graphs have x-coordinates $x_1, x_2, x_3$, and $x_4$, in increasing order, and $x_3-x_2 = 150$. Then $x_4-x_1 = m + n\sqrt$ p, where m, n, and p are positive integers, and p is not divisible by the square of any prime. What is m + n + p?
+
+$\textbf{(A)}\ 602\qquad \textbf{(B)}\ 652\qquad \textbf{(C)}\ 702\qquad \textbf{(D)}\ 752 \qquad \textbf{(E)}\ 802$
+## Solution (Alcumus)
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+import graph; size(250);Label k; k.p=fontsize(6); int ymax = 400, ymin = -400; real $rt = 175+150*2^.5$; real f(real x){return 1/400*$(x-125)$*(x+rt);} real g(real x){return -f(100-x);} xaxis(-600,600,Ticks(k, 5),Arrows(6));yaxis(ymin,ymax,Ticks(k, 5),Arrows(6)); draw(graph(f,-450,300),red+linewidth(0.8),Arrows(6));draw(graph(g,-200,550),blue+linewidth(0.8),Arrows(6)); draw((50,ymax)--(50,ymin),linetype("4 4"),Arrows(4));dot((-rt,0));dot((100+rt,0));dot((-25,0));dot((125,0));
+```
+
+
+The two quadratics are $180^{\circ}$ rotations of each other about (50,0). Since we are only dealing with differences of roots, we can translate them to be symmetric about (0,0). Now $x_3 = - x_2 = 75$ and $x_4 = - x_1$. Say our translated versions of f and g are p and q, respectively, so that $p(x) = -$ q( - x). Let $x_3 = 75$ be a root of p and $x_2$ = - 75 a root of q by symmetry. Note that since they each contain each other's vertex, $x_1, x_2, x_3$, and $x_4$ must be roots of alternating polynomials, so $x_1$ is a root of p and $x_4$ a root of q
+
+
+$$
+p(x) = a(x - 75)(x - x_1)
+q(x) = - a(x + 75)(x + x_1)
+$$
+
+
+The vertex of p(x) is half the sum of its roots, or $\frac$ {75 + $x_1$}{2}. We are told that the vertex of one quadratic lies on the other, so
+
+
+$$
+\begin{eqnarray*} p\left(\frac {75 + x_1}{2}\right) & = & a\left(\frac {75 - x_1}{2}\right)\left(\frac { - 75 + x_1}{2}\right) \\ & = & - \frac {a}{4}(x_1 - 75)^2 \\ - \frac {a}{4}(x_1 - 75)^2 & = & q\left(\frac {75 + x_1}{2}\right) \\ & = & - a\left(\frac {x_1 + 225}{2}\right)\left(\frac {3x_1 + 75}{2}\right) \\ & = & - \frac {a}{4}(x_1 + 225)(3x_1 + 75) \end{eqnarray*}
+$$
+
+
+Let $x_1 = 75$u and divide through by $75^2,$ since it will drastically simplify computations. We know u < - 1 and that $(u - 1)^2 =$ (3u + 1)$$(u + 3), or
+
+
+$$
+\begin{eqnarray*} 0 & = & (3u + 1)(u + 3) - (u - 1)^2 \\ & = & 3u^2 + 10u + 3 - (u^2 - 2u + 1) \\ & = & 2u^2 + 12u + 2 \\ & = & u^2 + 6u + 1 \end{eqnarray*}
+$$
+
+
+So u = $\frac$ { - $6\pm\sqrt$ {32}}{2} = - $3\pm2\sqrt2.$ Since u < - 1, u = - 3 - $2\sqrt2.$
+
+The answer is $x_4-x_1 = (-x_1) - x_1 = - 150u = 450 + 300\sqrt$ {2}, and $450 + 300 + 2 = $752\ $\mathbf{(D)}.$
+## Note
+Actually it is not necessary to solve any quadratic equations, if one utilizes the two facts about the quadratic $ax^2+bx+c (a>0$) that (i) the difference of the two quadratic roots equals to $\sqrt{\Delta}$/a, and (ii) that the minimum value of a quadratic equals to $-\Delta/4a$, where $\Delta=b^2-4$ac. Here is a possible adjustment to the solution:
+
+Without loss of generality we may "shift" f,g,$x_1,x_2,x_3,x_4$ 50 units to the left, then the differences of $x_i$ remain the same, $x_3$ and $x_2$ are symmetrical about 0, so $x_2=-75, x_3=75$. The relationship of f,g becomes $g(x)=-f(-x).$ So we may write:
+
+
+$$
+f(x)=a(x-b)^2 + m
+g(x)=-a(x+b)^2 - m
+$$
+
+
+Again without loss of generality, we can assume a>0 and b>0 (Short argument is needed here instead of the lazy "wlog"). Also, the vertex of f is (b,m), so $m=g(b)=-4ab^2-m$, or $m=-2ab^2 <0$.
+
+Since $x_2,x_4$ are roots of f, we have the following relationship of the roots:
+
+$$
+x_2 + x_4 = 2b
+x_4 - x_2 = \sqrt{\Delta}/a = \sqrt{-4am}/a = 2\sqrt{-m/a} = 2\sqrt{2b^2} = 2\sqrt{2}b = \sqrt{2} (x_2+x_4)
+$$
+
+
+$$So (\sqrt{2}-1)x_4 = 75(1+\sqrt{2}), or x_4 = 75(1+\sqrt{2})^2 = 75(3+2\sqrt{2}).$$
+
+
+Therefore $x_4-x_1=$2x_$4=450+300\sqrt{2}.$
+## Solution 2
+[500px|center](https://artofproblemsolving.com/wiki/index.php/File:2009AMC12A_23.png)
+
+$$g(x) = g(50-(50-x), f(x) = f(50+(50-x))$$
+
+=> the two functions are symmetric over $x=50$
+
+$x_3-x_2 = 150 => x_2 = -25, x_3 = 125$
+
+$$g(x) = a(x-x_1)(x-x_3) = a[2(150+m)+m]m$$
+
+$$f(x) = -a(x-x_2)(x_x-x_4)$$
+
+$$\space \space \space \space \space \space \space =-a(150+m)(-(150+m))$$
+
+$$\space \space \space \space \space \space \space =a(150+m)^2$$
+
+$$m^2+2m(150+m) = (150+m)^2$$
+
+$$3m^2+300m = m^2+300m+150^2$$
+
+$$m = 75\sqrt{2}$$
+
+Therefore $x_4-x_1 = 3(150+m) + m =450+300\sqrt{2}$\space $450+300+2 =\boxed{752}$
+
+*~cassphe*
+## See also

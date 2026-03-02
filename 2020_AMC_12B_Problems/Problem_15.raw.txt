@@ -1,0 +1,57 @@
+{{duplicate|[[2020 AMC 10B Problems|2020 AMC 10B #17]] and [[2020 AMC 12B Problems|2020 AMC 12B #15]]}}
+
+==Problem==
+
+There are <math>10</math> people standing equally spaced around a circle. Each person knows exactly <math>3</math> of the other <math>9</math> people: the <math>2</math> people standing next to her or him, as well as the person directly across the circle. How many ways are there for the <math>10</math> people to split up into <math>5</math> pairs so that the members of each pair know each other?
+
+<math>\textbf{(A)}\ 11 \qquad\textbf{(B)}\ 12 \qquad\textbf{(C)}\  13 \qquad\textbf{(D)}\ 14 \qquad\textbf{(E)}\ 15</math>
+
+==Solution==
+Consider the <imath>10</imath> people to be standing in a circle, where two people opposite of each other form a diameter of the circle.
+
+Let us use casework on the number of pairs that form a diameter of the circle.
+
+Case 1: <imath>0</imath> diameters
+
+There are <imath>2</imath> ways: either <imath>1</imath> pairs with <imath>2</imath>, <imath>3</imath> pairs with <imath>4</imath>, and so on or <imath>10</imath> pairs with <imath>1</imath>, <imath>2</imath> pairs with <imath>3</imath>, etc. So <imath>\boxed{\textbf{2}}</imath> cases.
+
+Case 2: <imath>1</imath> diameter
+
+There are <imath>5</imath> possible diameters to draw (everyone else pairs with the person next to them). So <imath>\boxed{\textbf{5}}</imath> cases.
+
+Note that there cannot be <imath>2</imath> diameters since there would be one person on either side that will not have a pair adjacent to them. The only scenario forced is when the two people on either side would be paired up across a diameter. Thus, a contradiction will arise.
+
+Case 3: <imath>3</imath> diameters
+
+There are <imath>5</imath> possible sets of <imath>3</imath> diameters to draw.
+Notice we are technically choosing the number of ways to choose a pair of two diameters that are neighbors to each other. This means we can choose the first diameter in the pair, and have only two diameters to choose from for the second in the pair. This means we have <imath>5 \cdot 2=10</imath> possibilities for choosing 5 neighboring diameters. However, notice that there are duplicates, so we divide the <imath>10</imath> possibilities by <imath>2</imath> to get <imath>\boxed{\textbf{5}}</imath>.
+
+Note that there cannot be a case with <imath>4</imath> diameters because then there would have to be <imath>5</imath> diameters for the two remaining people as they have to be connected with a diameter. A contradiction arises.
+
+Case 4: <imath>5</imath> diameters
+
+There is only <imath>\boxed{\textbf{1}}</imath> way to do this.
+
+Thus, in total there are <imath>2+5+5+1=\boxed{\textbf{(C) }13}</imath> possible ways.
+
+
+~Pearl2008 + Alzwang (Minor Edits)
+
+==Video Solution (HOW TO THINK CRITICALLY!!!)==
+https://youtu.be/t1WQTZ8TF7k
+
+~Education, the Study of Everything
+
+==Video Solution by TheBeautyOfMath==
+https://youtu.be/3BvJeZU3T-M?t=419 
+
+https://youtu.be/0xgTR3UEqbQ
+
+== Video Solution by Sohil Rathi ==
+https://youtu.be/0W3VmFp55cM?t=2796
+
+==See Also==
+
+{{AMC10 box|year=2020|ab=B|num-b=16|num-a=18}}
+{{AMC12 box|year=2020|ab=B|num-b=14|num-a=16}}
+{{MAA Notice}}

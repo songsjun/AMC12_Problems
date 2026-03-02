@@ -1,0 +1,47 @@
+== Problem ==
+
+The mean, median, and mode of the <math>7</math> data values <math>60, 100, x, 40, 50, 200, 90</math> are all equal to <math>x</math>. What is the value of <math>x</math>?
+
+<math>\textbf{(A)}\ 50 \qquad\textbf{(B)}\ 60 \qquad\textbf{(C)}\ 75 \qquad\textbf{(D)}\ 90 \qquad\textbf{(E)}\ 100</math>
+
+== Solution 1 ==
+
+Since <math>x</math> is the mean,
+<cmath>\begin{align*}
+x&=\frac{60+100+x+40+50+200+90}{7}\\
+&=\frac{540+x}{7}.
+\end{align*}</cmath>
+
+Therefore, <math>7x=540+x</math>, so <math>x=\boxed{\textbf{(D) }90}.</math>
+
+Note: if the mean of a set is in the set, it can be discarded and the mean of the remaining numbers will be the same. This means that if using the mean in your reasoning, you can just take the mean of the other 6 numbers, and it'll solve it marginally faster. -[[User:Integralarefun|Integralarefun]] ([[User talk:Integralarefun|talk]]) 18:19, 27 September 2023 (EDT)
+
+==Solution 2==
+Note that <math>x</math> must be the median so it must equal either <math>60</math> or <math>90</math>. You can see that the mean is also <math>x</math>, and by intuition <math>x</math> should be the greater one. <math>x=\boxed{\textbf{(D) }90}.</math>
+~bjc
+
+==Check==
+
+Order the list: <math>\{40,50,60,90,100,200\}</math>. <math>x</math> must be either <math>60</math> or <math>90</math> because it is both the median and the mode of the set. Thus <math>90</math> is correct.
+
+==Video Solution (CREATIVE THINKING)==
+https://youtu.be/qDqe8pztaJQ
+
+~Education, the Study of Everything
+
+
+
+
+==Video Solution==
+https://youtu.be/XXX4_oBHuGk?t=163
+
+~IceMatrix
+
+https://youtu.be/joLWmbpvrCw
+
+~savannahsolver
+
+==See Also==
+{{AMC10 box|year=2016|ab=A|num-b=6|num-a=8}}
+{{AMC12 box|year=2016|ab=A|num-b=3|num-a=5}}
+{{MAA Notice}}

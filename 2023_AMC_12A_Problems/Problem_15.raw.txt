@@ -1,0 +1,100 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2023_AMC_12A_Problems/Problem_15&action=raw
+
+Published Time: Wed, 29 Oct 2025 06:46:33 GMT
+
+Markdown Content:
+==Problem==
+
+Usain is walking for exercise by zigzagging across a 100-meter by 30-meter rectangular field, beginning at point A and ending on the segment \overline{BC}. He wants to increase the distance walked by zigzagging as shown in the figure below (APQRS). What angle \theta = \angle PAB=\angle QPC=\angle RQB=\cdots will produce a length that is 120 meters? (This figure is not drawn to scale. Do not assume that he zigzag path has exactly four segments as shown; there could be more or fewer.)
+
+ import olympiad; draw((-50,15)--(50,15)); draw((50,15)--(50,-15)); draw((50,-15)--(-50,-15)); draw((-50,-15)--(-50,15)); draw((-50,-15)--(-22.5,15)); draw((-22.5,15)--(5,-15)); draw((5,-15)--(32.5,15)); draw((32.5,15)--(50,-4.090909090909)); label("$\theta$", (-41.5,-10.5)); label("$\theta$", (-13,10.5)); label("$\theta$", (15.5,-10.5)); label("$\theta$", (43,10.5)); dot((-50,15)); dot((-50,-15)); dot((50,15)); dot((50,-15)); dot((50,-4.09090909090909)); label("$D$",(-58,15)); label("$A$",(-58,-15)); label("$C$",(58,15)); label("$B$",(58,-15)); label("$S$",(58,-4.0909090909)); dot((-22.5,15)); dot((5,-15)); dot((32.5,15)); label("$P$",(-22.5,23)); label("$Q$",(5,-23)); label("$R$",(32.5,23)); 
+
+\textbf{(A)}~\arccos\frac{5}{6}\qquad\textbf{(B)}~\arccos\frac{4}{5}\qquad\textbf{(C)}~\arccos\frac{3}{10}\qquad\textbf{(D)}~\arcsin\frac{4}{5}\qquad\textbf{(E)}~\arcsin\frac{5}{6}
+
+==Solution 1==
+
+By "unfolding" APQRS into a straight line, we get a right angled triangle ABS'.
+
+ import olympiad; draw((-50,15)--(50,15)); draw((50,15)--(50,-15)); draw((50,-15)--(-50,-15)); draw((-50,-15)--(-50,15)); draw((-50,-15)--(-22.5,15)); draw((-22.5,15)--(5,-15)); draw((5,-15)--(32.5,15)); draw((32.5,15)--(50,-4.090909090909)); label("$\theta$", (-41.5,-10.5)); label("$\theta$", (-13,10.5)); label("$\theta$", (15.5,-10.5)); label("$\theta$", (43,10.5)); dot((-50,15)); dot((-50,-15)); dot((50,15)); dot((50,-15)); dot((50,-4.09090909090909)); label("$D$",(-58,15)); label("$A$",(-58,-15)); label("$C$",(58,15)); label("$B$",(58,-15)); label("$S$",(58,-4.0909090909)); dot((-22.5,15)); dot((5,-15)); dot((32.5,15)); dot((5,45)); dot((32.5,75)); dot((50,94.09090909090909)); draw((-22.5,15)--(50,94.09090909090909)); draw((50,-4.09090909090909)--(50,94.09090909090909)); label("$P$",(-22.5,23)); label("$Q$",(5,-23)); label("$R$",(32.5,23)); label("$Q'$",(5,35)); label("$R'$",(32.5,85)); label("$S'$",(58,94.09090909090909)); 
+It follows that
+\begin{align*} \cos(\theta)&=\frac{100}{120} \\ \theta&=\boxed{\textbf{(A) } \arccos\left(\frac{5}{6}\right)}. \end{align*}
+~lptoggled
+
+==Solution 2==
+
+Drop an altitude from P to AB and let its base be x. Note that if we repeat this for Q and R, all four right triangles (including \triangle{RSC}) will have the same trig ratios. By proportion, the hypotenuse AP is \frac{x}{100}(120) = \frac65 x, so \cos\theta = \frac{x}{(\frac65x)} = \frac56 \Rightarrow \theta = \boxed{\textbf{(A) }\arccos{\frac56}}.
+
+~IbrahimNadeem
+
+==Solution 3 (Trig Bash)==
+
+We can let x be the length of one of the full segments of the zigzag. We can then notice that \sin\theta = \frac{30}{x}. By Pythagorean Theorem, we see that DP = \sqrt{x^2 - 900}. This implies that: RC = 100 - 3\sqrt{x^2 - 900}. We also realize that RS = 120 - 3x, so this means that: \cos\theta = \frac{100 - 3\sqrt{x^2 - 900}}{120 - 3x}. We can then substitute x = \frac{30}{\sin\theta}, so this gives:
+\begin{align*} \cos\theta &= \frac{100 - 3\sqrt{x^2 - 900}}{120 - 3x}\\ &= \frac{100 - 3\sqrt{\frac{900}{\sin^2\theta} - 900}}{120 - \frac{90}{\sin\theta}}\\ &= \frac{100 - 90\sqrt{\csc^2\theta - 1}}{120 - \frac{90}{\sin\theta}}\\ &= \frac{100 - \frac{90}{\tan\theta}}{120 - \frac{90}{\sin\theta}}\\ &= \frac{100\sin\theta - 90\cos\theta}{120\sin\theta - 90}\\ &= \frac{10\sin\theta - 9\cos\theta}{12\sin\theta - 9}\\ \end{align*}
+
+Now we have: \cos\theta = \frac{10\sin\theta - 9\cos\theta}{12\sin\theta - 9}, meaning that: 12\sin\theta\cos\theta - 9\cos\theta = 10\sin\theta - 9\cos\theta \implies \cos\theta = \frac{10}{12} = \frac56.
+This means that \theta = \arccos\left(\frac56\right), giving us \boxed{\textbf{A}}
+
+~ap246
+
+==Solution 4 (No Trig)==
+Let x be the length of DP. Apply the Pythagoras theorem on \triangle{ADP} to get AP = \sqrt{900 + x^2}, which is also the length of every zigzag segment. 
+
+There are \frac{100}{x} such segments. Thus the total length formed by the zigzags is 
+\frac{100}{x} \times \sqrt{900+x^2} = 120
+\sqrt{900+x^2} = \frac{6}{5}x
+900 + x^2 = \frac{36}{25}x^2
+x = \frac{150}{\sqrt{11}} = DP
+AP = \sqrt{900 + x^2} = \frac{180}{\sqrt{11}}
+\cos\theta = \frac{DP}{AP} = \frac{5}{6}
+\theta=\boxed{\textbf{(A) } \arccos\left(\frac{5}{6}\right)}
+
+(note that \frac{100}{x} is not an integer, but it doesn't matter because of similar triangles. The length of the incomplete segment is always proportionate to the length of the incomplete base)
+
+~dwarf_marshmallow
+
+==Solution 5 (Intuitive and Quick)==
+Imagine that Usain walks at a constant speed. The horizontal component of Usain's velocity does not change. (Imagine a beam of light reflecting off of mirrors. A mirror only changes the velocity of light in the direction perpendicular to the mirror.) The horizontal component of Usain's velocity divided by his total velocity must be \frac{100}{120}. Therefore \theta=\boxed{\textbf{(A) } \arccos\left(\frac{5}{6}\right)}.
+~numerophile
+
+==Solution 6==
+
+Although the diagram is not fully accurate, we can use it to some extent. 
+
+It's given that the length of the rectangle is 100 and the total length of the path Usain is taking is 120, so Usain will walk \frac{120}{100} = \frac{6}{5} longer than he would if he were just to walk along the rectangle. Therefore for each point along his path, he will travel \frac{6}{5} farther than he would if he were just to walk along the rectangle. 
+
+Drop a perpendicular from point P to point Q on \overline{AB}. Let AQ = x: it follows that QP = 30 and PA = \frac{6}{5}x. By the Pythagorean Theorem, 
+
+x^2 + 900 = \frac{36}{25}x,
+
+so x = \frac{150}{\sqrt{11}} and \frac{6x}{5} = \frac{180}{\sqrt{11}}. 
+
+Now, \cos\theta = \frac{\frac{150}{\sqrt{11}}}{\frac{180}{\sqrt{11}}} = \frac{5}{6} and \theta = \boxed{\textbf{(A) } \arccos\left(\frac{5}{6}\right)}.
+
+-Benedict T (countmath1)
+
+==Video Solution (easy to digest) by Power Solve==
+https://youtu.be/YXIH3UbLqK8?si=U1VEKC7S0PoUFjF5&t=2100
+
+==Video Solution 1 by OmegaLearn==
+https://youtu.be/NhUI-BNCIUE
+
+==Video Solution (⚡Solved in 56 seconds⚡)==
+https://youtu.be/jkujDM5aW3w 
+_~Education, the Study of Everything_
+
+==Video Solution by SpreadTheMathLove==
+https://www.youtube.com/watch?v=ianRnPT_jk4
+
+==Video Solution==
+
+https://youtu.be/S5H8JEImiA8
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+==See also==
+
+{{AMC12 box|year=2023|ab=A|num-b=14|num-a=16}}
+
+{{MAA Notice}}

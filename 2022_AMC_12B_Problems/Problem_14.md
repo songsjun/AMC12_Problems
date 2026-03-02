@@ -1,0 +1,82 @@
+# 2022 AMC 12B Problem 14
+
+## Problem
+The graph of $y=x^2+2x-15$ intersects the x-axis at points A and C and the y-axis at point B. What is $\tan(\angle ABC)$?
+
+$\textbf{(A)}\ \frac{1}{7} \qquad \textbf{(B)}\ \frac{1}{4} \qquad \textbf{(C)}\ \frac{3}{7} \qquad \textbf{(D)}\ \frac{1}{2} \qquad \textbf{(E)}\ \frac{4}{7} \qquad$
+## Diagram
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+/* Made by MRENTHUSIASM */ size(250); real xMin = -15; real xMax $= 15$; real yMin = -17; real yMax $= 17$; draw((xMin,0)--(xMax,0),black+linewidth(1.5),EndArrow(5)); draw((0,yMin)--(0,yMax),black+linewidth(1.5),EndArrow(5)); label("$x$",(xMax,0),(2,0)); label("$y$",(0,yMax),(0,2)); real f(real x) { return $x^2+2*x-15$; } draw(graph(f,-6.75,4.75),red); pair A, B, C; A = (-5,0); B = (0,-15); C = (3,0); draw(A--B--C); dot("$A$",A,1.5NW,linewidth(4.5)); dot("$B$",B,1.5SE,linewidth(4.5)); dot("$C$",C,1.5NE,linewidth(4.5)); label("$y=x^2+2x-15$",(12,9),red);
+```
+
+*~MRENTHUSIASM*
+## Solution 1 (Dot Product)
+First, find A=(-5,0), B=(0,-15), and C=(3,0). Create vectors $\overrightarrow{BA}$ and $\overrightarrow{BC}.$ These can be reduced to $\langle -1, 3 \rangle$ and $\langle 1, 5 \rangle,$ respectively. Then, we can use the dot product to calculate the cosine of the angle (where $\theta=\angle ABC)$ between them:
+
+
+$$
+\begin{align*} \langle -1, 3 \rangle \cdot \langle 1, 5 \rangle = 15-1 &= \sqrt{10}\sqrt{26}\cos(\theta),\\ \implies \cos (\theta) &= \frac{7}{\sqrt{65}}. \end{align*}
+$$
+
+
+Thus, $\tan(\angle ABC) = \sqrt{\frac{65}{49}-1}= \boxed{\textbf{(E)}\ \frac{4}{7}}.$
+
+*~Jackson La Vallee*
+## Solution 2
+Note that $y=x^2+2x-15$ intersects the x-axis at points (-5, 0) and (3, 0). Without loss of generality, let these points be A and C respectively. Also, the graph intersects the y-axis at point B = (0, -15).
+
+Let point O=(0, 0). It follows that $\triangle AOB$ and $\triangle BOC$ are right triangles.
+
+We have $\tan(\angle ABC) = \tan(\angle ABO + \angle OBC) = \frac{\tan(\angle ABO) + \tan(\angle OBC)}{1 - \tan(\angle ABO) \cdot \tan(\angle OBC)} = \frac{\frac15 + \frac13}{1 - \frac1{15}} = \boxed{\textbf{(E)}\ \frac{4}{7}}.$
+Alternatively, we can use the [Pythagorean Theorem](https://artofproblemsolving.com/wiki/index.php/Pythagorean_Theorem) to find that AB = 5 $\sqrt{10}$ and BC = 3 $\sqrt{26}$ and then use the A = $\frac12 ab \sin \angle C$ [area formula for a triangle](https://artofproblemsolving.com/wiki/index.php/Area_of_a_Triangle) and the [Law of Cosines](https://artofproblemsolving.com/wiki/index.php/Law_of_Cosines) to find $\tan(\angle ABC).$
+## Solution 3
+Like above, we set A to (-5,0), B to (0, -15), and C to (3,0), then finding via the Pythagorean Theorem that AB = 5 $\sqrt{10}$ and BC = 3 $\sqrt{26}.$ Using the Law of Cosines, we see that $\cos(\angle ABC) = \frac{AB^2 + BC^2 - AC^2}{2 AB BC} = \frac{250 + 234 - 64}{30 \sqrt{260}} = \frac{7}{\sqrt{65}}.$ Then, we use the identity $\tan^2(x) = \sec^2(x) - 1$ to get $\tan(\angle ABC) = \sqrt{\frac{65}{49} - 1} = \boxed{\textbf{(E)}\ \frac{4}{7}}.$
+
+*~jamesl123456*
+
+Alternatively, we could observe that $\sin(\angle ABC)=\sqrt{1-\cos^2(\angle ABC)}=\sqrt{1-\left(\dfrac7{\sqrt{65}}\right)^2}=\sqrt{\dfrac{16}{65}}=\dfrac4{\sqrt{65}},$ so $\tan(\angle ABC)=\dfrac{\sin(\angle ABC)}{\cos(\angle ABC)}=\boxed{\textbf{(E) }\dfrac47}.$
+
+*~Technodoggo*
+## Solution 4
+We can reflect the figure, but still have the same angle. This problem is the same as having points D(0,0), E(3,15), and F(-5,15), where we're solving for angle FED. We can use the formula for $\tan(a-b)$ to solve now where a is the x-axis to angle F and b is the x-axis to angle E. $\tan(a) = \textrm{slope of line }DF = -3$ and $\tan(B) = \textrm{slope of line }DE = 5.$ Plugging these values into the $\tan(a-b)$ formula, we get (-3-5)/(1+($-3\cdot 5))$ which is $\boxed{\textbf{(E)}\ \frac{4}{7}}.$
+
+*~mathboy100 (minor LaTeX edits)*
+## Solution 5
+We use the formula [ABC]=$\frac{1}{2}$ab$\sin{C}.$
+
+Note that $\triangle ABC$ has side-lengths AB=$5\sqrt{10}$ and BC=$3\sqrt{26}$ from Pythagorean theorem, with the area being $\frac12\cdot8\cdot15.$
+
+We equate the areas together to get: $\frac12\cdot8\cdot15=\frac12\cdot5\sqrt{10}\cdot3\sqrt{26}\cdot\sin{B},$
+from which $\sin{B}=\frac{8}{\sqrt{260}}.$
+
+From Pythagorean Identity, $\cos{B}=\frac{14}{\sqrt{260}}.$
+
+Then we use $\tan{B}=\frac{\sin{B}}{\cos{B}},$ to obtain $\tan{B}=\frac{8}{14}=\boxed{\textbf{(E)}\ \frac{4}{7}}.$
+
+- SAHANWIJETUNGA
+## Solution 6 (Complex Numbers)
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+/* Made by MRENTHUSIASM */ size(300); real xMin = -15; real xMax $= 15$; real yMin = -17; real yMax $= 17$; draw((xMin,0)--(xMax,0),black+linewidth(1.5),EndArrow(5)); draw((0,yMin)--(0,yMax),black+linewidth(1.5),EndArrow(5)); label("$x$",(xMax,0),(2,0)); label("$y$",(0,yMax),(0,2)); real f(real x) { return $x^2+2*x-15$; } draw(graph(f,-6.75,4.75),red); pair A, B, C, O; A = (-5,0); B = (0,-15); C = (3,0); O = origin; markscalefactor=0.1; draw(rightanglemark(B,O,C)); draw(A--B--C); dot("$A$",A,1.5SW,linewidth(4.5)); dot("$B$",B,1.5SE,linewidth(4.5)); dot("$C$",C,1.5SE,linewidth(4.5)); dot("$O$",O,1.5SW,linewidth(4.5)); label("$y=x^2+2x-15$",(12,9),red); label("$5$",(-2.5,0),1.5N); label("$3$",(1.5,0),1.5N); label("$15$",(0,-6),W); label("$\theta$",(0,-15),9*dir(100)); label("$\phi$",(0,-15),9*dir(84));
+```
+
+From x^2 + $2x - 15 = (x-3)(x+5)$, we may assume, without loss of generality, that x-intercepts of the given parabola are A(-5,0) and C(3,0). And, point B has coordinates (0,-15). Consider complex numbers $z = 3$ + i and $w = 5$ + i whose arguments are $\theta$\coloneqq $\angle OBA$ and $\phi$\coloneqq $\angle OBC,$ respectively. Notice that $\angle ABC = \theta + \phi$ is the argument of the product zw which is  zw = (3+i)(5+i) = 14 + $8i$.
+Hence $\tan \angle ABC = \frac{\operatorname{Im}(zw)}{\operatorname{Re}(zw)} = \frac{8}{14} = \boxed{\textbf{(E)}\ \frac{4}{7}}.$
+
+*~VensL.*
+## Video Solution by mop 2024
+https://youtu.be/ezGvZgBLe8k&t=458s
+
+*~r00tsOfUnity*
+## Video Solution (Under 2 min!)
+https://youtu.be/InJgY_JYBkE
+
+*~_Education, the Study of Everything_*
+## Video Solution(1-16)
+https://youtu.be/SCwQ9jUfr0g
+
+~~Hayabusa1
+## See Also

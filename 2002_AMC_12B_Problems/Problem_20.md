@@ -1,0 +1,65 @@
+# 2002 AMC 12B Problem 20
+
+> This problem is the same as [2002 AMC 12B #20](https://artofproblemsolving.com/wiki/index.php/2002_AMC_12B_Problems) and [2002 AMC 10B #22](https://artofproblemsolving.com/wiki/index.php/2002_AMC_10B_Problems).
+## Problem
+Let $\triangle XOY$ be a [right-angled triangle](https://artofproblemsolving.com/wiki/index.php/right_triangle) with $m\angle XOY = 90^{\circ}.$ Let M and N be the [midpoint](https://artofproblemsolving.com/wiki/index.php/midpoint)s of legs OX and OY, respectively. Given that XN = 19 and YM = 22, find XY.
+
+
+$$\mathrm{(A)}\ 24 \qquad\mathrm{(B)}\ 26 \qquad\mathrm{(C)}\ 28 \qquad\mathrm{(D)}\ 30 \qquad\mathrm{(E)}\ 32$$
+
+## Solution 1
+[Image:2002_$12B_AMC-20$.png](https://artofproblemsolving.com/wiki/index.php/Image:2002_12B_AMC-20.png)
+
+Let OM = x, ON = y. By the [Pythagorean Theorem](https://artofproblemsolving.com/wiki/index.php/Pythagorean_Theorem) on $\triangle XON, MOY$ respectively,
+
+$$
+\begin{align*} (2x)^2 + y^2 &= 19^2\\ x^2 + (2y)^2 &= 22^2\end{align*}
+$$
+
+
+Summing these gives $5x^2+5y^2 = 845 \Longrightarrowx^2 + y^2 = 169.$
+
+By the Pythagorean Theorem again, we have
+
+
+$$(2x)^2 + (2y)^2 = XY^2 \Longrightarrow XY = \sqrt{4(x^2 + y^2)} = \sqrt{4(169)} = \sqrt{676} = \boxed{\mathrm{(B)}\ 26}.$$
+
+
+Alternatively, we could note that since we found $x^2 + y^2 = 169,$ segment MN=13. Right triangles $\triangle MON$ and $\triangle XOY$ are similar by Leg-Leg with a ratio of $\frac{1}{2},$ so XY=$2(MN)=\boxed{\mathrm{(B)}\ 26}.$
+## Solution 2
+Let XO=x and YO=y. Then, XY=$\sqrt{x^2+y^2}.$
+
+Since XN=19 and YM=22,
+
+$$
+XN^2=19^2=x^2+(\dfrac{y}{2})^2)=\dfrac{x^2}{4}+y^2
+YM^2=22^2=(\dfrac{x}{2})^2+y^2=\dfrac{x^2}{4}+y^2.
+$$
+
+
+Adding these up:
+
+$$
+19^2+22^2=\dfrac{4x^2+y^2}{4}+\dfrac{x^2+4y^2}{4}
+845=\dfrac{5x^2+5y^2}{4}
+3380=5x^2+5y^2
+676=x^2+y^2.
+$$
+
+
+Then, we substitute: XY=$\sqrt{x^2+y^2}=\sqrt{676}=\boxed{26}.$
+## Solution 3 (Solution 1 but shorter)
+Refer to the diagram in solution 1. $4x^2+y^2=361$ and $4y^2+x^2=484,$ so add them: $5x^2+5y^2=845$ and divide by 5: $x^2+y^2=169$ so $\dfrac{XY}{2}=\sqrt{169}=13$ and so XY=26, or answer $\boxed{\text{(B)}}.$
+## Solution 4
+Use the diagram in solution 1. Get $4x^2+y^2=361$ and $4y^2+x^2=484,$ and multiply the second equation by 4 to get $4x^2+16y^2=1936$ and then subtract the first from the second. Get $15y^2=1575$ and y^2=105. Repeat for the other variable to get $15x^2=960$ and $x^2=64. Now XY$ is equal to the square root of four times these quantities, so (105+64) $\cdot 4=676,$ and XY=$\boxed{\text{(B)}\ 26}.$
+## Solution 5 (Quick and good for in-contest use)
+Let XM = MO = y, and ON = NY = x. Now, we can write some equations. We have that $(2y)^2+x^2 = 19^2 \Longrightarrow 4y^2 + x^2 = 361,$ and $(2x)^2+y^2 = 22^2 \Longrightarrow 4$x^2+y^2 = 484. Adding the 2 equations up we get $5x^2+5y^2 = 845$. The hypotenuse of the triangle is equal to $\sqrt{4x^2+4y^2},$ so that is what we want. In order to get $4x^2+4y^2$, we need to subtract $x^2+y^2$ from $5x^2+5y^2$, and since $x^2+y^2 =\dfrac{1}{5}\left(5x^2+5y^2\right),$ we have that $4x^2+4y^2 =\dfrac{4}{5} \cdot 845 = 676.$ Therefore, the hypotenuse is $\sqrt{676} = \boxed{\text{(B)}\ 26}.$
+
+*~jb2015007*
+## Video Solution by OmegaLearn
+https://youtu.be/BIyhEjVp0iM?t=174
+
+*~pi_is_3.14*
+## Video Solution
+https://www.youtube.com/watch?v=7wj6RupkO90   ~David
+## See also

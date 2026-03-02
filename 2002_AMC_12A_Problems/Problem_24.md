@@ -1,0 +1,69 @@
+# 2002 AMC 12A Problem 24
+
+## Problem
+Find the number of ordered pairs of real numbers (a,b) such that (a+$bi)^{2002}$ = a-bi.
+
+
+$$\text{(A) }1001 \qquad \text{(B) }1002 \qquad \text{(C) }2001 \qquad \text{(D) }2002 \qquad \text{(E) }2004$$
+
+## Solution 1
+Let $s=\sqrt{a^2+b^2}$ be the magnitude of a+bi. Then the magnitude of (a+$bi)^{2002}$ is $s^{2002}$, while the magnitude of a-bi is s. We get that $s^{2002}$=s, hence either $s=0$ or $s=1$.
+
+For $s=0$ we get a single solution (a,b)=(0,0).
+
+Let's now assume that $s=1$. Multiply both sides by a+bi. The left hand side becomes (a+$bi)^{2003}$, the right hand side becomes (a-bi)(a+bi)=a^2 + b^2 = 1. Hence the solutions for this case are precisely all the 2003rd complex roots of unity, and there are 2003 of those.
+
+The total number of solutions is therefore 1+2003 = $\boxed{2004}.$
+## Solution 2
+As in the other solution, split the problem into when $s=0$ and when $s=1$. When $s=1$ and $a+bi=\cos\theta+i\sin\theta,$
+
+
+$$(a+bi)^{2002}= \cos(2002\theta)+i\sin(2002\theta)   =a-bi= \cos\theta-i\sin\theta= \cos(-\theta)+i\sin(-\theta)$$
+
+
+so we must have $2002\theta=-\theta+2\pi$ k and hence $\theta=\frac{2\pi k}{2003}.$ Since $\theta$ is restricted to [0,$2\pi),$ k can range from 0 to 2002 inclusive, which is $2002-0+1=2003$ values. Thus the total is $1+2003 =\boxed{\textbf{(E)}\ 2004}.$
+## Solution 3
+Let r be the magnitude of a+bi. Notice that r must be either 0 or 1 for this to be true, as shown in the above solutions. We know this because we are taking magnitude to the 2003rd power, and if the magnitude of a+bi is larger than 1, it will increase and if it is smaller than 1 it will decrease. However, the magnitude on the RHS is still r, so this is not possible. Again, only $r=0$ and $r=1$ satisfy the equation.
+
+Now if $r=0$, then (a,b) must be (0,0).
+
+However if $r=1$, we then have:
+
+$\cos(2002 \theta) = \cos(-\theta).$ This has solution of $\theta = 0.$ This would represent the number 1+0i, with conjugate 1-0i. This works because the magnitude is the same and the angle is nothing anyways. We multiply angle by 2002 through De Moivre's Theorem and also we do $-\theta$ because it is a reflection, angles therefore is negative.
+
+We then write:
+
+$\cos(2002 \theta) = \cos(360-\theta)$ which has solution of $\theta = \frac{360}{2003}.$
+
+We can also write:
+
+$\cos(2002 \theta) = \cos(720-\theta)$ which has solution $\theta = \frac{720}{2003}.$
+
+We notice that it is simply headed upwards and the answer is of the form $\frac{720}{2003}$ n, where n is some integer from 0 to infinity, inclusive.
+
+Well wait, it repeats itself $n=2003$, that is 360 which is also 0! Hence we only have $n=0$ to 2002 as original solutions, or 2003 solutions.
+
+$$1+2003 = \boxed{2004}.$$
+
+Solution by Blackhawk 9-10-17
+
+\LaTeXed (with some edits) by PhunsukhWangdu 7/27/22
+## Solution 4
+Let z = a + bi = $re^{i\theta}$ where r = |z| and $0\leq \theta < 2\pi.$ We want to solve $z^{2002}=\overline{z}.$ Since $z\overline{z} =$ |z|^$2,$ we multiply by z on both sides to get
+$$z^{2003} = |z|^2 = r^{2003}e^{2023i\theta} = r^2,$$
+from which we get $r\in\{0, 1\}$ (since $r\in \mathbb{R}),$ immediately yielding $z = 0$ as an answer. If $r=1$ then we have $z^{2003} = 1$, which each of the 2003rd roots of unity satisfies. Altogether, there are 1 + $2003 =\boxed{\textbf{(E)\ 2004}}$ values of z, each of which correspond to a unique ordered pair (a, b).
+
+*~Benedict T(countmath1)*
+## Solution 5
+Let z=a+bi $\Rightarrowz^{2022}=\overline{z}.$ Hence, taking the magnitude of both sides, we must have:
+$$|z^{2022}|=|\overline{z}|=|z| \Rightarrow |z|=0, 1.$$
+If |z|=0, then $z=0$. This gives one solution.
+
+If |z|=1, then we do the following. Multiply the first equation by z on both sides such that you obtain $z^{2003}=z \overline{z} =$|z|^$2.$
+
+Now, it is clear that if |z|=1, we need $z^{2003}=1$. We have 2003 solutions for this, i.e. for each $i\in\{0,1,\cdots,2022\}$ for $e^{2i\pi/2003}$.
+
+A total of $2003+1=2004$ solutions.
+
+*~mathboy282*
+## See Also

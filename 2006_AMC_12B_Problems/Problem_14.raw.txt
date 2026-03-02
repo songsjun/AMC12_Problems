@@ -1,0 +1,22 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2006_AMC_12B_Problems/Problem_14&action=raw
+
+Published Time: Sun, 08 Dec 2013 21:21:48 GMT
+
+Markdown Content:
+== Problem ==
+Elmo makes N sandwiches for a fundraiser. For each sandwich he uses B globs of peanut butter at 4 cents per glob and J blobs of jam at 5 cents per glob. The cost of the peanut butter and jam to make all the sandwiches is  2.53. Assume that B, J and N are all positive integers with N>1. What is the cost of the jam Elmo uses to make the sandwiches? 
+
+ \mathrm{(A)}\ 1.05 \qquad \mathrm{(B)}\ 1.25 \qquad \mathrm{(C)}\ 1.45 \qquad \mathrm{(D)}\ 1.65 \qquad \mathrm{(E)}\ 1.85 
+== Solution ==
+From the given, we know that 
+
+253=N(4B+5J) 
+(The numbers are in cents)
+
+since 253=11\cdot23, and since N is an integer, then 4B+5J=11 or 23. It is easily deduced that 11 is impossible to make with B and J integers, so N=11 and 4B+5J=23. Then, it can be guessed and checked quite simply that if B=2 and J=3, then 4B+5J=4(2)+5(3)=23. The problem asks for the total cost of jam, or N(5J)=11(15)=165 cents, or 1.65\implies\mathrm{(D)}
+
+== See also ==
+{{AMC12 box|year=2006|ab=B|num-b=13|num-a=15}}
+{{MAA Notice}}

@@ -1,0 +1,50 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2023_AMC_12B_Problems/Problem_10&action=raw
+
+Published Time: Fri, 17 Oct 2025 00:59:26 GMT
+
+Markdown Content:
+==Problem==
+In the xy-plane, a circle of radius 4 with center on the positive x-axis is tangent to the y-axis at the origin, and a circle with radius 10 with center on the positive y-axis is tangent to the x-axis at the origin. What is the slope of the line passing through the two points at which these circles intersect?
+
+\textbf{(A)}\ \dfrac{2}{7} \qquad\textbf{(B)}\ \dfrac{3}{7} \qquad\textbf{(C)}\ \dfrac{2}{\sqrt{29}} \qquad\textbf{(D)}\ \dfrac{1}{\sqrt{29}} \qquad\textbf{(E)}\ \dfrac{2}{5}
+
+==Solution 1==
+
+The center of the first circle is (4,0).
+The center of the second circle is (0,10).
+Thus, the slope of the line that passes through these two centers is - \frac{10}{4} = - \frac{5}{2}.
+
+Because this line is the perpendicular bisector of the line that passes through two intersecting points of two circles, the slope of the latter line is \frac{-1}{- \frac{5}{2}} = \boxed{\textbf{(E) } \frac{2}{5}}.
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+==Solution 2 (Coordinate Geometry)==
+
+The first circle can be written as (x-4)^2 + y^2 = 4^2 we'll call this equation (1)
+The second can we writen as x^2 + (y-10)^2 = 10^2, we'll call this equation (2)
+
+Expanding (1):
+\begin{align*} x^2 -8x + 4^2 + y^2 &= 4^2 \\ x^2 - 8x + y^2 &= 0 \end{align*}
+Exapnding (2)
+\begin{align*} x^2 + y^2 -20y + 10^2 = 10^2\\ x^2 + y^2 - 20y = 0 \end{align*}
+
+Now we can set the equations equal to eachother:
+\begin{align*} x^2 - 8x + y^2 &= x^2 + y^2 - 20y \\ \frac{8}{20}x &= y \\ \frac{2}{5}x &= y \end{align*}
+This is in slope intercept form therefore the slope is \boxed{\textbf{(E) } \frac{2}{5}}.
+[[Image:Amc12B_2023_P10.PNG|thumb|center|600px]] 
+~[https://artofproblemsolving.com/wiki/index.php/User:Cyantist luckuso]
+
+==Video Solution 1 by OmegaLearn==
+https://youtu.be/IUB6r1iNgpU
+
+==Video Solution==
+
+https://youtu.be/sjJMWtL_CEY
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+==See Also==
+{{AMC12 box|year=2023|ab=B|num-b=9|num-a=11}}
+{{MAA Notice}}

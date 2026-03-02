@@ -1,0 +1,12 @@
+# 2004 AMC 12B Problem 20
+
+## Problem
+Each face of a [cube](https://artofproblemsolving.com/wiki/index.php/cube) is painted either red or blue, each with probability 1/2. The color of each face is determined independently. What is the probability that the painted cube can be placed on a horizontal surface so that the four vertical faces are all the same color?
+
+$\textbf{(A)}\ \frac14 \qquad \textbf{(B)}\ \frac {5}{16} \qquad \textbf{(C)}\ \frac38 \qquad \textbf{(D)}\ \frac {7}{16} \qquad \textbf{(E)}\ \frac12$
+## Solution
+There are $2^6$ possible colorings of the cube. Consider the color that appears with greater frequency. The property obviously holds true if 5 or 6 of the faces are colored the same, which for each color can happen in $6 + 1 = 7$ ways. If 4 of the faces are colored the same, there are 3 possible cubes (corresponding to the 3 possible ways to pick pairs of opposite faces for the other color). If 3 of the faces are colored the same, the property obviously cannot be satisfied. Thus, there are a total of $2(7 + 3) = 20$ ways for this to occur, and the desired probability is $\frac{20}{2^6} = \frac{5}{16}$\ $\mathbf{(B)}.$
+## Solution 2
+As with the previous solution, we will simply count the number of valid faces and divide by $2^6.$ We say that a cube has a ring of color when four vertical faces are all the same color. If we fix the cube in space, there can be 3 different rings (in each of the 3 axis), each of which can take on 2 different colors. This leaves us to choose the remaining two faces (which are opposite one another) in 2^2=4 ways. However, we have counted coloring that has each face the same color 3 times for both red and blue. This means that we must subtract the 4 overcounts to get 2*3*$2^2-4=20$. Dividing by $2^6$ total colorings, we get $20/2^6=\frac{5}{16}\mathbf{(B)}.$
+*~bambithenambi*
+## See also

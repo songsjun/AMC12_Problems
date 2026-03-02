@@ -1,0 +1,33 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2003_AMC_10B_Problems/Problem_8&action=raw
+
+Published Time: Tue, 28 Mar 2023 00:44:07 GMT
+
+Markdown Content:
+{{duplicate|[[2003 AMC 12B Problems|2003 AMC 12B #6]] and [[2003 AMC 10B Problems|2003 AMC 10B #8]]}}
+
+==Problem==
+
+The second and fourth terms of a geometric sequence are 2 and 6. Which of the following is a possible first term?
+
+\textbf{(A) } -\sqrt{3} \qquad\textbf{(B) } -\frac{2\sqrt{3}}{3} \qquad\textbf{(C) } -\frac{\sqrt{3}}{3} \qquad\textbf{(D) } \sqrt{3} \qquad\textbf{(E) } 3
+
+==Solution==
+Let the first term be  a  and the common ratio be  r . Therefore, 
+
+ar=2\ \ (1) \qquad \text{and} \qquad ar^3=6\ \ (2)
+
+Dividing (2) by (1) eliminates the  a , yielding  r^2=3 , so  r=\pm\sqrt{3} .
+
+Now, since  ar=2 ,  a=\frac{2}{r} , so  a=\frac{2}{\pm\sqrt{3}}=\pm\frac{2\sqrt{3}}{3} .
+
+We therefore see that  \boxed{\textbf{(B)}\ -\frac{2\sqrt{3}}{3}}  is a possible first term.
+
+==See Also==
+
+{{AMC10 box|year=2003|ab=B|num-b=7|num-a=9}}
+{{AMC12 box|year=2003|ab=B|num-b=5|num-a=7}}
+
+[[Category:Introductory Algebra Problems]]
+{{MAA Notice}}

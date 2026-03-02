@@ -1,0 +1,70 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2006_AMC_12B_Problems/Problem_23&action=raw
+
+Published Time: Sun, 01 Sep 2024 18:31:32 GMT
+
+Markdown Content:
+== Problem ==
+Isosceles \triangle ABC has a right angle at C.  Point P is inside \triangle ABC, such that PA=11, PB=7, and PC=6. Legs \overline{AC} and \overline{BC} have length s=\sqrt{a+b\sqrt{2}}, where a and b are positive integers.  What is a+b?
+
+ pathpen = linewidth(0.7); pen f = fontsize(10); size(5cm); pair B = (0,sqrt(85+42*sqrt(2))); pair A = (B.y,0); pair C = (0,0); pair P = IP(arc(B,7,180,360),arc(C,6,0,90)); D(A--B--C--cycle); D(P--A); D(P--B); D(P--C); MP("A",D(A),plain.E,f); MP("B",D(B),plain.N,f); MP("C",D(C),plain.SW,f); MP("P",D(P),plain.NE,f); 
+
+ \mathrm{(A)}\ 85 \qquad \mathrm{(B)}\ 91 \qquad \mathrm{(C)}\ 108 \qquad \mathrm{(D)}\ 121 \qquad \mathrm{(E)}\ 127 
+
+== Solution ==
+ pathpen = linewidth(0.7); pen f = fontsize(10); size(5cm); pair B = (0,sqrt(85+42*sqrt(2))); pair A = (B.y,0); pair C = (0,0); pair P = IP(arc(B,7,180,360),arc(C,6,0,90)); D(A--B--C--cycle); D(P--A); D(P--B); D(P--C); MP("A",D(A),plain.E,f); MP("B",D(B),plain.N,f); MP("C",D(C),plain.SW,f); MP("P",D(P),plain.NE,f); MP("\alpha",C,5*dir(80),f); MP("90^\circ-\alpha",C,3*dir(30),f); MP("s",(A+C)/2,plain.S,f); MP("s",(B+C)/2,plain.W,f); 
+Using the Law of Cosines on \triangle PBC, we have:
+
+ \begin{align*} PB^2&=BC^2+PC^2-2\cdot BC\cdot PC\cdot \cos(\alpha) \Rightarrow 49 = 36 + s^2 - 12s\cos(\alpha) \Rightarrow \cos(\alpha) = \dfrac{s^2-13}{12s}. \end{align*} 
+
+Using the Law of Cosines on \triangle PAC, we have:
+ \begin{align*} PA^2&=AC^2+PC^2-2\cdot AC\cdot PC\cdot \cos(90^\circ-\alpha) \Rightarrow 121 = 36 + s^2 - 12s\sin(\alpha) \Rightarrow \sin(\alpha) = \dfrac{s^2-85}{12s}. \end{align*} 
+
+Now we use \sin^2(\alpha) + \cos^2(\alpha) = 1.
+ \begin{align*} \sin^2(\alpha)+\cos^2(\alpha) = 1 &\Rightarrow \frac{s^4-26s^2+169}{144s^2} + \frac{s^4-170s^2+7225}{144s^2} = 1 \\ &\Rightarrow s^4-170s^2+3697 = 0 \\ &\Rightarrow s^2 = \dfrac{170 \pm 84\sqrt{2}}{2} = 85 \pm 42\sqrt2 \end{align*} 
+
+Note that we know that we want the solution with s^2 > 85 since we know that \sin(\alpha) > 0.  Thus, a+b=85+42=\boxed{127}.
+
+==Solution 2==
+Rotate triangle PAC 90 degrees counterclockwise about C so that the image of A rests on B. Now let the image of P be \widetilde{P}. 
+ pathpen = linewidth(0.7); pen f = fontsize(10); size(10cm); pair B = (0,sqrt(85+42*sqrt(2))); pair A = (B.y,0); pair C = (0,0); pair P = IP(arc(B,7,180,360),arc(C,6,0,90)); draw(A--B--C--cycle, black+0.8); D(P--A); D(P--B); D(P--C); MP("A",D(A),E,f); MP("B, \widetilde{A}",D(B),N,f); MP("C",D(C),S,f); MP("P",D(P),NE,f); pair Bp = dir(90)*(B-origin); pair Pp = dir(90)*(P-origin); D(B--Bp--C--Pp--B); MP("\widetilde{P}",D(Pp),SW,f); MP("\widetilde{B}",D(Bp),W,f); 
+Note that \widetilde{P}C=6, meaning triangle PC\widetilde{P} is right isosceles, and \angle P\widetilde{P}C=45^\circ. Then P\widetilde{P}=6\sqrt{2}. Now because PB=7 and \widetilde{P}B=11, we observe that \angle \widetilde{P}PB=90^\circ, by the Pythagorean Theorem on \widetilde{P}PB. Now we have that \angle APC=\angle B\widetilde{P}C=\angle B\widetilde{P}P + \angle P\widetilde{P}C. So we take the cosine of the second equality, using that fact that \angle P\widetilde{P}C=45^\circ, to get \cos(B\widetilde{P}C)=\frac{6\sqrt{2}-7}{11\sqrt{2}}. Finally, we use the fact that \cos(B\widetilde{P}C)=\cos(CPA) and use the Law of Cosines on triangle CPA to arrive at the value of s^2.
+
+Or notice that since \angle \widetilde{P}PB=90^\circ and \angle P\widetilde{P}C=45^\circ, we have \angle BPC=135^\circ, and Law of Cosines on triangle BPC gives the value of s^2.
+
+==Solution 3 (coordinate bash)== 
+
+Let point P have coordinates (x,y) and C have coordinates (0,0). Then, A has (s,0) and B has (0,s). 
+
+By distance formula, we have 
+x^2+y^2=36 \tag{1}.
+x^2+(y-s)^2=49 \tag{2}.
+(x-s)^2+y^2=121 \tag{3}  
+
+Expanding (2) and (3) gives x^2+y^2-2ys+s^2=49, and 
+x^2+y^2-2sx+s^2=121, respectively. Then, using equation (1), we have that -2ys+s^2=49-36=13, and -2sx+s^2=121-36=85. 
+
+Then, solving for x and y gives
+x=\frac{85-s^2}{-2s}=\frac{s^2-85}{2s}, and
+y=\frac{13-s^2}{-2s}=\frac{s^2-13}{2s}. 
+Plugging these values of x and y into equation (1) yields \left(\frac{s^2-85}{2s}\right)^2+\left(\frac{s^2-13}{2s}\right)^2=36.
+
+We multiply both sides by 4s^2 and expand, yielding the equation s^4-170s^2+7225+s^4-26s^2+169=144s^2. Simplifying gives the equation 2s^4-340s^2+7394=0.  Solving this quadratic gives s^2=85\pm 42\sqrt{2}. Now, if this were the actual test, we stop here, noting that the question tells us a and b are positive, so s^2 must be 85+42\sqrt{2}, and our solution is 127.
+
+However, here is why s^2 cannot be 85-42\sqrt{2}:
+
+If s^2=85-42\sqrt{2}, using 1.4 as an approximation for \sqrt{2}, s^2\approx 85-42\cdot 1.4=85-58.8=26.2, and s is slightly greater than 5. Also note that this implies that AB\approx 7. 
+
+Note that at least one of \angle BPA, \angle APC and \angle BPC must be obtuse, since they sum to 360^{\circ}. Then, note the well known fact that if \angle A is the largest angle in \Delta ABC, BC must be the largest side. However, combined with the first fact, implies that either AB is the largest side of \Delta ABP, BC is the largest side of \Delta BPC, or AC is the largest side of \Delta APC. By our approximations, this cannot possibly be true, even if we are generous with our margin of error, so s^2 cannot equal 85-42\sqrt{2}, and s^2=85+42\sqrt{2}. 
+
+The answer is 85+42=\boxed{127}
+
+== Video Solution Essentials of Math ==
+
+https://www.youtube.com/watch?v=br45zehw-i4
+
+== See also ==
+
+{{AMC12 box|year=2006|ab=B|num-b=22|num-a=24}}
+{{MAA Notice}}

@@ -1,0 +1,65 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2008_AMC_12A_Problems/Problem_19&action=raw
+
+Published Time: Sun, 10 Jan 2021 02:54:29 GMT
+
+Markdown Content:
+==Problem==
+In the expansion of
+\left(1 + x + x^2 + \cdots + x^{27}\right)\left(1 + x + x^2 + \cdots + x^{14}\right)^2,
+what is the [[coefficient]] of x^{28}?
+
+\mathrm{(A)}\ 195\qquad\mathrm{(B)}\ 196\qquad\mathrm{(C)}\ 224\qquad\mathrm{(D)}\ 378\qquad\mathrm{(E)}\ 405
+
+==Solution 1 (easiest)== 
+Let A = \left(1 + x + x^2 + \cdots + x^{14}\right) and B = \left(1 + x + x^2 + \cdots + x^{27}\right). We are expanding A \cdot A \cdot B. 
+
+Since there are 15 terms in A, there are 15^2 = 225 ways to choose one term from each A. The product of the selected terms is x^n for some integer n between 0 and 28 inclusive. For each n \neq 0, there is one and only one x^{28 - n} in B. For example, if I choose x^2 from A , then there is exactly one power of x in B that I can choose; in this case, it would be x^{24}. Since there is only one way to choose one term from each A to get a product of x^0, there are 225 - 1 = 224 ways to choose one term from each A and one term from B to get a product of x^{28}. Thus the coefficient of the x^{28} term is 224 \Rightarrow \boxed{C}.
+
+== Solution 2 ==
+Let P(x) = \left(1 + x + x^2 + \cdots + x^{14}\right)^2 = a_0 + a_1x + a_2x^2 + \cdots + a_{28}x^{28}. Then the x^{28} term from the product in question \left(1 + x + x^2 + \cdots + x^{27}\right)(a_0 + a_1x + a_2x^2 + \cdots + a_{28}x^{28}) is
+
+1a_{28}x^{28} + xa_{27}x^{27} + x^2a_{26}x^{26} + \cdots + x^{27}a_1x = \left(a_1 + a_2 + \cdots a_{28}\right)x^{28}
+
+So we are trying to find the sum of the coefficients of P(x) minus a_0. Since the constant term a_0 in P(x) (when expanded) is 1, and the sum of the coefficients of P(x) is P(1), we find the answer to be
+P(1) - a_0 = \left(1 + 1 + 1^2 + \cdots 1^{14}\right)^2 - 1 = 15^2 - 1 = 224 \Rightarrow \boxed{C}.
+
+==Solution 3==
+We expand (1 + x + x^2 + x^3 + \cdots + x^{14})^2 to (1 + x + x^2 + x^3 + \cdots + x^{14}) * (1 + x + x^2 + x^3 + \cdots + x^{14}) and use FOIL to multiply. It expands out to:
+
+1 + x + x^2 + x^3 + x^4 + \cdots + x^{14} +   
+
+\qquad x + x^2 + x^3 + x^4 + \cdots + x^{14} + x^{15} +  
+
+\qquad \qquad x^2 + x^3 + x^4 + \cdots + x^{14} + x^{15} + x^{16} + \cdots
+
+It becomes apparent that 
+
+(1 + x + x^2 + x^3 + \cdots + x^{14})^2 = 1 + 2x + 3x^2 + 4x^3 + \cdots + 15x^{14} + 14x^{15} + 13x^{16} + \cdots + x^{28}.
+
+Now we have to find the coefficient of x^{28} in the product: 
+
+(1 + 2x + 3x^2 + 4x^3 + \cdots + 15x^{14} + 14x^{15} + 13x^{16} + \cdots + x^{28}) \cdot (1 + x + x^2 + x^3 + \cdots + x^{27}).
+
+We quickly see that the we get x^{28} terms from x^{27} \cdot 2x, x^{26} \cdot 3x^2, x^{25} \cdot 4x^3, ... 15x^{14} \cdot x^{14}, ... x^{28} \cdot 1. The coefficient of x^{28} is just the sum of the coefficients of all these terms. 1 + 2 + 3 + 4 + \cdots + 15 + 14 + 13 + \cdots + 4 + 3 + 2 = 224, so the answer is \boxed{C}.
+
+==Solution 4==
+Rewrite the product as \frac{(x^{28} - 1)(x^{15} - 1)(x^{15} - 1)}{(x - 1)^3}. It is known that 
+
+\frac{1}{(1 - x)^n} = \binom{n - 1}{n - 1} + \binom{n}{n - 1}x + \binom{n + 1}{n - 1}x^2 + \binom{n + 2}{n - 1}x^3 + \cdots + \binom{n - 1 + k}{n - 1}x^k + \cdots .
+
+Thus, our product becomes
+
+-\left( x^{28} - 1 \right) \left( x^{15} - 1 \right) \left( x^{15} - 1 \right) \left( \binom{2}{2} + \binom{3}{2}x + \binom{4}{2}x^2 + \cdots \right).
+
+= -\left( x^{28} - 1 \right) \left( x^{15} - 1 \right) \left( x^{15} - 1 \right) \left( 1 + 3x + 6x^2 + \cdots \right). 
+
+We determine the x^{28} coefficient by doing casework on the first three terms in our product. We can obtain an x^{28} term by choosing x^{28} in the first term, -1 in the second and third terms, and 1 in the fourth term. We can get two x^{28} terms by choosing x^{15} in either the second or third term, -1 in the first term, -1 in the second or third term from which x^{15} has not been chosen, and the \binom{15}{2}x^{13} in the fourth term. We get \binom{15}{2} * 2 = 210 x^{28} terms this way. (We multiply by 2 because the x^{15} term could have been chosen from the second term or the third term). Lastly, we can get an x^{28} term by choosing -1 in the first three terms and a \binom{30}{2}x^{28} from the fourth term. We have a total of 1 + 210 - 435 = -224 for the x^{28} coefficient, but we recall that we have a negative sign in front of our product, so we obtain an answer of 224 \Rightarrow \boxed{(C)}.
+
+==See Also==
+
+{{AMC12 box|year=2008|ab=A|num-b=18|num-a=20}}
+
+[[Category:Introductory Algebra Problems]]
+{{MAA Notice}}

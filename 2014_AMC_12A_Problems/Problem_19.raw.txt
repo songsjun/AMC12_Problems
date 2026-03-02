@@ -1,0 +1,24 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2014_AMC_12A_Problems/Problem_19&action=raw
+
+Published Time: Fri, 05 Apr 2024 00:33:06 GMT
+
+Markdown Content:
+==Problem==
+There are exactly N distinct rational numbers k such that |k|<200 and 5x^2+kx+12=0 has at least one integer solution for x.  What is N?
+
+\textbf{(A) }6\qquad \textbf{(B) }12\qquad \textbf{(C) }24\qquad \textbf{(D) }48\qquad \textbf{(E) }78\qquad
+
+== Solution 1==
+Factor the quadratic into
+ \left(5x + \frac{12}{n}\right)\left(x + n\right) = 0 
+where -n is our integer solution. Then, 
+ k = \frac{12}{n} + 5n, 
+which takes rational values between -200 and 200 when |n| \leq 39, excluding n = 0. This leads to an answer of 2 \cdot 39 = \boxed{\textbf{(E) } 78}.
+
+==Solution 2==
+Solve for k so k=-\frac{12}{x}-5x.  Note that x can be any integer in the range [-39,0)\cup(0,39]  so k is rational with \lvert k\rvert<200.  Hence, there are 39+39=\boxed{\textbf{(E) } 78}.
+
+==Solution 3==
+Plug in k=200 to find the upper limit. You will find the limit to be a number from 0 and one that is just below -39. All the integer values from -1 to -39 can be attainable through some value of k. Since the question asks for the absolute value of k, we see that the answer is 39\cdot2 = \boxed{\textbf{(E) }78.} iron ==Video Solution by SpreadTheMathLove== https://www.youtube.com/watch?v=BoPnuYKBq30 ==See Also== {{AMC12 box|year=2014|ab=A|num-b=18|num-a=20}} {{MAA Notice}}

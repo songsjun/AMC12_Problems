@@ -1,0 +1,35 @@
+# 2004 AMC 12B Problem 22
+
+## Problem
+The square
+
+$$
+\begin{tabular}{|c|c|c|} \hline 50 & \textit{b} & \textit{c} \\ \hline \textit{d} & \textit{e} & \textit{f} \\ \hline \textit{g} & \textit{h} & 2 \\ \hline \end{tabular}
+$$
+
+is a multiplicative magic square. That is, the product of the numbers in each row, column, and diagonal is the same. If all the entries are positive integers, what is the sum of the possible values of g?
+
+$\textbf{(A)}\ 10 \qquad \textbf{(B)}\ 25 \qquad \textbf{(C)}\ 35 \qquad \textbf{(D)}\ 62 \qquad \textbf{(E)}\ 136$
+## Solution 1
+All the unknown entries can be expressed in terms of b.
+Since $100e$ = beh = ceg = def, it follows that $h =\frac{100}{b},g =\frac{100}{c},$
+and f = $\frac{100}{d}.$ Comparing rows 1 and 3 then gives
+$$50bc = 2 \cdot \frac{100}{b} \cdot \frac{100}{c},$$
+from which c = $\frac{20}{b}.$
+Comparing columns 1 and 3 gives
+$$50d \cdot \frac{100}{c}= 2c \cdot \frac{100}{d},$$
+from which d = $\frac{c}{5} = \frac{4}{b}.$
+Finally, $f =25b, g =5b$, and $e = 10$. All the entries are positive integers
+if and only if $b = 1$, 2, or 4. The corresponding values for g are 5, 10, and
+20, and their sum is $\boxed{\mathbf{(C)}35}$ .
+
+Credit to Solution B goes to http://billingswest.billings.k12.mt.us/math/AMC%201012/AMC%2012%20work%20sheets/2004%20AMC%2012B%20ws-15.pdf, a page with a play-by-play explanation of the solutions to this test's problems.
+## Solution 2
+We know because this is a multiplicative magic square that each of the following are equal to each other:
+$100e$=ceg=50dg=beh=2cf=50bc=def=2gh
+
+From this we know that 50dg=2hg, thus $h=25d$.
+Thus beh=be$(25d)$ and be$(25d)=100e$. Thus $b=\frac{4}{d}$
+From this we know that 50bc=(50)($\frac{4}{d})(c)=50$dg. Thus $c=\frac{d^2g}{4}.$
+Now we know from the very beginning that $100e$=ceg or 100=cg or $100=\frac{d^2g}{4}(g)$ or $\frac{d^2g^2}{4}.$ Rearranging the equation $100=\frac{d^2g^2}{4}$ we have  $(d^2)(g^2)=400$ or dg=20 due to d and g both being positive. Now that dg=20 we find all pairs of positive integers that multiply to 20. There is (d,g)= (20,1);(10,2);(5,4);(4,5);(2,10);(1,20). Now we know that $b=\frac{4}{d}$ and b has to be a positive integer. Thus d can only be 1, 2, or 4. Thus g can only be 20,10,or 5. Thus sum of $20+10+5 = 35$. The answer is $\boxed{\mathbf{(C)}35}$ .
+## See also

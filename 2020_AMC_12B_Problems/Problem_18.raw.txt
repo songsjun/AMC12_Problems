@@ -1,0 +1,243 @@
+{{duplicate|[[2020 AMC 10B Problems|2020 AMC 10B #21]] and [[2020 AMC 12B Problems|2020 AMC 12B #18]]}}
+
+==Problem==
+In square <math>ABCD</math>, points <math>E</math> and <math>H</math> lie on <math>\overline{AB}</math> and <math>\overline{DA}</math>, respectively, so that <math>AE=AH.</math> Points <math>F</math> and <math>G</math> lie on <math>\overline{BC}</math> and <math>\overline{CD}</math>, respectively, and points <math>I</math> and <math>J</math> lie on <math>\overline{EH}</math> so that <math>\overline{FI} \perp \overline{EH}</math> and <math>\overline{GJ} \perp \overline{EH}</math>. See the figure below. Triangle <math>AEH</math>, quadrilateral <math>BFIE</math>, quadrilateral <math>DHJG</math>, and pentagon <math>FCGJI</math> each has area <math>1.</math> What is <math>FI^2</math>?
+
+<asy>
+real x=2sqrt(2);
+real y=2sqrt(16-8sqrt(2))-4+2sqrt(2);
+real z=2sqrt(8-4sqrt(2));
+pair A, B, C, D, E, F, G, H, I, J;
+A = (0,0);
+B = (4,0);
+C = (4,4);
+D = (0,4);
+E = (x,0);
+F = (4,y);
+G = (y,4);
+H = (0,x);
+I = F + z * dir(225);
+J = G + z * dir(225);
+
+draw(A--B--C--D--A);
+draw(H--E);
+draw(J--G^^F--I);
+draw(rightanglemark(G, J, I), linewidth(.5));
+draw(rightanglemark(F, I, E), linewidth(.5));
+
+dot("$A$", A, S);
+dot("$B$", B, S);
+dot("$C$", C, dir(90));
+dot("$D$", D, dir(90));
+dot("$E$", E, S);
+dot("$F$", F, dir(0));
+dot("$G$", G, N);
+dot("$H$", H, W);
+dot("$I$", I, SW);
+dot("$J$", J, SW);
+
+</asy>
+
+<math>\textbf{(A) } \frac{7}{3} \qquad \textbf{(B) } 8-4\sqrt2 \qquad \textbf{(C) } 1+\sqrt2 \qquad \textbf{(D) } \frac{7}{4}\sqrt2 \qquad \textbf{(E) } 2\sqrt2</math>
+
+== Solution 1 ==
+Since the total area is <math>4</math>, the side length of square <math>ABCD</math> is <math>2</math>. We see that since triangle <math>HAE</math> is a right isosceles triangle with area 1, we can determine sides <math>HA</math> and <math>AE</math> both to be <math>\sqrt{2}</math>. Now, consider extending <math>FB</math> and <math>IE</math> until they intersect. Let the point of intersection be <math>K</math>. We note that <math>EBK</math> is also a right isosceles triangle with side <math>2-\sqrt{2}</math> and find its area to be <math>3-2\sqrt{2}</math>. Now, we notice that <math>FIK</math> is also a right isosceles triangle (because <math>\angle EKB=45^\circ</math>) and find it's area to be <math>\frac{1}{2}</math><math>FI^2</math>. This is also equal to <math>1+3-2\sqrt{2}</math> or <math>4-2\sqrt{2}</math>. Since we are looking for <math>FI^2</math>, we want two times this. That gives <math>\boxed{\textbf{(B)}\ 8-4\sqrt{2}}</math>.~TLiu
+
+== Solution 2 ==
+Draw the auxiliary line <math>AC</math>. Denote by <math>M</math> the point it intersects with <math>HE</math>, and by <math>N</math> the point it intersects with <math>GF</math>. Last, denote by <math>x</math> the segment <math>FN</math>, and by <math>y</math> the segment <math>FI</math>. We will find two equations for <math>x</math> and <math>y</math>, and then solve for <math>y^2</math>. 
+
+Since the overall area of <math>ABCD</math> is <math>4 \;\; \Longrightarrow \;\;  AB=2</math>, and <math>AC=2\sqrt{2}</math>. In addition, the area of <math>\bigtriangleup AME = \frac{1}{2} \;\; \Longrightarrow \;\; AM=1</math>.
+
+The two equations for <math>x</math> and <math>y</math> are then:
+
+<math>\bullet</math> Length of <math>AC</math>: <math>1+y+x = 2\sqrt{2}  \;\; \Longrightarrow \;\; x = (2\sqrt{2}-1) - y</math> 
+
+<math>\bullet</math> Area of CMIF: <math>\frac{1}{2}x^2+xy = \frac{1}{2}  \;\; \Longrightarrow \;\; x(x+2y)=1</math>.
+
+Substituting the first into the second, yields 
+<math>\left[\left(2\sqrt{2}-1\right)-y\right]\cdot \left[\left(2\sqrt{2}-1\right)+y\right]=1</math>
+
+Solving for <math>y^2</math> gives <math>\boxed{\textbf{(B)}\ 8-4\sqrt{2}}</math> ~DrB
+
+== Solution 3 ==
+Plot a point <math>F'</math> such that <math>F'I</math> and <math>AB</math> are parallel and extend line <math>FB</math> to point <math>B'</math> such that <math>FIB'F'</math> forms a square. Extend line <math>AE</math> to meet line <math>F'B'</math> and point <math>E'</math> is the intersection of the two. The area of this square is equivalent to <math>FI^2</math>. We see that the area of square <math>ABCD</math> is <math>4</math>, meaning each side is of length 2. The area of the pentagon <math>EIFF'E'</math> is <math>2</math>. Length <math>AE=\sqrt{2}</math>, thus <math>EB=2-\sqrt{2}</math>. Triangle <math>EB'E'</math> is isosceles, and the area of this triangle is <math>\frac{1}{2}(4-2\sqrt{2})(2-\sqrt{2})=6-4\sqrt{2}</math>. Adding these two areas, we get <cmath>2+6-4\sqrt{2}=8-4\sqrt{2}\rightarrow \boxed{\textbf{(B)}\ 8-4\sqrt{2}}</cmath>. --OGBooger
+
+== Solution 4 (HARD Calculation) ==
+We can easily observe that the area of square <math>ABCD</math> is 4 and its side length is 2 since all four regions that build up the square has area 1. 
+Extend <math>FI</math> and let the intersection with <math>AB</math> be <math>K</math>. Connect <math>AC</math>, and let the intersection of <math>AC</math> and <math>HE</math> be <math>L</math>.
+Notice that since the area of triangle <math>AEH</math> is 1 and <math>AE=AH</math> , <math>AE=AH=\sqrt{2}</math>, therefore <math>BE=HD=2-\sqrt{2}</math>.
+Let <math>CG=CF=m</math>, then <math>BF=DG=2-m</math>.
+Also notice that <math>KB=2-m</math>, thus <math>KE=KB-BE=2-m-(2-\sqrt{2})=\sqrt{2}-m</math>.
+Now use the condition that the area of quadrilateral <math>BFIE</math> is 1, we can set up the following equation: 
+<math>\frac{1}{2}(2-m)^2-\frac{1}{4}(\sqrt{2}-m)^2=1</math>
+We solve the equation and yield <math>m=\frac{8-2\sqrt{2}-\sqrt{64-32\sqrt{2}}}{2}</math>.
+Now notice that
+<math>FI=AC-AL-\frac{m}{\sqrt{2}}=2\sqrt{2}-1-\frac{\sqrt{2}}{2} \cdot \frac{8-2\sqrt{2}-\sqrt{64-32\sqrt{2}}}{2}</math>
+<math>=2\sqrt{2}-1-\frac{8\sqrt{2}-4-\sqrt{128-64\sqrt2}}{4}</math>
+<math>=\frac{\sqrt{128-64\sqrt{2}}}{4}</math>.
+Hence <math>FI^2=\frac{128-64\sqrt{2}}{16}=8-4\sqrt{2}</math>.  -HarryW
+
+== Solution 5 (Basically Same as Solution 3)==
+
+<asy>
+real x=2sqrt(2);
+real y=2sqrt(16-8sqrt(2))-4+2sqrt(2);
+real z=2sqrt(8-4sqrt(2));
+real k= 8-2sqrt(2);
+real l= 2sqrt(2)-4;
+pair A, B, C, D, E, F, G, H, I, J, L, M, K;
+A = (0,0);
+B = (4,0);
+C = (4,4);
+D = (0,4);
+E = (x,0);
+F = (4,y);
+G = (y,4);
+H = (0,x);
+I = F + z * dir(225);
+L = (k,0);
+M = F + z * dir(315);
+K = (4,l);
+
+draw(A--B--C--D--A);
+draw(H--E);
+draw(J--G^^F--I);
+draw(F--M);
+draw(M--L);
+draw(E--K,dashed+linewidth(.5));
+draw(K--L,dashed+linewidth(.5));
+draw(B--L);
+draw(rightanglemark(G, J, I), linewidth(.5));
+draw(rightanglemark(F, I, E), linewidth(.5));
+draw(rightanglemark(F, M, L), linewidth(.5));
+fill((4,0)--(k,0)--M--(4,y)--cycle, gray);
+dot("$A$", A, S);
+dot("$C$", C, dir(90));
+dot("$D$", D, dir(90));
+dot("$E$", E, S);
+dot("$G$", G, N);
+dot("$H$", H, W);
+dot("$I$", I, SW);
+dot("$J$", J, SW);
+dot("$K$", K, S);
+dot("$F(G)$", F, E);
+dot("$H'$", L, S);
+dot("$B(D)$", B, S);
+
+
+</asy>
+Easily, we can find that: quadrilateral <imath>BFIE</imath> and <imath>DHJG</imath> are congruent with each other, so we can move <imath>DHJG</imath> to the shaded area (<imath>F</imath> and <imath>G</imath>, <imath>B</imath> and <imath>D</imath> overlapping) to form a square <imath>FIKJ'</imath> (<imath>DG</imath> = <imath>FB</imath>, <imath>CG</imath> = <imath>FC</imath>, <imath>{\angle} CGF</imath> = <imath>{\angle}CFG</imath> = <imath>45^{\circ}</imath> so <imath>{\angle} IFJ'= 90^{\circ}</imath>). Then we can solve <imath>AH</imath> = <imath>AE</imath> = <imath>\sqrt{2}</imath>, <imath>EB</imath> = <imath>2-\sqrt{2}</imath>, <imath>EK</imath> = <imath>2\sqrt{2}-2</imath>. 
+
+<imath>FI^2=\text{area of} \: BFIE+\text{area of} \:FJ'H'B+\text{area of} \:EH'K \\= 1 + 1 + \frac{1}{2}(2\sqrt{2}-2)^2=8-4\sqrt{2}\rightarrow \boxed{\textbf{(B)}\ 8-4\sqrt{2}}</imath>
+
+--Ryan Zhang @BRS
+--Minor edit by WhySean38
+
+== Solution 6 ==
+
+<asy>
+real x=2sqrt(2);
+real y=2sqrt(16-8sqrt(2))-4+2sqrt(2);
+real z=2sqrt(8-4sqrt(2));
+pair A, B, C, D, E, F, G, H, I, J, K, L;
+A = (0,0);
+B = (4,0);
+C = (4,4);
+D = (0,4);
+E = (x,0);
+F = (4,y);
+G = (y,4);
+H = (0,x);
+I = F + z * dir(225);
+J = G + z * dir(225);
+K = (4-x,4);
+L = J + 1.68 * dir(45);
+
+draw(A--B--C--D--A);
+draw(H--E);
+draw(J--G^^F--I);
+draw(H--K,dashed+linewidth(.5));
+draw(L--K,dashed+linewidth(.5));
+draw(rightanglemark(G, J, I), linewidth(.5));
+draw(rightanglemark(F, I, E), linewidth(.5));
+draw(rightanglemark(H, K, L), linewidth(.5));
+draw(rightanglemark(K, L, G), linewidth(.5));
+
+dot("$A$", A, S);
+dot("$B$", B, S);
+dot("$C$", C, dir(90));
+dot("$D$", D, dir(90));
+dot("$E$", E, S);
+dot("$F$", F, dir(0));
+dot("$G$", G, N);
+dot("$H$", H, W);
+dot("$I$", I, SW);
+dot("$J$", J, SW);
+dot("$K$", K, N);
+dot("$L$", L, S);
+</asy>
+
+<math>[ABCD] = 4</math>, <math>AB = 2</math>, <math>[AHE] = 1</math>, <math>AH = AE = \sqrt{2}</math>, <math>DH = 2 - \sqrt{2}</math>, <math>JL = HK = \sqrt{2} \cdot DH = 2 \sqrt{2} - 2</math>
+
+Because <math>ABCD</math> is a square and <math>AH = AE</math>, <math>AC</math> is the line of symmetry of pentagon <math>CDHEB</math>. Because <math>[DHJG] = [BFIE]</math>, <math>DHJG</math> is the reflection of <math>BFIE</math> about line <math>AC</math>
+
+Let <math>FI = GJ = x</math>, <math>KL = LG = GJ - LJ = x - 2 \sqrt{2} + 2</math>
+
+<math>[DHK] = \frac{(2 - \sqrt{2})^2}{2} = 3 - 2 \sqrt {2}</math>
+
+<math>[GKL] = \frac{(x - 2 \sqrt{2} + 2)^2}{2} = \frac{x^2}{2} + 2x - 2x \sqrt{2} - 4 \sqrt{2} + 6</math>
+
+<math>[HKJL] = (x - 2 \sqrt{2} + 2) \cdot (2 \sqrt{2} - 2) = 2x \sqrt{2} - 2x + 8 \sqrt{2} -12</math>
+
+<cmath>[DHK] + [GKL] + [HKLJ] = [DHJG]</cmath>
+
+<cmath>3 - 2 \sqrt {2} +  \frac{x^2}{2} + 2x - 2x \sqrt{2} - 4 \sqrt{2} + 6 + 2x \sqrt{2} - 2x + 8 \sqrt{2} -12= 1</cmath>
+
+<cmath>\frac{x^2}{2} + 2 \sqrt{2} - 4 = 0</cmath>
+
+<cmath>x^2 = 8 - 4 \sqrt{2}</cmath>
+
+<cmath>FI^2 = \boxed{\textbf{(B)}\ 8-4\sqrt{2}}</cmath>
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+== Solution 7 (Easy to See) == 
+
+Note that the side length of <math>ABCD</math> is 2 and thus the diagonal is of length <math>2\sqrt{2}</math>. However, the height to side <math>HE</math> in triangle <math>HAE</math> is 1, implying that <math>CM = 2\sqrt{2}-1</math> where <math>M</math> is the midpoint of <math>JI</math>. From here suppose that <math>N</math> is the midpoint of <math>\overline{FG}</math> and let <math>x = NC</math>, which means <math>FG=2x</math>. The area of the pentagon is then 
+<cmath>[FIJG]+[GCF]=GF \cdot FI + x^2 = (2x)(2\sqrt{2}-1-x)+x^2=1</cmath>
+Solving this quadratic for <math>x</math> yields <math>x=2\sqrt{2}-1 \pm \sqrt{8-4\sqrt{2}}</math> (technically the smaller value is the correct one but it doesn’t matter for our purposes). We can then calculate <math>FI^2 = (2\sqrt{2} -1 -x)^2 = \boxed{\textbf{(B) } 8-4\sqrt{2}}</math>.
+
+~Dhillonr25
+
+== Solution 8 ==
+
+We extend <math>\overline{FB}</math> and <math>\overline{IE}</math> to meet at a point <math>X</math>. Since <math>\angle AEI = \angle BEX</math> and <math>FX</math> is parallel to <math>DA</math>, we know that <math>\triangle{BEX} \sim \triangle{AEH}</math>, and because <math>\angle BXE = \angle IXF</math> and <math>\angle XBE = \angle XIF</math>, we can conclude that <math>\triangle{BEX} \sim \triangle{AEH} \sim \triangle{IFX}</math>. 
+
+Now, because <math>\triangle{AEH}</math> is isosceles, right, and has an area of 1, we can conclude that <math>AE = AH = \sqrt{2}</math> and that <math>BE = 2-\sqrt{2}</math>. Armed with this knowledge, and setting <math>IF = a</math> and the area of <math>\triangle{BEX} = b</math>, we can use similarity to say that 
+<cmath>(\frac{a}{2-\sqrt{2}})^2 = \frac{1+b}{b}</cmath>
+Since we know the side lengths of <math>\triangle{BEX}</math> due to the fact that it is also an isosceles right triangle, we know that the area is <math>\frac{(2-\sqrt{2})^2}{2}</math>.
+Simplifying further and plugging in values, we have
+<cmath>\frac{a^2}{(2-\sqrt{2})^2} = 1 + \frac{2}{(2-\sqrt{2})^2)}</cmath>
+Multiplying by <math>(2-\sqrt{2})^2</math> on both sides, we get 
+<cmath>a^2 = (2-\sqrt{2})^2 + 2 = \boxed{\textbf{(B)}\ 8-4\sqrt{2}}</cmath>
+~yingkai_0_
+==Video Solution (HOW TO THINK CREATIVELY!!!)==
+https://youtu.be/oRvHHywcw4w
+
+~Education, the Study of Everything
+
+==Video Solution by MathEx==
+https://www.youtube.com/watch?v=AKJXB07Sat0
+
+==Video Solution by TheBeautyOfMath==
+https://youtu.be/VZYe3Hu88OA?t=189
+
+== Really Good Vid Explanation ==
+https://www.youtube.com/watch?v=AUndgrOH8U8&ab_channel=ReachTheStars
+
+==See Also==
+{{AMC10 box|year=2020|ab=B|num-b=20|num-a=22}}
+{{AMC12 box|year=2020|ab=B|num-b=17|num-a=19}}
+
+[[Category:Intermediate Geometry Problems]]
+{{MAA Notice}}

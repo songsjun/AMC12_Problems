@@ -1,0 +1,25 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2008_AMC_12B_Problems/Problem_7&action=raw
+
+Published Time: Mon, 15 Feb 2021 17:48:17 GMT
+
+Markdown Content:
+==Problem==
+For real numbers a and b, define a\textdollar b = (a - b)^2. What is (x - y)^2\textdollar(y - x)^2?
+
+\textbf{(A)}\ 0 \qquad \textbf{(B)}\ x^2 + y^2 \qquad \textbf{(C)}\ 2x^2 \qquad \textbf{(D)}\ 2y^2 \qquad \textbf{(E)}\ 4xy
+
+==Solution 1 ==
+
+\left[ (x-y)^2 - (y-x)^2 \right]^2
+
+\left[ (x-y)^2 - (x-y)^2 \right]^2
+
+[0]^2
+
+0 \Rightarrow \textbf{(A)}
+
+==See Also==
+{{AMC12 box|year=2008|ab=B|num-b=6|num-a=8}}
+{{MAA Notice}}

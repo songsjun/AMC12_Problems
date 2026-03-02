@@ -1,0 +1,71 @@
+{{duplicate|[[2014 AMC 12A Problems|2014 AMC 12A #3]] and [[2014 AMC 10A Problems|2014 AMC 10A #4]]}}
+
+==Problem==
+
+Walking down Jane Street, Ralph passed four houses in a row, each painted a different color. He passed the orange house before the red house, and he passed the blue house before the yellow house. The blue house was not next to the yellow house. How many orderings of the colored houses are possible?
+
+<math>\textbf{(A)}\ 2\qquad\textbf{(B)}\ 3\qquad\textbf{(C)}\ 4\qquad\textbf{(D)}\ 5\qquad\textbf{(E)}\ 6</math>
+
+==Solution 1==
+Let's use casework on the yellow house. The yellow house <math>(\text{Y})</math> is either the <math>3^\text{rd}</math> house or the last house.
+
+Case 1: <math>\text{Y}</math> is the <math>3^\text{rd}</math> house.
+
+The only possible arrangement is <math>\text{B}-\text{O}-\text{Y}-\text{R}</math>
+
+Case 2: <math>\text{Y}</math> is the last house.
+
+There are two possible arrangements:
+
+<math>\text{B}-\text{O}-\text{R}-\text{Y}</math>
+
+<math>\text{O}-\text{B}-\text{R}-\text{Y}</math> 
+
+The answer is <math>1+2=\boxed{\textbf{(B) } 3}</math>
+
+==Solution 2 (symmetry)==
+
+There are <math>4!=24</math> arrangements without restrictions. There are <math>3!\cdot2!=12</math> arrangements such that the blue house neighboring the yellow house (calculating the arrangments of [<math>\text{BY}</math>], <math>\text{O}</math>, and <math>\text{R}</math>). Hence, there are <math>24-12=12</math> arrangements with the blue and yellow houses non-adjacent.
+
+By symmetry, exactly half of the <math>12</math> arrangements have the blue house before the yellow house, and exactly half of those <math>6</math> arrangements have the orange house before the red house, so our answer is <math>12\cdot\frac{1}{2}\cdot\frac{1}{2}= \boxed{\textbf{(B) } 3}</math>
+
+==Solution 3==
+
+To start with, the blue house is either the first or second house.
+
+If the blue house is the first, then the orange must follow, leading to <math>2</math> cases: <math>\text{B-O-R-Y}</math> and <math>\text{B-O-Y-R}</math>. 
+
+If the blue house is second, then the orange house must be first and the yellow house last, leading to <math>1</math> case: <math>\text{O-B-R-Y}</math>.
+Therefore, our answer is <math>\boxed{\textbf{(B) } 3}</math>.
+
+~MathFun1000
+
+==Solution 4 (Complementary Counting)==
+We first count all the cases with the restrictions that B comes before Y and O comes before R. We have <math>4</math> "slots" to choose from, and when we choose <math>2</math> to be B and Y, the order for B and Y is automatically chosen. Also, O and R are also automatically chosen, so there are simply <math>\dbinom42=6</math> total cases. 
+
+From here, the cases that don't work are the ones where B and Y are adjacent. BY can be treated as a single block; now, we have <math>3</math> slots and <math>1</math> thing to place, so there are <math>3</math> of these cases. 
+
+Thus, this yields <math>6-3=3</math> total cases. We are done. 
+
+~Technodoggo
+
+==Video Solution (CREATIVE THINKING)==
+ https://youtu.be/DsZBRhCtWvc
+
+~Education, the Study of Everything
+
+
+
+
+==Video Solution==
+https://youtu.be/XR661k7tLCU
+
+~savannahsolver
+
+==See Also==
+
+{{AMC10 box|year=2014|ab=A|num-b=3|num-a=5}}
+{{AMC12 box|year=2014|ab=A|num-b=2|num-a=4}}
+{{MAA Notice}}
+
+[[Category: Prealgebra Problems]]

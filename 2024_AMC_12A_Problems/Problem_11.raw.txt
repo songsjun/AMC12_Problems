@@ -1,0 +1,164 @@
+{{duplicate|[[2024 AMC 10A Problems/Problem 18|2024 AMC 10A #18]] and [[2024 AMC 12A Problems/Problem 11|2024 AMC 12A #11]]}}
+
+==Problem==
+There are exactly <math>K</math> positive integers <math>b</math> with <math>5 \leq b \leq 2024</math> such that the base-<math>b</math> integer <math>2024_b</math> is divisible by <math>16</math> (where <math>16</math> is in base ten). What is the sum of the digits of <math>K</math>?
+
+<math>\textbf{(A) }16\qquad\textbf{(B) }17\qquad\textbf{(C) }18\qquad\textbf{(D) }20\qquad\textbf{(E) }21</math>
+
+==Solution 1==
+<math>2024_b = 2b^3+2b+4\equiv 0\pmod{16}\implies b^3+b+2\equiv 0\pmod 8</math>. If <math>b</math> is even, then <math>b+2\equiv 0\pmod 8\implies b\equiv 6\pmod 8</math>. If <math>b</math> is odd, then <math>b^2\equiv 1\pmod 8\implies b^3+b+2\equiv 2b+2\pmod 8</math> so <math>2b+2\equiv 0\pmod 8\implies b+1\equiv 0\pmod 4\implies b\equiv 3,7\pmod 8</math>. Now <math>8\mid 2024</math> so <math>\frac38\cdot 2024=759</math> but one of the answers we got from that, <math>3</math>, is too small, so <math>759 - 1 = 758\implies\boxed{\textbf{(D) }20}</math>.
+
+~OronSH ~[[User:Mathkiddus|mathkiddus]] ~andliu766 ~megaboy6679 ~trevian1(minor edit for clarity)
+
+==Solution 2==
+
+\begin{align*}
+2024_b\equiv0\pmod{16} \\
+2b^3+2b+4\equiv0\pmod{16} \\
+b^3+b+2\equiv0\pmod8 \\
+\end{align*}
+
+Clearly, <math>b</math> is either even or odd. If <math>b</math> is even, let <math>b=2a</math>. 
+
+\begin{align*}
+(2a)^3+2a+2\equiv0\pmod8 \\
+8a^3+2a+2\equiv0\pmod8 \\
+0+2a+2\equiv0\pmod8 \\
+a+1\equiv0\pmod4 \\
+a\equiv3\pmod4 \\
+\end{align*}
+
+Thus, one solution is <math>b=2(4x+3)=8x+6</math> for some integer <math>x</math>, or <math>b\equiv6\pmod8</math>. 
+
+What if <math>b</math> is odd? Then let <math>b=2a+1</math>: 
+
+\begin{align*}
+(2a+1)^3+2a+1+2\equiv0\pmod8 \\
+8a^3+12a^2+6a+1+2a+1+2\equiv0\pmod8 \\
+8a^3+12a^2+8a+4\equiv0\pmod8 \\
+4a^2+4\equiv0\pmod8 \\
+a^2\equiv1\pmod2 \\
+\end{align*}
+
+This simply states that <math>a</math> is odd. Thus, the other solution is <math>b=2(2x+1)+1=4x+3</math> for some integer <math>x</math>, or <math>b\equiv3\pmod4</math>. 
+
+We now simply must count the number of integers between <math>5</math> and <math>2024</math>, inclusive, that are <math>6</math> mod <math>8</math> or <math>3</math> mod <math>4</math>. Note that the former case comprises even numbers only while the latter is only odd; thus, there is no overlap and we can safely count the number of each and add them. 
+
+In the former case, we have the numbers <math>6,14,22,30,\dots,2022</math>; this list is equivalent to <math>8,16,24,32,\dots,2024\cong1,2,3,4,\dots,253</math>, which comprises <math>253</math> numbers. In the latter case, we have the numbers <math>7,11,15,19,\dots,2023\cong4,8,12,16,\dots,2020\cong1,2,3,4,\dots,505</math>, which comprises <math>505</math> numbers. There are <math>758</math> numbers in total, so our answer is <math>7+5+8=\boxed{\textbf{(D) 20}}</math>. 
+
+~Technodoggo
+
+==Solution 3==
+Note that <imath>2024_b=2b^3+2b+4</imath> is to be divisible by <imath>16</imath>, which means that <imath>b^3+b+2</imath> is divisible by <imath>8</imath>.
+
+If <imath>b=0</imath>, then <imath>b^3+b+2 \equiv (0)^3 + (0) + 2 \equiv 2</imath> is not divisible by <imath>8</imath>.
+
+If <imath>b=1</imath>, then <imath>b^3+b+2 \equiv (1)^3 + (1) + 2  \equiv 4</imath> is not divisible by <imath>8</imath>.
+
+If <imath>b=2</imath>, then <imath>b^3+b+2 \equiv (2)^3 + (2) + 2  \equiv 4</imath> is not divisible by <imath>8</imath>.
+
+If <imath>b=3</imath>, then <imath>b^3+b+2 \equiv (3)^3 + (3) + 2  \equiv (8+1)\cdot3 + (3) + 2 \equiv 0 </imath> is divisible by <imath>8</imath>.
+
+If <imath>b=4</imath>, then <imath>b^3+b+2 \equiv (4)^3 + (4) + 2 \equiv 0 + 4 + 2 \equiv 6 </imath> is not divisible by <imath>8</imath>.
+
+If <imath>b=5</imath>, then <imath>b^3+b+2 \equiv (-3)^3 + (-3) + 2 \equiv  (8+1)\cdot 3 + (-3) + 2 \equiv 2 </imath> is not divisible by <imath>8</imath>.
+
+If <imath>b=6</imath>, then <imath>b^3+b+2 \equiv (-2)^3 + (-2) + 2 \equiv -8 + (-2) + 2 \equiv 0 </imath> is divisible by <imath>8</imath>.
+
+If <imath>b=7</imath>, then <imath>b^3+b+2 \equiv (-1)^3 + (-1) + 2 \equiv -1 + (-1) + 2 \equiv 0 </imath> is divisible by <imath>8</imath>.
+
+Therefore, for every <imath>8</imath> values of <imath>b</imath>, <imath>3</imath> of them will make <imath>b^3+b+2</imath> divisible by <imath>8</imath>. Therefore, since <imath>2024</imath> is divisible by <imath>8</imath>, <imath>\dfrac{3}{8}\cdot2024=759</imath> values of <imath>b</imath>, but this includes <imath>b=3</imath>, which does not satisfy the given inequality. Therefore, the answer is <cmath>759-1=758\rightarrow7+5+8=\boxed{\text{(D) }20}</cmath> ~Tacos_are_yummy_1
+
+More detail by ~[https://artofproblemsolving.com/wiki/index.php/User:Cyantist luckuso]
+
+==Solution 4==
+
+<math>2024_b=2\ast\ b^3+2\ast\ b+4\ \\
+{2024}_{\left(b+8\right)}=2\ast\left(b+8\right)^3+2\ast\left(b+8\right)+4</math>
+<math>{2024}_{\left(b+8\right)}-{2024}_b=2*\left(8\right)*\left(b^2+8b+64\right)+2*8\ =16*\left(b^2+8b+64\right)+16</math>
+
+\begin{align*}
+2024_{(b+8)}-2024_b\equiv0\ (mod\ 16)\\
+2024_{(b+8)}\ \ \equiv2024_b\ \ (mod\ 16)\\
+2024_0\equiv4\ (mod\ 16)\\
+2024_1\equiv8\ (mod\ 16)\\
+2024_2\equiv6\ (mod\ 16)\\
+2024_3\equiv0(mod\ 16)\\
+2024_4\equiv12(mod\ 16)\\
+2024_5\equiv8(mod\ 16)\\
+2024_6\equiv0(mod\ 16)\\
+2024_7\equiv0(mod\ 16)\\
+\end{align*}
+
+We need
+<math>b\ \equiv3\ (mod\ 8)\ \ or\ b\ \equiv6\ (mod\ 8)\ \ or\ b\ \equiv7\ (mod\ 8) \\
+\lfloor(2024-3)/8\rfloor+\lfloor(2024-6)/8\rfloor+\lfloor(2024-7)/8\rfloor+3=759</math>
+take away one because <math>b=3</math> is out of range, so <math>758\Rightarrow7+8+5=\boxed{\text{(D) }20}</math>
+
+===Solution 4.1: Alternate Ending===
+
+One can arrange 2024 into different "blocks" consisting of 8 numbers each, particularly \( \{0,1,2,3,4,5,6,7\} \), \( \{8,9,10,11,12,13,14,15\} \) ...
+
+These just represent different \( \mod(8) \) class residues. So, you can just divide 2024 by 8 blocks giving us 253 total blocks with 0 extra semi-blocks.
+
+We see that \( 2024_3 \mod 8 \), \( 2024_6 \mod 8 \), and \( 2024_7 \mod 8 \) all appear exactly 253 times each, so we have \( 253 \times 3 = 759 \) different values of \( K \).
+
+However, we must not include \( 2024_3 \), as the bases \( b \) range from \( 5 \le b \le 2024 \), therefore we have \( 759-1=758 \) cases.
+
+Our answer is \( 7+5+8= \) <math>\boxed{\text{(D) }20}</math>.
+
+~Pinotation (I did not do the solution above this remark)
+
+==Solution 5 (Factoring)==
+
+Start similar to other solutions.
+
+<cmath>b^3+b+2 \equiv 0\pmod 8</cmath>
+
+Except now we notice the following:
+
+\begin{align*}
+b^3+8+b+2 \equiv 8\pmod 8 \equiv 0\pmod 8\\
+(b+2)(b^2-2b+4) + b+2 \equiv 0\pmod 8\\
+(b+2)(b^2-2b+5) \equiv 0\pmod 8\\
+\end{align*}
+
+Notice that <imath>b+2</imath> and <imath>b^2-2b+5</imath> have opposite parity, and when multiplied, is divisible by <imath>8</imath>. 
+Thus, either <imath>b+2</imath> or <imath>b^2-2b+5</imath> is divisible by <imath>8</imath>.
+
+<imath>b+2</imath> is obvious, where <imath>b+2 | 8</imath> when <imath>b \equiv 6\pmod 8</imath>
+
+When testing for <imath>b^2-2b+5 | 8</imath>, we find <imath>b \equiv 3, 7\pmod 8</imath>
+
+Proceed similar to the other solutions, <imath>\lfloor\dfrac{3}{8} \cdot 2024\rfloor-1=759-1=758</imath>, where <imath>7+5+8=\boxed{\text{(D) }20}</imath>
+
+Also noting this is an example of a misplaced problem this would be far to easy for even P 18 of amc 10, deserved to be Q5-6
+
+~ NSAoPS
+
+==Video Solution by [https://artofproblemsolving.com/wiki/index.php/User:grogg007 grogg007]== 
+https://youtu.be/xDye0tT4oPc
+
+== Video Solution by Power Solve ==
+https://www.youtube.com/watch?v=qtFvaD9TEaA
+
+== Video Solution by Pi Academy ==
+
+https://youtu.be/fW7OGWee31c?si=oq7toGPh2QaksLHE
+
+==Video Solution by SpreadTheMathLove==
+https://youtu.be/snp3Yo8rU-M?si=GHqpGqQs6Q0xM57j
+
+== Video solution by TheNeuralMathAcademy ==
+https://www.youtube.com/watch?v=4b_YLnyegtw&t=3726s
+
+==See Also==
+{{AMC10 box|year=2024|ab=A|before=[[2024 AMC 10A Problems/Problem 17]]|after=[[2024 AMC 10A Problems/Problem 19]]}}
+{{AMC12 box|year=2024|ab=A|before=[[2024 AMC 12A Problems/Problem 10]]|after=[[2024 AMC 12A Problems/Problem 12]]}}
+* [[AMC 10]]
+* [[AMC 10 Problems and Solutions]]
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

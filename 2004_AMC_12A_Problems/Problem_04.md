@@ -1,0 +1,21 @@
+# 2004 AMC 12A Problem 4
+
+> This problem is the same as [2004 AMC 12A #4](https://artofproblemsolving.com/wiki/index.php/2004_AMC_12A_Problems) and [2004 AMC 10A #6](https://artofproblemsolving.com/wiki/index.php/2004_AMC_10A_Problems/Problem_6).
+## Problem
+Bertha has 6 daughters and no sons.  Some of her daughters have 6 daughters, and the rest have none.  Bertha has a total of 30 daughters and granddaughters, and no great-granddaughters.  How many of Bertha's daughters and grand-daughters have no daughters?
+
+
+$$\mathrm{(A) \ } 22 \qquad \mathrm{(B) \ } 23 \qquad \mathrm{(C) \ } 24 \qquad \mathrm{(D) \ } 25 \qquad \mathrm{(E) \ } 26$$
+
+## Solutions
+### Solution 1
+Since Bertha has 6 daughters, she has $30-6=24$ granddaughters, of which none have daughters.  Of Bertha's daughters, $\frac{24}6=4$ have daughters, so $6-4=2$ do not have daughters. Therefore, of Bertha's daughters and granddaughters, $24+2=26$ do not have daughters.  $\boxed{\mathrm{(E)}\ 26}$
+### Solution 2 (From Alcumus)
+Bertha has $30 - 6 = 24$ granddaughters, none of whom have any daughters. The granddaughters are the children of $24/6 = 4$ of Bertha's daughters, so the number of women having no daughters is 30 - $4 =\boxed{26}.$
+### Solution 3
+Draw a tree diagram and see that the answer can be found in the sum of 6+6 granddaughters, 5+5 daughters, and 4 more daughters.  Adding them together gives the answer of $\boxed{\mathrm{(E)}\ 26}.$
+## Video Solution
+https://youtu.be/HfOIeW-TGhc
+
+Education, the Study of Everything
+## See also

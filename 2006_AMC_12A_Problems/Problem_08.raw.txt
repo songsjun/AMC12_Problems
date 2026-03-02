@@ -1,0 +1,79 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2006_AMC_12A_Problems/Problem_8&action=raw
+
+Published Time: Wed, 18 Dec 2024 04:30:30 GMT
+
+Markdown Content:
+{{duplicate|[[2006 AMC 12A Problems|2006 AMC 12A #8]] and [[2006 AMC 10A Problems/Problem 9|2008 AMC 10A #9]]}}
+== Problem ==
+How many [[set]]s of two or more consecutive positive integers have a sum of 15?
+
+ \textbf{(A) } 1\qquad \textbf{(B) } 2\qquad \textbf{(C) } 3\qquad \textbf{(D) } 4\qquad \textbf{(E) } 5
+
+== Solution 1==
+Notice that if the consecutive positive integers have a sum of 15, then their average (which could be a fraction) must be a divisor of 15. If the number of integers in the list is odd, then the average must be either 1, 3,  or 5, and 1 is clearly not possible. The other two possibilities both work:
+
+*1 + 2 + 3 + 4 + 5 = 15
+*4 + 5 + 6 = 15
+
+If the number of integers in the list is even, then the average will have a \frac{1}{2}. The only possibility is \frac{15}{2}, from which we get:
+
+*15 = 7 + 8
+
+Thus, the correct answer is \boxed{\textbf{(C) }3}.
+
+Question: (RealityWrites) Is it possible that the answer is 4, because 0+1+2+3+4+5 should technically count, right?
+
+Answer: (IMGROOT2) It isn't possible because the question asks for positive integers, and this means that negative integers or zero aren't allowed.
+
+Note to readers: make sure to always read the problem VERY carefully before attempting; it could mean the difference of making the cutoff.
+
+== Solution 2 ==
+Any set will form a arithmetic progression with the first term say a. Since the numbers are consecutive the common difference d = 1.
+
+The sum of the AP has to be 15. So,
+
+S_n = \frac{n}{2} \cdot (2a + (n-1)d)
+S_n = \frac{n}{2} \cdot (2a + (n-1)1)
+15 = \frac{n}{2} \cdot (2a + n - 1)
+2an + n^2 - n = 30
+n^2 + n(2a - 1) - 30 = 0
+
+Now we need to find the number of possible sets of values of a, n which satisfy this equation. Now a cannot be 15 as we need 2 terms. So a can only be less the 15.
+
+Trying all the values of a from 1 to 14 we observe that a = 4, a = 7 and a = 1 provide the only real solutions to the above equation.The three possibilites of a and n are.
+
+(a,n) = (4,3),(7, 2),(1, 6)
+
+The above values are obtained by solving the following equations obtained by substituting the above mentioned values of a into n^2 + n(2a - 1) - 30 = 0,
+
+n^2 + 7n - 30 = 0
+n^2 + 13n - 30 = 0
+n^2 - n - 30 = 0
+
+Since there are 3 possibilities the answer is \boxed{\textbf{(C) }3}.
+
+==Solution 3==
+We want some consecutive numbers that add up. We can use casework to solve this. We know that any set of 6 consecutive, positive integers cannot be greater than 5. Therefore the max amount of elements is 5.
+
+===Case 1: There are 5 numbers===
+-We know that 15/5 = 3, so if we put 3 as our middle number and expand evenly, we get {1,2,3,4,5}
+
+===Case 2: There are 4 numbers===
+-By a bit of bashing we find that there are no solutions
+
+===Case 3: There are 3 numbers===
+-We know that 15/3 = 5, so if we put 5 as our middle number and expand evenly, we get {4,5,6}
+
+===Case 4: There are 2 numbers===
+-We'll say x is the lower number. Thus x + (x + 1) = 15. Solving for x, x = 7. Thus getting {7,8}
+
+Adding up all the cases we get 1 + 0 + 1 + 1 = \boxed{\textbf{(C) }3}.
+
+== See also ==
+{{AMC12 box|year=2006|ab=A|num-b=7|num-a=9}}
+{{AMC10 box|year=2006|ab=A|num-b=8|num-a=10}}
+{{MAA Notice}}
+
+[[Category:Introductory Algebra Problems]]

@@ -1,0 +1,50 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2007_AMC_12A_Problems/Problem_23&action=raw
+
+Published Time: Tue, 21 Jul 2020 22:09:47 GMT
+
+Markdown Content:
+== Problem ==
+Square ABCD has area 36, and \overline{AB} is [[parallel]] to the [[x-axis]]. Vertices A, B, and C are on the graphs of y = \log_{a}x, y = 2\log_{a}x, and y = 3\log_{a}x, respectively. What is a?
+	
+\mathrm{(A)}\ \sqrt [6]{3}\qquad \mathrm{(B)}\ \sqrt {3}\qquad \mathrm{(C)}\ \sqrt [3]{6}\qquad \mathrm{(D)}\ \sqrt {6}\qquad \mathrm{(E)}\ 6
+
+== Solution 1==
+Let x be the x-coordinate of B and C, and x_2 be the x-coordinate of A and y be the y-coordinate of A and B. Then 2\log_ax= y \Longrightarrow a^{y/2} = x and \log_ax_2 = y \Longrightarrow x_2 = a^y = \left(a^{y/2}\right)^2 = x^2. Since the distance between A and B is 6, we have x^2 - x - 6 = 0, yielding x = -2, 3.
+
+However, we can discard the negative root (all three [[logarithm]]ic equations are underneath the line y = 3 and above y = 0 when x is negative, hence we can't squeeze in a square of side 6). Thus x = 3.
+
+Substituting back, 3\log_{a}x - 2\log_{a}x = 6 \Longrightarrow a^6 = x, so a = \sqrt[6]{3}\ \ \mathrm{(A)}.
+
+==Solution 2==
+Notice that all of the graphs y = \log_{a}x, y = 2\log_{a}x, and y = 3\log_{a}x have a domain of (0, \infty]. Also notice that y = \log_{a}x is the furthest to the right, as adding coefficients in front of the \log part only makes the graph steeper. Since A is on the graph of y = \log_{a}x and B is on the graph of y = 2\log_{a}x, \, A must be to the right of B. We are told that \overline{AB} is [[parallel]] to the [[x-axis]]. Let A be the point (x, y). Then the points B and C are
+
+(x-6, y)
+
+and
+
+(x-6, y+6)
+
+respectively.
+
+Substituting these coordinates into the equations given yields y = \log_{a}x, y = 2\log_{a}x-6, and y+6 = 3\log_{a}x-6. Rearranging a bit, we get the following equations:
+
+1) a^y = x
+
+2) a^y = (x-6)^2
+
+3) a^{y+6} = (x-6)^3
+
+Using equations 1 and 2, we get x=(x-6)^2. Solving yields x=9, x=-4. However, -4 is extraneous so x=9 (also because we know A has to have a positive x-coordinate). Using the second and third equations, we get
+
+\frac{a^{y+6}}{a^y} = \frac{(x-6)^3}{(x-6)^2} \Rightarrow a^6 = x-6.
+
+Plugging in 9 for x yields a^6 = 3, or a= \sqrt[6]{3} \Rightarrow \boxed{\text{A}}.
+
+== See also ==
+{{AMC12 box|year=2007|num-b=22|num-a=24|ab=A}}
+
+[[Category:Introductory Algebra Problems]] 
+[[Category:Introductory Geometry Problems]]
+{{MAA Notice}}

@@ -1,0 +1,40 @@
+# 2013 AMC 12A Problem 18
+
+## Problem
+Six spheres of radius 1 are positioned so that their centers are at the vertices of a regular hexagon of side length 2. The six spheres are internally tangent to a larger sphere whose center is the center of the hexagon. An eighth sphere is externally tangent to the six smaller spheres and internally tangent to the larger sphere. What is the radius of this eighth sphere?
+
+$\textbf{(A)} \ \sqrt{2} \qquad \textbf{(B)} \ \frac{3}{2} \qquad \textbf{(C)} \ \frac{5}{3} \qquad \textbf{(D)} \ \sqrt{3} \qquad \textbf{(E)} \ 2$
+## Solution 1
+Set up an isosceles triangle between the center of the 8th sphere and two opposite ends of the hexagon. Then set up another triangle between the point of tangency of the 7th and 8th spheres, and the points of tangency between the 7th sphere and 2 of the original spheres on opposite sides of the hexagon. Express each side length of the triangles in terms of r (the radius of sphere 8) and h (the height of the first triangle). You can then use Pythagorean Theorem to set up two equations for the two triangles, and find the values of h and r.
+
+$$(1+r)^2=2^2+h^2$$
+
+$$(3\sqrt{2})^2=3^2+(h+r)^2$$
+
+$$r = \boxed{\textbf{(B) }\frac{3}{2}}$$
+## Solution 2
+We have a regular hexagon with side lengths 2 and six spheres on each vertex with radius 1 that are internally tangent, therefore drawing radii going through all of them would create this regular hexagon.
+
+There is a larger sphere which the 6 spheres are internally tangent to, with center in the center of the hexagon. To find the radius of the larger sphere we must first, either by prior knowledge or by deducing from the angle sum that the hexagon can be split into 6 equilateral triangles from it's vertices, that the radius is $2+1=3$
+
+The 8th sphere is now, when thinking about it in 3D, sitting on top of the 6 spheres, which is the only possibility for it to tangent all the 6 small spheres externally and the larger sphere internally. The ring of the 6 small spheres is symmetrical and the 8th sphere will be resting with it's center aligned with the diameter of the large sphere.
+
+We can therefore now create a triangle with the horizontal component 2, as it is from the vertex of the hexagon to the center of the hexagon.
+The vertical component is from the center of the large sphere to the center of the 8th sphere. This length equals 3, the radius of the large sphere, take away the radius of the 8th sphere, we can call it r, since the radius of the large sphere will include the diameter of the 8th sphere if we subtract radius we will reach the center.
+The last component is the hypotenuse of the right angled triangle. This consists of the radius of the small sphere - 1 - and the radius of the 8th sphere - r -.
+
+We therefore now have a right angled triangle which when applied Pythagoras states $2^2+(3-r)^2=(1+r)^2$
+Expanding brackets gives us 4+9-$6r+r^2=1+2r+r^2$ here we can cancel out $r^2$
+Isolating the r's $12=8r$
+and then finally we have the answer: $r=\frac{12}{8}=\frac{3}{2}$
+## Solution 3 (Simply Drawing)
+[center|500px](https://artofproblemsolving.com/wiki/index.php/File:2013AMC12AProblem18Solution3.png)
+
+It can be seen that the diameter of the eighth sphere is equal to the radius of the seventh sphere by drawing out a diagram of the insides of the seventh sphere. The radius of the seventh sphere is $2+1=3$, the radius of the eight sphere is $\boxed{\textbf{(B) } \frac32}.$
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+## Video Solution by Richard Rusczyk
+https://artofproblemsolving.com/videos/amc/2013amc12a/363
+
+*~dolphin7*
+## See also

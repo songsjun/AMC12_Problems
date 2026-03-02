@@ -1,0 +1,26 @@
+# 2018 AMC 12A Problem 9
+
+## Problem
+Which of the following describes the largest subset of values of y within the closed interval [0,$\pi$] for which
+$\sin(x+y)\leq \sin(x)+\sin(y)$for every x between 0 and $\pi,$ inclusive?
+
+$\textbf{(A) } y=0 \qquad \textbf{(B) } 0\leq y\leq \frac{\pi}{4} \qquad \textbf{(C) } 0\leq y\leq \frac{\pi}{2} \qquad \textbf{(D) } 0\leq y\leq \frac{3\pi}{4} \qquad \textbf{(E) } 0\leq y\leq \pi$
+## Solution 1
+On the interval [0, $\pi$] sine is nonnegative; thus $\sin(x + y) = \sin$ x $\cos$ y + $\sin$ y $\cos$ x $\le \sin$ x + $\sin$ y for all x, y $\in$ [0, $\pi$] and equality only occurs when $\cosx =\cosy = 1$, which is cosine's maximum value. The answer is $\boxed{\textbf{(E) } 0\le y\le \pi}. ($CantonMathGuy)
+## Solution 2
+Expanding, $\cos$ y $\sin$ x + $\cos$ x $\sin$ y $\le \sin$ x + $\sin$ y Let $\sin$ x =a $\ge 0, \sin$ y = b $\ge 0.$ We have that ($\cos$ y)a+($\cos$ x)b $\le$ a+b Comparing coefficients of a and b gives a clear solution: both $\cos$ y and $\cos$ x are less than or equal to one, so the coefficients of a and b on the left are less than on the right. Since a, b $\ge 0,$ that means that this equality is always satisfied over this interval, or $\boxed{\textbf{(E) } 0\le y\le \pi}.$
+## Solution 3
+If we plug in $\pi,$ we can see that $\sin(x+\pi) \le \sin(x).$ Note that since $\sin(x)$ is always nonnegative, $\sin(x+\pi)$ is always nonpositive. So, the inequality holds true when $y=\pi.$ The only interval that contains $\pi$ in the answer choices is $\boxed{\textbf{(E) } 0\le y\le \pi}.$
+## Solution 4 (Answer Choices)
+Notice that for $y=0$ there is equality and nowhere else because the angle is not being rotated enough. We can just try all the subset of values from the answer choices to try out preferably the largest value for each subset that works as they've special trig values and are the upper bound for the set with values of the x interval.
+
+From this we notice E has the largest bound from the answer choices that works. Hence our answer is $\boxed{E}.$
+*~Batmanstark*
+## Solution 5
+Rewrite it as $\cos$ y $\sin$ x + $\cos$ x $\sin$ y $\le \sin$ x + $\sin$ y then move the terms such that it appears as this $\sin$ x ($\cos$ y -1) $\le \sin$ y (1- $\cos$ x) We know that on the interval of [0, $\pi$], $0\le (1-\cos x)\le 2,$ and $0\le \sin$ y, such that the whole thing on the right hand side is always greater than or equal to 0. On the left hand side, $0\le \sin$ x and we want ($\cos$ y -1)$\le 0,$ which $\boxed{0\le y\le \pi}$ satisfies.
+*~azure123456*
+## Solution 6
+Using [Sum-to-product identities](https://artofproblemsolving.com/wiki/index.php/Sum-to-product_identities), the inequality simplifies to $\cos\left(\frac{x-y}{2}\right)\ge\cos\left(\frac{x+y}{2}\right). ($This manipulation requires dividing both sides by $\sin\left(\frac{x+y}{2}\right),$ but this value is always positive since $\frac{x+y}{2}\le\pi$ for all given values, so we do not have to flip the sign of the inequality.) This can be interpreted as choosing a value $\frac{x}{2}\in\left$[0,$\frac{\pi}{2}\right$], making this value the new center of the cosine graph in the x-direction, and taking both points $\frac{y}{2}\in\left$[0,$\frac{\pi}{2}\right$] distance from the center. By looking at the graph, we find that for all x-values, the change in y always makes it so that the value left of the center is greater than the value right of the center, so our answer is $\boxed{\textbf{(E) } 0\le y\le \pi}.$
+
+*~eevee9406 (look at the graph if you don't understand)*
+## See Also

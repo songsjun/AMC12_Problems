@@ -1,0 +1,63 @@
+# 2014 AMC 12B Problem 19
+
+## Problem
+A sphere is inscribed in a truncated right circular cone as shown. The volume of the truncated cone is twice that of the sphere. What is the ratio of the radius of the bottom base of the truncated cone to the radius of the top base of the truncated cone?
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+real r=(3+sqrt(5))/2; real s=sqrt(r); real Brad=r; real brad=1; real Fht $= 2$*s; import graph3; import solids; currentprojection=orthographic(1,0,.2); currentlight=(10,10,5); revolution sph=sphere((0,0,Fht/2),Fht/2); //draw(surface(sph),green+white+opacity(0.5)); //triple f(pair t) {return (t.x*cos(t.y),t.x*sin(t.y),t.x^(1/n)*sin(t.y/n));} triple f(pair t) { triple v0 = Brad*(cos(t.x),sin(t.x),0); triple v1 = brad*(cos(t.x),sin(t.x),0)+(0,0,Fht); return (v0 + t.y*(v1-v0)); } triple g(pair t) { return (t.y*cos(t.x),t.y*sin(t.x),0); } surface sback=surface(f,(3pi/4,0),(7pi/4,1),80,2); surface sfront=surface(f,(7pi/4,0),(11pi/4,1),80,2); surface base = surface(g,(0,0),(2pi,Brad),80,2); draw(sback,gray(0.9)); draw(sfront,gray(0.5)); draw(base,gray(0.9)); draw(surface(sph),gray(0.4));
+```
+
+
+$$\text{(A) } \dfrac32 \quad \text{(B) } \dfrac{1+\sqrt5}2 \quad \text{(C) } \sqrt3 \quad \text{(D) } 2 \quad \text{(E) } \dfrac{3+\sqrt5}2$$
+
+## Solutions
+### Solution 1
+First, we draw the vertical cross-section passing through the middle of the frustum.
+let the top base equal 2 and the bottom base to be equal to $2r$
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(7cm); pair A,B,C,D; real r = (3+sqrt(5))/2; real s = sqrt(r); A = (-r,0); B = (r,0); C = (1,2*s); D = (-1,2*s); draw(A--B--C--D--cycle); pair O = (0,s); draw(shift(O)*scale(s)*unitcircle); dot(O); pair X,Y; X = (0,0); Y = (0,2*s); draw(X--Y); label("$r-1$",(X+B)/2,S); label("$1$",(Y+C)/2,N); label("$s$",(O+Y)/2,W); label("$s$",(O+X)/2,W); draw(B--C--(1,0)--cycle,blue+1bp); pair P = 0.73*C+0.27*B; draw(O--P); dot(P); label("$1$",(C+P)/2,NE); label("$r$",(B+P)/2,NE);
+```
+
+
+then using the Pythagorean theorem we have:
+$$(r+1)^2=(2s)^2+(r-1)^2$$
+which is equivalent to:
+$$r^2+2r+1=4s^2+r^2-2r+1$$
+subtracting $r^2-2r+1$ from both sides
+$$4r=4s^2$$
+solving for s we get:
+$$s=\sqrt{r}$$
+next we can find the volume of the frustum and of the sphere and we know $V_{\text{frustum}}$=$2V_{\text{sphere}}$ so we can solve for s
+using $V_{\text{frustum}}$=$\frac{\pi*h}{3}(R^2+r^2+Rr)$
+we get:
+$V_{\text{frustum}}$=$\frac{\pi*2\sqrt{r}}{3}(r^2+r+1)$
+using  $V_{\text{sphere}}$=$\dfrac{4s^{3}\pi}{3}$
+we get
+$V_{\text{sphere}}$=$\dfrac{4(\sqrt{r})^{3}\pi}{3}$
+so we have:
+$$\frac{\pi*2\sqrt{r}}{3}(r^2+r+1)=2*\dfrac{4(\sqrt{r})^{3}\pi}{3}$$
+dividing by $\frac{2\pi*\sqrt{r}}{3}$
+we get $r^2+r+1=4r$
+which is equivalent $to r^2-3r+1=0$
+
+$$
+r=\dfrac{3\pm\sqrt{(-3)^2-4*1*1}}{2*1}
+so r=\dfrac{3+\sqrt{5}}{2}\longrightarrow \boxed{E}
+$$
+
+### Solution 2(ADD DIAGRAM)
+Let's once again look at the cross section of the frustum. Let the angle from the center of the sphere to a point on the circumference of the bottom circle be $\theta.$ This implies that the angle from the center of the sphere to a point on the circumference of the top circle is 90 - $\theta.$ Hence the bottom radius is $r\tan{\theta}$ and the top radius is $\frac$ {r}{$\tan$ {$\theta$}}. This means that the radio between the bottom radius and top radius is ($\tan$ {$\theta$})^2. Using the frustum volume formula, we find that the are of this figure is $\frac{2\pi r}{3}(r^2(\tan$ {$\theta})^2 + r^2 +\frac{r^2} {(\tan$ {$\theta})^2}).$ We can equate this to $\frac$ {$8\pi$*r^3} 3. Simplifying, we are left with a quadratic conveniently in ($\tan$ {$\theta})^2.$ The quadratic is ($\tan$ {$\theta})^4 - 3($\tan$ {$\theta$})^2 + 1 = 0$. This gives us ($\tan$ {$\theta})^2 =\dfrac{3+\sqrt{5}}{2}\longrightarrow \boxed{E}$
+
+*~NeeNeeMath*
+### Remark
+For problems that involve a circle inscribed into an isosceles trapezoid, the following fact is very useful. If we let the bases be x and y, and the height be h, then h = $\sqrt{xy}.$ Then, we could solve from solution 1 directly knowing the radius in terms of the base. By letting the upper base be 1 and the lower base be x, we can find r in terms of x, and solve like in solution one.
+*~Puck_0*
+## Video Solution by icematrix
+https://youtu.be/3C5AYs7GoF4
+## See also

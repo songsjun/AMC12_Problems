@@ -1,0 +1,114 @@
+{{duplicate|[[2022 AMC 10B Problems/Problem 8|2022 AMC 10B #8]] and [[2022 AMC 12B Problems/Problem 6|2022 AMC 12B #6]]}}
+
+==Problem==
+Consider the following <math>100</math> sets of <math>10</math> elements each:
+<cmath>\begin{align*}
+&\{1,2,3,\ldots,10\}, \\
+&\{11,12,13,\ldots,20\},\\
+&\{21,22,23,\ldots,30\},\\
+&\vdots\\
+&\{991,992,993,\ldots,1000\}.
+\end{align*}</cmath>
+How many of these sets contain exactly two multiples of <math>7</math>?
+
+<math>\textbf{(A)}\ 40\qquad\textbf{(B)}\ 42\qquad\textbf{(C)}\ 43\qquad\textbf{(D)}\ 49\qquad\textbf{(E)}\ 50</math>
+
+==Solution 1 (Competition)==
+
+There are \(\text{floor}\left(\frac{1000}{7}\right) = 142\) numbers divisible by 7. We split these into 100 sets containing 10 numbers each, giving us 1.42 multiples of 7 per set. After the first set, the numbers come evenly, and we multiply 100 by <math>1.42 - 1 = \boxed{\textbf{(B)}\ 42}.</math>
+
+~Pinotation
+ 
+==Solution 2 (Casework)==
+We apply casework to this problem. The only sets that contain two multiples of seven are those for which:
+
+<ol style="margin-left: 1.5em;">
+  <li>The multiples of <math>7</math> are <math>1\pmod{10}</math> and <math>8\pmod{10}.</math> That is, the first and eighth elements of such sets are multiples of <math>7.</math></li><p>
+The first element is <math>1+10k</math> for some integer <math>0\leq k\leq99.</math> It is a multiple of <math>7</math> when <math>k=2,9,16,\ldots,93.</math>
+  <li>The multiples of <math>7</math> are <math>2\pmod{10}</math> and <math>9\pmod{10}.</math> That is, the second and ninth elements of such sets are multiples of <math>7.</math></li><p>
+The second element is <math>2+10k</math> for some integer <math>0\leq k\leq99.</math> It is a multiple of <math>7</math> when <math>k=4,11,18,\ldots,95.</math>
+  <li>The multiples of <math>7</math> are <math>3\pmod{10}</math> and <math>0\pmod{10}.</math> That is, the third and tenth elements of such sets are multiples of <math>7.</math></li><p>
+The third element is <math>3+10k</math> for some integer <math>0\leq k\leq99.</math> It is a multiple of <math>7</math> when <math>k=6,13,20,\ldots,97.</math>
+</ol>
+Each case has <math>\left\lfloor\frac{100}{7}\right\rfloor=14</math> sets. Therefore, the answer is <math>14\cdot3=\boxed{\textbf{(B)}\ 42}.</math>
+
+~MRENTHUSIASM
+
+==Solution 3 (Find A Pattern)==
+We find a pattern. 
+<cmath>\begin{align*}
+&\{1,2,3,\ldots,10\}, \\
+&\{11,12,13,\ldots,20\},\\
+&\{21,22,23,\ldots,30\},\\
+&\vdots\\
+&\{991,992,993,\ldots,1000\}.
+\end{align*}</cmath>
+We can figure out that the first set has <math>1</math> multiple of <math>7</math>. The second set also has <math>1</math> multiple of <math>7</math>. The third set has <math>2</math> multiples of <math>7</math>. The fourth set has <math>1</math> multiple of <math>7</math>. The fifth set has <math>2</math> multiples of <math>7</math>. The sixth set has <math>1</math> multiple of <math>7</math>. The seventh set has <math>1</math> multiple of <math>7</math>. The eighth set has <math>2</math> multiples of <math>7</math>. Disregarding the first set and then calculating this pattern further, we can see (reasonably) that it repeats for each <math>1</math> sets.
+We see that the pattern for the number of multiples per <math>7</math> sets (again, disregarding the first set) goes: <math>1,2,1,2,1,1,2.</math> So, for every <math>7</math> sets after the first, there are three sets with <math>2</math> multiples of <math>7</math>. We calculate <math>\left\lfloor\frac{100-1}{7}\right\rfloor</math> and multiply that by <math>3</math>. (We also disregard the remainder of <math>1</math> since it doesn't add any extra sets with <math>2</math> multiples of <math>7</math>.). We get <math>14\cdot3= \boxed{\textbf{(B) }42}</math>.
+
+~(edited by) mihikamishra
+
+~(edited by) MiniGlasses2009
+
+==Solution 4 (Fastest)==
+Each set contains exactly <imath>1</imath> or <imath>2</imath> multiples of <imath>7</imath> (Because it will need at least <imath>2</imath> * <imath>7</imath> = <imath>14</imath> numbers in a group for <imath>3</imath> or more multiples of <imath>7</imath>).
+
+There are <imath>\dfrac{1000}{10}=100</imath> total sets and <imath>\left\lfloor\dfrac{1000}{7}\right\rfloor = 142</imath> multiples of <imath>7</imath>. Thus, there are <imath>142-100=\boxed{\textbf{(B) }42}</imath> sets with <imath>2</imath> multiples of <imath>7</imath>.
+
+~BrandonZhang202415
+~(edited by)DRA777
+~(Minor edits by)DUODUOLUO
+
+== Solution 5 (Simple Counting, Similar to Solution 1) ==
+
+Consecutive multiples of <math>7</math> must differ by <math>7</math>. So, if a set <math>\{\ldots1,\ldots2,\ldots3,(\ldots),\ldots8,\ldots9,\ldots0\}</math> contains two multiples of <math>7</math>, they must end with the digits <math>1</math> and <math>8</math>, <math>2</math> and <math>9</math>, or <math>3</math> and <math>0</math>. This reduces the problem to counting the amount of multiples of <math>7</math> less than <math>1000</math> that end with <math>1</math>, <math>2</math>, and <math>3</math>.
+
+The first multiple of <math>7</math> that ends with <math>1</math> is <math>21</math>. The next multiple that ends with <math>1</math> occurs <math>70</math> later, since that is the smallest multiple of <math>7</math> we can add to <math>21</math> without affecting the last digit. The greatest number of <math>70</math>'s we can add to <math>21</math> while keeping it less than <math>1000</math> is <math>13</math>, because <math>21 + 70(13) = 931</math>. Therefore, the set of multiples of <math>7</math> less than <math>1000</math> ending with <math>1</math> is <math>\{21 + 70(0), 21+70(1),\ldots,21+70(13)\}</math>, meaning there are <math>14</math> of these particular multiples. We can use the same reasoning to count the multiples of <math>7</math> that end with <math>2</math> and <math>3</math>. 
+
+The first multiple of <math>7</math> that ends with <math>2</math> is <math>42</math>. The greatest number of <math>70</math>'s we can add to <math>42</math> here is also <math>13</math>, since <math>42 + 70(13) = 952</math>. The set of multiples of <math>7</math> less than <math>1000</math> ending with <math>2</math> is <math>\{42 + 70(0), 42+70(1),\ldots,42+70(13)\}</math>, giving <math>14</math> multiples.
+
+The first multiple of <math>7</math> that ends with <math>3</math> is <math>63</math>. The greatest number of <math>70</math>'s we can add to <math>63</math> here is yet again <math>13</math>, since <math>63 + 70(13) = 973</math>. The set of multiples of <math>7</math> less than <math>1000</math> ending with <math>3</math> is <math>\{63 + 70(0), 63+70(1),\ldots,63+70(13)\}</math>, giving another <math>14</math> multiples.
+
+In total, there are <math>14 + 14 + 14 = 42</math> of these multiples, and so <math>\boxed{\textbf{(B) }42}</math> sets with two multiples of <math>7</math>.
+
+~marsus16112
+
+== Solution 6 (Very Fast System of Equations) ==
+
+Let <math>a</math> be the number of sets with <math>1</math> multiple of <math>7</math> and <math>b</math> be the number of sets with <math>2</math> multiples of <math>7</math>. Note that it is impossible for a set to have more than two multiples of <math>7</math>. 
+
+Since there are a total of <math>100</math> sets, <math>a+b=100</math>. Also, since there are <math>\lfloor \frac{1000}{7}\rfloor = 142</math> multiples of <math>7</math> between <math>1</math> and <math>1000</math>, we must have <math>a+2b=142</math>. 
+
+Solving the system of equations
+
+<cmath>a+b=100</cmath>
+<cmath>a+2b=142</cmath>
+
+for <math>b</math> gives us the answer of <math>\boxed{\textbf{(B) }42}</math>.
+
+~FIREDRAGONMATH16
+~scrares (minor edit)
+
+==Solution 7 (reasonable count)==
+
+(Similar to Solution 3, but a little more intuitive and less numbers.) Note that this system loops every cycle of length <math>70</math>, or <math>7</math> such sets. From <math>1</math> to <math>70</math>, the multiples of <math>7</math> are <math>7</math>, <math>14</math>, <math>21</math>, <math>28</math>, <math>35</math>, <math>42</math>, <math>49</math>, <math>56</math>, <math>63</math>, and <math>70</math>; note that <math>(21,28),(42,49),</math> and <math>(63,70)</math> are in the same sets. Thus, for every <math>7</math> sets, we have <math>3</math> sets with exactly two multiples of <math>7</math>. We have <math>100</math> sets, which is <math>98+2=7\cdot14+2</math>; the first <math>98</math> sets contain <math>\dfrac37(7\cdot14)=42</math> desired sets. The last two sets comprise the integers from <math>981</math> to <math>999</math>; the multiples of <math>7</math> here are <math>987</math> and <math>994</math>. Neither of the two last sets contains two multiples of <math>7</math>, so our answer is simply <math>\boxed{\textbf{(D) }42}</math>. 
+
+~Technodoggo
+
+==Video Solution (🚀Under 3 min🚀)==
+https://youtu.be/PdyKJ1p9Y2w
+
+~Education, the Study of Everything
+
+==Video Solution(1-16)==
+https://youtu.be/SCwQ9jUfr0g
+
+~~Hayabusa1
+
+==Video Solution by Interstigation==
+https://youtu.be/_KNR0JV5rdI?t=884
+
+== See Also ==
+{{AMC10 box|year=2022|ab=B|num-b=7|num-a=9}}
+{{AMC12 box|year=2022|ab=B|num-b=5|num-a=7}}
+{{MAA Notice}}

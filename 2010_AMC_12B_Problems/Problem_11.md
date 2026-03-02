@@ -1,0 +1,29 @@
+# 2010 AMC 12B Problem 11
+
+> This problem is the same as [2010 AMC 12B #11](https://artofproblemsolving.com/wiki/index.php/2010_AMC_12B_Problems) and [2010 AMC 10B #21](https://artofproblemsolving.com/wiki/index.php/2010_AMC_10B_Problems).
+## Problem
+A palindrome between 1000 and 10,000 is chosen at random. What is the probability that it is divisible by 7?
+
+$\textbf{(A)}\ \dfrac{1}{10} \qquad \textbf{(B)}\ \dfrac{1}{9} \qquad \textbf{(C)}\ \dfrac{1}{7} \qquad \textbf{(D)}\ \dfrac{1}{6} \qquad \textbf{(E)}\ \dfrac{1}{5}$
+## Solution 1
+View the palindrome as some number with form (decimal representation):
+$a_3\cdot 10^3 +a_2\cdot 10^2 +a_1\cdot 10 +a_0$. But because the number is a palindrome, $a_3=a_0, a_2=a_1$. Recombining this yields 1001$a_3 + 110a_2$. 1001 is divisible by 7, which means that as long as $a_2 = 0$, the palindrome will be divisible by 7. This yields 9 palindromes out of 90 (9 $\cdot 10)$ possibilities for palindromes. However, if $a_2 = 7$, then this gives another case in which the palindrome is divisible by 7. This adds another 9 palindromes to the list, bringing our total to $18/90 =\boxed$ {$\frac{1}{5}$ } = $\boxed$ {E}
+## Solution (Divisibility Rules)
+We can notice the palindrome is of the form $\overline{abba}.$ Then, by the divisibility rule of 7, 7 must divide $100a+11b-$2a = $98a+11$b. This nicely simplifies to the fact that 7 \mid $4b$, so b is clearly 0 or 7. This gives us 9 $\cdot 2$ total choices for the palindrome divisible by 7, divided by 9 $\cdot 10$ total choices for $\overline{abba},$ giving us an answer of $\boxed{\text{(E)}}$ \ $\dfrac{1}{5}.$
+
+*~icecreamrolls8*
+## Addendum (Alternate)
+7\mid $1001a^3+110b^2$ and 1001 $\equiv 0 \pmod 7.$ Knowing that a does not factor (pun intended) into the problem, note 110's prime factorization and 7\mid b. There are only 10 possible digits for b, 0 through 9, but 7\mid b only holds if $b=0$, 7. This is 2 of the 10 digits, so $\frac{2}{10}=\boxed{\textbf{(E) }\frac{1}{5}}$
+
+*~BJHHar*
+## Solution 4
+The palindrome is in the form of $\overline{abba}.$ There are 9 possible values of a and 10 possible values for b. Thus, there are 90 four-digit palindromes. The smallest palindrome is 1001, which is a multiple of 7. Note how each palindrome with the same thousands and ones digit increase by 110 (i.e., $1111-1001=$110, $1221-1111=110$, etc). 110 $\equiv 5 (mod 7).$ Since 5 and 7 is coprime, to get another palindrome that is a multiple of 7, we need to increase by 770. $1001+770=1771$. Next, when the thousands place is 2, we start with 2002, which is a multiple of 1001, so 2002 $\equiv 0 (mod 7).$ Therefore, 2772 is also a satisfactory palindrome. Similarly, for every thousands place, there are 2 satisfactory palindromes, which means there are a total of 2 $\cdot 9 = 18$ satisfactory palindromes. Thus, the answer is $\frac{18}{90} = \frac{1}{5}$ or $\boxed{\text{(E)}\ \frac{1}{5}}.$
+## Video Solution
+https://youtu.be/ZfnxbpdFKjU
+
+*~IceMatrix*
+## Video Solution by Daily Dose of Math
+https://youtu.be/dYLkjOfCQ7c
+
+*~Thesmartgreekmathdude*
+## See also

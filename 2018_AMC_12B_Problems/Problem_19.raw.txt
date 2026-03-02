@@ -1,0 +1,87 @@
+{{duplicate|[[2018 AMC 12B Problems|2018 AMC 12B #19]] and [[2018 AMC 10B Problems|2018 AMC 10B #21]]}}
+
+==Problem==
+Mary chose an even <math>4</math>-digit number <math>n</math>. She wrote down all the divisors of <math>n</math> in increasing order from left to right: <math>1,2,\ldots,\dfrac{n}{2},n</math>. At some moment Mary wrote <math>323</math> as a divisor of <math>n</math>. What is the smallest possible value of the next divisor written to the right of <math>323</math>?
+
+<math>\textbf{(A) } 324 \qquad \textbf{(B) } 330 \qquad \textbf{(C) } 340 \qquad \textbf{(D) } 361 \qquad \textbf{(E) } 646</math>
+
+==Solution 1 (Inequalities)==
+
+Let <math>d</math> be the next divisor written to the right of <math>323.</math>
+
+If <math>\gcd(323,d)=1,</math> then <cmath>n\geq323d>323^2>100^2=10000,</cmath> which contradicts the precondition that <math>n</math> is a <math>4</math>-digit number.
+
+It follows that <math>\gcd(323,d)>1.</math> Since <math>323=17\cdot19,</math> the smallest possible value of <math>d</math> is <math>17\cdot20=\boxed{\textbf{(C) } 340},</math> from which <cmath>n=\operatorname{lcm}(323,d)=17\cdot19\cdot20=6460.</cmath>
+~MRENTHUSIASM ~tdeng
+
+==Solution 2 (Inequalities)==
+
+Let <math>d</math> be the next divisor written to the right of <math>323.</math>
+
+Since <math>n</math> is even and <math>323=17\cdot19,</math> we have <math>n=2\cdot17\cdot19\cdot k=646k</math> for some positive integer <math>k.</math> Moreover, since <math>1000\leq n\leq9998,</math> we get <math>2\leq k\leq15.</math> As <math>d>323,</math> it is clear that <math>d</math> must be divisible by <math>17</math> or <math>19</math> or both.
+
+Therefore, the smallest possible value of <math>d</math> is <math>17\cdot20=\boxed{\textbf{(C) } 340},</math> from which <cmath>n=\operatorname{lcm}(323,d)=17\cdot19\cdot20=6460.</cmath>
+~MRENTHUSIASM ~bjhhar
+
+==Solution 3 (Quick)==
+The prime factorization of <math>323</math> is <math>17 \cdot 19</math>. Our answer must be a multiple of either <math>17</math> or <math>19</math> or both. Since <math>17 < 19</math>, the next smallest divisor that is divisble by <math>17</math> would be <math>323 + 17 = \boxed{\textbf{(C) } 340}</math>
+
+~[https://artofproblemsolving.com/wiki/index.php/User:South South]
+
+==Solution 4 (Answer Choices)==
+
+Since prime factorizing <math>323</math> gives you <math>17 \cdot 19</math>, the desired answer needs to be a multiple of <math>17</math> or <math>19</math>, this is because if it is not a multiple of <math>17</math> or <math>19</math>, <math>n</math> will be more than a <math>4</math> digit number. For example, if the answer were to instead be <math>324</math>, <math>n</math> would have to be a multiple of <math>2^2\cdot3^4\cdot17\cdot19</math> for both <math>323</math> and <math>324</math> to be a valid factor, meaning <math>n</math> would have to be at least <math>104652</math>, which is too big. Looking at the answer choices, <math>\textbf{(A)}</math> and <math>\textbf{(B)}</math> are both not a multiple of neither <math>17</math> nor <math>19</math>, <math>\textbf{(C)}</math> is divisible by <math>17</math>. <math>\textbf{(D)}</math> is divisible by <math>19</math>, and <math>\textbf{(E)}</math> is divisible by both <math>17</math> and <math>19</math>. Since <math>\boxed{\textbf{(C) } 340}</math> is the smallest number divisible by either <math>17</math> or <math>19</math> it is the answer. Checking, we can see that <math>n</math> would be <math>6460</math>, a <math>4</math>-digit number. Note that <math>n</math> is also divisible by <math>2</math>, one of the listed divisors of <math>n</math>. (If <math>n</math> was not divisible by <math>2</math>, we would need to look for a different divisor.)
+
+-Edited by Mathandski
+
+==Solution 5 (Answer Choices)==
+Note that <math>323</math> multiplied by any of the answer choices results in a <math>5</math> or <math>6</math>-digit <math>n</math>. So, we need a choice that shares a factor(s) with <math>323</math>, such that the factors we'll need to add to the prime factorization of <math>n</math> (in result to adding the chosen divisor) won't cause our number to multiply to more than <math>4</math> digits. 
+The prime factorization of <math>323</math> is <math>17\cdot19</math>, and since we know <math>n</math> is even, our answer needs to be 
+
+* even 
+
+* has a factor of <math>17</math> or <math>19</math>
+
+We see <math>340</math> achieves this and is the smallest to do so (<math>646</math> being the other). So, we get <math>\boxed{\textbf{(C) } 340}</math>.
+
+~OGBooger (Solution)
+
+~Pearl2008 (Minor Edits)
+
+==Solution 6 (Very Rigorous)==
+This is not the fastest solution, but if i saw this question on an Olympiad/AIME, where there are no answer choices, and my work counted, this is what i would do (for the purpose of this question, a=323, b=answer, c=the four digit number);
+
+<math>\newline</math>
+Note that for any <math>a,b,c \in \mathbb{Z}^+</math>, if <math>a|c</math> and <math>b|c</math> then lcm<math>(a,b)|c</math> (this is because if something divides a or b, it must divide c, and thus the max of all of the prime factors, ie: lcm, divides c) since <math>a=323,b > a</math>, if <math>gcd(a,b)=1</math> then <math>lcm(a,b)=ab</math> and thus <math>ab|c \implies c>a^2 \implies c>100^2 \implies</math> c is not a four digit number.
+<math>\newline</math> thus, <math>gcd(a,b)\neq1</math>. This implies that either <math>17|b</math>, or <math>19|b</math>, or both.
+
+<math>\newline</math> Case 1: <math>17|b</math>, <math>19\not|b</math>. We let <math>b=17b'</math>, and by Euclid's Lemma, <math>19\not|b'</math>. Then, <math>lcm(323,b)|c \implies 17(lcm(19,b'))|c</math>. Since we already established that, <math>19\not|b</math> (and since 19 is prime, if it does not divide a number it is coprime to that number), <math>17*19*b'|c \implies 323b'|c</math>. Since <math>b=17b'>19*17</math>, <math>b' \geq 20</math>. A quick check shows <math>b'=20, b=340</math> suffices.
+<math>\newline</math> Now, let us show that there are no such numbers less than 340.
+<math>\newline</math> Presume there exists such a number, <math>n \in \mathbb{Z}^+</math> is in the range <math>(323,340)</math>. By hypothesis, there is a <math>d>1</math> such that <math>d|323</math>, <math>d|n</math>. By properties of divisibility <math>d|n-323</math>. the maximum possible value of <math>n-323</math> is <math>17^-</math> (basically an arbitrary amount smaller than 17). But, since <math>d>1</math> and <math>d|323, d \in \{17,19,323\}</math>. Of which, the minimum value is d=17. but, <math>17>17^-</math> so there is no such d, and no such n.
+<math>\newline</math> Thus, our answer is just <math>\boxed{\textbf{(C) } 340}</math>.
+<math>\newline</math> ~Stereotypicalmathnerd
+
+==Video Solution 1==
+
+https://www.youtube.com/watch?v=qlHE_sAXiY8
+
+https://www.youtube.com/watch?v=T94oxV8schA&ab_channel=Jay
+
+~Coach J
+
+==Video Solution 2==
+
+https://www.youtube.com/watch?v=KHaLXNAkDWE
+
+==Video Solution 3==
+
+https://www.youtube.com/watch?v=vc1FHO9YYKQ
+
+~bunny1
+
+==See Also==
+{{AMC10 box|year=2018|ab=B|num-b=20|num-a=22}}
+{{AMC12 box|year=2018|ab=B|num-b=18|num-a=20}}
+{{MAA Notice}}
+
+[[Category:Intermediate Number Theory Problems]]

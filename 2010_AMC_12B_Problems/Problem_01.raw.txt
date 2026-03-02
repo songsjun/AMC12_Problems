@@ -1,0 +1,33 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2010_AMC_12B_Problems/Problem_1&action=raw
+
+Published Time: Mon, 01 Aug 2022 20:59:04 GMT
+
+Markdown Content:
+{{duplicate|[[2010 AMC 12B Problems|2010 AMC 12B #1]] and [[2010 AMC 10B Problems|2010 AMC 10B #2]]}}
+
+== Problem ==
+Makarla attended two meetings during her 9-hour work day. The first meeting took 45 minutes and the second meeting took twice as long. What percent of her work day was spent attending meetings?
+
+\textbf{(A)}\ 15 \qquad \textbf{(B)}\ 20 \qquad \textbf{(C)}\ 25 \qquad \textbf{(D)}\ 30 \qquad \textbf{(E)}\ 35
+
+== Solution ==
+The total number of minutes in her 9-hour work day is 9 \times 60 = 540.
+The total amount of time spend in meetings in minutes is 45 + 45 \times 2 = 135.
+The answer is then \frac{135}{540} = \boxed{25\%} or  \boxed{(C)}
+
+==Video Solution==
+https://youtu.be/8yntxcttyd8
+
+-Education, the Study of Everything
+
+==Video Solution==
+https://youtu.be/uAc9VHtRRPg?t=82
+
+~IceMatrix
+
+== See also ==
+{{AMC12 box|year=2010|before=First Question|num-a=2|ab=B}}
+{{AMC10 box|year=2010|ab=B|num-b=1|num-a=3}}
+{{MAA Notice}}

@@ -1,0 +1,78 @@
+# 2022 AMC 12A Problem 14
+
+## Problem
+What is the value of ($\log 5)^{3}+(\log 20)^{3}+(\log 8)(\log 0.25)$ where $\log$ denotes the base-ten logarithm?
+
+$\textbf{(A)}~\frac{3}{2}\qquad\textbf{(B)}~\frac{7}{4}\qquad\textbf{(C)}~2\qquad\textbf{(D)}~\frac{9}{4}\qquad\textbf{(E)}~3$
+## Solution 1
+Let $\text{log } $2 = x. The expression then becomes $(1+x)^3+(1-x)^3+(3x)(-2x)=\boxed{2}.$
+
+*~bluelinfish*
+### Solution 1.1
+(Elaboration & motivation behind Sol. 1)
+
+Note that 5,20,8, and 0.25 are all products and quotients of exponents of 2 and 5, and the base of the logarithms is 10 = $2\times5$; this strongly hints at some sort of major simplification using the addition and subtraction rules of logarithms so we can convert all the different arguments of the logs into 1 common argument for easy algebra.
+
+Note that we can write all of the following expressions in the following ways:
+
+
+$$
+\begin{align*}
+\log5=\log\dfrac{10}2=\log10-\log2&=1-\log2\\ \log20=\log(2\cdot10)=\log2+\log10&=\log2+1\\
+\log8=\log\left(2^3\right)&=3\log2 \\
+\log0.25=\log\left(2^{-2}\right)&=-2\log2
+\end{align*}
+$$
+
+
+Thus, let $a=\log2,$ and proceed as in solution 1.
+
+*~Technodoggo*
+*~some elaboration by rawr3507*
+## Solution 2
+Using sum of cubes
+
+$$
+(\log 5)^{3}+(\log 20)^{3}
+= (\log 5 + \log 20)((\log 5)^{2}-(\log 5)(\log 20) + (\log 20)^{2})
+= 2((\log 5)^{2}-(\log 5)(2\log 2 + \log 5) + (2\log 2 + \log 5)^{2})
+$$
+
+Let $x =\log 5$ and $y =\log 2,$ so x+$y=1$
+
+The entire expression becomes
+
+$$
+2(x^2-x(2y+x)+(2y+x)^2)-6y^2
+=2(x^2+2xy+4y^2-3y^2)
+=2(x+y)^2 = \boxed{2}
+$$
+
+
+*~kempwood*
+## Solution 3 (Estimates)
+We can estimate the solution. Using $\log(2) \approx 0.3, \log(20) = \log(10)+\log(2) = 1 + 0.3 \approx 1.3, \log(8) \approx 0.9$ and $\log(.25) = \log(1)-\log(4)= 0 - 0.6\approx -0.6,$ we have
+
+$$0.7^3 + 1.3^3 + .9\cdot(-0.6) = \boxed{2}$$
+*~kxiang*
+## Solution 4(log bash)
+Using log properties, we combine the terms to make our expression equal to $\log$ {( ($5^{\log^2{5}}) \cdot (20^{\log^2{20}}) \cdot 8 ^ {\log{\frac{1}{4}}} )$ }.
+By exponent properties, we separate the part with base 20 to become $20^{\log^2{5}}\cdot 20^{\log^2{20}-\log^2{5}}.$ Then, we substitute this into the original expression to get $\log$ {( ($5^{\log^2{5}}) \cdot 20^{\log^2{5}} \cdot 20^{\log^2{20}-\log^2{5}} \cdot 8 ^ {\log{\frac{1}{4}}} )$ } = $\log$ {( ($100^{\log^2{5}}) \cdot 20^{\log^2{20}-\log^2{5}} \cdot 8 ^ {\log{\frac{1}{4}}} )$ }.
+Because $100^{\log^2{5}}=25^{\log{5}}$, and $\log^2{20}-\log^2{5} = (\log{20}+\log{5})(\log{20}-\log{5}) = \log{100}\cdot\log{4} = 2\log{4},$ this expression is equal to  $\log{( 25 ^ {\log{5}$} $\cdot 400^{\log{4}} \cdot 8 ^ {\log{\frac{1}{4}}} )$ }.
+We perform the step with the base combining on 25 and 400 to get $25 ^ {\log{5}$} $\cdot 400^{\log{4}} = 25 ^ {\log{5}-\log{4}} \cdot 10000^{\log{4}} = 25^{\log{\frac{5}{4}}}\cdot 256.$ Putting this back into the whole equation gives $\log{( 25^{\log{\frac{5}{4}}}\cdot 256 \cdot 8^{\log{\frac{1}{4}}})}.$
+One last base merge remains - but $25\cdot 8$ isn't a power of 10. We can rectify this by converting $8^{\log{\frac{1}{4}}}$ to ($4^\frac{3}{2})^{\log{\frac{1}{4}}} = 4^{\log{ \frac{1}{8} }}.$
+Finally, we complete this arduous process by performing the base merge on $\log{( 25^{\log{\frac{5}{4}}}\cdot 256 \cdot 4^{\log{\frac{1}{8}}})}.$
+We get $25^{\log{\frac{5}{4}}}\cdot 4^{\log{\frac{1}{8}}} = 25^{\log{\frac{5}{4}}-\log{\frac{1}{8}}} \cdot 100^{\log{\frac{1}{8}}} = 25^{\log{10}} \cdot \frac{1}{64} = \frac{25}{64}.$
+Putting this back into that original equation one last time, we get $\log(256 \cdot \frac{25}{64}) = \log{100} = \boxed{2}.$
+*~aop2014*
+## Video Solution (Speedy)
+https://www.youtube.com/watch?v=pai2A9FXI9U
+
+*~Education, the Study of Everything*
+## Video Solution (Simple)
+https://youtu.be/7yAh4MtJ8a8?si=9vbP5erdxlCLlG82&t=2957
+
+*~Math-x*
+## Video Solution (Most Effecient)
+https://www.youtube.com/watch?v=ndtpVFADLUo
+## See Also

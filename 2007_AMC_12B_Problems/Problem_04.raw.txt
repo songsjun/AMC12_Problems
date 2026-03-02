@@ -1,0 +1,21 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2007_AMC_12B_Problems/Problem_4&action=raw
+
+Published Time: Sat, 07 Jun 2025 01:56:34 GMT
+
+Markdown Content:
+== Problem ==
+
+At Frank's Fruit Market, 3 bananas cost as much as 2 apples, and 6 apples cost as much as 4 oranges. How many oranges cost as much as 18 bananas?
+
+\textbf{(A) } 6 \qquad\textbf{(B) } 8 \qquad\textbf{(C) } 9 \qquad\textbf{(D) } 12 \qquad\textbf{(E) } 18
+
+== Solution ==
+
+3 bananas cost as much as 2 apples, so 18 bananas cost as much as 12 apples. Since 6 apples cost as much as 4 oranges, 12 apples cost as much as 8 oranges, giving (B).
+
+==See Also==
+
+{{AMC12 box|year=2007|ab=B|num-b=3|num-a=5}}
+{{MAA Notice}}

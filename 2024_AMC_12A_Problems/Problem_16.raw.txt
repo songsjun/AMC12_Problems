@@ -1,0 +1,128 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2024_AMC_12A_Problems/Problem_16&action=raw
+
+Published Time: Tue, 28 Oct 2025 04:44:49 GMT
+
+Markdown Content:
+==Problem==
+A set of 12 tokens — 3 red, 2 white, 1 blue, and 6 black — is to be distributed at random to 3 game players, 4 tokens per player. The probability that some player gets all the red tokens, another gets all the white tokens, and the remaining player gets the blue token can be written as \frac{m}{n}, where m and n are relatively prime positive integers. What is m+n?
+
+ \textbf{(A) }387 \qquad \textbf{(B) }388 \qquad \textbf{(C) }389 \qquad \textbf{(D) }390 \qquad \textbf{(E) }391 \qquad 
+
+==Solution 1A (Trivial/Easy solve)==
+We have \binom{12}{4,4,4} ways to handle the red/white/blue tokens distribution on the denominator.
+Now we simply \binom{6}{1} \binom{5}{2} 3! for the numerator in order to handle the black tokens and distinguishable persons. 
+The solution is therefore \frac {6 \cdot 6 \cdot 10}{70 \cdot 45 \cdot 11} = \frac {4}{385} or 4+385=\boxed{\textbf{(C) }389}.
+
+Remarks - Notice we let tokens and persons be distinguishable to increase ease of calculations
+
+~polya_mouse
+
+~small fixes from xenoflyte
+
+==Solution 1B (12fact bash)==
+
+We have 12! total possible arrangements of 12 distinct tokens. If we imagine the first 4 tokens of our arrangement go to the first player, the next 4 go to the second, and the final 4 go to the third, then we can view this problem as counting the number of valid arrangements. 
+
+Firstly, the tokens are not all distinct, so we multiply by 3!, 2!, 1!, and 6! to account for the fact that the red, white, blue, and black tokens, respectively can switch around from where they are. 
+
+Letting R denote red, W denote white, B denote blue, and L denote black, then our arrangement must be something like RRRLWWLLBLLL. The three players are arbitrary, so we multiply by 3!; then, the player who gets the reds has \dbinom41=4 possible arrangements, the player who gets the whites has \dbinom42=6 possibilities, and the player who gets the blacks has \dbinom43=4 possibilities. Our total on top is thus 3!\cdot2!\cdot1!\cdot6!\cdot3!\cdot4\cdot6\cdot4, and the denominator is 12!. Firstly, we have the 6! in the numerator cancel out part of the denominator; we thus have the following: 
+
+\dfrac{3\cdot2\cdot2\cdot3\cdot2\cdot4\cdot6\cdot4}{12\cdot11\cdot10\cdot9\cdot8\cdot7}=\dfrac{2^83^3}{2^63^35\cdot7\cdot11}=\dfrac4{385}.
+
+Our answer is 4+385=\boxed{\textbf{(C) }389}. 
+
+~Technodoggo
+
+==Solution 2==
+Assume all of them are distinct even though some have the same color,
+
+Total possibility = \mathrm{C}_{4}^{12}\mathrm{C}_{4}^{8}\mathrm{C}_{4}^{4}
+(choosing 4 random token for each person)
+
+Next, assume that all the token are already in 3 different groups (Note: 3! Ways to do so since 3 people)
+
+We then distribute the 6 distinct black token into these 3 different groups (So 1,2,3 token for each group)
+
+There are a total of 3! \cdot \mathrm{C}_{3}^{6}\mathrm{C}_{2}^{3}\mathrm{C}_{1}^{1} ways in doing so
+
+Thus the answer is 3! \cdot \frac{6!}{1!2!3!}/\frac{12!}{4!4!4!}=\frac{4}{385}
+
+So the answer is \boxed{\textbf{(C) }389}
+
+~lptoggled
+
+==Solution 3==
+We first assume there are designated red, white, and blue token players that will receive all of their respective one.
+
+Consider each non-black token: The probability of the red player getting the first red token is \frac{4}{12}, because each player has 4 empty token "slots" for a total of 12. It follows that the probability of the player receiving all 3 red tokens is \left(\frac{4}{12}\right)\left(\frac{3}{11}\right)\left(\frac{2}{10}\right), the white token player is \left(\frac{4}{9}\right)\left(\frac{3}{8}\right), and the blue token player is \frac{4}{7}.
+
+The combined probability is \left(\frac{4}{12}\right)\left(\frac{3}{11}\right)\left(\frac{2}{10}\right)\left(\frac{4}{9}\right)\left(\frac{3}{8}\right)\left(\frac{4}{7}\right)=\frac{2}{1155}.
+
+Finally, we multiply the probability by 3!=6 to remove our initial assumption to get \frac{4}{385}.
+
+The requested sum is 4+385=\boxed{\textbf{(C) }389}.
+
+~SilverRush
+==Solution 4==
+Process start, _**first**_ player get tokens.  The probability that he gets 3 red tokens and 1 black token is \frac{3 \cdot 2 \cdot 1 \cdot 6}{12 \cdot 11 \cdot 10 \cdot 9} = \frac {1}{330}.
+
+There is  \dbinom41 = 4 possible arrangements (RRRB,RRBR,RBRR,BRRR) and 3 possibilities who is the first, so the probability that _**some**_ player gets 3 red tokens and 1 black token is \frac {4 \cdot 3}{330} = \frac {2}{55}. 
+ 
+After that _**second**_ player get tokens. The probability that he gets 2 white tokens and 2 black tokens is \frac{2 \cdot 1 \cdot 5 \cdot 4}{8 \cdot 7 \cdot 6 \cdot 5} = \frac {1}{42}.
+
+There is \dbinom42 = 6 possible arrangements (WWBB,WBWB, WBBW, BBWW, BWBW, BWWB) and 2 possibilities who is the second, so the probability that _**some**_ player gets 2 white tokens and 2 black tokens is \frac {6 \cdot 2}{42} = \frac {2}{7}.
+
+The third player gets last tokens - 1 blue and 3 black tokens.
+ 
+The desired probability is \frac {2 \cdot 2}{55 \cdot 7} = \frac {4}{385} \implies 4+385=\boxed{\textbf{(C) }389}.
+
+To check the result suppose that first and some) player gets 1 blue and 3 black tokens. The probability is \frac{1 \cdot 6 \cdot 5 \cdot 4}{12 \cdot 11 \cdot 10 \cdot 9} \cdot 4 \cdot 3 = \frac {4}{33}. 
+
+The probability that second (and some) player gets 3 red tokens and 1 black token is \frac{3 \cdot 2 \cdot 1 \cdot 3}{8 \cdot 7 \cdot 6 \cdot 5} \cdot 4 \cdot 2 = \frac {3}{35}.
+
+The desired probability is \frac {4 \cdot 3}{33 \cdot 35} = \frac {4}{385}.
+
+'''vladimir.shelomovskii@gmail.com, vvsss'''
+
+==Solution 5==
+
+Arranging these 12 tokens in a row, there are total of \frac{12!}{3!\,2!\,1!\,6!} arrangements. 
+
+Player one takes the first to the fourth tokens, player two takes the fifth to the eighth, and player three takes the rest. There are 6 cases of desired arrangements:
+
+Case 1. Player one has three red tokens (and one black), player 2 has two white tokens and player 3 has 1 blue token. There are total of \binom{4}{3}\binom{4}{2}\binom{4}{1}=4\cdot 6\cdot 4 arrangements in this case.
+
+Other cases (such as player 1 has two white tokens, player 2 has three red, and player has one blue token) are all similar.
+
+The number of desired arrangements for all cases is 6\cdot (4\cdot 6\cdot 4).
+
+The target probability is \frac{6\cdot (4\cdot 6\cdot 4)}{12!/(3!\,2!\,1!\,6!)}=\frac{4}{385}.
+
+-J.Z.
+
+==Solution 6 (Alternate Solution 3)==
+
+We make no assumptions about which player receives which tokens.
+
+Let us first distribute the red tokens. It does not matter who the first token goes to, but the second one must go to the same player, in 1 of their 3 open spots, out of the total 11 remaining spots. Similarly, the third red token must go in one of the 2 open spots out of 10 remaining.
+
+Distributing the white tokens next, the first token can go in any of the 9 remaining spots except for the 1 spot of the red token player. The second white token must then go in the 3 open spots of this white token player out of 8 spots.
+
+Lastly, the blue token must go in 1 of the 4 open spots of the last player, out of a total of 7 spots. The remaining 6 black tokens can be distributed however.
+
+Thus, our probability is \frac{3}{11} \cdot \frac{2}{10} \cdot \frac{8}{9} \cdot \frac{3}{8} \cdot \frac{4}{7} = \frac{4}{385}, and so our answer is 4 + 385 = \boxed{\textbf{(C)}\ 389}.
+
+~Mathemagician108
+
+==Video Solution, Fast, Quick, Easy!==
+
+https://youtu.be/g4xdfcFgwGo
+
+==Video Solution 1 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=ynMtiJuLCNI
+
+==See also==
+{{AMC12 box|year=2024|ab=A|num-b=15|num-a=17}}
+{{MAA Notice}}

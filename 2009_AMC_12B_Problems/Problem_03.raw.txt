@@ -1,0 +1,21 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2009_AMC_10B_Problems/Problem_5&action=raw
+
+Published Time: Thu, 22 Apr 2021 19:03:41 GMT
+
+Markdown Content:
+{{duplicate|[[2009 AMC 10B Problems|2009 AMC 10B #5]] and [[2009 AMC 12B Problems|2009 AMC 12B #3]]}}
+
+== Problem ==
+Twenty percent less than 60 is one-third more than what number?
+
+\mathrm{(A)}\ 16\qquad \mathrm{(B)}\ 30\qquad \mathrm{(C)}\ 32\qquad \mathrm{(D)}\ 36\qquad \mathrm{(E)}\ 48
+
+== Solution ==
+Twenty percent less than 60 is \frac 45 \cdot 60 = 48. One-third more than a number ''n'' is \frac 43n. Therefore \frac 43n = 48 and the number is \boxed {36}. The answer is \mathrm{(D)}.
+
+== See also ==
+{{AMC10 box|year=2009|ab=B|num-b=4|num-a=6}}
+{{AMC12 box|year=2009|ab=B|num-b=2|num-a=4}}
+{{MAA Notice}}

@@ -1,0 +1,70 @@
+# 2017 AMC 12B Problem 15
+
+## Problem
+Let ABC be an equilateral triangle. Extend side $\overline{AB}$ beyond B to a point B' so that BB'=3AB. Similarly, extend side $\overline{BC}$ beyond C to a point C' so that CC'=3BC, and extend side $\overline{CA}$ beyond A to a point A' so that AA'=3CA. What is the ratio of the area of $\triangle A$'B'C' to the area of $\triangle ABC$?
+
+$\textbf{(A)}\ 9:1 \qquad\textbf{(B)}\ 16:1 \qquad\textbf{(C)}\ 25:1 \qquad\textbf{(D)}\ 36:1 \qquad\textbf{(E)}\ 37:1$
+## Diagram
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(12cm); dot((0,0)); dot((2,0)); dot((1,1.732)); dot((-6,0)); dot((5,-5.196)); dot((4,6.928)); draw((0,0)--(2,0)--(1,1.732)--cycle); draw((-6,0)--(5,-5.196)--(4,6.928)--cycle); draw((-6,0)--(0,0)); draw((5,-5.196)--(2,0)); draw((4,6.928)--(1,1.732));
+```
+## Solution 1 (Uses Trig)
+Note that by symmetry, $\triangle A$'B'C' is also equilateral. Therefore, we only need to find one of the sides of A'B'C' to determine the area ratio. WLOG, let AB = BC = CA = 1. Therefore, BB' = 3 and BC' = 4. Also, $\angle B$'BC' = $120^{\circ}$, so by the Law of Cosines, B'C' = $\sqrt{37}.$ Therefore, the answer is ($\sqrt{37})^$2 : $1^2 =\boxed{\textbf{(E) } 37}$
+## Solution 2
+As mentioned in the first solution, $\triangle A$'B'C' is equilateral. WLOG, let AB=2. Let D be on the line passing through AB such that A'D is perpendicular to AB. Note that $\triangle A$'DA is a 30-60-90 with right angle at D. Since AA'=6, AD=3 and A'D=$3\sqrt{3}.$ So we know that DB'=11. Note that $\triangle A$'DB' is a right triangle with right angle at D. So by the Pythagorean theorem, we find A'B'= $\sqrt{(3\sqrt{3})^2 + 11^2} = 2\sqrt{37}.$ Therefore, the answer is ($2\sqrt{37})^$2 : $2^2 =\boxed{\textbf{(E) } 37}.$
+## Solution 3
+Let AB=BC=CA=x. We start by noting that we can just write AB' as just AB+BB'=4AB.
+Similarly BC'=4BC, and CA'=4CA. We can evaluate the area of triangle ABC by simply using Heron's formula,
+[ABC]=$\sqrt{\frac{3x}{2}\cdot {\left(\frac{3x}{2}-x\right)}^3}=\frac{x^2\sqrt{3}}{4}.$
+Next in order to evaluate A'B'C' we need to evaluate the area of the larger triangles AA'B',BB'C', $\text{ and } CC$'A'.
+In this solution we shall just compute 1 of these as the others are trivially equivalent.
+In order to compute the area of $\Delta{AA'B'}$ we can use the formula [XYZ]=$\frac{1}{2}$xy$\cdot\sin{z}.$
+Since ABC is equilateral and A, B, B' are collinear, we already know $\angle{A'AB'}=180-60=120$
+Similarly from above we know AB' and A'A to be $4x$, and $3x$ respectively. Thus the area of $\Delta{AA'B'}$ is $\frac{1}{2}\cdot 4x\cdot 3x \cdot \sin{120}=3x^2\cdot\sqrt{3}.$ Likewise we can find BB'C', $\text{ and } CC$'A' to also be $3x^2\cdot\sqrt{3}.$
+[A'B'C']=[AA'B']+[BB'C']+[CC'A']+[ABC]=$3\cdot3x^2\cdot\sqrt{3}+\frac{x^2\sqrt{3}}{4}=\sqrt{3}\cdot\left(9x^2+\frac{x^2}{4}\right).$
+Therefore the ratio of [A'B'C'] to [ABC] is $\frac{\sqrt{3}\cdot\left(9x^2+\frac{x^2}{4}\right)}{\frac{x^2\sqrt{3}}{4}}=\boxed{\textbf{(E) } 37}$
+## Solution 4 (Elimination and Educated Guess)
+Looking at the answer choices, we see that all but {$\textbf{(E)}$} has a perfect square in the ratio. With some intuition, we can guess that the sidelength of the new triangle formed is not an integer, thus we pick $\boxed{\textbf{(E) } 37}.$
+
+Additionally, notice that option D is 36:1, which is 1 below 37:1. It's quite possible that people would forget to include the area of ABC when calculating the area of A'B'C' and erroneously get an answer that is 1 below the correct one, which further supports picking $\boxed{\textbf{(E) } 37}.$
+
+Solution by sp1729
+Modification by rawr3507
+## Solution 5 (Barycentric Coordinates)
+We use barycentric coordinates wrt $\triangle ABC,$ to which we can easily obtain that A'=(4,0,-3), B'=(-3,4,0), and C'=(0,-3,4). Now, since the coordinates are homogenized (-$3+4=1$), we can directly apply the area formula to obtain that
+[A'B'C']=[ABC]$\cdot\left$| $\begin{array}{ccc} $4 & 0 & -3 \\ -3 & 4 & 0 \\ 0 & -3 & 4 $\end{array} \right$| = (64-27)[ABC]=37[ABC],
+so the answer is $\boxed{\textbf{(E) } 37}$
+## Solution 6 (Area Comparison)
+First, comparing bases yields that [BA'B']=3[AA'B]=9[ABC]$\implies$ [AA'B']=12. By congruent triangles,
+[AA'B']=[BB'C']=[CC'A']$\implies$ [A'B'C']=(12+12+12+1)[ABC],
+so [A'B'C']:[ABC]=$\boxed{\textbf{(E) } 37}$
+## Solution 7 (Quick Proportionality)
+Scale down the figure so that the area formulas for the $120^\circ$ and equilateral triangles become proportional with proportionality constant equivalent to the product of the corresponding sides. By the proportionality, it becomes clear that the answer is 3*4*3+1*1=37, $\boxed{\text{E}}.$
+*~Solution by mathchampion1*
+## Solution 8 (Sin area formula)
+Drawing the diagram, we see that the large triangle, A'B'C', is composed of three congruent triangles with the triangle ABC at the center. Let each of the sides of triangle ABC be x. Therefore, using the equilateral triangle area formula, the [ABC] = $\frac{x^2\sqrt{3}}{4}.$ We also know now that the sides of the triangles are $3x$ and $3x$ + x, or $4x$. We also know that since BB' are collinear, as are the others, angle C'BB' is 180 - 60, which is 120 degrees. Because that angle is an included angle, we get the area of all three congruent triangle's are $\frac{12x^2\sin120}{2} \cdot 3.$ Simplifying that yields $\frac{36x^2\sqrt{3}}{4}.$ Adding that to the [ABC] yields $\frac{37x^2\sqrt{3}}{4}.$ From this, we can compare the ratios by canceling everything out except for the 37, so the answer is $\boxed{\textbf{(E) }37}$
+
+*~Solution by EricShi1685*
+## Solution 9: Law of Cosines
+Solution by HydroQuantum
+
+Let AB=BC=CA=x.
+
+Recall The Law of Cosines. Letting A'B'=B'C'=C'A'$=y, y^2=(3x)^2+(x+3x)^2-2(3x)($x+$3x)(\cos 120) =  (3x)^2+(4x)^2-2(3x)(4x)(\cos 120)=9x^2+16x^2-24x(\cos 120)=25x^2+12x^2=37x^2$. Since both $\triangle ABC$ and $\triangle A$'B'C' are both equilateral triangles, they must be similar due to AA similarity. This means that $\frac{A'B'}{AB} = \frac{B'C'}{BC} = \frac{C'A'}{CA} = \frac{[\triangle A'B'C']}{[\triangle ABC]} = \frac{37}{1}.$
+
+Therefore, our answer is $\boxed{\textbf{(E) }37}.$
+## Solution 10: Inspection(easiest solution)
+Note that the height and base of $\triangle A$'CC' are respectively 4 times and 3 times that of $\triangle ABC.$ Therefore the area of $\triangle A$'CC' is 12 times that of $\triangle ABC.$
+
+By symmetry, $\triangle A$'CC' \cong $\triangle B$'AA' \cong $\triangle C$'BB'. Adding the areas of these three triangles and $\triangle ABC$ for the total area of $\triangle A$'B'C' gives a ratio of (12 + 12 + 12 + 1) : 1, or $\boxed{\textbf{(E) } 37}.$
+## Solution 11: Coordinates
+First we note that A'B'C'$\sim ABC$ due to symmetry. WLOG, let B = (0, 0) and AB = 1 Therefore, C = (1, 0), A = $\frac{1}{2}, \left(\frac{\sqrt{3}}{2}\right).$ Using the condition that CC' = 3, we get C' = (4, 0) and B' = $\left(\frac{-3}{2}, \frac{-3\sqrt{3}}{2}\right).$ It is easy to check that B'C' = $\sqrt{37}.$ Since the area ratios of two similar figures is the square of the ratio of their lengths, the ratio is $\boxed{\textbf{(E) } 37}$
+
+Solution by _mathwiz0803_
+## Solution 12: Computing the Areas
+Note that angle C'BB' is 120°, as it is supplementary to the equilateral triangle. Then, using $area =\frac{1}{2}$ab$\sin\theta$ and letting side AB = 1 for ease, we get: $4\cdot3\cdot\frac{\sin120}{2} = 3\sqrt{3}$ as the area of C'BB'. Then, the area of ABC is $\frac{\sqrt{3}}{4},$ so the ratio is $\frac{3(3\sqrt{3})+\frac{\sqrt{3}}{4}}{\frac{\sqrt{3}}{4}} = \boxed{\textbf{(E) } 37}$
+
+Solution by Aadileo
+## See Also

@@ -1,0 +1,14 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2006_AMC_12B_Problems/Problem_9&action=raw
+
+Published Time: Tue, 30 Apr 2024 21:10:22 GMT
+
+Markdown Content:
+== Problem==
+How many even three-digit integers have the property that their digits, all read from left to right, are in strictly increasing order? 
+
+ \text {(A) } 21 \qquad \text {(B) } 34 \qquad \text {(C) } 51 \qquad \text {(D) } 72 \qquad \text {(E) } 150 
+
+==Solution 1 (Alcumus Edition)==
+Let the integer have digits a, b, and c, read left to right. Because 1 \leq a, none of the digits can be zero and c cannot be 2. If c=4, then a and b must each be chosen from the digits 1, 2, and 3. Therefore there are \binom{3}{2}=3 choices for a and b, and for each choice there is one acceptable order. Similarly, for c=6 and c=8 there are, respectively, \binom{5}{2}=10 and \binom{7}{2}=21 choices for a and b. Thus there are altogether 3+10+21=\boxed{34} such integers. (Edited by HMSSONI82) ==Solution 2== Let's set the middle (tens) digit first. The middle digit can be anything from 2-7 (If it was 1 we would have the hundreds digit to be 0, if it was more than 7, the ones digit cannot be even). If it was 2, there is 1 possibility for the hundreds digit, 3 for the ones digit. If it was 3, there are 2 possibilities for the hundreds digit, 3 for the ones digit. If it was 4, there are 3 possibilities for the hundreds digit, and 2 for the ones digit, and so on. So, the answer is 3(1+2)+2(3+4)+1(5+6)=\boxed{34} \Rightarrow B. ==Solution 3== The last digit is 4, 6, or 8. If the last digit is x, the possibilities for the first two digits correspond to 2-element subsets of \{1,2,\dots,x-1\}. Thus the answer is {3\choose 2} + {5\choose 2} + {7\choose 2} = 3 + 10 + 21 = \boxed{34}. ==Solution 4== The answer must be half of a triangular number (evens and decreasing/increasing) so \boxed{34} or the letter B. - ==Solution 5 (Forward Casework + Listing)== Casework: For the sake of simplicity, we are going to call the number \overline{abc}. 1. If a=1: a. c=2. No such number exists. b. c=4. b=2, 3. c. c=6. b=2, 3, 4, 5. d. c=8. b=2, 3, 4, 5, 6, 7. 2. If a=2: continue as above. We can count up that there are 34 such integers, so select \boxed{B}. ~hastapasta == See also == {{AMC12 box|year=2006|ab=B|num-b=8|num-a=10}} {{MAA Notice}}

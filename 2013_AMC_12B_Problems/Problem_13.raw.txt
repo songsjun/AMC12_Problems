@@ -1,0 +1,31 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2013_AMC_12B_Problems/Problem_13&action=raw
+
+Published Time: Fri, 08 Jan 2021 16:32:23 GMT
+
+Markdown Content:
+==Problem==
+
+The internal angles of quadrilateral ABCD form an arithmetic progression. Triangles ABD and DCB are similar with \angle DBA = \angle DCB and \angle ADB = \angle CBD. Moreover, the angles in each of these two triangles also form an arithmetic progression. In degrees, what is the largest possible sum of the two largest angles of ABCD?
+
+\textbf{(A)}\ 210 \qquad \textbf{(B)}\ 220 \qquad \textbf{(C)}\ 230 \qquad \textbf{(D)}\ 240 \qquad \textbf{(E)}\ 250
+
+==Solution==
+Since the angles of Quadrilateral ABCD form an arithmetic sequence, we can assign each angle with the value a, a+d, a+2d, and a+3d. Also, since these angles form an arithmetic progression, we can reason out that (a)+(a+3d)=(a+d)+(a+2d)=180.
+
+For the sake of simplicity, lets rename the angles of each similar triangle. Let \angle ADB = \angle CBD = \alpha, \angle DBA = \angle DCB = \beta, \angle CDB = \angle BAD = \gamma.
+
+Now the four angles of ABCD are \beta, \alpha + \beta, \gamma, and \alpha + \gamma.
+
+As for the similar triangles, we can name their angles y, y+b, and y+2b. Therefore y+y+b+y+2b=180 and y+b=60. Because these 3 angles are each equal to one of \alpha, \beta, \gamma, we know that one of these three angles is equal to 60 degrees.
+
+Now we we use trial and error. Let \alpha = 60^{\circ}. Then the angles of ABCD are \beta, 60^{\circ} + \beta, \gamma, and 60^{\circ} + \gamma. Since these four angles add up to 360, then \beta + \gamma= 120. If we list them in increasing value, we get \beta, \gamma, 60^{\circ} + \beta, 60^{\circ} + \gamma. Note that this is the only sequence that works because the common difference is less than 45. So, this would give us the four angles 45, 75, 105, and 135. In this case, \alpha, \beta, \gamma also form an arithmetic sequence with 45, 60, and 75, and the largest two angles of the quadrilateral add up to 240 which is an answer choice.
+
+If we apply the same reasoning to \beta and \gamma, we would get the sum of the highest two angles as 220, which works but is lower than 240. Therefore, \boxed{\textbf{(D) }240} is the correct answer.
+
+== See also ==
+{{AMC12 box|year=2013|ab=B|num-b=12|num-a=14}}
+
+[[Category:Introductory Geometry Problems]]
+{{MAA Notice}}

@@ -1,0 +1,45 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2002_AMC_12B_Problems/Problem_24&action=raw
+
+Published Time: Tue, 29 Jul 2025 22:21:56 GMT
+
+Markdown Content:
+== Problem ==
+A [[convex polygon|convex]] [[quadrilateral]] ABCD with area 2002 contains a point P in its interior such that PA = 24, PB = 32, PC = 28, PD = 45. Find the perimeter of ABCD.
+
+\mathrm{(A)}\ 4\sqrt{2002} \qquad \mathrm{(B)}\ 2\sqrt{8465} \qquad \mathrm{(C)}\ 2 (48+\sqrt{2002}) \qquad \mathrm{(D)}\ 2\sqrt{8633} \qquad \mathrm{(E)}\ 4(36 + \sqrt{113})
+== Solution 1==
+We have 
+[ABCD] = 2002 \le \frac 12 (AC \cdot BD)
+(This is true for any convex quadrilateral: split the quadrilateral along AC and then using the triangle area formula to evaluate [ACB] and [ACD]), with equality only if \overline{AC} \perp \overline{BD}. By the [[triangle inequality]],  
+
+\begin{align*}AC &\le PA + PC = 52\\ BD &\le PB + PD = 77\end{align*}
+
+with equality if P lies on \overline{AC} and \overline{BD} respectively. Thus
+
+2002 \le \frac{1}{2} AC \cdot BD \le \frac 12 \cdot 52 \cdot 77 = 2002
+
+Since we have the equality case, \overline{AC} \perp \overline{BD} at point P, as shown below. 
+
+ size(200); defaultpen(0.6); pair A = (0,0), B = (40,0), C = (25.6 * 52 / 24, 19.2 * 52 / 24), D = (40 - (40-25.6)*77/32,19.2*77/32), P = (25.6,19.2), Q = (25.6, 18.5); pair E=(A+P)/2, F=(B+P)/2, G=(C+P)/2, H=(D+P)/2; draw(A--B--C--D--cycle); draw(A--P--B--P--C--P--D); label("\(A\)",A,WSW); label("\(B\)",B,ESE); label("\(C\)",C,ESE); label("\(D\)",D,NW); label("\(P\)",Q,SSW); label("24",E,WNW); label("32",F,WSW); label("28",G,ESE); label("45",H,ENE); draw(rightanglemark(C,P,D,50)); 
+
+By the [[Pythagorean Theorem]],  
+\begin{align*} AB = \sqrt{PA^2 + PB^2} & = \sqrt{24^2 + 32^2} = 40\\ BC = \sqrt{PB^2 + PC^2} & = \sqrt{32^2 + 28^2} = 4\sqrt{113}\\ CD = \sqrt{PC^2 + PD^2} & = \sqrt{28^2 + 45^2} = 53\\ DA = \sqrt{PD^2 + PA^2} & = \sqrt{45^2 + 24^2} = 51 \end{align*}
+
+The perimeter of ABCD is AB + BC + CD + DA = 4(36 + \sqrt{113}) \Rightarrow \mathrm{(E)}.
+
+==Solution 2==
+Draw the diagram out. Notice the very peculiar sets of numbers (24,32);(24,45);(28,45); these are simply multiples of the legs of well-known Pythagorean triples (3,4,5);(8,15,17);(28,45,53), pointing to signs of possible right angles. We can assume that \angle APB=\angle BPC=\angle CPD=\angle DPA=90^\circ, so the area of the entire figure would be:
+
+A=\frac{1}{2}\cdot(24+28)(45+32)=\frac{1}{2}\cdot52\cdot77=2002
+
+Thus this is the correct case, so finding the side lengths of ABCD by the Pythagorean Theorem yields AB=40, BC=4\sqrt{113},CD=53,DA=51, so the perimeter is 40+4\sqrt{130}+53+51=144+4\sqrt{130}=\boxed{\textbf{(E) }4(36+\sqrt{113})}.
+
+~eevee9406
+
+== See also ==
+{{AMC12 box|year=2002|ab=B|num-b=23|num-a=25}}
+
+[[Category:Introductory Geometry Problems]]
+{{MAA Notice}}

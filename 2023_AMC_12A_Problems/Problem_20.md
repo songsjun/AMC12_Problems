@@ -1,0 +1,293 @@
+# 2023 AMC 12A Problem 20
+
+## Problem
+Rows 1, 2, 3, 4, and 5 of a triangular array of integers are shown below.
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(4.5cm); label("$1$", (0,0)); label("$1$", (-0.5,-2/3)); label("$1$", (0.5,-2/3)); label("$1$", (-1,-4/3)); label("$3$", (0,-4/3)); label("$1$", (1,-4/3)); label("$1$", (-1.5,-2)); label("$5$", (-0.5,-2)); label("$5$", (0.5,-2)); label("$1$", (1.5,-2)); label("$1$", (-2,-8/3)); label("$7$", (-1,-8/3)); label("$11$", (0,-8/3)); label("$7$", (1,-8/3)); label("$1$", (2,-8/3));
+```
+
+
+Each row after the first row is formed by placing a 1 at each end of the row, and each interior entry is 1 greater than the sum of the two numbers diagonally above it in the previous row. What is the units digits of the sum of the 2023 numbers in the 2023rd row?
+
+$\textbf{(A) } 1 \qquad \textbf{(B) } 3 \qquad \textbf{(C) } 5 \qquad \textbf{(D) } 7 \qquad \textbf{(E) } 9$
+## Solution 1
+First, let R(n) be the sum of the nth row. Now, with some observation and math instinct, we can guess that $R(n) = 2^n$ - n.
+
+Now we try to prove it by induction,
+
+$R(1) = 2^n -n = 2^1 - 1 = 1$ (works for base case)
+
+$$R(k) = 2^k - k$$
+
+$$R(k+1) = 2^{k+1} - (k + 1) = 2(2^k) - k - 1$$
+
+By definition from the question, the next row is always:
+
+Double the sum of last row (Imagine each number from last row branches off toward left and right to the next row), plus # of new row, minus 2 (minus leftmost and rightmost's 1)
+
+Which gives us :
+
+$$2(2^k - k) + (k + 1) - 2 = 2(2^k) - k - 1$$
+
+Hence, proven
+
+Last, simply substitute $n = 2023$, we get R(2023) = $2^{2023} - 2023$
+
+Last digit of $2^{2023}$ is 8, 8-3 = $\boxed{\textbf{(C) } 5}$
+
+*~lptoggled*
+## Solution 2
+In a normal Pascal's Triangle with a row's elements being $a_1, a_2, a_3... a_n$, the following row's elements will sum to:
+
+$$a_1 + (a_1 + a_2) + (a_2 + a_3)...(a_{n-1} + a_n) + a_n = 2(a_1 + a_2 + a_3 + ... + a_n).$$
+
+So the sum of the elements in the next row are double that of the previous row in a Pascal's Triangle.
+
+Now, in this specific problem, for every consecutive pair of numbers in the previous row, an extra 1 is added. There are n - 1 pairs in the previous row to add ones to, but we have to subtract 1 because of the two $1s$ on the sides which don't change. Let $S_n$ represent the sum of the elements on the nth row. Then we have: $S_n = 2(S_{n - 1}) + n - 1 - 1 = 2(S_{n - 1}$) + n - 2.
+
+
+$$So S_{2023} = 2S_{2022} + 2021 = 2(2(S_{2021}) + 2020) + 2021 = 2(2(2S_{2020} + 2019) + 2020) + 2021 = \dots$$
+
+
+Notice the pattern. At $S_{2021}$ we had:
+$$S_{2023} = 2^{2} \cdot S_{2021} + 2^{1} \cdot 2020 + 2^{0} \cdot 2021$$
+And at $S_{2020}$ we had:
+
+$$S_{2023} = 2^{3} \cdot S_{2020} + 2^{2} \cdot 2019 + 2^{1} \cdot 2020 + 2^{0} \cdot 2021$$
+
+Aside from the first term, the exponents and constant always sum to the same number. We can generalize $S_{2023}$ based on where we stop for $S_{n}$:
+
+$$S_{2023} = 2^{k}S_{2023 - k} + \sum_{j=0}^{k-1} 2^j(2021 - j)$$
+
+Let $k = 2022$:
+
+$$S_{2023} = 2^{2022}S_{1} + \sum_{j=0}^{2021} 2^j(2021 - j) = 2^{2023} + \sum_{j=0}^{2021} 2^j\cdot2021 - \sum_{j=0}^{2021} 2^{j}\cdot j$$
+
+We apply the sum of geometric sequences formula to the first part of the summation:
+$$\sum_{j=0}^{2021} 2^j\cdot2021 = 2021(2^{2022} - 1)$$
+
+Now we expand the second part of the summation:
+
+
+$$\sum_{j=0}^{2021} 2^{j}\cdot j = 2^{0} \cdot 0 + 2^{1} \cdot 1 + ... + 2021 \cdot 2^{2021}$$
+
+Then multiply this by 2 to get another expression:
+
+$$2\sum_{j=0}^{2021} 2^{j}\cdot j = 2^{1} \cdot 0 + 2^{2} \cdot 1 + ... + 2021 \cdot 2^{2022}$$
+
+Subtract the two expressions:
+
+$$
+-\sum_{j=0}^{2021} 2^{j}\cdot j = 0 \cdot 2^{0} + (1 - 0) \cdot 2^{1} + (2 - 1) \cdot 2^{2} + ... + (2021 - 2020)\cdot 2^{2021} - 2021 \cdot 2^{2022} =
+2^{0} + 2^{1} + 2^{2} + ... + 2^{2021} - 2021 \cdot 2^{2022}
+$$
+
+
+This can again be simplified using the geometric sequence sum formula to finally get
+
+$$\sum_{j=0}^{2021} 2^{j}\cdot j = 2020\cdot2^{2022} + 2$$
+
+Plugging this back into the overall expression finally gives us:
+
+$$S_{2023} = 2^{2022}S_{1} + 2021(2^{2022} - 1) - 2020\cdot2^{2022} - 2$$
+
+Since $S_{1}$ is just 1 we have:
+
+$$S_{2023} = 2^{2022} + 2^{2022} - 2023 = 2^{2023} - 2023.$$
+
+Take this mod 10 to get the last digit:
+$$2^{2023} - 2023 \equiv 8 - 3 \equiv \boxed{5} \pmod{10}.$$
+
+*~grogg007*
+## Solution 3
+Let the sum of the numbers in row 2022 be $S_{2022}$. Let each number in row 2022 be $x_i$ where 1 $\leq$ i $\leq 2022.$
+
+Then
+
+$$
+\begin{align*} S_{2023}&=1+(x_1+x_2+1)+(x_2+x_3+1)+...+(x_{2021}+x_{2022}+ 1)+1 \\ S_{2023}&=x_1+2(S_{2022}-x_1-x_{2022})+2023+x_{2022} \\ S_{2023} &= 2S_{2022} + 2021 \end{align*}
+$$
+
+
+From this we can establish:
+
+$$
+\begin{align*} S_n &= 2S_{n-1} + n-2 \\ S_{n-1} &= 2S_{n-2} + n-3 \\ S_n - S_{n-1} &= 2S_{n-1} - 2S_{n-2} + 1 \end{align*}
+$$
+
+
+Let
+$$B_{n} = S_n - S_{n-1}$$
+
+From this we have:
+
+$$
+\begin{align*} B_n + 1 &= 2(B_{n-1} + 1) \\ B_n &= 2^{n-1} - 1 \\ S_n - S_{n-1} &= 2^{n-1} - 1 \\ S_n &= 2^{n-1} + 2^{n-2} + ... + 2^1 - (n-1) + S_1 \\ S_n &= 2^n - n \\ S_{2023} &= 2^{2023} - 2023 \end{align*}
+$$
+
+
+The problem requires us to find the last digit of $S_{2023}$. We can use modular arithmetic.
+
+$$
+\begin{align*} S_{2023} &= 2^{2023} - 2023 \\ 2^{2023} - 2023 &\equiv 8 - 3\pmod{10} \\ &\equiv \boxed{\textbf{(C) } 5} \pmod{10} \\ \end{align*}
+$$
+
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Cyantist luckuso]
+## Solution 3.b simpler
+
+$$
+\begin{align*} S_n &= 2S_{n-1} + n-2 \\ S_n + An + B &= 2(S_{n-1} + A(n-1) + B) \\ A = 1 , B = 0 \\ S_n + n &= 2 (S_{n-1} + n-1) = 2^{n-1} (S_1+1) \end{align*}
+$$
+
+continue with the rest from solution 2
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Cyantist luckuso]
+## Solution 4 (Recursion)
+Let the sum of the $n^{th}$ row be $S_n$.
+
+For each of the $n-2$ non-1 entries in the $n^{th}$ row, they are equal to the sum of the 2 numbers diagonally above it in the n-$1^{th}$ row plus 1. Therefore all $n-3$ non-1 entries in the n-$1^{th}$ row appear twice in the sum of the $n-2$ non-1 entries in the $n^{th}$ row, the two $1s$ on each end of the n-$1^{th}$ row only appear once in the sum of the $n-2$ non-1 entries in the $n^{th}$ row. Additionally, additional $1s$ are placed at each end of the $n^{th}$ row. Hence, $S_n = 2(S_{n-1} - 1) + n-2 + 1 + 1 = 2S_{n-1}$ + n - 2
+
+[center|700px](https://artofproblemsolving.com/wiki/index.php/File:2023AMC12AP20_1.png)
+
+$S_4 = 1+5+5+1 = 12, S_5 = 1+7+11+7+1 = 27$. By using the recursive formula, $S_5 = 2\cdot S_4 + 5-2 = 27$
+
+
+$$
+S_n = 2 S_{n-1} + n - 2
+S_n + n = 2 S_{n-1} + 2n - 2
+S_n + n = 2( S_{n-1} + n - 1)
+$$
+
+$S_n$ + n is a geometric sequence by a ratio of 2
+
+$$\because \quad S_1 = 1$$
+
+$$\therefore \quad S_n + n = 2^n, S_n = 2^n - n$$
+
+$$S_{2023} = 2^{2023} - 2023$$
+
+The unit digit of powers of 2 is periodic by a cycle of 4 digits: 2, 4, 8, 6. 2023 = 3 $\mod 4,$ the unit digit of $2^{2023}$ is 8.
+
+Therefore, the unit digit of $S_{2023}$ is 8-3 = $\boxed{\textbf{(C) } 5}$
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+## Solution 5
+Consider Pascal's triangle as the starting point. In the Pascal's triangle depicted below, the sum of the numbers in the nth row is $2^{(n-1)}$. For the 2023rd row in the Pascal's triangle, the sum of numbers is $2^{2022}$.
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(4.5cm); label("$1$", (0,0)); label("$1$", (-0.5,-2/3)); label("$1$", (0.5,-2/3)); label("$1$", (-1,-4/3)); label("$2$", (0,-4/3)); label("$1$", (1,-4/3)); label("$1$", (-1.5,-2)); label("$3$", (-0.5,-2)); label("$3$", (0.5,-2)); label("$1$", (1.5,-2)); label("$1$", (-2,-8/3)); label("$4$", (-1,-8/3)); label("$6$", (0,-8/3)); label("$4$", (1,-8/3)); label("$1$", (2,-8/3));
+```
+
+
+For the triangular array of integers in the problem, 1 is added to each interior entry, which propagates to two numbers diagonally below it in the next row, making the sum of numbers in the next row to increase by 2. And the addition of 1 continues to propagate to the next row, which makes the sum of numbers in the row below the next to increase by 4.
+
+Examine the following triangular array of 1's, which indicates the 1's being added to each position of corresponding numbers in the Pascal's triangle.
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(4.5cm); label("$0$", (0,0)); label("$0$", (-0.5,-2/3)); label("$0$", (0.5,-2/3)); label("$0$", (-1,-4/3)); label("$1$", (0,-4/3)); label("$0$", (1,-4/3)); label("$0$", (-1.5,-2)); label("$1$", (-0.5,-2)); label("$1$", (0.5,-2)); label("$0$", (1.5,-2)); label("$0$", (-2,-8/3)); label("$1$", (-1,-8/3)); label("$1$", (0,-8/3)); label("$1$", (1,-8/3)); label("$0$", (2,-8/3));
+```
+
+
+For the 3rd row, 1 is added to the original number in the same position in the Pascal's triangle. And the addition of 1 in the 3rd row makes the sum of numbers in the 4th row to increase by 2, and makes the sum of numbers in the 5th row to increase by 4, and so forth. Therefore, the addition of a 1 in the 3rd row makes the sum of numbers in the 2023rd row to increase by $2^{2023-3}=2^{2020}$. And similarly, the addition of each 1 in the 4th row makes the number of numbers in the 2023rd row to increase by $2^{2023-4}=2^{2019}$. The 1's being added between the 3rd and 2022nd rows impact on the sum of numbers in the 2023rd row to increase by $2^{2020} + $2 $\cdot 2^{2019} + 3 \cdot 2^{2018} + \dots + 2020 \cdot 2^1 = \sum_{n=1}^{2020}(n \cdot 2^{(2021-n)}).$
+
+Therefore, the sum of numbers in the 2023rd row is the aggregation of the sum of numbers in the 2023rd row in the Pascal's triangle, the impact of addition of 1's between the 3rd row and the 2022nd row, and the addition of 1's on 2021 interior entries in the 2023rd row, which is $2^{2022}+\sum_{n=1}^{2020}(n \cdot 2^{(2021-n)}) + 2021.$
+
+Because $2^{2022}=2^{2020+2} = 16^{505} \cdot 2^2 = 16^{505} \cdot 4$ and $16^k$ will always ends with 6 as the unit digit, the unit digit of $2^{2022}$ is 4.
+
+For $\sum_{n=1}^{2020}(n \cdot 2^{(2021-n)}),$ we can solve the sum of geometric sequence to be {$2^{2022} - 4 - 2020 \cdot 2$}, which has 0 for the unit digit.
+
+Therefore, for the sum of numbers in the 2023rd row, which is $2^{2022}+\sum_{n=1}^{2020}(n \cdot 2^{(2021-n)}) + 2021,$ its unit digit is 4 + 0 + $1 =\boxed{\textbf{(C) } 5}.$
+
+*~sqroot*
+## Solution 6 (mod bash)
+Observe that:
+$$S_n = 2{S_{n-1}} + (n-2) \\ = 2{S_{n-1}} + D_{n} \\ = 2{S_{n-1}} + D_{n-1} + 1$$
+where $D_1$=-1, and $D_n=D_{n-1}+1$ for n>1.
+
+Make a table of values, ($S_n$, $D_n) \mod 2$ and ($S_n$, $D_n) \mod 5,$ a until the cycle completes for each. ($\mod 2$ has period 1; $\mod 5$ has period 20).
+( In both cases, there is no "head" that is not part of the cycle.)
+
+Mod 2:
+
+$$S_{2023} \equiv S_{2023 \mod 2} \equiv S_1 = (1\cdot 2 +0)\cdot 0 + 1 \equiv 1 \pmod 2$$
+
+
+Mod 5:
+
+$$S_{2023} \equiv S_{2023 \mod 20} \equiv S_3 \equiv (1\cdot 2 +0)\cdot 2 + 1 \equiv 5 \pmod 5$$
+
+
+Thus $S_{2023}\mod 10 = \boxed{\textbf{(C) } 5}.$
+## Solution 7: Newton's Little Formula
+The triangle provided by the question may be rewritten with Pascal's Triangle being the starting point.
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+usepackage("color"); texpreamble("\usepackage{color}"); size(6cm); // Reduced from 8cm // Reduced spacing real dx = 1.2; real dy = 0.6; // Level 0 label(Label("$1$", align=Center), (0, 0)); // Level 1 label(Label("$1$", align=Center), (-dx/2, -dy)); label(Label("$1$", align=Center), ( dx/2, -dy)); // Level 2 label(Label("$1$", align=Center), (-dx, -2*dy)); label(Label("$\textcolor{red}{1}$", align=Center), (0, -2*dy)); label(Label("$1$", align=Center), (dx, -2*dy)); // Level 3 label(Label("$1$", align=Center), (-1.5*dx, -3*dy)); label(Label("$\textcolor{red}{2}$", align=Center), (-0.5*dx, -3*dy)); label(Label("$\textcolor{red}{2}$", align=Center), (0.5*dx, -3*dy)); label(Label("$1$", align=Center), (1.5*dx, -3*dy)); // Level 4 label(Label("$1$", align=Center), (-2*dx, -4*dy)); label(Label("$\textcolor{red}{3}$", align=Center), (-dx, -4*dy)); label(Label("$\textcolor{red}{5}$", align=Center), (0, -4*dy)); label(Label("$\textcolor{red}{3}$", align=Center), (dx, -4*dy)); label(Label("$1$", align=Center), (2*dx, -4*dy)); label(Label("$\vdots$", align=Center), (0, -5*dy));
+```
+
+
+The numbers in Pascal's Triangle could be written with combinations. Moreover, the following equation is true.
+
+$$\sum_{k=0}^{n}{}_nC_k=2^n$$
+
+Therefore, the sum of every number in $n^{th}$ row of a Pascal's Triangle is $2^{n}$.
+
+Another triangle with the red colored number could be written to evaluate the sum of the red numbers in each row.
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(2.5cm); label("$\textcolor{red}{1}$", (0, 0)); label("$\textcolor{red}{2}$", (0.1/2, -0.08)); label("$\textcolor{red}{2}$", (-0.1/2, -0.08)); label("$\textcolor{red}{3}$", (-0.1, -2*0.08)); label("$\textcolor{red}{5}$", ( 0, -2*0.08)); label("$\textcolor{red}{3}$", ( 0.1, -2*0.08)); label("$\vdots$", (0, -3*0.08));
+```
+
+
+The sum of numbers in each line could be investigated.
+
+$$
+\begin{array}{c@{\quad}c@{\quad}c@{\quad}c@{\quad}c@{\quad}c@{\quad}c@{\quad}c@{\quad}c@{\quad}c@{\quad}c@{\quad}c} 1 & & 4 & & 11 & & 26 & & 53 & \dots \\ & 3 & & 7 & & 15 & & 27 & \dots & \\ & & 4 & & 8 & & 12 & \dots & & \\ & & & 4 & & 4 & \dots & & & \\ \end{array}
+$$
+
+Using Newton's Little Formula, it is evident that the following equation is true.
+
+$$a_n=1\cdot{}_{n-1}C_0+3\cdot{}_{n-1}C_1+4\cdot{}_{n-1}C_2+4\cdot{}_{n-1}C_3$$
+
+With all the tools, the last digit, or the remainder when divided by 10, of the sum of the numbers in the 2023rd row may be computed. Let x be the last digit. Moreover,  $a_{2020}$ is equivalent to the sum of red numbers in 2023rd row of the original triangle.
+
+$$
+\begin{align*}
+2^{2020}+1\cdot{}_{2020}C_0+3\cdot{}_{2020}C_1+4\cdot{}_{2020}C_2+4\cdot{}_{2020}C_3 &\equiv x\pmod{10} \\
+&\equiv 2^{2022}+1+3\cdot2020+2\cdot2020\cdot2019 \\
+&\text{ }\text{ }\text{ }\text{ }\text{ }\text{ }\text{ }\text{ }\text{ }\text{ }\text{ }\text{ }\text{ }\text{ }\text{ }\text{ }\text{ }\text{ }\text{ }+2\cdot2020\cdot673\cdot2018 \pmod{10} \\
+&=2^{2022}+1 \pmod{10} \\
+&=4+1 \pmod{10} \\
+&=5 \pmod{10}
+\end{align*}
+$$
+
+
+Answer: $\boxed{(C) 5}$
+
+*~MaPhyCom*
+~$ALGEBRAIC_ALGORITHMIC$ (latex changes)
+## Video Solution 1 by OmegaLearn
+https://youtu.be/MnR5VXAXDeU
+## Video Solution
+https://youtu.be/EVHnJFOW4Ys
+
+*~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)*
+## See also

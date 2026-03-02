@@ -1,0 +1,30 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2004_AMC_12B_Problems/Problem_17&action=raw
+
+Published Time: Wed, 25 Jun 2025 15:23:12 GMT
+
+Markdown Content:
+== Problem ==
+For some real numbers a and b, the [[equation]]
+8x^3 + 4ax^2 + 2bx + a = 0
+has three distinct positive roots. If the sum of the base-2 [[logarithm]]s of the roots is 5, what is the value of a? 
+
+\mathrm{(A)}\ -256 \qquad\mathrm{(B)}\ -64 \qquad\mathrm{(C)}\ -8 \qquad\mathrm{(D)}\ 64 \qquad\mathrm{(E)}\ 256 
+== Solution ==
+Let the three roots be x_1,x_2,x_3. 
+\log_2 x_1 + \log_2 x_2 + \log_2 x_3 = \log_2 x_1x_2x_3= 5 \Longrightarrow x_1x_2x_3 = 32
+By [[Vieta's Formulas|Vieta’s formulas]],
+8(x-x_1)(x-x_2)(x-x_3) = 8x^3 + 4ax^2 + 2bx + a
+gives us that a = -8x_1x_2x_3 = -256 \Rightarrow \mathrm{(A)}.
+
+==Video Solution==
+https://youtu.be/40mJNmstTEY
+
+~IceMatrix
+
+== See also ==
+{{AMC12 box|year=2004|ab=B|num-b=16|num-a=18}}
+
+[[Category:Introductory Algebra Problems]]
+{{MAA Notice}}

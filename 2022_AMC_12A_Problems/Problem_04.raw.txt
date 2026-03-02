@@ -1,0 +1,58 @@
+{{duplicate|[[2022 AMC 10A Problems/Problem 7|2022 AMC 10A #7]] and [[2022 AMC 12A Problems/Problem 4|2022 AMC 12A #4]]}}
+
+==Problem==
+
+The least common multiple of a positive integer <math>n</math> and <math>18</math> is <math>180</math>, and the greatest common divisor of <math>n</math> and <math>45</math> is <math>15</math>. What is the sum of the digits of <math>n</math>?
+
+<math>\textbf{(A) } 3 \qquad \textbf{(B) } 6 \qquad \textbf{(C) } 8 \qquad \textbf{(D) } 9 \qquad \textbf{(E) } 12</math>
+
+== Solution 1 == 
+Note that
+<cmath>\begin{align*}
+18 &= 2\cdot3^2, \\
+180 &= 2^2\cdot3^2\cdot5, \\
+45 &= 3^2\cdot5 \\
+15 &= 3\cdot5.
+\end{align*}</cmath>
+Let <math>n = 2^a\cdot3^b\cdot5^c.</math> It follows that:
+<ol style="margin-left: 1.5em;">
+  <li>From the least common multiple condition, we have <cmath>\operatorname{lcm}(n,18) = \operatorname{lcm}(2^a\cdot3^b\cdot5^c,2\cdot3^2) = 2^{\max(a,1)}\cdot3^{\max(b,2)}\cdot5^{\max(c,0)} = 2^2\cdot3^2\cdot5,</cmath> from which <math>a=2, b\in\{0,1,2\},</math> and <math>c=1.</math></li><p>
+  <li>From the greatest common divisor condition, we have <cmath>\gcd(n,45) = \gcd(2^2\cdot3^b\cdot5,3^2\cdot5) = 2^{\min(2,0)}\cdot3^{\min(b,2)}\cdot5^{\min(1,1)} = 3\cdot5,</cmath> from which <math>b=1.</math></li><p>
+</ol>
+Together, we conclude that <math>n=2^2\cdot3\cdot5=60.</math> The sum of its digits is <math>6+0=\boxed{\textbf{(B) } 6}.</math>
+
+~MRENTHUSIASM ~USAMO333
+
+==Solution 2==
+The options for <math>\text{lcm}(x, 18)=180</math> are <math>20</math>, <math>60</math>, and <math>180</math>. The options for <math>\text{gcd}(y, 45)=15</math> are <math>15</math>, <math>30</math>, <math>60</math>, <math>75</math>, etc. We see that <math>60</math> appears in both lists; therefore, <math>6+0=\boxed{\textbf{(B) } 6}</math>.
+
+~MrThinker
+
+== Remark ==
+
+If you ignore or mess up the LCM, and get  <math>n=15</math>, you'll still get the correct answer.
+
+==Video Solution 1 ==
+https://youtu.be/YI1E8C3ZX-U
+
+~Education, the Study of Everything
+
+==Video Solution 2==
+https://youtu.be/q2y-Wfdi4q8
+
+~savannahsolver
+
+==Video Solution 3 (Smart and Simple) ==
+https://youtu.be/7yAh4MtJ8a8?si=o-aImrVOwbH1HoZv&t=673
+
+~Math-X
+
+==Video Solution 4==
+https://youtu.be/5KAiNlqbrsQ
+
+== See Also ==
+{{AMC10 box|year=2022|ab=A|num-b=6|num-a=8}}
+{{AMC12 box|year=2022|ab=A|num-b=3|num-a=5}}
+
+[[Category:Introductory Number Theory Problems]]
+{{MAA Notice}}

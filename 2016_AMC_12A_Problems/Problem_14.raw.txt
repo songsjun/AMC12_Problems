@@ -1,0 +1,92 @@
+==Problem==
+
+Each vertex of a cube is to be labeled with an integer <math>1</math> through <math>8</math>, with each integer being used once, in such a way that the sum of the four numbers on the vertices of a face is the same for each face. Arrangements that can be obtained from each other through rotations of the cube are considered to be the same. How many different arrangements are possible?
+
+<math>\textbf{(A) } 1\qquad\textbf{(B) } 3\qquad\textbf{(C) }6 \qquad\textbf{(D) }12 \qquad\textbf{(E) }24</math>
+
+==Solution 1==
+
+Note that the sum of the numbers on each face must be 18, because <math>\frac{1+2+\cdots+8}{2}=18</math>. 
+
+So now consider the opposite edges (two edges which are parallel but not on same face of the cube); they must have the same sum value too.
+
+'''Note:''' It is not too hard to see this through making one side <math>a</math> (another way of saying this is to have two vertices have a sum of <math>a</math>), the side on the same face and parallel to it <math>b.</math> Then, the side diametrically opposite to <math>a</math> must also have a side length of <math>a</math> in order to maintain the constant face sum <math>a+b.</math>) ~mathboy282
+
+Now think about the points <math>1</math> and <math>8</math>. If they are not on the same edge, they must be endpoints of opposite edges, and we should have <math>1+X=8+Y</math>. However, this scenario would yield no solution for <math>[7,2]</math>, which is a contradiction. (Try drawing out the cube if it doesn't make sense to you.)
+
+The points <math>1</math> and <math>8</math> are therefore on the same side and all edges parallel must also sum to <math>9</math>.
+
+Now we have <math>4</math> parallel sides <math>1-8, 2-7, 3-6, 4-5</math>.
+Thinking about <math>4</math> endpoints, we realize they need to sum to <math>18</math>.
+It is easy to notice only <math>1-7-6-4</math> and <math>8-2-3-5</math> would work.
+
+So if we fix one direction <math>1-8 (</math>or <math>8-1)</math> all other <math>3</math> parallel sides must lay in one particular direction. <math>(1-8,7-2,6-3,4-5)</math> or <math>(8-1,2-7,3-6,5-4)</math>
+
+Now, the problem is the same as arranging <math>4</math> points in a two-dimensional square, which is <math>\frac{4!}{4}=\boxed{\textbf{(C) }6.}</math> This is because for every single arrangement, there is only one way to finish the cube. - AGDude
+
+== Solution 2 ==
+
+Again, all faces sum to <math>18.</math> If <math>x,y,z</math> are the vertices next to <math>1</math>, then the remaining vertices are <math>17-x-y, 17-y-z, 17-x-z, x+y+z-16.</math> Now it remains to test possibilities. Note that we must have <math>x+y+z>17.</math> Without loss of generality, let <math>x<y<z.</math>
+<cmath>3,7,8\text{: Does not work.}</cmath> 
+<cmath>4,6,8\text{: Works.}</cmath>
+<cmath>4,7,8\text{: Works.}</cmath> 
+<cmath>5,6,7\text{: Does not work.}</cmath>
+<cmath>5,6,8\text{: Does not work.}</cmath>
+<cmath>5,7,8\text{: Does not work.}</cmath>
+<cmath>6,7,8\text{: Works.}</cmath>
+
+Keeping in mind that a) solutions that can be obtained by rotating each other count as one solution and b) a cyclic sequence is always asymmetrical, we can see that there are two solutions (one with <math>[x, y, z]</math> and one with <math>[z, y, x]</math>) for each combination of <math>x</math>, <math>y</math>, and <math>z</math> from above. So, our answer is <math>3\cdot 2=\boxed{\textbf{(C) }6.}</math> - AGDude
+
+== Solution 3 ==
+
+We know the sum of each face is <math>18.</math> If we look at an edge of the cube whose numbers sum to <math>x</math>, it must be possible to achieve the sum <math>18-x</math> in two distinct ways, looking at the two faces which contain the edge. If <math>8</math> and <math>6</math> were on the same edge, it is possible to achieve the desired sum only with the numbers <math>1</math> and <math>3</math> since the values must be distinct. Similarly, if <math>8</math> and <math>7</math> were on the same edge, the only way to get the sum is with <math>1</math> and <math>2</math>. This means that <math>6</math> and <math>7</math> are not on the same edge as <math>8</math>, or in other words they are diagonally across from it on the same face, or on the other end of the cube.
+
+Now we look at three cases, each yielding two solutions which are reflections of each other:
+
+1) <math>6</math> and <math>7</math> are diagonally opposite <math>8</math> on the same face.
+
+2) <math>6</math> is diagonally across the cube from <math>8</math>, while <math>7</math> is diagonally across from <math>8</math> on the same face.
+
+3) <math>7</math> is diagonally across the cube from <math>8</math>, while <math>6</math> is diagonally across from <math>8</math> on the same face.
+
+This means the answer is <math>3\cdot 2=\boxed{\textbf{(C) }6.}</math>
+
+==Solution 4 (Blitz)==
+
+Label the vertices of the cube 1 - 8, with 1, 2, 3, 4 on one face and 5, 6, 7, 8 on the opposite face. There are \( 4^2 \) ways to swap two edges. This gives 16 swapped vertices, now we count invalid applications.
+
+Case 1: 2 Vertices are swapped.
+
+We see that if we swap two vertices, there are some cases where you can form the same two pairs by a rotation. Therefore, we count the ways this can happen. There are only 2 ways, and those are the diagonals, but notice how you can rotate the cube from one diagonal to the other. This cancels out one of the cases, giving us 1 case that is invalid.
+
+Case 2: 3 Vertices are swapped.
+
+We see that for each face, we have 4 cases for each face. Either 1 stays put, 2 stays put, 3 stays put, etc. So there are a total of 8 cases here which are invalid.
+
+Case 3: 4 Vertices are swapped.
+
+It is quite obvious that if you swap all 4 vertices, a simple rotation can just map one figure onto the other. There is then 1 invalid case, which is the only case.
+
+With the 16 possible swaps, we subtract \( 8 + 1 + 1 = 10 \) invalid cases. We are left with \( 16-10=6 \), or <math>\boxed{\textbf{(C) }6.}</math>
+
+~Pinotation
+
+==Video Solution==
+
+https://www.youtube.com/watch?v=enRv3Z4Mv5k
+
+==Video Solution by TheBeautyofMath==
+https://youtu.be/yJFQ2lsh6wg
+
+~IceMatrix
+
+==Video Solution==
+https://www.youtube.com/watch?v=mdA7nt959KE with comprehensive approach
+
+~Mathkidsmax
+
+==See Also==
+
+{{AMC10 box|year=2016|ab=A|num-b=17|num-a=19}}
+{{AMC12 box|year=2016|ab=A|num-b=13|num-a=15}}
+{{MAA Notice}}

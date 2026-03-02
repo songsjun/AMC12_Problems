@@ -1,0 +1,104 @@
+{{duplicate|[[2018 AMC 10A Problems/Problem 24|2018 AMC 10A #24]] and [[2018 AMC 12A Problems/Problem 18|2018 AMC 12A #18]]}}
+
+== Problem ==
+
+Triangle <imath>ABC</imath> with <imath>AB=50</imath> and <imath>AC=10</imath> has area <imath>120</imath>. Let <imath>D</imath> be the midpoint of <imath>\overline{AB}</imath>, and let <imath>E</imath> be the midpoint of <imath>\overline{AC}</imath>. The angle bisector of <imath>\angle BAC</imath> intersects <imath>\overline{DE}</imath> and <imath>\overline{BC}</imath> at <imath>F</imath> and <imath>G</imath>, respectively. What is the area of quadrilateral <imath>FDBG</imath>?
+
+<imath>
+\textbf{(A) }60 \qquad
+\textbf{(B) }65 \qquad
+\textbf{(C) }70 \qquad
+\textbf{(D) }75 \qquad
+\textbf{(E) }80 \qquad
+</imath>
+
+==Diagram==
+[[file:2018_amc_10a_24_accurate_diagram.png]]
+
+== Solution 1 ==
+
+Let <math>BC = a</math>, <math>BG = x</math>, <math>GC = y</math>, and the length of the perpendicular from <math>BC</math> through <math>A</math> be <math>h</math>. By angle bisector theorem, we have that <cmath>\frac{50}{x} = \frac{10}{y},</cmath> where <math>y = -x+a</math>. Therefore substituting we have that <math>BG=\frac{5a}{6}</math>. By similar triangles, we have that <math>DF=\frac{5a}{12}</math>, and the height of this trapezoid is <math>\frac{h}{2}</math>. Then, we have that <math>\frac{ah}{2}=120</math>. We wish to compute <math>\frac{5a}{8}\cdot\frac{h}{2}</math>, and we have that it is <math>\boxed{\textbf{(D) }75}</math> by substituting.
+
+==  Solution 2 ==
+
+For this problem, we have <math>\triangle{ADE}\sim\triangle{ABC}</math> because of SAS and <math>DE = \frac{BC}{2}</math>. Therefore, <math>\bigtriangleup ADE</math> is a quarter of the area of <math>\bigtriangleup ABC</math>, which is <math>30</math>. Subsequently, we can compute the area of quadrilateral <math>BDEC</math> to be <math>120 - 30 = 90</math>. Using the angle bisector theorem in the same fashion as the previous problem, we get that <math>\overline{BG}</math> is <math>5</math> times the length of <math>\overline{GC}</math>. We want the larger piece, as described by the problem. Because the heights are identical, one area is <math>5</math> times the other, and <math>\frac{5}{6} \cdot 90 = \boxed{\textbf{(D) }75}</math>.
+
+== Solution 3 ==
+The ratio of the <math>\overline{BG}</math> to <math>\overline{GC}</math> is <math>5:1</math> by the Angle Bisector Theorem, so area of <math>\bigtriangleup ABG</math> to the area of <math>\bigtriangleup ACG</math> is also <math>5:1</math> (They have the same height). Therefore, the area of <math>\bigtriangleup ABG</math> is <math>\frac{5}{5+1}\times120=100</math>. Since <math>\overline{DE}</math> is the midsegment of <math>\bigtriangleup ABC</math>, so <math>\overline{DF}</math> is the midsegment of <math>\bigtriangleup ABG</math> . Thus, the ratio of the area of <math>\bigtriangleup ADF</math> to the area of <math>\bigtriangleup ABG</math> is <math>1:4</math>, so the area of <math>\bigtriangleup ACG</math> is <math>\frac{1}{4}\times100=25</math>. Therefore, the area of quadrilateral <math>FDBG</math> is <math>[ABG]-[ADF]=100-25=\boxed{\textbf{(D) }75}</math>
+
+==Solution 4 ==
+The area of quadrilateral <math>FDBG</math> is the area of <math>\bigtriangleup ABG</math> minus the area of <math>\bigtriangleup ADF</math>. Notice, <math>\overline{DE} || \overline{BC}</math>, so <math>\bigtriangleup ABG \sim \bigtriangleup ADF</math>, and since <math>\overline{AD}:\overline{AB}=1:2</math>, the area of <math>\bigtriangleup ADF:\bigtriangleup ABG=(1:2)^2=1:4</math>. Given that the area of <math>\bigtriangleup ABC</math> is <math>120</math>, using <math>\frac{bh}{2}</math> on side <math>AB</math> yields <math>\frac{50h}{2}=120\implies h=\frac{240}{50}=\frac{24}{5}</math>. Using the Angle Bisector Theorem, <math>\overline{BG}:\overline{BC}=50:(10+50)=5:6</math>, so the height of <math>\bigtriangleup ABG: \bigtriangleup ACB=5:6</math>. Therefore our answer is <math>\big[ FDBG\big] = \big[ABG\big]-\big[ ADF\big] = \big[ ABG\big]\big(1-\frac{1}{4}\big)=\frac{3}{4}\cdot \frac{bh}{2}=\frac{3}{8}\cdot 50\cdot \frac{5}{6}\cdot \frac{24}{5}=\frac{3}{8}\cdot 200=\boxed{\textbf{(D) }75}</math>
+
+==Solution 5 (Trigonometry) ==
+We try to find the area of quadrilateral <math>FDBG</math> by subtracting the area outside the quadrilateral but inside triangle <math>ABC</math>. Note that the area of <math>\triangle ADE</math> is equal  to <math>\frac{1}{2} \cdot 25 \cdot 5 \cdot \sin{A}</math> and the area of triangle <math>ABC</math> is equal to <math>\frac{1}{2} \cdot 50 \cdot 10 \cdot \sin A</math>. The ratio <math>\frac{[ADE]}{[ABC]}</math> is thus equal to <math>\frac{1}{4}</math> and the area of triangle <math>ADE</math> is <math>\frac{1}{4} \cdot 120 = 30</math>. Let side <math>BC</math> be equal to <math>6x</math>, then <math>BG = 5x, GC = x</math> by the angle bisector theorem. Similarly, we find the area of triangle <math>AGC</math> to be <math>\frac{1}{2} \cdot 10 \cdot x \cdot \sin C</math> and the area of triangle <math>ABC</math> to be <math>\frac{1}{2} \cdot 6x \cdot 10 \cdot \sin C</math>. A ratio between these two triangles yields <math>\frac{[ACG]}{[ABC]} = \frac{x}{6x} = \frac{1}{6}</math>, so <math>[AGC] = 20</math>. Now we just need to find the area of triangle <math>AFE</math> and subtract it from the combined areas of <math>[ADE]</math> and <math>[ACG]</math>, since we count it twice. Note that the angle bisector theorem also applies for <math>\triangle ADE</math> and <math>\frac{AE}{AD} = \frac{1}{5}</math>, so thus <math>\frac{EF}{ED} = \frac{1}{6}</math> and we find <math>[AFE] = \frac{1}{6} \cdot 30 = 5</math>, and the area outside <math>FDBG</math> must be <math> [ADE] + [AGC] - [AFE] = 30 + 20 - 5 = 45</math>, and we finally find  <math>[FDBG] = [ABC] - 45 = 120 -45 = \boxed{\textbf{(D) }75}</math>, and we are done. 
+
+=
+
+==Solution 7 (Barycentrics) ==
+Let our reference triangle be <math>\triangle ABC</math>. Consequently, we have <math>A=(1,0,0)</math>, <math>B=(0,1,0)</math>, <math>C=(0,0,1).</math> Since <math>D</math> is the midpoint of <math>\overline{AB}</math>, we have that <math>D=(1:1:0)</math>. Similarly, we have <math>E=(1:0:1).</math> Hence, the line through <math>D</math> and <math>E</math> is given by the equation 
+
+<cmath>
+0 = 
+\begin{vmatrix}
+x & y & z\\
+1 & 1 & 0\\
+1 & 0 & 1
+\end{vmatrix}
+</cmath>
+
+Additionally, since all points on <math>\overline{AG}</math> are characterized by <math>(t:1:5)</math>, we may plug in for <math>x,y,z</math> to get <math>t=6</math>. Thus, we have <math>F=(6:1:5).</math> Now, we homogenize the coordinates for <math>F D, B, G</math> to get <math>F=(\frac{1}{2}, \frac{5}{12}, \frac{1}{12})</math>, <math>D=(\frac{1}{2}, \frac{1}{2}, 0)</math>, <math>B=(0,1,0)</math>, <math>G=(0, \frac{1}{6}, \frac{5}{6})</math>
+
+Splitting <math>[FBGD]</math> into <math>[ DBG ] + [ FDG],</math> we may now evaluate the two determinants:
+
+<cmath>
+\begin{vmatrix}
+\frac{1}{2} & \frac{1}{2} & 0\\
+0 & 1 & 0\\
+0 & \frac{1}{6} & \frac{5}{6}
+\end{vmatrix}
+</cmath>
+<cmath>
+\begin{vmatrix}
+\frac{1}{2} & \frac{1}{12} & \frac{5}{12}\\
+\frac{1}{2} & \frac{1}{2} & 0\\
+0 & \frac{5}{6} & \frac{1}{6}
+\end{vmatrix}.
+</cmath>
+
+After simplification, we get <math>\frac{5}{12}</math> and <math>\frac{5}{24}</math>, respectively. Summing, we get <math>\frac{15}{24}.</math> Hence, <math>[FBGD]=\frac{15}{24} \cdot 120 = \fbox{\textbf{(D) }75}.</math>
+<math>\sim</math>Math0323
+
+==Solution 8==
+[[File:201810A_24.png]]
+
+We want to find ratios. Start off letting [AEF]=1. Then we know [AEF]=[CEF]=1 since AE=CE and they share the same height. Then, also because AE is half of AC, we see that [AEF]=1/4 [ACG] so [ACG]=4. 
+
+But we also know [EFGC]=3/4 [ACG], so [EFGC]=3 and then [CFG]=2. If [CFG]=2, then note that [FGB] must be 2*5=10.
+
+Now, we see that [AFD]=5[AED] because EF=1/5 FD (from angle bisector theorem) and they share the same height. Then, because AD=DB, we have [FDB]=[FAD]=5. 
+
+Adding these up, we see that the ratio of [BGFD] to [ABC] is 15/24=5/8. 5/8*120 yields our answer of 75. ~mathboy282
+
+==Solution 9==
+
+Draw a nice diagram. Lets find some some areas. We will start by finding <math>[AED]</math>. The side length ratio of <math>\triangle{AED}</math> to <math>\triangle{ACB}</math> is <math>\dfrac{1}{2}</math>, so the area ratio is <math>\dfrac{1}{4}</math>, so <math>[AED] = \dfrac{1}{4} \cdot 120 = 30</math>. Lets look for information we have used yet. We still havent used the fact that <math>AG</math> is an angle bisector. This hints at us using the angle bisector theorem. Letting <math>EF = y</math>, we have <math>FD = 5y</math>, and letting <math>CG = x</math>, <math>GB = 5x</math>. Now, we have<cmath>\dfrac{[AEF]}{[AED]} = \dfrac{1}{6} \Longrightarrow [AEF] = \dfrac{1}{6} \cdot 30 = 5, [AFD] = \dfrac{5}{6} \cdot 30 = 25</cmath>. Doing the same thing with triangles <math>ACG</math> and <math>AGB</math>, we find that <math>[AGB] = 100</math>, and so <math>[FDGB] = 100-25 = \boxed{75}</math>
+
+-jb2015007
+
+== Video Solution by Richard Rusczyk ==
+
+https://artofproblemsolving.com/videos/amc/2018amc10a/469
+
+~ dolphin7
+
+== Video Solution by OmegaLearn ==
+https://youtu.be/4_x1sgcQCp4?t=4898
+
+~ pi_is_3.14
+
+==See Also==
+{{AMC10 box|year=2018|ab=A|num-b=23|num-a=25}}
+{{AMC12 box|year=2018|ab=A|num-b=17|num-a=19}}
+{{MAA Notice}}
+
+[[Category:Intermediate Geometry Problems]]

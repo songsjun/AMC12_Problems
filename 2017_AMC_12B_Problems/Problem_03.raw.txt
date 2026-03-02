@@ -1,0 +1,54 @@
+==Problem==
+Supposed that <math>x</math> and <math>y</math> are nonzero real numbers such that <math>\frac{3x+y}{x-3y}=-2</math>. What is the value of <math>\frac{x+3y}{3x-y}</math>?
+
+<math>\textbf{(A)}\ -3\qquad\textbf{(B)}\ -1\qquad\textbf{(C)}\ 1\qquad\textbf{(D)}\ 2\qquad\textbf{(E)}\ 3</math>
+
+==Solution 1==
+Rearranging, we find <math>3x+y=-2x+6y</math>, or <math>5x=5y\implies x=y</math>.
+Substituting, we can convert the second equation into <math>\frac{x+3x}{3x-x}=\frac{4x}{2x}=\boxed{\textbf{(D)}\ 2}</math>.
+
+
+
+More step-by-step explanation:
+
+<math>\frac{3x+y}{x-3y}=-2</math>
+
+<math>3x+y=-2\left(x-3y\right)</math>
+
+<math>3x+y=-2x+6y</math>
+
+<math>5x=5y</math>
+
+<math>x=y</math>
+
+<math>\frac{x+3y}{3x-y}=\frac{1+3\left(1\right)}{3\left(1\right)-1}=\frac{4}{2}=2</math>.
+
+We choose <math>\boxed{\textbf{(D)}\ 2}</math>.
+
+==Solution 2==
+Substituting each <math>x</math> and <math>y</math> with <math>1</math>, we see that the given equation holds true, as <math>\frac{3(1)+1}{1-3(1)} = -2</math>. Thus, <math>\frac{x+3y}{3x-y}=\boxed{\textbf{(D)}\ 2}</math>
+
+==Solution 3==
+Let <math>y=ax</math>. The first equation converts into <math>\frac{(3+a)x}{(1-3a)x}=-2</math>, which simplifies to <math>3+a=-2(1-3a)</math>. After a bit of algebra we found out <math>a=1</math>, which means that <math>x=y</math>. Substituting <math>y=x</math> into the second equation it becomes <math>\frac{4x}{2x}=\boxed{\textbf{(D)}\ 2}</math> - mathleticguyyy
+
+== Video Solution ==
+https://youtu.be/ba6w1OhXqOQ?t=1059
+
+~ pi_is_3.14
+
+==Video Solution==
+https://youtu.be/B0NUA9011OQ
+
+~savannahsolver
+
+==Video Solution by TheBeautyofMath==
+https://youtu.be/zTGuz6EoBWY?t=668
+
+~IceMatrix
+
+==See Also==
+{{AMC10 box|year=2017|ab=B|num-b=3|num-a=5}}
+{{AMC12 box|year=2017|ab=B|num-b=2|num-a=4}}
+{{MAA Notice}}
+
+[[Category:Introductory Algebra Problems]]

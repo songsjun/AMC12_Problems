@@ -1,0 +1,29 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2011_AMC_12B_Problems/Problem_12&action=raw
+
+Published Time: Sun, 01 Sep 2024 01:11:45 GMT
+
+Markdown Content:
+==Problem==
+A dart board is a regular octagon divided into regions as shown below. Suppose that a dart thrown at the board is equally likely to land anywhere on the board. What is the probability that the dart lands within the center square?
+
+ unitsize(10mm); defaultpen(linewidth(.8pt)+fontsize(10pt)); dotfactor=4; pair A=(0,1), B=(1,0), C=(1+sqrt(2),0), D=(2+sqrt(2),1), E=(2+sqrt(2),1+sqrt(2)), F=(1+sqrt(2),2+sqrt(2)), G=(1,2+sqrt(2)), H=(0,1+sqrt(2)); draw(A--B--C--D--E--F--G--H--cycle); draw(A--D); draw(B--G); draw(C--F); draw(E--H);
+
+\textbf{(A)}\ \frac{\sqrt{2} - 1}{2} \qquad \textbf{(B)}\ \frac{1}{4} \qquad \textbf{(C)}\ \frac{2 - \sqrt{2}}{2} \qquad \textbf{(D)}\ \frac{\sqrt{2}}{4} \qquad \textbf{(E)}\ 2 - \sqrt{2}
+
+== Solution ==
+Let's assume that the side length of the octagon is x. The area of the center square is just x^2. The triangles are all 45-45-90 triangles, with a side length ratio of 1:1:\sqrt{2}. The area of each of the 4 identical triangles is \left(\dfrac{x}{\sqrt{2}}\right)^2\times\dfrac{1}{2}=\dfrac{x^2}{4}, so the total area of all of the triangles is also x^2. Now, we must find the area of all of the 4 identical rectangles. One of the side lengths is x and the other side length is \dfrac{x}{\sqrt{2}}=\dfrac{x\sqrt{2}}{2}, so the area of all of the rectangles is 2x^2\sqrt{2}. The ratio of the area of the square to the area of the octagon is \dfrac{x^2}{2x^2+2x^2\sqrt{2}}. Cancelling x^2 from the fraction, the ratio becomes \dfrac{1}{2\sqrt2+2}. Multiplying the numerator and the denominator each by 2\sqrt{2}-2 will cancel out the radical, so the fraction is now \dfrac{1}{2\sqrt2+2}\times\dfrac{2\sqrt{2}-2}{2\sqrt{2}-2}=\dfrac{2\sqrt{2}-2}{4}=\boxed{\mathrm{(A)}\ \dfrac{\sqrt{2}-1}{2}}
+
+== Solution ==
+Instead of doing mindless algebra, let's set the side lengths of the square to 1.
+
+After careful inspection of the regular octagon, we find that all of the sides of the regular octagon must be 1.
+
+This gives the total area to be 4 \cdot \text{triangle area} + 4 \cdot \text{rectangle area} + \text{square area} = 4(\dfrac{1}{4}) + 4(\sqrt{\dfrac{1}{2}}) + 1, which simplifies to 2(1+\sqrt{2}).
+
+The percent area of the center square is the area of the square divided by the total area of the regular octagon. This gives \dfrac{1}{2(1+\sqrt{2})}. Multiplying by the conjugate gives answer choice \boxed{(A).}
+
+== See also ==
+{{AMC12 box|year=2011|ab=B|num-b=11|num-a=13}}
+{{MAA Notice}}

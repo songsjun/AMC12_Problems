@@ -1,0 +1,85 @@
+# 2024 AMC 12B Problem 11
+
+## Problem
+Let $x_n=\sin^2(n^{\circ}).$ What is the mean of $x_1,x_2,x_3,\dots,x_{90}$?
+
+$\textbf{(A) } \frac{11}{45} \qquad\textbf{(B) } \frac{22}{45} \qquad\textbf{(C) } \frac{89}{180} \qquad\textbf{(D) } \frac{1}{2} \qquad\textbf{(E) } \frac{91}{180}$
+## Solution 1
+Add up $x_1$ with $x_{89}$, $x_2$ with $x_{88}$, and $x_i$ with $x_{90-i}$. Notice
+
+$$x_i+x_{90-i}=\sin^2(i^{\circ})+\sin^2((90-i)^{\circ})=\sin^2(i^{\circ})+\cos^2(i^{\circ})=1$$
+
+by the Pythagorean identity. Since we can pair up 1 with 89 and keep going until 44 with 46, we get
+
+$$x_1+x_2+\dots+x_{90}=44+x_{45}+x_{90}=44+\left(\frac{\sqrt{2}}{2}\right)^2+1^2=\frac{91}{2}$$
+
+Hence the mean is $\boxed{\textbf{(E) }\frac{91}{180}}$
+
+*~kafuu_chino*
+## Solution 2
+We can add a term $x_0$ into the list, and the total sum of the terms won't be affected since $x_0=0$. Once $x_0$ is added into the list, the average of the 91 terms is clearly $\frac{1}{2}.$ Hence the total sum of the terms is $\frac{91}{2}.$ To get the average of the original 90, we merely divide by 90 to get $\frac{91}{180}.$ Hence the mean is $\boxed{\textbf{(E) }\frac{91}{180}}$
+
+This method is called constructing a variable (although most of you already know).
+
+*~tsun26, ShortPeopleFartalot*
+## Solution 3 (Inductive Reasoning)
+If we use radians to rewrite the question, we have: $x_n=\sin^2\left(\frac{n\pi}{2\times90}\right).$ Notice that 90 have no specialty beyond any other integers, so we can use some inductive processes.
+
+If we change 90 to 2: $\frac{\sin^2\left(\frac{\pi}{4}\right)+\sin^2\left(\frac{2\pi}{4}\right)}{2}=\frac{\left(\frac{1}{\sqrt{2}}\right)^2+\left(1\right)^2}{2}=\frac{\frac{1}{2}+1}{2}=\frac{3}{4}$\,.
+
+If we change 90 to 3: $\frac{\sin^2\left(\frac{\pi}{6}\right)+\sin^2\left(\frac{2\pi}{6}\right)+\sin^2\left(\frac{3\pi}{6}\right)}{3}=\frac{\left(\frac{1}{2}\right)^2+\left(\frac{\sqrt{3}}{2}\right)^2+\left(1\right)^2}{3}=\frac{\frac{1}{4}+\frac{3}{4}+1}{3}=\frac{2}{3}=\frac{4}{6}$\,.
+
+By intuition, although not rigorous at all, we can guess out the solution if we change 90 into k, we get $\frac{k+1}{2k}.$ Thus, if we plug in $k=90$, we get $\frac{90+1}{2\times90}=\boxed{\mathbf{(E)}\,\frac{91}{180}}$
+
+*~Prof. Joker*
+## Solution 4
+[thumb|center|600px|](https://artofproblemsolving.com/wiki/index.php/Image:_2024_AMC_12B_P11.jpeg)
+*~Kathan*
+## Solution 4
+Note that $\sin^2(x) = \frac{1 - \cos(2x)}{2}.$ We want to determine $\frac{1}{90}\sum_{n = 1}^{90} \sin^2(n^{\circ}).$
+
+
+$$
+\begin{align*} &= \frac{1}{90} \sum_{n = 1}^{90} \frac{1 - \cos(2n)}{2} \\ &= \frac{1}{2} -\frac{1}{180}\sum_{n = 1}^{90} \cos(2n) \\ \end{align*}
+$$
+
+
+Graphing $\cos(x),$ we can pair $\cos(2^{\circ}) + \cos(178^{\circ}) = 0$ and so on. We are left with $\cos(90^{\circ}) + \cos(180^{\circ}) = -1.$
+
+Our answer is $\frac{1}{2} + \frac{1}{180} = \boxed{\textbf{(E) }\frac{91}{180}}$
+
+*~vinyx*
+## Solution 5 (Integral Approximation)
+Let $f(n) = \sin^2(n^\circ)$
+
+The function $f(n) = \sin^2(n)$ is continuous for all real values of $n$. We want to find the average value of $f(n)$ over the interval: $\left$[$\frac{\pi}{180}, \frac{\pi}{2}\right$]
+
+While there are 90 discrete terms meaning $f(n)$ isn't actually continuous, the interval is very small compared to 90, so calculating the average over EVERY term in the interval will be very close to calculating the average over 90 terms, so we can instead calculate the average value from $\frac{\pi}{180}$ to $\frac{\pi}{2}$
+
+The average value of $f(n)$ is $\frac{1}{\frac{\pi}{2} - \frac{\pi}{180}} \int_{1\cdot\frac{\pi}{180}}^{90\cdot\frac{\pi}{180}} \sin^{2}(x)$ \, $dx =\frac{180}{89\pi} \int_{\pi/180}^{\pi/2} \sin^2(x)$ \, dx
+
+We can solve this integral using the power-reduction identity: $\sin^2(x) = \frac{1 - \cos(2x)}{2}$
+
+
+$$
+\frac{180}{89\pi} \int_{\pi/180}^{\pi/2} \frac{1 - \cos(2x)}{2} \, dx
+= \frac{180}{89\pi} \left.\left(\frac{x}{2} - \frac{\sin(2x)}{4}\right)\right|_{\pi/180}^{\pi/2}
+= \frac{180}{89\pi} \left[ \left(\frac{\pi}{4} - 0\right) - \left(\frac{\pi}{360} - \frac{\sin\left(\frac{\pi}{90}\right)}{4}\right) \right]
+= \frac{180}{89\pi} \left( \frac{89\pi}{360} + \frac{\sin\left(\frac{\pi}{90}\right)}{4} \right)
+$$
+
+
+The taylor series of $\sin(\theta) = \theta - \frac{\theta^3}{6} + \frac{\theta^5}{120} - \cdots$
+
+Because $\sin\left(\frac{\pi}{90}\right)$ is a small angle, we can use a first-order taylor approximation and approximate $\sin\left(\frac{\pi}{90}\right) \approx \frac{\pi}{90}$
+
+Hence, our result is $\frac{180}{89\pi}\left(\frac{89\pi}{360} + \frac{\pi}{360}\right) = \frac{180}{89\pi}\cdot\frac{90\pi}{360} = \frac{180}{89\pi}\cdot\frac{\pi}{4} = \frac{45}{89}$
+
+While $\frac{45}{89}$ isn't an option, it is greater than $\frac{1}{2},$ and out of the given options, only $\frac{91}{180}$ is greater than $\frac{1}{2} ($We approximated $\sin\left(\frac{\pi}{90}\right)$ with a first-order taylor approximation and calculated the average value over the interval instead of over 90 discrete values, but it's close enough to $\frac{91}{180}).$
+
+So the answer is $\boxed{\textbf{(E) }\frac{91}{180}}$
+
+*~sourodeepdeb*
+## Video Solution 1 by SpreadTheMathLove
+https://www.youtube.com/watch?v=gJq7DhLNnZ4&t=0s
+## See also

@@ -1,0 +1,54 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2009_AMC_12A_Problems/Problem_14&action=raw
+
+Published Time: Fri, 31 Jan 2025 03:41:23 GMT
+
+Markdown Content:
+== Problem ==
+
+A triangle has vertices (0,0), (1,1), and (6m,0), and the line y = mx divides the triangle into two triangles of equal area. What is the sum of all possible values of m?
+
+\textbf{A} - \!\frac {1}{3} \qquad \textbf{(B)} - \!\frac {1}{6} \qquad \textbf{(C)}\ \frac {1}{6} \qquad \textbf{(D)}\ \frac {1}{3} \qquad \textbf{(E)}\ \frac {1}{2}
+
+== Solution ==
+
+Let's label the three points as A=(0,0), B=(1,1), and C=(6m,0).
+
+Clearly, whenever the line y=mx intersects the inside of the triangle, it will intersect the side BC. Let D be the point of intersection. 
+
+The triangles ABD and ACD have the same height, which is the distance between the point A and the line BC.
+Hence they have equal areas if and only if D is the midpoint of BC.
+
+The midpoint of the segment BC has coordinates \left( \frac{6m+1}2, \frac 12 \right). This point lies on the line y=mx if and only if \frac 12 = m \cdot \frac{6m+1}2. This simplifies to 6m^2 + m - 1 = 0. Using Vieta's formulas, we find that the sum of the roots is \boxed{\textbf{(B)} - \!\frac {1}{6}}.
+
+For illustration, below are pictures of the situation for m=1.5, m=0.5, m=1/3, and m=-1/2.
+
+ unitsize(1cm); defaultpen(0.8); real m=1.5; draw( (0,0)--(1,1)--(6*m,0)--cycle ); draw( ((-0.5)*(1,m)) -- ((1.5)*(1,m)), dashed ); label("$A$",(0,0),NW); label("$B$",(1,1),NE); label("$C$",(6*m,0),E); 
+
+ unitsize(2cm); defaultpen(0.8); real m=0.5; draw( (0,0)--(1,1)--(6*m,0)--cycle ); draw( ((-1)*(1,m)) -- (3*(1,m)), dashed ); label("$A$",(0,0),NW); label("$B$",(1,1),N); label("$C$",(6*m,0),E); pair D = intersectionpoint( (1,1)--(6*m,0), ((-1)*(1,m)) -- (3*(1,m)) ); dot(D); label("$D$",D,S); 
+
+ unitsize(2cm); defaultpen(0.8); real m=1/3; draw( (0,0)--(1,1)--(6*m,0)--cycle ); draw( ((-1)*(1,m)) -- (3*(1,m)), dashed ); label("$A$",(0,0),NW); label("$B$",(1,1),N); label("$C$",(6*m,0),E); pair D = intersectionpoint( (1,1)--(6*m,0), ((-1)*(1,m)) -- (3*(1,m)) ); dot(D); label("$D$",D,S); 
+
+ unitsize(2cm); defaultpen(0.8); real m=-1/2; draw( (0,0)--(1,1)--(6*m,0)--cycle ); draw( ((-2)*(1,m)) -- (1*(1,m)), dashed ); label("$A$",(0,0),S); label("$B$",(1,1),NE); label("$C$",(6*m,0),W); pair D = intersectionpoint( (1,1)--(6*m,0), ((-1)*(1,m)) -- (3*(1,m)) ); dot(D); label("$D$",D,S); 
+
+Note : In contests when you get problems like these, your AOPS knowledge will not be enough. AOPs books are just the basic, always prep for more.
+
+==Solution 2==
+
+The line must pass through the triangle's centroid, since the line divides the triangle in half. The coordinates of the centroid are found by averaging those of the vertices. The slope of the line from the origin through the centroid is thus \frac{\frac{1}{3}}{\frac{1+6m}{3}}, which is equal to m.
+
+\frac{\frac{1}{3}}{\frac{1+6m}{3}}=m
+
+\frac{1}{3}=m\left(\frac{1+6m}{3}\right)
+
+1=m(1+6m)
+
+6m^2+m-1=0
+
+Using Vieta's Formulas, the sum of the possible values of m is \boxed{\textbf{(B)}\; -\frac{1}{6}}
+
+== See Also ==
+
+{{AMC12 box|year=2009|ab=A|num-b=13|num-a=15}}
+{{MAA Notice}}

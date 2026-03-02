@@ -1,0 +1,163 @@
+{{duplicate|[[2020 AMC 12A Problems|2020 AMC 12A #23]] and [[2020 AMC 10A Problems|2020 AMC 10A #25]]}}
+
+==Problem==
+Jason rolls three fair standard six-sided dice. Then he looks at the rolls and chooses a subset of the dice (possibly empty, possibly all three dice) to reroll. After rerolling, he wins if and only if the sum of the numbers face up on the three dice is exactly <math>7.</math> Jason always plays to optimize his chances of winning. What is the probability that he chooses to reroll exactly two of the dice?
+
+<math>\textbf{(A) } \frac{7}{36} \qquad\textbf{(B) } \frac{5}{24} \qquad\textbf{(C) } \frac{2}{9} \qquad\textbf{(D) } \frac{17}{72} \qquad\textbf{(E) } \frac{1}{4}</math>
+
+==Solution 1==
+Consider the probability that rolling two dice gives a sum of <math>s</math>, where <math>s \leq 7</math>. There are <math>s - 1</math> pairs that satisfy this, namely <math>(1, s - 1), (2, s - 2), \ldots, (s - 1, 1)</math>, out of <math>6^2 = 36</math> possible pairs. The probability is <math>\frac{s - 1}{36}</math>.
+
+Therefore, if one die has a value of <math>a</math> and Jason rerolls the other two dice, then the probability of winning is <math>\frac{7 - a - 1}{36} = \frac{6 - a}{36}</math>.
+
+In order to maximize the probability of winning, <math>a</math> must be minimized. This means that if Jason rerolls two dice, he must choose the two dice with the maximum values.
+
+Thus, we can let <math>a \leq b \leq c</math> be the values of the three dice. Consider the case when <math>a + b < 7</math>. If <math>a + b + c = 7</math>, then we do not need to reroll any dice. Otherwise,
+if we reroll one die, we can reroll any one dice in the hope that we get the value that makes the sum of the three dice <math>7</math>. This happens with probability <math>\frac16</math>. If we reroll two dice, we will roll the two maximum dice, and the probability of winning is <math>\frac{6 - a}{36}</math>, as stated above. However, <math>\frac16 > \frac{6 - a}{36}</math>, so rolling one die is always better than rolling two dice if <math>a + b < 7</math>.
+
+Now consider the case where <math>a + b \geq 7</math>. Rerolling one die will not help us win since the sum of the three dice will always be greater than <math>7</math>. If we reroll two dice, the probability of winning is, once again, <math>\frac{6 - a}{36}</math>. To find the probability of winning if we reroll all three dice, we can let each dice have <math>1</math> dot and find the number of ways to distribute the remaining <math>4</math> dots. By stars and bars, there are <math>{6\choose2} = 15</math> ways to do this, making the probability of winning <math>\frac{15}{6^3} = \frac5{72}</math>.
+
+In order for rolling two dice to be more favorable than rolling three dice, <math>\frac{6 - a}{36} > \frac5{72} \rightarrow a \leq 3</math>.
+
+Thus, rerolling two dice is optimal if and only if <math>a \leq 3</math> and <math>a + b \geq 7</math>. The possible triplets <math>(a, b, c)</math> that satisfy these conditions, and the number of ways they can be permuted, are
+
+<math>(3, 4, 4) \rightarrow 3</math> ways.
+
+<math>(3, 4, 5) \rightarrow 6</math> ways.
+
+<math>(3, 4, 6) \rightarrow 6</math> ways.
+
+<math>(3, 5, 5) \rightarrow 3</math> ways.
+
+<math>(3, 5, 6) \rightarrow 6</math> ways.
+
+<math>(3, 6, 6) \rightarrow 3</math> ways.
+
+<math>(2, 5, 5) \rightarrow 3</math> ways.
+
+<math>(2, 5, 6) \rightarrow 6</math> ways.
+
+<math>(2, 6, 6) \rightarrow 3</math> ways.
+
+<math>(1, 6, 6) \rightarrow 3</math> ways.
+
+There are <math>3 + 6 + 6 + 3 + 6 + 3 + 3 + 6 + 3 + 3 = 42</math> ways in which rerolling two dice is optimal, out of <math>6^3 = 216</math> possibilities, Therefore, the probability that Jason will reroll two dice is <math>\frac{42}{216} = \boxed{\textbf{(A) } \frac{7}{36}}</math>.
+
+==Solution 2 (Illustration)==
+We conclude all of the following after the initial roll:
+<ol style="margin-left: 1.5em;">
+  <li>Jason rerolls exactly zero dice if and only if the sum of the three dice is <math>7,</math> in which the probability of winning is always <math>1.</math></li><p>
+  <li>If Jason rerolls exactly one die, then the sum of the two other dice must be <math>2,3,4,5,</math> or <math>6.</math> The probability of winning is always <math>\frac16,</math> as exactly <math>1</math> of the <math>6</math> possible outcomes of the die rerolled results in a win. </li><p>
+  <li>If Jason rerolls exactly two dice, then the outcome of the remaining die must be <math>1,2,3,4,</math> or <math>5.</math> Applying casework to the remaining die produces the following table:
+<cmath>\begin{array}{c||c|c}
+& & \\ [-2.5ex]
+\textbf{Remaining Die} & \textbf{Sum Needed for the Two Dice Rerolled} & \textbf{Probability of Winning} \\ [0.5ex]
+\hline
+& & \\ [-2ex]
+1 & 6 & 5/36 \\
+2 & 5 & 4/36 \\
+3 & 4 & 3/36 \\
+4 & 3 & 2/36 \\
+5 & 2 & 1/36
+\end{array}</cmath>
+The probability of winning is at most <math>\frac{5}{36}.</math></li><p>
+  <li>If Jason (re)rolls all three dice, then the probability of winning is always <math>\frac{\binom62}{6^3}=\frac{15}{216}=\frac{5}{72}.</math></li><p>
+For the denominator, rolling three dice gives a total of <math>6^3=216</math> possible outcomes. <p>
+For the numerator, this is the same as counting the ordered triples of positive integers <math>(a,b,c)</math> for which <math>a+b+c=7.</math> Suppose that <math>7</math> balls are lined up in a row. There are <math>6</math> gaps between the balls, and placing dividers in <math>2</math> of the gaps separates the balls into <math>3</math> piles. From left to right, the numbers of balls in the piles correspond to <math>a,b,</math> and <math>c,</math> respectively. There are <math>\binom62=15</math> ways to place the dividers. Note that the dividers' positions and the ordered triples have one-to-one correspondence, and <math>1\leq a,b,c\leq6</math> holds for all such ordered triples. </li><p>
+</ol>
+The optimal strategy is that:
+<ul style="list-style-type:square;">
+  <li>If Jason needs to reroll at least zero dice to win, then he rerolls exactly zero dice.</li><p>
+  <li>If Jason needs to reroll at least one die to win, then he rerolls exactly one die.</li><p>
+  <li>If Jason needs to reroll at least two dice to win, then he rerolls exactly two dice if and only if the probability of winning is greater than <math>\frac{5}{72},</math> the probability of winning for rerolling all three dice. <p> The first three cases in the table above satisfy this requirement. We will analyze these cases by considering the initial outcomes of the two dice rerolled. Note that any of the three dice can be the remaining die, so we need a factor of <math>3</math> for all counts in the third column:
+<cmath>\begin{array}{c||c|c} 
+& & \\ [-2.5ex] 
+\textbf{Remaining Die} & \textbf{Initial Outcomes of the Two Dice Rerolled} & \textbf{\# of Ways} \\ [0.5ex] 
+\hline 
+& & \\ [-2ex] 
+1 & \text{Both are in }\{6\}\text{, not necessarily distinct.} & 3\cdot1^2=3 \\ 
+2 & \text{Both are in }\{5,6\}\text{, not necessarily distinct.} & \hspace{2mm}3\cdot2^2=12 \\ 
+3 & \text{Both are in }\{4,5,6\}\text{, not necessarily distinct.} & \hspace{2mm}3\cdot3^2=27
+\end{array}</cmath>
+</li>
+</ul>
+Finally, the requested probability is <cmath>\frac{3+12+27}{6^3}=\frac{42}{216}=\boxed{\textbf{(A) } \frac{7}{36}}.</cmath>
+
+~MRENTHUSIASM
+
+==Solution 3 (Similar to Solution 2)==
+We count the numerator.
+Jason will pick up no dice if he already has a <math>7</math> as a sum. We need to assume he does not have a <math>7</math> to begin with.
+If Jason decides to pick up all the dice to re-roll, by the stars and bars rule ways to distribute, <math>{n+k-1 \choose k-1}</math>, there will be <math>2</math> bars and <math>4</math> stars (<math>3</math> of them need to be guaranteed because a roll is at least <math>1</math>) for a probability of <math>\frac{15}{216}=\frac{2.5}{36}</math>.
+If Jason picks up <math>2</math> dice and leaves a die showing <math>k</math>, he will need the other two to sum to <math>7-k</math>. This happens with probability <cmath>\frac{6-k}{36}</cmath> for integers <math>1 \leq k \leq 6</math>.
+If the roll is not <math>7</math>, Jason will pick up exactly one die to re-roll if there can remain two other dice with sum less than <math>7</math>, since this will give him a <math>\frac{1}{6}</math> chance which is a larger probability than all the cases unless he has a <math>7</math> to begin with.
+We have <cmath>\frac{1}{6} > \underline{\frac{5,4,3}{36}} > \frac{2.5}{36} > \frac{2,1,0}{36}.</cmath>
+We count the underlined part's frequency for the numerator without upsetting the probability greater than it.
+Let <math>a</math> be the roll we keep. We know <math>a\leq3</math> since <math>a=4</math> would cause Jason to pick up all the dice.
+When <math>a=1</math>, there are <math>3</math> choices for whether it is rolled <math>1</math>st, <math>2</math>nd, or <math>3</math>rd, and in this case the other two rolls have to be at least <math>6</math> (or he would have only picked up <math>1</math>). This give <math>3 \cdot 1^{2} =3</math> ways.
+Similarly, <math>a=2</math> gives <math>3 \cdot 2^{2} =12</math> because the <math>2</math> can be rolled in <math>3</math> places and the other two rolls are at least <math>5</math>.
+<math>a=3</math> gives <math>3 \cdot 3^{2} =27</math>. 
+Summing together gives the numerator of <math>42</math>.
+The denominator is <math>6^3=216</math>, so we have <math>\frac{42}{216}=\boxed{\textbf{(A) } \frac{7}{36}}</math>.
+
+==Solution 4==
+We can quickly write out all possible rolls that result in a total of <math>7</math>, to get that there is a <math>\frac{5}{72}</math> chance that rolling three dice will result in a total of <math>7</math>.
+
+<b>Claim 1</b>: If all of Jason's initial outcomes are <math>4</math>, <math>5</math> or <math>6</math>, Jason is best off rerolling everything.
+
+<b>Proof of if part</b>: If Jason rerolls two dice, he would like for the sum of the two outcomes to be <math>7-\text{(The initial outcome of the untouched dice)}</math>. Since in this case, every dice's initial outcome is <math>4</math>, <math>5</math> or <math>6</math>, this value is <math>1</math>, <math>2</math> or <math>3</math>. By basic dice probability, the probability that they add to one is <math>0</math>; the probability that they add to two is <math>\frac{1}{36}</math>; the probability that they add to three is <math>\frac{1}{18}</math>. Each of these probabilities is less than <math>\frac{5}{72}</math>, (the probability of winning by rerolling everything) so Jason should not reroll one dice in this scenario. Rolling one die is also nonsense in this situation, since the other two dice will already add up to something greater than <math>7</math>.
+
+<b>Proof of only-if part</b>: If Jason rolls a <math>1</math>, <math>2</math> or <math>3</math>, even just once, then, the probability that rerolling the other two dice will result in win is <math>\frac{5}{36}</math>, <math>\frac{1}{9}</math> and <math>\frac{1}{12}</math>, by basic die probability. Each of these is greater than <math>\frac{5}{72}</math>, so if Jason rolls a <math>1</math>, <math>2</math> or <math>3</math>, he should not reroll everything.
+
+<b>Claim 2</b>: If the sum of any two of the initial dice is less than <math>7</math>, Jason is best off rerolling one or zero die.
+
+<b>Proof of if part</b>: If the sum of any two of the initial dice is less than <math>7</math>, when the other die is rolled, there is always a fixed <math>\frac{1}{6}</math> chance that this results in a win for Jason (or, he his initial roll already won, so he doesn't have to roll anything). Rerolling that one die is better than rerolling all three dice, since, as we have seen there is a <math>\frac{5}{72}</math> chance that Jason wins from that. Rerolling that one die is also better than rerolling two dice: by basic die probability, if Jason wishes for the sum of two rerolled dice to equal one value, the maximum probability this happens is <math>\frac{1}{6}</math>, and this is when he wishes for the sum to be <math>7</math>; however, since he wishes for the sum of all three dice to be <math>7</math>, this will never happen, so the probability that rerolling two dice results in a win is always less than <math>\frac{1}{6}</math>.
+
+<b>Proof of only-if part</b>: If the sum of each pair of the three dice is at least <math>7</math>, it would make no sense to reroll one die, since the final sum of all three dice will always be greater than <math>7</math>. Also, if the sum of each pair of the three dice is at least <math>7</math>, the total initial sum must also be greater than <math>7</math>, so Jason should not reroll zero dice.
+
+From having shown these two claims, we know that Jason should reroll two dice if at least one of them is a <math>1</math>, <math>2</math> or <math>3</math>, and if the sum of any two of the initial dice is at least <math>7</math>. We can write out all the possibilities of initial rolls, account for their permutations, and add everything together to see that there are <math>42</math> total outcomes, where Jason should reroll two dice. Therefore, our final answer is <math>\frac{42}{216} = \boxed{\textbf{(A) } \frac{7}{36}}</math>.
+
+~ ihatemath123
+
+==Solution 5==
+If the sum of the dice is <imath>7</imath>, we reroll no dice.
+If the sum of any two dice is <imath>\leq 6</imath>, we reroll <imath>1</imath> die because rolling <imath>1</imath> die will give Jason a <imath>\frac{1}{6}</imath> chance of winning. 
+Thus, we consider the scenario where the sum of any two dice is <imath>7</imath> or greater. 
+
+
+If the smallest die is <imath>1</imath>, the other two dice must be <imath>6</imath>, which has <imath>3</imath> possible permutations.
+
+If the smallest die is 2, the other two dice can be 5 or 6. There are 3 ways to choose the position of the smallest die, 2 ways each to choose the value of the other dice, so there are <imath>2 \cdot 2 \cdot 3 = 12</imath> possible permutations.
+
+If the smallest die is 3, the other two dice can be 4, 5, or 6. Similarly, there are 3 ways to choose the position of the smallest die, and 3 ways each to choose the value of the other dice, so there are <imath>3 \cdot 3 \cdot 3 = 27</imath> possible permutations.
+
+If all die are 4 or above, then we reroll 3 dice. When we reroll all 3 dice, the winning rolls are 1,1,5; 1,2,4; 1,3,3; 2,2,3 in some arrangement, for a total of 15 permutations. Thus, the probability of winning after rerolling 3 dice is <imath>\frac{15}{6^3} = \frac{5}{72}</imath>. If we reroll only 2 dice with the smallest die being <imath>4</imath>, we would need to roll 1,2 or 2,1 to win, which gives a <imath>\frac{2}{36} = \frac{4}{72}</imath> chance of winning, so this is worse.
+
+If the smallest die is 5 or 6, rerolling 2 dice gives us even worse odds.
+
+
+Therefore, the cases where 1, 2, or 3 are the smallest die covers all cases where 2 rerolls is optimal. There are <imath>3+12+27 = 42</imath> permutations out of 216 total permutations, giving us a probability of <imath>\frac{42}{216} = \boxed{\frac{7}{36}}</imath>.
+
+~JGsomeone, krwang, slamgirls
+
+==Video Solution (Interactive Teaching Approach)==
+
+https://www.youtube.com/watch?v=33QVK1HGJfg
+
+~MathkidsbyMax
+
+==Video Solution 1 by Brain Math Club==
+https://youtu.be/B8pt8jF04ZM
+
+==Video Solution 2 (Richard Rusczyk)==
+https://artofproblemsolving.com/videos/amc/2020amc10a/516
+
+==Video Solution 3 by Confusion==
+https://www.youtube.com/watch?v=caUKXO7R0bc
+
+==See Also==
+{{AMC10 box|year=2020|ab=A|num-b=24|after=Last Problem}}
+{{AMC12 box|year=2020|ab=A|num-b=22|num-a=24}}
+
+[[Category: Introductory Combinatorics Problems]]
+{{MAA Notice}}

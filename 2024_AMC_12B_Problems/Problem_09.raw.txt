@@ -1,0 +1,140 @@
+{{duplicate|[[2024 AMC 10B Problems/Problem 14|2024 AMC 10B #14]] and [[2024 AMC 12B Problems/Problem 9|2024 AMC 12B #9]]}}
+
+==Problem==
+A dartboard is the region <math>B</math> in the coordinate plane consisting of points <math>(x, y)</math> such that <math>|x| + |y| \le 8</math>. A target <math>T</math> is the region where <math>(x^2 + y^2 - 25)^2 \le 49</math>. A dart is thrown and lands at a random point in B. The probability that the dart lands in <math>T</math> can be expressed as <math>\frac{m}{n} \cdot \pi</math>, where <math>m</math> and <math>n</math> are relatively prime positive integers. What is <math>m + n</math>?
+
+<math>
+\textbf{(A) }39 \qquad
+\textbf{(B) }71 \qquad
+\textbf{(C) }73 \qquad
+\textbf{(D) }75 \qquad
+\textbf{(E) }135 \qquad
+</math>
+
+==Diagram==
+<asy>
+// By Elephant200
+// Feel free to adjust the code
+
+size(10cm);
+
+pair A = (8, 0);
+pair B = (0, 8);
+pair C = (-8, 0);
+pair D = (0, -8);
+draw(A--B--C--D--cycle, linewidth(1.5));
+
+label("$(8,0)$", A, NE);
+label("$(0,8)$", B, NE);
+label("$(-8,0)$", C, NW);
+label("$(0,-8)$", D, SE);
+
+filldraw(circle((0,0),4*sqrt(2)), gray, linewidth(1.5));
+filldraw(circle((0,0),3*sqrt(2)), white, linewidth(1.5));
+
+draw((-10, 0)--(10,0),EndArrow(5));
+draw((10, 0)--(-10,0),EndArrow(5));
+draw((0,-10)--(0,10), EndArrow(5));
+draw((0,10)--(0,-10),EndArrow(5));
+</asy>
+~Elephant200
+
+==Solution 1==
+Inequalities of the form <math>|x|+|y| \le 8</math> are well-known and correspond to a square in space with centre at origin and vertices at <math>(8, 0)</math>, <math>(-8, 0)</math>, <math>(0, 8)</math>, <math>(0, -8)</math>.
+The diagonal length of this square is clearly <math>16</math>, so it has an area of 
+<cmath>\frac{1}{2} \cdot 16 \cdot 16 = 128</cmath>
+Now,
+<cmath>(x^2 + y^2 - 25)^2 \le 49</cmath>
+Converting to polar form,
+<cmath>r^2 - 25 \le 7 \implies r \le \sqrt{32},</cmath>
+and
+<cmath>r^2 - 25 \ge -7\implies r\ge \sqrt{18}.</cmath>
+
+The intersection of these inequalities is the circular region <math>T</math> for which every circle in <math>T</math> has a radius between <math>\sqrt{18}</math> and <math>\sqrt{32}</math>, inclusive. The area of such a region is thus <math>\pi(32-18)=14\pi.</math> The requested probability is therefore <math>\frac{14\pi}{128} = \frac{7\pi}{64},</math> yielding <math>(m,n)=(7,64).</math> We have <math>m+n=7+64=\boxed{\textbf{(B)}\ 71}.</math>
+
+-AbhiSood1234, countmath1
+
+==Solution 2 (Calculus)==
+Expressing the Area of Region \( B \)
+
+Region \( B \) consists of points where \( |x| + |y| \le 8 \)
+
+In each quadrant, this can be expressed by the following functions:
+
+First quadrant: \( y = 8 - x \)
+Second quadrant: \( y = 8 + x \)
+Third quadrant: \( y = -8 - x \)
+Fourth quadrant: \( y = -8 + x \)
+
+In the first quadrant, \( x \) ranges from 0 to 8, and \( y \) ranges from 0 to \( 8 - x \). Thus, the area in the first quadrant is:
+<cmath> 
+\text{Area of first quadrant} = \int_0^8 \int_0^{8 - x} \, dy \, dx 
+</cmath>
+<cmath> 
+= \int_0^8 [y]_{y=0}^{y=8-x} \, dx = \int_0^8 (8 - x) \, dx 
+</cmath>
+<cmath> 
+= \left[ 8x - \frac{x^2}{2} \right]_0^8 = 64 - 32 = 32 
+</cmath>
+The total area of region \( B \) is:
+<cmath> 
+\text{Area of } B = 4 \times 32 = 128 
+</cmath>
+
+Expressing the Area of Region \( T \)
+Region \( T \) is defined by the inequality \( (x^2 + y^2 - 25)^2 \le 49 \), which can be rewritten as:
+<cmath> 
+18 \le x^2 + y^2 \le 32 
+</cmath>
+
+To find the area, we switch to polar coordinates with \( x = r \cos \theta \) and \( y = r \sin \theta \), where \( x^2 + y^2 = r^2 \). Here, \( r \) ranges from \( \sqrt{18} \) to \( \sqrt{32} \), and \( \theta \) ranges from 0 to \( 2\pi \).
+
+The area of \( T \) can then be found by:
+<cmath> 
+\text{Area of } T = \int_0^{2\pi} \int_{\sqrt{18}}^{\sqrt{32}} r \, dr \, d\theta 
+</cmath>
+<cmath> 
+= \int_0^{2\pi} \left[ \frac{r^2}{2} \right]_{r=\sqrt{18}}^{r=\sqrt{32}} \, d\theta = \int_0^{2\pi} \left( \frac{32}{2} - \frac{18}{2} \right) \, d\theta 
+</cmath>
+<cmath> 
+= \int_0^{2\pi} 7 \, d\theta = 14\pi 
+</cmath>
+
+The probability \( P \) that a dart lands in region \( T \) is the area of \( T \) divided by the area of \( B \):
+<cmath> 
+P = \frac{\text{Area of } T}{\text{Area of } B} = \frac{14\pi}{128} = \frac{7\pi}{64} 
+</cmath>
+
+So the probability is of the form \( \frac{m}{n} \pi \), where \( m = 7 \) and \( n = 64 \), so \( m + n = 7 + 64 = 71 \).
+
+<cmath> 
+\boxed{\textbf{(B)}\ 71}
+</cmath>
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Athmyx Athmyx]
+
+==Solution 3==
+[[Image: 2024_AMC_12B_P09.jpeg|thumb|center|600px|]]
+~Kathan
+
+==Video Solution 1 by Pi Academy (Fast and Easy ⚡🚀)==
+
+https://youtu.be/YqKmvSR1Ckk?feature=shared
+
+~ Pi Academy
+
+==Video Solution 2 by SpreadTheMathLove==
+https://youtu.be/Zk9eW4lpTjo?si=qGMDoWy9WiNNG3yx
+
+==Video Solution 3 by TheBeautyofMath==
+For AMC 10: https://youtu.be/dfF39udgqc8?t=1298 in Rapid Fire
+
+For AMC 12: https://youtu.be/AKLPjTRPF4Q?t=727 in Rapid Fire
+
+~IceMatrix
+
+==See also==
+{{AMC10 box|year=2024|ab=B|num-b=13|num-a=15}}
+{{AMC12 box|year=2024|ab=B|num-b=8|num-a=10}}
+{{MAA Notice}}
+[[Category: Introductory Geometry Problems]]

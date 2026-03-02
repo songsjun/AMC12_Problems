@@ -1,0 +1,30 @@
+# 2020 AMC 12A Problem 3
+
+> This problem is the same as [2020 AMC 12A #3](https://artofproblemsolving.com/wiki/index.php/2020_AMC_12A_Problems) and [2020 AMC 10A #4](https://artofproblemsolving.com/wiki/index.php/2020_AMC_10A_Problems).
+## Problem
+A driver travels for 2 hours at 60 miles per hour, during which her car gets 30 miles per gallon of gasoline. She is paid \$0.50 per mile, and her only expense is gasoline at \$2.00 per gallon. What is her net rate of pay, in dollars per hour, after this expense?
+
+$\textbf{(A)}\ 20\qquad\textbf{(B)}\ 22\qquad\textbf{(C)}\ 24\qquad\textbf{(D)}\ 25\qquad\textbf{(E)}\ 26$
+## Solution 1
+Since the driver travels 60 miles per hour and each hour she uses 2 gallons of gasoline, she spends \$4 per hour on gas. If she gets \$0.50 per mile, then she gets \$30 per hour of driving. Subtracting the gas cost, her net rate of money earned per hour is \boxed{\textbf{(E)}\ 26}.
+*~mathsmiley*
+## Solution 2 (longer)
+The driver is driving for 2 hours at 60 miles per hour, she drives 120 miles. Therefore, she uses $\frac{120}{30}=4$ gallons of gasoline. So, total she has \$\cdot120-\2.00\$cdot4=\$60-\$8=\$52. So, her rate is \frac{52}{2}=\boxed{\textbf{(E)}\ 26}.
+*~sosiaops*
+## Video Solution 1
+https://youtu.be/J-Ery8I0yAg
+
+*~Education, the Study of Everything*
+## Video Solution 2
+https://youtu.be/WUcbVNy2uv0
+
+*~IceMatrix*
+## Video Solution 3
+https://www.youtube.com/watch?v=7-3sl1pSojc
+
+*~bobthefam*
+
+https://youtu.be/Dj_DFoZO-xw
+
+*~savannahsolver*
+## See Also

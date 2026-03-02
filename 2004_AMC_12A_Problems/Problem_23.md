@@ -1,0 +1,29 @@
+# 2004 AMC 12A Problem 23
+
+## Problem
+A [polynomial](https://artofproblemsolving.com/wiki/index.php/polynomial)
+
+$$P(x) = c_{2004}x^{2004} + c_{2003}x^{2003} + ... + c_1x + c_0$$
+
+has [real](https://artofproblemsolving.com/wiki/index.php/real) [coefficient](https://artofproblemsolving.com/wiki/index.php/coefficient)s with $c_{2004}\not = 0$ and 2004 distinct complex [zero](https://artofproblemsolving.com/wiki/index.php/zero)es $z_k=a_k+b_ki$, $1\leqk\leq 2004$ with $a_k$ and $b_k$ real, $a_1=b_1 = 0$, and
+
+$$\sum_{k = 1}^{2004}{a_k} = \sum_{k = 1}^{2004}{b_k}.$$
+
+Which of the following quantities can be a non zero number?
+
+
+$$\text {(A)} c_0 \qquad \text {(B)} c_{2003} \qquad \text {(C)} b_2b_3...b_{2004} \qquad \text {(D)} \sum_{k = 1}^{2004}{a_k} \qquad \text {(E)}\sum_{k = 1}^{2004}{c_k}$$
+
+## Solution 1
+We have to evaluate the answer choices and use process of elimination:
+
+*$\mathrm{(A)}$: We are given that $a_1=b_1 = 0$, so $z_1 = 0$. If one of the roots is zero, then P(0) = $c_0 = 0$.
+*$\mathrm{(B)}$: By [Vieta's formulas](https://artofproblemsolving.com/wiki/index.php/Vieta's_formulas), we know that $-\frac{c_{2003}}{c_{2004}}$ is the sum of all of the roots of P(x). Since that is real,  $\sum_{k = 1}^{2004}{b_k}=0=\sum_{k = 1}^{2004}{a_k},$ and $\frac{c_{2003}}{c_{2004}}=0,$ so $c_{2003}=0$.
+*$\mathrm{(C)}$: All of the coefficients are real. For sake of contradiction suppose none of $b_{2\ldots 2004}$ are zero. Then for each complex root $z_k$, its [complex conjugate](https://artofproblemsolving.com/wiki/index.php/complex_conjugate) $\overline{z_k} =a_k-b_k$ i is also a root. So the roots should pair up, but we have an odd number of imaginary roots! (Remember that $b_1 = 0$.) This gives us the contradiction, and therefore the product is equal to zero.
+*$\mathrm{(D)}$: We are given that $\sum_{k = 1}^{2004}{a_k} = \sum_{k = 1}^{2004}{b_k}.$ Since the coefficients are real, it follows that if a root is complex, its conjugate is also a root; and the sum of the imaginary parts of complex conjugates is zero. Hence the RHS is zero.
+
+There is, however, no reason to believe that $\boxed{\mathrm{E}}$ should be zero (in fact, that quantity is P(1), and there is no evidence that 1 is a root of P(x)).
+## Solution 2(cheap method using answer choices)
+Rule out answer choices A, B, D as done in solution 1. Assume for the sake of contradiction that $\mathrm{(E)}$ is 0. Then P(1)=0, so there is some $m\neq 1$ such that $z_m=1+0i$, which implies at least one $b_i$, $i\neq 1$ is 0 SO if $\sum_{k=1}^{2004}$c_k=0, then $\prod_{i=2}^{2004}$b_i=0. So we have that $\sum_{k=1}^{2004}$c_k$\neq 0,$ because then that would rule out all the answer choices. Hence $\boxed{\mathrm{E}}$ must be nonzero, so the answer is $\mathrm{(E)}.$
+*~vsamc*
+## See also

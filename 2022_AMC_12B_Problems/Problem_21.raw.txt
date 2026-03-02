@@ -1,0 +1,190 @@
+{{duplicate|[[2022 AMC 10B Problems/Problem 22|2022 AMC 10B #22]] and [[2022 AMC 12B Problems/Problem 21|2022 AMC 12B #21]]}}
+
+==Problem==
+Let <math>S</math> be the set of circles in the coordinate plane that are tangent to each of the three circles with equations <math>x^{2}+y^{2}=4</math>, <math>x^{2}+y^{2}=64</math>, and <math>(x-5)^{2}+y^{2}=3</math>. What is the sum of the areas of all circles in <math>S</math>?
+
+<math>\textbf{(A)}~48\pi\qquad\textbf{(B)}~68\pi\qquad\textbf{(C)}~96\pi\qquad\textbf{(D)}~102\pi\qquad\textbf{(E)}~136\pi\qquad</math>
+
+==Solution 1==
+<asy>
+        import geometry;
+        unitsize(0.5cm);
+
+		void dc(pair x, pen p) {
+          pair y = intersectionpoints(circle((0,0),8),(0,0)--1000*x)[0];
+          draw(circle(x, abs(x-y)),p+linewidth(2));
+        }
+
+        pair O1 = (0,0),O2=(5,0),P1=intersectionpoints(circle(O1,5),circle(O2,3+sqrt(3)))[0],P2=intersectionpoints(circle(O1,3),circle(O2,5+sqrt(3)))[0],P3=intersectionpoints(circle(O1,5),circle(O2,3-sqrt(3)))[0],P4=intersectionpoints(circle(O1,3),circle(O2,5-sqrt(3)))[0];
+
+        draw(circle(O1,2));
+        draw(circle(O1,8));
+        draw(circle(O2,sqrt(3)));
+
+		dc(P1,blue);
+		dc(P2,red);
+		dc(P3,mediumgreen);
+		dc(P4,brown);
+</asy>
+The circles match up as follows: Case <math>1</math> is brown, Case <math>2</math> is blue, Case <math>3</math> is green, and Case 4 is red.
+Let <math>x^2 + y^2 = 64</math> be circle <math>O</math>, <math>x^2 + y^2 = 4</math> be circle <math>P</math>, and <math>(x-5)^2 + y^2 = 3</math> be circle <math>Q</math>.
+All the circles in S are internally tangent to circle <math>O</math>.
+There are four cases with two circles belonging to each:
+
+<math>*</math> <math>P</math> and <math>Q</math> are internally tangent to <math>S</math>.
+
+<math>*</math> <math>P</math> and <math>Q</math> are externally tangent to <math>S</math>.
+
+<math>*</math> <math>P</math> is externally and Circle <math>Q</math> is internally tangent to <math>S</math>.
+
+<math>*</math> <math>P</math> is internally and Circle <math>Q</math> is externally tangent to <math>S</math>.
+
+Consider Cases <math>1</math> and <math>4</math> together. Since circles <math>O</math> and <math>P</math> have the same center, the line connecting the center of <math>S</math> and the center of <math>O</math> will pass through the tangency point of both <math>S</math> and <math>O</math> and the tangency point of <math>S</math> and <math>P</math>. This line will be the diameter of <math>S</math> and have length <math>r_P + r_O = 10</math>. Therefore the radius of <math>S</math> in these cases is <math>5</math>.
+
+Consider Cases <math>2</math> and <math>3</math> together. Similarly to Cases <math>1</math> and <math>4</math>, the line connecting the center of <math>S</math> to the center of <math>O</math> will pass through the tangency points. This time, however, the diameter of <math>S</math> will have length <math>r_P-r_O=6</math>. Therefore, the radius of <math>S</math> in these cases is <math>3</math>.
+    
+The set of circles <math>S</math> consists of <math>8</math> circles - <math>4</math> of which have radius <math>5</math> and <math>4</math> of which have radius <math>3</math>. 
+The total area of all circles in <math>S</math> is <math>4(5^2\pi + 3^2\pi) = 136\pi \Rightarrow \boxed{\textbf{(E)}}</math>.
+
+-naman12
+
+==Solution 2==
+
+We denote by <math>C_1</math> the circle that has the equation <math>x^2 + y^2 = 4</math>.
+We denote by <math>C_2</math> the circle that has the equation <math>x^2 + y^2 = 64</math>.
+We denote by <math>C_3</math> the circle that has the equation <math>(x-5)^2 + y^2 = 3</math>.
+
+We denote by <math>C_0</math> a circle that is tangent to <math>C_1</math>, <math>C_2</math> and <math>C_3</math>.
+We denote by <math>\left( u, v \right)</math> the coordinates of circle <math>C_0</math>, and <math>r</math> the radius of this circle.
+
+From the graphs of circles <math>C_1</math>, <math>C_2</math>, <math>C_3</math>, we observe that if <math>C_0</math> is tangent to all of them, then <math>C_0</math> must be internally tangent to <math>C_2</math>.
+We have
+<cmath>
+\[
+u^2 + v^2 = \left( 8 - r \right)^2 . \hspace{1cm} (1)
+\]
+</cmath>
+
+We do the following casework analysis in terms of the whether <math>C_0</math> is externally tangent to <math>C_1</math> and <math>C_3</math>.
+
+Case 1: <math>C_0</math> is externally tangent to <math>C_1</math> and <math>C_3</math>.
+
+We have
+<cmath>
+\[
+u^2 + v^2 = \left( r + 2 \right)^2   \hspace{1cm} (2)
+\]
+</cmath>
+and
+<cmath>
+\[
+(u-5)^2 + v^2 = \left( r + \sqrt{3} \right)^2 . \hspace{1cm} (3)
+\]
+</cmath>
+
+Taking <math>(2) - (1)</math>, we get <math>r + 2 = 8 - r</math>. Thus, <math>r = 3</math>.
+We can further compute (omitted here) that there exist feasible <math>(u,v)</math> with this given <math>r</math>.
+
+Case 2: <math>C_1</math> is internally tangent to <math>C_0</math> and <math>C_3</math> is externally tangent to <math>C_0</math>.
+
+We have
+<cmath>
+\[
+u^2 + v^2 = \left( r - 2 \right)^2  \hspace{1cm} (2)
+\]
+</cmath>
+and
+<cmath>
+\[
+(u-5)^2 + v^2 = \left( r + \sqrt{3} \right)^2 . \hspace{1cm} (3)
+\]
+</cmath>
+
+Taking <math>(2) - (1)</math>, we get <math>r - 2 = 8 - r</math>. Thus, <math>r = 5</math>.
+We can further compute (omitted here) that there exist feasible <math>(u,v)</math> with this given <math>r</math>.
+
+Case 3: <math>C_1</math> is externally tangent to <math>C_0</math> and <math>C_3</math> is internally tangent to <math>C_0</math>.
+
+We have
+<cmath>
+\[
+u^2 + v^2 = \left( r + 2 \right)^2  \hspace{1cm} (2)
+\]
+</cmath>
+and
+<cmath>
+\[
+(u-5)^2 + v^2 = \left( r - \sqrt{3} \right)^2 . \hspace{1cm} (3)
+\]
+</cmath>
+
+Taking <math>(2) - (1)</math>, we get <math>r + 2 = 8 - r</math>. Thus, <math>r = 3</math>.
+We can further compute (omitted here) that there exist feasible <math>(u,v)</math> with this given <math>r</math>.
+
+Case 4: <math>C_1</math> is internally tangent to <math>C_0</math> and <math>C_3</math> is internally tangent to <math>C_0</math>.
+
+We have
+<cmath>
+\[
+u^2 + v^2 = \left( r - 2 \right)^2  \hspace{1cm} (2)
+\]
+</cmath>
+and
+<cmath>
+\[
+(u-5)^2 + v^2 = \left( r - \sqrt{3} \right)^2 . \hspace{1cm} (3)
+\]
+</cmath>
+
+Taking <math>(2) - (1)</math>, we get <math>r - 2 = 8 - r</math>. Thus, <math>r = 5</math>.
+We can further compute (omitted here) that there exist feasible <math>(u,v)</math> with this given <math>r</math>.
+
+
+Because the graph is symmetric with the <math>x</math>-axis, and for each case above, the solution of <math>v</math> is not 0. Hence, in each case, there are two congruent circles whose centers are symmetric through the <math>x</math>-axis.
+
+Therefore, the sum of the areas of all the circles in <math>S</math> is <math>2\left( 3^2 \pi +5^2 \pi +3^2 \pi +5^2 \pi \right) = \boxed{\textbf{(E) } 136 \pi}</math>.
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+~MrThinker (LaTeX Error)
+
+== Solution 3 ==
+The problem of counting the number of circles tangent to a given number of other circles, lines, or points is called Apollonius's Problem. Here, there are three circles; solutions to Apollonius's problem tell us that there are 8 possible tagent circles. When looking for all eight, we can notice that the diagram is symmetrical about the x-axis, so we only need to find four different circles and then reflect them to the other side. 
+
+After drawing in those circles, we can use any of the above methods to find the radii of the circle. The important step is to realize that the segment between tangent circles' centers must pass through the point of tangency. From here, we can prove that the center of the circle with equation <math> x^2 + y^2 = 4 </math> and the center of the circle tangent to all three must both lie on the radius of <math> x^2 + y^2 = 64 </math>, allowing us to quickly find the radius of the tangent circle.
+
+For the tangent circles mostly above the x-axis, there are two of radius 5, and two of radius 3. The total area is <math> 50 \pi + 18 \pi = 68 \pi </math>. As due to symmetry there are four other circles below the x-axis, the total area is <math> 136 \pi </math>, so we choose <math> \boxed{ (E) } </math>. 
+
+~LeonQS
+
+
+== Video Solution by OmegaLearn using Circular Tangency ==
+https://youtu.be/ZDpmvGmNefQ
+
+~ pi_is_3.14
+
+==Video Solution==
+
+https://youtu.be/1pkuBlRKt6Q
+
+~ThePuzzlr
+
+https://youtu.be/nqE5QYkzRAw
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+==Video Solution by TheBeautyofMath==
+With additional justification reasoning for certain statements made. Also an additional twist on a potential similar alternate problem at the end.
+https://youtu.be/r-jNrjKIXTU
+
+~IceMatrix
+
+==Video Solution by The Power of Logic(#20-#21)==
+https://youtu.be/7FiTsDNMmgg
+==Video Solution by Interstigation==
+https://youtu.be/GWEfdjTiXSQ
+
+~Interstigation
+
+==See Also==
+{{AMC10 box|year=2022|ab=B|num-b=21|num-a=23}}
+{{AMC12 box|year=2022|ab=B|num-b=20|num-a=22}}
+{{MAA Notice}}

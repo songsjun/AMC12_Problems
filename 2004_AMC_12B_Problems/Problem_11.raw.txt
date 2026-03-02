@@ -1,0 +1,37 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2004_AMC_12B_Problems/Problem_11&action=raw
+
+Published Time: Mon, 13 Oct 2025 01:42:29 GMT
+
+Markdown Content:
+== Problem ==
+
+All the students in an algebra class took a 100-point test. Five students scored 100, each student scored at least 60, and the mean score was 76. What is the smallest possible number of students in the class?
+
+ \mathrm{(A)}\ 10 \qquad \mathrm{(B)}\ 11 \qquad \mathrm{(C)}\ 12 \qquad \mathrm{(D)}\ 13 \qquad \mathrm{(E)}\ 14 
+
+== Solution 1 ==
+
+Let the number of students be n\geq 5. Then the sum of their scores is at least 5\cdot 100 + (n-5)\cdot 60. At the same time, we need to achieve the mean 76, which is equivalent to achieving the sum 76n.
+
+Hence we get a necessary condition on n: we must have 5\cdot 100 + (n-5)\cdot 60 \leq 76n.
+This can be simplified to 200 \leq 16n. The smallest integer n for which this is true is n=13.
+
+To finish our solution, we now need to find one way how 13 students could have scored on the test. We have 13\cdot 76 = 988 points to divide among them. The five 100s make 500, hence we must divide the remaining 488 points among the other 8 students. This can be done e.g. by giving 61 points to each of them. 
+
+Hence the smallest possible number of students is \boxed{\mathrm{(D)}\ 13}.
+
+== Solution 2 ==
+
+Let's assume that each student scores 60 points on the test. This gives
+(500 + 60(n))/(n+5) = 76
+
+Solving the equation for n we see that n = 7.5.
+
+Because of the extra five people we know that the total amount of people is 12.5, however, to adjust for the complexity of not every score being a 60 we round up to 13. Giving \boxed{\mathrm{(D)}\ 13}.
+
+== See Also ==
+
+{{AMC12 box|year=2004|ab=B|num-b=10|num-a=12}}
+{{MAA Notice}}

@@ -1,0 +1,16 @@
+# 2007 AMC 12B Problem 1
+
+> This problem is the same as [2007 AMC 12B #1](https://artofproblemsolving.com/wiki/index.php/2007_AMC_12B_Problems) and [2007 AMC 10B #1](https://artofproblemsolving.com/wiki/index.php/2007_AMC_10B_Problems).
+## Problem
+Isabella's house has 3 bedrooms. Each bedroom is 12 feet long, 10 feet wide, and 8 feet high. Isabella must paint the walls of all the bedrooms. Doorways and windows, which will not be painted, occupy 60 square feet in each bedroom. How many square feet of walls must be painted?
+
+
+$$\mathrm{(A)}\ 678 \qquad \mathrm{(B)}\ 768 \qquad \mathrm{(C)}\ 786 \qquad \mathrm{(D)}\ 867 \qquad \mathrm{(E)}\ 876$$
+
+## Solution
+There are four walls in each bedroom (she can't paint floors or ceilings). Therefore, we calculate the number of square feet of walls there is in one bedroom:
+$$2\cdot(12\cdot8+10\cdot8)-60=2\cdot176-60=292$$
+We have three bedrooms, so she must paint $292\cdot3=\boxed{\textbf{(E) }876}$ square feet of walls.
+
+*~MathFun1000*
+## See Also

@@ -1,0 +1,27 @@
+# 2017 AMC 12A Problem 4
+
+## Problem
+Jerry and Silvia wanted to go from the southwest corner of a square field to the northeast corner. Jerry walked due east and then due north to reach the goal, but Silvia headed northeast and reached the goal walking in a straight line. Which of the following is closest to how much shorter Silvia's trip was, compared to Jerry's trip?
+
+$\textbf{(A)}\ 30\%\qquad\textbf{(B)}\ 40\%\qquad\textbf{(C)}\ 50\%\qquad\textbf{(D)}\ 60\%\qquad\textbf{(E)}\ 70\%$
+## Solution
+Let j represent how far Jerry walked, and s represent how far Sylvia walked. Since the field is a square, and Jerry walked two sides of it, while Silvia walked the diagonal, we can simply define the side of the square field to be one, and find the distances they walked. Since Jerry walked two sides,
+$$j = 2$$
+Since Silvia walked the diagonal, she walked the hypotenuse of a 45, 45, 90 triangle with leg length 1. Thus,
+$$s = \sqrt{2} = 1.414...$$
+We can then take
+
+$$
+\frac{j-s}{j} \approx \frac{2 - 1.4}{2} = 0.3 = 30\%
+\boxed{ \textbf{A}}.
+$$
+
+## Video Solution (HOW TO THINK CREATIVELY!!!)
+https://youtu.be/J6uhxJBUgjg
+
+*~Education, the Study of Everything*
+## Video Solution
+https://www.youtube.com/watch?v=0XqlF9t39Pg
+
+*~Math4All999*
+## See Also

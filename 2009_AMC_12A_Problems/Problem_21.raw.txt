@@ -1,0 +1,35 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2009_AMC_12A_Problems/Problem_21&action=raw
+
+Published Time: Wed, 29 Jul 2020 14:25:20 GMT
+
+Markdown Content:
+== Problem ==
+Let p(x) = x^3 + ax^2 + bx + c, where a, b, and c are complex numbers.  Suppose that
+
+p(2009 + 9002\pi i) = p(2009) = p(9002) = 0
+
+What is the number of nonreal zeros of x^{12} + ax^8 + bx^4 + c?
+
+\textbf{(A)}\ 4\qquad \textbf{(B)}\ 6\qquad \textbf{(C)}\ 8\qquad \textbf{(D)}\ 10\qquad \textbf{(E)}\ 12
+
+== Solution==
+From the three zeroes, we have p(x) = (x - (2009 + 9002\pi i))(x - 2009)(x - 9002).
+
+Then p(x^4) = (x^4 - (2009 + 9002\pi i))(x^4 - 2009)(x^4 - 9002)=x^{12}+ax^8+bx^4+c.
+
+Let's do each factor case by case:
+*x^4 - (2009 + 9002\pi i) = 0: Clearly, all the fourth roots are going to be complex.
+*x^4 - 2009 = 0: The real roots are \pm \sqrt [4]{2009}, and there are two complex roots.
+*x^4 - 9002 = 0: The real roots are \pm \sqrt [4]{9002}, and there are two complex roots.
+
+So the answer is 4 + 2 + 2 = 8\ \mathbf{(C)}.
+
+==Alternative Thinking==
+Consider the graph of x^4. It is similar to a parabola, but with a wider "base". First examine x^4-2009 and x^4-9002. Clearly they are just being translated down some large amount. This will result in the x-axis being crossed twice, indicating 2 real zeroes. From the [[Fundamental Theorem of Algebra]] we know that a polynomial must have exactly as many roots as its highest degree, so we are left with 4-2 or 2 nonreal roots for each of the graphs. For the graph of x^4-(2009+9002\pi i), it's not even possible to graph it on the Cartesian plane, so all 4 roots will be nonreal. This is 2+2+4 = 8 total nonreal roots \Rightarrow \boxed{\text{C}}.
+== See also ==
+{{AMC12 box|year=2009|ab=A|num-b=20|num-a=22}}
+
+[[Category:Introductory Algebra Problems]]
+{{MAA Notice}}

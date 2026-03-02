@@ -1,0 +1,235 @@
+{{duplicate|[[2022 AMC 10B Problems/Problem 21|2022 AMC 10B #21]] and [[2022 AMC 12B Problems/Problem 20|2022 AMC 12B #20]]}}
+
+==Problem==
+
+Let <math>P(x)</math> be a polynomial with rational coefficients such that when <math>P(x)</math> is divided by the polynomial
+<math>x^2 + x + 1</math>, the remainder is <math>x+2</math>, and when <math>P(x)</math> is divided by the polynomial <math>x^2+1</math>, the remainder
+is <math>2x+1</math>. There is a unique polynomial of least degree with these two properties. What is the sum of
+the squares of the coefficients of that polynomial?
+
+<math>\textbf{(A)}\ 10 \qquad\textbf{(B)}\ 13 \qquad\textbf{(C)}\ 19 \qquad\textbf{(D)}\ 20 \qquad\textbf{(E)}\ 23</math>
+
+==Solution 1 (Experimentation)==
+
+Given that all the answer choices and coefficients are integers, we hope that <math>P(x)</math> has positive integer coefficients.
+
+Throughout this solution, we will express all polynomials in base <math>x</math>. E.g. <math>x^2 + x + 1 = 111_{x}</math>.
+
+We are given:
+<cmath>111a + 12 = 101b + 21 = P(x).</cmath>
+We add <math>111</math> and <math>101</math> to each side and balance respectively:
+<cmath>111(a - 1) + 123 = 101(b - 1) + 122 = P(x).</cmath>
+We make the unit's digits equal:
+<cmath>111(a - 1) + 123 = 101(b - 2) + 223 = P(x).</cmath>
+We now notice that:
+<cmath>111(a - 11) + 1233 = 101(b - 12) + 1233 = P(x).</cmath>
+Therefore <math>a = 11_{x} = x + 1</math>, <math>b = 12_{x} = x + 2</math>, and <math>P(x) = 1233_{x} = x^3 + 2x^2 + 3x + 3</math>. <math>3</math> is the minimal degree of <math>P(x)</math> since there is no way to influence the <math>x</math>‘s digit in <math>101b + 21</math> when <math>b</math> is an integer. The desired sum is <math>1^2 + 2^2 +3^2+ 3^2 = \boxed{\textbf{(E)} \ 23}</math>
+
+P.S. The four computational steps can be deduced through quick experimentation.
+
+~ numerophile
+
+==Solution 2==
+
+Let <math>P(x) = Q(x)(x^2+x+1) + x + 2</math>, then <math>P(x) = Q(x)(x^2+1) + xQ(x) + x + 2</math>, therefore <math>xQ(x) + x + 2 \equiv 2x + 1 \pmod{x^2+1}</math>, or <math>xQ(x) \equiv x-1 \pmod{x^2+1}</math>. The rule says we can change any <math>x^2</math> into <math>-1</math>. This is because <math>x^2 \equiv -1 \pmod{x^2+1}</math> (since <math>x^2 - (-1) = x^2+1</math>, which is a multiple of <math>x^2+1</math>).
+To find the least possible degree <math>Q(x)</math>, it would be logical to first assume it's a constant. Let's say <math>Q(x)=c</math>, which makes <math>xQ(x) = cx</math>. Is <math>cx</math> congruent to <math>x-1</math>? The difference is <math>cx - (x-1) = (c-1)x+1</math>. This is a polynomial of degree 1, so it's not a multiple of <math>x^2+1</math> (a degree 2 polynomial). So, a constant won't work.
+Could <math>Q(x)</math> be a simple degree 1 polynomial? Let's try <math>Q(x) = x+1</math>. Let's check if <math>Q(x) = x+1</math> works. Calculate <math>xQ(x)</math>: <math>x(x+1) = x^2+x</math>. 
+
+Now, apply our rule: we can replace <math>x^2</math> with <math>-1</math>. Therefore, <math>x^2+x</math> becomes <math>-1+x</math>, which is <math>x-1</math>. This shows that <math>xQ(x)</math> is congruent to <math>x-1</math>.
+Since we showed that no constant polynomial works, and we found a degree 1 polynomial that does work, the minimum degree must be 1. The simplest polynomial of degree 1 that satisfies the condition is <math>Q(x)=x+1</math>, and expanding gives <math>P(x) = x^3+2x^2+3x+3</math>. Summing the squares of coefficients gives <math>\boxed{\textbf{(E)} \ 23}</math>
+
+~mathfan2020
+
+~Lovemath2021
+
+==Solution 3==
+
+Let <imath>P(x) = (x^2+x+1)Q_1(x) + x + 2</imath>, 
+then <imath>P(x) = (x^2+1)Q_1(x) + xQ_1(x) + x + 2</imath>
+
+Also, <imath>P(x) = (x^2+1)Q_2(x) + 2x + 1</imath>
+
+We infer that <imath>Q_1(x)</imath> and <imath>Q_2(x)</imath> have same degree, we can assume <imath>Q_1(x) = x + a </imath>, and <imath>Q_2(x) = x + b </imath>, since <imath>P(x)</imath> has least degree. If this cannot work, we will try quadratic, etc.
+
+Then we get:
+<imath>(x^2+1)(Q_1(x) - Q_2(x)) + xQ_1(x) - x + 1 = 0 </imath>
+
+The constant term gives us:
+<imath>(Q_1(x) - Q_2(x)) + 1 = 0 </imath>
+
+So <imath>Q_1(x) - Q_2(x) = -1 </imath>
+
+Substituting this in gives: 
+<imath>-(x^2+1) + xQ_1(x) - x + 1 = 0</imath>
+
+Solving this equation, we get
+<imath>Q_1(x) = x + 1 </imath> 
+
+Plugging this into our original equation we get 
+<imath>P(x) = x^3 + 2x^2 + 3x + 3 </imath>
+
+Verify this works with <imath>P(x) = (x^2+1)Q_2(x) + 2x + 1</imath>
+
+Therefore the answer is <imath>1^2 + 2^2 + 3^2 + 3^2 = \boxed{\textbf{(E)} \ 23}</imath>
+
+~qgcui
+
+==Solution 4 (Undetermined Coefficients)==
+
+Notice that we cannot have the quotients equal to some constants, since the same constant will yield different constant terms for <math>P(x)</math> (which is bad) and different constants will yield different first coefficients (also bad). Thus, we try setting the quotients equal to linear terms (for minimizing degree).
+
+Let <math>P(x)=(x^2+x+1)(ax+b)+(x+2)</math> and <math>P(x)=(x^2+1)(ax+c)+(2x+1)</math>. The quotients have the same <math>x</math> coefficient, since <math>P(x)</math> must have the same <math>x^3</math> coefficient in both cases. Expanding, we get <cmath>P(x)=ax^3+(a+b)x^2+(a+b+1)x+(b+2)</cmath> and <cmath>P(x)=ax^3+cx^2+(a+2)x+(c+1).</cmath>
+
+Equating coefficients, we get <math>b+2=c+1</math>, <math>a+b+1=a+2</math>, and <math>a+b=c</math>. From the second equation, we get <math>b=1</math>, then substituting into         the first, <math>c=2</math>. Finally, from <math>a+b=c</math>, we have <math>a=1</math>. Now, <math>P(x)=(x^2+x+1)(ax+b)+(x+2)=(x^2+x+1)(x+1)+(x+2)=x^3+2x^2+3x+3</math> and our answer is <cmath>1^2+2^2+3^2+3^2=\boxed{\textbf{(E)} \ 23}.</cmath>
+
+~MathHayden
+
+==Solution 5 (Quick, but Not Quicker Than Solution 2) ==
+We construct the following equations in terms of <math>P(x)</math> and the information given by the problem:
+<cmath>\textbf{(1) } P(x)=(x^2+x+1)\cdot Q(x)+x+2</cmath>
+<cmath>\textbf{(2) } P(x)=(x^2+1)\cdot R(x)+2x+1</cmath>
+Upon inspection, <math>Q(x)</math> and <math>R(x)</math> cannot be constant, so the smallest possible degree of <math>P(x)</math> is <math>3,</math> and both <math>Q(x)</math> and <math>R(x)</math> are linear. 
+
+Let <math>Q(x)=x-q</math> and <math>R(x)=x-r.</math> We know there will be values for <math>q</math> and <math>r</math> that make the below equation hold, so we can assume that <math>P(x)</math> has a leading coefficient of <math>1</math>.
+
+Substituting these values in, and setting <math>\textbf{(1)}</math> and <math>\textbf{(2)}</math> equal to each  other,
+<cmath>(x^2+x+1)(x-q)+x+2=(x^2+1)(x-r)+2x+1.</cmath>
+We plug in <math>x=0</math>, yielding <math>r+1=q.</math> Substituting this value into the above equation, 
+<cmath>(x^2+x+1)(x-r-1)+x+2=(x^2+1)(x-r)+2x+1.</cmath>
+Letting <math>x=1,</math> we conclude that <math>r=-2,</math> so <math>R(x)=x+2.</math>
+Therefore, 
+<cmath>P(x)=(x^2+1)(x+2)+2x+1 = x^3+2x^3+3x+3.</cmath>
+The requested sum is 
+<cmath>1^2+2^2+3^2+3^2=\boxed{\textbf{(E) }23}</cmath>
+
+-Benedict T (countmath1)
+
+==Solution 6 (Similar to Solution 3) ==
+By remainder theorem, the polynomial can be written as follows.
+
+<cmath>P(x) = (x^2+x+1)Q_{1}(x)+x+2 = (x^2+1)Q_{2}(x)+2x+1</cmath>
+This is a timed exam, we can use the information given by answer choices. The answer choices tell us this is the polynomial with integer coefficients, and we need to find the polynomial with the least degree so we can assume both <math>Q_{1}(x)</math> and <math>Q_{2}(x)</math> are linear (the coefficient of x should be same).
+
+Then we can write <math>P(x)</math> as a cubic polynomial.
+
+<cmath>P(x) = (x^2+x+1)(ax+b)+x+2 = (x^2+1)(ax+c)+2x+1</cmath>
+Substituting <math>x=0,1,-1</math> to determine the value of <math>a</math> and <math>b</math>.
+
+We have:
+<cmath>P(0) = b+2 = c+1</cmath>
+<cmath>P(1) = 3a+3b+3 = 2a+2c+3</cmath>
+<cmath>P(-1) = -a+b+1 = -2a+2c-1</cmath>
+
+We can solve the simultaneous equations: <math>a=1,b=1,c=2</math>
+
+Hence, <math>P(x)=(x^2+x+1)(x+1)+x+2=x^3+2x^2+3x+3</math>. The answer is <math>1^2+2^2+3^2+3^2=\boxed{\textbf{(E) }23}</math>
+
+~PythZhou
+
+==Solution 7 (Bounding with Answer Choices)==
+We are given: 
+
+<math>P(x) \equiv x + 2 \pmod{x^2+x+1}</math>
+
+<math>P(x) \equiv 2x + 1 \pmod{x^2+1}</math>
+
+Since the problem asks us about the coefficients of the polynomial, we should evaluate <math>P(x)</math> at <math>1</math>.
+
+Our congruences now become:
+
+<math>P(1) \equiv 1 + 2 \pmod{(1)^2+(1)+1}</math> <math>\implies P(1) \equiv 3 \pmod{3} \implies P(1) \equiv 0 \pmod{3}</math>.
+
+<math>P(1) \equiv 2(1) + 1 \pmod{(1)^2+1}</math> <math>\implies P(1) \equiv 3 \pmod{2} \implies P(1) \equiv 1 \pmod{2}</math>.
+
+We now know that the coefficients of the polynomial sum to an odd multiple of 3. 
+
+We now begin bounding the value of the sum of the coefficients squared. For our answer, the sum of the coefficients squared must be between <math>10</math> and <math>23</math>. Trying a quadratic polynomial, if <math>P(1) = 3</math>, then the maximum of the coefficients squared is <math>9</math> (<math>3^2+0^2+0^2</math> is the maximum, any other permutation can be trivially shown to be lower). If <math>P(1) = 9</math>, the minimum of the coefficients squared is <math>27</math> (<math>3^2+3^2+3^2</math>, once again, any other permutation can be trivially shown to be higher). Any higher value of <math>P(1)</math> obviously will not work, so <math>P(x)</math> cannot be a quadratic.
+
+Since a quadratic did not work, we now move up to a cubic. We start with <math>P(1) = 3</math>. Similarly to the quadratic, there is no way to get an answer within the range of the answer choices. 
+
+However, moving up to <math>P(1) = 9</math>, we get that the minimum of the coefficients squared is <math>81/4</math> (which we get from all 4 coefficients being equal at <math>9/4</math>). Since this is the minimum, any other answers will be higher. We get that <math>\boxed{\textbf{(E) }23}</math> is our answer, since it is the only answer choice greater than <math>81/4</math>.
+
+-SwordOfJustice
+
+==Solution 8==
+Since the divisors <math>x^2 + x + 1</math> and <math>x^2 + 1</math> are both powers of 2, and the remainders <math>x + 2</math> and <math>2x + 1</math> are both linear, we can assume that <math>P(x)</math> has a minimum degree of 3.
+
+We can then set the coefficients of the polynomial as <math>P(x) = ax^3 + bx^2 + cx + d</math>.
+
+Then, using long division, we divide  <math>P(x) = ax^3 + bx^2 + cx + d</math> by <math>x^2 + x + 1</math> and obtain a remainder of <math>(c - b)x + (a + d - b)</math>, which is equal to <math>x + 2</math>
+
+We also divide <math>P(x) = ax^3 + bx^2 + cx + d</math> by <math>x^2 + 1</math> and obtain a remainder of <math>(c - a)x + (d - b)</math>, which is equal to <math>2x + 1</math>.
+
+From here we can set up a systems of equations:
+
+<math>c -b = 1</math>
+
+<math>a + d - b = 2</math>
+
+<math>c - a = 2</math>
+
+<math>d - b = 1</math>
+
+Thus giving us the solutions <math>a = 1</math>, <math>b = 2</math>, <math>c = 3</math>, <math>d = 3</math> and hence <math>P(x) = x^3 + 2x^2 + 3x + 3</math>
+
+Squaring the coefficients, then adding them, <math>1^2 + 2^2 + 3^2 + 3^2</math> we get the final answer <math>\boxed{\textbf{(E)} \ 23}</math>
+
+~Sedric S
+
+==Solution 9==
+We assume <math>P(x)</math> is a monic cubic polynomial. Now, we set <math>P(x)=x^{3}+ax^{2}+bx+c</math>, and set the equations:
+
+<math>x^{3}+ax^{2}+bx+c=Q_{1}(x)(x^{2}+x+1)+x+2</math>
+
+<math>x^{3}+ax^{2}+bx+c=Q_{2}(x)(x^{2}+1)+2x+1</math>
+
+Plugging in <math>x=i</math> for the second equation, we get <math>-i-a+bi+c=2i+1</math>, and matching coefficients gives <math>c-a=1</math> and <math>b-1=2 \rightarrow b=3</math>. Now, we can guess values for <math>a</math> and <math>c</math> based on the answer choices. We have that the sum of the squares of the current known coefficients is <math>1^{2}+3^{2}=10</math>, and guessing <math>c=1, a=0</math> clearly doesnt match up with the answer choices, so we guess <math>c=3, a=2</math> and find that the answer is <math>\boxed{\textbf{(E)} \ 23}</math>
+
+==Solution 10 (EZ CRT)==
+If we let <imath>x=10</imath>, we just get a CRT problem. Note: this only works because all the coefficients are integers between 0 and 9. Our problem now is to find <imath>n</imath> such that
+<cmath>n\equiv 12\pmod {111}</cmath>
+<cmath>n\equiv 21\pmod {101}</cmath>
+After using some careful Euclidean Algorithm (or just eyeing it), <imath>n=1233</imath>, so our answer is <imath>1^2+2^2+3^2+3^2 = \boxed{\textbf{(E)} \ 23}</imath>.
+
+==Video Solution (Interactive Teaching Approach)==
+
+https://www.youtube.com/watch?v=GxZta87dr8o
+
+~MathkidsbyMax
+
+==Video Solution==
+
+https://youtu.be/yGUur4vP_6k
+
+~ ThePuzzlr
+
+==Video Solution==
+
+https://youtu.be/ELdhkqVyB9E
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+== Video Solution by OmegaLearn Using Polynomial Remainders ==
+https://youtu.be/HdrbPiZHim0
+
+~ pi_is_3.14
+
+==Video Solution by The Power of Logic(#20-#21)==
+
+https://youtu.be/7FiTsDNMmgg
+==Video Solution by Interstigation==
+https://youtu.be/TvOHfDJ_2Ag
+
+~Interstigation
+
+==Video Solution by TheBeautyofMath==
+https://youtu.be/UEQOPjlqh94
+
+~IceMatrix
+
+== See Also ==
+
+{{AMC10 box|year=2022|ab=B|num-b=20|num-a=22}}
+{{AMC12 box|year=2022|ab=B|num-b=19|num-a=21}}
+{{MAA Notice}}
+[[Category:Intermediate Algebra Problems]]

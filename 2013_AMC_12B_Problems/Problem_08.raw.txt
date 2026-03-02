@@ -1,0 +1,65 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2013_AMC_12B_Problems/Problem_8&action=raw
+
+Published Time: Sat, 07 Jun 2025 15:52:52 GMT
+
+Markdown Content:
+==Problem==
+Line l_1 has equation 3x - 2y = 1 and goes through A = (-1, -2). Line l_2 has equation y = 1 and meets line l_1 at point B. Line l_3 has positive slope, goes through point A, and meets l_2 at point C. The area of \triangle ABC is 3. What is the slope of l_3?
+
+\textbf{(A)}\ \frac{2}{3} \qquad \textbf{(B)}\ \frac{3}{4} \qquad \textbf{(C)}\ 1 \qquad \textbf{(D)}\ \frac{4}{3} \qquad \textbf{(E)}\ \frac{3}{2}
+
+==Solution 1==
+
+Line l_1 has the equation y=3x/2-1/2 when rearranged. Substituting 1 for y, we find that line l_2 will meet this line at point (1,1), which is point B. We call \overline{BC} the base and the altitude from A to the line connecting B and C, y=-1, the height. The altitude has length |-2-1|=3, and the area of \triangle{ABC}=3. Since A={bh}/2, b=2. Because l_3 has positive slope, it will meet l_2 to the right of B, and the point 2 to the right of B is (3,1). l_3 passes through (-1,-2) and (3,1), and thus has slope \frac{|1-(-2)|}{|3-(-1)|}= \boxed{\textbf{(B) }\frac{3}{4}}.
+
+==Solution 2 - Shoelace Theorem==
+
+We know lines l_1 and l_2 intersect at B, so we can solve for that point:
+3x-2y=1
+Because y = 1 we have: 
+3x-2(1) = 1
+3x-2=1
+3x=3
+x = 1
+
+Thus we have B = (1,1). 
+
+We know that the area of the triangle is 3, so by Shoelace Theorem we have: 
+
+A = \dfrac{1}{2} |(-2x+y-1) - (-2+x-y)|
+A = \dfrac{1}{2} |-2x+y-1+2-x+y|
+3 = \dfrac{1}{2} |-2x+y-1+2-x+y|
+6 = |-3x+2y+1|.
+
+Thus we have two options: 
+
+6 = -3x+2y+1
+5 = -3x+2y
+
+or
+
+6 = 3x-2y-1
+7 = 3x-2y.
+
+Now we must just find a point that satisfies m_{l_3} is positive. 
+
+Since {l_3} intersects {l_2} at y=1, from the second equation: 
+
+7 = 3x-2(1)
+7+2 = 3x
+x=3
+
+so a valid point here is (3,1). When calculated, the slope of l_3 in this situation yields \boxed{\textbf{(B) }\frac{3}{4}}.
+
+==Video Solution==
+https://youtu.be/a-3CAo4CoWc
+
+~Punxsutawney Phil or sugar_rush
+
+== See also ==
+{{AMC12 box|year=2013|ab=B|num-b=7|num-a=9}}
+
+[[Category:Introductory Geometry Problems]]
+{{MAA Notice}}

@@ -1,0 +1,48 @@
+# 2023 AMC 12A Problem 23
+
+## Problem
+How many ordered pairs of positive real numbers (a,b) satisfy the equation
+(1+$2a)(2+2b)(2a$+b) = 32ab?
+
+$\textbf{(A) }0\qquad\textbf{(B) }1\qquad\textbf{(C) }2\qquad\textbf{(D) }3\qquad\textbf{(E) }\text{an infinite number}$
+## Solution 1: AM-GM Inequality
+Using the AM-GM inequality on the two terms in each factor on the left-hand side, we get
+$$(1+2a)(2+2b)(2a+b) \ge 8\sqrt{2a \cdot 4b \cdot 2ab}= 32ab,$$
+This means the equality condition must be satisfied. Therefore, we must have $1 =2a$ = b, so the only solution is $\boxed{\textbf{(B) }1}.$
+
+*~semistevehan*
+## Solution 2: Sum Of Squares
+Equation (1+$2a)(2+2b)(2a$+b)=32ab is equivalent to
+$$b(2a-1)^2+2a(b-1)^2+(2a-b)^2=0,$$
+where a, b>0. Therefore $2a-1=b-1=2a-b=0$, so (a,b)=$\left(\tfrac12,1\right).$ Hence the answer is $\boxed{\textbf{(B) }1}.$
+## Solution 3:
+$$(1+2a)(1+b)(2a+b)=16ab,$$
+
+let $x=2a$, y=b, then it becomes (1+x)(1+y)(x+y)=8xy, or (1+x+y+xy)(x+y)=8xy.
+
+Let $\alpha=x+y, \beta=x$y, it becomes ($1+\alpha+\beta)\alpha=8\beta,$
+
+notice we have $\alpha^2-4\beta=(x-y)^2\ge 0,$ now $\beta= \frac{\alpha(1+\alpha)}{(8-\alpha)}$
+
+$\alpha^2\ge 4\beta=4\alpha(1+\alpha)/(8-\alpha) (n$otice we must have $8-\alpha>0), (8-\alpha)\alpha\ge 4(1+\alpha), (\alpha-2)^2\le 0, \alpha=2,$
+and $\beta=1,$
+
+so $x=y=1$ and $a=\frac12,b=1$ is the only solution.
+
+answer is $\boxed{\textbf {(B)}}$
+
+*~szhangmath*
+## Video Solution
+https://youtu.be/bRQ7xBm1hFc
+*~MathKatana*
+## Video Solution 1 by OmegaLearn
+https://youtu.be/LP4HSoaOCSU
+## Video Solution by MOP 2024
+https://youtu.be/kkx7sm6-ZE8
+
+*~r00tsOfUnity*
+## Video Solution
+https://youtu.be/ZKdnv8MsEDI
+
+*~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)*
+## See also

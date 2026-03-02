@@ -1,0 +1,62 @@
+# 2025 AMC 12B Problem 24
+
+## Problem
+How many real numbers satisfy the equation $\sin(20\pi x) = \log_{20}(x)$?
+
+$\textbf{(A) } 199 \qquad \textbf{(B) } 200 \qquad \textbf{(C) } 398 \qquad \textbf{(D) } 399 \qquad \textbf{(E) } 400$
+## Note
+This problem's solution logic is basically the same as [https://artofproblemsolving.com/wiki/index.php?title=1991_AIME_Problems/Problem_4 1991 AIME Q4].
+## Solution 1
+Let f(x)=$\sin(20\pi x)$ and g(x)=$\log_{20}(x).$ Note that g passes through $\left(\frac{1}{20},-1\right)$ and (1,0) and (20,1); these are the extrema and midpoint of f. We want to find the number of intersections of f and g.
+
+Let an occurrence of sine passing under the x-axis a _down-dip_, and similarly define an _up-dip_. We find that the period of f is $\frac{1}{10},$ so between $x=\frac{1}{20}$ and $x=1$ the number of periods is 9.5. The first period indeed counts, so effectively we have 10 down-dips in this interval. Each down-dip contributes 2 to the total, so we have 20 total intersections.
+
+From $x=1 to x=20$, there are 190 periods, each of which also contributes 2 to the total due to the up-dips. Therefore, this case contributes 380 points to the total.
+
+But (1,0) is counted in both cases, so the total is $20+380-1=\boxed{\textbf{(D) } 399}.$
+
+~ [https://artofproblemsolving.com/wiki/index.php/User:Eevee9406 eevee9406]
+## Solution 2 (AoPS Precalculus)
+Note that the number of solutions to  $\sin(20\pi x) = \log_{20}(x)$  is the same as asking the number of intersection points of the graphs  $\sin(20\pi x)$  and  $\log_{20}(x)$ .
+
+We begin by understanding the range of  $\sin(20\pi x)$ . The range is just  -1 $\le \sin(20\pi x) \le 1$ .
+
+For the graph  $\log_{20}(x)$  to intersect  $\sin(20\pi x)$ , we need  $\log_{20}(x)$  to also be in the range  -1 $\le \log_{20}(x) \le 1$ , which is simplified into  $\frac{1}{20} \le$ x $\le 20$ .
+
+The period of  $\sin(20\pi x)$  is  $\frac{2\pi}{20\pi} = \frac{1}{10}$ . Thus in every 1 unit, there are 10 periods.
+
+Also, the x intersections of both graphs are the same.  $\sin(20\pi x) = 0$  indicates  $x =\frac{1}{2} +$ k . Also,  $\log_{20}(x) = 0$  if  $x = 1$ , so we have  $k = 0$  and we must consider two cases, either  $\frac{1}{20} \le$ x $\le 1$  and  1 < x $\le 20$ .
+
+Case 1:  $\frac{1}{20} \le$ x $\le 1$ .
+
+For this case, we first must understand one thing. Does  $\log_{20}(x)$  intersect the first time  $\sin(20\pi x)$  dips below the x-axis for  x $\ge 0  0$ times, 1 time, or 2 times?
+
+Well, notice that if we plug in  x = $\frac{1}{20}$ ,  $\sin(20\pi x) = 0$  and  $\log_{20}(x) = -1$ , so because  $\log_{20}(x)$  is increasing, it will intersect the graph of  $\sin(20\pi x)$  twice.
+
+Taking this into consideration, in each period, half the period is positive whereas the other half is negative. Then, because there are 10 periods between  $\frac{1}{20} \le$ x $\le 1$ , there will be 10 negative periods.
+
+Then, the graph  $\log_{20}(x)$  intersects these 10 periods twice, giving us a total of 20 intersections in this case.
+
+Case 2:  1 < x $\le 20$ .
+
+For this case, we see that there is a total of 10 periods per unit, and there are  $20 - 1 = 19$  units. Then, because once again there are 10 positive intervals,  $\log_{20}(x)$  will intersect each interval twice, giving us a total of 20 intersections per one unit. Multiplying by 19, we get a total of  19 $\times 20 = 380$  intersections. However, we have excluded 1, and the first period lasting  1 $\le$ x $\le \frac{11}{10}$ , we see that two intersections occur, one at the point (1,0) and another at some random point. We already considered the point (1,0) last case, so we subtract 1 from the total to obtain $380 - 1 = 379$.
+
+Thus the total number of solutions to the equation is  20 + 379 = $\boxed{\textbf{(D) } 399}.$
+
+*~Pinotation*
+## Solution 3 (quick but risky)
+Each period of the sin function is $\frac{1}{10},$ so 200 periods, 2 intersections each (just draw it out) - 400. But there is 1 overlap in two periods at (1,0), so subtract 1 -> 399 (can check end behavior if time)
+*~ScoutViolet*
+## Solution 4 (Unit-period parametrization)
+Note that $-1\le \sin 20\pix=\log_{20}x\le 1,$ forcing $\frac{1}{20}\lex\le 20.$ For simplicity, let $2\pit=20\pi$ x or t=$10x\in\left$[ $\frac{1}{2},200 \right$]. Since $2\pi$ t is the unit-period parametrization, there are 200 full periods on [0,200], and we check the closed intervals $\left$[ $\frac{1}{2},1 \right$],[1,2],$\dots,$[199,200]. By sketching the graph, we see that when sine and log share the same sign, the sine will weave through the log twice for the non-degenerate case. The endpoints are also non-degenerate after verifying $\log\left( \frac{1}{20} \right)=-1,\log_{20}20=1$ whereas $\sin 20\pi \left( \frac{1}{20} \right)=\sin 20\pi(200)=0.$
+
+Because $\log_{20}(x=1)=0=\log_{20}(t=10)$ lands perfectly on an integer, by the intermediate value theorem, $\log$ will only have at most two signs among -,0,+ in each full period closed interval. We count $200\cdot 2=400$ intersections. However, $t=10$ is shared among [9,10] and [10,11] so we must subtract the overlap to get $400-1=\boxed{\textbf{(D) } 399}.$
+
+*~imosilver*
+## Solution 5 (Risky)
+We know that the period of $\sin(20\pi x)$ is $\frac{2\pi}{20\pi}=\frac{1}{10},$ and that the amplitude of the graph is 1. Now, we  need to find the values of x for which the graph of $y=\log_{20}$ x intersects with the upper and lower extrema of $\sin(20\pi x),$ or with $y=1$ and y=-1. At y=-1, $x=20^{-1}=\frac{1}{20},$ and at $y=1, x=20^1=20$. We know that for each period of the sin graph, there will be 2 intersections, and there are $\frac{20}{\frac{1}{10}}=200$ periods of the sin graph from 0 to 20. Because there are 3 answer choices close to 400, we can test with smaller bounds using a line, and count the points. The line from ($\frac{1}{20},-1)$ to ($\frac{1}{2},1)$ intersected the graph $y=\sin(20\pi x) 9$ times, and there were 5 periods between $\frac{1}{2}$ and 0, thus we can say the answer is $\boxed{\textbf{(D) } 399}$
+
+*~Voidling*
+## Video Solution 1 by OmegaLearn.org
+https://youtu.be/BzeEeUbjKDQ
+## See Also

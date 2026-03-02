@@ -1,0 +1,57 @@
+# 2024 AMC 12B Problem 8
+
+## Problem
+What value of x satisfies
+$$\frac{\log_2x \cdot \log_3x}{\log_2x+\log_3x}=2?$$
+
+$\textbf{(A) } 25 \qquad\textbf{(B) } 32 \qquad\textbf{(C) } 36 \qquad\textbf{(D) } 42 \qquad\textbf{(E) } 48$
+## Solution 1
+We have
+
+$$
+\begin{align*}
+\log_2x\cdot\log_3x&=2(\log_2x+\log_3x) \\
+1&=\frac{2(\log_2x+\log_3x)}{\log_2x\cdot\log_3x} \\
+1&=2(\frac{1}{\log_3x}+\frac{1}{\log_2x}) \\
+1&=2(\log_x3+\log_x2) \\
+\log_x6&=\frac{1}{2} \\
+x^{\frac{1}{2}}&=6 \\
+x&=36
+\end{align*}
+$$
+
+$$so \boxed{\textbf{(C) }36}$$
+
+*~kafuu_chino*
+## Solution 2 (Change of Base)
+
+$$
+\begin{align*}
+\frac{\log_2x \cdot \log_3x}{\log_2x+\log_3x} &= 2 \$$6pt]
+\log_2x \cdot \log_3x &= 2(\log_2x+\log_3x) \$$6pt]
+\log_2x \cdot \log_3x &= 2\log_2x + 2\log_3x \$$6pt]
+\frac{\log x}{\log 2} \cdot \frac{\log x}{\log 3} &= 2\frac{\log x}{\log 2} + 2\frac{\log x}{\log 3} \$$6pt]
+\frac{(\log x)^2}{\log 2 \cdot \log 3} &= \frac{2\log x \cdot \log 3 + 2\log x \cdot \log 2}{\log 2 \cdot \log 3} \$$6pt]
+(\log x)^2 &= 2\log x \cdot \log 3 + 2\log x \cdot \log 2 \$$6pt]
+(\log x)^2 &= 2\log x(\log 2 + \log 3) \$$6pt]
+\log x &= 2(\log 2 + \log 3) \$$6pt]
+x &= 10^{2(\log 2 + \log 3)} \$$6pt]
+x &= (10^{\log 2} \cdot 10^{\log 3})^2 \$$6pt]
+x &= (2 \cdot 3)^2 = 6^2 = \boxed{\textbf{(C) }36}
+\end{align*}
+$$
+
+
+*~sourodeepdeb*
+## Solution 3 (Using Variables)
+Let $a=\log_2$x and $b=\log_3$x. This gives us the equation $\frac{ab}{a+b}=2.$
+
+Then, from our definitions of a and $b, 2^a=x$ and $3^b=x,$ so $2^a=3^b$. Taking the logarithm base 3 of both sides of this equation gives us $\log_3 2^a=b,$ hence a $\log_3 2=b.$
+Now, we substitute a $\log_3 2$ for b in the equation, which gives $\frac{a \cdot a \log_3 2}{a+a \log_3 2}=2.$Notice that we can factor out an a in the numerator and denominator, if a $\neq 0,$ and doing so yields $\frac{a \log_3 2}{1+\log_3 2}=2.$ We know that $1=\log_3 3,$ so putting that in gives us $\frac{a \log_3 2}{\log_3 3+\log_3 2}=2 \implies \frac{a \log_3 2}{\log_3 6}=2.$So, $a=2\cdot \frac{\log_3 6}{\log_3 2},$ which, using the change of base formula, is equivalent to 2 $\cdot \log_2 6,$ thus, $a=2\cdot \log_2 6= \log _2 6^2= \log _2 36.$ Finally, using our original definition of a, we have $a =\log_2x=\log_2 36,$ so $x=\boxed{\textbf{(C) }36}.$
+
+*~hdanger*
+## Video Solution 1 by TheBeautyofMath
+https://youtu.be/AKLPjTRPF4Q?t=539
+
+*~IceMatrix*
+## See also

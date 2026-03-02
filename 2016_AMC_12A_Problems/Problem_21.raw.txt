@@ -1,0 +1,668 @@
+{{duplicate|[[2016 AMC 10A Problems#Problem 24|2016 AMC 10A #24]] and [[2016 AMC 12A Problems#Problem 21|2016 AMC 12A #21]]}}
+
+==Problem==
+A quadrilateral is inscribed in a circle of radius <imath>200\sqrt{2}</imath>. Three of the sides of this quadrilateral have length <imath>200</imath>. What is the length of the fourth side?
+
+<imath>\textbf{(A) }200\qquad \textbf{(B) }200\sqrt{2}\qquad\textbf{(C) }200\sqrt{3}\qquad\textbf{(D) }300\sqrt{2}\qquad\textbf{(E) } 500</imath>
+
+==Solution 1 ==
+
+<asy>
+size(250);
+defaultpen(linewidth(0.4));
+//Variable Declarations
+real RADIUS;
+pair A, B, C, D, E, F, O;
+RADIUS=3;
+
+//Variable Definitions
+A=RADIUS*dir(148.414);
+B=RADIUS*dir(109.471);
+C=RADIUS*dir(70.529);
+D=RADIUS*dir(31.586);
+O=(0,0);
+
+//Path Definitions
+path quad= A -- B -- C -- D -- cycle;
+
+//Initial Diagram
+draw(Circle(O, RADIUS), linewidth(0.8));
+draw(quad, linewidth(0.8));
+label("$A$",A,W);
+label("$B$",B,NW);
+label("$C$",C,NE);
+label("$D$",D,ENE);
+label("$O$",O,S);
+label("$\theta$",O,3N);
+
+//Radii
+draw(O--A);
+draw(O--B);
+draw(O--C);
+draw(O--D);
+
+//Construction
+E=extension(B,O,A,D);
+
+label("$E$",E,NE);
+
+F=extension(C,O,A,D);
+
+label("$F$",F,NE);
+
+
+//Angle marks
+draw(anglemark(C,O,B));
+
+</asy>
+
+Let <imath>AD</imath> intersect <imath>OB</imath> at <imath>E</imath> and <imath>OC</imath> at <imath>F.</imath>
+
+
+<imath>\overarc{AB}= \overarc{BC}= \overarc{CD}=\theta</imath>
+
+<imath>\angle{BAD}=\frac{1}{2} \cdot \overarc{BCD}=\theta=\angle{AOB}</imath>
+
+
+From there, <imath>\triangle{OAB} \sim \triangle{ABE}</imath>, thus:
+
+<imath>\frac{OA}{AB} = \frac{AB}{BE} = \frac{OB}{AE}</imath>
+
+<imath>OA = OB</imath> because they are both radii of <imath>\odot{O}</imath>. Since <imath>\frac{OA}{AB} = \frac{OB}{AE}</imath>, we have that <imath>200 = AB = AE</imath>. Similarly, <imath>CD = DF</imath>.
+
+<imath>OE = 100\sqrt{2} = \frac{OB}{2}</imath> and <imath>EF=\frac{BC}{2}=100</imath> , so <imath>AD=AE + EF + FD = 200 + 100 + 200 = \boxed{\textbf{(E) } 500}</imath>
+
+===Note===
+The first angle chase is done by the central angle theorem. Note that <imath>\angle BAD</imath> is an inscribed angle from <imath>BD</imath> to <imath>A</imath>, which is always <imath>\frac{1}{2}</imath> of the angle of <imath>\overarc{BD}</imath>. Hence follows.
+
+Furthermore, we get <imath>OE=100\sqrt{2}</imath> from the similar triangles mentioned. We have: <imath>\frac{200}{200\sqrt{2}}=\frac{BE}{200}</imath>. Hence, <imath>BE=100\sqrt{2}</imath> and so <imath>OE=OB-BE=100\sqrt{2}</imath>.
+~mathboy282
+
+==Solution 2 (Algebra)==
+To save us from getting big numbers with lots of zeros behind them, let's divide all side lengths by <imath>200</imath> for now, then multiply it back at the end of our solution.
+
+
+<asy>
+size(250);
+defaultpen(linewidth(0.4));
+//Variable Declarations
+real RADIUS;
+pair A, B, C, D, E, O;
+RADIUS=3;
+
+//Variable Definitions
+A=RADIUS*dir(148.414);
+B=RADIUS*dir(109.471);
+C=RADIUS*dir(70.529);
+D=RADIUS*dir(31.586);
+E=extension(B,D,O,C);
+O=(0,0);
+
+//Path Definitions
+path quad= A -- B -- C -- D -- cycle;
+
+//Initial Diagram
+draw(Circle(O, RADIUS), linewidth(0.8));
+draw(quad, linewidth(0.8));
+label("$A$",A,W);
+label("$B$",B,NW);
+label("$C$",C,NE);
+label("$D$",D,E);
+label("$E$",E,WSW);
+label("$O$",O,S);
+
+//Radii
+draw(O--A);
+draw(O--B);
+draw(O--C);
+draw(O--D);
+
+//Construction
+draw(B--D);
+draw(rightanglemark(C,E,D));
+</asy>
+
+Construct quadrilateral <imath>ABCD</imath> on the circle with <imath>AD</imath> being the missing side (Notice that since the side length is less than the radius, it will be very small on the top of the circle). Now, draw the radii from center <imath>O</imath> to <imath>A,B,C,</imath> and <imath>D</imath>. Let the intersection of <imath>BD</imath> and <imath>OC</imath> be point <imath>E</imath>. Notice that <imath>BD</imath> and <imath>OC</imath> are perpendicular because <imath>BCDO</imath> is a kite.
+
+We set lengths <imath>BE=ED</imath> equal to <imath>x</imath> (Solution 1.1 begins from here). By the Pythagorean Theorem,
+<cmath>\sqrt{1^2-x^2}+\sqrt{(\sqrt{2})^2-x^2}=\sqrt{2}</cmath>
+
+We solve for <imath>x</imath>:
+<cmath>1-x^2+2-x^2+2\sqrt{(1-x^2)(2-x^2)}=2</cmath>
+<cmath>2\sqrt{(1-x^2)(2-x^2)}=2x^2-1</cmath>
+<cmath>4(1-x^2)(2-x^2)=(2x^2-1)^2</cmath>
+<cmath>8-12x^2+4x^4=4x^4-4x^2+1</cmath>
+<cmath>8x^2=7</cmath>
+<cmath>x=\frac{\sqrt{14}}{4}</cmath>
+
+By [[Ptolemy's Theorem]],
+<cmath>AB \cdot CD + BC \cdot AD = AC \cdot BD = BD^2 = (2 \cdot BE)^2</cmath>
+
+Substituting values,
+<cmath>1^2+1 \cdot AD = 4{\left( \frac{\sqrt{14}}{4} \right)}^2</cmath>
+<cmath>1+AD=\frac{7}{2}</cmath>
+<cmath>AD=\frac{5}{2}</cmath>
+
+Finally, we multiply back the <imath>200</imath> that we divided by at the beginning of the problem to get <imath>AD=\boxed{\textbf{(E) } 500}</imath>.
+
+==Solution 3 (Extended Law of Sines and Light Trig)==
+<asy>
+size(250);
+defaultpen(linewidth(0.4));
+//Variable Declarations
+real RADIUS;
+pair A, B, C, D, O;
+RADIUS=3;
+
+//Variable Definitions
+A=RADIUS*dir(148.414);
+B=RADIUS*dir(109.471);
+C=RADIUS*dir(70.529);
+D=RADIUS*dir(31.586);
+P=RADIUS*dir(270);
+O=(0,0);
+
+//Path Definitions
+path quad= A -- B -- C -- D -- cycle;
+
+//Initial Diagram
+draw(circle(O, RADIUS), linewidth(0.8));
+draw(quad, linewidth(0.8));
+label("<imath>A</imath>",A,W);
+label("<imath>B</imath>",B,NW);
+label("<imath>C</imath>",C,NE);
+label("<imath>D</imath>",D,E);
+label("<imath>O</imath>",O,S);
+
+//Radii
+draw(O--A);
+draw(O--B);
+draw(O--C);
+draw(O--D);
+draw(P--A);
+draw(P--B);
+draw(P--C);
+draw(P--D);
+
+
+Draw some point <imath>P</imath> somewhere on major arc <imath>\overarc{AD}</imath>. Let <imath>\angle AOB \cong \angle BOC \cong \angle COD = 2\theta</imath>. Then, by inscribed angle <imath>\angle APB \cong \angle BPC \cong \angle CPD = \theta</imath>. By extended law of sines, we have <imath>\frac{200}{\text{sin}(\theta)} = 2(200\sqrt{2}) \implies \text{sin}(\theta) = \frac{\sqrt{2}}{4}</imath>. Using the triple angle sine formula, we have <imath>\text{sin}(3\theta)=3\text{sin}(\theta) - 4\text{sin}^3(\theta) = \frac{5\sqrt{2}}{8}</imath>.
+Then, again by extended law of sines, we have <imath>\frac{AD}{\text{sin}(3\theta)}=400\sqrt{2}</imath>. Thus, <imath>AD = \text{sin}(3\theta) 400\sqrt{2} = \boxed{500}</imath>.
+
+==Solution 3 (HARD Algebra)==
+<asy>
+size(250);
+defaultpen(linewidth(0.4));
+//Variable Declarations
+real RADIUS;
+pair A, B, C, D, O;
+RADIUS=3;
+
+//Variable Definitions
+A=RADIUS*dir(148.414);
+B=RADIUS*dir(109.471);
+C=RADIUS*dir(70.529);
+D=RADIUS*dir(31.586);
+O=(0,0);
+
+//Path Definitions
+path quad= A -- B -- C -- D -- cycle;
+
+//Initial Diagram
+draw(Circle(O, RADIUS), linewidth(0.8));
+draw(quad, linewidth(0.8));
+label("$A$",A,W);
+label("$B$",B,NW);
+label("$C$",C,NE);
+label("$D$",D,E);
+label("$O$",O,S);
+
+//Radii
+draw(O--A);
+draw(O--B);
+draw(O--C);
+draw(O--D);
+
+</asy>
+
+Let quadrilateral <imath>ABCD</imath> be inscribed in circle <imath>O</imath>, where <imath>AD</imath> is the side of unknown length. Draw the radii from center <imath>O</imath> to all four vertices of the quadrilateral, and draw the altitude of <imath>\triangle BOC</imath> such that it passes through side <imath>AD</imath> at the point <imath>G</imath> and meets side <imath>BC</imath> at point <imath>H</imath>.
+
+By the Pythagorean Theorem, the length of <imath>OH</imath> is
+<cmath>\begin{align*}
+\sqrt{CO^2 - HC^2} &= \sqrt{(200\sqrt{2})^2 - \left(\frac{200}{2}\right)^2}
+\\ &= \sqrt{80000 - 10000}
+\\ &= \sqrt{70000}
+\\ &= 100\sqrt{7}.
+\end{align*}</cmath>
+
+Note that <imath>[ABCDO] = [AOB] + [BOC] + [COD] = [AOD] + [ABCD].</imath> Let the length of <imath>OG</imath> be <imath>h</imath> and the length of <imath>AD</imath> be <imath>x</imath>; then we have that 
+
+<imath> [AOB] + [BOC] + [COD] = \frac{200 \times 100\sqrt{7}}{2} + \frac{200 \times 100\sqrt{7}}{2} + \frac{200 \times 100\sqrt{7}}{2} = \frac{x \times h}{2} + \frac{(100\sqrt{7} - h)(200 + x)}{2} = [AOD] + [ABCD].</imath> 
+
+Furthermore,
+<cmath>\begin{align*}
+h &= \sqrt{OD^2 - GD^2}
+\\ &= \sqrt{(200\sqrt{2})^2 - \left(\frac{x}{2}\right)^2}
+\\ &= \sqrt{80000 - \frac{x^2}{4}}
+\end{align*}</cmath>
+
+Substituting this value of <imath>h</imath> into the previous equation and evaluating for <imath>x</imath>, we get:
+<cmath>\frac{200 \times 100\sqrt{7}}{2} + \frac{200 \times 100\sqrt{7}}{2} + \frac{200 \times 100\sqrt{7}}{2} = \frac{x \times h}{2} + \frac{(100\sqrt{7} - h)(200 + x)}{2}</cmath>
+<cmath>\frac{3 \times 200 \times 100\sqrt{7}}{2} = \frac{x\sqrt{80000 - \frac{x^2}{4}}}{2} + \frac{\left(100\sqrt{7} - \sqrt{80000 - \frac{x^2}{4}}\right)(200 + x)}{2}</cmath>
+<cmath>60000\sqrt{7} = \left(x\sqrt{80000 - \frac{x^2}{4}}\right) + \left(20000\sqrt{7}\right) + \left(100x\sqrt{7}\right) - \left(200\sqrt{80000 - \frac{x^2}{4}}\right) - \left(x\sqrt{80000 - \frac{x^2}{4}}\right)</cmath>
+<cmath>40000\sqrt{7} = 100x\sqrt{7} - 200\sqrt{80000 - \frac{x^2}{4}}</cmath>
+<cmath>400\sqrt{7} = x\sqrt{7} - 2\sqrt{80000 - \frac{x^2}{4}}</cmath>
+<cmath>(x - 400)\sqrt{7} = 2\sqrt{80000 - \frac{x^2}{4}}</cmath>
+<cmath>7(x-400)^2 = 4\left(80000 - \frac{x^2}{4}\right)</cmath>
+<cmath>7x^2 - 5600x + 1120000 = 320000 - x^2</cmath>
+<cmath>8x^2 - 5600x + 800000 = 0</cmath>
+<cmath>x^2 - 700x + 100000 = 0</cmath>
+
+The roots of this quadratic are found by using the quadratic formula:
+<cmath>\begin{align*}
+x &= \frac{-(-700) \pm \sqrt{(-700)^2 - 4 \times 1 \times 100000}}{2 \times 1}
+\\ &= \frac{700 \pm \sqrt{490000 - 400000}}{2}
+\\ &= \frac{700}{2} \pm \frac{\sqrt{90000}}{2}
+\\ &= 350 \pm \frac{300}{2}
+\\ &= 200, 500
+\end{align*}</cmath>
+
+If the length of <imath>AD</imath> is <imath>200</imath>, then <imath>ABCD</imath> would be a square. Thus, the radius of the circle would be
+<cmath>\frac{\sqrt{200^2 + 200^2}}{2} = \frac{\sqrt{80000}}{2} = \frac{200\sqrt{2}}{2} = 100\sqrt{2}</cmath>
+Which is a contradiction. Therefore, our answer is <imath>\boxed{500}.</imath>
+
+==Solution 4 (Trigonometry Bash)==
+<asy>
+size(250);
+defaultpen(linewidth(0.4));
+//Variable Declarations
+real RADIUS;
+pair A, B, C, D, O;
+RADIUS=3;
+
+//Variable Definitions
+A=RADIUS*dir(148.414);
+B=RADIUS*dir(109.471);
+C=RADIUS*dir(70.529);
+D=RADIUS*dir(31.586);
+O=(0,0);
+
+//Path Definitions
+path quad= A -- B -- C -- D -- cycle;
+
+//Initial Diagram
+draw(Circle(O, RADIUS), linewidth(0.8));
+draw(quad, linewidth(0.8));
+label("$A$",A,W);
+label("$B$",B,NW);
+label("$C$",C,NE);
+label("$D$",D,E);
+label("$O$",O,S);
+label("$\theta$",O,3N);
+
+//Radii
+draw(O--A);
+draw(O--B);
+draw(O--C);
+draw(O--D);
+
+//Angle mark for BOC
+draw(anglemark(C,O,B));
+</asy>
+
+Construct quadrilateral <imath>ABCD</imath> on the circle with <imath>AD</imath> being the missing side (Notice that since the side length is less than the radius, it will be very small on the top of the circle). Now, draw the radii from center <imath>O</imath> to <imath>A,B,C,</imath> and <imath>D</imath>. Apply the [[law of cosines]] on <imath>\Delta BOC</imath>; let <imath> \theta = \angle BOC</imath>. We get the following equation: <cmath>(BC)^{2}=(OB)^{2}+(OC)^{2}-2\cdot OB \cdot OC\cdot \cos\theta</cmath> Substituting the values in, we get <cmath>(200)^{2}=2\cdot (200)^{2}+ 2\cdot (200)^{2}- 2\cdot 2\cdot (200)^{2}\cdot \cos\theta</cmath> Canceling out, we get <cmath>\cos\theta=\frac{3}{4}</cmath>
+Because <imath>\angle AOB</imath>, <imath>\angle BOC</imath>, and <imath>\angle COD</imath> are congruent, <imath>\angle AOD = 3\theta</imath>. To find the remaining side (<imath>AD</imath>), we simply have to apply the law of cosines to <imath>\Delta AOD</imath>. Now, to find <imath>\cos 3\theta</imath>, we can derive a formula that only uses <imath>\cos\theta</imath>: <cmath>\cos 3\theta=\cos (2\theta+\theta)= \cos 2\theta \cos\theta- (2\sin\theta \cos\theta) \cdot \sin \theta</cmath> <cmath>\cos 3\theta= \cos\theta (\cos 2\theta-2\sin^{2}\theta)=\cos\theta (2\cos^{2}\theta-3+2\cos^{2}\theta)</cmath> <cmath>\Rightarrow \cos 3\theta=4\cos^{3}\theta-3\cos\theta</cmath> It is useful to memorize the triple angle formulas (<imath>\cos 3\theta=4\cos^{3}\theta-3\cos\theta, \sin 3\theta=3\sin\theta-4\sin^{3}\theta</imath>).  Plugging in <imath>\cos\theta=\frac{3}{4}</imath>, we get <imath>\cos 3\theta= -\frac{9}{16}</imath>. Now, applying law of cosines on triangle <imath>OAD</imath>, we get <cmath>(AD)^{2}= 2\cdot (200)^{2}+ 2\cdot (200)^{2}+2\cdot 200\sqrt2 \cdot 200\sqrt2 \cdot \frac{9}{16}</cmath> <cmath>\Rightarrow 2\cdot (200)^{2} \cdot (1+1+ \frac{9}{8})=(200)^{2}\cdot \frac{25}{4}</cmath> <cmath>AD=200 \cdot \frac{5}{2}=\boxed{500}</cmath>
+
+==Solution 5 (Easier Trigonometry)==
+
+<asy>
+size(250);
+defaultpen(linewidth(0.4));
+//Variable Declarations
+real RADIUS;
+pair A, B, C, D, E, F, O;
+RADIUS=3;
+
+//Variable Definitions
+A=RADIUS*dir(148.414);
+B=RADIUS*dir(109.471);
+C=RADIUS*dir(70.529);
+D=RADIUS*dir(31.586);
+E=foot(A,B,C);
+F=foot(D,B,C);
+O=(0,0);
+
+//Path Definitions
+path quad= A -- B -- C -- D -- cycle;
+
+//Initial Diagram
+draw(Circle(O, RADIUS), linewidth(0.8));
+draw(quad, linewidth(0.8));
+label("$A$",A,W);
+label("$B$",B,NW);
+label("$C$",C,NE);
+label("$D$",D,ENE);
+label("$O$",O,S);
+label("$\theta$",O,3N);
+
+//Radii
+draw(O--A);
+draw(O--B);
+draw(O--C);
+draw(O--D);
+
+//Construction
+draw(A--E);
+draw(E--B);
+draw(C--F);
+draw(F--D);
+label("$E$",E,NW);
+label("$F$",F,NE);
+
+//Angle marks
+draw(anglemark(C,O,B));
+draw(rightanglemark(A,E,B));
+draw(rightanglemark(C,F,D));
+</asy>
+
+Construct quadrilateral <imath>ABCD</imath> on the circle <imath>O</imath> with <imath>AD</imath> being the desired side. Then, drop perpendiculars from <imath>A</imath> and <imath>D</imath> to the extended line of <imath>\overline{BC}</imath> and let these points be <imath>E</imath> and <imath>F</imath>, respectively. Also, let <imath>\theta = \angle BOC</imath>. From the [[Law of Cosines]] on <imath>\triangle BOC</imath>, we have <imath>\cos \theta = \frac{3}{4}</imath>.
+
+Now, since <imath>\triangle BOC</imath> is isosceles with <imath>\overline{OB} \cong \overline{OC}</imath>, we have that <imath>\angle BCO = \angle CBO = 90 - \frac{\theta}{2}</imath>. In addition, we know that <imath>\overline{BC} \cong \overline{CD}</imath> as they are both equal to <imath>200</imath> and <imath>\overline{OB} \cong \overline{OC} \cong \overline{OD}</imath> as they are both radii of the same circle. By SSS Congruence, we have that <imath>\triangle OBC \cong \triangle OCD</imath>, so we have that <imath>\angle OCD = \angle BCO = 90 - \frac{\theta}{2}</imath>, so <imath>\angle DCF = \theta</imath>.
+
+Thus, we have <imath>\frac{FC}{DC} = \cos \theta = \frac{3}{4}</imath>, so <imath>FC = 150</imath>. Similarly, <imath>BE = 150</imath>, and <imath>AD = 150 + 200 + 150 = \boxed{500}</imath>.
+
+==Solution 6 (Ptolemy's Theorem)==
+
+<asy>
+pathpen = black; pointpen = black;
+size(6cm);
+draw(unitcircle);
+pair A = D("A", dir(50), dir(50));
+pair B = D("B", dir(90), dir(90));
+pair C = D("C", dir(130), dir(130));
+pair D = D("D", dir(170), dir(170));
+pair O = D("O", (0,0), dir(-90));
+draw(A--C, red);
+draw(B--D, blue+dashed);
+draw(A--B--C--D--cycle);
+draw(A--O--C);
+draw(O--B);
+</asy>
+
+Let <imath>s = 200</imath>.  Let <imath>O</imath> be the center of the circle.  Then <imath>AC</imath> is twice the altitude of <imath>\triangle OBC</imath> to <imath>\overline{OB}</imath>.  Since <imath>\triangle OBC</imath> is isosceles we can compute its area to be <imath>\frac{s^2 \sqrt{7}}{4}</imath>, hence <imath>CA = 2 \cdot \tfrac{2 \cdot s^2\sqrt7/4}{s\sqrt2} = s\sqrt{\frac{7}{2}}</imath>.
+
+Now by Ptolemy's Theorem we have <imath>CA^2 = s^2 + AD \cdot s \implies AD = \left(\frac{7}{2}-1\right)s.</imath> This gives us: <cmath>\boxed{\textbf{(E) } 500.}</cmath>
+
+==Solution 7 (Trigonometry)==
+Since all three sides equal <imath>200</imath>, they subtend three equal angles from the center. The right triangle between the center of the circle, a vertex, and the midpoint between two vertices has side lengths <imath>100,100\sqrt{7},200\sqrt{2}</imath> by the Pythagorean Theorem. Thus, the sine of half of the subtended angle is <imath>\frac{100}{200\sqrt{2}}=\frac{\sqrt{2}}{4}</imath>. Similarly, the cosine is <imath>\frac{100\sqrt{7}}{200\sqrt{2}}=\frac{\sqrt{14}}{4}</imath>.
+Since there are three sides, and since <imath>\sin\theta=\sin\left(180-\theta\right)</imath>,we seek to find <imath>2r\sin 3\theta</imath>.
+First, <imath>\sin 2\theta=2\sin\theta\cos\theta=2\cdot\left(\frac{\sqrt{2}}{4}\right)\left(\frac{\sqrt{14}}{4}\right)=\frac{2\sqrt{2}\sqrt{14}}{16}=\frac{\sqrt{7}}{4}</imath> and <imath>\cos 2\theta=\frac{3}{4}</imath> by Pythagorean.
+<cmath>\sin 3\theta=\sin(2\theta+\theta)=\sin 2\theta\cos\theta+\sin \theta\cos 2\theta=\frac{\sqrt{7}}{4}\left(\frac{\sqrt{14}}{4}\right)+\frac{\sqrt{2}}{4}\left(\frac{3}{4}\right)=\frac{7\sqrt{2}+3\sqrt{2}}{16}=\frac{5\sqrt{2}}{8}</cmath>
+<cmath>2r\sin 3\theta=2\left(200\sqrt{2}\right)\left(\frac{5\sqrt{2}}{8}\right)=400\sqrt{2}\left(\frac{5\sqrt{2}}{8}\right)=\frac{800\cdot 5}{8}=\boxed{\textbf{(E)}\text{ 500}}</cmath>
+
+==Solution 8 (Area By Brahmagupta's Formula)==
+For simplicity, scale everything down by a factor of 100. Let the inscribed trapezoid be <imath>ABCD</imath>, where <imath>AB=BC=CD=2</imath> and <imath>DA</imath> is the missing side length. Let <imath>DA=2x</imath>. If <imath>M</imath> and <imath>N</imath> are the midpoints of <imath>BC</imath> and <imath>AD</imath>, respectively, the height of the trapezoid is <imath>OM-ON</imath>. By the pythagorean theorem, <imath>OM=\sqrt{OB^2-BM^2}=\sqrt7</imath> and <imath>ON=\sqrt{OA^2-AN^2}=\sqrt{8-x^2}</imath>. Thus the height of the trapezoid is <imath>\sqrt7-\sqrt{8-x^2}</imath>, so the area is <imath>\frac{(2+2x)(\sqrt7-\sqrt{8-x^2})}{2}=(x+1)(\sqrt7-\sqrt{8-x^2})</imath>. By [[Brahmagupta's formula]], the area is <imath>\sqrt{(x+1)(x+1)(x+1)(3-x)}</imath>. Setting these two equal, we get <imath>(x+1)(\sqrt7-\sqrt{8-x^2})=\sqrt{(x+1)(x+1)(x+1)(3-x)}</imath>. Dividing both sides by <imath>x+1</imath> and then squaring, we get <imath>7-2(\sqrt7)(\sqrt{8-x^2})+8-x^2=(x+1)(3-x)</imath>. Expanding the right hand side and canceling the <imath>x^2</imath> terms gives us <imath>15-2(\sqrt7)(\sqrt{8-x^2})=2x+3</imath>. Rearranging and dividing by two, we get <imath>(\sqrt7)(\sqrt{8-x^2})=6-x</imath>. Squaring both sides, we get <imath>56-7x^2=x^2-12x+36</imath>. Rearranging, we get <imath>8x^2-12x-20=0</imath>. Dividing by 4 we get <imath>2x^2-3x-5=0</imath>. Factoring we get, <imath>(2x-5)(x+1)=0</imath>, and since <imath>x</imath> cannot be negative, we get <imath>x=2.5</imath>. Since <imath>DA=2x</imath>, <imath>DA=5</imath>. Scaling up by 100, we get <imath>\boxed{\textbf{(E)}\text{ 500}}</imath>.
+
+==Solution 9 (Similar Triangles)==
+<asy>
+size(250);
+defaultpen(linewidth(0.4));
+//Variable Declarations, L is used to write alpha= statement
+real RADIUS;
+pair A, B, C, D, E, F, O, L;
+RADIUS=3;
+
+//Variable Definitions
+A=RADIUS*dir(148.414);
+B=RADIUS*dir(109.471);
+C=RADIUS*dir(70.529);
+D=RADIUS*dir(31.586);
+E=extension(A,D,O,B);
+F=extension(A,D,O,C);
+L=midpoint(C--D);
+O=(0,0);
+
+//Path Definitions
+path quad = A -- B -- C -- D -- cycle;
+
+//Initial Diagram
+draw(circle(O, RADIUS), linewidth(0.8));
+draw(quad, linewidth(0.8));
+label("$A$",A,NW);
+label("$B$",B,NW);
+label("$C$",C,NE);
+label("$D$",D,NE);
+label("$E$",E,SW);
+label("$F$",F,SE);
+label("$O$",O,SE);
+dot(O,linewidth(5));
+
+//Radii
+draw(O--A);
+draw(O--B);
+draw(O--C);
+draw(O--D);
+
+//Construction
+label("$\alpha = 90-\frac{\theta}{2}$",L,5NE,rgb(128, 0, 0));
+draw(anglemark(C,O,B));
+label("$\theta$",O,3N);
+draw(anglemark(E,F,O));
+label("$\alpha$",F,3SW);
+draw(anglemark(D,F,C));
+label("$\alpha$",F,3NE);
+draw(anglemark(F,C,D));
+label("$\alpha$",C,3SSE);
+draw(anglemark(C,D,F));
+label("$\theta$",(RADIUS-0.04)*dir(31.586),3WNW);
+</asy>
+Label the points as shown, and let <imath>\angle{EOF} = \theta</imath>. Since <imath>\overline{OB} = \overline{OC}</imath>, and <imath>\triangle{OFE} \sim \triangle{OCB}</imath>, we get that <imath>\angle{EFO} = 90-\frac{\theta}{2}</imath>. We assign <imath>\alpha</imath> to <imath>90-\frac{\theta}{2}</imath> for simplicity. 
+From here, by vertical angles <imath>\angle{CFD} = \alpha</imath>. Also, since <imath>\triangle{OCB} \cong \triangle{ODC}</imath>, <imath>\angle{OCD} = \alpha</imath>. This means that <imath>\angle{CDF} = 180-2\alpha = \theta</imath>, which leads to <imath>\triangle{OCB} \sim \triangle{DCF}</imath>. 
+Since we know that <imath>\overline{CD} = 200</imath>, <imath>\overline{DF} = 200</imath>, and by similar reasoning <imath>\overline{AE} = 200</imath>. 
+Finally, again using similar triangles, we get that <imath>\overline{CF} = 100\sqrt{2}</imath>, which means that <imath>\overline{OF} = \overline{OC} - \overline{CF} = 200\sqrt{2} - 100\sqrt{2} = 100\sqrt{2}</imath>. We can again apply similar triangles (or use Power of a Point) to get <imath>\overline{EF} = 100</imath>, and finally <imath>\overline{AD} = \overline{AE}+\overline{EF}+\overline{FD} = 200+100+200=\boxed{\textbf{(E)}500}</imath> - ColtsFan10
+
+==Solution 10 (Complex Numbers)==
+
+We first scale down by a factor of <imath>200\sqrt{2}</imath>. Let the vertices of the quadrilateral be <imath>A</imath>, <imath>B</imath>, <imath>C</imath>, and <imath>D</imath>, so that <imath>AD</imath> is the length of the fourth side. We draw this in the complex plane so that <imath>D</imath> corresponds to the complex number <imath>1</imath>, and we let <imath>C</imath> correspond to the complex number <imath>z</imath>. Then, <imath>A</imath> corresponds to <imath>z^3</imath> and <imath>B</imath> corresponds to <imath>z^2</imath>. We are given that <imath>\lvert z \rvert = 1</imath> and <imath>\lvert z-1 \rvert = 1/\sqrt{2}</imath>, and we wish to find <imath>\lvert z^3 - 1 \rvert=\lvert z^2+z+1\rvert \cdot \lvert z-1 \rvert=\lvert (z^2+z+1)/\sqrt{2} \rvert</imath>. Let <imath>z=a+bi</imath>, where <imath>a</imath> and <imath>b</imath> are real numbers. Then, <imath>a^2+b^2=1</imath> and <imath>a^2-2a+1+b^2=1/2</imath>; solving for <imath>a</imath> and <imath>b</imath> yields <imath>a=3/4</imath> and <imath>b=\sqrt{7}/4</imath>. Thus, <imath>AD = \lvert z^3 - 1 \rvert = \lvert (z^2+z+1)/\sqrt{2} \rvert = \lvert (15/8 + 5\sqrt{7}/8 \cdot i)/\sqrt{2} \rvert = \frac{5\sqrt{2}}{4}</imath>. Scaling back up gives us a final answer of <imath>\frac{5\sqrt{2}}{4} \cdot 200\sqrt{2} = \boxed{\textbf{(E)} 500}</imath>.
+
+~ Leo.Euler
+
+==Solution 11 (Trignometry + Ptolemy’s)==
+
+Let angle <imath>C</imath> be <imath>2a</imath>. This way <imath>BD</imath> will be <imath>400sin(a)</imath>. Now we can trig bash. As the circumradius of triangle <imath>BCD</imath> is <imath>200\sqrt{2}</imath>, we can use the formula <cmath>R=\frac{abc}{4A}</cmath> and <cmath>A=\frac{absin(C)}{2}</cmath> and plug in all the values we got to get <cmath>200\sqrt{2}=\frac{200^2 \cdot 400sin(a)}{4 \cdot (\frac{200^2 sin(2a)}{2})}</cmath>. This boils down to <cmath>\sqrt{2}=\frac{sin(a)}{sin{2a}}</cmath>. This expression can further be simplified by the trig identity <cmath>sin(2a)=2sin(a)cos(a)</cmath>. This leads to the final simplified form <cmath>2\sqrt{2}=\frac{1}{cos(a)}</cmath>. Solving this expression gives us <cmath>cos(a)=\frac{\sqrt{2}}{4}</cmath>. However, as we want <imath>sin(a)</imath>, we use the identity <imath>sin^2+cos^2=1</imath>, and substitute  to get that <imath>sin(a)=\frac{\sqrt{14}}{4}</imath>, and therefore BD is <imath>100\sqrt{14}</imath>. 
+
+Then, as <imath>ABCD</imath> is a cyclic quadrilateral, we can use [[Ptolemy’s Theorem]] (with <imath>AD=x</imath>) to get <cmath>14 \cdot 100^2=200x+200^2</cmath>. Finally, we solve to get <imath>\boxed{\textbf{(E) } 500}</imath>.
+
+-dragoon
+
+==Solution 12 (Simple Trigonometry with Geometric Observations)==
+<asy>
+size(250);
+defaultpen(linewidth(0.4));
+//Variable Declarations
+real RADIUS;
+pair A, B, C, D, O;
+RADIUS=3;
+
+//Variable Definitions
+A=RADIUS*dir(148.414);
+B=RADIUS*dir(109.471);
+C=RADIUS*dir(70.529);
+D=RADIUS*dir(31.586);
+O=(0,0);
+
+//Path Definitions
+path quad= A -- B -- C -- D -- cycle;
+
+//Initial Diagram
+draw(Circle(O, RADIUS), linewidth(0.8));
+draw(quad, linewidth(0.8));
+label("$A$",A,W);
+label("$B$",B,NW);
+label("$C$",C,NE);
+label("$D$",D,E);
+label("$O$",O,S);
+
+//Radii
+draw(O--A);
+draw(O--B);
+draw(O--C);
+draw(O--D);
+
+</asy>
+Claim: <imath>[ABCD]</imath> is an isosceles trapezoid.
+
+Proof: Notice that <imath>[ABCD]</imath> is cyclic, triangle <imath>BOC</imath> is isosceles, and triangle <imath>AOB</imath> is congruent to <imath>DOC</imath> by SSS congruence. Therefore, <imath>\angle BAD = 180 - \angle BCD = 180-(\angle BCO + \angle DCO)=180-(\angle CBO+\angle ABO) = 180 - \angle ABC = \angle CDA</imath>. Hence, <imath>[ABCD]</imath> is an isosceles trapezoid.
+
+Let <imath>\angle CDA=\alpha</imath>. Notice that the length of the altitude from <imath>C</imath> to <imath>AD</imath> is <imath>200sin(\alpha)</imath>. Furthermore, the length of the altitude from <imath>O</imath> to <imath>BC</imath> is <imath>100\sqrt{7}</imath> by the Pythagorean theorem. Therefore, the length of the altitude from <imath>O</imath> to <imath>AD</imath> is <imath>100\sqrt{7}-200sin\alpha</imath>. Let <imath>F</imath> the feet of the altitude from <imath>O</imath> to <imath>AD</imath>. Then, <imath>FD=(200+400cos(\alpha))/2=100+200cos(\alpha)</imath>, because <imath>AOD</imath> is isosceles. 
+
+Therefore, by the Pythagorean theorem, <imath>(100+200cos(\alpha))^2+(100\sqrt{7}-200sin(\alpha))^2=80000</imath>. Simplifying, we have <imath>1+cos(\alpha)=sin(\alpha) \cdot sqrt{7} \implies cos^2(\alpha)+2cos(\alpha)+1=sin^2(\alpha) \cdot 7 = 7-7cos^2(\alpha) \implies 8cos^2(\alpha)+2cos(\alpha) - 6 =0</imath>. Solving this quadratic, we have <imath>cos(\alpha)=\frac{3}{4}, -1</imath>, but <imath>0<\alpha<180 \implies cos(\alpha)=3/4</imath>. Therefore, <imath>AD=200cos(\alpha)+200cos(\alpha)+200=\boxed{500}</imath>
+
+- [mathMagicOPS]
+
+==Solution 13 (Law of Cosines)==
+
+<asy>
+size(250);
+defaultpen(linewidth(0.4));
+//Variable Declarations
+real RADIUS;
+pair A, B, C, D, E, F, O;
+RADIUS=3;
+
+//Variable Definitions
+A=RADIUS*dir(148.414);
+B=RADIUS*dir(109.471);
+C=RADIUS*dir(70.529);
+D=RADIUS*dir(31.586);
+O=(0,0);
+
+//Path Definitions
+path quad= A -- B -- C -- D -- cycle;
+
+//Initial Diagram
+draw(Circle(O, RADIUS), linewidth(0.8));
+draw(quad, linewidth(0.8));
+label("$A$",A,W);
+label("$B$",B,NW);
+label("$C$",C,NE);
+label("$D$",D,ENE);
+label("$O$",O,S);
+label("$\theta$",O,3N);
+
+//Radii
+draw(O--A);
+draw(O--B);
+draw(O--C);
+draw(O--D);
+
+//Construction
+E=extension(B,O,A,D);
+
+label("$E$",E,NE);
+
+F=extension(C,O,A,D);
+
+label("$F$",F,NE);
+
+
+//Angle marks
+draw(anglemark(C,O,B));
+
+</asy>
+
+Since <imath>AB</imath>, <imath>BC</imath>, and <imath>CD</imath> are congruent chords, the triangles formed by connecting these sides to the circumcenter <imath>O</imath> (i.e., <imath>\triangle AOB</imath>, <imath>\triangle BOC</imath>, <imath>\triangle COD</imath>) are congruent isosceles triangles.
+Let <imath>\alpha = \angle OCB</imath>. In <imath>\triangle BOC</imath>, the side length <imath>BC=200</imath> and <imath>OC = OB = 200\sqrt{2}</imath>. By dropping an altitude from <imath>O</imath> to <imath>BC</imath>, we bisect <imath>BC</imath>. Half the base is <imath>\frac{200}{2} = 100</imath>.
+Using the right triangle formed, we find <imath>\cos(\alpha)</imath>:
+<cmath>\cos(\alpha) = \frac{\text{Adjacent}}{\text{Hypotenuse}} = \frac{100}{200\sqrt{2}} = \frac{\sqrt{2}}{4}</cmath>
+Since <imath>\triangle BOC \cong \triangle COD</imath>, we have <imath>m\angle OCB = m\angle OCD = \alpha</imath>.
+The interior angle measure <imath>m\angle DCB</imath> is given by:
+<cmath>m\angle DCB = m\angle OCB + m\angle OCD = 2\alpha</cmath>
+We calculate <imath>\cos(2\alpha)</imath> using the double-angle identity:
+<cmath>\cos(2\alpha) = 2\cos^2(\alpha) - 1</cmath>
+<cmath>\cos(2\alpha) = 2\left(\frac{\sqrt{2}}{4}\right)^2 - 1 = \frac{1}{4} - 1 = -\frac{3}{4}</cmath>
+Now, apply the Law of Cosines to <imath>\triangle BCD</imath> to find <imath>BD^2</imath>:
+<cmath>BD^2 = BC^2 + CD^2 - 2(BC)(CD)\cos(\angle DCB)</cmath>
+<cmath>BD^2 = 200^2 + 200^2 - 2(200)(200)\left(-\frac{3}{4}\right)</cmath>
+<cmath>BD^2 = 80000 + 60000 = 140000</cmath>
+Since <imath>ABCD</imath> is a cyclic quadrilateral, the opposite angles are supplementary:
+<cmath>m\angle DAB = 180^\circ - m\angle DCB = 180^\circ - 2\alpha</cmath>
+Thus, we find <imath>\cos(\angle DAB)</imath>:
+<cmath>\cos(\angle DAB) = \cos(180^\circ - 2\alpha) = -\cos(2\alpha)</cmath>
+<cmath>\cos(\angle DAB) = -\left(-\frac{3}{4}\right) = \frac{3}{4}</cmath>
+Finally, we apply the Law of Cosines to <imath>\triangle DAB</imath> to find the side length <imath>AD</imath>. Let <imath>AD = a</imath>:
+<cmath>140000 = 200^2 + a^2 - 2(200)(a)\left(\frac{3}{4}\right)</cmath>
+<cmath>140000 = 40000 + a^2 - 300a</cmath>
+Rearranging the terms yields the quadratic equation:
+<cmath>a^2 - 300a - 100000 = 0</cmath>
+We solve this equation by factoring:
+<cmath>(a - 500)(a + 200) = 0</cmath>
+The two possible solutions for <imath>a</imath> are <imath>a=500</imath> and <imath>a=-200</imath>. Since <imath>a</imath> represents a side length, it must be positive, so <imath>a = 500</imath>, which means <imath>AD = 500</imath>, or <imath>\boxed{\textbf{(E) } 500}</imath>.
+
+~Voidling
+==Solution 14 (Kites)==
+
+Let our quadrilateral be ABCD, inscribed in circle O, with unknown side AD
+
+<imath>\newline</imath> Notice that by the problem statement, AB = CD This implies that <imath>AB\parallel CD</imath>, as AB = CD <imath>\iff</imath> 
+<imath>AB\parallel CD</imath> in a circle. 
+<imath>\newline</imath> obviously <imath>m\angle{AOB}=m\angle{BOC} = m\angle{COD}</imath>
+<imath>\newline</imath> By SAS congruency <imath>\triangle{AOB}=\triangle{BOC} = \triangle{COD}</imath>
+<imath>\newline</imath> Draw <imath>\overline{AO}</imath>,<imath>\overline{BO}</imath>,<imath>\overline{CO}</imath>,<imath>\overline{DO}</imath>.
+<imath>\newline</imath> let <imath>\overline{BO}</imath>,<imath>\overline{CO}</imath> <imath>\cap</imath> <imath>\overline{AD}</imath> at P and Q respectively. 
+<imath>\newline</imath> By interior angle theorem, <imath>m\angle{BPA} = m\angle{OBC}</imath> (For the sake of simplicity, we will only prove this on one side, since all triangles are congruent as above, the same applies for the right side)
+<imath>\newline</imath> Notice that ABCO is a kite as <imath>AB = BC = 200</imath> and <imath>OA=OC = 200\sqrt{2}</imath>. Thus, <imath>OB</imath> bisects <imath>\angle{ABC}</imath>. This implies that <imath>\triangle{ABP}</imath>~<imath>\triangle{OAB}</imath>
+<imath>\newline</imath> From this we obtain <imath>\frac{200}{200\sqrt{2}}=\frac{BP}{200}</imath>, from which we obtain <imath>BP = 100\sqrt{2}</imath> and by isosceles triangle theorem, <imath>BP = 200</imath>
+<imath>\newline</imath> Additionally, we obtain <imath>m\angle{BPA}=m\angle{OPQ}</imath> by vertical angles, from which we obtain <imath>\triangle{OPQ}</imath>~<imath>\triangle{OBC}</imath>, which implies <imath>\frac{200\sqrt{2}-100\sqrt{2}}{200\sqrt{2}}=\frac{PQ}{200}</imath> <imath>\rightarrow</imath> <imath>PQ = 100.</imath>
+<imath>\newline</imath> The requested length, <imath>AD =</imath> <imath>2*BP+PQ =</imath><imath>\boxed{\textbf{(E) } 500}</imath>.
+~Stereotypicalmathnerd
+
+==Remark (Morley's Trisector Theorem)==
+
+This problem is related to [http://www.cut-the-knot.org/triangle/Morley/Naraniengar.shtml M. T. Naraniengar's proof] of [https://en.wikipedia.org/wiki/Morley%27s_trisector_theorem Morley's Trisector Theorem]. This problem is taken from the figure of the Lemma of M. T. Naraniengar's proof, as shown below.
+
+[[File:NaraniengarLemma.gif|200px]]
+
+If four points <imath>Y'</imath>, <imath>Z</imath>, <imath>Y</imath>, <imath>Z'</imath> satisfy the conditions
+
+<imath>\quad</imath> <imath>1.</imath> <imath>Y'Z = ZY = YZ'</imath> and
+
+<imath>\quad</imath> <imath>2.</imath> <imath>\angle YZY'</imath> = <imath>\angle Z'YZ</imath> = <imath>180^{\circ} - 2a > 60^{\circ}</imath>
+
+then they lie on a circle.
+
+
+The Lemma is used to prove Morley's Trisector Theorem by constructing an equilateral triangle at <imath>YZ</imath> and extending <imath>AY'</imath> and <imath>AZ'</imath> as shown below.
+
+[[File:NaraniengarTheorem.gif|400px]]
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+==Video Solution by AoPS (Deven Ware)==
+https://www.youtube.com/watch?v=hpSyHZwsteM
+
+==Video Solution by Walt S.==
+https://www.youtube.com/watch?v=3iDqR9YNNkU
+
+== Video Solution (Ptolemy’s Theorem) ==
+https://youtu.be/NsQbhYfGh1Q?t=5094
+
+~ pi_is_3.14
+==Video Solution by TheBeautyofMath==
+https://youtu.be/OF0ZI4IV7v0?si=a3GLZcK4hLlrGJVt
+
+~IceMatrix
+
+==Video Solution by Punxsutawney Phil==
+https://www.youtube.com/watch?v=st6HIgDWgX4
+
+== Video Solution by OmegaLearn ==
+https://youtu.be/NsQbhYfGh1Q?t=5094
+
+~ pi_is_3.14
+
+==See Also==
+
+{{AMC10 box|year=2016|ab=A|num-b=23|num-a=25}}
+{{AMC12 box|year=2016|ab=A|num-b=20|num-a=22}}
+[[Category:Intermediate Geometry Problems]]
+{{MAA Notice}}

@@ -1,0 +1,21 @@
+# 2006 AMC 12B Problem 18
+
+## Problem
+An object in the plane moves from one lattice point to another. At each step, the object may move one unit to the right, one unit to the left, one unit up, or one unit down. If the object starts at the origin and takes a ten-step path, how many different points could be the final point?
+
+
+$$\mathrm{(A)}\ 120 \qquad \mathrm{(B)}\ 121 \qquad \mathrm{(C)}\ 221 \qquad \mathrm{(D)}\ 230 \qquad \mathrm{(E)}\ 231$$
+
+## Solution 1
+Let the starting point be (0,0). After 10 steps we can only be in locations (x,y) where |x|+|y|$\leq 10.$ Additionally, each step changes the [parity](https://artofproblemsolving.com/wiki/index.php/parity) of exactly one coordinate. Hence after 10 steps we can only be in locations (x,y) where x+y is even. It can easily be shown that each location that satisfies these two conditions is indeed reachable.
+
+Once we pick $x\in\{-10,\dots,10\}$, we have 11-|x| valid choices for y, giving a total of $\boxed{121}$ possible positions.
+## Solution 2
+10 moves results in a lot of possible endpoints, so we try small cases first.
+
+If the object only makes 1 move, it is obvious that there are only 4 possible points that the object can move to.
+If the object makes 2 moves, it can move to (0, 2), (1, 1), (2, 0), (1, -1), (0, -2), (-1, -1), (-2, 0) as well as (0, 0), for a total of 9 moves.
+If the object makes 3 moves, it can end up at (0, 3), (2, 1), (1, 2), (3, 0), (2, -1), (1, -2), (0, -3), (-1, -2), (-2, -1), (0, -3) etc. for a total of 16 moves.
+
+At this point we can guess that for n moves, there are $(n + 1)^2$ different endpoints. Thus, for 10 moves, there are $11^2 = 121$ endpoints, and the answer is $\boxed{B}.$
+## See also

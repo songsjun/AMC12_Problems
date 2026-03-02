@@ -1,0 +1,120 @@
+# 2023 AMC 12B Problem 18
+
+## Problem
+Last academic year Yolanda and Zelda took different courses that did not necessarily administer the same number of quizzes during each of the two semesters. Yolanda's average on all the quizzes she took during the first semester was 3 points higher than Zelda's average on all the quizzes she took during the first semester. Yolanda's average on all the quizzes she took during the second semester was 18 points higher than her average for the first semester and was again 3 points higher than Zelda's average on all the quizzes Zelda took during her second semester. Which one of the following statements cannot possibly be true?
+
+$\textbf{(A)} Yolanda's quiz average for the academic year was 22 points higher than Zelda's.$
+
+$\textbf{(B)} Zelda's quiz average for the academic year was higher than Yolanda's.$
+
+$\textbf{(C)} Yolanda's quiz average for the academic year was 3 points higher than Zelda's.$
+
+$\textbf{(D)} Zelda's quiz average for the academic year equaled Yolanda's.$
+
+$\textbf{(E)} If Zelda had scored 3 points higher on each quiz she took, then she would have had the same average for the academic year as Yolanda.$
+## Solution 1
+Denote by $A_i$ the average of person with initial A in semester i $\in \left\{1, 2 \right\}$
+Thus, $Y_1=Z_1 + 3, Y_2=Y_1 + 18, Y_2=Z_2 + 3$.
+
+Denote by $A_{12}$ the average of person with initial A in the full year.
+Thus, $Y_{12}$ can be any number in $\left( Y_1 , Y_2\right)$ and $Z_{12}$ can be any number in $\left( Z_1 , Z_2\right).$
+
+Therefore, the impossible solution is
+$\boxed{\textbf{(A)}~\text{Yolanda's quiz average for the academic year was 22 points higher than Zelda's.}}$
+
+*~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)*
+## Solution 2
+We can use process of elimination by finding possible solutions to answer choices. Let $y_1$ and $y_2$ be the number of quizzes Yolanda took in the first and second semesters, respectively. Define $z_1$ and $z_2$ similarly for Zelda.
+
+Answer choice B is satisfied by $(y_1,y_2,z_1,z_2)$ = (289,1,1,289).
+
+Answer choice C and E are both satisfied by $(y_1,y_2,z_1,z_2)$ = (17,17,17,17).
+
+Answer choice D is satisfied by $(y_1,y_2,z_1,z_2)$ = (7,5,5,7).
+
+Therefore the answer is $\boxed{\textbf{(A)}~\text{Yolanda's quiz average for the academic year was 22 points higher than Zelda's.}}$
+
+*~cantalon*
+## Solution 3 (Algebra)
+Let Yolanda's average for semester 1 be $y_1$, the number of quizzes Yolanda took in semester 1 be $n_1$, Zelda's average for semester 1 be $z_1$, the number of quizzes Zelda took in semester 1 be $k_1$, Yolanda's average for semester 2 be $y_2$, the number of quizzes Yolanda took in semester 2 be $n_2$, Zelda's average for semester 2 be $z_2$, the number of quizzes Zelda took in semester 2 be $k_2$, Yolanda's average for the entire year be y, Zelda's average for the entire year be z.
+
+From the problem we know that
+
+$$y_1 = z_1 + 3, \quad y_2 = z_2 + 3$$
+
+$$y_2 = y_1 + 18, \quad z_2 = z_1 + 18$$
+
+
+$$y = \frac{ y_1 n_1 + y_2 n_2 }{ n_1 + n_2} = \frac{ y_1 n_1 + (y_1 + 18) n_2 }{ n_1 + n_2} = y_1 + \frac{18 n_2 }{ n_1 + n_2}$$
+
+
+$$z = \frac{ z_1 k_1 + z_2 k_2 }{ k_1 + k_2} = \frac{ z_1 k_1 + (z_1 + 18) k_2 }{ k_1 + k_2} = z_1 + \frac{ 18 k_2 }{ k_1 + k_2}$$
+
+
+$$y - z = y_1 + \frac{18 n_2 }{ n_1 + n_2} - z_1 - \frac{ 18 k_2 }{ k_1 + k_2} = y_1 - z_1 + 18 \left( \frac{n_2 }{ n_1 + n_2} - \frac{k_2 }{ k_1 + k_2} \right) = 3 + 18 \left( \frac{n_2 }{ n_1 + n_2} - \frac{k_2 }{ k_1 + k_2} \right)$$
+
+
+$\frac{n_2 }{ n_1 + n_2}$ at most is 1, $\frac{k_2 }{ k_1 + k_2}$ is at least 0, meaning that $\frac{n_2 }{ n_1 + n_2} - \frac{k_2 }{ k_1 + k_2}$ is at most 1.
+
+Therefore, y - z $\le 3 + 18 = 21$
+
+Hence, $\boxed{\textbf{(A)}~\text{Yolanda's quiz average for the academic year was 22 points higher than Zelda's}}$ is not possible.
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+## Solution 4
+Denote $y_1$ and $y_2$ as the quiz averages of Yolanda in the 1st and 2nd semesters, respectively. Similarly, denote $z_1$ and $z_2$ as the quiz averages of Zelda in the 1st and 2nd semesters.
+
+We have $y_1=z_1 + 3$, so $y_1-3 =z_1$. We also know that $y_2 = 18+y_1 = 3 + z_2$, implying $z_2 = 15+y_1$.
+
+The average quiz scores for both students must lie between the averages of each semester, i.e $\mathrm{Avg_{y}}\in$[$y_1, 18+y_1$], and $\mathrm{Avg_{z}}\in$[$y_1-3, y_1+15$]. Since $z_2>z_1, y_2>y_1$, and $y_1>z_1$, we have $\min\{\mathrm{Avg}\}=\min\{\mathrm{Avg}_z\}=z_1$ and $\max\{\mathrm{Avg}\}=\max\{\mathrm{Avg}_y\}=y_2$. Therefore the maximum difference between the two yearly averages is
+
+|$y_2-z_$1| = |($y_1 + 18)-(y_1-$3)| = $21 < 22$.
+
+Therefore, $\boxed{\textbf{(A)}~\text{Yolanda's quiz average for the academic year was 22 points higher than Zelda's}}$ is not possible.
+
+*~Benedict T (countmath1)*
+## Solution 5
+Let
+
+$$
+\begin{align*}
+\text{Yolanda's 1st Semester Average} &= \frac{a_1+\dots+a_n}{n} \\
+\text{Yolanda's 2nd Semester Average} &= \frac{a_1'+\dots+a_n'}{n'} \\
+\text{Zelda's 1st Semester Average} &= \frac{b_1+\dots+b_m}{m} \\
+\text{Zelda's 2nd Semester Average} &= \frac{b_1'+\dots+b_m'}{m'}.
+\end{align*}
+$$
+
+
+According to the problem, $\frac{a_1+\dots+a_n}{n}+18=\frac{a_1'+\dots+a_n'}{n'}.$
+
+Moreover, $\frac{a_1+\dots+a_n}{n}=\frac{b_1+\dots+b_m}{m}+3$ and $\frac{a_1'+\dots+a_n'}{n'}=\frac{b_1'+\dots+b_m'}{m'}+3$ are true.
+
+In another words,
+
+$$\frac{a_1+\dots+a_n}{n}=\frac{a_1'+\dots+a_n'-18n'}{n'}=\frac{b_1+\dots+b_m+3m}{m}= \frac{b_1'+\dots+b_m'-15m'}{m'}.$$
+
+
+The relationship leads to
+
+$$
+\frac{a_1+\dots+a_n+a_1'+\dots+a_n'-18n'}{n+n'}=\frac{b_1+\dots+b_m+b_1'+\dots+b_m'+3m-15m'}{m+m'}, \text{or}
+\frac{a_1+\dots+a_n+a_1'+\dots+a_n'}{n+n'}-\frac{18n'}{n'+n}-\frac{3m}{m+m'}+\frac{15m'}{m+m'}=\frac{b_1+\dots+b_m+b_1'+\dots+b_m'}{m+m'}.
+$$
+
+For choice (A) to be true, $-\frac{18n'}{n'+n}-\frac{3m}{m+m'}+\frac{15m'}{m+m'}$ must be -22.
+
+Let n'=kn and m'=k'm.
+
+$$-\frac{18n'}{n'+n}-\frac{3m}{m+m'}+\frac{15m'}{m+m'}=-\frac{18kn}{n(k+1)}-\frac{3m}{m(k'+1)}+\frac{15k'm}{m(k'+1)}=-\frac{18kn}{n(k+1)}+\frac{3m(5k'-1)}{m(k'+1)}$$
+
+n,n',m,m',k$\text{ and }$k' must be non-zero integer to satisfy the condition in the question. While the equation above is a multiple of three, 22 is not. Therefore, choice $\boxed{(A) \text{ cannot be true.}}$
+
+*~MaPhyCom*
+## Video Solution 1 by OmegaLearn
+https://youtu.be/BlJ-ArZ6JEw
+## Video Solution 2
+https://youtu.be/A9ywJSZgD6c
+
+*~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)*
+## See Also

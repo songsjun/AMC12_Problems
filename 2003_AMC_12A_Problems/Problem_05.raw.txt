@@ -1,0 +1,52 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2003_AMC_12A_Problems/Problem_5&action=raw
+
+Published Time: Fri, 20 Jun 2025 17:22:13 GMT
+
+Markdown Content:
+{{duplicate|[[2003 AMC 12A Problems|2003 AMC 12A #5]] and [[2003 AMC 10A Problems|2003 AMC 10A #11]]}}
+== Problem ==
+The sum of the two 5-digit numbers AMC10 and AMC12 is 123422. What is A+M+C? 
+
+ \mathrm{(A) \ } 10\qquad \mathrm{(B) \ } 11\qquad \mathrm{(C) \ } 12\qquad \mathrm{(D) \ } 13\qquad \mathrm{(E) \ } 14 
+
+== Solution ==
+AMC10+AMC12=123422
+
+AMC00+AMC00=123400 
+
+AMC+AMC=1234
+
+2\cdot AMC=1234 
+
+AMC=\frac{1234}{2}=617
+
+Since A, M, and C are digits, A=6, M=1, C=7. 
+
+Therefore, A+M+C = 6+1+7 = \boxed{\mathrm{(E)}\ 14} .
+
+== Solution 2 ==
+
+We know that AMC12 is 2 more than AMC10. We set up AMC10=x and AMC12=x+2. We have x+x+2=123422. Solving for x, we get x=61710. Therefore, the sum A+M+C= 6+1+7 = \boxed{\mathrm{(E)}\ 14}.
+
+== Solution 3 == 
+Consider the place values of the digits of AMC10 and AMC12. 
+
+When we add AMC10 and AMC12, C + C must result in a units digit of 4, meaning C is either 2 or 7. Since M is odd, this means a ten was carried over to the next place value from C + C, and thus C = 7 (as 7 + 7 = 14 and the ten is carried over). Now, we know 3 is the units digit of M + M + 1, so M is either 1 or 6. Again, we must look at the digit before M, or A. A is even, so M must be less than 5, or else the ten would be carried over. Ergo, M is 1. Nothing is carried over, so we have A + A = 12, and A = 6. Therefore, the sum of A, M, and C is 6 + 1 + 7 = \boxed{\mathrm{(E)}\ 14}.
+
+==Solution 4==
+
+Intuitively, adding AMC10 and AMC12 is the same as adding AMC11 to itself. We can divide 123422 by 2 to get 61711. So, 
+A = 6, M = 1, and C = 7. Adding all those up yields 6 + 1 + 7 = \boxed{\mathrm{(E)}\ 14} ~sdmd
+
+==Video Solution==
+
+https://www.youtube.com/watch?v=ZetE-VohlFQ   ~David
+
+== See Also ==
+{{AMC10 box|year=2003|ab=A|num-b=10|num-a=12}}
+{{AMC12 box|year=2003|ab=A|num-b=4|num-a=6}}
+
+[[Category:Introductory Algebra Problems]]
+{{MAA Notice}}

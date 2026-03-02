@@ -1,0 +1,31 @@
+# 2011 AMC 12A Problem 19
+
+## Problem
+At a competition with N players, the number of players given elite status is equal to $2^{1+\lfloor \log_{2} (N-1) \rfloor}$-N. Suppose that 19 players are given elite status. What is the sum of the two smallest possible values of N?
+
+$\textbf{(A)}\ 38 \qquad \textbf{(B)}\ 90 \qquad \textbf{(C)}\ 154 \qquad \textbf{(D)}\ 406 \qquad \textbf{(E)}\ 1024$
+## Solution 1
+We start with  $2^{1+\lfloor\log_{2}(N-1)\rfloor}$-N = 19. After rearranging, we get $\lfloor\log_{2}(N-1)\rfloor = \log_{2} \left(\frac{N+19}{2}\right).$
+
+Since  $\lfloor\log_{2}(N-1)\rfloor$  is a positive integer,  $\frac{N+19}{2}$ must be in the form of $2^{m}$  for some positive integer  m . From this fact, we get N=$2^{m+1}-19$.
+
+If we now check integer values of N that satisfy this condition, starting from N=19, we quickly see that the first values that work for N are 45 and 109, that is, 2^6-19 and $2^7 -19,$ giving values of 5 and 6 for m, respectively. Adding up these two values for N, we get $45 + 109 = 154\rightarrow \boxed{\textbf{C}}$
+## Solution 2
+We examine the value that  $2^{1+\lfloor\log_{2}(N-1)\rfloor}$ takes over various intervals. The $\lfloor\log_{2}(N-1)\rfloor$ means it changes on each multiple of 2, like so:
+
+2 --> 1
+
+3 - 4 --> 2
+
+5 - 8 --> 3
+
+9 - 16 --> 4
+
+From this, we see that  $2^{1+\lfloor\log_{2}(N-1)\rfloor}$ - N is the difference between the next power of 2 above  $2^{\lfloor\log_{2}(N-1)\rfloor}$ and N. We are looking for N such that this difference is 19. The first two N that satisfy this are 45 = 64-19 and 109=128-19 for a final answer of $45 + 109 = 154\rightarrow \boxed{\textbf{C}}$
+## Solution 3 (using the answer choices)
+Note that each N is 19 less than a power of 2. So, the answer will be 38 less than the sum of 2 powers of 2. Adding 38 to each answer, we get 76, 128, 192, 444, and 1062. Obviously we can take out 76 and 1062. Also, 128 will not work because two powers of two will never sum to another power of 2 (unless they are equal, which is a contradiction to the question). So, we have 192 and 444. Note that $444 =1 + 443 = 2+442 =4 + 440 = 8 + 436 =16 + 428 = 32 + 412$, etc. We quickly see that 444 will not work, leaving 192 which corresponds to $\boxed{\textbf{C}}.$ We can also confirm that this works because $192 =128 + 64 = 2^7 + 2^6$.
+## Solution 4 (removing the log)
+In order to fix the exponent and get rid of the logarithm term, let $N = 2^m + k + 1,$ with 0 $\leq$ k < 2^m. Doing so, we see that $\lfloor \log_2{N - 1} \rfloor =$ m, which turns our given relation into
+$$2^m = 20 + k,$$
+for which the solutions of the form (m, k), (5, 12) and (6, 44), follow trivially. Adding up the two values of N gives us $32 + 12 + 1 + 64 + 44 + 1 = 154$, so the answer is $\boxed{\textbf{C}}.$
+## See also

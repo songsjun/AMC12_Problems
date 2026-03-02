@@ -1,0 +1,46 @@
+{{duplicate|[[2019 AMC 10A Problems|2019 AMC 10A #12]] and [[2019 AMC 12A Problems|2019 AMC 12A #7]]}}
+
+==Problem==
+
+Melanie computes the mean <math>\mu</math>, the median <math>M</math>, and the modes of the <math>365</math> values that are the dates in the months of <math>2019</math>. Thus her data consist of <math>12</math> <math>1\text{s}</math>, <math>12</math> <math>2\text{s}</math>, . . . , <math>12</math> <math>28\text{s}</math>, <math>11</math> <math>29\text{s}</math>, <math>11</math> <math>30\text{s}</math>, and <math>7</math> <math>31\text{s}</math>. Let <math>d</math> be the median of the modes. Which of the following statements is true?
+
+<math>\textbf{(A) } \mu < d < M \qquad\textbf{(B) } M < d < \mu \qquad\textbf{(C) } d = M =\mu \qquad\textbf{(D) } d < M < \mu \qquad\textbf{(E) } d < \mu < M</math>
+
+==Solution 1==
+
+First of all, <math>d</math> obviously has to be smaller than <math>M</math>, since when calculating <math>M</math>, we must take into account the <math>29</math>s, <math>30</math>s, and <math>31</math>s. So we can eliminate choices <math>B</math> and <math>C</math>. Since there are <math>365</math> total entries, the median, <math>M</math>, must be the <math>183\text{rd}</math> one, at which point we note that <math>12 \cdot 15</math> is <math>180</math>, so <math>16</math> has to be the median (because <math>183</math> is between <math>12 \cdot 15 + 1 = 181</math> and <math>12 \cdot 16 = 192</math>). Now, the mean, <math>\mu</math>, must be smaller than <math>16</math>, since there are many fewer <math>29</math>s, <math>30</math>s, and <math>31</math>s. <math>d</math> is less than <math>\mu</math>, because when calculating <math>\mu</math>, we would include <math>29</math>, <math>30</math>, and <math>31</math>. Thus the answer is <math>\boxed{\textbf{(E) } d < \mu < M}</math>.
+
+==Solution 2==
+
+As in Solution 1, we find that the median is <math>16</math>. Then, looking at the modes <math>(1-28)</math>, we realize that even if we were to have <math>12</math> of each, their median would remain the same, being <math>14.5</math>. As for the mean, we note that the mean of the first <math>28</math> is simply the same as the median of them, which is <math>14.5</math>. Hence, since we in fact have <math>29</math>'s, <math>30</math>'s, and <math>31</math>'s, the mean has to be higher than <math>14.5</math>. On the other hand, since there are fewer <math>29</math>'s, <math>30</math>'s, and <math>31</math>'s than the rest of the numbers, the mean has to be lower than <math>16</math> (the median). By comparing these values, the answer is <math>\boxed{\textbf{(E) } d < \mu < M}</math>.
+
+==Solution 3 (direct calculation)==
+
+We can solve this problem simply by carefully calculating each of the values, which turn out to be <math>M=16</math>, <math>d=14.5</math>, and <math>\mu = \frac{\sum_{n=1}^{30} 12n - 29 - 30 +31*7}{365} \approx 15.7</math>. Thus the answer is <math>\boxed{\textbf{(E) } d < \mu < M}</math>.
+
+==Solution 4 (Definitions)==
+
+We learned that a mean is more accurate than a median, but when in the face of a list with greater size and almost no variety, \( \mu < M \). We can quite easily calculate \( d = 14.5 \), and can see that the median will obviously be greater than the median of the mode, and the mean of the entire list will obviously be greater than the median of the modes as it is more accurate. Therefore our answer is <math>\boxed{\textbf{(E) } d < \mu < M}</math>.
+
+~Pinotation
+
+==Video Solution 1==
+
+https://youtu.be/3xVKbAVkHo8
+
+Education, the Study of Everything
+
+
+
+
+==Video Solution 2==
+https://youtu.be/tzaUr4iVfgc
+
+~savannahsolver
+
+==See Also==
+
+{{AMC10 box|year=2019|ab=A|num-b=11|num-a=13}}
+{{AMC12 box|year=2019|ab=A|num-b=6|num-a=8}}
+{{MAA Notice}}
+[[Category: Introductory Algebra Problems]]

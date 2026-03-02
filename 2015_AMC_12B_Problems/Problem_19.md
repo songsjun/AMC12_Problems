@@ -1,0 +1,101 @@
+# 2015 AMC 12B Problem 19
+
+## Problem
+In $\triangle ABC, \angle C = 90^\circ$ and AB = 12. Squares ABXY and CBWZ are constructed outside of the triangle. The points X, Y, Z, and W lie on a circle. What is the perimeter of the triangle?
+
+$\textbf{(A)}\; 12+9\sqrt{3} \qquad\textbf{(B)}\; 18+6\sqrt{3} \qquad\textbf{(C)}\; 12+12\sqrt{2} \qquad\textbf{(D)}\; 30 \qquad\textbf{(E)}\; 32$
+## Solution 1
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+pair A,B,C,M,E,W,Z,X,Y; A=(2,0); B=(0,2); C=(0,0); M=(A+B)/2; W=(-2,2); Z=(-2,-0); X=(2,4); Y=(4,2); E=(W+Z)/2; draw(A--B--C--cycle); draw(W--B--C--Z--cycle); draw(A--B--X--Y--cycle); dot(M); dot(E); label("W",W,NW); label("Z",Z,SW); label("C",C,S); label("A",A,S); label("B",B,N); label("X",X,NE); label("Y",Y,SE); label("E",E,1.5*plain.W); label("M",M,NE); draw(circle(M,sqrt(10)));
+```
+
+First, we should find the center and radius of this circle. We can find the center by drawing the perpendicular bisectors of WZ and XY and finding their intersection point. This point happens to be the midpoint of AB, the hypotenuse. Let this point be M. To find the radius, determine MY, where $MY^{2}= MA^2 + AY^2, MA =\frac{12}{2} = 6,$ and AY = AB = 12. Thus, the radius =r =MY = $6\sqrt5.$
+
+Next we let AC = b and BC = a. Consider the right triangle ACB first. Using the Pythagorean theorem, we find that $a^2 + b^2 = 12^2 = 144.$
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+pair A,B,C,M,E,W,Z,X,Y; A=(2,0); B=(0,2); C=(0,0); M=(A+B)/2; W=(-2,2); Z=(-2,-0); X=(2,4); Y=(4,2); E=(W+Z)/2; draw(A--B--C--cycle); draw(W--B--C--Z--cycle); draw(A--B--X--Y--cycle); dot(M); dot(E); label("W",W,NW); label("Z",Z,SW); label("C",C,S); label("A",A,S); label("B",B,N); label("X",X,NE); label("Y",Y,SE); label("E",E,1.5*plain.W); label("M",M,NE); draw(circle(M,sqrt(10))); draw(E--Z--M--cycle,dashed);
+```
+
+Now, we let E be the midpoint of WZ, and we consider right triangle ZEM. By the Pythagorean theorem, we have that $\left(\frac{a}{2}\right)^2 + \left(a + \frac{b}{2}\right)^2 =$ r^2 = 180. Expanding this equation, we get that
+
+
+$$
+\frac{1}{4}(a^2+b^2) + a^2 + ab = 180
+\frac{144}{4} + a^2 + ab = 180
+a^2 + ab = 144 = a^2 + b^2
+ab = b^2
+b = a
+$$
+
+
+This means that ABC is a 45-45-90 triangle, so a = b = $\frac{12}{\sqrt2} = 6\sqrt2.$ Thus the perimeter is a + b + AB = $12\sqrt2 + 12$ which is answer $\boxed{\textbf{(C)}\; 12 + 12\sqrt2}.$
+## Solution 2
+The center of the circle on which X, Y, Z, and W lie must be equidistant from each of these four points. Draw the perpendicular bisectors of $\overline{XY}$ and of $\overline{WZ}.$ Note that the perpendicular bisector of $\overline{WZ}$ is parallel to $\overline{CW}$ and passes through the midpoint of $\overline{AC}.$ Therefore, the triangle that is formed by A, the midpoint of $\overline{AC},$ and the point at which this perpendicular bisector intersects $\overline{AB}$ must be similar to $\triangle ABC,$ and the ratio of a side of the smaller triangle to a side of $\triangle ABC$ is 1:2. Consequently, the perpendicular bisector of $\overline{XY}$ passes through the midpoint of $\overline{AB}.$ The perpendicular bisector of $\overline{WZ}$ must include the midpoint of $\overline{AB}$ as well. Since all points on a perpendicular bisector of any two points M and N are equidistant from M and N, the center of the circle must be the midpoint of $\overline{AB}.$
+
+Now the distance between the midpoint of $\overline{AB}$ and Z, which is equal to the radius of this circle, is $\sqrt{12^2 + 6^2} = \sqrt{180}.$ Let a=AC. Then the distance between the midpoint of $\overline{AB}$ and Y, also equal to the radius of the circle, is given by $\sqrt{\left(\frac{a}{2}\right)^2 + \left(a + \frac{\sqrt{144 - a^2}}{2}\right)^2} (t$he ratio of the similar triangles is involved here). Squaring these two expressions for the radius and equating the results, we have
+
+
+$$
+\left(\frac{a}{2}\right)^2+\left(a+\frac{\sqrt{144-a^2}}{2}\right)^{2} = 180
+144 - a^2 = a\sqrt{144-a^2}
+(144-a^2)^2 = a^2(144-a^2)
+$$
+
+
+Since a cannot be equal to 12, the length of the hypotenuse of the right triangle, we can divide by $(144-a^2),$ and arrive at $a =6\sqrt{2}.$ The length of other leg of the triangle must be $\sqrt{144-72} = 6\sqrt{2}.$ Thus, the perimeter of the triangle is 12+$2($6\sqrt{2})$ = \boxed{\textbf{(C)}\; 12+12\sqrt{2}}.$
+## Solution 3
+In order to solve this problem, we can search for similar triangles. Begin by drawing triangle ABC and squares ABXY and ACWZ. Draw segments $\overline{YZ}$ and $\overline{WX}.$ Because we are given points X, Y, Z, and W lie on a circle, we can conclude that WXYZ forms a cyclic quadrilateral. Take $\overline{AC}$ and extend it through a point P on $\overline{YZ}.$ Now, we must do some angle chasing to prove that $\triangle WBX$ is similar to $\triangle YAZ.$
+
+Let $\alpha$ denote the measure of $\angle ABC.$ Following this, $\angle BAC$ measures 90 - $\alpha.$ By our construction, $\overline{CAP}$ is a straight line, and we know $\angle YAB$ is a right angle. Therefore, $\angle PAY$ measures $\alpha.$ Also, $\angle CAZ$ is a right angle and thus, $\angle ZAP$ is a right angle. Sum $\angle ZAP$ and $\angle PAY$ to find $\angle ZAY,$ which measures 90 + $\alpha.$ We also know that $\angle WBY$ measures 90 + $\alpha.$ Therefore, $\angle ZAY = \angle WBX.$
+
+Let $\beta$ denote the measure of $\angle AZY.$ It follows that $\angle WZY$ measures 90 + $\beta^\circ.$ Because WXYZ is a cyclic quadrilateral, $\angle WZY + \angle YXW = 180^\circ.$ Therefore, $\angle YXW$ must measure 90 - $\beta,$ and $\angle BXW$ must measure $\beta.$ Therefore, $\angle AZY = \angle BXW.$
+
+$\angle ZAY = \angle WBX$ and $\angle AZY = \angle BXW,$ so $\triangle AZY \sim \triangle BXW$! Let x = AC = WC. By Pythagorean theorem, BC = $\sqrt{144-x^2}.$ Now we have WB = WC + BC = x + $\sqrt{144-x^2}, BX = 12, YA = 12,$ and AZ = x.
+We can set up an equation:
+
+
+$$
+\frac{YA}{AZ} = \frac{WB}{BX}
+\frac{12}{x} = \frac{x+\sqrt{144-x^2}}{12}
+144 = x^2 + x\sqrt{144-x^2}
+12^2 - x^2 = x\sqrt{144-x^2}
+12^4 - 2*12^2*x^2 + x^4 = 144x^2 - x^4
+2x^4 - 3(12^2)x^2 + 12^4 = 0
+(2x^2 - 144)(x^2 - 144) = 0
+$$
+
+
+Solving for x, we find that $x =6\sqrt{2}$ or $x = 12$, which we omit. The perimeter of the triangle is 12 + x + $\sqrt{144-x^2}.$ Plugging in $x =6\sqrt{2},$ we get $\boxed{\textbf{(C)}\; 12+12\sqrt{2}}.$
+
+Alternatively, let BC = $S_1, AB = S_2$ and AC = x. Because $\frac{WB}{BX} = \frac{AY}{AZ},$ we get that $S_2^2 =S_1^2+S_1x. S_1$ = x satisfies the equation because of Pythagorean theorem, so $\triangle ABC$ is right isosceles.
+## Solution 4
+We claim that X, Y, Z, and W lie on a circle if $\triangle ACB$ is an isosceles right triangle.
+
+*Proof:* If $\triangle ACB$ is an isosceles right triangle, then $\angle WAY=180$º. Therefore, W, A, and Y are collinear. Since WY and YX form a right angle, WX is the diameter of the circumcircle of $\triangle WYX.$ Similarly, Z, A, and X are collinear, and ZX forms a right angle with ZW. Thus, WX is also the diameter of the circumcircle of $\triangle WZX.$ Therefore, since $\triangle WYX$ and $\triangle WZX$ share a circumcircle, X, Y, Z, and W lie on a circle if $\triangle ACB$ is an isosceles triangle.
+
+If $\triangle ACB$ is isosceles, then its legs have length $6\sqrt{2}.$ The perimeter of $\triangle ACB$ is $\boxed{\textbf{(C) }12+12\sqrt{2}}.$
+## Solution 5
+Note that because $\angle WZA=\angle AYX=90^\circ,$ these two angles inscribe the semicircle defined by diameter WX. Since A lies on line ZA, and $\angle XAY=45^\circ (b$ecause ABXY is a square), we can find that $\angle ZAY= 180^\circ - 45^\circ = 135^\circ.$
+
+Now, we can see that $\angle BAC=45^\circ$ to complete the full $360^\circ.$ Therefore, $\triangle ABC$ is and isosceles right triangle, and AC=BC=$6\sqrt2.$ So Our answer is $6\sqrt2 + 6\sqrt 2 + 12 = \boxed{\textbf{(C) }12+12\sqrt{2}}.$
+.
+## Solution 6
+We see a circle and little information of position of the shapes inside the triangle, so we think of things associated with circles and think of cyclic quads. We then notice that quadrilateral WXYZ is cyclic. Then we see that $\angle W = \angle X$ making extensions of $\overline{WA}$ and $\overline{XZ}$ diagonals of WXYZ. Let $x =\overline{AC}=\overline{AW}.$ We can see that $\overline{AY} = 12\sqrt{2}$ and $\overline{AZ} =x\sqrt{2}.$ Thus $\overline{YZ}^2 = x^2 + (x+12\sqrt{2})^2 = 2x^2 + 24x\sqrt{2} + 288.$ Let $\angle ZAY = \alpha.$ Then we can see that $\angle ZAC$ and $\angle BAY$ are 45 degrees, making $\angle ZAY \alpha + 90$ degrees.
+
+We can verify with the cosine addition identity that $-\cos{\alpha + 90 degree} = \sin{\alpha} (k$nowing that $\sin{\theta + 90 degree} = \cos{\theta}$ motivates this). By law of cosine's, $\overline{YZ}^2 = (12\sqrt{2})^2 +x\sqrt{2})^2 - 2\cdot 12\sqrt{2} \cdotx\sqrt{2}$cos{$\alpha + 90$ degree} = 288 + x^2 + 48cos{$\alpha + 90$ degree} = 288 + $2x^2 + $4$8x\sin{\alpha}.$ Since $\angle{A}$ is opposite $\overline{BC}, \sin{\alpha} = \frac{\sqrt{144-x^2}}{12}.$ Thus $\overline{YZ}^2 = 288 + 2x^2 + 4x\sqrt{144-x^2}.$
+
+Setting the first paragraph's $\overline{YZ}^2$ equal to the second:
+$$288 + x^2 + 4x\sqrt{144-x^2}=2x^2 + 24x\sqrt{2} + 288$$
+## Solution 7 (Right Triangle Altitude Theorem)
+This solution does not use the fact that the four points are cyclic.
+Let CA=x, and CB=y. Looking at the figure, its trivial that the points Z, C, A are concurrent. Construct line ZB. By the right triangle altitude theorem, we have: $y^2=xy.$
+By Pythagoras' Theorem, we also have $x^2 + y^2 = 12^2$
+Solving the two equations above, we have $x=y=6\sqrt2.$ Hence, the perimeter is 12 + x + $y =\boxed{\textbf{(C) }12+12\sqrt{2}}.$
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Mangor Mangor]
+## See Also

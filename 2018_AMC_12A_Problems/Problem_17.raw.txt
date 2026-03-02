@@ -1,0 +1,281 @@
+{{duplicate|[[2018 AMC 10A Problems/Problem 23|2018 AMC 10A #23]] and [[2018 AMC 12A Problems/Problem 17|2018 AMC 12A #17]]}}
+
+== Problem ==
+
+Farmer Pythagoras has a field in the shape of a right triangle. The right triangle's legs have lengths <math>3</math> and <math>4</math> units. In the corner where those sides meet at a right angle, he leaves a small unplanted square <math>S</math> so that from the air it looks like the right angle symbol. The rest of the field is planted. The shortest distance from <math>S</math> to the hypotenuse is <math>2</math> units. What fraction of the field is planted?
+
+<asy>
+/* Edited by MRENTHUSIASM */
+size(160);
+pair A, B, C, D, F;
+A = origin;
+B = (4,0);
+C = (0,3);
+D = (2/7,2/7);
+F = foot(D,B,C);
+fill(A--(2/7,0)--D--(0,2/7)--cycle, lightgray);
+draw(A--B--C--cycle);
+draw((2/7,0)--D--(0,2/7));
+label("$4$", midpoint(A--B), N);
+label("$3$", midpoint(A--C), E);
+label("$2$", midpoint(D--F), SE);
+label("$S$", midpoint(A--D));
+draw(D--F, dashed);
+</asy>
+
+<math>\textbf{(A) }   \frac{25}{27}   \qquad        \textbf{(B) }   \frac{26}{27}   \qquad    \textbf{(C) }   \frac{73}{75}   \qquad   \textbf{(D) } \frac{145}{147} \qquad  \textbf{(E) }   \frac{74}{75} </math>
+
+==Solution 1 (Area Addition)==
+Note that the hypotenuse of the field is <math>5,</math> and the area of the field is <math>6.</math> Let <math>x</math> be the side-length of square <math>S.</math>
+
+We partition the field into a red triangle, a yellow triangle, and a green triangle, as shown below:
+<asy>
+/* Edited by MRENTHUSIASM */
+size(180);
+pair A, B, C, D, F;
+A = origin;
+B = (4,0);
+C = (0,3);
+D = (2/7,2/7);
+F = foot(D,B,C);
+fill(A--D--C--cycle, red);
+fill(A--D--B--cycle, yellow);
+fill(B--D--C--cycle, green);
+draw(A--B--C--cycle);
+label("$5$", midpoint(B--C), NE);
+label("$4$", midpoint(A--B), S);
+label("$3$", midpoint(A--C), W);
+label("$2$", midpoint(D--F), SE);
+label("$S$", midpoint(A--D));
+label("$x$", midpoint((0,2/7)--D), N);
+label("$x$", midpoint((2/7,0)--D), E);
+draw((2/7,0)--D--(0,2/7));
+draw(A--D^^B--D^^C--D, dashed);
+draw(D--F, dashed);
+</asy>
+Let the brackets denote areas. By area addition, we set up an equation for <math>x:</math>
+<cmath>\begin{align*}
+[\text{Red Triangle}]+[\text{Yellow Triangle}]+[\text{Green Triangle}]&=[\text{Field}] \\
+\frac{3x}{2}+\frac{4x}{2}+\frac{5\cdot2}{2}&=6,
+\end{align*}</cmath>
+from which <math>x=\frac27.</math> Therefore, the answer is <cmath>\frac{[\text{Field}]-[S]}{[\text{Field}]}=\frac{6-x^2}{6}=\boxed{\textbf{(D) } \frac{145}{147}}.</cmath>
+~MRENTHUSIASM
+
+==Solution 2 (Area Addition)==
+Let the square have side length <math>x</math>. Connect the upper-right vertex of square <math>S</math> with the two vertices of the triangle's hypotenuse. This divides the triangle in several regions whose areas must add up to the area of the whole triangle, which is <math>6</math>.
+<asy>
+/* Edited by MRENTHUSIASM */
+size(180);
+pair A, B, C, D, F;
+A = origin;
+B = (4,0);
+C = (0,3);
+D = (2/7,2/7);
+F = foot(D,B,C);
+fill(A--(2/7,0)--D--(0,2/7)--cycle, lightgray);
+draw(A--B--C--cycle);
+label("$5$", midpoint(B--C), NE);
+label("$4$", midpoint(A--B), S);
+label("$3$", midpoint(A--C), W);
+label("$2$", midpoint(D--F), SE);
+label("$S$", midpoint(A--D));
+label("$x$", midpoint((0,2/7)--D), N);
+label("$x$", midpoint((2/7,0)--D), E);
+draw((2/7,0)--D--(0,2/7));
+draw(B--D^^C--D, dashed);
+draw(D--F, dashed);
+</asy>
+Square <math>S</math> has area <math>x^2</math>, and the two thin triangle regions have area <math>\dfrac{x(3-x)}{2}</math> and <math>\dfrac{x(4-x)}{2}</math>. The final triangular region with the hypotenuse as its base and height <math>2</math> has area <math>5</math>. Thus, we have <cmath>x^2+\dfrac{x(3-x)}{2}+\dfrac{x(4-x)}{2}+5=6.</cmath>
+Solving gives <math>x=\dfrac{2}{7}</math>. The area of <math>S</math> is <math>\dfrac{4}{49}</math> and the desired ratio is <math>\dfrac{6-\tfrac{4}{49}}{6}=\boxed{\textbf{(D) } \frac{145}{147}}</math>.
+
+Alternatively, once you get <math>x=\frac{2}{7}</math>, you can avoid computation by noticing that there is a denominator of <math>7</math>, so the answer must have a factor of <math>7</math> in the denominator, which only <math>\frac{145}{147}</math> does.
+
+==Solution 3 (Similar Triangles)==
+Let the square have side length <math>s</math>. If we were to extend the sides of the square further into the triangle until they intersect on point on the hypotenuse, we'd have a similar right triangle formed between the hypotenuse and the two new lines, and two smaller similar triangles that share a side of length <math>2</math>. Using the side-to-side ratios of these triangles, we can find that the length of the larger similar triangle is <math>\frac{5}{3}(2)=\frac{10}{3}</math>. Now, let's extend this larger similar right triangle to the left until it hits the side of length <math>3</math>. Now, the length is <math>\frac{10}{3}+s</math>, and using the ratios of the side lengths, the height is <math>\frac{3}{4}\left(\frac{10}{3}+s\right)=\frac{5}{2}+\frac{3s}{4}</math>. Looking at the diagram, if we add the height of this triangle to the side length of the square, we'd get <math>3</math>, so
+<cmath>\begin{align*}
+\frac{5}{2}+\frac{3s}{4}+s&=3 \\ 
+\frac{5}{2}+\frac{7s}{4}&=3 \\
+\frac{7s}{4}&=\frac{1}{2} \\
+s&=\frac{2}{7}.
+\end{align*}</cmath>
+So, the area of the square is <math>\left(\frac{2}{7}\right)^2=\frac{4}{49}</math>.
+
+Now comes the easy part--finding the ratio of the areas: <math>\frac{3\cdot 4 \cdot \frac{1}{2} -\frac{4}{49}}{3\cdot 4 \cdot \frac{1}{2}}=\frac{6-\frac{4}{49}}{6}=\frac{294-4}{294}=\frac{290}{294}=\boxed{\textbf{(D) } \frac{145}{147}}</math>.
+
+==Solution 4 (Similar Triangles)==
+<asy>
+/* Edited by MRENTHUSIASM */
+size(180);
+pair A, B, C, D, F;
+A = origin;
+B = (4,0);
+C = (0,3);
+D = (2/7,2/7);
+F = foot(D,B,C);
+fill(A--(2/7,0)--D--(0,2/7)--cycle, lightgray);
+draw(A--B--C--cycle);
+label("$4$", midpoint(A--B), S);
+label("$3$", midpoint(A--C), W);
+label("$2$", midpoint(D--F), SE);
+label("$S$", midpoint(A--D));
+label("$\ell$", midpoint((0,2/7)--D), N);
+label("$\ell$", midpoint((2/7,0)--D), E);
+label("$\ell$", midpoint((2/7,2/7+5/2)--(0,2/7+5/2)), S);
+label("$\ell$", midpoint((2/7+10/3,2/7)--(2/7+10/3,0)), W);
+label("$\frac{5}{2}$", midpoint((2/7,2/7+5/2)--D), E);
+label("$\frac{10}{3}$", midpoint((2/7+10/3,2/7)--D), N);
+draw((2/7,0)--D--(0,2/7));
+draw((2/7,2/7+5/2)--D^^(2/7+10/3,2/7)--D, dashed);
+draw((2/7,2/7+5/2)--(0,2/7+5/2)^^(2/7+10/3,2/7)--(2/7+10/3,0), dashed);
+draw(D--F, dashed);
+</asy>
+On the diagram above, find two smaller triangles similar to the large one with side lengths <math>3</math>, <math>4</math>, and <math>5</math>; consequently, the segments with length <math>\frac{5}{2}</math> and <math>\frac{10}{3}</math>.
+
+With <math>\ell</math> being the side length of the square, we need to find an expression for <math>\ell</math>. Using the hypotenuse, we can see that <math>\frac{3}{2}+\frac{8}{3}+\frac{5}{4}\ell+\frac{5}{3}\ell=5</math>. Simplifying, <math>\frac{35}{12}\ell=\frac{5}{6}</math>, or <math>\ell=\frac27</math>.
+
+A different calculation would yield <math>\ell+\frac{3}{4}\ell+\frac{5}{2}=3</math>, so <math>\frac{7}{4}\ell=\frac{1}{2}</math>. In other words, <math>\ell=\frac{2}{7}</math>, while to check, <math>\ell+\frac{4}{3}\ell+\frac{10}{3}=4</math>. As such, <math>\frac{7}{3}\ell=\frac{2}{3}</math>, and <math>\ell=\frac{2}{7}</math>.
+
+Finally, we get <math>A(\Square S)=\ell^2=\frac{4}{49}</math>, to finish. As a proportion of the triangle with area <math>6</math>, the answer would be <math>1-\frac{4}{49\cdot6}=1-\frac{2}{147}=\frac{145}{147}</math>, so <math>\boxed{\textbf{(D) } \frac{145}{147}}</math> is correct.
+
+==Solution 5 (Similar Triangles)==
+Let the side length of the square be <math>x</math>. First off, let us make a similar triangle with the segment of length <math>2</math> and the top-right corner of <math>S</math>. Therefore, the longest side of the smaller triangle must be <math>2 \cdot \frac54 = \frac52</math>. We then do operations with that side in terms of <math>x</math>. We subtract <math>x</math> from the bottom, and <math>\frac{3x}{4}</math> from the top. That gives us the equation of <math>3-\frac{7x}{4} = \frac{5}{2}</math>. Solving, <cmath>12-7x = 10 \implies x = \frac{2}{7}.</cmath>
+Thus, <math>x^2 = \frac{4}{49}</math>, so the fraction of the triangle (area <math>6</math>) covered by the square is <math>\frac{2}{147}</math>. The answer is then <math>\boxed{\textbf{(D) } \frac{145}{147}}</math>.
+
+==Solution 6 (Similar Triangles)==
+<asy>
+/* Geogebra to Asymptote conversion, documentation at artofproblemsolving.com/Wiki go to User:Azjps/geogebra */
+import graph; size(180); 
+real labelscalefactor = 1.5; /* changes label-to-point distance */
+// pen dps = linewidth(0.5) + fontsize(10); 
+// defaultpen(dps); /* default pen style */ 
+// pen dotstyle = black; /* point style */ 
+real xmin = -1.6030465381283199, xmax = 7.095084767820557, ymin = -1.3624649422453508, ymax = 4.065350676871526;  /* image dimensions */
+
+ /* draw figures */
+draw((0,0)--(0,3)); 
+draw((0,0)--(4,0)); 
+draw((4,0)--(0,3)); 
+draw((0,0.2857142857142857)--(0.2857142857142857,0.2857142857142857)); 
+draw((0.2857142857142857,0.2857142857142857)--(0.2857142857142857,0)); 
+draw((0.07142857142857142,0)--(1.4857142857142858,1.885714285714286)); 
+label("$A$",(0, 0),SW*labelscalefactor); 
+label("$B$",(4,0),SE*labelscalefactor); 
+label("$C$",(0, 3),N*labelscalefactor); 
+label("$D$",(0.2857142857142857,0),S*labelscalefactor); 
+label("$E$",(0.2857142857142857, 0.2857142857142857),E*labelscalefactor); 
+label("$F$",(0.0714285714, 0),S*labelscalefactor); 
+label("$G$", (1.49, 1.89), NE*labelscalefactor);
+ /* dots and labels */
+clip((xmin,ymin)--(xmin,ymax)--(xmax,ymax)--(xmax,ymin)--cycle); 
+ /* end of picture */
+</asy>
+Let <math>AD=x</math>. Note that <math>\triangle DEF</math> is a <math>3{-}4{-}5</math> triangle, so <math>EF=\frac{5}{4}x</math> and <math>FD=\frac{3}{4}x</math>. <math>BF=BD+FD=4-x+\frac{3}{4}x=4-\frac{1}{4}x</math>. We know that <math>GE</math> is <math>2</math> from the problem so <math>GF=2+\frac{5}{4}x</math>. <math>\triangle FGB</math> is also a <math>3{-}4{-}5</math> triangle with <math>GF:BF=3:5</math>. We now have <math>3\left(4-\frac{1}{4}x\right)=5\left(2+\frac{5}{4}x\right)</math>. Solving this equation, we get that <math>x=\frac{2}{7}</math> so the area of <math>S</math> is <math>\frac{4}{49}</math>. The area of the triangle is <math>\frac{3\cdot 4}{2}=6</math> so the fraction of field that is unplanted is <math>\frac{\frac{4}{49}}{6}=\frac{2}{147}</math>. Thus, the fraction of the field that is planted is <math>1-\frac{2}{147}=\boxed{\textbf{(D) } \frac{145}{147}}</math>.
+
+~Heavytoothpaste
+
+==Solution 7 (Coordinate Geometry)==
+We use coordinate geometry. Let the right angle be at <math>(0,0)</math> and the hypotenuse be the line <math>3x+4y = 12</math> for <math>0\le x\le 3</math>. Denote the position of <math>S</math> as <math>(s,s)</math>, and by the point to line distance formula, we know that
+<cmath>\begin{align*}
+\frac{|3s+4s-12|}{5} &= 2 \\
+|7s-12| &= 10
+\end{align*}</cmath>
+Solving this, we get <math>s=\frac{22}{7}, \frac{2}{7}</math>. Obviously <math>s<\frac{22}{7}</math>, so <math>s = \frac{2}{7}</math>, and from here, the rest of the solution follows to get <math>\boxed{\textbf{(D) } \frac{145}{147}}</math>.
+
+==Solution 8 (Coordinate Geometry)==
+Let the right angle be at <math>(0,0)</math>, the point <math>(x,x)</math> be the far edge of the unplanted square and the hypotenuse be the line <math>y=-\frac{3}{4}x+3</math>. Since the line from <math>(x,x)</math> to the hypotenuse is the shortest possible distance, we know this line, call it line <math>\l</math>, is perpendicular to the hypotenuse and therefore has a slope of <math>\frac{4}{3}</math>. 
+
+Since we know <math>m=\frac{4}{3}</math> , we can see that the line rises by <math>\frac{8}{5}</math> and moves to the right by <math>\frac{6}{5}</math> to meet the hypotenuse. (Let <math>2 = 5x</math> and the rise be <math>4x</math> and the run be <math>3x</math> and then solve.) Therefore, line <math>\l</math> intersects the hypotenuse at the point <math>\left(x+\frac{6}{5}, x+\frac{8}{5}\right)</math>. Plugging into the equation for the hypotenuse we have <math>x=\frac{2}{7}</math> , and after a bit of computation we get <math>\boxed{\textbf{(D) } \frac{145}{147}}</math>.
+
+==Solution 9 (Pythagorean Theorem)==
+Let the side length of the square be <math>a</math>, and the lengths that the line from <math>S</math> hits the hypotenuse be <math>x</math> and <math>5-x</math>. Also, connect the outermost vertex of <math>S</math> to the vertices that <math>S</math> isn't connected to. Note that the line that hits the hypotenuse must create a right angle, since it is the shortest possible distance. This creates two pairs of right triangles that share the same hypotenuse. This means that we can set up a system of equations using the Pythagorean Theorem: 
+<cmath>\begin{align*}
+a^2+(4-a)^2&=(5-x)^2+2^2, \\
+a^2+(3-a)^2&=x^2+2^2.
+\end{align*}</cmath>
+After *some* algebra, we obtain <math>a=\frac{2}{7}</math>, which gives the answer <math>\boxed{\textbf{(D) } \frac{145}{147}}</math>.
+
+==Solution 10 (Proportions)==
+We name <i><b>small triangle</b></i> the  triangle similar to given in which unplanted square <math>S</math> is inscribed.
+The height of given triangle is 2.4 units so similarity coefficient is <math>\frac {2.4 - 2}{2.4} = \frac {1}{6}</math> , the  area is <math>\frac {1}{36}</math> of total area.
+
+The ratio of planted area in <i><b>small triangle</b></i> to the area of the square is <math>\frac {3}{8} + \frac {2}{3} = \frac {25}{24}.</math>
+
+The fraction of planted area in <i><b>small triangle</b></i> is <math>\frac {25}{25+24} = \frac {25}{49}.</math>
+
+Therefore, the fraction of the planted  field is <math>\frac {25}{49} \cdot  \frac {1}{36} + \frac {35}{36} = \boxed{\textbf{(D) } \frac{145}{147}}.</math>
+
+'''vladimir.shelomovskii@gmail.com, vvsss'''
+
+==Solution 11 (Bash)==
+<asy>
+size(240);
+pair A, B, C, D, F, X, Y, P, Q, M, N;
+A = origin; label(A, "$A$", SW);
+B = (4,0); label(B, "$B$", S);
+C = (0,3); label(C, "$C$", W);
+D = (2/7,2/7); label(D, "$D$", NE);
+F = foot(D,B,C); label(F, "$F$", NE);
+X = (2/7,39/14); label(X, "$X$", NE, red);
+Y = (76/21,2/7); label(Y, "$Y$", NE, red);
+P = foot(X,A,C); label(P, "$P$", W, red);
+Q = foot(Y,A,B); label(Q, "$Q$", S, red);
+M = (2/7,0); label(M, "$M$", S);
+N = (0,2/7); label(N, "$N$", W);
+
+fill(A--(2/7,0)--D--(0,2/7)--cycle, lightgray);
+draw(A--B--C--cycle);
+draw((2/7,0)--D--(0,2/7));
+label("$x$", midpoint(A--M), S);
+label("$x$", midpoint(A--N), W);
+label("$2$", midpoint(D--F), SE);
+draw(D--F);
+draw(D--X, red);
+draw(D--Y, red);
+draw(X--P, red);
+draw(Y--Q, red);
+</asy>
+
+Denote <math>A,B,C</math> to be the three vertices of the triangular field. Also denote <math>A,M,D,N</math> to be the vertices of the square <math>S</math>. Let <math>X</math> be on <math>BC</math> such that <math>AC\parallel DX</math> and <math>Y</math> be on <math>BC</math> such that <math>AB\parallel DY</math>. Let <math>P</math> and <math>Q</math> be the foot of the altitudes from <math>X</math> to <math>AC</math> and from <math>Y</math> to <math>AB</math> respectively.
+
+Note that <math>\triangle ABC \sim \triangle DYX \sim \triangle PXC \sim \triangle QBY</math>. Thus, <math>PC = x \cdot \frac34</math> and <math>QB = x \cdot \frac43</math>, making
+<cmath>\begin{align*}
+DX &= 3-x-\dfrac{3}{4}x = 3-\dfrac{7}{4}x, \\
+MQ &= 4-x-\dfrac{4}{3}x = 4-\dfrac{7}{3}x.
+\end{align*}</cmath>
+Also from the similarity ratio is the fact that <math>CX = \frac54 x</math> and <math>BY = \frac53 x</math>, making
+<cmath>XY = 5 - \dfrac{5}{4}x - \dfrac{5}{3}x = 5 - \dfrac{35}{12}x.</cmath>
+Computing the area of <math>\triangle XDY</math> in two ways gives an equation for <math>x</math>:
+<cmath>\begin{align*}
+\left(3-\dfrac{7}{4}x\right)\left(4-\dfrac{7}{3}x\right) &= 2\cdot \left(5 - \dfrac{35}{12}x\right) \\
+10-\dfrac{35}{6}x &= \dfrac{49}{12}x^2 - 14x + 12 \\
+\dfrac{49}{12}x^2 - \dfrac{49}{6}x + 2 &= 0 \\
+49x^2 - 98x + 24 &= 0 \\
+x&=\dfrac{2}{7} \text{ or } \dfrac{12}{7}.
+\end{align*}</cmath>
+But <math>x=\dfrac{12}{7}</math> is extraneous. Thus, the area of square <math>S = x^2 = \dfrac{4}{49}</math>, making the portion of the field that is planted being <cmath>1 - \dfrac{\tfrac{4}{49}}{6} = 1 - \dfrac{2}{147} = \boxed{\textbf{(D) } \frac{145}{147}}.</cmath>
+
+-Solution by sml1809
+
+==Solution 12 ==
+Let the square have side length <math>x</math>. Note that when <math>x = \dfrac{12}{7}</math>, the square is inscribed and touching the hypotenuse. Denote <math>f(x)</math> to be the minimum distance from the square to the hypotenuse. Notably, <math>f</math> is linear with respect to <math>x</math>. <math>f(0) = \dfrac{12}{5}</math>, because it is simply the length of the hypotenuse's altitude. Similarly, <math>f(\dfrac{12}{7}) = 0</math>. We can find that <math>f(x) = \dfrac{12-7x}{5}</math>. Setting this equal to <math>2</math>, we get that <math>f(\dfrac{2}{7}) = 2</math>. Therefore, the side has side length <math>\dfrac27</math>, and has area <math>\dfrac{4}{49}</math>. So, the unshaded area is <math>1 - \dfrac{\frac{4}{49}}{6} = \boxed{\dfrac{145}{147}}</math>, or <math>(D)</math>. ~Puck_0
+
+== Video Solution by Pi Academy (Fast and Easy with Area Addition) ==
+https://youtu.be/Jdx74PGIgpw?si=kO6EGrKQQUkp22X1
+
+~ Pi Academy
+
+== Video Solution (#21-#25) ==
+https://youtube.com/playlist?list=PLpxy89D2tvVow8EoCSsNY3Y-2SwJly_SZ&si=aEJ3Ttjck10aCIUH
+
+== Video Solution by Richard Rusczyk ==
+
+https://www.youtube.com/watch?v=p9npzq4FY_Y
+
+~ dolphin7
+
+==See Also==
+{{AMC10 box|year=2018|ab=A|num-b=22|num-a=24}}
+{{AMC12 box|year=2018|ab=A|num-b=16|num-a=18}}
+{{MAA Notice}}
+
+[[Category:Intermediate Geometry Problems]]

@@ -1,0 +1,52 @@
+# 2016 AMC 12B Problem 16
+
+## Problem 16
+In how many ways can 345 be written as the sum of an increasing sequence of two or more consecutive positive integers?
+
+$\textbf{(A)}\ 1\qquad\textbf{(B)}\ 3\qquad\textbf{(C)}\ 5\qquad\textbf{(D)}\ 6\qquad\textbf{(E)}\ 7$
+## Solution 1
+We proceed with this problem by considering two cases, when: 1) There are an odd number of consecutive numbers, 2) There are an even number of consecutive numbers.
+
+For the first case, we can cleverly choose the convenient form of our sequence to be
+$$a-n,\cdots, a-1, a, a+1, \cdots, a+n$$
+
+because then our sum will just be $(2n+1)$a. We now have
+$$(2n+1)a = 345$$
+and a will have a solution when $\frac{345}{2n+1}$ is an integer, namely when $2n+1$ is a divisor of 345. We check that
+$$2n+1 = 3, 5, 15, 23$$
+work, and no more, because $2n+1=1$ does not satisfy the requirements of two or more consecutive integers, and when $2n+1$ equals the next biggest factor, 69, there must be negative integers in the sequence. Our solutions are $\{114,115, 116\}$, $\{67, \cdots, 71\}$, $\{16, \cdots, 30\}$, $\{4, \cdots, 26\}$.
+
+For the even cases, we choose our sequence to be of the form:
+$$a-(n-1), \cdots, a, a+1, \cdots, a+n$$
+so the sum is $\frac{(2n)(2a+1)}{2} =$ n(2a+1)$$. In this case, we find our solutions to be $\{172, 173\}$, $\{55,\cdots, 60\}$, $\{30,\cdots, 39\}$.
+
+We have found all 7 solutions and our answer is $\boxed{\textbf{(E)} \, 7}.$
+
+Note: We cannot have more than 25 terms since the sum of the first 26 numbers = $\frac{26 \cdot 27}{2} = 351 > 345.$
+## Solution 2
+The sum from a to b where a and b are integers and a>b  is
+
+$$S=\dfrac{(a-b+1)(a+b)}{2}$$
+
+$$345=\dfrac{(a-b+1)(a+b)}{2}$$
+
+$$2\cdot 3\cdot 5\cdot 23=(a-b+1)(a+b)$$
+
+Let c=a-$b+1$ and d=a+b
+
+$$2\cdot 3\cdot 5\cdot 23=c\cdot d$$
+
+If we factor 690 into all of its factor groups ($\text{exg}$~ (10,69) ~$\text{or}$ ~(15,46)) we will have several ordered pairs (c,d) where c The number of possible values for c is half the number of factors of 690 which is $\frac{1}{2}\cdot2\cdot2\cdot2\cdot2=8$ However, we have one extraneous case of (1,690) because here, a=b and we have the sum of one consecutive number which is not allowed by the question. Thus the answer is $8-1=7\boxed{\textbf{(E)} \,7}.$
+## Solution 3 (Logic)
+The consecutive sums can be written as 345=kn+$\sum_{i=1}^{k-1}{i}$ where k is the number of terms in a sequence, and n is the first term. Then, $\{k,n\}\in \mathbb{N}$ and $k\geq2.$ Evaluating the sum and rearranging yields $n=\frac{345}{k}-\frac{k-1}{2}.$ The prime factorization of 345 is $1\cdot3\cdot5\cdot23.$ Then, $3\cdot5, 3\cdot23,$ and $5\cdot23$ are also divisors. As odd divisors of 345, note that they all produce integer solutions to n as k. Only k!=1 is not valid, as $k\geq2.$ Similarly, quickly notice that $k=2$ is a solution. Multiplying an odd divisor by 2 always yields an integer solution (see below). As such, the even integer solutions are $k=2, 2\cdot3, 2\cdot5, 2\cdot15 ... 2\cdot345.$ Note that the function is decreasing for increasing values of k and that $\frac{345}{k}-\frac{k-1}{2}=4$ for $k=23$. Thus, when n is negative, k is only slightly more than $k=23$. Recall $\{k,n\}\in \mathbb{N}.$ Since the next highest solution, $k=2\cdot23=46$ is twice $k=23, k\leq23.$ Thus, the remaining solutions are when $k=$2,6,10,3,5,15,23 $\implies \boxed{\textbf{(E)} \,7}.$ :*This is proven by the fact that an odd number (345 in this case) divided by an divisor always yields an odd number. Dividing this by 2 produces a number in the form $z+\frac{k-1}{2},$ where z is an integer. Since an even number multiplied by an odd number also yields an even number, $\frac{k-1}{2}$ similarly is in the form $z+\frac{k-1}{2},$ producing an integer.* (Solution by BJHHar)
+## Solution 4
+We're dealing with an increasing arithmetic progression of common difference 1. Let x be the number of terms in a summation. Let y be the first term in a summation. The sum of an arithmetic progression is the average of the first term and the last term multiplied by the number of terms. The problem tells us that the sum must be 345.  $\begin{align*}$ x $\cdot \frac{y+y+[(x-1)1]}{2}$&=345 \\ 2xy+x^2-x&=690 $\end{align*}$  In order to satisfy the constraints of the problem, x and y must be positive integers. Maybe we can make this into a Diophantine thing! In fact, if we just factor out that x... voilà! (x)$(x+2y-1)=690$ There are 16 possible factor pairs to try (for brevity, I will not enumerate them here). Notice that the expression in the right parenthesis is 2$y-1$ more than the expression in the parenthesis on the left. y is at least 1. Thus, the expression in the right parenthesis will always be greater than the expression on the left. This eliminates 8 factor pairs. The problem also says the "increasing sequence" has to have "two or more" terms, so x \geqslant 2. This eliminates the factor pair 1 $\cdot 690.$ With brief testing, we find that the the other 7 factor pairs produce 7 viable ordered pairs. This means we have found $\boxed{\textbf{(E)}\ 7}$ ways to write 345 in the silly way outlined by the problem.
+## Solution 5
+By the sum of an arithmetic sequence... this ultimately comes to n+$n+1+n+2....+n+p=345=(2n+p)(p+1)=690=23\cdot3\cdot5\cdot2.$ Quick testing (would take you roughly a minute) We see that the first 7 values of p that work are $p=1$,2,4,5,9,14,22. We see that each one of them works. Hence, the answer is $\boxed{7}.$
+## Solution 6
+The sum of all integers from x to y inclusive is equal to $\frac{y(y+1)}{2}-\left(\frac{x(x+1)}{2}\right)+x.$ In words, x added to sum of the first x positive inegers subtracted from the sum of the first positive y integers. Setting this equal to 345 and multiplying by 2 to clear fractions, we can see that y$(y+1)-x(x+1)+2x=y^2-x^2+y+x=(y+x)(y-x+1$)=690. Now we know that, y+x and y-$x+1$ multiply together to 690, and they're both integers. Now, we can set y+x and y-$x+1$ equal to factors of 690. Clearly, x>$\frac{1}{2},$ so y+x will take the larger of the two factors. We can factorize 690 as $1\cdot2\cdot3\cdot5\cdot23.$ We also know that when solving for y, we can add the two systems in y+x and y-$x+1$ to get a new equation in terms of 2$y+1$. In order for y to be an integer, the sum of the two factors must be odd. We also know that there is only one factor of 2, so either y+x or y-$x+1$ will be even. The number of odd factors multiplied together can either be 1, 2 or 3 (0 doesn't work, since (690, 1) doesn't). There are a total of 3 odd numbers present in our new prime factorization, now excluding 1. Therefore, the number of combinations that yield integral values for both x and y are {$3\choose1$}+{$3\choose2$}+{$3\choose3$}= $\boxed{\textbf{E)} 7}. -$Benedict T (countmath1)
+## Video Solution
+https://youtu.be/KhH6CkuYg_E ~savannahsolver
+## Video Solution by CanadaMath (Problem 11-20)
+Fast Forward to 22:34 for problem 16 https://www.youtube.com/watch?v=4osvFatUv1o ~THEMATHCANADIAN
+## See Also

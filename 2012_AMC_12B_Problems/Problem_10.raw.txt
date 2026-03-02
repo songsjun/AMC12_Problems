@@ -1,0 +1,38 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2012_AMC_12B_Problems/Problem_10&action=raw
+
+Published Time: Sat, 17 Jan 2026 22:13:09 GMT
+
+Markdown Content:
+==Problem==
+
+What is the area of the polygon whose vertices are the points of intersection of the curves x^2 + y^2 =25 and (x-4)^2 + 9y^2 = 81 ?
+
+\textbf{(A)}\ 24\qquad\textbf{(B)}\ 27\qquad\textbf{(C)}\ 36\qquad\textbf{(D)}\ 37.5\qquad\textbf{(E)}\ 42
+
+==Solution 1==
+
+The first curve is a circle with radius 5 centered at the origin, and the second curve is an ellipse with center (4,0) and end points of (-5,0) and (13,0). Finding points of intersection, we get (-5,0), (4,3), and (4,-3), forming a triangle with height of 9 and base of 6. So the area of this triangle is 9 \cdot 6 \cdot 0.5 =\boxed{27 \textbf{ (B)}}.
+
+==Solution 2==
+Given the equations x^2 + y^2 =25 and (x-4)^2 + 9y^2 = 81, we can substitute y^2=25-x^2 from the first equation and plug it in to the 2nd equation, giving us (x-4)^2+9(25-x^2)=81. After rearranging, 8x^2+8x-160=0 or x^2+x-20=0. The solutions are x=-5 and x=4. This gives us the points (-5,0),(4,3),and (4,-3). The area of the triangle formed by these points is 27=\fbox{B}
+
+~dragnin
+
+~minor edits by [https://artofproblemsolving.com/wiki/index.php/User:Kevinchen_yay KevinChen_Yay]
+
+==Solution 3==
+Using the algebra from solution 2, we find the points of intersection to be (-5,0),(4,3),and (4,-3). Using the shoelace theorem, we can easily find the area of the triangle to be 27=\fbox{B}.
+
+~PeterDoesPhysics
+
+More information on the shoelace theorem:
+https://artofproblemsolving.com/wiki/index.php/Shoelace_Theorem
+
+== See Also ==
+
+{{AMC12 box|year=2012|ab=B|num-b=9|num-a=11}}
+
+[[Category:Introductory Geometry Problems]]
+{{MAA Notice}}

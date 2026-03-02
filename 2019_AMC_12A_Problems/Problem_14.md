@@ -1,0 +1,14 @@
+# 2019 AMC 12A Problem 14
+
+## Problem
+For a certain complex number c, the polynomial
+ $P(x) = (x^2-2x + 2)(x^2 - cx + 4)(x^2 -4x + 8$)has exactly 4 distinct roots. What is |c|?
+
+$\textbf{(A) } 2 \qquad \textbf{(B) } \sqrt{6} \qquad \textbf{(C) } 2\sqrt{2} \qquad \textbf{(D) } 3 \qquad \textbf{(E) } \sqrt{10}$
+## Solution
+The polynomial can be factored further broken down into
+
+$$P(x) = (x - [1 - i])(x - [1 + i])(x - [2 - 2i])(x - [2 + 2i])(x^2 - cx + 4)$$
+
+by using the [quadratic formula](https://artofproblemsolving.com/wiki/index.php/quadratic_formula) on each of the quadratic factors. Since the first four roots are all distinct, the term $(x^2 - cx + 4)$ must be a product of any combination of two (not necessarily distinct) factors from the set: (x - [1 - i]), (x - [1 + i]), (x - [2 - $2i$]), and (x - [2 + $2i$]). We need the two factors to yield a constant term of 4 when multiplied together. The only combinations that work are (x - [1 - i]) and (x - [2 + $2i$]), or (x - [1+i]) and (x - [2-$2i$]). When multiplied together, the polynomial is either $(x^2 +$ [-3 + i]x + 4) or $(x^2+$[-3-i]$x+4$). Therefore, $c = 3\pm$ i and |c| = $\boxed{\textbf{(E) } \sqrt{10}}.$
+## See Also

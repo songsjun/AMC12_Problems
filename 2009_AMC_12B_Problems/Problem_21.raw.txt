@@ -1,0 +1,47 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2009_AMC_12B_Problems/Problem_21&action=raw
+
+Published Time: Tue, 20 Sep 2022 02:58:50 GMT
+
+Markdown Content:
+== Problem ==
+Ten women sit in 10 seats in a line. All of the 10 get up and then reseat themselves using all 10 seats, each sitting in the seat she was in before or a seat next to the one she occupied before. In how many ways can the women be reseated?
+
+\textbf{(A)}\ 89\qquad \textbf{(B)}\ 90\qquad \textbf{(C)}\ 120\qquad \textbf{(D)}\ 2^{10}\qquad \textbf{(E)}\ 2^2 3^8
+
+==Solution 1==
+Notice that either a woman stays in her own seat after the rearrangement, or two adjacent women swap places. Thus, our answer is counting the number of ways to arrange 1x1 and 2x1 blocks to form a 1x10 rectangle. This can be done via casework depending on the number of 2x1 blocks. The cases of 0, 1, 2, 3, 4, 5 2x1 blocks correspond to 10, 8, 6, 4, 2, 0 1x1 blocks, and so the sum of the cases is
+\binom{10}{0} + \binom{9}{1} + \binom{8}{2} + \binom{7}{3} + \binom{6}{4} + \binom{5}{5} = 1 + 9 + 28 + 35 + 15 + 1 = \boxed{89}.
+
+===Solution 1 Shortcut===
+Recall that the number of ways to arrange 1x1 and 2x1 blocks to form a 1xn rectangle results in [[Fibonacci numbers]]. Clearly, \boxed{89} is the only fibonacci number, so no calculation is needed for this problem.
+
+==Solution 2==
+Let S_n be the number of possible seating arrangements with n women. Consider n \ge 3, and focus on the rightmost woman. If she returns back to her seat, then there are S_{n-1} ways to seat the remaining n-1 women. If she sits in the second to last seat, then the woman who previously sat there must now sit at the rightmost seat. This gives us S_{n-2} ways to seat the other n-2 women, so we obtain the recursion
+S_n = S_{n-1}+S_{n-2}.
+
+Starting with S_1=1 and S_2=2, we can calculate S_{10}=\boxed{89}.
+
+==Clarification of Solution 2==
+The seating possibilities of woman #10 become the two cases which we work out. S_n was defined to be the number of different seating arrangements with n women.
+
+In the first "case" if woman #10 sits in the seat #10, this leads to a similar scenario, but with 9 women instead. That means that for this case, there are a total of S_{9} possible arrangements. We don't know how many exactly, but we are able to define it in terms of S.
+
+During the second "case", woman #10 sits in seat #9. This time, woman #9 must go to seat #10, as she is the only other person who can go there. This leaves us with 8 women, and we again represent this in terms of S \Rightarrow S_8.
+
+Therefore, we can write S_{10} in terms of S_8 and S_9, like so:
+
+S_{10} = S_8 + S_9.
+
+We can then generalize this to say
+
+S_n = S_{n-1}+S_{n-2}.
+
+Calculating S_1 = 1 and S_2 =2, then following the recursive rule from above, we get S_{10} = 89 \Rightarrow \boxed{\text{A}}.
+== See Also ==
+
+{{AMC12 box|year=2009|ab=B|num-b=20|num-a=22}}
+
+[[Category:Introductory Combinatorics Problems]]
+{{MAA Notice}}

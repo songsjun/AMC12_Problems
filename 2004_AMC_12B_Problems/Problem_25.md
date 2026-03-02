@@ -1,0 +1,31 @@
+# 2004 AMC 12B Problem 25
+
+## Problem
+Given that $2^{2004}$ is a 604-[digit](https://artofproblemsolving.com/wiki/index.php/digit) number whose first digit is 1, how many [element](https://artofproblemsolving.com/wiki/index.php/element)s of the [set](https://artofproblemsolving.com/wiki/index.php/set) S = $\{2^0,2^1,2^2,\ldots ,2^{2003}\}$ have a first digit of 4?
+
+
+$$\mathrm{(A)}\ 194 \qquad \mathrm{(B)}\ 195 \qquad \mathrm{(C)}\ 196 \qquad \mathrm{(D)}\ 197 \qquad \mathrm{(E)}\ 198$$
+
+## Solution 1
+Given n digits, there must be exactly one power of 2 with n digits such that the first digit is 1. Thus S contains 603 elements with a first digit of 1. For each number in the form of $2^k$ such that its first digit is 1, then $2^{k+1}$ must either have a first digit of 2 or 3, and $2^{k+2}$ must have a first digit of 4,5,6,7. Thus there are also 603 numbers with first digit $\{2,3\}$ and 603 numbers with first digit $\{4,5,6,7\}$. By using [complementary counting](https://artofproblemsolving.com/wiki/index.php/complementary_counting), there are 2004 - 3 $\times 603 = 195$ elements of S with a first digit of $\{8,9\}. Now, 2^k$ has a first digit of $\{8,9\}$ [if and only if](https://artofproblemsolving.com/wiki/index.php/iff) the first digit of $2^{k-1}$ is 4, so there are $\boxed{195} \Rightarrow \mathrm{(B)}$ elements of S with a first digit of 4.
+## Solution 2
+We can make the following chart for the possible loops of leading digits:
+
+$$
+1 \rightarrow 2 \rightarrow 4 \rightarrow 8 \rightarrow 1
+1 \rightarrow 2 \rightarrow 4 \rightarrow 9 \rightarrow 1
+1 \rightarrow 2 \rightarrow 5 \rightarrow 1
+1 \rightarrow 3 \rightarrow 6 \rightarrow 1
+1 \rightarrow 3 \rightarrow 7 \rightarrow 1
+$$
+
+
+Thus each loop from 1 $\rightarrow 1$ can either have 3 or 4 numbers. Let there be x of the sequences of 3 numbers, and let there be y of the sequences of 4 numbers. We note that a 4 appears only in the loops of 4, and also we are given that $2^{2004}$ has 604 digits.
+
+$$
+3x+4y=2004
+x+y=603
+$$
+
+Solving gives  $x = 408$ and $y = 195$, thus the answer is (B).
+## See also

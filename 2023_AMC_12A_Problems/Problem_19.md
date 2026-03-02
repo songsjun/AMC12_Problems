@@ -1,0 +1,106 @@
+# 2023 AMC 12A Problem 19
+
+## Problem
+What is the product of all solutions to the equation
+$$\log_{7x}2023\cdot \log_{289x}2023=\log_{2023x}2023$$
+
+$\textbf{(A) } (\log_{2023}7\cdot \log_{2023}289)^2\qquad\textbf{(B) } \log_{2023}7\cdot \log_{2023}289\qquad\textbf{(C) } 1 \\ \qquad \textbf{(D) } \log_{7}2023\cdot \log_{289}2023\qquad \textbf{(E) } (\log_7 2023\cdot\log_{289} 2023)^2$
+## Solution 1
+For $\log_{7x}2023\cdot \log_{289x}2023=\log_{2023x}2023,$ transform it into $\dfrac{\ln 289+\ln 7}{\ln 7 + \ln x}\cdot \dfrac{\ln 289+\ln 7}{\ln 289 + \ln x}=\dfrac{\ln 289+\ln 7}{\ln 289+\ln 7+\ln x}.$ Replace $\ln$ x with y. Because we want to find the product of all solutions of x, it is equivalent to finding the exponential of the sum of all solutions of y. Change the equation to standard quadratic equation form, the term with 1 power of y is canceled.  By using Vieta, we see that since there does not exist a by term, $\sumy=0$ and $\prodx=e^0=\boxed{\textbf{(C)} 1}.$
+
+*~plasta*
+## Solution 2 (Same idea as Solution 1 with easily understood steps)
+$$\log_{7x}2023\cdot \log_{289x}2023=\log_{2023x}2023$$
+
+Rearranging it give us:
+
+$$\log_{2023}7x\cdot \log_{2023}289x=\log_{2023}2023x$$
+
+
+$$(\log_{2023}7+\log_{2023}x)(\log_{2023}289+\log_{2023}x)=(\log_{2023}2023+\log_{2023}x)$$
+
+
+let $\log_{2023}$x be a, we get
+
+$$(\log_{2023}7+a)(\log_{2023}289+a)=1+a$$
+
+$$a^2+(\log_{2023}7+\log_{2023}289)a+\log_{2023}7 \cdot \log_{2023}289=1+a$$
+
+$$a^2+\log_{2023}7 \cdot \log_{2023}289-1=0$$
+
+by Vieta's Formulas,
+
+$$a_1+a_2=0$$
+
+$$\log_{2023}{x_1}+\log_{2023}{x_2}=0$$
+
+$$\log_{2023}{x_1x_2}=0$$
+
+$$x_1x_2=\boxed{\textbf{(C)} 1}$$
+
+*~lptoggled*
+～edited by DRA777
+## Solution 3
+Similar to solution 1, change the bases first
+
+$$\frac{\ln 289+\ln 7}{\ln7 + \ln{x}} \cdot \frac{\ln 289+\ln 7}{2\ln17 + \ln{x}} = \frac{\ln 289+\ln 7}{\ln7 + 2\ln17 + \ln{x}}$$
+
+Cancel and cross multiply to get
+$$(\ln7 + 2\ln17)(\ln7 + 2\ln17 + \ln{x}) = (\ln7 + \ln{x})(2\ln17 + \ln{x})$$
+Simplify to get
+
+$$
+(\ln{x})^2 = 4(\ln17)^2 + 2\ln17\ln7 + (\ln7)^2
+\ln{x} = \pm \sqrt{4(\ln17)^2 + 2\ln17\ln7 + (\ln7)^2}
+$$
+
+The sum of all possible $\ln{x}$ is 0, thus the product of all solutions of x is $\boxed{\textbf{(C)} 1}$
+
+*~dwarf_marshmallow*
+## Solution 4(Fakesolve)
+We take the reciprocal of both sides:
+$\frac{1}{\log_{7x}2023}\cdot \frac{1}{\log_{289x}2023}=\frac{1}{\log_{2023x}2023}.$ Using logarithm properties, we have $\log_{2023}7x\cdot \log_{2023}289x=\log_{2023}2023$x. Simplify to obtain $2023x^2=2023x,$ from which we have $x=\boxed{\textbf{(C)} 1}$
+
+*~MLiang2018*
+
+This solution works for this problem by chance but do note that the simplification step to get $2023x^2=2023$xis not how log properties work and that the actual solutions for x are  $x =e^{ \pm \sqrt{ln^2(7)+ln(17)ln(2092529)}}$ (as shown in solution 3) which multiply to 1
+
+*~silk-hyacinth*
+## Solution 5(Similar to solution 4, Fakesolve)
+First, we take the reciprocal of both sides. We get $\frac{1}{\log_{7x}2023}\cdot \frac{1}{\log_{289x}2023}=\frac{1}{\log_{2023x}2023}.$
+Flip the logarithms to get $\log_{2023}7x\cdot \log_{2023}289x=\log_{2023}2023$x.
+
+Now we can use $\log_{a}$bc=$\log_{a}b+\log_{a}$c. We get $\log_{2023}7+\log_{2023}x+\log_{2023}289+\log_{2023}x=\log_{2023}2023+\log_{2023}$x. The $\log_{2023}7+\log_{2023}289$ and $\log_{2023}2023$ terms cancel, giving $2\cdot\log_{2023}x=\log_{2023}$x so now we are sure that $\log_{2023}$x=0, so the only solution is $x=\boxed{\textbf{(C)} 1}.$
+
+*~Yrock*
+## Solution 6 (Bogus Solution)
+We can begin by changing the logarithms' base to x and simplifying:
+
+$$
+\newline
+\frac{(\log_{x} 2023)^2}{\log_{x} 7 +1} \cdot \frac{1}{\log_{x} 289 + 1} = 1
+\newline
+$$
+
+After that, we can multiply the denominator on the $\text{LHS}$ on both sides, resulting in:
+
+$$
+\newline
+(\log_{x} 2023)^2 = (\log_{x} 7 +1)(\log_{x} 289 +1)
+\newline
+(\log_{x} 2023)^2 = \log_{x} 2023 + \log_{x} 7 + \log_{x} 289 + 1
+\newline
+(\log_{x} 2023)^2 = 2\log_{x} 2023 + 1
+\newline
+$$
+
+Now, we can substitute some variable a as $\log_{x} 2023,$ giving the quadratic $a^2-2a-1=0$. By Vieta's, the product of the roots is 1, thus the solution is $\boxed{\textbf{(C)} 1}.$
+
+*~cyberhacker*
+## Video Solution 1 by OmegaLearn
+https://youtu.be/OcNU62SMh4o
+## Video Solution
+https://youtu.be/-CZkFE-wriQ
+
+*~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)*
+## See also

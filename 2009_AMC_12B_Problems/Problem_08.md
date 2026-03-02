@@ -1,0 +1,41 @@
+# 2009 AMC 12B Problem 8
+
+> This problem is the same as [2009 AMC 10B #15](https://artofproblemsolving.com/wiki/index.php/2009_AMC_10B_Problems) and [2009 AMC 12B #8](https://artofproblemsolving.com/wiki/index.php/2009_AMC_12B_Problems).
+## Problem
+When a bucket is two-thirds full of water, the bucket and water weigh a kilograms. When the bucket is one-half full of water the total weight is b kilograms. In terms of a and b, what is the total weight in kilograms when the bucket is full of water?
+
+
+$$\mathrm{(A)}\ \frac23a + \frac13b\qquad \mathrm{(B)}\ \frac32a - \frac12b\qquad \mathrm{(C)}\ \frac32a + b\qquad \mathrm{(D)}\ \frac32a + 2b\qquad \mathrm{(E)}\ 3a - 2b$$
+
+## Solution
+### Solution 1
+Let x be the weight of the bucket and let y be the weight of the water in a full bucket.  Then we are given that x + $\frac 23$y = a and x + $\frac 12$y = b.  Hence $\frac 16$y = a-b, so y = 6$a-6$b.  Thus x = b - $\frac 12 (6a-6b) = -3a + 4b$.  Finally x + $y =\boxed$ {$3a-2$b}. The answer is $\mathrm{(E)}.$
+### Solution 2
+Imagine that we take three buckets of the first type, to get rid of the fraction. We will have three buckets and two buckets' worth of water.
+
+On the other hand, if we take two buckets of the second type, we will have two buckets and enough water to fill one bucket.
+
+The difference between these is exactly one bucket full of water, hence the answer is $3a-2$b.
+### Solution 3
+We are looking for an expression of the form xa + yb.
+
+We must have x+$y=1$, as the desired result contains exactly one bucket. Also, we must have $\frac 23 x + \frac 12y = 1$, as the desired result contains exactly one bucket of water.
+
+At this moment, it is easiest to check that only the options (A), (B), and (E) satisfy x+$y=1$, and out of these only (E) satisfies the second equation.
+
+Alternatively, we can directly solve the system, getting $x=3$ and y=-2.
+### Solution 4
+Since a is one bucket plus two-thirds of the total amount of water, and b is one bucket plus one-half of the total amount of water, a-b would equal \cancel{$\text{bucket}$}+$\frac23\cdot\text{water}-($\cancel{$\text{bucket}$}+$\frac12\cdot\text{water})=\frac16\cdot\text{water}.$ Therefore, a-b is one-sixth of the total mass of the water. Starting from a, we add two one-sixths of the total amount of the water to become full. Therefore, the full bucket of water is $a+2(a-b)=a+2a-2b=3a-2b\Rightarrow\textbf{(E)}$
+
+*~SweetMango77*
+## Solution 5 (Using answer choices+Very quick bash)
+WLOG let the bucket hold 6 units of water. Then $b=4, a=3$. Then test out all the answer choices to arrive at the answer choice (E)
+*~PEKKA*
+## Video Solution
+https://youtu.be/fXXSk8zUXgo
+
+*~savannahsolver*
+
+I restored the original video solution that was deleted by Whitelisted and replaced with a Rick Roll.
+*~IceMatrix*
+## See also

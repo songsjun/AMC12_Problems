@@ -1,0 +1,20 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2007_AMC_12B_Problems/Problem_9&action=raw
+
+Published Time: Mon, 19 Oct 2020 05:01:50 GMT
+
+Markdown Content:
+== Problem ==
+A function f has the property that f(3x-1)=x^2+x+1 for all real numbers x.  What is f(5)?
+
+\mathrm{(A)}\ 7 \qquad \mathrm{(B)}\ 13 \qquad \mathrm{(C)}\ 31 \qquad \mathrm{(D)}\ 111 \qquad \mathrm{(E)}\ 211
+
+== Solution ==
+3x-1 =5 \implies x= 2
+
+f(3(2)-1) = 2^2+2+1=7 \implies (A)
+
+== See Also ==
+{{AMC12 box|year=2007|ab=B|num-b=8|num-a=10}}
+{{MAA Notice}}

@@ -1,0 +1,32 @@
+{{duplicate|[[2012 AMC 12A Problems|2012 AMC 12A #9]] and [[2012 AMC 10A Problems|2012 AMC 10A #12]]}}
+
+== Problem ==
+
+A year is a leap year if and only if the year number is divisible by 400 (such as 2000) or is divisible by 4 but not 100 (such as 2012).  The 200th anniversary of the birth of novelist Charles Dickens was celebrated on February 7, 2012, a Tuesday.  On what day of the week was Dickens born?
+
+<math> \textbf{(A)}\ \text{Friday}\qquad\textbf{(B)}\ \text{Saturday}\qquad\textbf{(C)}\ \text{Sunday}\qquad\textbf{(D)}\ \text{Monday}\qquad\textbf{(E)}\ \text{Tuesday} </math>
+
+== Solution ==
+ 
+In this solution we refer to moving to the left as decreasing the year or date number and moving to the right as  increasing the year or date number. Every non-leap year we move to the right results in moving one day to the right because <math>365\equiv 1\pmod 7</math>.  Every leap year we move to the right results in moving <math>2</math> days to the right since <math>366\equiv 2\pmod 7</math>. A leap year is usually every four years, so 200 years would have <math>\frac{200}{4}</math> = <math>50</math> leap years, but the problem says that 1900 does not count as a leap year.
+
+Therefore there would be 151 regular years and 49 leap years, so <math>1(151)+2(49)</math> = <math>249</math> days back.  Since <math>249 \equiv 4\ (\text{mod}\ 7)</math>, four days back from Tuesday would be <math>\boxed{\textbf{(A)}\ \text{Friday}}</math>.
+
+== Solution 2== 
+
+Since they say that February <math>7</math>th, <math>2012</math> is the <math>200</math>th anniversary of Charles Dickens birthday, that means that the birth of Charles Dickens is on February <math>7</math>th, <math>1812</math>. We then see that there is a leap year on <math>1812, 1816, ...., 2008</math> but we must exclude <math>1900</math> which equates to <math>49</math> leap years. So, the amount of days we have to go back is <math>200(365) + 49</math> days which in <math>\text{mod }7</math> gives us 4. Thus, <math>4</math> days back from Tuesday is <math>\boxed{\textbf{(A)}\ \text{Friday}}</math>.
+
+
+== Remark ==
+
+The reason why there are 49 leap years:
+
+<math>\quad</math> There are 200 <math>\div</math> 4  years which are divisible by 4. There are 2 years which are divisible by 100 within these 200 years. There is 1 year which is divisible by 400. Therefore , there are <math>\frac{200}{4} -2 + 1</math> leap years.
+
+~ JiYang
+
+== See Also ==
+
+{{AMC10 box|year=2012|ab=A|num-b=11|num-a=13}}
+{{AMC12 box|year=2012|ab=A|num-b=8|num-a=10}}
+{{MAA Notice}}

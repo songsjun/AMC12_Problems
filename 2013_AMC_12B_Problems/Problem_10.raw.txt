@@ -1,0 +1,45 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2013_AMC_12B_Problems/Problem_10&action=raw
+
+Published Time: Sat, 20 Dec 2025 17:56:14 GMT
+
+Markdown Content:
+{{duplicate|[[2013 AMC 12B Problems|2013 AMC 12B #10]] and [[2013 AMC 10B Problems|2013 AMC 10B #17]]}}
+
+==Problem==
+Alex has 75 red tokens and 75 blue tokens. There is a booth where Alex can give two red tokens and receive in return a silver token and a blue token and another booth where Alex can give three blue tokens and receive in return a silver token and a red token. Alex continues to exchange tokens until no more exchanges are possible. How many silver tokens will Alex have at the end?
+
+\textbf{(A)}\ 62 \qquad \textbf{(B)}\ 82 \qquad \textbf{(C)}\ 83 \qquad \textbf{(D)}\ 102 \qquad \textbf{(E)}\ 103
+
+== Solution 1==
+
+If Alex goes to the red booth 3 times, then goes to the blue booth once, Alex can exchange 6 red tokens for 4 silver tokens and one red token. Similarly, if Alex goes to the blue booth 2 times, then goes to the red booth once, Alex can exchange 6 blue tokens for 3 silver tokens and one blue token. Let's call the first combination Combo 1, and the second combination Combo 2.
+
+In other words, Alex can exchange 5 red tokens for 4 silver tokens as long as he has at least 6 red tokens, and Alex can exchange 5 blue tokens for 3 silver tokens as long as he has at least 6 blue tokens. Hence after performing 14 Combo 1's and 14 Combo 2's, we end up with 5 red, 5 blue, and 98 silver tokens.
+
+Finally, Alex can visit the blue booth once, then do Combo 1 to end up with 1 red token, 2 blue tokens, and \boxed{\textbf{(E)}\ 103} silver tokens, at which point it is clear he cannot use the booths anymore.
+
+== Solution 2==
+
+We can approach this problem by assuming he goes to the red booth first. You start with 75 \text{R} and 75 \text{B} and at the end of the first booth, you will have 1 \text{R} and 112 \text{B} and 37 \text{S}. We now move to the blue booth, and working through each booth until we have none left, we will end up with:1 \text{R}, 2 \text{B} and 103 \text{S}. So, the answer is \boxed{\textbf{(E)}103}
+
+==Solution 3==
+
+Let x denote the number of visits to the first booth and y denote the number of visits to the second booth. Then we can describe the quantities of his red and blue coins as follows:
+R(x,y)=-2x+y+75
+B(x,y)=x-3y+75
+There are no legal exchanges when he has fewer than 2 red coins and fewer than 3 blue coins, namely when he has a red coin and 2 blue coins. We can then create a system of equations:
+1=-2x+y+75
+2=x-3y+75
+Solving yields x=59 and y=44. Since he gains one silver coin per visit to each booth, he has x+y=44+59=\boxed{\textbf{(E)}103} silver coins in total.
+
+==Solution 4 (Invariance)==
+Suppose we set the values of the coins: Red = 4, Blue = 3, Silver = 5. This way, whenever an exchange is made, Alex's total value in coins does not change. His total value at the beginning (and thus also at the end) is 3\cdot 75+4\cdot 75=525, so his theoretical possible total (if everything works out perfectly) is 105.
+
+Note that the maximum possible leftover red coins is 1, and the maximum possible leftover blue coins is 2, so the maximum leftover non-silver value is 10. This perfectly gives us 103 silver coins.
+
+== See also ==
+{{AMC10 box|year=2013|ab=B|num-b=16|num-a=18}}
+{{AMC12 box|year=2013|ab=B|num-b=9|num-a=11}}
+{{MAA Notice}}

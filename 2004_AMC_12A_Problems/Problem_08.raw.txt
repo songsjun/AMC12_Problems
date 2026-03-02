@@ -1,0 +1,77 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2004_AMC_12A_Problems/Problem_8&action=raw
+
+Published Time: Sat, 17 May 2025 19:39:33 GMT
+
+Markdown Content:
+{{duplicate|[[2004 AMC 12A Problems|2004 AMC 12A #8]] and [[2004 AMC 10A Problems/Problem 9|2004 AMC 10A #9]]}}
+
+== Problem ==
+In the overlapping [[triangle]]s \triangle{ABC} and \triangle{ABE} sharing common [[edge | side]] AB, \angle{EAB} and \angle{ABC} are [[right angle]]s, AB=4, BC=6, AE=8, and \overline{AC} and \overline{BE} intersect at D. What is the difference between the areas of \triangle{ADE} and \triangle{BDC}? 
+
+ size(150); defaultpen(linewidth(0.4)); //Variable Declarations pair A, B, C, D, E; //Variable Definitions A=(0, 0); B=(4, 0); C=(4, 6); E=(0, 8); D=extension(A,C,B,E); //Initial Diagram draw(A--B--C--A--E--B); label("$A$",A,SW); label("$B$",B,SE); label("$C$",C,NE); label("$D$",D,3N); label("$E$",E,NW); //Side labels label("$4$",A--B,S); label("$8$",A--E,W); label("$6$",B--C,ENE); 
+
+\mathrm {(A)}\ 2 \qquad \mathrm {(B)}\ 4 \qquad \mathrm {(C)}\ 5 \qquad \mathrm {(D)}\ 8 \qquad \mathrm {(E)}\ 9 \qquad
+
+== Solutions ==
+===Solution 1===
+Looking, we see that the area of [\triangle EBA] is 16 and the area of [\triangle ABC] is 12. Set the area of [\triangle ADB] to be x. We want to find [\triangle ADE] - [\triangle CDB]. So, that would be [\triangle EBA]-[\triangle ADB]=16-x and [\triangle ABC]-[\triangle ADB]=12-x. Therefore, [\triangle ADE]-[\triangle DBC]=(16-x)-(12-x)=16-x-12+x= \boxed{\mathrm{(B)}\ 4}
+
+~ MathKatana
+
+=== Solution 2 ===
+Since AE \perp AB and BC \perp AB, AE \parallel BC. By alternate interior angles and AA\sim, we find that \triangle ADE \sim \triangle CDB, with side length ratio \frac{4}{3}. Their heights also have the same ratio, and since the two heights add up to 4, we have that h_{ADE} = 4 \cdot \frac{4}{7} = \frac{16}{7} and h_{CDB} = 3 \cdot \frac 47 = \frac {12}7. Subtracting the areas, \frac{1}{2} \cdot 8 \cdot \frac {16}7 - \frac 12 \cdot 6 \cdot \frac{12}7 = 4 \Rightarrow \boxed{\mathrm{(B)}\ 4}.
+
+=== Solution 3 ===
+Let [X] represent the area of figure X. Note that [\triangle BEA]=[\triangle ABD]+[\triangle ADE] and [\triangle BCA]=[\triangle ABD]+[\triangle BDC].
+
+[\triangle ADE]-[\triangle BDC]=[\triangle BEA]-[\triangle BCA]=\frac{1}{2}\times8\times4-\frac{1}{2}\times6\times4= 16-12=4\Rightarrow\boxed{\mathrm{(B)}\ 4}
+
+=== Solution 4 (coordbash)===
+Put figure ABCDE on a graph. \overline{AC} goes from (0, 0) to (4, 6) and \overline{BE} goes from (4, 0) to (0, 8). \overline{AC} is on line y = 1.5x. \overline{BE} is on line y = -2x + 8. Finding intersection between these points,
+
+1.5x = -2x + 8. 
+
+3.5x = 8 
+
+ x = 8 \times \frac{2}{7}
+
+ = \frac{16}{7}
+
+This gives us the x-coordinate of D. 
+So, \frac{16}{7} is the height of \triangle ADE, then area of \triangle ADE is 
+\frac{16}{7} \times 8 \times \frac{1}{2}
+ = \frac{64}{7}
+
+Now, the height of \triangle BDC is 4-\frac{16}{7} = \frac{12}{7}
+And the area of \triangle BDC is 6 \times \frac{12}{7} \times \frac{1}{2} = \frac{36}{7}
+
+This gives us \frac{64}{7} - \frac{36}{7} = 4
+
+Therefore, the difference is 4
+
+=== Solution 5 ===
+We want to figure out [\triangle ADE] - [\triangle BDC].
+Notice that \triangle ABC and \triangle BAE "intersect" and form \triangle ADB.
+
+This means that [\triangle BAE] - [\triangle ABC)] = [\triangle ADE] - [\triangle BDC] because [\triangle ADB] cancels out, which can be seen easily in the diagram.
+
+[\triangle BAE] = 0.5 \cdot 4 \cdot 8 = 16
+
+[\triangle ABC] = 0.5 \cdot 4 \cdot 16 = 12
+
+[\triangle BDC] - [\triangle ADE] = 16 - 12 =\boxed{\mathrm{(B)}\ 4}
+
+==Video Solution==
+https://youtu.be/DlA71MBSviU
+
+Education, the Study of Everything
+
+== See also ==
+* [http://www.artofproblemsolving.com/Forum/viewtopic.php?t=131320 AoPS topic]
+{{AMC12 box|year=2004|ab=A|num-b=7|num-a=9}}
+{{AMC10 box|year=2004|ab=A|num-b=8|num-a=10}}
+
+[[Category:Introductory Geometry Problems]]
+{{MAA Notice}}

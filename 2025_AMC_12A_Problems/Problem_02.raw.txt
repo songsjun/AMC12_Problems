@@ -1,0 +1,130 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2025_AMC_12A_Problems/Problem_2&action=raw
+
+Published Time: Sun, 01 Mar 2026 16:45:04 GMT
+
+Markdown Content:
+{{duplicate|[[2025 AMC 10A Problems/Problem 2|2025 AMC 10A #2]] and [[2025 AMC 12A Problems/Problem 2|2025 AMC 12A #2]]}}
+
+==Problem==
+A box contains 10 pounds of a nut mix that is 50 percent peanuts, 20 percent cashews, and 30 percent almonds. A second nut mix containing 20 percent peanuts, 40 percent cashews, and 40 percent almonds is added to the box resulting in a new nut mix that is 40 percent peanuts. How many pounds of cashews are now in the box? 
+
+\textbf{(A) } 3.5 \qquad\textbf{(B) } 4 \qquad\textbf{(C) } 4.5 \qquad\textbf{(D) } 5 \qquad\textbf{(E) } 6
+
+==Solution 1==
+
+We are given 0.2(10) = 2 pounds of cashews in the first box.
+
+Denote the pounds of nuts in the second nut mix as x. 
+
+5 + 0.2x = 0.4(10 + x)
+0.2x = 1
+x = 5
+
+Thus, we have 5 pounds of the second mix. 
+
+0.4(5) + 2 = 2 + 2 = \boxed{\text{(B) }4}
+
+~pigwash
+
+~yuvaG (Formatting)
+
+~LucasW (Minor LaTeX)
+
+~Kirbyisdabestboiii (Very very very minor edits)
+
+==Solution 2==
+
+Let the number of pounds of nuts in the second nut mix be x. Therefore, we get the equation 0.5 \cdot 10 + 0.2 \cdot x = 0.4(x+10). Solving it, we get x=5. Therefore the amount of cashews in the two bags is 0.2 \cdot 10 + 0.4 \cdot 5 = 4, so our answer choice is \boxed{\textbf{(B)} 4}.
+
+~iiiiiizh
+
+~yuvaG - \LaTeX Formatting ;)
+
+~Amon26(really minor edits)
+
+==Solution 3==
+
+The percent of peanuts in the first mix is 10\% away from the total percentage of peanuts, and the percent of peanuts in the second mix is 20\% away from the total percentage. This means the first mix has twice as many nuts as the second mix, so the second mix has 5 pounds. 
+0.20 \cdot 10 + 0.40 \cdot 5 = 4 pounds of cashews. So our answer is, \boxed{\textbf{(B)}4}
+~LUCKYOKXIAO
+
+~LEONG2023-Latex
+
+==Solution 4==
+Note that we can set the information given in the problem into a table shown below:
+
+\renewcommand{\arraystretch}{1.5} \begin{centering} \begin{array}{| c | c | c |} \hline \text{Peanuts} & \text{Cashews} & \text{Almonds}\\ \hline 5 & 2 & 3\\ \hline \frac{2}{10}x & \frac{4}{10}x & \frac{4}{10}x\\ \hline \end{array} \end{centering} 
+
+We are given that the new nut mix will contain 40\% peanuts. Hence, 5 + \frac{2}{10}x is 40\% of the total mix which is 10 + x. 
+Solving the equation 5 + \frac{2}{10}x = \frac{2}{5} \cdot (10 + x) yields x=5. Therefore, the number of cashews in the new mix is equal to 2 + \frac{2}{5} \cdot 5 = \boxed{\textbf{(B)} 4}.
+
+~Moonlight11
+
+~TehSovietOnion (LaTeX)
+
+==Solution 5==
+
+Write composition vectors as column vectors (mass fractions multiplied by mass):
+
+Initial mass vector (peanuts, cashews, almonds) for 10 lb:
+ \mathbf{v}_0 = 10 \begin{pmatrix} 0.50 \\ 0.20 \\ 0.30 \end{pmatrix} = \begin{pmatrix} 5 \\ 2 \\ 3 \end{pmatrix}. 
+Added mix per unit mass:
+ \mathbf{u} = \begin{pmatrix} 0.20 \\ 0.40 \\ 0.40 \end{pmatrix}. 
+After adding \( x \) lb, total mass vector is
+ \mathbf{v}(x) = \mathbf{v}_0 + x \mathbf{u} = \begin{pmatrix} 5 \\ 2 \\ 3 \end{pmatrix} + x \begin{pmatrix} 0.2 \\ 0.4 \\ 0.4 \end{pmatrix}. 
+Peanut fraction requirement:
+ \frac{\mathbf{e}_1^\top \mathbf{v}(x)}{\mathbf{1}^\top \mathbf{v}(x)} = 0.4, 
+where \( \mathbf{e}_1 = \begin{pmatrix} 1, 0, 0 \end{pmatrix}^\top \) and \( \mathbf{1} = \begin{pmatrix} 1, 1, 1 \end{pmatrix}^\top \). This is exactly the same scalar equation,
+ \frac{5 + 0.2x}{10 + x} = 0.4, 
+leading to \( x = 5 \) and hence
+ \mathbf{v}(5) = \begin{pmatrix} 5 \\ 2 \\ 3 \end{pmatrix} + 5 \begin{pmatrix} 0.2 \\ 0.4 \\ 0.4 \end{pmatrix} = \begin{pmatrix} 6 \\ 4 \\ 5 \end{pmatrix}. 
+Thus cashews \( = 4 \) lb.
+
+==Solution 6: Very easy algebra and straightforward! == 
+Set up the ratios for the initial and the additional mixtures. The ratio of Peanuts:Cashews:Almonds (denoted as P:C:A) would initially be 5x:2x:3x. For some factor (x). Then for the second mixture it would be 2x:4x:4x. If we add these we get 7x:6x:7x. Now we know that the percentage of peanuts is 40%. But we also know that the number of pounds of peanuts and almonds is the same. 40%+40% is 80% and so the number of cashews makes up 20% of the mixture. If you divide the factor x by the whole ratio you get 7:6:7 . These values sum to 20 and 20% of 20 is 4.
+
+=Video Solutions=
+
+==Video Solution by Power Solve==
+
+https://youtu.be/QBn439idcPo?si=jrzzKE72p29BIDQZ&t=102
+
+==Chinese Video Solution==
+
+https://www.bilibili.com/video/BV1S52uBoE8d/
+
+~metrixgo
+
+== Video Solution (Intuitive, Quick Explanation!) ==
+https://youtu.be/Qb-9KDYDDX8
+
+~ Education, the Study of Everything
+
+== Video Solution (Fast and Easy) ==
+https://youtu.be/YpJ3QZTmDuw?si=ucvH15JKX2tw4SKZ ~ Pi Academy
+
+==Video Solution by SpreadTheMathLove==
+https://www.youtube.com/watch?v=dAeyV60Hu5c
+
+==Video Solution by Daily Dose of Math==
+
+https://youtu.be/LN5ofIcs1kY
+
+~Thesmartgreekmathdude
+==Video Solution==
+https://youtu.be/gWSZeCKrOfU
+
+~MK
+
+==Video Solution== 
+https://youtu.be/l1RY_C20Q2M
+
+==Video Solution by Thinking Feet==
+https://youtu.be/HXHBTOGdMqo
+
+==See Also==
+{{AMC10 box|year=2025|ab=A|num-b=1|num-a=3}}
+{{AMC12 box|year=2025|ab=A|num-b=1|num-a=3}}
+{{MAA Notice}}

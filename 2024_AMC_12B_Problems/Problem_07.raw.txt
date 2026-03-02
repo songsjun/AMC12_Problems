@@ -1,0 +1,130 @@
+{{duplicate|[[2024 AMC 10B Problems/Problem 11|2024 AMC 10B #11]] and [[2024 AMC 12B Problems/Problem 7|2024 AMC 12B #7]]}}
+
+==Problem==
+In the figure below <math>WXYZ</math> is a rectangle with <math>WX=4</math> and <math>WZ=8</math>. Point <math>M</math> lies <math>\overline{XY}</math>, point <math>A</math> lies on <math>\overline{YZ}</math>, and <math>\angle WMA</math> is a right angle. The areas of <math>\triangle WXM</math> and <math>\triangle WAZ</math> are equal. What is the area of <math>\triangle WMA</math>?
+
+<asy>
+pair X = (0, 0);
+pair W = (0, 4);
+pair Y = (8, 0);
+pair Z = (8, 4);
+label("$X$", X, dir(180));
+label("$W$", W, dir(180));
+label("$Y$", Y, dir(0));
+label("$Z$", Z, dir(0));
+
+draw(W--X--Y--Z--cycle);
+dot(X);
+dot(Y);
+dot(W);
+dot(Z);
+pair M = (2, 0);
+pair A = (8, 3);
+label("$A$", A, dir(0));
+dot(M);
+dot(A);
+draw(W--M--A--cycle);
+markscalefactor = 0.05;
+draw(rightanglemark(W, M, A));
+label("$M$", M, dir(-90));
+</asy>
+
+Note: On certain tests that took place in China, the problem asked for the area of <math>\triangle MAY</math>.
+
+<math>
+\textbf{(A) }13 \qquad
+\textbf{(B) }14 \qquad
+\textbf{(C) }15 \qquad
+\textbf{(D) }16 \qquad
+\textbf{(E) }17 \qquad
+</math>
+
+
+==Solution 1==
+We know that <math>WX = 4</math>, <math>WZ = 8</math>, so <math>YZ = 4</math> and <math>YX = 8</math>. Since <math>\angle WMA = 90^\circ</math>, triangles <math>WXM</math> and <math>MYA</math> are similar. Therefore, <math>\frac{WX}{MY} = \frac{XM}{YA}</math>, which gives <math>\frac{4}{8 - XM} = \frac{XM}{4 - ZA}</math>. We also know that the areas of triangles <math>WXM</math> and <math>WAZ</math> are equal, so <math>WX \cdot XM = WZ \cdot ZA</math>, which implies <math>4 \cdot XM = 8 \cdot ZA</math>. Substituting this into the previous equation, we get <math>\frac{4}{8 - 2ZA} = \frac{2ZA}{4 - ZA}</math>, yielding <math>ZA = 1</math> and <math>XM = 2</math>. Thus,
+
+<cmath>
+\triangle WMA = 4 \cdot 8 - \frac{4 \cdot 2}{2} - \frac{8 \cdot 1}{2} - \frac{6 \cdot 3}{2} = \boxed{\textbf{(C) }15}
+</cmath>
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Athmyx Athmyx]
+
+==Solution 2==
+Let <math>XM=b</math>, <math>ZA = a</math>, <math>4\cdot b= 8\cdot a</math>, <math>b = 2a</math>, 
+<cmath>WM^2 + AM^2 = AW^2</cmath>
+<cmath>(b^2+4^2) + (4-a)^2 + (8-b)^2  = (a^2 + 8^2)</cmath>
+<math>a=1</math>, <math>b=2</math> , 
+<cmath>
+\triangle WMA = area(WXYZ) - \triangle WZA- \triangle WXM- \triangle MYA = 32 - 4-4-9 = \boxed{\textbf{(C) }15}
+</cmath>
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Cyantist luckuso]
+~minor edits by EaZ_Shadow
+
+==Solution 3 (Pythagorean Theorem) ==
+Assign ZA as <math>x</math>, then AY as <math>4 - x</math>. Assign XM as <math>y</math> and MY as <math>8 - y</math>. Since triangles WXM and WZA are equal in area, we can say <math>8x = 4y</math>, so <math>y = 2x</math>. Then, therefore, XM is <math>2x</math> and MY has length <math>8 - 2x</math>. We can use the Pythagorean theorem to find WM, which is actually <math>\sqrt{(2x)^2 + 4^2)} = \sqrt{4x^2 + 16}</math>. We don't factor it yet - we are going to find <math>x</math> again using the Pythagorean Theorem. Similarly, finding MA is just the square root of the squares of AY and MY individually, or <math>\sqrt{(8 - 2x)^2 + (4 - x)^2} = \sqrt{64 - 32x + 4x^2 + 16 - 8x + x^2} = \sqrt{5x^2 - 40x + 80}</math>. Then simply, WA is really <math>\sqrt{x^2 + 64}</math>.
+
+Now we have the three sides of the right triangle: <math>\sqrt{4x^2 + 16}</math>, <math>\sqrt{5x^2 - 40x + 80}</math>, and <math>\sqrt{x^2 + 64}</math>. Per the Pythagorean theorem again, we can see <math>(4x^2 + 16) + (5x^2 - 40x + 80) = (x^2 + 64)</math>. Combining like terms gives us <math>8x^2 - 40x + 32 = 0</math>, then dividing by 8 gives <math>x^2 - 5x + 4 = 0</math>. As this elementary and well-known quadratic gives us the roots of <math>1</math> and <math>4</math>, we can see it is a bit weird to have <math>x = 4</math>, as then point Z is point A. So we'll assume <math>x = 1</math>. We have two legs of the triangle by plugging in the sides with x in them, given that <math>x = 1</math>: <math>\sqrt{20}</math> and <math>\sqrt{45}</math>. We should know that <math>20 \cdot 45 = 900</math>, and <math>\sqrt{900} = 30.</math> Dividing by 2 reveals us our answer: <math>\boxed{\textbf{(C) }15}</math>
+
+~pepper2831
+~RoyalPawn38 (small edit)
+
+note: to further prove that 1 is the correct root, note that setting A at Z makes WZA have area 0. Therefore, WXM also has to have an area of 0. This makes it impossible for angle WMA to be a right angle, as WMA would simply become a right triangle with half the area of WXYZ, making MWA the right angle.
+
+~meihk_neiht
+
+==Solution 4 (Similar Triangles)==
+We are given <math>WX = 4</math>, <math>WZ = 8</math>. △ WXM and △ MYA have equal area, so let <math>XM = 2x</math> and <math>ZA = x</math>. <math>MY = 8-2x</math> and <math>AY = 4-x</math>. 
+From this, we can conclude that <math>\frac{MY}{AY} = \frac{8-2x}{4-x} = \frac{2}{1}</math>
+
+Since <math>WM</math> intersects parallel lines <math>WZ</math> and <math>XY</math>, <math>\angle ZWM = \angle WMZ</math>. <math>\angle ZWM + \angle MWX = 90^\circ</math>, so <math>180^\circ - 90^\circ = \angle WMZ + \angle AMY</math>. Thus, <math>\angle MWX = \angle AMY</math> and <math>\Delta WXM</math> ~ <math>\Delta MYA</math> due to AA Similarity. 
+
+Corresponding sides of similar triangles are proportional, so <math>\frac{WX}{XM} = \frac{MY}{AY}</math> or <math>\frac{4}{2x} = \frac{2}{1}</math>. It is clear that <math>2x = 2</math>, and <math>x = 1</math>. Now, all we have to do is subtract the area of the rectangle by each of the three triangles.
+
+
+<math>\Delta WMA</math> = <math>8 \cdot 4</math> - <math>\left(\frac{1}{2} \cdot 4 \cdot 2 \right)</math> - <math>\left(\frac{1}{2} \cdot 8 \cdot 1 \right)</math> - <math>\left(\frac{1}{2} \cdot 6 \cdot 3 \right)</math>
+
+<math>\Delta WMA</math> = <math>32 - 4 - 4 - 9</math>
+
+<math>\Delta WMA</math> = <math>\boxed{\textbf{(C) }15}</math>
+
+~peeghj
+~NOOK (Minor LaTeX edits)
+
+==Solution 5 (Desperate)==
+Taking a look at the diagram bruh, points <imath>M</imath> and <imath>A</imath> seem to divide <imath>\overline{XY}</imath> and <imath>\overline{YZ}</imath> into <imath>1:3</imath> ratios. With this assumption in mind, <imath>XM=2</imath>, <imath>MY=6</imath>, <imath>YA=3</imath>, and <imath>AZ=1</imath>. This means that the areas of <imath>\triangle WXM</imath> and <imath>\triangle WZA</imath> are <imath>\frac{4(2)}{2}=4</imath> and <imath>\frac{8(1)}{2}=4</imath> respectively, and the area of <imath>\triangle MAY</imath> is <imath>\frac{6(3)}{2}=9</imath>. The area of rectangle <imath>WXYZ=4(8)=32</imath>, so subtracting the areas of triangles <imath>WXM</imath>, <imath>WZA</imath>, and <imath>MAY</imath>, we get that the area of <imath>\triangle WMA=32-4-4-9=\boxed{\textbf{(C) 15}}</imath>
+
+~phinetium (first edit!)
+
+==China Test Solution (Finding <math>\triangle MAY</math>)==
+From solution 3, instead of finding the area of <math>\triangle WMA</math>, we instead find  the area of <math>\triangle MAY</math>. Then <math>x = 1</math> then we have <math>MA = 8 - 2x = 6</math>. Again, since <math>AY = 4 - x</math>, then <math>AY = 4 - 1 = 3.</math> The area of a triangle with legs <math>3</math> and <math>6</math> is <math>\frac{3 * 6}{2} = \boxed{9}</math>.
+
+~pepper2831 (again)
+
+-minor edits by fireball9746
+
+can someone pls explain why <math>\triangle MAY</math> has the same area as <math>\triangle WMA</math>
+
+^ To the person above:
+Under the problem, there’s a note that says some tests in China asked for the area of <math>\triangle MAY</math>. - trevian1
+
+==Video Solution 1 by Pi Academy (Fast and Easy ⚡🚀)==
+
+https://youtu.be/YqKmvSR1Ckk?feature=shared
+
+~ Pi Academy
+
+==Video Solution 2 by SpreadTheMathLove==
+https://youtu.be/782cQrY92Uc?si=KwONGMmze1cx7qUp
+
+==Video Solution 3 by TheBeautyofMath==
+For AMC 10: https://youtu.be/dfF39udgqc8?si=3bOkC2YDgeINF3x2 in Rapid Fire
+For AMC 12: https://youtu.be/AKLPjTRPF4Q?t=265 in Rapid Fire
+
+~IceMatrix
+
+==See also==
+{{AMC10 box|year=2024|ab=B|num-b=10|num-a=12}}
+{{AMC12 box|year=2024|ab=B|num-b=6|num-a=8}}
+{{MAA Notice}}
+[[Category: Introductory Geometry Problems]]

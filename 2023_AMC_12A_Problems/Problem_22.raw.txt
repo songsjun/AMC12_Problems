@@ -1,0 +1,174 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2023_AMC_12A_Problems/Problem_22&action=raw
+
+Published Time: Tue, 11 Nov 2025 14:20:52 GMT
+
+Markdown Content:
+==Problem==
+Let f be the unique function defined on the positive integers such that \sum_{d\mid n}d\cdot f\left(\frac{n}{d}\right)=1 for all positive integers n. What is f(2023)?
+
+\textbf{(A)}~-1536\qquad\textbf{(B)}~96\qquad\textbf{(C)}~108\qquad\textbf{(D)}~116\qquad\textbf{(E)}~144
+== Solution 1 (Very Thorough) ==
+First, we note that f(1) = 1, since the only divisor of 1 is itself.   
+
+Then, let's look at f(p) for p a prime. We see that
+\sum_{d \mid p} d \cdot f\left(\frac{p}{d}\right) = 1
+1 \cdot f(p) + p \cdot f(1) = 1
+f(p) = 1 - p \cdot f(1)
+f(p) = 1-p
+Nice.   
+
+Now consider f(p^k), for k \in \mathbb{N}. 
+\sum_{d \mid p^k} d \cdot f\left(\frac{p^k}{d}\right) = 1
+1 \cdot f(p^k) + p \cdot f(p^{k-1}) + p^2 \cdot f(p^{k-2}) + \dotsc + p^k f(1) = 1.  
+
+It can be (strongly) inductively shown that f(p^k) = f(p) = 1-p. Here's how.    
+
+We already showed k=1 works. Suppose it holds for k = n, then
+
+1 \cdot f(p^n) + p \cdot f(p^{n-1}) + p^2 \cdot f(p^{n-2}) + \dotsc + p^n f(1) = 1 \implies f(p^m) = 1-p \; \forall \; m \leqslant n
+
+For k = n+1, we have
+
+1 \cdot f(p^{n+1}) + p \cdot f(p^{n}) + p^2 \cdot f(p^{n-1}) + \dotsc + p^{n+1} f(1) = 1, then using f(p^m) = 1-p \; \forall \; m \leqslant n, we simplify to
+
+1 \cdot f(p^{n+1}) + p \cdot (1-p) + p^2 \cdot (1-p) + \dotsc + p^n \cdot (1-p) + p^{n+1} f(1) = 1
+f(p^{n+1}) + \sum_{i=1}^n p^i (1-p) + p^{n+1} = 1
+f(p^{n+1}) + p(1 - p^n) + p^{n+1} = 1
+f(p^{n+1}) + p = 1 \implies f(p^{n+1}) = 1-p.   
+
+Very nice! Now, we need to show that this function is multiplicative, i.e. f(pq) = f(p) \cdot f(q) for \textbf{distinct} p,q prime.
+It's pretty standard, let's go through it quickly.
+\sum_{d \mid pq} d \cdot f\left(\frac{pq}{d}\right) = 1
+1 \cdot f(pq) + p \cdot f(q) + q \cdot f(p) + pq \cdot f(1) = 1
+Using our formulas from earlier, we have
+f(pq) + p(1-q) + q(1-p) + pq = 1 \implies f(pq) = 1 - p(1-q) - q(1-p) - pq = (1-p)(1-q) = f(p) \cdot f(q)
+
+Great! We're almost done now. 
+Let's actually plug in 2023 = 7 \cdot 17^2 into the original formula. 
+\sum_{d \mid 2023} d \cdot f\left(\frac{2023}{d}\right) = 1
+1 \cdot f(2023) + 7 \cdot f(17^2) + 17 \cdot f(7 \cdot 17) + 7 \cdot 17 \cdot f(17) + 17^2 \cdot f(7) + 7 \cdot 17^2 \cdot f(1) = 1
+Let's use our formulas! We know 
+f(7) = 1-7 = -6
+f(17) = 1-17 = -16
+f(7 \cdot 17) = f(7) \cdot f(17) = (-6) \cdot (-16) = 96
+f(17^2) = f(17) = -16
+
+So plugging ALL that in, we have
+f(2023) = 1 - \left(7 \cdot (-16) + 17 \cdot (-6) \cdot (-16) + 7 \cdot 17 \cdot (-16) + 17^2 \cdot (-6) + 7 \cdot 17^2\right)
+
+which, be my guest simplifying, is \boxed{\textbf{(B)} \ 96}
+
+~ \color{magenta} zoomanTV
+
+== Solution 2 ==
+
+First, change the problem into an easier form.
+\sum_{d\mid n}d\cdot f(\frac{n}{d} )=\sum_{d\mid n}\frac{n}{d}f(d)=1
+So now we get 
+\frac{1}{n}= \sum_{d\mid n}\frac{f(d)}{d}
+Also, notice that both \frac{f(d)}{d} and \frac{1}{n} are arithmetic functions. Applying Möbius inversion formula, we get
+\frac{f(n)}{n}=\sum_{d\mid n}\frac{ \mu (d) }{\frac{n}{d} }=\frac{1}{n} \sum_{d\mid n}d\cdot \mu (d) 
+So 
+f(n)=1-p_1-p_2-...+p_1p_2+...=(1-p_1)(1-p_2)...=\prod_{p\mid n}(1-p)
+So the answer should be f(2023)=\prod_{p\mid 2023}(1-p)=(1-7)(1-17)=\boxed{\textbf{(B)} \ 96}
+
+~ZZZIIIVVV
+
+== Solution 3 ==
+From the problem, we want to find f(2023). Using the problem, we get f(2023)+7f(289)+17f(119)+119f(17)+289f(7)+2023f(1)=1. By plugging in factors of 2023, we get
+ \begin{align} f(7)+7f(1)=1\\ f(17)+17f(1)=1\\ f(119)+7f(17)+17f(7)+119f(1)=1\\ f(289)+17f(17)+289f(1)=1 \end{align} 
+Notice that (4)-17(2)=f(289), so f(289)=-16. Similarly, notice that (3)-17(1)=f(119)+7f(17)=-16. Now, substituting this all back into our equation to solve for f(2023), we get
+ \begin{align*} f(2023)+7f(289)+17(f(119)+7f(17))+289(f(7)+7f(1))=1\\ f(2023)+7 \cdot (-16) + 17 \cdot (-16) + 289 \cdot (1) = 1\\ f(2023)=\boxed{\textbf{(B)} \ 96} \end{align*} 
+-PhunsukhWangdu
+
+==Solution 4==
+
+Consider any n \in \Bbb N with prime factorization n = \Pi_{i=1}^k p_i^{\alpha_i}.
+Thus, the equation given in this problem can be equivalently written as
+ \[ \sum_{\beta_1 = 0}^{\alpha_1} \sum_{\beta_2 = 0}^{\alpha_2} \cdots \sum_{\beta_k = 0}^{\alpha_k} \Pi_{i=1}^k p_i^{\alpha_i - \beta_i} \cdot f \left( \Pi_{i=1}^k p_i^{\beta_i} \right) = 1 . \] 
+
+\noindent \textbf{Special case 1}: n = 1.
+
+We have f \left( 1 \right) = 1.
+
+\noindent \textbf{Special case 2}: n is a prime.
+
+We have
+ \[ 1 \cdot f \left( n \right) + n \cdot f \left( 1 \right) = 1 . \] 
+
+Thus, f \left( n \right) = 1 - n.
+
+\noindent \textbf{Special case 3}: n is the square of a prime, n = p_1^2.
+
+We have
+ \[ 1 \cdot f \left( p_1^2 \right) + p_1 \cdot f \left( p_1 \right) + p_1^2 \cdot f \left( 1 \right) = 1. \] 
+
+Thus, f \left( p_1^2 \right) = 1 - p_1.
+
+\noindent \textbf{Special case 4}: n is the product of two distinct primes, n = p_1 p_2.
+
+We have
+ \[ 1 \cdot f \left( p_1 p_2 \right) + p_1 \cdot f \left( p_2 \right) + p_2 \cdot f \left( p_1 \right) + p_1 p_2 \cdot f \left( 1 \right) = 1. \] 
+
+Thus, f \left( p_1 p_2 \right) = 1 - p_1 - p_2 + p_1 p_2.
+
+\noindent \textbf{Special case 5}: n takes the form n = p_1^2 p_2, where p_1 and p_2 are two distinct primes.
+
+We have
+ \[ 1 \cdot f \left( p_1^2 p_2 \right) + p_1 \cdot f \left( p_1 p_2 \right) + p_1^2 \cdot f \left( p_2 \right) + p_2 \cdot f \left( p_1^2 \right) + p_1 p_2 f \left( p_1 \right) + p_1^2 p_2 f \left( 1 \right) = 1. \] 
+
+Thus, f \left( p_1^2 p_2 \right) = 1 - p_1 - p_2 + p_1 p_2.
+
+The prime factorization of 2023 is 7 \cdot 17^2.
+Therefore,
+ \begin{align*} f \left( 2023 \right) & = 1 - 7 - 17 + 7 \cdot 17 \\ & = \boxed{\textbf{(B) 96}}. \end{align*} 
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+==Solution 5 (Very much overkill, but fast if you know stuff)==
+
+In the below, denote \operatorname{id}(x)=x and 1(x)=1, and let the Dirichlet convolution of f and g be f*g. Denote the Dirichlet inverse of f as f^{-1}. Also, let the Dirichlet series of f evaluated at s be:
+DG_f(s)=\sum_{n=1}^{\infty}\frac{f(n)}{n^s}.
+Let \zeta(s) be the Riemann zeta function.
+
+We note that \sum_{d|n}{d\cdot f\left(\frac{n}{d}\right)}=1 is equivalent to f=1*\operatorname{id}^{-1}. We state a well-known theorem:
+DG_f(s)DG_g(s)=DG_{f*g}(s).
+By this:
+DG_{\operatorname{id}^{-1}}(s)=\frac{1}{DG_{\operatorname{id}}(s)}=\frac{1}{\zeta(s-1)}.
+We know also that:
+\sum_{n=1}^{\infty}\frac{\mu(n)}{n^s}=\frac{1}{\zeta(s)},
+so:
+DG_{\operatorname{id}^{-1}}(s)=\sum_{n=1}^{\infty}\frac{n\mu(n)}{n^s},
+i.e., \operatorname{id}^{-1}(n)=n\mu(n). Thus:
+\begin{align*}
+f(2023)&=\left(\operatorname{id}^{-1}*1\right)(2023)\\
+&=\sum_{d|2023}{n\mu(n)}\\
+&=\mu(1)+7\mu(7)+17\mu(17)+7\cdot 17\mu(7\cdot 17)\\
+&= 7\cdot 17-7-17+1\\
+&=96
+\end{align*}
+
+Hence we choose \boxed{(B)}.
+~Sivin
+
+==Video Solution by MOP 2024==
+https://YouTube.com/watch?v=gdhVqdRhMsQ
+
+~r00tsOfUnity
+
+==Video Solution by OmegaLearn==
+https://youtu.be/Trz8DEmgAtk
+
+==Video Solution==
+
+https://youtu.be/Fyd1hGGHZ8k
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+==See also==
+{{AMC12 box|ab=A|year=2023|num-b=21|num-a=23}}
+
+[[Category:Intermediate Number Theory Problems]]
+{{MAA Notice}}

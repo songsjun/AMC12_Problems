@@ -1,0 +1,27 @@
+# 2007 AMC 12A Problem 19
+
+## Problem
+[Triangle](https://artofproblemsolving.com/wiki/index.php/Triangle)s ABC and ADE have [area](https://artofproblemsolving.com/wiki/index.php/area)s 2007 and 7002, respectively, with B = (0,0), C = (223,0), D = (680,380), and E = (689,389). What is the sum of all possible x coordinates of A?
+
+
+$$\mathrm{(A)}\ 282 \qquad \mathrm{(B)}\ 300 \qquad \mathrm{(C)}\ 600 \qquad \mathrm{(D)}\ 900 \qquad \mathrm{(E)}\ 1200$$
+
+## Solution
+[Image:2007_$12A_AMC-19$.png](https://artofproblemsolving.com/wiki/index.php/Image:2007_12A_AMC-19.png)
+## Solution 1
+From k = [ABC] = $\frac 12$bh, we have that the height of $\triangle ABC$ is $h =\frac{2k}{b} = \frac{2007 \cdot 2}{223} = 18.$ Thus A lies on the lines $y =\pm 18 \quad \mathrm{(1)}.$
+
+DE = $9\sqrt{2}$ using 45-45-90 triangles, so in $\triangle ADE$ we have that h = $\frac{2 \cdot 7002}{9\sqrt{2}} = 778\sqrt{2}.$ The slope of DE is 1, so the equation of the line is y = x + b $\Longrightarrow$ b = (380) - (680) = -300 $\Longrightarrow$ y = x - 300. The point A lies on one of two [parallel](https://artofproblemsolving.com/wiki/index.php/parallel) lines that are $778\sqrt{2}$ units away from $\overline{DE}.$ Now take an arbitrary point on the line $\overline{DE}$ and draw the [perpendicular](https://artofproblemsolving.com/wiki/index.php/perpendicular) to one of the parallel lines; then draw a line straight down from the same arbitrary point. These form a 45-45-90 $\triangle,$ so the straight line down has a length of $778\sqrt{2} \cdot \sqrt{2} = 1556.$ Now we note that the [y-intercept](https://artofproblemsolving.com/wiki/index.php/y-intercept) of the parallel lines is either 1556 units above or below the y-intercept of line $\overline{DE}$; hence the equation of the parallel lines is y = x - 300 $\pm 1556 \Longrightarrow$ x = y + 300 $\pm 1556 \quad \mathrm{(2)}.$
+
+We just need to find the intersections of these two lines and sum up the values of the x-coordinates. Substituting the $\mathrm{(1)}$ into $\mathrm{(2)},$ we get $x =\pm 18 + 300 \pm 1556 = 4(300) = 1200 \Longrightarrow \mathrm{(E)}.$
+## Solution 2
+We are finding the intersection of two pairs of [parallel](https://artofproblemsolving.com/wiki/index.php/parallel) lines, which will form a [parallelogram](https://artofproblemsolving.com/wiki/index.php/parallelogram). The [centroid](https://artofproblemsolving.com/wiki/index.php/centroid) of this parallelogram is just the intersection of $\overline{BC}$ and $\overline{DE},$ which can easily be calculated to be (300,0). Now the sum of the x-coordinates is just $4(300) = 1200$.
+## Solution 3 (Bashing but very straightforward)
+After we compute that the y-value can be either $y =\pm 18$ and realize there are four total values (each pair being equally spaced on their respective y-lines of $\pm 18),$ we can use an easy application of the [Shoelace Theorem](https://artofproblemsolving.com/wiki/index.php/Shoelace_Theorem) to figure out the values of X. Since we already know the two distances (positive y and negative y) will be the same, then we can simply plug in $y=18$, compute the sum of the two corresponding x-values and multiply it by two to get our answer which is $2(600) = $1200 $\Longrightarrow \mathrm{(E)}$
+
+- Zephyrica
+## Solution 4 (intense bashing, similar to Solution 3)
+We can use the shoelace theorem to first find that the y-coordinate of A can be -18 or 18. Then we can apply shoelace again to find the 4 possible x-coordinates, namely -1274, -1238, 1838, and 1874. Adding these up, we get 1200 $\Longrightarrow \mathrm{(E)}.$
+
+*~erinb28lms*
+## See Also

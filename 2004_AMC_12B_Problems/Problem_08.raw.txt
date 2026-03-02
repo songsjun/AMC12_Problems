@@ -1,0 +1,28 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2004_AMC_12B_Problems/Problem_8&action=raw
+
+Published Time: Sat, 22 Oct 2022 23:24:14 GMT
+
+Markdown Content:
+{{duplicate|[[2004 AMC 12B Problems|2004 AMC 12B #8]] and [[2004 AMC 10B Problems|2004 AMC 10B #10]]}}
+
+== Problem ==
+A grocer makes a display of cans in which the top row has one can and each lower row has two more cans than the row above it. If the display contains 100 cans, how many rows does it contain?
+
+\mathrm{(A)\ }5\qquad\mathrm{(B)\ }8\qquad\mathrm{(C)\ }9\qquad\mathrm{(D)\ }10\qquad\mathrm{(E)\ }11
+
+== Solution ==
+
+The sum of the first n odd numbers is n^2. As in our case n^2=100, we have n=\boxed{\mathrm{(D)\ }10}.
+
+== Video Solution 1==
+https://youtu.be/2Yqy5G8G1IU
+
+~Education, the Study of Everything
+
+== See Also ==
+
+{{AMC12 box|year=2004|ab=B|num-b=7|num-a=9}}
+{{AMC10 box|year=2004|ab=B|num-b=9|num-a=11}}
+{{MAA Notice}}

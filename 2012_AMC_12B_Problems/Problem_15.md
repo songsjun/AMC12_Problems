@@ -1,0 +1,9 @@
+# 2012 AMC 12B Problem 15
+
+## Problem
+Jesse cuts a circular disk of radius 12, along 2 radii to form 2 sectors, one with a central angle of 120. He makes two circular cones using each sector to form the lateral surface of each cone. What is the ratio of the volume of the smaller cone to the larger cone?
+
+$\textbf{(A)}\ \frac{1}{8}\qquad\textbf{(B)}\ \frac{1}{4}\qquad\textbf{(C)}\ \frac{\sqrt{10}}{10}\qquad\textbf{(D)}\ \frac{\sqrt{5}}{6}\qquad\textbf{(E)}\ \frac{\sqrt{5}}{5}$
+## Solution
+If the original radius is 12, then the circumference is $24\pi$; since arcs are defined by the central angles, the smaller arc, a 120 degree angle, is half the size of the larger sector. so the smaller arc is $8\pi,$ and the larger is $16\pi.$ Those two arc lengths become the two circumferences of the new cones; so the radius of the smaller cone is 4 and the larger cone is 8. Using the Pythagorean theorem, the height of the larger cone is $4\cdot\sqrt{5}$ and the smaller cone is $8\cdot\sqrt{2},$ and now for volume just square the radii and multiply by $\tfrac{1}{3}$ of the height to get the volume of each cone: $128\cdot\sqrt{2}$ and $256\cdot\sqrt{5}$ [both multiplied by three as ratio come out the same. now divide the volumes by each other to get the final ratio of $\boxed{\textbf{(C) } \frac{\sqrt{10}}{10}}$
+## See Also

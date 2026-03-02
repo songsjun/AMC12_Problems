@@ -1,0 +1,23 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2008_AMC_12A_Problems/Problem_5&action=raw
+
+Published Time: Thu, 05 Aug 2021 07:17:39 GMT
+
+Markdown Content:
+{{duplicate|[[2008 AMC 12A Problems|2008 AMC 12A #5]] and [[2008 AMC 10A Problems/Problem 9|2008 AMC 10A #9]]}}
+==Problem==
+Suppose that
+\frac{2x}{3}-\frac{x}{6}
+is an integer. Which of the following statements must be true about x?
+
+\mathrm{(A)}\ \text{It is negative.}\\\mathrm{(B)}\ \text{It is even, but not necessarily a multiple of 3.}\\\mathrm{(C)}\ \text{It is a multiple of 3, but not necessarily even.}\\\mathrm{(D)}\ \text{It is a multiple of 6, but not necessarily a multiple of 12.}\\\mathrm{(E)}\ \text{It is a multiple of 12.}
+
+==Solution==
+\frac{2x}{3}-\frac{x}{6}\quad\Longrightarrow\quad\frac{4x}{6}-\frac{x}{6}\quad\Longrightarrow\quad\frac{3x}{6}\quad\Longrightarrow\quad\frac{x}{2}
+For \frac{x}{2} to be an integer, x must be even, but not necessarily divisible by 3. Thus, the answer is \mathrm{(B)}.
+
+==See also==
+{{AMC12 box|year=2008|ab=A|num-b=4|num-a=6}}
+{{AMC10 box|year=2008|ab=A|num-b=8|num-a=10}}
+{{MAA Notice}}

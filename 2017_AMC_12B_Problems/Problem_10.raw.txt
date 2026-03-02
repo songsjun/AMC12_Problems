@@ -1,0 +1,26 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2017_AMC_12B_Problems/Problem_10&action=raw
+
+Published Time: Fri, 25 Oct 2024 11:09:53 GMT
+
+Markdown Content:
+==Problem==
+At Typico High School, 60\% of the students like dancing, and the rest dislike it. Of those who like dancing, 80\% say that they like it, and the rest say that they dislike it. Of those who dislike dancing, 90\% say that they dislike it, and the rest say that they like it. What fraction of students who say they dislike dancing actually like it?
+
+\textbf{(A)}\ 10\%\qquad\textbf{(B)}\ 12\%\qquad\textbf{(C)}\ 20\%\qquad\textbf{(D)}\ 25\%\qquad\textbf{(E)}\ \frac{100}{3}\%
+
+==Solution 1==
+WLOG, let there be 100 students. 60 of them like dancing, and 40 do not. Of those who like dancing, 20\%, or 12 of them say they dislike dancing. Of those who dislike dancing, 90\%, or 36 of them say they dislike it. Thus, \frac{12}{12+36} = \frac{12}{48} = \frac{1}{4} = 25\% \boxed{\textbf{(D)}}
+
+==Solution 2 (Bayes' Theorem)==
+The question can be translated into P(Likes|Says Dislike). 
+
+By Bayes' Theorem, this is equal to the probability of \frac{\textnormal{P(Likes} \cap \textnormal{Says Dislike)}}{\textnormal{P(Says Dislike)}}. \textnormal{P(Likes} \cap \textnormal{Says Dislike)} = 0.6 \cdot 0.2 = 0.12, and \textnormal{P(Says Dislike)} = (0.4 \cdot 0.9) + (0.6 \cdot 0.2) = 0.48.
+Therefore, you get a probability of \frac{0.12}{0.48} = 25\% \boxed{\textbf{(D)}}
+
+~Directrixxx
+
+==See Also==
+{{AMC12 box|year=2017|ab=B|num-b=9|num-a=11}}
+{{MAA Notice}}

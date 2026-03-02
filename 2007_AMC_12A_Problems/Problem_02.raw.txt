@@ -1,0 +1,20 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2007_AMC_12A_Problems/Problem_2&action=raw
+
+Published Time: Tue, 14 Oct 2025 17:20:25 GMT
+
+Markdown Content:
+== Problem ==
+An aquarium has a [[rectangular prism|rectangular base]] that measures 100 cm by 40 cm and has a height of 50 cm. It is filled with water to a height of 40 cm. A brick with a rectangular base that measures 40 cm by 20 cm and a height of 10 cm is placed in the aquarium. By how many centimeters does the water rise?
+
+\mathrm{(A)}\ 0.5\qquad \mathrm{(B)}\ 1\qquad \mathrm{(C)}\ 1.5\qquad \mathrm{(D)}\ 2\qquad \mathrm{(E)}\ 2.5
+
+== Solution ==
+The brick has volume 8000 cm^3. The base of the aquarium has area 4000 cm^2. For every cm the water rises, the volume increases by 4000 cm^3; therefore, when the volume increases by 8000 cm^3, the water level rises 2 cm \Rightarrow\fbox{D}
+
+== See also ==
+{{AMC12 box|year=2007|ab=A|num-b=1|num-a=3}}
+
+[[Category:Introductory Algebra Problems]]
+{{MAA Notice}}

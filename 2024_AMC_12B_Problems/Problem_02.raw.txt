@@ -1,0 +1,64 @@
+{{duplicate|[[2024 AMC 10B Problems/Problem 2|2024 AMC 10B #2]] and [[2024 AMC 12B Problems/Problem 2|2024 AMC 12B #2]]}}
+
+==Problem==
+What is <imath>10! - 7! \cdot 6!</imath>
+
+==Solution 1==
+<math>10! = 10 \cdot 9 \cdot 8 \cdot 7! = 720 \cdot 7!</math>
+
+<math>6! \cdot 7! = 720 \cdot 7!</math>
+
+Therefore, the equation is equal to <math>720 \cdot 7! - 720 \cdot 7! = \boxed{\textbf{(B) }0}</math>
+
+[ONLY FOR CERTAIN CHINESE TESTPAPERS]
+
+<math>0 - 5! = \boxed{\textbf{(A) }-120}</math>
+
+~Aray10 (Main Solution) and RULE101 (Modifications for certain China test papers)
+
+==Solution 2==
+Factoring out <math>7!</math> gives <cmath>7!(10\cdot9\cdot8-1\cdot6!).</cmath> Since <math>10\cdot9\cdot8=6!=720</math>, the answer is <math>\boxed{\text{(B) }0}</math> 
+
+Factoring <math>6!</math> also works, it just makes the expression in the parenthesis a little harder to compute.
+
+==Solution 3==
+
+Note that <math>10! - 7! \cdot 6!</math> must be divisible by <math>7</math>, and <math>\boxed{\text{(B) }0}</math> is the only option divisible by <math>7</math>.
+
+==Solution 4==
+
+<math>10! - 7! \cdot 6!</math> can be split into two parts, <math>10!</math> and <math>7! \cdot 6!</math>. 
+We can break the <math>6!</math> into <math>(2 \cdot 4)(3 \cdot 5 \cdot 6)</math>
+The <math>2 \cdot 4</math> part makes <math>8</math>, and the <math>3 \cdot 5 \cdot 6</math> part makes <math>90</math>, which is <math>9 \cdot 10</math>. 
+We still have the 7!, and we can multiply it by <math>8 \cdot 9 \cdot 10</math>. This is clearly equivalent to <math>10!</math>, so our solution is <math>10! - 10! = </math><math>\boxed{\text{(B) }0}</math>.
+
+==Solution 5==
+
+<math>10! = 3,628,800</math>, <math>7! = 5,040</math>, and <math>6! = 720</math>. Of course, if you're fast enough, you can do <math>5,040 \cdot 720 = 3,628,800</math>. Therefore, <math>3,628,800 - 3,628,800 = \boxed{\text{(B) }0}</math>.
+
+-pepper2831 
+
+==Video Solution 1 by Pi Academy (Fast and Easy ⚡🚀)==
+
+https://youtu.be/DIl3rLQQkQQ?feature=shared
+
+~ Pi Academy
+
+==Video Solution 2 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=24EZaeAThuE
+
+== Video Solution by Daily Dose of Math ==
+
+https://youtu.be/DVlOz24jWuo
+
+~Thesmartgreekmathdude
+
+==Video Solution by the BeautyofMath==
+https://youtu.be/mpnm_r6D3-w?t=373
+
+~IceMatrix
+
+==See also==
+{{AMC10 box|year=2024|ab=B|num-b=1|num-a=3}}
+{{AMC12 box|year=2024|ab=B|num-b=1|num-a=3}}
+{{MAA Notice}}

@@ -1,0 +1,20 @@
+# 2002 AMC 12B Problem 17
+
+> This problem is the same as [2002 AMC 12B #17](https://artofproblemsolving.com/wiki/index.php/2002_AMC_12B_Problems) and [2002 AMC 10B #21](https://artofproblemsolving.com/wiki/index.php/2002_AMC_10B_Problems).
+## Problem
+Andy's lawn has twice as much area as Beth's lawn and three times as much area as Carlos' lawn. Carlos' lawn mower cuts half as fast as Beth's mower and one third as fast as Andy's mower. If they all start to mow their lawns at the same time, who will finish first?
+
+$\mathrm{(A)}$\ $\text{Andy} \qquad\mathrm{(B)}$\ $\text{Beth} \qquad\mathrm{(C)}$\ $\text{Carlos} \qquad\mathrm{(D)}$\ $\text{Andy\ and \ Carlos\ tie\ for\ first.} \qquad\mathrm{(E)}$\ $\text{All\ three\ tie.}$
+## Solution 1
+We say Andy's lawn has an area of x. Beth's lawn thus has an area of $\frac{x}{2},$ and Carlos's lawn has an area of $\frac{x}{3}.$
+
+We say Andy's lawn mower cuts at a speed of y. Carlos's cuts at a speed of $\frac{y}{3},$ and Beth's cuts at a speed $\frac{2y}{3}.$
+
+Each person's lawn is cut at a time of $\frac{\text{area}}{\text{rate}},$ so Andy's is cut in $\frac{x}{y}$ time, as is Carlos's. Beth's is cut in $\frac{3}{4}\times\frac{x}{y},$ so the first one to finish is $\boxed{\mathrm{(B)}\ \text{Beth}}.$
+## Solution 2
+WLOG, we can set values of their lawns' areas and their owners' speeds. Let the area of Andy's lawn be 6 units, Beth's lawn be 3 units, and Carlos's lawn be 2 units. Let Carlos's mowing area per hour (honestly the time you set won't matter) be 1, let Beth's mowing area per hour be 2, and let Andy's mowing area per hour be 3. Now, we can easily calculate their time  by dividing their lawns' areas by their respective owners' speeds. Andy's time is $\frac{6}{3} = 2$ hours, Beth's time is $\frac{3}{2} = 1.5$ hours, and Carlos's time is $\frac{6}{3} = 2$ hours. Our answer is clearly $\boxed{\mathrm{(B)}\ \text{Beth}}.$
+
+*~Solution by virjoy2001*
+## Video Solution
+https://www.youtube.com/watch?v=s2p_cLIVgDU    ~David
+## See also

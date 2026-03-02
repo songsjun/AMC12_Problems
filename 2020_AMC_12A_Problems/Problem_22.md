@@ -1,0 +1,44 @@
+# 2020 AMC 12A Problem 22
+
+## Problem
+Let $(a_n)$ and $(b_n)$ be the sequences of real numbers such that
+$$(2 + i)^n = a_n + b_ni$$for all integers n\geq 0, where i = \sqrt{-1}. What is\sum_{n=0}^\infty\frac{a_nb_n}{7^n}\,?
+
+$\textbf{(A) }\frac 38\qquad\textbf{(B) }\frac7{16}\qquad\textbf{(C) }\frac12\qquad\textbf{(D) }\frac9{16}\qquad\textbf{(E) }\frac47$
+## Solution 1
+Square the given equality to yield
+$$(3 + 4i)^n = (a_n + b_ni)^2 = (a_n^2 - b_n^2) + 2a_nb_ni,$$
+so $a_nb_n=\tfrac1$2\operatorname{Im}((3+$4i)^n)$ and
+
+$$\sum_{n\geq 0}\frac{a_nb_n}{7^n} = \frac12\operatorname{Im}\left(\sum_{n\geq 0}\frac{(3+4i)^n}{7^n}\right) = \frac12\operatorname{Im}\left(\frac{1}{1 - \frac{3 + 4i}7}\right) = \boxed{\frac 7{16}}.$$
+
+## Solution 2 (DeMoivre's Formula)
+Note that (2+i) = $\sqrt{5} \cdot \left(\frac{2}{\sqrt{5}} + \frac{1}{\sqrt{5}}$i $\right).$ Let $\theta = \arctan (1/2),$ then, we know that (2+i) = $\sqrt{5} \cdot \left( \cos \theta +i\sin \theta \right),$ so $(2+i)^n = (\cos (n \theta) +i\sin (n\theta))(\sqrt{5})^n.$ Therefore,
+
+$$
+\begin{align*} \sum_{n=0}^\infty\frac{a_nb_n}{7^n} &= \sum_{n=0}^\infty\frac{\cos(n\theta)\sin(n\theta) (5)^n}{7^n} \\ &=\frac{1}{2}\sum_{n=0}^\infty \left( \frac{5}{7}\right)^n \sin (2n\theta)\\ &=\frac{1}{2} \operatorname{Im} \left( \sum_{n=0}^\infty \left( \frac{5}{7} \right)^ne^{2i\theta n} \right). \end{align*}
+$$
+
+
+Aha! $\sum_{n=0}^\infty \left( \frac{5}{7} \right)^ne^{2i\theta n}$  is a geometric sequence that evaluates to $\frac{1}{1-\frac{5}{7}e^{2\theta i}}$! Now we can quickly see that $\sin(2\theta) = 2 \cdot \sin \theta \cdot \cos \theta = 2 \cdot \frac{2}{\sqrt{5}} \cdot \frac{1}{\sqrt{5}} = \frac{4}{5}, \cos (2\theta) = \cos^2 \theta - \sin^2 \theta = \frac{4}{5}-\frac{1}{5} = \frac{3}{5}.$ Therefore, $\frac{1}{1-\frac{5}{7}e^{2\theta i}} = \frac{1}{1 - \frac{5}{7}\left( \frac{3}{5} + \frac{4}{5}i\right)} = \frac{7}{8} + \frac{7}{8}$i. The imaginary part is $\frac{7}{8},$ so our answer is $\frac{1}{2} \cdot \frac{7}{8} = \boxed{\frac{7}{16}} \Rightarrow \textbf{(B)}.$
+
+*~AopsUser101*
+## Solution 3
+Clearly $a_n=\frac{(2+i)^n+(2-i)^n}{2},b_n=\frac{(2+i)^n-(2-i)^n}{2i}.$ So we have $\sum_{n\ge 0}\frac{a_nb_n}{7^n}=\sum_{n\ge 0}\frac{((2+i)^n+(2-i)^n))((2+i)^n-(2-i)^n))}{4i(7^n)}.$ By linearity, we have the latter is equivalent to $\frac{1}{4i}\sum_{n\ge 0}\frac{[(2+i)^n+(2-i)^n][(2+i)^n-(2-i)^n]}{7^n}.$ Expanding the summand yields
+
+$$
+\begin{align*}
+\frac{1}{4i}\sum_{n\ge 0}\frac{(3+4i)^n-(3-4i)^n}{7^n}&=\frac{1}{4}[\frac{1}{1-(\frac{3+4i}{7})}-\frac{1}{1-(\frac{3-4i}{7})}] \\
+&=\frac{1}{4i}[\frac{7}{7-(3+4i)}-\frac{7}{7-(3-4i)}] \\
+&=\frac{1}{4}[\frac{7}{4-4i}-\frac{7}{4+4i}] \\
+&=\frac{1}{4i}[\frac{7(4+4i)}{32}-\frac{7(4-4i)}{32}]=\frac{1}{4}\cdot \frac{56}{32} \\
+&=\boxed{\frac{7}{16}}\textbf{(B)}
+\end{align*}
+$$
+
+*~vsamc*
+## Video Solution 1 by Richard Rusczyk
+https://www.youtube.com/watch?v=OdSTfCDOh5A
+## Video Solution 2 by StressedPineapple
+https://youtube.com/watch?v=NWBPm3lThH4&t=952s
+## See Also

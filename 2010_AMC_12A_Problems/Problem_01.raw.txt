@@ -1,0 +1,23 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2010_AMC_12A_Problems/Problem_1&action=raw
+
+Published Time: Sat, 11 Oct 2025 05:16:12 GMT
+
+Markdown Content:
+== Problem ==
+What is \left(20-\left(2010-201\right)\right)+\left(2010-\left(201-20\right)\right)?
+
+\textbf{(A)}\ -4020 \qquad \textbf{(B)}\ 0 \qquad \textbf{(C)}\ 40 \qquad \textbf{(D)}\ 401 \qquad \textbf{(E)}\ 4020
+
+== Solution ==
+20-2010+201+2010-201+20=20+20=\boxed{\textbf{(C)}\,40}.
+
+==Video Solution==
+https://youtu.be/KBlf0TKdI4I?si=XFer3NW2lpMxgjW_
+
+== See Also ==
+{{AMC12 box|year=2010|before=First Problem|num-a=2|ab=A}}
+
+[[Category:Introductory Algebra Problems]]
+{{MAA Notice}}

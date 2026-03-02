@@ -1,0 +1,89 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2019_AMC_12B_Problems/Problem_13&action=raw
+
+Published Time: Sat, 25 Oct 2025 22:03:43 GMT
+
+Markdown Content:
+{{duplicate|[[2019 AMC 10B Problems|2019 AMC 10B #17]] and [[2019 AMC 12B Problems|2019 AMC 12B #13]]}}
+==Problem==
+
+A red ball and a green ball are randomly and independently tossed into bins numbered with the positive integers so that for each ball, the probability that it is tossed into bin k is 2^{-k} for k = 1,2,3....  What is the probability that the red ball is tossed into a higher-numbered bin than the green ball?
+
+\textbf{(A) } \frac{1}{4} \qquad\textbf{(B) } \frac{2}{7} \qquad\textbf{(C) } \frac{1}{3} \qquad\textbf{(D) } \frac{3}{8} \qquad\textbf{(E) } \frac{3}{7}
+
+== Solutions ==
+
+===Solution 1 (Competition Speed and No Summation Notation)===
+
+We see that the total probability will eventually sum to 1 from the infinite geometric series sum formula. Now, if the green ball goes into the \( k=1 \) bin with a \( 1/2 \) chance, then the red ball has a \( \frac{1}{4} + \frac{1}{8} + \frac{1}{16} + \dots = 1/2 \) chance to go to a higher bin. The combined probability is \( 1/2 \cdot 1/2 = 1/4 \). If the green ball goes into the \( k=2 \) bin with \( 1/4 \) chance, then the red ball has a \( 1/8 + 1/16 + \dots = 1/4 \) chance to go to a higher level bin. This probability is \( 1/4 \cdot 1/4 = 1/16 \). So our common ratio is \( 1/4 \), and we use the geometric series sum formula to get \( \frac{1/4}{1 - 1/4} = \) \boxed{\textbf{(C) } \frac{1}{3}}.
+
+~Pinotation
+
+=== Solution 2 ===
+By symmetry, the probability of the red ball landing in a higher-numbered bin is the same as the probability of the green ball landing in a higher-numbered bin. Clearly, the probability of both landing in the same bin is \sum_{k=1}^{\infty}{2^{-k} \cdot 2^{-k}} = \sum_{k=1}^{\infty}2^{-2k} = \frac{1}{3} (by the geometric series sum formula). Therefore, since the other two probabilities have to be the same, they have to be \frac{1-\frac{1}{3}}{2} = \boxed{\textbf{(C) } \frac{1}{3}}.
+
+Note: the formula is \frac{a_{1}}{1-r} where a_{1} is the first term and r is the common ratio.
+Derivation of the geometric series sum formula:
+Let S = S=a_{1}+a_{1}r+a_{1}r^{2}+a_{1}r^{3}+... and so on to infinity.
+Then rS=a_{1}r+a_{1}r^{2}+a_{1}r^{3}+... and so on to infinity. Notice that the terms in the second expression are the same as all the terms in the first EXCEPT for a_{1}.
+Subtract S-rS=a_{1}, factor S\left(1-r\right)=a_{1}, and finally S=\frac{a_{1}}{1-r}.
+
+Note: The formula only works if r<1; otherwise, the series will diverge to infinity or negative infinity.
+~JH. L
+
+=== Solution 3 ===
+Suppose the green ball goes in bin i, for some i \ge 1. The probability of this occurring is \frac{1}{2^i}. Given that this occurs, the probability that the red ball goes in a higher-numbered bin is \frac{1}{2^{i+1}} + \frac{1}{2^{i+2}} + \ldots = \frac{1}{2^i} (by the geometric series sum formula). Thus the probability that the green ball goes in bin i, and the red ball goes in a bin greater than i, is \left(\frac{1}{2^i}\right)^2 = \frac{1}{4^i}. Summing from i=1 to infinity, we get
+
+\sum_{i=1}^{\infty} \frac{1}{4^i} = \boxed{\textbf{(C) } \frac{1}{3}}
+where we again used the geometric series sum formula. (Alternatively, if this sum equals n, then by writing out the terms and multiplying both sides by 4, we see 4n = n+1, which gives n = \frac{1}{3}.)
+
+=== Solution 4 ===
+For red ball in bin k, \Pr(\text{Green Below Red})=\sum\limits_{i=1}^{k-1}2^{-i} (GBR) and \Pr(\text{Red in Bin k}=2^{-k} (RB). 
+\Pr(\text{GBR}|\text{RB})=\sum\limits_{k=1}^{\infty}2^{-k}\sum\limits_{i=1}^{k-1}2^{-i}=\sum\limits_{k=1}^{\infty}2^{-k}\cdot\frac{1}{2}(\frac{1-(1/2)^{k-1}}{1-1/2})
+\sum\limits_{k=1}^{\infty}\frac{1}{2^{-k}}-2\sum\limits_{k=1}^\infty\frac{1}{(2^2)^{-k}}\implies 1-2/3=\boxed{(\textbf{C}) \frac{1}{3}}
+
+=== Solution 5 ===
+The probability that the two balls will go into adjacent bins is \frac{1}{2\times4} + \frac{1}{4\times8} + \frac{1}{8 \times 16} + ... = \frac{1}{8} + \frac{1}{32} + \frac{1}{128} + \cdots = \frac{1}{6} by the geometric series sum formula. Similarly, the probability that the two balls will go into bins that have a distance of 2 from each other is \frac{1}{2 \times 8} + \frac{1}{4 \times 16} + \frac{1}{8 \times 32} + \cdots = \frac{1}{16} + \frac{1}{64} + \frac{1}{256} + \cdots = \frac{1}{12} (again recognizing a geometric series). We can see that each time we add a bin between the two balls, the probability halves. Thus, our answer is \frac{1}{6} + \frac{1}{12} + \frac{1}{24} + \cdots, which, by the geometric series sum formula, is \boxed{\textbf{(C) } \frac{1}{3}}.
+-fidgetboss_4000
+
+=== Solution 6 (quick, conceptual) ===
+Define a win as a ball appearing in higher numbered box.
+
+Start from the first box. 
+
+There are 4 possible results in the box: Red, Green, Red and Green, or none, with an equal probability of \frac{1}{4} for each. If none of the balls is in the first box, the game restarts at the second box with the same kind of probability distribution, so if p is the probability that Red wins, we can write p = \frac{1}{4} + \frac{1}{4}p: there is a \frac{1}{4} probability that "Red" wins immediately, a 0 probability in the cases "Green" or "Red and Green", and in the "None" case (which occurs with \frac{1}{4} probability), we then start again, giving the same probability p. Hence, solving the equation, we get p = \boxed{\textbf{(C) } \frac{1}{3}}.
+
+=== Solution 7 ===
+Write out the infinite geometric series as \frac{1}{2}, \frac{1}{4}, \frac{1}{8}, \frac{1}{16}, \cdots. To find the probablilty that red goes in a higher-numbered bin than green, we can simply remove all odd-index terms (i.e term 1, term 3, etc.), and then sum the remaining terms - this is in fact precisely equivalent to the method of Solution 2. Writing this out as another infinite geometric sequence, we are left with \frac{1}{4}, \frac{1}{16}, \frac{1}{64}, \cdots. Summing, we get \sum_{i=1}^{\infty} \frac{1}{4^i} = \boxed{\textbf{(C) } \frac{1}{3}}
+
+=== Solution 8 ===
+Fixing the green ball to fall into bin 1 gives a probability of \frac{1}{2}\left(\frac{1}{2^2}+\frac{1}{2^3} +...\right) for the red ball to fall into a higher bin. Fixing the green ball to fall into bin 2 gives a probability of \frac{1}{2^2}\left(\frac{1}{2^3}+\frac{1}{2^4} +...\right). Factoring out the denominator of the first fraction in each probability gives \frac{1}{2^3}\left(1+\frac{1}{2}+\frac{1}{2^2}+...\right)+\frac{1}{2^5}\left(1+\frac{1}{2}+\frac{1}{2^2}+...\right)+... so factoring out \left(1+\frac{1}{2}+\frac{1}{2^2}+\frac{1}{2^3}+...\right) results in the probability simplifying to \left(\frac{1}{2^3}+\frac{1}{2^5}+\frac{1}{2^7}+...\right)\left(1+\frac{1}{2}+\frac{1}{2^2}+\frac{1}{2^3}+...\right) and using the formula \frac{a}{1-r} to find both series, we obtain \left(\frac{\frac{1}{2^3}}{1-\frac{1}{4}}\right)\left(\frac{1}{1-\frac{1}{2}}\right) which simplifies to \boxed{\textbf{(C) } \frac{1}{3}} -- OGBooger
+
+=== Solution 9 ===
+We can think of this problem as "what is the probability that the green ball's bin is less than the red ball's bin". We do not consider the case where the red ball goes into bin 1 because the green ball has no where to go then. The chance that the green one is below the red one if the red one goes to bin 2 is \frac{1}{4} chance that the red ball even goes in bin 2 and \frac{1}{2} chance that the green ball goes into any bin less than 2. Similarly, if the red goes into bin 3, there is a \frac{1}{8} \cdot \left(\frac{1}{4} + \frac{1}{2}\right) chance, or \frac{3}{32}, continuing like this, we get this sequence:
+
+\frac{1}{8}, \frac{3}{32}, \frac{7}{128}, ...
+
+Let S equal the sum of our series:
+
+S = \frac{1}{8} + \frac{3}{32} + \frac{7}{128} + .... That means we can write another equation:
+\frac{S}{4} = \frac{1}{32} + \frac{3}{128} + ...
+
+Subtracting \frac{S}{4} from S, yields:
+
+S - \frac{S}{4} = \frac{1}{8} + \frac{2}{32} + \frac{4}{128} + ...
+
+We see that the above series is a infinite geometric sequence with common ratio \frac{1}{2}. Therefore, the sum of that infinite series is \frac{\frac{1}{8}}{\frac{1}{2}}, which equals \frac{1}{4}. Our equation is now S - \frac{S}{4} = \frac{1}{4}. Solving for S shows that S = \frac{1}{3}.
+
+Our answer is \boxed{\textbf{(C) }\frac{1}{3}}
+
+~ericshi1685
+
+=== Solution 10 (quick, symmetry) ===
+
+Denote G,R the bin numbers of the green and red balls, respectively. The common probability distribution of G,B can be constructed by keep splitting the remaining unassigned probability into two halves: one goes to the smallest number that has not been assigned, and the other goes to the rest. In other words, \Pr(G=k) = \Pr (G>k), \forall k \in \mathbb{N}. Then,
+
+ \Pr(G>R)=\sum_{k=1}^\infty \Pr(G>k) \Pr(R=k) = \sum_{k=1}^\infty \Pr(G=k) \Pr(R=k) = \Pr (G=R) 
+
+Similarly \Pr(G. Therefore all three probabilities equal \boxed{\textbf{(C) }\frac{1}{3}}. ~asops === Solution 11 === The probability of the red ball falling ahead of the green ball is the same as the probability of the green ball falling ahead of the red ball. Therefore, if we calculate the probability of the red ball and the green ball falling inside the same box, we get the answer by subtracting that probability from 1. P(same) = \left(\frac{1}{2}\right)^2 + \left(\frac{1}{4}\right)^2 + \left(\frac{1}{8}\right)^2 + \cdots = \frac{1}{4} + \frac{1}{16} + \frac{1}{64} = \frac{1}{3}. Therefore, our answer is \frac{1-\frac{1}{3}}{2} = \boxed{\frac{1}{3}} -NL008 === Solution 12 (approachable and easy) === The probability of the bins is \frac{1}{2}, \frac{1}{4}, \frac{1}{8}, \ldots. Assuming the green ball falls in bin 1, which occurs with probability \frac{1}{2}, the probability of the red ball falling in a bin higher is also \frac{1}{2}, as it needs to fall anywhere but the first box, which happens with probability 1 - \frac{1}{2}. Assuming that instead the green ball falls in the second bin, which occurs with probability \frac{1}{4}, we can see that the probability of the red ball being higher is also \frac{1}{4}, as it needs to fall anywhere but the first two, which happens with probability 1 - \frac{1}{2} - \frac{1}{4}. This pattern continues, meaning the probability of red being in a box higher than green is \frac{1}{2} \cdot \frac{1}{2} + \frac{1}{4} \cdot \frac{1}{4} + \frac{1}{8} \cdot \frac{1}{8} + \ldots = \frac{1}{4} + \frac{1}{16} + \frac{1}{64} + \ldots = x. Factoring out \frac{1}{4}, we get \frac{1}{4}\left(1 + \frac{1}{4} + \frac{1}{16} + \frac{1}{64} + \ldots\right) = x. By replacing the sum inside with x as they are equivalent, we get \frac{1}{4}\left(1+x\right) = x, which gets us x = \boxed{\frac{1}{3}} ~AmyInRetrograde You can also use the infinite geometric sequence formula for the \frac{1}{2}\cdot\frac{1}{2}+\frac{1}{4}\cdot\frac{1}{4}+\ldots to get \frac{1}{2}\cdot\frac{1}{2}+\frac{1}{4}\cdot\frac{1}{4}+\ldots = \frac{\frac{1}{4}}{1-\frac{1}{4}} = \frac{\frac{1}{4}}{\frac{3}{4}} = \boxed{\frac{1}{3}} ~Marshall_Huang == Video Solutions == === Video Solution by OnTheSpotSTEM === https://youtu.be/VP7ltu-XEq8 ===Video Solution by TheBeautyofMath=== https://youtu.be/_0YaCyxiMBo?t=353 ~IceMatrix ===Video Solution 3, by OmegaLearn === https://youtu.be/IRyWOZQMTV8?t=2484 ~ pi_is_3.14 ===Related Video=== https://www.youtube.com/watch?v=RBf1s4TassI == See Also == {{AMC10 box|year=2019|ab=B|num-b=16|num-a=18}} {{AMC12 box|year=2019|ab=B|num-b=12|num-a=14}} {{MAA Notice}}

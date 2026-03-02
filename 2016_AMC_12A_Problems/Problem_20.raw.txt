@@ -1,0 +1,129 @@
+== Problem ==
+A binary operation <math>\diamondsuit</math> has the properties that <math>a\,\diamondsuit\, (b\,\diamondsuit \,c) = (a\,\diamondsuit \,b)\cdot c</math> and that <math>a\,\diamondsuit \,a=1</math> for all nonzero real numbers <math>a, b,</math> and <math>c</math>. (Here <math>\cdot</math> represents multiplication). The solution to the equation <math>2016 \,\diamondsuit\, (6\,\diamondsuit\, x)=100</math> can be written as <math>\tfrac{p}{q}</math>, where <math>p</math> and <math>q</math> are relatively prime positive integers. What is <math>p+q?</math>
+
+<math>\textbf{(A) }109\qquad\textbf{(B) }201\qquad\textbf{(C) }301\qquad\textbf{(D) }3049\qquad\textbf{(E) }33,601</math>
+
+== Solution 1 ==
+
+We see that <math>a \, \diamondsuit \, a = 1</math>, and think of division. Testing, we see that the first condition <math>a \, \diamondsuit \, (b \, \diamondsuit \, c) = (a \, \diamondsuit \, b) \cdot c</math> is satisfied, because <math>\frac{a}{\frac{b}{c}} = \frac{a}{b} \cdot c</math>. Therefore, division can be the operation <math>\diamondsuit</math>. Solving the equation, <cmath>\frac{2016}{\frac{6}{x}} = \frac{2016}{6} \cdot x = 336x = 100\implies x=\frac{100}{336} = \frac{25}{84},</cmath> so the answer is <math>25 + 84 = \boxed{\textbf{(A) }109}</math>.
+
+== Solution 2 (Proving that <math>\diamondsuit</math> is division) ==
+If the given conditions hold for all nonzero numbers <math>a, b,</math> and <math>c</math>, 
+
+Let <math>a=b=c.</math> From the first two givens, this implies that 
+
+
+<cmath>a\diamondsuit\, (a\diamondsuit\, {a})=(a\diamondsuit\, a)\cdot{a}.</cmath>
+
+
+From <math>a\diamondsuit\,{a}=1,</math> this equation simply becomes <math>a\diamondsuit\,{1}=a.</math>
+
+
+Let <math>c=b.</math> Substituting this into the first two conditions, we see that 
+
+<cmath>a\diamondsuit\, (b\diamondsuit\, {c})=(a\diamondsuit\, {b})\cdot{c} \implies a\diamondsuit\, (b\diamondsuit\, {b})=(a\diamondsuit\, {b})\cdot{b}.</cmath>
+
+Substituting <math>b\diamondsuit\, {b} =1</math>, the second equation becomes
+
+<cmath>a\diamondsuit\, {1}=(a\diamondsuit\, {b})\cdot{b} \implies a=(a\diamondsuit\,{b})\cdot{b}.</cmath>
+
+Since <math>a, b</math> and <math>c</math> are nonzero, we can divide by <math>b</math> which yields,
+
+<cmath>\frac{a}{b}=(a\diamondsuit\, {b}).</cmath>
+
+Now we can find the value of <math>x</math> straightforwardly:
+
+<cmath>\frac{2016}{(\frac{6}{x})}=100 \implies 2016=\frac{600}{x} \implies x=\frac{600}{2016} = \frac{25}{84}.</cmath>
+
+Therefore, <math>a+b=25+84=\boxed{\textbf{A)} 109}</math>
+
+-Benedict T (countmath1)
+
+Note: We only really cared about what <math>a\diamondsuit\,{b}</math> was, so we used the existence of <math>c</math> to get an expression in terms of just <math>a</math> and <math>b</math>.
+
+== Solution 3 ==
+One way to eliminate the <math>\diamondsuit</math> in this equation is to make <math>a = b</math> so that  <math>a\,\diamondsuit\, (b\,\diamondsuit \,c) = c</math>. In this case, we can make <math>b = 2016</math>.
+
+<cmath>2016 \,\diamondsuit\, (6\,\diamondsuit\, x)=100\implies 
+(2016\, \diamondsuit\, 6) \cdot x = 100</cmath>
+
+By multiplying both sides by <math>\frac{6}{x}</math>, we get:
+
+<cmath>(2016\, \diamondsuit\, 6) \cdot 6 = \frac{600}{x}\implies 
+2016 \, \diamondsuit\, (6\, \diamondsuit\, 6) = \frac{600}{x}</cmath>
+
+Because <math>6\, \diamondsuit\, 6 = 2016\, \diamondsuit\, 2016 = 1:</math>
+
+<cmath>2016 \, \diamondsuit\, (2016\, \diamondsuit\, 2016) = \frac{600}{x}\implies 
+(2016\, \diamondsuit\, 2016) \cdot 2016 = \frac{600}{x}\implies 
+2016 = \frac{600}{x}</cmath>
+
+Therefore, <math>x = \frac{600}{2016} = \frac{25}{84}</math>, so the answer is <math>25 + 84 = \boxed{\textbf{(A) }109.}</math>
+
+==Solution 4==
+
+We can manipulate the given identities to arrive at a conclusion about the binary operator <math>\diamondsuit</math>.  Substituting <math>b = c</math> into the first identity yields <cmath>( a\ \diamondsuit\ b) \cdot b = a\ \diamondsuit\ (b\ \diamondsuit\  b) = a\ \diamondsuit\  1 = a\ \diamondsuit\ ( a\ \diamondsuit\ a) = ( a\ \diamondsuit\ a) \cdot a = a.</cmath>  Hence, <math>( a\ \diamondsuit\ b) \cdot b = a,</math> or, dividing both sides of the equation by <math>b,</math> <math>( a\ \diamondsuit\ b) = \frac{a}{b}.</math>
+
+Hence, the given equation becomes <math>\frac{2016}{\frac{6}{x}} = 100</math>.  Solving yields <math>x=\frac{100}{336} = \frac{25}{84},</math> so the answer is <math>25 + 84 = \boxed{\textbf{(A) }109.}</math>
+
+==Solution 5==
+
+<math>2016 \diamondsuit (6 \diamondsuit x) = (2016 \diamondsuit 6) \cdot x = 100</math>
+
+<math>2016 \diamondsuit (2016 \diamondsuit 1) = (2016 \diamondsuit 2016) \cdot 1 = 1 \cdot 1 = 1</math>
+
+<math>2016 \diamondsuit 2016 = 1</math>, <math>2016 \diamondsuit (2016 \diamondsuit 1) = 1</math>, so <math>2016 \diamondsuit 1 = 2016</math>
+
+<math>2016  \diamondsuit 1 = (2016  \diamondsuit 6) \cdot 6</math>, <math>2016 \diamondsuit 6 = \frac{2016  \diamondsuit 1}{6} = 336</math>
+
+<math>x = \frac{100}{2016 \diamondsuit 6} = \frac{100}{336} = \frac{25}{84}</math>, <math>24 + 85 = \boxed{\textbf{(A) }109}</math>
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+==Solution 6 (Fast)==
+First, looking at the conditions, we know that any nonzero real number <math>a</math> satisfies:
+<math>a \diamondsuit (a \diamondsuit a) = (a \diamondsuit a) \cdot a</math>
+Using the next condition, we get that:
+<math>a \diamondsuit 1 = a</math>
+
+Notice that <math>2016 \diamondsuit 1 = 2016 \diamondsuit (6 \diamondsuit 6) = (2016 \diamondsuit 6) \cdot 6 =  2016</math>. Hence, <math>2016 \diamondsuit 6 = 336</math>. Thus, <math>2016 \diamondsuit (6 \diamondsuit x)=100 \implies (2016 \diamondsuit 6) \cdot x = 100 \implies 336x=100 \implies x=\frac{25}{84}</math>. Therefore, the answer is <math>\boxed{\textbf{(A) }109}</math>
+
+~Mathmagicops
+
+~minor edits by CXP
+
+==Solution 7==
+We can rewrite <math>2016\diamondsuit (6\diamondsuit x)=100</math> as <math>2016\diamondsuit 6=\dfrac{100}x.</math> We do a series of algebraic  manipulations: 
+
+<cmath>(2016\diamondsuit 6)\cdot6=\dfrac{600}x</cmath>
+<cmath>2016\diamondsuit (6\diamondsuit 6)=\dfrac{600}x</cmath>
+<cmath>2016\diamondsuit 1=\dfrac{600}x.</cmath>
+
+Let <math>a=2016\diamondsuit 1.</math> 
+
+<cmath>2016a=(2016\diamondsuit 1)\cdot 2016</cmath>
+<cmath>2016a=2016\diamondsuit (1\diamondsuit 2016)</cmath>
+
+We let <math>b=1\diamondsuit 2016.</math> 
+
+<cmath>2016b=(1\diamondsuit 2016)\cdot2016</cmath>
+<cmath>2016b=1\diamondsuit (2016\diamondsuit 2016)</cmath>
+<cmath>2016b=1\diamondsuit 1=1</cmath>
+<cmath>b=\dfrac1{2016}</cmath>
+
+We notice that <math>1\diamondsuit 2016=\dfrac1{2016},</math> which makes <math>a\diamondsuit b</math> look suspiciously like <math>\dfrac ab.</math> Sure enough, when we try the given condition on <math>a\diamondsuit b=\dfrac ab,</math> we see that it works. We evaluate <math>2016\diamondsuit (6\diamondsuit x)=100,</math> and get <math>x=\dfrac{25}{84},</math> and therefore <math>p+q=25+84=109.</math> 
+
+~Technodoggo
+
+== Video Solution 1==
+https://www.youtube.com/watch?v=8GULAMwu5oE
+
+== Video Solution 2(Meta-Solving Technique) ==
+https://youtu.be/GmUWIXXf_uk?t=1632
+
+~ pi_is_3.14
+
+== See Also ==
+{{AMC10 box|year=2016|ab=A|num-b=22|num-a=24}}
+{{AMC12 box|year=2016|ab=A|num-b=19|num-a=21}}
+{{MAA Notice}}

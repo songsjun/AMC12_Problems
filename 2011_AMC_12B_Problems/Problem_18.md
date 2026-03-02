@@ -1,0 +1,42 @@
+# 2011 AMC 12B Problem 18
+
+## Problem
+A pyramid has a square base with side of length 1 and has lateral faces that are equilateral triangles. A cube is placed within the pyramid so that one face is on the base of the pyramid and its opposite face has all its edges on the lateral faces of the pyramid. What is the volume of this cube?
+
+$\textbf{(A)}\ 5\sqrt{2} - 7 \qquad \textbf{(B)}\ 7 - 4\sqrt{3} \qquad \textbf{(C)}\ \frac{2\sqrt{2}}{27} \qquad \textbf{(D)}\ \frac{\sqrt{2}}{9} \qquad \textbf{(E)}\ \frac{\sqrt{3}}{9}$
+## Solution 1
+We can use the Pythagorean Theorem to split one of the triangular faces into two 30-60-90 triangles with side lengths $\frac{1}{2}, 1$ and $\frac{\sqrt{3}}{2}.$
+
+Next, take a cross-section of the pyramid, forming a triangle with the top of the pyramid and the midpoints of two opposite sides of the square base.
+
+This triangle is isosceles with a base of 1 and two sides of length $\frac{\sqrt{3}}{2}.$
+
+The height of this triangle will equal the height of the pyramid. To find this height, split the triangle into two right triangles, with sides $\frac{1}{2}, \frac{\sqrt2}{2}$ and $\frac{\sqrt{3}}{2}.$
+
+The cube, touching all four triangular faces, will form a similar pyramid that sits on top of the cube. If the cube has side length x, the small pyramid has height $\frac{x\sqrt{2}}{2} (b$ecause the pyramids are similar).
+
+Thus, the height of the cube plus the height of the smaller pyramid equals the height of the larger pyramid.
+
+$$x +\frac{x\sqrt{2}}{2} = \frac{\sqrt2}{2}.$$
+
+$$x\left(1+\frac{\sqrt{2}}{2} \right) =\frac{\sqrt{2}}{2}$$
+
+$$x\left(2+\sqrt{2}\right) = \sqrt{2}$$
+
+x = $\frac{\sqrt{2}}{2+\sqrt{2}} \cdot \frac{2-\sqrt{2}}{2-\sqrt{2}} = \frac{2\sqrt{2}-2}{4-2} = \sqrt{2}-1 =$ side length of cube.
+
+
+$$\left(\sqrt{2}-1\right)^3 = (\sqrt{2})^3 + 3(\sqrt{2})^2(-1) + 3(\sqrt{2})(-1)^2 + (-1)^3 = 2\sqrt{2} - 6 +3\sqrt{2} - 1 =\textbf{(A)} 5\sqrt{2} - 7$$
+
+## Solution 2
+Let the side length of the square be s. Let the top of the pyramid be A and the square base be BCDE. Then, let the smaller cube meet edge AB at F and edge AC at G. Let the closest vertice of the cube to C on the base of the pyramid be H.
+Consider diagonal CE. It has length $\sqrt{2}.$ Since the diagonal of the smaller cube's base is $s\sqrt{2},$ note that the distance from C to H is $\dfrac{\sqrt{2} - s\sqrt{2}}{2}.$ Also, note that AG = s and CG = 1-s. We can now use the Pythagorean Theorem on triangle CHG, the right angle at G, to solve for s.
+
+$$
+s^2 + (\dfrac{\sqrt{2} - s\sqrt{2}}{2})^2 = (1-s)^2
+\rightarrow s = \sqrt{2} - 1 \rightarrow \boxed{\textbf{(A)}}.
+$$
+
+## AMC 10
+(For eventual redirection of one of the two pages.) This is also #22 on the corresponding AMC 10B.
+## See Also

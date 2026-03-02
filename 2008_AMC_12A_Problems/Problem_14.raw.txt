@@ -1,0 +1,25 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2008_AMC_12A_Problems/Problem_14&action=raw
+
+Published Time: Sun, 13 Mar 2016 14:28:15 GMT
+
+Markdown Content:
+== Problem ==
+What is the area of the region defined by the [[inequality]] |3x-18|+|2y+7|\le3?
+
+\mathrm{(A)}\ 3\qquad\mathrm{(B)}\ \frac{7}{2}\qquad\mathrm{(C)}\ 4\qquad\mathrm{(D)}\ \frac{9}{2}\qquad\mathrm{(E)}\ 5
+
+== Solution ==
+Area is invariant under translation, so after translating left 6 and up 7/2 units, we have the inequality
+
+|3x| + |2y|\leq 3
+
+which forms a [[rhombus|diamond]] centered at the [[origin]] and vertices at (\pm 1, 0), (0, \pm 1.5). Thus the diagonals are of length 2 and 3. Using the formula A = \frac 12 d_1 d_2, the answer is \frac{1}{2}(2)(3) = 3 \Rightarrow \mathrm{(A)}.
+
+== See also ==
+{{AMC12 box|year=2008|num-b=13|num-a=15|ab=A}}
+
+[[Category:Introductory Algebra Problems]]
+[[Category:Introductory Geometry Problems]]
+{{MAA Notice}}

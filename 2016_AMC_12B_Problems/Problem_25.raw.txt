@@ -1,0 +1,68 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2016_AMC_12B_Problems/Problem_25&action=raw
+
+Published Time: Sun, 10 Nov 2024 04:43:12 GMT
+
+Markdown Content:
+==Problem==
+The sequence (a_n) is defined recursively by a_0=1, a_1=\sqrt[19]{2}, and a_n=a_{n-1}a_{n-2}^2 for n\geq 2. What is the smallest positive integer k such that the product a_1a_2\cdots a_k is an integer?
+
+\textbf{(A)}\ 17\qquad\textbf{(B)}\ 18\qquad\textbf{(C)}\ 19\qquad\textbf{(D)}\ 20\qquad\textbf{(E)}\ 21
+
+==Solution 1==
+
+Let b_i=19\text{log}_2a_i. Then b_0=0, b_1=1, and b_n=b_{n-1}+2b_{n-2} for all n\geq 2. The characteristic polynomial of this linear recurrence is x^2-x-2=0, which has roots 2 and -1. 
+
+Therefore, b_n=k_12^{n}+k_2(-1)^n for constants to be determined k_1, k_2.  Using the fact that b_0=0, b_1=1, we can solve a pair of linear equations for k_1, k_2:
+
+k_1+k_2=0
+2k_1-k_2=1.
+
+Thus k_1=\frac{1}{3}, k_2=-\frac{1}{3}, and b_n=\frac{2^n-(-1)^n}{3}.
+
+Now, a_1a_2\cdots a_k=2^{\frac{(b_1+b_2+\cdots+b_k)}{19}}, so we are looking for the least value of k so that
+
+b_1+b_2+\cdots+b_k \equiv 0 \pmod{19}. 
+
+Note that we can multiply all b_i by three for convenience, as the b_i are always integers, and it does not affect divisibility by 19.
+
+Now, for all even k the sum (adjusted by a factor of three) is 2^1+2^2+\cdots+2^k=2^{k+1}-2. The smallest k for which this is a multiple of 19 is k=18 by Fermat's Little Theorem, as it is seen with further testing that 2 is a primitive root \pmod{19}.  
+
+Now, assume k is odd. Then the sum (again adjusted by a factor of three) is 2^1+2^2+\cdots+2^k+1=2^{k+1}-1. The smallest k for which this is a multiple of 19 is k=17, by the same reasons. Thus, the minimal value of k is \boxed{\textbf{(A) } 17}.
+
+==Solution 2==
+Since the product a_1a_2\cdots a_k is an integer, it must be a power of 2, so the sum of the base-2 logarithms must be an integer. Multiply all of these logarithms by 19 (to make them integers), so the sum must be a multiple of 19.
+
+The logarithms are b_n = 19\log_2 a_n. Using the recursion b_0 = 0, b_1 = 1, b_n = b_{n-1}+2b_{n-2} (modulo 19 to save calculation time), we get the sequence
+0,1,1,3,5,11,2,5,9,0,-1,-1,-3,-5,-11,-2,-5,-9,0,\dots
+Listing the numbers out is expedited if you notice b_{n+1}=2b_n+(-1)^n.
+
+The cycle repeats every 9+9=18 terms. Notice that since b_n+b_{n+9} \equiv 0 \pmod{19}, the first 18 terms sum up to a multiple of 19. Since b_{18}=0, we only need at most the first \boxed{\textbf{(A)}\ 17} terms to sum up to a multiple of 19, and this is the lowest answer choice.
+
+**Note 1:** To rigorously prove this is the smallest value, you will have to keep a running sum of the terms and check that it is never a multiple of 19 before the 17th term.
+
+**Note 2:** In response to note 1, it can be proven that b_{n+2} = 2S + 1, where S = \sum^{n}_{i=1} b_i. Since S is a multiple of 19, it suffices to find the minimal n \geq 1 such that b_{n+2} \equiv 1 \pmod {19} . In this case, n = 17 happens to be minimal such n, so the answer would be 17.
+
+The relation b_{n+2} = 2S + 1 can be proven by rearranging the relation b_{i+2} = b_{i+1} + 2b_i to b_{i+2} - b_{i+1} = 2b_i for all integers 0 \leq i \leq n, then adding those n+1 equations together. The LHS telescopes into b_{n+2} - 1, and the RHS becomes 2S. Therefore, if you don't find a cleaner solution involving the relation b_n+b_{n+9} \equiv 0 \pmod{19}, you can always solve the problem just by considering the value of b_{n+2} rather than keeping a running sum.
+
+==Solution 3==
+Like in [[#Solution 2|Solution 2]], calculate the first few terms of the sequence, but also keep a running sum c_n of the logarithms (not modulo 19 here):
+0,1,2,5,10,21,42,\dots
+Notice that c_n=2c_{n-1}+1 for odd n and c_n=2c_{n-1} for even n. Since 2 is relatively prime to 19, we can ignore even n and calculate odd n using c_1 = 1, c_{n} = 4c_{n-2}+1 (modulo 19):
+,1,,5,,2,,9,,-1,,-3,,8,,-5,,0,\dots
+c_n is first a multiple of 19 at n = \boxed{\textbf{(A)}\ 17}. ~[[User:emerald_block|emerald_block]]
+
+==Solution 4 (Using a formula)==
+
+Consider the product a_1a_2\cdots a_k (will finish tommorow)
+
+==Video Solution by CanadaMath (Problem 21-25)==
+Fast Forward to 26:01 for problem 25
+https://www.youtube.com/watch?v=P3jJDLGyF2w&t=1546s
+
+~THEMATHCANADIAN
+
+==See Also==
+{{AMC12 box|year=2016|ab=B|after=Last Problem|num-b=24}}
+{{MAA Notice}}

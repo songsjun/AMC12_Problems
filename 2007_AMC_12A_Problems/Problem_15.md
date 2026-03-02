@@ -1,0 +1,19 @@
+# 2007 AMC 12A Problem 15
+
+## Problems
+The [set](https://artofproblemsolving.com/wiki/index.php/set) $\{3,6,9,10\}$ is augmented by a fifth element n, not equal to any of the other four. The [median](https://artofproblemsolving.com/wiki/index.php/median) of the resulting set is equal to its [mean](https://artofproblemsolving.com/wiki/index.php/mean). What is the sum of all possible values of n?
+
+
+$$\mathrm{(A)}\ 7\qquad \mathrm{(B)}\ 9\qquad \mathrm{(C)}\ 19\qquad \mathrm{(D)}\ 24\qquad \mathrm{(E)}\ 26$$
+
+## Solution
+The median must either be 6, 9, or n. [Casework](https://artofproblemsolving.com/wiki/index.php/Casework):
+
+*Median is 6: Then n $\le 6$ and $\frac{3+6+9+10+n}{5} = 6 \Longrightarrown = 2$.
+
+*Median is 9: Then n $\ge 9$ and $\frac{3+6+9+10+n}{5} = 9 \Longrightarrown = 17$.
+
+*Median is n: Then 6 < n < 9 and $\frac{3+6+9+10+n}{5} =$ n $\Longrightarrown = 7$.
+
+All three cases are valid, so our solution is $2 + 7 + 17 = 26\Longrightarrow \mathrm{(E)}.$
+## See also

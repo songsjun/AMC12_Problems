@@ -1,0 +1,311 @@
+{{duplicate|[[2018 AMC 10B Problems#Problem 25 | 2018 AMC 10B #25]] and [[2018 AMC 12B Problems#Problem 24|2018 AMC 12B #24]]}}
+
+== Problem 25==
+Let <math>\lfloor x \rfloor</math> denote the greatest integer less than or equal to <math>x</math>. How many real numbers <math>x</math> satisfy the equation <math>x^2 + 10,000\lfloor x \rfloor = 10,000x</math>?
+
+<math>\textbf{(A) } 197 \qquad \textbf{(B) } 198 \qquad \textbf{(C) } 199 \qquad \textbf{(D) } 200 \qquad \textbf{(E) } 201</math>
+
+==Solution 1==
+This rewrites itself to <math>x^2=10,000\{x\}</math> where <math>\lfloor x \rfloor + \{x\} = x</math>.
+
+Graphing <math>y=10,000\{x\}</math> and <math>y=x^2</math> we see that the former is a set of line segments with slope <math>10,000</math> from <math>0</math> to <math>1</math> with a hole at <math>x=1</math>, then <math>1</math> to <math>2</math> with a hole at <math>x=2</math> etc.
+Here is a graph of <math>y=x^2</math> and <math>y=16\{x\}</math> for visualization.
+
+<asy>
+import graph;
+size(400);
+xaxis("$x$",Ticks(Label(fontsize(8pt)),new real[]{-5,-4,-3, -2, -1,0,1 2,3, 4,5}));
+yaxis("$y$",Ticks(Label(fontsize(8pt)),new real[]{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18}));
+real y(real x) {return x^2;}
+draw(circle((-4,16), 0.1));
+draw(circle((-3,16), 0.1));
+draw(circle((-2,16), 0.1));
+draw(circle((-1,16), 0.1));
+draw(circle((0,16), 0.1));
+draw(circle((1,16), 0.1));
+draw(circle((2,16), 0.1));
+draw(circle((3,16), 0.1));
+draw(circle((4,16), 0.1));
+draw((-5,0)--(-4,16), black);
+draw((-4,0)--(-3,16), black);
+draw((-3,0)--(-2,16), black);
+draw((-2,0)--(-1,16), black);
+draw((-1,0)--(-0,16), black);
+draw((0,0)--(1,16), black);
+draw((1,0)--(2,16), black);
+draw((2,0)--(3,16), black);
+draw((3,0)--(4,16), black);
+draw(graph(y,-4.2,4.2),green);
+</asy>
+
+Now notice that when <math>x=\pm 100</math> the graph has a hole at <math>(\pm 100,10,000)</math> which the equation <math>y=x^2</math> passes through and then continues upwards. Thus our set of possible solutions is bounded by <math>(-100,100)</math>. We can see that <math>y=x^2</math> intersects each of the lines once and there are <math>99-(-99)+1=199</math> lines for an answer of <math>\boxed{\text{(C)}~199}</math>.
+
+==Solution 2==
+
+Same as the first solution, <math>x^2=10,000\{x\} </math>.
+
+
+We can write <math>x</math> as <math>\lfloor x \rfloor+\{x\}</math>. Expanding everything, we get a quadratic in <math>\{x\}</math> in terms of <math>\lfloor x \rfloor</math>:
+<cmath> \{x\}^2+ (2\lfloor x \rfloor -10,000)\{x\} + \lfloor x \rfloor ^2 = 0</cmath>
+
+
+We use the quadratic formula to solve for <math>\{x\}</math> :
+<cmath> \{x\} = \frac {-2\lfloor x \rfloor + 10,000 \pm \sqrt{ ( 2\lfloor x \rfloor - 10,000 )^2 - 4\lfloor x \rfloor^2  }}{2} = \frac {-2\lfloor x \rfloor + 10,000 \pm \sqrt{ 4\lfloor x \rfloor^2 -40,000 \lfloor x \rfloor + 10,000^2- 4\lfloor x \rfloor^2  }}{2} </cmath>
+
+
+Since <math> 0 \leq \{x\} < 1 </math>, we get an inequality which we can then solve. After simplifying a lot, we get that <math>\lfloor x \rfloor^2 + 2\lfloor x \rfloor - 9999 < 0</math>.
+
+
+Solving over the integers, <math>-101 < \lfloor x \rfloor < 99 </math>, and since <math>\lfloor x \rfloor</math> is an integer, there are <math>\boxed{\text{(C)}~199}</math> solutions. Each value of <math> \lfloor x \rfloor</math> should correspond to one value of <math>x</math>, so we are done.
+
+==Solution 3 (Fakesolve)==
+
+Let <math>x = a+k</math> where <math>a</math> is the integer part of <math>x</math> and <math>k</math> is the fractional part of <math>x</math>.
+We can then rewrite the problem below:
+
+<math>(a+k)^2 + 10000a = 10000(a+k)</math>
+
+From here, we get
+
+<math>(a+k)^2 + 10000a = 10000a + 10000k</math>
+
+Solving for <math>a+k = x</math>
+
+<math>(a+k)^2 = 10000k</math>
+
+<math>x = a+k = \pm100\sqrt{k}</math>
+
+Because <math>0 \leq k < 1</math>, we know that <math>a+k</math> cannot be less than or equal to <math>-100</math> nor greater than or equal to <math>100</math>. Therefore:
+
+<math>-99 \leq x \leq 99</math>
+
+There are <math>199</math> elements in this range, so the answer is <math>\boxed{\textbf{(C)} \text{ 199}}</math>.
+
+
+Note (not by author): this solution seems to be invalid at first, because one can not determine whether <math>x</math> is an integer or not. However, it actually works because although <math>x</math> itself might not be an integer, it is very close to one, so there are 199 potential <math>x</math>.
+
+
+Another Note (not by author of previous note): we can actually determine that <math>x</math>=0 is the only possible integer value of <math>x</math> is we set <math>x</math>=<math>\lfloor x \rfloor</math> we end up with <math>x</math>=0   ~YJC64002776
+
+
+Yet Another Note EXCEPT THIS ONE'S VERY IMPORTANT, AS IT DISPROVES THE PROOF (also not by the author of any previous notes or of the original solution): this solution claims that <math>-99 \leq x \leq 99</math>, which is not entirely true. When <math>x = 5000-1000\sqrt{26}</math>, the equation originally stated in the question holds true. <math>5000-1000\sqrt{26}</math> is roughly <math>-99.0195</math> (rounded to the nearest ten thousandth), which is not in the <math>-99 \leq x \leq 99</math> interval. It is probably by mere coincidence that this solution gives the correct answer, as the solution is not rigorous. Additionally, <math>x</math> is not necessarily integer, so it is not claimable that there are 199 elements in the range of <math>-99 \leq x \leq 99</math>.
+
+
+One More Note (not by any of the previous authors): The original guy who wrote the solution just wrote the wrong range lol this is a valid solution (at least I'm pretty sure). Given <math>(a+k)^2 = 10000k</math>, dividing each side by 10000 gives <math>\frac{(a+k)^2}{10000} = k</math>. Our original definition of <math>k</math> states that <math>0 \leq k < 1</math>, so <math>0 \leq \frac{(a+k)^2}{10000} < 1</math>. This is equivalent to the range <math>-100 \leq x < 100</math> NOT <math>-99 \leq x < 99</math>. If you observe the functions behavior, you realize that between every interval of length <math>1</math> there is one solution, except for the intervals that include <math>0</math>, where only <math>0</math> is a solution. There are therefore <math>99+99+1</math> solutions in that range which gives the answer. Also <math>x</math> literally doesn't have to be an integer the original constraint was that <math>x</math> is a real number.
+
+==Solution 4==
+
+Notice the given equation is equivalent to <math>(\lfloor x \rfloor+\{x\})^2=10,000\{x\} </math>
+
+Now we know that <math>\{x\} < 1</math> so plugging in <math>1</math> for <math>\{x\}</math> we can find the upper and lower bounds for the values.
+
+<math>(\lfloor x \rfloor +1)^2 = 10,000(1)</math>
+
+<math>(\lfloor x \rfloor +1) = \pm 100</math>
+
+<math>\lfloor x \rfloor = 99, -101</math>
+
+And just like <math>\textbf{Solution 2}</math>, we see that <math>-101 < \lfloor x \rfloor < 99 </math>, and since <math>\lfloor x \rfloor</math> is an integer, there are <math>\boxed{\text{(C)}~199}</math> solutions. Each value of <math> \lfloor x \rfloor</math> should correspond to one value of <math>x</math>, so we are done.
+
+* <math>\textbf{Note}</math> (not by author of any other notes beforehand): this solution is probably the best and most efficient of all. It solves the problems stated in the fakesolves./
+
+==Solution 5==
+
+Firstly, if <math>x</math> is an integer, then <math>10,000\lfloor x \rfloor=10,000x</math>, so <math>x</math> must be <math>0</math>.
+
+If <math>0<x<1</math>, then we know the following:
+
+<math>0<x^2<1</math>
+
+<math>10,000\lfloor x \rfloor =0</math>
+
+<math>0<10,000x<10,000</math>
+
+Therefore, <math>0<x^2+10,000\lfloor x \rfloor <1</math>, which overlaps with <math>0<10,000x<10,000</math>. This means that there is at least one real solution between <math>0</math> and <math>1</math>. Since <math>x^2+10,000\lfloor x \rfloor </math> increases quadratically and <math>10,000x</math> increases linearly, there is only one solution for this case. 
+
+Similarly, if <math>1<x<2</math>, then we know the following:
+
+<math>1<x^2<4</math>
+
+<math>10,000\lfloor x \rfloor =10,000</math>
+
+<math><10,000<10,000x<20,000</math>
+
+By following similar logic, we can find that there is one solution between <math>1</math> ad <math>2</math>. 
+
+We can also follow the same process to find that there are negative solutions for <math>x</math> as well.
+
+There are not an infinite amount of solutions, so at one point there will be no solutions when <math>n<x<n+1</math> for some integer <math>n</math>. For there to be no solutions in a given range means that the range of <math>10,000\lfloor x \rfloor + x^2</math> does not intersect the range of <math>10,000x</math>. <math>x^2</math> will always be positive, and <math>10,000\lfloor x \rfloor</math> is less than <math>10,000</math> less than <math>10,000x</math>, so when <math>x^2 >= 10,000</math>, the equation will have no solutions. This means that there are <math>99</math> positive solutions, <math>99</math> negative solutions, and <math>0</math> for a total of <math>\boxed{\text{(C)}~199}</math> solutions.
+
+~Owen1204
+
+==Solution 6 (General Equation)==
+
+General solution to this type of equation <math>f(x, \lfloor x \rfloor) = 0</math>:
+
+ 1. solve <math>f(x, \lfloor x \rfloor) = 0</math> for <math>x</math> to get <math>x = g(\lfloor x \rfloor )</math>
+ 2. apply <math>\lfloor x \rfloor \le x < \lfloor x \rfloor+1</math>, solve <math>\lfloor x \rfloor \le g(\lfloor x \rfloor) < \lfloor x \rfloor+1</math> to get the domain of <math>\lfloor x \rfloor</math>
+ 3. get <math> \lfloor x \rfloor</math> from the domain of <math> \lfloor x \rfloor</math> because <math> \lfloor x \rfloor</math> is integer, then get <math>x</math> from <math> \lfloor x \rfloor</math> by <math>x = g( \lfloor x \rfloor) </math>
+ Note: function <math>\lfloor x \rfloor</math> maps <math>x</math> to its floor. By solving <math>f(x, \lfloor x \rfloor) = 0</math>, we get function <math>x = g( \lfloor x \rfloor) </math>, mapping <math>x</math>'s floor to <math>x</math>
+
+<math>x^2 - 10000x + 10000 \lfloor x \rfloor =0</math>
+
+<math>x=5000 \pm 100 \sqrt{2500- \lfloor x \rfloor}</math>, <math>\lfloor x \rfloor \le 2500</math>
+
+<math>\lfloor x \rfloor \le x < \lfloor x \rfloor + 1</math>
+
+If <math>x= 5000 + 100 \sqrt{2500 - \lfloor x \rfloor}</math>, <math>x \ge 5000</math>, it contradicts <math>x < \lfloor x \rfloor + 1 \le 2501</math>
+
+So <math>x= 5000 - 100 \sqrt{2500 - \lfloor x \rfloor}</math>
+
+Let <math>k = \lfloor x \rfloor</math> , <math>x= 5000 - 100 \sqrt{2500 - k}</math>
+
+<math>k \le 5000 - 100 \sqrt{2500 - k} < k + 1</math>
+
+<math>0 \le 5000 - k - 100 \sqrt{2500 - k} < 1</math>
+
+<math>0 \le 2500 - k - 100 \sqrt{2500 - k} + 2500 < 1</math>
+
+<math>0 \le (\sqrt{2500 - k} - 50)^2 < 1</math>
+
+<math>-1 < \sqrt{2500 - k} - 50 < 1</math>
+
+<math>49 < \sqrt{2500 - k} < 51</math>
+
+<math>-101 < k < 99</math>
+
+So the number of <math>k</math>'s values is <math>99-(-101)-1=199</math>. Because <math>x=5000-100\sqrt{2500-k}</math>, for each value of <math>k</math>, there is a value for <math>x</math>. The answer is <math>\boxed{\textbf{(C)} 199}</math>
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+==Solution 7 (Fakesolve)==
+Subtracting <math>10000\lfloor x\rfloor</math> from both sides gives <math>x^2=10000(x-\lfloor x\rfloor)=10000\{x\}</math>. Dividing both sides by <math>10000</math> gives <math>\left(\frac{x}{100}\right)^2=\{x\}<1</math>.  <math>\left(\frac{x}{100}\right)^2<1</math> when <math>-100<x<100</math> so the answer is <math>\boxed{199}</math>.
+
+~randomdude10807
+
+==Solution 8 (Also Gives General Formula For Values of x)==
+The question wants to know how many values of <math>x</math> satisfy the equation <math>x^2 + 10,000\lfloor x \rfloor = 10,000x</math>. This equation can be simplified as follows
+
+<cmath>x^2 + 10,000\lfloor x \rfloor = 10,000x</cmath>
+
+<cmath>x^2 = 10,000(x-\lfloor x \rfloor)</cmath>
+
+Notice that <math>x-\lfloor x \rfloor</math> must be greater than or equal to zero, but less than one. Because of that, the right-hand side of the equation must be less than <math>10000</math>. Therefore, <math>-100<x<100</math>.
+
+<math>x</math> can be expressed as <math>a+b</math>, where <math>a</math> is an integer and <math>b</math> is a real number such that <math>0 \leq b < 1</math>. Notice that in order to satisfy the conditions set down for <math>x</math>, <math>-100 \leq a \leq 99</math>.
+
+Substituting <math>a</math> and <math>b</math> into <math>x^2 = 10000(x-\lfloor x \rfloor)</math>, we get
+
+<cmath>(a+b)^2 = 10,000b</cmath>
+
+<cmath>a^2+2ab+b^2 = 10,000b</cmath>
+
+Let's try to turn this into a quadratic equation where we're trying to solve for <math>b</math>. Simplifying, we find
+
+<cmath>b^2+(2a-10,000)b+a^2 = 0</cmath>
+
+Now the value of <math>b</math> depends on the value of <math>a</math>. Our task is to figure out how many values of <math>a</math> will give me valid values of <math>b</math> (a.k.a the values of <math>a</math> that give me <math>b</math> such that <math>0 \leq b < 1</math>), as that will be our answer. We must also keep in mind that <math>-100 \leq a \leq 99</math>.
+
+Using the quadratic formula, we can find
+
+<cmath>\frac{(-2a+10,000) \pm \sqrt{(2a-10,000)^2-4a^2}}{2}</cmath>
+
+The equation above represents the values of <math>b</math> in terms of <math>a</math>. Since it represents <math>b</math>, we want values of <math>a</math> such that the equation is between zero and one, zero inclusive. We can then conceive the inequality below.
+
+<cmath>0 \leq \frac{(-2a+10,000) \pm \sqrt{(2a-10,000)^2-4a^2}}{2} < 1</cmath>
+
+Wow, that looks like a mess! How are we supposed to easily use such a complicated expression? Maybe it would help to simplify it further. First, let's notice a few things.
+
+*I want the numerator to be between 0 and 2, 0 inclusive. Of the <math>\pm</math> in the quadratic formula, only the "<math>-</math>" (minus) will work. Why? Because <math>-2a+10000</math> will always be positive (if I plug in the largest possible value of <math>a</math>, <math>99</math>, it will give <math>9802</math>), and if I want <math>b</math> to be real, which I do, then <math>\sqrt{(2a-10,000)^2-4a^2}</math> should also be positive. <math>-2a+10000</math> will already be much bigger than 2, and adding more on will only make it bigger. It will never be less than 2. It will never work.
+
+*I can simplify the numbers under the square root using Difference of Squares. I can turn <math>\sqrt{(2a-10,000)^2-4a^2}</math> into <math>\sqrt{(2a-10,000)^2-(2a)^2}</math>. Applying Difference of Squares, it will eventually simplify out to be <math>200\sqrt{2500-a}</math>.
+
+Cool! Now we've simplified the square root and figured out that it must be a minus sign, not a plus sign. Our new inequality looks like this:
+
+<cmath>0 \leq \frac{(-2a+10,000) - 200\sqrt{2500-a}}{2} < 1</cmath>
+
+Simplifying the unsimplified fraction further, we can get this:
+
+<cmath>0 \leq -a + 5,000 - 100\sqrt{2500-a} < 1</cmath>
+
+Yay! A simpler equation. As long as the value <math>a</math> fits this inequality, the restrictions set on <math>b</math> are satisfied. But wait. What about the restrictions on <math>a</math>?
+
+'''By testing out <math>-100</math> and <math>99</math> (and finding that <math>-100</math> gives a value very close to <math>1</math>, and that <math>99</math> gives exactly <math>1</math>), we can conclude that any value of <math>-100 \leq </math>a<math> \leq 99</math> will satisfy the inequality above as long as it does not make <math>-a + 5,000 - 100\sqrt{2500-a}</math> equal to <math>1</math>. By testing <math>-100</math> and <math>99</math>, you will also find that <math>a = 99</math> will not satisfy the inequality.''' <u><-- old, non-rigorous way. You can ignore it, but if you want to see a bogus way to prove it, feel free to read it.</u>
+
+I can solve <math>0 \leq -a + 5000 - 100\sqrt{2500-a} < 1</math> for <math>a</math> this way:
+
+<math>0 \leq -a + 5000 - 100\sqrt{2500-a} < 1</math>
+
+<math>-5000 \leq -a - 100\sqrt{2500-a} < -4999</math>
+
+<math>5000 \geq a + 100\sqrt{2500-a} < 4999</math>
+
+<math>5000-a \geq 100\sqrt{2500-a} < 4999-a</math>
+
+<math>25000000-10000a+a^2 \geq 25000000-10000a > 4999^2-9998a+a^2</math>
+
+<math>a^2 \geq 0 > -9999+2a+a^2</math>
+
+<math>0 \geq -a^2 > -9999+2a</math>
+
+<math>0 \leq a^2 < 9999-2a</math>
+
+<math>2a \leq a(a+2) < 9999</math>
+
+Following the left part of the inequality,
+
+<math>2a \leq a^2 + 2a</math>
+
+<math>0 \leq a^2</math>
+
+<math>a</math> can be anything <math>(-\infty, \infty)</math>.
+
+Following the right part of the inequality,
+
+<math>a(a+2) < 9999</math>
+
+<math>a < 99</math> and <math>a > -101</math>
+
+<math>a</math> can be anything <math>(-101, 99)</math>.
+
+Combining both restrictions and given previously that <math>-100 \leq a \leq 99</math>, we can conclude that the inequality describing all possible values of <math>a</math> is <math>-100 \leq a < 99</math>.
+
+Remember how these values of <math>a</math> give valid values of <math>b</math> that satisfy the desired inequality <math>0 \leq b < 1</math> and how adding up <math>a</math> and <math>b</math> gives <math>x</math>. In summary, remember that the number of values of <math>a</math> is equivalent to the number of values of <math>x</math>.
+
+<math>a</math> must be integer, so the number of values of <math>a</math> that satisfy <math>-100 \leq a < 99</math> is <math>\boxed{199}</math>.
+
+The answer is <math>\boxed{\textbf{(C)} 199}</math>.
+
+~ AVRILAVIGNE
+
+
+Note From Author of Solution: you may have noticed that I missed a slight bit by not proving that the thing under the square root in the quadratic formula I made was positive. Don't worry, it wasn't a mistake. It's actually pretty easy to prove. I'll leave it to you to figure out how to do it!
+
+
+==Solution 9==
+
+Note that the problem rearranges itself to <math>x^2=10,000\{x\}</math> where <math>\lfloor x \rfloor + \{x\} = x</math>.
+
+
+To get a general scope of solutions, by noting that <math>0 \leq \{x\} < 1</math>, we have that <math>0 \leq x^2 < 10,000</math>. Therefore, <math>-100 < x < 100</math>.
+
+
+From here, it is easy to observe that there is one solution per each integer value of <math>-99 \leq \lfloor x \rfloor \leq 99</math>. This can be reasoned by bounding <math>\{x\}</math> for each <math>\lfloor x \rfloor</math> (intuitively, this is because <math>\lfloor x \rfloor</math> determines the fractional part: for each <math>\lfloor x \rfloor</math>, you will be forced to choose the value of <math>\{x\}</math> that will satisfy the equation).
+
+
+Ultimately, the answer is <math>99+99+1 = \boxed{\textbf{(C)} 199}</math>.
+
+
+~xHypotenuse
+
+
+==Video Solution==
+https://www.youtube.com/watch?v=vHKPbaXwJUE
+
+==See Also==
+
+{{AMC10 box|year=2018|ab=B|num-b=24|after=Last Problem}}
+{{AMC12 box|year=2018|ab=B|num-b=23|num-a=25}}
+{{MAA Notice}}
+
+[[Category:Intermediate Algebra Problems]]

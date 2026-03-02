@@ -1,0 +1,106 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2025_AMC_12B_Problems/Problem_13&action=raw
+
+Published Time: Wed, 19 Nov 2025 05:49:55 GMT
+
+Markdown Content:
+{{duplicate|[[2025 AMC 10B Problems/Problem 16|2025 AMC 10B #16]] and [[2025 AMC 12B Problems/Problem 13|2025 AMC 12B #13]]}}
+==Problem 13==
+A circle has been divided into 6 sectors of different sizes. Then 2 of the sectors are painted red, 2 painted green, and 2 painted blue so that no two neighboring sectors are painted the same color. One such coloring is shown below.
+
+ /* Made by Mathemagician108 */ unitsize(1.7cm); pair O = (0, 0); real R = 2; pair A = (R, 0); pair B = (0.5*R, 0.866*R); pair C = (0, R); pair D = (-R, 0); pair E = (-0.954*R, -0.3*R); pair F = (-0.22*R, -0.975*R); path sector1 = O -- A .. arc(O,A,B) -- cycle; path sector2 = O -- B .. arc(O,B,C) -- cycle; path sector3 = O -- C .. arc(O,C,D) -- cycle; path sector4 = O -- D .. arc(O,D,E) -- cycle; path sector5 = O -- E .. arc(O,E,F) -- cycle; path sector6 = O -- F .. arc(O,F,A) -- cycle; pen r = rgb(255, 120, 120); pen g = rgb(120, 255, 120); pen b = rgb(120, 120, 255); filldraw(sector1, g); filldraw(sector2, r); filldraw(sector3, b); filldraw(sector4, r); filldraw(sector5, g); filldraw(sector6, b); draw(circle(O, R)); defaultpen(fontsize(12pt)); label("green", (0.57*R, 0.32*R)); label("red", (0.16*R, 0.63*R)); label("blue", (-0.45*R, 0.45*R)); label("red", (-0.69*R, -0.1*R)); label("green", (-0.45*R, -0.5*R)); label("blue", (0.39*R, -0.49*R)); 
+
+How many different colorings are possible?
+
+\textbf{(A)}~12\qquad\textbf{(B)}~16\qquad\textbf{(C)}~18\qquad\textbf{(D)}~24\qquad\textbf{(E)}~28
+
+==Solution 1==
+
+Create an arbitrary six slice circular diagram. The first slice has 3 options, and the second has 2, third has 2, fourth has 2, fifth has 2, and the sixth has only 1 color to be chosen.
+
+Understand that if \( \mathbb{X} \) is the set containing all possible cases of the circle, then \( \mathbb{X} \) has a correlation to another set, call it \( \mathbb{K} \), which contains all the colors. This can be quite easily sought as a rotation of one element in \( \mathbb{X} \) that accurately maps to another element in \( \mathbb{X} \) is considered the same.
+
+In simpler terms, to account for overlapping cases in \( \mathbb{X} \), one must divide by 2 (as two colorings that are rotated are considered different, and we don't want that as it defeats the purpose of "unique").
+
+Then, multiplying out we have \( 3 \times 2^4 = 48 \). Dividing by 2 to account for overlap in \( \mathbb{X} \), we get \( 48/2 \) or
+\boxed{\textbf{(D) } 24}
+
+~Pinotation
+
+==Solution 2==
+Since the sectors are of different sizes, this is equivalent to ordering the colors in a line of six spaces such that the colors at either end must be different and adjacent colors must be different. WLOG let the first color be red and the second be green.
+
+If the third color is also red, then two of the remaining spaces must be blue, so blue must occupy the fourth and sixth spaces. Our coloration is thus RGRBGB.
+
+If the third color is blue, then we again consider cases. The fourth color being green forces red and then blue, so we must have RGBGRB.
+
+Otherwise, the fourth color would be red, and either of the final two space colorations work, yielding RGBRBG and RGBRGB.
+
+Since the first color can be chosen in 3 ways and the second in 2 ways, and there are a total of 4 colorations after choosing these two colors, the total number of cases is 3\cdot2\cdot4=\boxed{\textbf{(D)}~24}.
+
+~ [https://artofproblemsolving.com/wiki/index.php/User:Eevee9406 eevee9406]
+
+==Solution 3==
+
+There are two cases on how the colors can be distributed: 
+
+Case 1: Every color is diametrically opposite itself. The 6 sectors form 3 diametrically opposite pairs: (1, 4), (2, 5), and (3, 6). In this case, each of the 3 colors must cover one of these pairs. There are 3! ways to assign the 3 colors to the 3 pairs. 3! = 6
+
+Case 2: Only 1 color is diametrically opposite itself. First, there are 3 choices for which color is opposite itself. Second, there are 3 choices for which diametrical pair (e.g., (1, 4), (2, 5), or (3, 6)) this color will cover. Without loss of generality, suppose one color covers sectors 1 and 4. The two remaining colors must then cover the remaining sectors {2, 3, 5, 6}. These must be arranged in "crooked" pairs, for example, {2, 6} and {3, 5}, so that neither of the remaining colors is also opposite itself. There are 2 ways to assign the two remaining colors to these two crooked pairs. This gives 3 \cdot 3 \cdot 2 = 18 options in this case. It is impossible to have exactly 0 or 2 diametrically opposite colors. Therefore, the total number of ways is the sum of the two cases: 18 + 6 =\boxed{\textbf{(D)}~24}.
+
+~Aarav_Mishra
+
+==Solution 4==
+(casework based on red sectors)
+ 
+Case 1) Gaps between red sectors is 2-2:
+There are 2\cdot 2 = 4 ways to order the green and blue sectors between the reds (there is one sector of each color in each gap and two ways to order the two colors per gap). Multiply by 3 to account for ways to rotate the ordering.
+ 
+Case 2) Gaps between red sectors is 1-3:
+There are 2 ways to assign Green and Blue for sectors between Reds (two ways to pick color for gap of size 1, which determines color of center sector for gap of size 3 such that all other sector colors are decided). Multiply by 6 to account for rotation.
+ 
+Answer is 4 \cdot 3 + 2 \cdot 6 = \boxed{\textbf{(D) 24}}.
+ 
+~Pearl2008
+
+==Solution 5 (Burnside's Lemma)==
+We apply Burnside's lemma to this problem. Use the cyclic group G=C_{6}, it has 6 rotations so |C_{6}|=6. Burnside's lemma says:
+|X/G|=\frac{1}{|G|}\sum_{g\in G}|X^g|
+Our goal is to find n:=|X|=|X^{e}|, where e denotes the identity. Up to rotation, we can count the number of orbits. Place 2A,2B,2C on a circle with no 2 adjacent. Start with placing A's, they can either have gaps of 2-2 (A\,\_\,\_\,A\,\_\,\_) or 1-3 (A\,\_\,A\,\_\,\_\,\_) for the remaining places. Up to rotation, for 2-2, we count ABCABC and 2\times ABCACB, and for 1-3 we get ABACBC and ACABCB, so there are |X/G|=3+2=5 orbits up to rotation.
+
+Let r be a single cycle of the elements. By symmetry, these cases are equivalent: r\equiv r^{-1}\equiv r^5, r^2\equiv r^4.  The cycle index polynomial of C_{6} is therefore Z\{C_{6}\}=x_{1}^6+2x_{6}+2x_{3}^2+x_{2}^3. 
+
+Counting the fixed points, we get
+5=\frac{1}{6}(n+2\cdot 0+2\cdot 0+3!)
+Solving, n=5\cdot 6-3! =\boxed{\textbf{(D)}~24}.
+
+~imosilver
+
+==Solution 6==
+
+You can tackle the problem by forgetting about the different sizes at first. This gets you 4 combinations:
+
+ size(300); pair base = (0,0); real r = 1; // Define colors pen B = blue; pen R = red; pen G = green; // Patterns (each row = one circle) // B,R,G,B,R,G etc. pen[][] patterns = { {B,R,G,B,R,G}, {B,R,G,B,G,R}, {B,R,B,G,R,G}, {B,G,B,R,G,R} }; for (int c = 0; c < 4; ++c) { pair O = base + (3*c, 0); // spacing circles horizontally draw(circle(O, r)); // outline for (int k = 0; k < 6; ++k) { real th1 = k * 60; real th2 = (k+1) * 60; // Build sector path path p = O -- arc(O, r, th1, th2) -- cycle; // Fill according to pattern filldraw(p, patterns[c][k], black); } } 
+
+ B-R-G-B-R-G
+ B-R-G-B-G-R
+ B-R-B-G-R-G
+ B-G-B-R-G-R
+
+Now we can multiply by 6 since we have 6 different pieces. 6\cdot 4 =\boxed{\textbf{(D)}~24}.
+
+~Taha Jazaeri
+
+==Video Solution 1 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=-bARFv6Felw
+
+==Video Solution 2 by TheBeuatyofMath==
+https://www.youtube.com/watch?v=gfChT3CAdGA
+
+~7.7
+
+==See Also==
+{{AMC10 box|year=2025|ab=B|num-b=15|num-a=17}}
+{{AMC12 box|year=2025|ab=B|num-b=12|num-a=14}}
+{{MAA Notice}}

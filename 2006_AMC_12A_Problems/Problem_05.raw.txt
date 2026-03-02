@@ -1,0 +1,22 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2006_AMC_12A_Problems/Problem_5&action=raw
+
+Published Time: Thu, 16 Dec 2021 21:57:54 GMT
+
+Markdown Content:
+{{duplicate|[[2006 AMC 12A Problems|2006 AMC 12A #5]] and [[2006 AMC 10A Problems/Problem 5|2006 AMC 10A #5]]}}
+== Problem ==
+Doug and Dave shared a pizza with 8 equally-sized slices. Doug wanted a plain pizza, but Dave wanted anchovies on half the pizza. The cost of a plain pizza was 8 dollars, and there was an additional cost of 2 dollars for putting anchovies on one half. Dave ate all the slices of anchovy pizza and one plain slice. Doug ate the remainder. Each paid for what he had eaten. How many more dollars did Dave pay than Doug?
+
+ \textbf{(A) } 1\qquad \textbf{(B) } 2\qquad \textbf{(C) } 3\qquad \textbf{(D) } 4\qquad \textbf{(E) } 5
+
+== Solution ==
+Dave and Doug paid 8+2=10 dollars in total.  Doug paid for three slices of plain pizza, which cost \frac{3}{8}\cdot 8=3.  Dave paid 10-3=7 dollars.  Dave paid 7-3=\boxed{\textbf{(D) }4} more dollars than Doug.
+
+== See also ==
+{{AMC12 box|year=2006|ab=A|num-b=4|num-a=6}}
+{{AMC10 box|year=2006|ab=A|num-b=4|num-a=6}}
+{{MAA Notice}}
+
+[[Category:Introductory Algebra Problems]]

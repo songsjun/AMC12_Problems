@@ -1,0 +1,22 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2017_AMC_12B_Problems/Problem_1&action=raw
+
+Published Time: Mon, 15 Feb 2021 17:51:10 GMT
+
+Markdown Content:
+==Problem==
+
+Kymbrea's comic book collection currently has 30 comic books in it, and she is adding to her collection at the rate of 2 comic books per month. LaShawn's collection currently has 10 comic books in it, and he is adding to his collection at the rate of 6 comic books per month. After how many months will LaShawn's collection have twice as many comic books as Kymbrea's?
+
+\textbf{(A)}\ 1\qquad\textbf{(B)}\ 4\qquad\textbf{(C)}\ 5\qquad\textbf{(D)}\ 20\qquad\textbf{(E)}\ 25
+
+==Solution==
+
+Kymbrea has 30 comic books initially and every month, she adds two. This can be represented as 30 + 2x where x is the number of months elapsed. LaShawn's collection, similarly, is 10 + 6x. To find when LaShawn will have twice the number of comic books as Kymbrea, we solve for x with the equation 2(2x + 30) = 6x + 10 and get x = \boxed{\textbf{(E) } 25}.
+
+==See Also==
+{{AMC12 box|year=2017|ab=B|before=First Problem|num-a=2}}
+{{MAA Notice}}
+
+[[Category:Introductory Algebra Problems]]

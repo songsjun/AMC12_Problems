@@ -1,0 +1,75 @@
+{{duplicate|[[2024 AMC 10A Problems/Problem 5|2024 AMC 10A #5]] and [[2024 AMC 12A Problems/Problem 4|2024 AMC 12A #4]]}}
+== Problem ==
+What is the least value of <math>n</math> such that <math>n!</math> is a multiple of <math>2024</math>?
+
+<math>\textbf{(A) } 11\qquad\textbf{(B) } 21\qquad\textbf{(C) } 22\qquad\textbf{(D) } 23\qquad\textbf{(E) } 253</math>
+
+== Solution==
+Note that <math>2024=2^3\cdot11\cdot23</math> in the prime factorization. Since <math>23!</math> is a multiple of <math>2^3, 11,</math> and <math>23,</math> we conclude that <math>23!</math> is a multiple of <math>2024.</math> Therefore, we have <math>n=\boxed{\textbf{(D) } 23}.</math>
+
+<u><b>Remark</b></u>
+
+Memorizing the prime factorization of the current year is useful for the AMC 8/10/12 Exams.
+
+~MRENTHUSIASM
+
+<u><b>Remark</b></u>
+
+Note that <math>2024</math> is <math>2025 -1</math>, which is <math>45^2 -1 = (45+1)(45-1) = 46\cdot44</math>.
+
+~WISETIGERJ2
+
+==Video Solution by Central Valley Math Circle==
+
+https://youtu.be/Hc5DxRT-DOU
+
+~mr_mathman
+
+==Video Solution==
+https://youtu.be/l3VrUsZkv8I
+
+== Video Solution by Math from my desk ==
+
+https://www.youtube.com/watch?v=fAitluI5SoY&t=3s
+
+== Video Solution (⚡️ 1 min solve ⚡️) ==
+
+https://youtu.be/FD6rV3wGQ74
+
+<i>~Education, the Study of Everything</i>
+
+== Video Solution by Pi Academy ==
+https://youtu.be/GPoTfGAf8bc?si=JYDhLVzfHUbXa3DW
+
+== Video Solution by Daily Dose of Math ==
+
+https://youtu.be/DXDJUCVX3yU
+
+~Thesmartgreekmathdude
+
+== Video Solution 1 by Power Solve ==
+https://youtu.be/j-37jvqzhrg?si=qwyiAvKLbySyDR7D&t=529
+
+==Video Solution by SpreadTheMathLove==
+https://www.youtube.com/watch?v=6SQ74nt3ynw
+
+==Video Solution by TheBeautyofMath==
+For AMC 10: https://youtu.be/uKXSZyrIOeU?t=1168
+
+For AMC 12: https://youtu.be/zaswZfIEibA?t=984
+
+~IceMatrix
+
+==Video Solution by Dr. David==
+https://youtu.be/uhpWASWW2ns
+
+==Video solution by TheNeuralMathAcademy==
+https://www.youtube.com/watch?v=4b_YLnyegtw&t=782s
+
+==See Also==
+{{AMC10 box|year=2024|ab=A|before=[[2023 AMC 10B Problems]]|after=[[2024 AMC 10B Problems]]}}
+* [[AMC 10]]
+* [[AMC 10 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

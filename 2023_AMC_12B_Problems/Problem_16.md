@@ -1,0 +1,142 @@
+# 2023 AMC 12B Problem 16
+
+## Problem
+In the state of Coinland, coins have values 6,10, and 15 cents. Suppose x is the value in cents of the most expensive item in Coinland that cannot be purchased using these coins with exact change. What is the sum of the digits of x?
+
+$\textbf{(A) }8\qquad\textbf{(B) }10\qquad\textbf{(C) }7\qquad\textbf{(D) }11\qquad\textbf{(E) }9$
+## Solution 1
+This problem asks to find largest x that cannot be written as
+$$6 a + 10 b + 15 c = x, \hspace{1cm} (1)$$
+
+where a, b, c $\in$\Bbb Z_+.
+
+Denote by r $\in \left\{ 0, 1 \right\}$ the remainder of x divided by 2.
+Modulo 2 on Equation (1), we get
+By using modulus m $\in \left\{ 2, 3, 5 \right\}$ on the equation above, we get
+$$c \equiv r \pmod{2}.$$
+
+Following from the [Chicken McNugget Theorem](https://artofproblemsolving.com/wiki/index.php/Chicken_McNugget_Theorem), we have that any number that is no less than (3-1)(5-1) = 8 can be expressed in the form of $3a+5b$ with a, b $\in$\Bbb Z_+.
+
+Therefore, all even numbers that are at least equal to 2 $\cdot 8 + 15 \cdot 0 = 16$ can be written in the form of Equation (1) with a, b, c $\in$\Bbb Z_+.
+All odd numbers that are at least equal to 2 $\cdot 8 + 15 \cdot 1 = 31$ can be written in the form of Equation (1) with a, b, c $\in$\Bbb Z_+.
+
+The above two cases jointly imply that all numbers that are at least 30 can be written in the form of Equation (1) with a, b, c $\in$\Bbb Z_+.
+
+Next, we need to prove that 29 cannot be written in the form of Equation (1) with a, b, c $\in$\Bbb Z_+.
+
+Because 29 is odd, we must have c $\equiv 1 \pmod{2}.$
+Because a, b, c $\in$\Bbb Z_+, we must have $c = 1$.
+Plugging this into Equation (1), we get 3 a + 5 $b = 7$.
+However, this equation does not have non-negative integer solutions.
+
+All analysis above jointly imply that the largest x that has no non-negative integer solution to Equation (1) is 29.
+Therefore, the answer is 2 + 9 = $\boxed{\textbf{(D) 11}}.$
+
+*~Steven Chen, www.professorchenedu.com*
+## Solution 2
+Arrange the positive integers into rows of 6, like this:
+
+$$
+\begin{array}{|c|c|c|c|c|c|} \hline 01 & 02 & 03 & 04 & 05 & \textcolor{red}{\boxed{06}} \\ \hline 07 & 08 & 09 & \textcolor{red}{\boxed{10}} & 11 & \textcolor{red}{\boxed{12}} \\ \hline 13 & 14 & \textcolor{red}{\boxed{15}} & \textcolor{red}{\boxed{16}} & 17 & \textcolor{red}{\boxed{18}} \\ \hline 19 & \textcolor{red}{\boxed{20}} & \textcolor{red}{\boxed{21}} & \textcolor{red}{\boxed{22}} & 23 & \textcolor{red}{\boxed{24}} \\ \hline \textcolor{red}{\boxed{25}} & \textcolor{red}{\boxed{26}} & \textcolor{red}{\boxed{27}} & \textcolor{red}{\boxed{28}} & 29 & \textcolor{red}{\boxed{30}} \\ \hline \textcolor{red}{\boxed{31}} & \textcolor{red}{\boxed{32}} & \textcolor{red}{\boxed{33}} & \textcolor{red}{\boxed{34}} & \textcolor{red}{\boxed{35}} & \textcolor{red}{\boxed{36}} \\ \hline \end{array}
+$$
+
+$$\vdots$$
+Observe that if any number can be made from a combination of $6s$, $10s$, and $15s$, then every number below it in the same column must also be possible to make, by simply adding $6s$.
+
+Thus, we will cross out any numbers that CAN be made as well as all numbers below it.
+
+In column 1, 25 is possible (10+15) and so is everything below 25.
+
+Column 2 - cross out 20
+
+Column 3 - cross out 15
+
+Column 4 - cross out 10
+
+Column 5 - cross out 35
+
+Column 6 - cross all out.
+
+The maximum number that remains is 29.
+Answer is $2+9=\boxed{\textbf{(D) 11}}.$
+
+(sorry for the bad formatting - feel free to edit)
+
+*~JN, ab_godder*
+## Solution 3 (Modulo 6)
+Let the number of 6 cent coins be a, the number of 10 cent coins be b, and the number of 15 cent coins be c. We get the [Diophantine equation](https://artofproblemsolving.com/wiki/index.php/Diophantine_equation)
+
+$$6a + 10b + 15c = k$$
+
+and we wish to find the largest possible value of k
+
+Construct the following $\mod 6$ table of 6, 10, and 15
+
+
+$$
+\begin{array}{c|ccc} & & & \\ \text{number of coins} & 6 & 10 & 15 \\ \hline & & & \\ 1 & 0 & 4 & 3\\ & & & \\ 2 & 0 & 2 & 0 \\ \end{array}
+$$
+
+
+There are only 6 possible residues for 6, they are: 0, 1, 2, 3, 4, and 5.
+
+$$0 \mod 6$$
+ We can obtain any value that is 0 $\mod 6$ because we have 6 cent coins.
+
+$$1 \mod 6$$
+ We can obtain values that equal 1 $\mod 6$ by using one 10 cent coin, one 15 cent coin, and as many 6 cent coins needed.
+ The smallest value that equals 1 $\mod 6$ we can obtain is $10+15 = 25$. Therefore, the largest value that equals 1 $\mod 6$ we cannot obtain is $25-6=19$
+
+$$2 \mod 6$$
+ We can obtain values that equal 2 $\mod 6$ by using two 10 cent coins, and as many 6 cent coins as needed.
+ The smallest value that equals 2 $\mod 6$ we can obtain is $10+10 = 20$. Therefore, the largest value that equals 2 $\mod 6$ we cannot obtain is $20-6=14$
+
+$$3 \mod 6$$
+ We can obtain values that equal 3 $\mod 6$ by using one 15 cent coin, and as many 6 cent coins as needed.
+ The smallest value that equals 3 $\mod 6$ we can obtain is 15. Therefore, the largest value that equals 3 $\mod 6$ we cannot obtain is $15-6=9$
+
+$$4 \mod 6$$
+ We can obtain values that equal 4 $\mod 6$ by using one 10 cent coin, and as many 6 cent coins as needed.
+ The smallest value that equals 4 $\mod 6$ we can obtain is 10. Therefore, the largest value that equals 4 $\mod 6$ we cannot obtain is $10-6=4$
+
+$$5 \mod 6$$
+ We can obtain values that equal 5 $\mod 6$ by using two 10 cent coins, one 15 cent coin, and as many 6 cent coins as needed.
+ The smallest value that equals 5 $\mod 6$ we can obtain is $10+10+15 = 35$. Therefore, the largest value that equals 5 $\mod 6$ we cannot obtain is $35-6=29$
+
+Hence, the largest value in cents we cannot obtain using 6, 10, and 15 cent coins is 29, 2 + 9 = $\boxed{\textbf{(D) 11}}.$
+
+*~isabelchen*
+## Solution 4
+We claim that the largest number that cannot be obtained using 6, 10, and 15 cent coins is 29.
+
+Let's first focus on the combination of 6, 10. As both of them are even numbers, we cannot obtain any odd numbers from these two but requires 15 to sum up to an odd number. Notice that by Chicken McNugget Theorem, the largest even number cannot be obtained by 6, 10 is $2($3\cdot 5-3-5)=$14.$ Add this with 29, we can easily verify that 29 cannot be obtained by 6, 10, and 15 as it needs at least one odd number, with the remaining part cannot be represented by 6 and 10.
+
+Let's show that any number greater than 29 can be obtained. First, any even numbers greater than 29 can be obtained by 6 and 10 by the Chicken McNugget Theorem. Next, any odd number greater than 29 can be obtained by adding one 15 with some $6s$ and $10s$, which is also shown by the Chicken McNugget Theorem. This completes the proof. So the answer is $2+9 =\boxed{\textbf{(D) 11}}$
+
+*~ZZZIIIVVV*
+## Solution 5 (apply Chicken McNugget Theorem twice)
+First considering the two terms
+
+$$6a+10b = 2(3a+5b)$$
+
+$$3a+5b = (3-1)(5-1)+t = 8+t, t \geq 0$$
+
+Again applying the two variable formula for the terms in brackets we see that
+
+$6a+10b+$15c = 2(8+t)+15c = 2t+15c+16 = (2-1)(15-1)+$s+16 = 30$+s, s>=0
+
+so the given expression $6a+10b+15$c produces all numbers from 30 and 29 is the largest number that could not be produced, so the answer is $2+9 =\boxed{\textbf{(D) 11}}$
+
+*~luckuso*
+
+- Note: Chicken McNugget Theorem: any positive integer N= $(a-1)(b-1)$+t ( a,b co-prime, t>=0) can always be represented as N = aP+ bQ ( p,q are non-negative integer)
+## Video Solution 1 by OmegaLearn
+https://youtu.be/E8WsGfn95mk
+## Video Solution 2
+[//youtu.be/T5nqrNGvf4Q ~Steven Chen, www.professorchenedu.com]
+## Video Solution 3
+[//youtu.be/9Gzo5cIgNf0&$t=403s$ Simple Explanations, simplexp.org]
+## Note
+This is the exact same question as the 2024 Mathcounts State Team Round question 4, albeit that this question asks for the sum of the digits of the number that cannot be formed.
+
+-$i_like_food$

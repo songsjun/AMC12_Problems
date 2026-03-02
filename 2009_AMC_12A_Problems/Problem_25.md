@@ -1,0 +1,134 @@
+# 2009 AMC 12A Problem 25
+
+## Problem
+The first two terms of a sequence are $a_1 = 1$ and $a_2=\frac$ {1}{$\sqrt3$}. For $n\ge1,$
+
+$$a_{n + 2} = \frac {a_n + a_{n + 1}}{1 - a_na_{n + 1}}.$$
+
+What is |$a_{2009}$|?
+
+$\textbf{(A)}\ 0\qquad \textbf{(B)}\ 2 - \sqrt3\qquad \textbf{(C)}\ \frac {1}{\sqrt3}\qquad \textbf{(D)}\ 1\qquad \textbf{(E)}\ 2 + \sqrt3$
+## Solution 1
+Consider another sequence $\{\theta_1, \theta_2, \theta_3...\}$ such that $a_n=\tan{\theta_n},$ and 0 $\leq \theta_n < 180.$
+
+The given recurrence becomes
+
+
+$$
+\begin{align*} a_{n + 2} & = \frac {a_n + a_{n + 1}}{1 - a_na_{n + 1}} \\ \tan{\theta_{n + 2}} & = \frac {\tan{\theta_n} + \tan{\theta_{n + 1}}}{1 - \tan{\theta_n}\tan{\theta_{n + 1}}} \\ \tan{\theta_{n + 2}} & = \tan(\theta_{n + 1} + \theta_n) \end{align*}
+$$
+
+
+It follows that $\theta_{n + 2} \equiv \theta_{n + 1} + \theta_{n} \pmod{180}.$ Since $\theta_1 = 45, \theta_2 = 30,$ all terms in the sequence $\{\theta_1, \theta_2, \theta_3...\}$ will be a multiple of 15.
+
+Now consider another sequence $\{b_1, b_2, b_3...\}$ such that $b_n=\theta_n/15$, and 0 $\leqb_n < 12$. The sequence $b_n$ satisfies $b_1 = 3, b_2 = 2, b_{n + 2}\equivb_{n + 1}+b_n\pmod{12}.$
+
+As the number of possible consecutive two terms is finite, we know that the sequence $b_n$ is periodic. Write out the first few terms of the sequence until it starts to repeat.
+
+
+$$\{b_n\} = \{3,2,5,7,0,7,7,2,9,11,8,7,3,10,1,11,0,11,11,10,9,7,4,11,3,2,5,7,...\}$$
+
+
+Note that $b_{25}=b_1 = 3$ and $b_{26}=b_2 = 2$. Thus $\{b_n\}$ has a period of 24: $b_{n + 24}=b_n$.
+
+It follows that $b_{2009}=b_{17} = 0$ and $\theta_{2009} = 15 b_{2009} = 0$. Thus $a_{2009}=\tan{\theta_{2009}} = \tan{0} = 0.$
+
+Our answer is |$a_{2009}$| = $\boxed{\textbf{(A)}\ 0}.$
+## Solution 2
+First, some intuition. The given recurrence relation: $a_{n + 2}=\frac$ {$a_n+a_{n + 1}$}{1 - a_$na_{n + 1}$} looks much like the tangent addition formula. So, we let $a_n=\tan{\theta_n}.$ Then, we get:
+$$\tan{\theta_n}=\tan{(\theta_{n-1}+\theta_{n-2})}$$
+This gives us:
+$$\theta_n \equiv \theta_{n-1}+\theta_{n-2} \pmod{180}$$
+Now, observe that
+
+$$
+\theta_1=45
+\theta_2=30
+$$
+
+We know that this sequence of values for $\theta_n$ will repeat eventually because it is mod 180.
+It is just a matter of when, so we start bashing:
+
+
+$$
+\theta_3=75
+\theta_4=105
+\theta_5=0
+\theta_6=105
+\theta_7=105
+\theta_8=30
+\theta_9=135
+\theta_{10}=165
+\theta_{11}=120
+\theta_{12}=105
+\theta_{13}=45
+\theta_{14}=150
+\theta_{15}=15
+\theta_{16}=165
+\theta_{17}=0
+\theta_{18}=165
+\theta_{19}=165
+\theta_{20}=150
+\theta_{21}=135
+\theta_{22}=105
+\theta_{23}=60
+\theta_{24}=165
+\theta_{25}=45
+\theta_{26}=30
+$$
+
+And there is the repetition. So, this series has a period of 24. 2009 $\equiv 17 \pmod{24},$ so |$a_{2009}$|=|$\tan{\theta_{17}}$|=|$\tan{0}$|=|0|= $\boxed{\textbf{(A)}\ 0}$ ~Firebolt360
+## Clarification
+(While the above solution is quite intuitive, it's kinda hard for people who don't know many proofing symbols to understand.)
+
+Notice that the formula given in the problem looks incredibly similar to the [Tangent Addition Formula](https://artofproblemsolving.com/wiki/index.php/Trigonometric_identities#Angle_Addition/Subtraction_Identities).
+Since $a_1 = 1$, let $a_1$ be $\tan{45}.$ Similarly, let $a_2$ be $\tan{30}.$ Then the formula for $a_3$ reads
+
+$$a_3 = \frac {\tan{45} + \tan{30} }{1 - \tan{45}*\tan{30}}.$$
+
+But from the [Tangent Addition Formula](https://artofproblemsolving.com/wiki/index.php/Trigonometric_identities#Angle_Addition/Subtraction_Identities) we know that this is just the formula for $\tan{(45+30)}$ or $\tan{75},$ meaning $a_3=\tan{75}.$ So, the sequence becomes a sort of [Fibonacci sequence](https://artofproblemsolving.com/wiki/index.php/Fibonacci_sequence)  with angle measures. We continue to sum angle measures, like so:
+
+$$a_4 = \tan{(75+30)} = \tan{105}$$
+
+$$a_5 = \tan{(105+75)} = \tan{180}$$
+
+$a_6=\tan{(180+105)} =$ ... wait a minute! $\tan{180} = \tan{0}$!
+
+So now we have
+
+$$a_5 = \tan{0}$$
+
+$$a_6 = \tan{(105+0)} = \tan{105}$$
+
+$$a_7 = \tan{(105+105)} = \tan{210}$$
+
+$a_8=\tan{(210+105)} =$  .... Ok this is getting tiring. Let's stop and think about whether we can simplify this. Notice that all of the angle measures are a multiple of 15. So, let's express the angle measures as multiples of 15.
+
+Let $b_n=\frac{\arctan{(a_n)}}{15}.$
+
+(Basically, $b_n$ is the angle measure of the corresponding $a_n$, divided by 15)
+
+Now we have
+
+$$b_1 = 3$$
+
+$$b_2 = 2$$
+
+$$b_3 = 5$$
+
+$$b_4 = 7$$
+
+$$b_5 = 12$$
+
+But wait... we're dealing with the $\tan$ function, which has a period (recurrence rate) of $2\pi$ or $180^{\circ}$. Since we divided the angle measures by 15, the period is now 12 (which aligns with what we got earlier: $a_5 = 0$). This means that we can reduce the terms of the sequence based on the $\bmod$ function, which returns the remainder after dividing by a certain amount. So now we can say $b_n\equivb_n\bmod{12} (\equiv$ denotes modular equivalence in this context). Now we continue our sequence:
+
+3, 2, 5, 7, 0, 7, 7, 2, 9, 11, 8, 7, 3, 10, 1, 11, 0, 11, 11, 10, 9, 7, 4, 11, 3, 2, 5 (It's starting to repeat now)
+
+So $a_1 = 3, a_{25} = 3, a_{49} = 3$, and so on. The sequence repeats every 24 terms. The problem asks us for the value of $a_{2009}$. Let's whip out the $\bmod$ function again.
+
+$$2009 \bmod 24 = 17$$
+
+So we want the value of the 17th number in the sequence, and looking back at it (hopefully you wrote it down somewhere) we find that $b_{17} = 0 \Rightarrow \boxed{\text{A}}.$
+## Video Solution
+https://www.youtube.com/watch?v=tic0ehB6TU4
+## See also

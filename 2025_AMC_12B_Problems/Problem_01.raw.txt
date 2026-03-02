@@ -1,0 +1,70 @@
+Title:
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2025_AMC_10B_Problems/Problem_1&action=raw
+
+Published Time: Fri, 14 Nov 2025 18:59:08 GMT
+
+Markdown Content:
+{{duplicate|[[2025 AMC 10B Problems/Problem 1|2025 AMC 10B #1]] and [[2025 AMC 12B Problems/Problem 1|2025 AMC 12B #1]]}}
+==Problem==
+The instructions on a <imath>350</imath>-gram bag of coffee beans say that proper brewing of a large mug of pour-over coffee requires <imath>20</imath> grams of coffee beans. What is the greatest number of properly brewed large mugs of coffee that can be made from the coffee beans in that bag?
+
+<imath>\textbf{(A) } 16 \qquad\textbf{(B) } 17 \qquad\textbf{(C) } 18 \qquad\textbf{(D) } 19 \qquad\textbf{(E) } 20</imath>
+
+==Solution 1==
+<imath>\frac{350}{20}</imath> is <imath>17.5</imath>. We round down to find the maximum he can make (he cannot brew half of a cup), so the answer is <imath>\boxed{\text{(B) }17}</imath>.
+
+~mingbaboo (this is my first time doing this so it could be very wrong)
+
+~NumberNinja1234 (Minor Latex and grammar edit for clarity) :)
+
+~Sumeete (Minor grammar edits)
+
+~SharkBlueHorse (Minor grammar edits)
+
+==Solution 2==
+We can use <imath>340</imath>-grams if we use <imath>17</imath> mugs. This is because <imath>20 \cdot 17 = 340</imath>. We cannot use <imath>18</imath> because that would mean using <imath>360</imath>-grams. The answer is <imath>\boxed{17}</imath>.
+
+Note that you can also find this by finding <imath>\lfloor \frac{350}{20} \rfloor = 17.</imath>
+
+~lprado
+
+==Solution 3==
+Dividing <imath>350</imath> by <imath>20</imath>, we get <imath>17</imath> with a remainder of <imath>10</imath>. However, <imath>10</imath> grams cannot make a properly brewed large mug of coffee, as stated in the problem. We can only count fully brewed mugs of coffee, hence the answer is <imath>\boxed{\text{(B) }17}</imath>.
+
+~Yoonyoung11
+
+~Minor edits and Latex by Yvz2900
+
+==Solution 4 - Cheese (Sort of)==
+We multiply <imath>20</imath> by each of the answer choices to see if we can find which one is closest and under <imath>350.</imath>
+
+First, we try solution <imath>\text{A}</imath>, which is <imath>16</imath>. <imath>16 \cdot 20 = 320,</imath> which is <imath>30</imath> off from 350, so <imath>\text{A}</imath> cannot be the answer, because we can add another <imath>20</imath>.
+
+Moving on to answer choice <imath>\text{B},</imath> <imath>17 \cdot 20 = 340.</imath> We notice that <imath>350-340=10,</imath> and so we cannot add another <imath>20</imath> to get closer but less than <imath>350.</imath> (The next number, <imath>18</imath>, would result in <imath>20 \cdot 18=360,</imath> which is more than <imath>350</imath>.)
+
+So, the answer is <imath>\boxed{\text{(B) }17}.</imath>
+
+(note - the actual cheese solution would likely include every single answer choice, but I use a bit of intellect in this solution)
+
+~zoyashaikh
+
+~edited by SmartyDigits
+
+== Video Solution (Fast and Easy) ==
+https://www.youtube.com/watch?v=aZS3YClnhFY
+
+~ Pi Academy
+
+==Video Solution 1 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=dLSWVrrKsgs
+
+==Video Solution by Daily Dose of Math==
+https://youtu.be/s-Wimgu9wto
+
+~Thesmartgreekmathdude
+
+==See also==
+{{AMC10 box|year=2025|ab=B|before=First Problem|num-a=2}}
+{{AMC12 box|year=2025|ab=B|before=First Problem|num-a=2}}
+{{MAA Notice}}

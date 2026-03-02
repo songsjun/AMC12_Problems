@@ -1,0 +1,17 @@
+# 2004 AMC 12B Problem 4
+
+## Problem
+An integer x, with $10\leqx\leq 99,$ is to be chosen. If all choices are equally likely, what is the probability that at least one digit of x is a 7?
+
+
+$$(\mathrm {A}) \dfrac{1}{9} \qquad (\mathrm {B}) \dfrac{1}{5} \qquad (\mathrm {C}) \dfrac{19}{90} \qquad (\mathrm {D}) \dfrac{2}{9} \qquad (\mathrm {E}) \dfrac{1}{3}$$
+
+## Solution
+The digit 7 can be either the tens digit (70, 71, $\dots, 79$: 10 possibilities), or the ones digit (17, 27, $\dots, 97$: 9 possibilities), but we counted the number 77 twice. This means that out of the 90 two-digit numbers, $10+9-1=18$ have at least one digit equal to 7. Therefore the probability is $\dfrac{18}{90} = \boxed{\dfrac{1}{5}} \Longrightarrow \mathrm{(B)}.$
+## Solution 2
+By complementary counting, we count the numbers that do not contain a 7, then subtract from the total. There is a $\frac{8}{9}\cdot\frac{9}{10}$ probability of choosing a number that does NOT contain a 7. Subtract this from 1 and simplify yields 1 - $\frac{8}{9}\cdot\frac{9}{10} = \frac{90}{90} - \frac{72}{90} = \frac{18}{90} = \frac{1}{5}.$
+## Video Solution 1
+https://youtu.be/s1771tqX32k
+
+*~Education, the Study of Everything*
+## See Also

@@ -1,0 +1,36 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2008_AMC_12B_Problems/Problem_19&action=raw
+
+Published Time: Tue, 26 Sep 2023 23:28:09 GMT
+
+Markdown Content:
+==Problem==
+A function f is defined by f(z) = (4 + i) z^2 + \alpha z + \gamma for all complex numbers z, where \alpha and \gamma are complex numbers and i^2 = - 1. Suppose that f(1) and f(i) are both real. What is the smallest possible value of | \alpha | + |\gamma | ?
+
+\textbf{(A)} \; 1 \qquad \textbf{(B)} \; \sqrt {2} \qquad \textbf{(C)} \; 2 \qquad \textbf{(D)} \; 2 \sqrt {2} \qquad \textbf{(E)} \; 4 \qquad
+
+==Solution 1:==
+We need only concern ourselves with the imaginary portions of f(1) and f(i) (both of which must be 0). These are:
+
+\begin{align*} \text{Im}(f(1)) & = i+i\text{Im}(\alpha)+i\text{Im}(\gamma) \\ \text{Im}(f(i)) & = -i+i\text{Re}(\alpha)+i\text{Im}(\gamma) \end{align*}
+
+Let p=\text{Im}(\gamma) and q=\text{Re}{(\gamma)}, then we know \text{Im}(\alpha)=-p-1 and \text{Re}(\alpha)=1-p. Therefore |\alpha|+|\gamma|=\sqrt{(1-p)^2+(-1-p)^2}+\sqrt{q^2+p^2}=\sqrt{2p^2+2}+\sqrt{p^2+q^2}, which reaches its minimum \sqrt 2 when p=q=0 by the Trivial Inequality. Thus, the answer is \boxed B.
+
+==Solution 2:==
+
+f(1)=4+i+\alpha+\gamma
+
+f(i)=-4-i+\alpha \cdot i +\gamma
+
+Since f(1) and f(i) are both real we get, 
+\alpha+\gamma=-i
+\alpha \cdot i+\gamma=i
+
+Solving, we get \alpha=1-i, \gamma can be anything, to minimize the value we set \gamma=0, so then the answer is \sqrt{1^2+1^2}=\sqrt{2}. Thus, the answer is \boxed{B}
+
+By: Quaratinium
+
+==See Also==
+{{AMC12 box|year=2008|ab=B|num-b=18|num-a=20}}
+{{MAA Notice}}

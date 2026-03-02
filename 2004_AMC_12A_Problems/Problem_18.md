@@ -1,0 +1,76 @@
+# 2004 AMC 12A Problem 18
+
+> This problem is the same as [2004 AMC 12A #18](https://artofproblemsolving.com/wiki/index.php/2004_AMC_12A_Problems) and [2004 AMC 10A #22](https://artofproblemsolving.com/wiki/index.php/2004_AMC_10A_Problems/Problem_22).
+## Problem
+[Square](https://artofproblemsolving.com/wiki/index.php/Square) ABCD has side length 2. A [semicircle](https://artofproblemsolving.com/wiki/index.php/semicircle) with [diameter](https://artofproblemsolving.com/wiki/index.php/diameter) $\overline{AB}$ is constructed inside the square, and the [tangent](https://artofproblemsolving.com/wiki/index.php/tangent_(geometry)) to the semicircle from C intersects side $\overline{AD}$ at E. What is the length of $\overline{CE}$?
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(100); defaultpen(fontsize(10)); pair A=(0,0), B=(2,0), C=(2,2), D=(0,2), E=(0,1/2); draw(A--B--C--D--cycle);draw(C--E); draw(Arc((1,0),1,0,180)); label("$A$",A,(-1,-1)); label("$B$",B,( 1,-1)); label("$C$",C,( 1, 1)); label("$D$",D,(-1, 1)); label("$E$",E,(-1, 0));
+```
+
+
+$$\mathrm{(A) \ } \frac{2+\sqrt{5}}{2} \qquad \mathrm{(B) \ } \sqrt{5} \qquad \mathrm{(C) \ } \sqrt{6} \qquad \mathrm{(D) \ } \frac{5}{2} \qquad \mathrm{(E) \ } 5-\sqrt{5}$$
+
+## Solutions
+### Solution 1
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(150); defaultpen(fontsize(10)); pair A=(0,0), B=(2,0), C=(2,2), D=(0,2), E=(0,1/2), F=E+(C-E)/abs(C-E)/2; draw(A--B--C--D--cycle);draw(C--E); draw(Arc((1,0),1,0,180));draw((A+B)/2--F); label("$A$",A,(-1,-1)); label("$B$",B,( 1,-1)); label("$C$",C,( 1, 1)); label("$D$",D,(-1, 1)); label("$E$",E,(-1, 0)); label("$F$",F,( 0, 1)); label("$x$",(A+E)/2,(-1, 0)); label("$x$",(E+F)/2,( 0, 1)); label("$2$",(F+C)/2,( 0, 1)); label("$2$",(D+C)/2,( 0, 1)); label("$2$",(B+C)/2,( 1, 0)); label("$2-x$",(D+E)/2,(-1, 0));
+```
+
+Let the point of tangency be F. By the [Two Tangent Theorem](https://artofproblemsolving.com/wiki/index.php/Two_Tangent_Theorem) BC = FC = 2 and AE = EF = x. Thus DE = 2-x. The [Pythagorean Theorem](https://artofproblemsolving.com/wiki/index.php/Pythagorean_Theorem) on $\triangle CDE$ yields
+
+
+$$
+\begin{align*} DE^2 + CD^2 &= CE^2\\ (2-x)^2 + 2^2 &= (2+x)^2\\ x^2 - 4x + 8 &= x^2 + 4x + 4\\ x &= \frac{1}{2}\end{align*}
+$$
+
+
+Hence CE = FC + x = $\frac{5}{2} \Rightarrow\boxed{\mathrm{(D)}\ \frac{5}{2}}.$
+### Solution 2
+Call the point of tangency point F and the midpoint of AB as G. CF=2 by Tangent Theorem. Notice that $\angle EGF=\frac{180-2\cdot\angle CGF}{2}=90-\angle CGF.$ Thus, $\angle EGF=\angle FCG$ and $\tan EGF=\tan FCG=\frac{1}{2}.$ Solving EF=$\frac{1}{2}.$ Adding, the answer is $\frac{5}{2}.$
+### Solution 3
+[Image:2004_AMC12A-18.png](https://artofproblemsolving.com/wiki/index.php/Image:2004_AMC12A-18.png)
+
+Clearly, EA = EF = BG. Thus, the sides of [right triangle](https://artofproblemsolving.com/wiki/index.php/right_triangle) CDE are in arithmetic progression. Thus it is [similar](https://artofproblemsolving.com/wiki/index.php/similar_triangles) to the triangle 3 - 4 - 5 and since DC = 2, CE = $\frac{5}{2} \Rightarrow\boxed{\mathrm{(D)}\ \frac{5}{2}}.$
+### Solution 4
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(150); defaultpen(fontsize(10)); pair A=(0,0), B=(2,0), C=(2,2), D=(0,2), E=(0,1/2), F=E+(C-E)/abs(C-E)/2, G=(1,0); draw(A--B--C--D--cycle);draw(C--E); draw(Arc((1,0),1,0,180));draw((A+B)/2--F); label("$A$",A,(-1,-1)); label("$B$",B,( 1,-1)); label("$C$",C,( 1, 1)); label("$D$",D,(-1, 1)); label("$E$",E,(-1, 0)); label("$F$",F,( 0, 1)); label("$x$",(A+E)/2,(-1, 0)); label("$x$",(E+F)/2,( 0, 1)); label("$2$",(F+C)/2,( 0, 1)); label("$2$",(D+C)/2,( 0, 1)); label("$2$",(B+C)/2,( 1, 0)); label("$2-x$",(D+E)/2,(-1, 0)); label("$G$",G,(0,-1)); dot(G); draw(G--C); label("$\sqrt{5}$",(G+C)/2,(-1,0));
+```
+
+
+Let us call the midpoint of side AB, point G. Since the semicircle has radius 1, we can do the Pythagorean theorem on sides GB, BC, GC. We get GC=$\sqrt{5}.$ We then know that CF=2 by Pythagorean theorem. Then by connecting EG, we get similar triangles EFG and GFC. Solving the ratios, we get $x=\frac{1}{2},$ so the answer is  $\frac{5}{2} \Rightarrow\boxed{\mathrm{(D)}\ \frac{5}{2}}.$
+
+Alternatively, we could apply the Pythagorean theorem on triangle CDE to get the equation $(2-x)^2+2^2=(x+2)^2$ which would give us that $x=\frac{1}{2}.$ Adding up CF and EF, we get $2+\frac{1}{2}=\boxed{\mathrm{(D)}\ \frac{5}{2}}$ again. Note that we know DE=2-x because  $\triangle EFG$\cong $\triangle EAG$ by $\text{HL.}$
+
+*~Alternate solution by Tinsel*
+### Solution 5
+Using the diagram as drawn in Solution 4, let the total area of square ABCD be divided into the triangles DCE, EAG, CGB, and EGC. Let x be the length of AE. Thus, the area of each triangle can be determined as follows:
+
+DCE = $\frac{DC\cdot{DE}}{2} = \frac{2\cdot(2-x)}{2} = 2-x$
+
+EAG= $\frac{AE\cdot{AG}}{2} = \frac{1\cdot{x}}{2} = \frac{x}{2}$
+
+CGB = $\frac{GB\cdot{CB}}{2} = \frac{1\cdot(2)}{2} = 1$
+
+EGC= $\frac{EG\cdot{GC}}{2} = \frac{\sqrt{5x^2 + 5}}{2} (t$he length of CE is calculated with the [Pythagorean Theorem](https://artofproblemsolving.com/wiki/index.php/Pythagorean_Theorem), lines GE and
+CE are perpendicular by definition of tangent)
+
+Adding up the areas and equating to the area of the total square (2 $\cdot 2=4),$ we get
+
+$$x = \frac{1}{2}$$
+
+$$So, CE = 2 + \frac{1}{2} = 5/2.$$
+
+*~Typo Fix by doulai1*
+### Video Solution
+https://youtu.be/pM0zICtH6Lg
+
+Education, the Study of Everything
+## See Also

@@ -1,0 +1,147 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2017_AMC_12B_Problems/Problem_22&action=raw
+
+Published Time: Sun, 03 Nov 2024 09:13:12 GMT
+
+Markdown Content:
+==Problem==
+Abby, Bernardo, Carl, and Debra play a game in which each of them starts with four coins. The game consists of four rounds. In each round, four balls are placed in an urn---one green, one red, and two white. The players each draw a ball at random without replacement. Whoever gets the green ball gives one coin to whoever gets the red ball. What is the probability that, at the end of the fourth round, each of the players has four coins?
+
+\textbf{(A)}\quad \dfrac{7}{576} \qquad \qquad \textbf{(B)}\quad \dfrac{5}{192} \qquad\qquad \textbf{(C)}\quad \dfrac{1}{36} \qquad\qquad \textbf{(D)}\quad \dfrac{5}{144} \qquad\qquad\textbf{(E)}\quad \dfrac{7}{48}
+
+==Solution 1==
+It amounts to filling in a 4 \times 4 matrix. Columns C_1 - C_4 are the random draws each round; rowof each player. Also, let \%R_A be the number of nonzero elements in R_A.
+Sidenote: (Not the author)(What does -1, 1, and 0, and R notation represent)?
+
+WLOG, let C_1 = \begin{pmatrix} 1\\-1\\0\\0\end{pmatrix}. Parity demands that \%R_A and \%R_B must equal 2 or 4. 
+
+Case 1: \%R_A = 4 and \%R_B = 4. There are \binom{3}{2}=3 ways to place 2 -1's in R_A, so there are 3 ways.
+
+Case 2: \%R_A = 2 and \%R_B=4. There are 3 ways to place the -1 in R_A, 2 ways to place the remaining -1 in R_B (just don't put it under the -1 on top of it!), and 2 ways for one of the other two players to draw the green ball. (We know it's green because Bernardo drew the red one.) We can just double to cover the case of \%R_A = 4, \%R_B = 2 for a total of 24 ways.
+
+Case 3: \%R_A=\%R_B=2. There are three ways to place the -1 in R_A. Now, there are two cases as to what happens next.
+
+Sub-case 3.1: The 1 in R_B goes directly under the -1 in R_A. There's obviously 1 way for that to happen. Then, there are 2 ways to permute the two pairs of 1, -1 in R_C and R_D. (Either the 1 comes first in R_C or the 1 comes first in R_D.)
+
+Sub-case 3.2: The 1 in R_B doesn't go directly under the -1 in R_A. There are 2 ways to place the 1, and 2 ways to do the same permutation as in Sub-case 3.1. 
+Hence, there are 3(2+2 \cdot 2)=18 ways for this case.
+
+There's a grand total of 45 ways for this to happen, along with 12^3 total cases. The probability we're asking for is thus \frac{45}{(12^3)}= \boxed{\textbf{(B)}\frac{5}{192}}.
+
+===Remark===
+
+-1 represents a player giving a coin away, 1 represents a player receiving a coin, 0 represents a player who doesn't receive or give anything. The R notation represents the rows, which also represents the history of a single player. For example, R_A represents the the history of what happened to player A during the 4 rounds.
+
+~tsun26
+
+==Solution 2 (Less Casework)==
+We will proceed by taking cases based on how many people are taking part in this "transaction." We can have 2, 3, or 4 people all giving/receiving coins during the 4 turns.
+Basically, (like the previous solution), we think of this as filling out a 4\text{x}2 matrix of letters, where a letter on the left column represents this person gave, and a letter on the right column means this person received. We need to make sure that for each person that gave in total certain amount, they received in total from other people that same amount, or in other words, we want it such that there are an equal number of A's, B's, C's, and D's in both columns of the matrix.
+
+For example, the matrix below represents: A gives B a coin, then B gives C a coin, then C gives D a coin, and finally A gives D a coin, in this order. 
+\[ \begin{bmatrix} & A & B & \\ & B & C & \\ & C & D & \\ & A & D & \\ \end{bmatrix} \] 
+Case 1: 2 people. In this case, we have \binom{4}{2} ways to choose the two people, and \binom{4}{2} ways to order them to get a count of {\binom{4}{2}}^2 = 36 ways.
+
+Case 2: 3 people. In this case, one special person is giving/receiving twice. There are four ways to choose this person, then of the remaining three people we choose two, to be the people interacting with the special person. Thus, we have 4\cdot\binom{3}{2}\cdot4! = 288 ways here.
+
+Case 3: 4 people. If we keep the order of A, B, C, D giving in that order (and permute afterward), then there are three options to choose A's receiver, and three options for B's receiver afterward. Then it is uniquely determined who C and D give to. This gives a total of 3\cdot3\cdot4! = 216 ways, after permuting.
+
+So we have a total of 36+288+216=540 ways to order the four pairs of people. 
+Now we divide this by the total number of ways: (4\cdot3)^4 
+(four rounds, four ways to choose giver, three to choose receiver each round).
+So the answer is \frac{540}{12^4} = \boxed{\textbf{(B)}\frac{5}{192}}.
+
+~ccx09 
+
+Latex polished by Argonauts16 and by Grace.yongqing.yu.
+
+==Solution 3==
+Similar to solution 2, we think in terms of transactions. WLOG, for the 1st transaction, we assume that A gives to B, which we denote AB. For the 2nd transaction, there are 12 options to choose from, so there are 12^3 possible options.
+
+Case 1 (Giving back immediately): The 2nd transaction is BA (1 option). Then, the 3rd transaction can be whatever you like (12 options), but the 4th transaction is now fixed to be the opposite of the 3rd transaction (1 option). So here we have 1\cdot 12\cdot 1 = 12 good options.
+
+Case 2 (Allows a cycle or two back-and-forths): The 2nd transaction is one of BC, BD, CA, DA, CD, DC (6 options). Then, for the 3rd transaction, 2 options force a "cycle" on the 4th transaction (example 2.1), and 2 options force two "back-and-forths" on the 4th transaction (example 2.2). In total, there are 2+2=4 options for the 3rd transaction. So here we have 6\cdot 4\cdot 1 = 24 good options. 
+
+Example 2.1: suppose 2nd = BC. Then if 3rd = DA or CD, the 4th is forced to be CD or DA respectively, completing a transaction "cycle"
+
+Example 2.2: suppose 2nd = BC. Then if 3rd = AB or BC, the 4th is forced to be BC or AB respectively. In the end, both A-B and B-C had back-and-forth transactions
+
+Case 3 (Allows two back-and-forths only): The 2nd transaction is one of AC, AD, DB, CB (4 options). Then, for the 3th transaction, there are only 2 possible options (namely, to reverse one of the previous transactions). Of course, the final transaction is forced. Here, we have 4\cdot 2\cdot 1 = 8 good options.
+
+Case 4 (AB again): The 2nd transaction is AB (same as 1st). This forces the later transactions to both be BA. Here we have 1 good option.
+
+Summing, we have 12+24+8+1=45 good options among 12^3 total options, so the solution is \frac{45}{(12^3)}= \boxed{\textbf{(B)}\frac{5}{192}}. 
+
+SilverLion
+
+== Solution 4 ==
+
+Define a cycle of length n to be a sequence of n transactions, starting and ending with the same person. For example, A \to B, B \to C, C \to A would be a cycle of 3.
+
+\textbf{Case 1}: Two different cycles of 2: There are \binom{4}{2} to choose the people for each cycle, giving \binom{\binom{4}{2}}{2} = 15 possible ways to choose the two cycles. Then, there would be 4! = 24 ways to order the transactions. This will mean 15\cdot 24 = 360 ways for the first case.
+
+\textbf{Case 2}: Two same cycles of 2: There are \binom{4}{2} to choose the two people, multiplying by \binom{4}{2} for the number of orderings of the four transactions. Thus, 6\cdot 6 = 36 ways for this case.
+
+\textbf{Case 3}: One cycle of 4: We choose what goes in front of A (whom A gives a coin to) in 3 ways, and what goes before A (whom gives a coin to A) in 2 ways. The remaining two transactions immediately get fixed after that. Again, there are 4! = 24 ways to order the four transactions, giving 2\cdot 3\cdot 24 = 144 ways for this case.
+
+Thus, there would be a total of 360+36+144 = 540 total ways: P = \dfrac{540}{12^4} = \boxed{\textbf{(B)}\frac{5}{192}}
+
+~sml1809
+
+=== Visualization of three cases ===
+
+https://www.happymatheducation.com/uploads/1/3/6/4/136474762/2017amc12b22.jpg
+
+~Di
+
+The link does not work anymore
+
+==Solution 5 (Casework/Inspired by states)==
+
+Let the notation (a,b,c,d) be the arrangement of the 16 coins, where order does not matter. Notice that after the first round, (3,5,4,4) is the only possible arrangement. Also, notice that the arrangement after the third round also has to be (3,5,4,4) for the arrangement at the end of the fourth round to return to (4,4,4,4). The probability of (4,4,4,4) occurring after (3,5,4,4) is \frac{1}{12}
+
+After the arrangement (3,5,4,4), there are 12 permutations that are 6 different arrangements, they are:
+\begin{align*} (2,6,4,4) \text{ occurs once} \quad & (4,4,4,4) \text{ occurs once} \quad & (2,5,5,4) \text{ occurs twice}\\ (4,5,3,4) \text{ occurs 4 times} \quad & (3,6,3,4) \text{ occurs twice} \quad & (3,5,3,5) \text{ occurs twice}\\ \end{align*}
+
+Therefore, we can create 6 cases and calculate the probability of each case occurring. For each case, only the arrangement after the second round is different, therefore, we will ignore the probability for the fourth round, and consider it in the end when adding the cases.
+ Case 1: (2,6,4,4)
+ The probability of (2,6,4,4) occurring after the second round is \frac{1}{12}.
+ The probability of (3,5,4,4) occurring after (2,6,4,4) is \frac{1}{12}.
+ \frac{1}{12} \cdot \frac{1}{12} = \frac{1}{144}
+
+ Case 2: (4,4,4,4)
+ The probability of (4,4,4,4) occurring after the second round is \frac{1}{12}.
+ The probability of (3,5,4,4) occurring after (4,4,4,4) is 1.
+ \frac{1}{12} \cdot 1 = \frac{1}{12}
+
+ Case 3: (2,5,5,4)
+ The probability of (2,5,5,4) occurring after the second round is \frac{1}{6}.
+ The probability of (3,5,4,4) occurring after (2,5,5,4) is \frac16.
+ \frac{1}{6} \cdot \frac{1}{6} = \frac{1}{36}
+
+ Case 4: (4,5,3,4)
+ The probability of (4,5,3,4) occurring after the second round is \frac{1}{3}.
+ The probability of (3,5,4,4) occurring after (4,5,3,4) is \frac{1}{3}.
+ \frac{1}{3} \cdot \frac{1}{3} = \frac{1}{9}
+
+ Case 5: (3,6,3,4)
+ The probability of (3,6,3,4) occurring after the second round is \frac{1}{6}.
+ The probability of (3,5,4,4) occurring after (3,6,3,4) is \frac{1}{6}.
+ \frac{1}{6} \cdot \frac{1}{6} = \frac{1}{36}
+
+ Case 6: (3,5,3,5)
+ The probability of (3,5,3,5) occurring after the second round is \frac{1}{6}.
+ The probability of (3,5,4,4) occurring after (3,5,3,5) is \frac{1}{3}.
+ \frac{1}{6} \cdot \frac{1}{3} = \frac{1}{18}
+
+The probability that at the end of the fourth round the arrangement is (4,4,4,4) is
+\frac{1}{12} \left( \frac{1}{144} + \frac{1}{12} + \frac{1}{36} + \frac19 + \frac{1}{36} + \frac{1}{18} \right) = \boxed{\textbf{(B)}\frac{5}{192}}
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+==See Also==
+{{AMC12 box|year=2017|ab=B|num-b=21|num-a=23}}
+{{MAA Notice}}
+
+[[Category:Intermediate Probability Problems]]

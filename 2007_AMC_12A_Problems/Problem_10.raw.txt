@@ -1,0 +1,38 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2007_AMC_12A_Problems/Problem_10&action=raw
+
+Published Time: Thu, 02 Oct 2025 09:47:45 GMT
+
+Markdown Content:
+{{duplicate|[[2007 AMC 12A Problems|2007 AMC 12A #10]] and [[2007 AMC 10A Problems/Problem 14|2007 AMC 10A #14]]}}
+
+==Problem==
+A [[triangle]] with side lengths in the [[ratio]] 3 : 4 : 5 is inscribed in a [[circle]] with [[radius]] 3. What is the area of the triangle?
+
+\mathrm{(A)}\ 8.64\qquad \mathrm{(B)}\ 12\qquad \mathrm{(C)}\ 5\pi\qquad \mathrm{(D)}\ 17.28\qquad \mathrm{(E)}\ 18
+
+==Solution==
+[[Image:2007_AMC12A-10.png]]
+
+Since 3-4-5 is a [[Pythagorean triple]], the triangle is a [[right triangle]]. Since the hypotenuse is a [[diameter]] of the [[circumcircle]], the hypotenuse is 2r = 6. Then the other legs are \frac{24}5=4.8 and \frac{18}5=3.6. The area is \frac{4.8 \cdot 3.6}2 = 8.64\ \mathrm{(A)}
+
+==Solution 2==
+The hypotenuse of the triangle is a diameter of the circumcircle, so it has length 2 \cdot 3 = 6. The triangle is similar to a 3-4-5 triangle with the ratio of their side lengths equal to \frac{6}{5}. The area of a 3-4-5 triangle is \frac{3\cdot 4}{2} = 6.
+The square of the ratio of their side lengths is equal to the ratio of their areas. Call the area of the triangle A. Therefore, \left(\frac{6}{5}\right)^2 = \frac{A}{6} \Longrightarrow \frac{36}{25} = \frac{A}{6} \Longrightarrow A = \frac{36\cdot6}{25} = 8.64\ \mathrm{(A)}
+
+~mobius247
+
+==Solution 3 (dimensional analysis)==
+Using the theorem that the hypotenuse of a right triangle inscribed in a circle is the diameter, one can determine that the diameter of the triangle is 6. As a result the ratio between the triangular ratios and their real values is (6/5). Using dimensional analysis, one can see that because the ratio between lengths is (6/5), the ratio between areas is (6/5)^2. This gives ((3 * 4)(6/5)^2)/2 as the area of the triangle or answer choice (A).
+
+==Solution 4==
+Let the sides of the triangle be 3x, 4x, 5x for some x. Now use the fact that the area of a triangle is equal to \frac{abc}{4R}, where a, b, c are side lengths and R is the circumradius. Also note that due to the 3, 4, 5 triple, the triangle is right. Thus we get \frac{12x^2}{2} = \frac{60x^3}{4\cdot 3}\Rightarrow x = \frac{6}{5} = 1.2. Then the area is 12(1.2)^2/2 = \boxed{8.64 \text{ (A)}}.
+
+==See also==
+{{AMC12 box|year=2007|ab=A|num-b=9|num-a=11}}
+{{AMC10 box|year=2007|ab=A|num-b=13|num-a=15}}
+
+[[Category:Introductory Geometry Problems]]
+[[Category:Area Problems]]
+{{MAA Notice}}

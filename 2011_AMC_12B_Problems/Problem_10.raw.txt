@@ -1,0 +1,18 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2011_AMC_12B_Problems/Problem_10&action=raw
+
+Published Time: Thu, 20 Jun 2024 21:39:15 GMT
+
+Markdown Content:
+==Problem==
+Rectangle ABCD has AB=6 and BC=3. Point M is chosen on side AB so that \angle AMD=\angle CMD. What is the degree measure of \angle AMD?
+
+\textrm{(A)}\ 15 \qquad \textrm{(B)}\ 30 \qquad \textrm{(C)}\ 45 \qquad \textrm{(D)}\ 60 \qquad \textrm{(E)}\ 75
+
+== Solution ==
+Since AB \parallel CD, \angle AMD = \angle CDM, so \angle AMD = \angle CMD = \angle CDM, so \bigtriangleup CMD is isosceles, and hence CM=CD=6.  Therefore, \triangle BMC is a 30-60-90 triangle with \angle BMC = 30^\circ.  Therefore \angle AMD=\boxed{\mathrm{(E)}\ 75^\circ}
+
+== See also ==
+{{AMC12 box|year=2011|ab=B|num-b=9|num-a=11}}
+{{MAA Notice}}

@@ -1,0 +1,26 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2002_AMC_12A_Problems/Problem_14&action=raw
+
+Published Time: Fri, 26 Aug 2022 00:43:32 GMT
+
+Markdown Content:
+== Problem ==
+
+For all positive integers n, let f(n)=\log_{2002} n^2. Let N=f(11)+f(13)+f(14). Which of the following relations is true?
+
+ \text{(A) }N<1 \qquad \text{(B) }N=1 \qquad \text{(C) }1 2 
+
+== Solution ==
+
+First, note that 2002 = 11 \cdot 13 \cdot 14.
+
+Using the fact that for any base we have \log a + \log b = \log ab, we get that N = \log_{2002} (11^2 \cdot 13^2 \cdot 14^2) = \log_{2002} 2002^2 = \boxed{(D) N=2}.
+
+== Video Solution ==
+https://youtu.be/YUdemyBf2yI
+
+== See Also ==
+
+{{AMC12 box|year=2002|ab=A|num-b=13|num-a=15}}
+{{MAA Notice}}

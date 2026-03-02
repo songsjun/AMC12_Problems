@@ -1,0 +1,73 @@
+{{duplicate|[[2018 AMC 12B Problems|2018 AMC 12B #14]] and [[2018 AMC 10B Problems|2018 AMC 10B #19]]}}
+
+==Problem==
+Joey and Chloe and their daughter Zoe all have the same birthday. Joey is <math>1</math> year older than Chloe, and Zoe is exactly <math>1</math> year old today. Today is the first of the <math>9</math> birthdays on which Chloe's age will be an integral multiple of Zoe's age. What will be the sum of the two digits of Joey's age the next time his age is a multiple of Zoe's age?
+
+<math>
+\textbf{(A) }7 \qquad
+\textbf{(B) }8 \qquad
+\textbf{(C) }9 \qquad
+\textbf{(D) }10 \qquad
+\textbf{(E) }11 \qquad
+</math>
+
+==Solution 1==
+Suppose that Chloe is <math>c</math> years old today, so Joey is <math>c+1</math> years old today. After <math>n</math> years, Chloe and Zoe will be <math>n+c</math> and <math>n+1</math> years old, respectively. We are given that <cmath>\frac{n+c}{n+1}=1+\frac{c-1}{n+1}</cmath> is an integer for <math>9</math> nonnegative integers <math>n.</math> It follows that <math>c-1</math> has <math>9</math> positive divisors. The prime factorization of <math>c-1</math> is either <math>p^8</math> or <math>p^2q^2.</math> Since <math>c-1<100,</math> the only possibility is <math>c-1=2^2\cdot3^2=36,</math> from which <math>c=37.</math> We conclude that Joey is <math>c+1=38</math> years old today.
+
+Suppose that Joey's age is a multiple of Zoe's age after <math>k</math> years, in which Joey and Zoe will be <math>k+38</math> and <math>k+1</math> years old, respectively. We are given that <cmath>\frac{k+38}{k+1}=1+\frac{37}{k+1}</cmath> is an integer for some positive integer <math>k.</math> It follows that <math>37</math> is divisible by <math>k+1,</math> so the only possibility is <math>k=36.</math> We conclude that Joey will be <math>k+38=74</math> years old then, from which the answer is <math>7+4=\boxed{\textbf{(E) }11}.</math>
+
+~Supercj ~MRENTHUSIASM ~Zeric
+
+==Solution 2==
+Let Joey's age be <math>j</math>, Chloe's age be <math>c</math>, and we know that Zoe's age is <math>1</math>. 
+
+We know that there must be <math>9</math> values <math>k\in\mathbb{Z}</math> such that <math>c+k=a(1+k)</math> where <math>a</math> is an integer.
+
+Therefore, <math>c-1+(1+k)=a(1+k)</math> and <math>c-1=(1+k)(a-1)</math>. Therefore, we know that, as there are <math>9</math> solutions for <math>k</math>, there must be <math>9</math> solutions for <math>c-1</math>. We know that this must be a perfect square. Testing perfect squares, we see that <math>c-1=36</math>, so <math>c=37</math>. Therefore, <math>j=38</math>. Now, since <math>j-1=37</math>, by similar logic, <math>37=(1+k)(a-1)</math>, so <math>k=36</math> and Joey will be <math>38+36=74</math> and the sum of the digits is <math>\boxed{\textbf{(E) }11}</math>.
+
+==Solution 3 (Intense Logic)==
+Chloe has exactly \( 9n \) birthdays that are integral multiples of Zoe. 
+
+We check \( n=1 \). This indicates that Chloe has an integral birthday of 9, meaning that Joey has an integral birthday of 10. This means that the next coinciding birthday is the 12th integral birthday for Joey, but as the pattern continues there will be \( > 9 \) exact integral birthdays, so \( n=1 \) does not work.
+
+We check \( n=2 \). We also see that Joey would have an integral birthday of 19, but 20 is not possible here as well, as it would result in \( > 9 \) integral birthdays.
+
+We check \( n=3 \). We see that the 30th integral birthday for Joey is when Zoe is 3, and this is also not possible as Joey and Zoe will intertwine at 36th, and then never intertwine again. 
+
+So we try \( n = 4 \). We see that at 38, we instantly get another integral birthday, where Joey is at the 38th integral birthday and Zoe is on the 2nd. We see this again at \( (J, Z) (40, 4) \), and again at \( (42, 6) \), then \( (45, 9) \), and we see it gets more and more uncommon. We can conclude that there will exist \( = 9 \) exact integral multiples, and therefore our answer is \( 3 + 8 = \) <math>\boxed{\textbf{(E) }11}</math>.
+
+~Pinotation
+
+== Solution 4 ==
+
+Here's a different way of stating Solution 2:
+
+If a number is a multiple of both Chloe's age and Zoe's age, then it is a multiple of their difference. Since the difference between their ages does not change, then that means the difference between their ages has <math>9</math> factors. Therefore, the difference between Chloe and Zoe's age is <math>36</math>, so Chloe is <math>37</math>, and Joey is <math>38</math>. The common factor that will divide both of their ages is <math>37</math>, so Joey will be <math>74</math>. The answer is <math>7 + 4 =  \boxed{\textbf{(E) }11}</math>.
+
+==Solution 5==
+Similar approach to above, just explained less concisely and more in terms of the problem (less algebraic).
+
+Let <math>C+n</math> denote Chloe's age, <math>J+n</math> denote Joey's age, and <math>Z+n</math> denote Zoe's age, where <math>n</math> is the number of years from now. We are told that <math>C+n</math> is a multiple of <math>Z+n</math> exactly nine times. Because <math>Z+n</math> is <math>1</math> at <math>n=0</math> and will increase until greater than <math>C-Z</math>, it will hit every natural number less than <math>C-Z</math>, including every factor of <math>C-Z</math>. For <math>C+n</math> to be an integral multiple of <math>Z+n</math>, the difference <math>C-Z</math> must also be a multiple of <math>Z</math>, which happens if <math>Z</math> is a factor of <math>C-Z</math>. Therefore, <math>C-Z</math> has nine factors. The smallest number that has nine positive factors is <math>2^23^2=36</math> . (We want it to be small so that Joey will not have reached three digits of age before his age is a multiple of Zoe's.) We also know <math>Z=1</math> and <math>J=C+1</math>. Thus,
+<cmath>\begin{align*}
+C-Z&=36, \\
+J-Z&=37.
+\end{align*}</cmath>
+By our above logic, the next time <math>J-Z</math> is a multiple of <math>Z+n</math> will occur when <math>Z+n</math> is a factor of <math>J-Z</math>. Because <math>37</math> is prime, the next time this happens is at <math>Z+n=37</math>, when <math>J+n=74</math>. The answer is <math>7+4=\boxed{\textbf{(E) }11}</math>.
+
+==Video Solution==
+https://youtu.be/E2SbkCQ1V84
+
+~savannahsolver
+
+== Video Solution by OmegaLearn==
+https://youtu.be/zfChnbMGLVQ?t=111
+
+~ pi_is_3.14
+
+==See Also==
+{{AMC10 box|year=2018|ab=B|num-b=18|num-a=20}}
+{{AMC12 box|year=2018|ab=B|num-b=13|num-a=15}}
+
+{{MAA Notice}}
+
+[[Category:Introductory Number Theory Problems]]

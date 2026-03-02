@@ -1,0 +1,44 @@
+# 2016 AMC 12A Problem 19
+
+## Problem
+Jerry starts at 0 on the real number line. He tosses a fair coin 8 times. When he gets heads, he moves 1 unit in the positive direction; when he gets tails, he moves 1 unit in the negative direction. The probability that he reaches 4 at some time during this process $\frac{a}{b},$ where a and b are relatively prime positive integers. What is a + b? (For example, he succeeds if his sequence of tosses is HTHHHHHH.)
+
+$\textbf{(A)}\ 69\qquad\textbf{(B)}\ 151\qquad\textbf{(C)}\ 257\qquad\textbf{(D)}\ 293\qquad\textbf{(E)}\ 313$
+## Solution 1
+For 6 to 8 heads, we are guaranteed to hit 4, so the sum here is $\binom{8}{2}+\binom{8}{1}+\binom{8}{0}=28+8+1=37.$
+
+For 4 heads, you have to hit the 4 heads at the start so there's only one way, 1.
+
+For 5 heads, we either start off with 4 heads, which gives us _$4\text{C}_1=4$ ways to arrange the other flips, or we start off with five heads and one tail, which has 6 ways minus the 2 overlapping cases, $\text{HHHHHTTT}$ and $\text{HHHHTHTT}.$ Total ways: 8.
+
+Then we sum to get 46. There are a total of $2^8=256$ possible sequences of 8 coin flips, so the probability is $\frac{46}{256}=\frac{23}{128}.$ Summing, we get $23+128=\boxed{\textbf{(B) }151}.$
+## Solution 2
+Reaching 4 will require either 4, 6, or 8 flips. Therefore we can split into 3 cases:
+
+(Case 1): The first four flips are heads. Then, the last four flips can be anything so $2^4=16$ possibilities work.
+
+(Case 2): It takes 6 flips to reach 4. There must be one tail in the first four flips so we don't repeat case 1. The tail can be in one of 4 positions. The next two flips must be heads. The last two flips can be anything so $2^2=4$ flips work. 4*4=16.
+
+(Case 3): It takes 8 flips to reach 4. We can split this case into 2 sub-cases. There can either be 1 or 2 tails in the first 4 flips.
+
+(1 tail in first four flips). In this case, the first tail can be in 4 positions. The second tail can be in either the 5th or 6th position so we don't repeat case 2. Thus, there are 4*2=8 possibilities.
+
+(2 tails in first four flips). In this case, the tails can be in $\binom{4}{2}=6$ positions.
+
+Adding these cases up and taking the total out of $2^8=256$ yields $\frac{16+16+8+6}{256}=\frac{46}{256}=\frac{23}{128}.$ This means the answer is $23+128=\boxed{\textbf{(B) }151}.$
+## Solution 3
+(Inspired by https://www.youtube.com/watch?v=EZYzjmd_f2g by Walt S)
+
+Draw a triangle of dots as seen in the video. Now, we'll do something different than he did. Draw a dotted line between dots that correspond to 3 on the number line and dots that correspond to 4 on the number line. This is the threshold that must be passed to have a successful sequence. We consider the three entry points to the immediate right of this line. Doing a tiny bit of fun bashing as we slide down this triangle, we find there is 1 way to cross the line for the first time through the uppermost entry point, 4 ways to cross the line for the first time through the middle entry point, and 14 ways to cross the line for the first time through the lowermost entry point.
+
+Superimpose Pascal's triangle over the dots. Notice that the number of ways to get to a dot is equal to its corresponding number on Pascal's triangle. Rows on Pascal's triangle sum to powers of 2. There are $2^4=16$ ways to get to the 4th row (remember that when working with Pascal's triangle, we start counting with a 0th row), and we found that 1 of them makes us cross the threshold for the first time. There are $2^6=64$ ways to get to the 6th row, and we found that 4 of them make us cross the threshold for the first time. There are $2^8=256$ ways to get to the 8th row, and we found that 14 of them make us cross the threshold for the first time.
+
+Adding up these probabilities $\frac{1}{16}+\frac{4}{64}+\frac{14}{256}=\frac{23}{128}$ and summing a and b, $a+b=23+128=\boxed{\textbf{(B)}\ 151}$ we get our answer.
+## Solution 4
+Notice every 2 flips, there is a $\dfrac{1}{4}$ chance to go 2 steps left (L), $\dfrac{1}{2}$ chance to stay put (P), and $\dfrac{1}{4}$ chance to move 2 steps right (R). We have 4 choices for how to get to 4:
+RR$-1\text{ arrangement}-\dfrac{1}{4}\cdot\dfrac{1}{4}=\dfrac{1}{16}$
+PRR$-2\text{ arrangements}-2\cdot\dfrac{1}{2}\cdot\dfrac{1}{4}\cdot\dfrac{1}{4}=\dfrac{1}{16}$
+LRRR$-2\text{ arrangements}-2\cdot\dfrac{1}{4}\cdot\dfrac{1}{4}\cdot\dfrac{1}{4}\cdot\dfrac{1}{4}=\dfrac{1}{128}$
+PPRR$-3\text{ arrangements}-3\cdot\dfrac{1}{2}\cdot\dfrac{1}{2}\cdot\dfrac{1}{4}\cdot\dfrac{1}{4}=\dfrac{3}{64}$
+Finally, our answer will be $\dfrac{1}{16}+\dfrac{1}{16}+\dfrac{1}{128}+\dfrac{3}{64}=\dfrac{23}{128}\impliesa+b=\boxed{\textbf{(B)}\ 151}.$
+## See Also

@@ -1,0 +1,36 @@
+# 2002 AMC 12A Problem 18
+
+## Problem
+Let $C_1$ and $C_2$ be circles defined by $(x-10)^$2 $+ y^2 = 36$ and $(x+15)^$2 $+ y^2 = 81$
+respectively. What is the length of the shortest line segment PQ that is tangent to $C_1$ at P and to $C_2$ at Q?
+
+
+$$\text{(A) }15 \qquad \text{(B) }18 \qquad \text{(C) }20 \qquad \text{(D) }21 \qquad \text{(E) }24$$
+
+## Solution 1
+First examine the formula $(x-10)^2+y^2=36,$ for the circle $C_1$. Its center, $D_1$, is located at (10,0) and it has a radius of $\sqrt{36} = 6.$ The next circle, using the same pattern, has its center, $D_2$, at (-15,0) and has a radius of $\sqrt{81} = 9.$ So we can construct this diagram:
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+unitsize(0.3cm); defaultpen(0.8); path C1=circle((10,0),6); path C2=circle((-15,0),9); draw(C1); draw(C2); draw( (-25,0) -- (17,0) ); dot((10,0)); dot((-15,0)); pair[] p1 = intersectionpoints(C1, circle((5,0),5) ); pair[] p2 = intersectionpoints(C2, circle((-7.5,0),7.5) ); dot(p1[1]); dot(p2[0]); draw((10,0)--p1[1]--p2[0]--(-15,0)); label("$C_1$",(10,0) + 6*dir(-45), SE ); label("$C_2$",(-15,0) + 9*dir(225), SW ); label("$D_1$",(10,0), SE ); label("$D_2$",(-15,0), SW ); label("$Q$", p2[0], NE ); label("$P$", p1[1], SW ); label("$O$", (0,0), SW );
+```
+
+Line PQ is tangent to both circles, so it forms a right angle with the radii (6 and 9). This, as well as the two vertical angles near O, prove triangles $D_2QO$ and $D_1PO$ similar by AA, with a scale factor of 6:9, or 2:3. Next, we must subdivide the line $D_2D_1$ in a 2:3 ratio to get the length of the segments $D_2O$ and $D_1O$. The total length is 10 - (-15), or 25, so applying the ratio, $D_2O$ = **15** and $D_1O$ = **10**. These are the hypotenuses of the triangles. We already know the length of $D_2Q$ and $D_1P$, **9** and **6** (they're radii). So in order to find PQ, we must find the length of the longer legs of the two triangles and add them.
+
+$$15^2 - 9^2 = (15-9)(15+9) = 6 \times 24 = 144$$
+
+$$\sqrt{144} = 12$$
+
+$$10^2-6^2 = (10-6)(10+6) = 4 \times 16 = 64$$
+
+$$\sqrt{64} = 8$$
+
+Finally, the length of PQ is $12+8=\boxed{20},$ or **(C)**.
+## Solution 2
+Using the above diagram, imagine that segment $\overline{QD_2}$ is shifted to the right to match up with $\overline{PD_1}.$ Then shift $\overline{QP}$ downwards to make a right triangle. We know $\overline{D_2D_1} = 25$ from the given information and the newly created leg has length  $\overline{QD_2} + \overline{PD_1} = 9 + 6 = 15.$ Hence by Pythagorean theorem $15^2 + {\overline{QP}}^2 = 25^2.$
+
+$$\overline{QP} = \boxed{20}, or C.$$
+## Video Solution
+https://youtu.be/wVadnulGLok
+## See Also

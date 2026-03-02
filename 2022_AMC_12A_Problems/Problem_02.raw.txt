@@ -1,0 +1,62 @@
+==Problem==
+The sum of three numbers is <math>96.</math> The first number is <math>6</math> times the third number, and the third number is <math>40</math> less than the second number. What is the absolute value of the difference between the first and second numbers?
+
+<math>\textbf{(A) } 1 \qquad \textbf{(B) } 2 \qquad \textbf{(C) } 3 \qquad \textbf{(D) } 4 \qquad \textbf{(E) } 5</math>
+
+== Solution 1 == 
+Let <math>x</math> be the third number. It follows that the first number is <math>6x,</math> and the second number is <math>x+40.</math>
+
+We have <cmath>6x+(x+40)+x=8x+40=96,</cmath> from which <math>x=7.</math>
+
+Therefore, the first number is <math>42,</math> and the second number is <math>47.</math> Their absolute value of the difference is <math>|42-47|=\boxed{\textbf{(E) } 5}.</math>
+
+~MRENTHUSIASM
+
+== Solution 2 ==
+Solve this using a system of equations. Let <math>x,y,</math> and <math>z</math> be the three numbers, respectively. We get three equations:
+<cmath>\begin{align*}
+x+y+z&=96, \\
+x&=6z, \\
+z&=y-40.
+\end{align*}</cmath>
+Rewriting the third equation gives us <math>y=z+40,</math> so we can substitute <math>x</math> as <math>6z</math> and <math>y</math> as <math>z+40.</math>
+
+Therefore, we get
+<cmath>\begin{align*}
+6z+(z+40)+z&=96 \\
+8z+40&=96 \\
+8z&=56 \\
+z&=7.
+\end{align*}</cmath>
+Substituting 7 in for <math>z</math> gives us <math>x=6z=6(7)=42</math> and <math>y=z+40=7+40=47.</math>
+
+So, the answer is <math>|x-y|=|42-47|=\boxed{\textbf{(E) } 5}.</math>
+
+~alexdapog A-A
+
+== Solution 3 ==
+In accordance with Solution 2, <cmath>y = z+40, x = 6z \implies |x-y| = |6z - z - 40| = 5|z - 8| \implies \boxed{\textbf{(E) } 5}.</cmath>
+'''vladimir.shelomovskii@gmail.com, vvsss'''
+
+==Video Solution 1 (Quick and Easy)==
+https://youtu.be/v2eJtm4EUkI
+
+~Education, the Study of Everything
+
+==Video Solution 2==
+https://youtu.be/B-5zSnDFVXs
+
+~Charles3829
+
+==Video Solution 3 (2 minutes) ==
+https://youtu.be/7yAh4MtJ8a8?si=Xpc2h85yyqEMOnVb&t=322
+
+~Math-x
+
+==Video Solution 4==
+https://youtu.be/BmWgwtKJExw
+
+== See Also ==
+{{AMC10 box|year=2022|ab=A|num-b=2|num-a=4}}
+{{AMC12 box|year=2022|ab=A|num-b=1|num-a=3}}
+{{MAA Notice}}

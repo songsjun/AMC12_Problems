@@ -1,0 +1,141 @@
+{{duplicate|[[2018 AMC 10A Problems/Problem 13|2018 AMC 10A #13]] and [[2018 AMC 12A Problems/Problem 11|2018 AMC 12A #11]]}}
+
+== Problem ==
+A paper triangle with sides of lengths <math>3,4,</math> and <math>5</math> inches, as shown, is folded so that point <math>A</math> falls on point <math>B</math>. What is the length in inches of the crease?
+<asy>
+draw((0,0)--(4,0)--(4,3)--(0,0));
+label("$A$", (0,0), SW);
+label("$B$", (4,3), NE);
+label("$C$", (4,0), SE);
+label("$4$", (2,0), S);
+label("$3$", (4,1.5), E);
+label("$5$", (2,1.5), NW);
+fill(origin--(0,0)--(4,3)--(4,0)--cycle, gray);
+</asy>
+<math>\textbf{(A) }   1+\frac12 \sqrt2   \qquad        \textbf{(B) }   \sqrt3   \qquad    \textbf{(C) }   \frac74   \qquad   \textbf{(D) }  \frac{15}{8} \qquad  \textbf{(E) }   2 </math>
+
+== Solution 1 (Most Practical) ==
+<asy>
+draw((0,0)--(4,0)--(4,3)--(0,0)); label("$A$", (0,0), SW); label("$B$", (4,3), NE); label("$C$", (4,0), SE);  label("$D$", (2,1.5), NW); label("$E$", (3.125,0), S);
+draw ((2,1.5)--(3.125,0),linewidth(1));
+ draw(rightanglemark((0,0),(2,1.5),(3.125,0)));
+</asy>
+
+First, we need to realize that the crease line is just the perpendicular bisector of side <math>AB</math>, the hypotenuse of right triangle <math>\triangle ABC</math>. Call the midpoint of <math>AB</math> point <math>D</math>. Draw this line and call the intersection point with <math>AC</math> as <math>E</math>. Now, <math>\triangle ACB</math> is similar to <math>\triangle ADE</math> by <math>AA</math> similarity. Setting up the ratios, we find that
+<cmath>\frac{BC}{AC}=\frac{DE}{AD} \Rightarrow \frac{3}{4}=\frac{DE}{\frac{5}{2}} \Rightarrow DE=\frac{15}{8}.</cmath>
+Thus, our answer is <math>\boxed{\textbf{(D) } \frac{15}{8}}</math>.
+
+==== Note ====
+In general, whenever we are asked to make a crease, think about that crease as a line of reflection over which the diagram is reflected. This is why the crease must be the perpendicular bisector of <math>AB</math>, because <math>A</math> must be reflected onto <math>B</math>.
+
+== Solution 2 (Very speedy, recommended if you are almost out of time) ==
+Use the ruler and regular paper you brought to quickly draw a 3-4-5 triangle of any scale (don't trust the diagram in the booklet). Very carefully fold the acute vertices together and make a crease. Measure the crease with the ruler. If you were reasonably careful, you should see that it measures somewhat more than <imath>\frac{7}{4}</imath> units and somewhat less than <imath>2</imath> units. The only answer choice in that range is <imath>\boxed{\textbf{(D) } \frac{15}{8}}</imath>.
+
+This is pretty much a cop-out, but it's allowed in the rules technically. This is basically useless for problems without diagrams.
+
+~ (minor edits) <B+
+
+~(minor edits) SwordAxe 
+(You can't bring graph paper to any of the AMC competitions).
+
+== Solution 3 ==
+Since <math>\triangle ABC</math> is a right triangle, we can see that the slope of line <math>AB</math> is <math>\frac{BC}{AC}</math> = <math>\frac{3}{4}</math>. We know that if we fold <math>\triangle ABC</math> so that point <math>A</math> meets point <math>B</math> the crease line will be perpendicular to <math>AB</math> and we also know that the slopes of perpendicular lines are negative reciprocals of one another. Then, we can see that the slope of our crease line is <math>-\frac{4}{3}</math>.
+<asy>
+pen dotstyle = black;
+
+draw((0,0)--(4,0)--(4,3)--(0,0));
+fill(origin--(0,0)--(4,3)--(4,0)--cycle, gray);
+
+dot((0,0),dotstyle); 
+label("$A$", (0.03153837092244126,0.07822624343603715), SW); 
+dot((4,0),dotstyle); 
+label("$C$", (4.028913881471271,0.07822624343603715), SE); 
+dot((4,3),dotstyle); 
+label("$B$", (4.028913881471271,3.078221223847919), NE); 
+dot((2,1.5),dotstyle);
+label("$D$", (2.0341528211973956,1.578223733641978), SE); 
+dot((2,0),dotstyle);
+label("$E$", (2.0341528211973956,0.07822624343603715), NE); 
+dot((3.1249518689638927,0),dotstyle);
+label("$F$", (3.1571875913515854,0.07822624343603715), NE); 
+
+label("$4$", (2,0), S);
+label("$3$", (4,1.5), E);
+label("$5$", (2,1.5), NW);
+</asy>
+
+Let us call the midpoint of <math>AB</math> point <math>D</math>, the midpoint of <math>AC</math> point <math>E</math>, and the crease line <math>DF</math>. We know that <math>DE</math> is parallel to <math>BC</math> and that <math>DE</math>'s length is <math>\frac{BC}{2}=\frac{3}{2}</math>. Using our slope calculation from earlier, we can see that<math>-\frac{DE}{EF}=-\frac{\frac{3}{2}}{EF}=-\frac{4}{3}</math>. With this information, we can solve for <math>EF</math>: 
+<cmath>-4EF=(-\frac{3}{2})(3) \Rightarrow -4EF=-\frac{9}{2} \Rightarrow 4EF=\frac{9}{2} \Rightarrow EF=\frac{9}{8}.</cmath>
+We can then use the Pythagorean Theorem to find <math>DF</math>.
+<cmath>\frac{3}{2}^2+\frac{9}{8}^2=DF^2 \Rightarrow \frac{9}{4}+\frac{9\cdot9}{8\cdot8}=DF^2 \Rightarrow \frac{9\cdot2\cdot8}{4\cdot2\cdot8}+\frac{9\cdot9}{8\cdot8}=DF^2 \Rightarrow \frac{9\cdot2\cdot8+9\cdot9}{8\cdot8}=DF^2 \Rightarrow \frac{9(2\cdot8+9)}{8\cdot8}=DF^2</cmath>
+<cmath>\Rightarrow DF=\sqrt{\frac{9(2\cdot8+9)}{8\cdot8}} \Rightarrow DF=\frac{3\cdot5}{8} \Rightarrow DF=\frac{15}{8}</cmath>
+Thus, our answer is <math>\boxed{\textbf{(D) } \frac{15}{8}}</math>.
+
+~ (minor edits) <B+
+
+== Solution 4 ==
+
+Make use of the diagram in Solution 3. It can be deduced that <math>AF=BF</math>. Let <math>DF=x</math>. In <math>\triangle ADF</math>, <math>AF^2=x^2+2.5^2 \Rightarrow AF=\sqrt{x^2+2.5^2}</math>. Then <math>FC</math> also would be <math>4-\sqrt{x^2+2.5^2}</math>.
+
+In <math>\triangle BCF</math>, <math>BF^2=FC^2+BC^2 \Rightarrow (\sqrt{x^2+2.5^2})^2=(4-\sqrt{x^2+2.5^2})^2+3^2</math>. After some quick math, we get <math>\sqrt{x^2+2.5^2}=\frac{25}{8}</math>.
+Solving for <math>x</math> will give <math>x=\frac{15}{8}</math>.
+
+<math>\therefore</math> <math>DF=x=</math> <math>\boxed{\textbf{(D) } \frac{15}{8}}</math>.
+
+== Solution 5 ==
+Like in Solution 3, we can make use of coordinate geometry to solve this problem. Because the length of the crease is constant no matter the positioning of the triangle, reorient the triangle so it has C at the origin and B and A at <math>(0,3)</math> and <math>(4,0)</math> respectively.
+
+<asy>
+draw((0,0)--(0,3)--(4,0)--(0,0));
+label("$C$", (0,0), SW); label("$B$", (0,3), NW); label("$A$", (4,0), SE);
+draw ((2,1.5)--(0.875,0),blue+linewidth(1));
+label("$(\frac{7}{8},0)$", (0.875,0), S); label("$(2,\frac{3}{2})$", (2,1.5), NE);
+draw(rightanglemark((4,0),(2,1.5),(0.875,0)));
+</asy>
+
+We know that each point in the crease is equidistant from <math>A</math> and <math>B</math>, so the crease must pass through the midpoint of <math>AB</math>, which is <math>({2,\frac{3}{2}})</math> , and be perpendicular to hypotenuse <math>AB</math>. The crease therefore has a slope of <math>\frac{4}{3}</math>.
+
+Plugging into point-slope we find that the equation of the crease is, <math>y-y_1=m(x-x_1)\implies y-\frac{3}{2}=\frac{4}{3}(x-2)\implies y=\frac{4}{3}x-\frac{7}{6}</math>
+
+Using 0 for y, we see that the crease intersects <math>AC</math> at <math>(\frac{7}{8},0)</math>. 
+
+By the Distance Formula,
+
+<math>(2-\frac{7}{8})^2+({\frac{3}{2}})^2=d^2 \implies d^2=\frac{225}{64} \implies d=\boxed{\textbf{(D) }\frac{15}{8}}</math>
+
+== Solution 6 ==
+Let <math>D</math> be a point on AC such that <math>AD=DB</math> and <math>\triangle{ADB}</math> is isosceles. The altitude of this triangle is the crease of the paper triangle.
+
+Setting <math>DC=x</math>, we have a right triangle <math>\triangle{BCD}</math> with legs of x and 3, and, because <math>AD=DB,</math> hypotenuse of <math>(4-x)</math>.
+
+<math>x^2+3^2=(4-x)^2 \implies x^2+9=16-8x+x^2 \implies 8x=7 \implies x=\frac{7}{8}</math>
+
+The area of <math>\triangle{BCD}  \text{ is thus} = \frac{7}{8}*3*\frac{1}{2} \implies \frac{21}{16}.</math> Because <math>[ADB]=[ABC]-[BCD],</math> we can plug in and see that <math>[ADB]=6-\frac{21}{16}=\frac{75}{16}.</math>
+
+Since <math>A=\frac{bh}{2}</math>, we get <math>\frac{75}{16}=\frac{5h}{2} \implies 5h=\frac{75}{8} \implies h=\boxed{\textbf{(D) }\frac{15}{8}}</math>
+
+==Video Solution (HOW TO THINK CREATIVELY!)==
+https://youtu.be/92WxfAyVumE
+
+~Education, the Study of Everything
+
+
+
+== Video Solution ==
+
+https://youtu.be/HJALwsbHZXc
+
+~ Whiz
+
+== Video Solution by OmegaLearn ==
+https://youtu.be/4_x1sgcQCp4?t=2623
+
+~ pi_is_3.14
+
+== See Also ==
+
+{{AMC10 box|year=2018|ab=A|num-b=12|num-a=14}}
+{{AMC12 box|year=2018|ab=A|num-b=10|num-a=12}}
+{{MAA Notice}}
+
+[[Category:Introductory Geometry Problems]]

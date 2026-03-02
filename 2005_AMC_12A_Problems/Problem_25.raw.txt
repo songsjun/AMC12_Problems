@@ -1,0 +1,33 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2005_AMC_12A_Problems/Problem_25&action=raw
+
+Published Time: Tue, 01 Jul 2025 19:35:32 GMT
+
+Markdown Content:
+== Problem ==
+Let S be the set of all points with coordinates (x,y,z), where x, y, and z are each chosen from the set \{0,1,2\}. How many equilateral triangles all have their vertices in S?
+
+(\mathrm {A}) \ 72\qquad (\mathrm {B}) \ 76 \qquad (\mathrm {C})\ 80 \qquad (\mathrm {D}) \ 84 \qquad (\mathrm {E})\ 88
+
+== Solution 1 ==
+For this solution, we will just find as many equilateral triangles as possible, until it becomes intuitive that there are no more size of triangles left.
+
+First, we observe that we can form an equilateral triangle with vertices in S by taking any point in S and connecting it to the 2 adjacent points. This triangle will have a side length of \sqrt{2}; a quick further examination of this cube will show us that this is the only possible side length (the red triangle in the diagram below). Each of these triangles is determined by one vertex of the cube, so in one cube we have 8 equilateral triangles. We have 8 unit cubes, as well as the entire 2 \times 2 \times 2 cube (giving the green triangle in the diagram), for a total of 8+1 = 9 cubes, and thus 9 \cdot 8 = 72 equilateral triangles. 
+ import three; unitsize(1cm); size(200); currentprojection=perspective(1/3,-1,1/2); draw((0,0,0)--(2,0,0)--(2,2,0)--(0,2,0)--cycle); draw((0,0,0)--(0,0,2)); draw((0,2,0)--(0,2,2)); draw((2,2,0)--(2,2,2)); draw((2,0,0)--(2,0,2)); draw((0,0,2)--(2,0,2)--(2,2,2)--(0,2,2)--cycle); draw((2,0,0)--(0,2,0)--(0,0,2)--cycle,green); draw((1,0,0)--(0,1,0)--(0,0,1)--cycle,red); label("$x=2$",(1,0,0),S); label("$z=2$",(2,2,1),E); label("$y=2$",(2,1,0),SE); 
+
+(Note that connecting the centers of the faces will actually give an octahedron, not a cube, because it only has 6 vertices.)
+
+Now we look for any further equilateral triangles. Connecting the midpoints of 3 non-adjacent, non-parallel edges indeed gives us more equilateral triangles (e.g. the blue triangle in the diagram below).  Notice that picking these 3 edges leaves 2 vertices alone (labelled A and B in the diagram), and that picking any 2 opposite vertices determines 2 equilateral triangles. Hence there are \frac{8 \cdot 2}{2} = 8 of these equilateral triangles, so adding these to the triangles already found above gives a total of 72+8 = \boxed{\textbf{(C) }80}.
+ import three; unitsize(1cm); size(200); currentprojection=perspective(1/3,-1,1/2); draw((0,0,0)--(2,0,0)--(2,2,0)--(0,2,0)--cycle); draw((0,0,0)--(0,0,2)); draw((0,2,0)--(0,2,2)); draw((2,2,0)--(2,2,2)); draw((2,0,0)--(2,0,2)); draw((0,0,2)--(2,0,2)--(2,2,2)--(0,2,2)--cycle); draw((1,0,0)--(2,2,1)--(0,1,2)--cycle,blue); label("$x=2$",(1,0,0),S); label("$z=2$",(2,2,1),E); label("$y=2$",(2,1,0),SE); label("$A$",(0,2,0), NW); label("$B$",(2,0,2), NW); 
+
+== Solution 2  ==
+The three-dimensional distance formula shows that the side length of the equilateral triangle must be \sqrt{d_x^2 + d_y^2 + d_z^2} with \left\lvert d_x\right\rvert,\left\lvert d_y\right\rvert,\left\lvert d_z\right\rvert \in \{0-0,1-0,1-1,2-0,2-1,2-2\} = \{0,1,2\}, so the possible side lengths are
+\begin{align*}&\sqrt{0^2+0^2+1^2}=\sqrt{1},\ \sqrt{0^2+1^2+1^2}=\sqrt{2},\ \sqrt{1^2+1^2+1^2}=\sqrt{3}, \\ &\sqrt{0^2+0^2+2^2}=\sqrt{4},\ \sqrt{0^2+1^2+2^2}=\sqrt{5},\ \sqrt{1^2+1^2+2^2}=\sqrt{6}, \\ &\sqrt{0^2+2^2+2^2}=\sqrt{8},\ \sqrt{1^2+2^2+2^2}=\sqrt{9},\ \sqrt{2^2+2^2+2^2}=\sqrt{12}.\end{align*}
+
+Some casework shows that \sqrt{2}, \sqrt{6}, and \sqrt{8} are the only lengths that work, after which we can complete the problem using the same counting argument as in Solution 1.
+
+== See Also ==
+{{AMC12 box|year=2005|ab=A|num-b=24|after=Last question}}
+[[Category:Intermediate Geometry Problems]]
+{{MAA Notice}}

@@ -1,0 +1,21 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2009_AMC_10B_Problems/Problem_3&action=raw
+
+Published Time: Wed, 09 Jun 2021 19:58:11 GMT
+
+Markdown Content:
+{{duplicate|[[2009 AMC 10B Problems|2009 AMC 10B #3]] and [[2009 AMC 12B Problems|2009 AMC 12B #2]]}}
+
+== Problem ==
+Paula the painter had just enough paint for 30 identically sized rooms.  Unfortunately, on the way to work, three cans of paint fell off her truck, so she had only enough paint for 25 rooms.  How many cans of paint did she use for the 25 rooms?
+
+\mathrm{(A)}\ 10\qquad \mathrm{(B)}\ 12\qquad \mathrm{(C)}\ 15\qquad \mathrm{(D)}\ 18\qquad \mathrm{(E)}\ 25
+
+== Solution ==
+Losing three cans of paint corresponds to being able to paint five fewer rooms. So \frac 35 \cdot 25 = \boxed{15}.  The answer is \mathrm{(C)}.
+
+== See also ==
+{{AMC10 box|year=2009|ab=B|num-b=2|num-a=4}}
+{{AMC12 box|year=2009|ab=B|num-b=1|num-a=3}}
+{{MAA Notice}}

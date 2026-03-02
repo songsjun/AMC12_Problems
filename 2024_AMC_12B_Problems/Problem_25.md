@@ -1,0 +1,59 @@
+# 2024 AMC 12B Problem 25
+
+## Problem
+Pablo will decorate each of 6 identical white balls with either a striped or a dotted pattern, using either red or blue paint. He will decide on the color and pattern for each ball by flipping a fair coin for each of the 12 decisions he must make. After the paint dries, he will place the 6 balls in an urn. Frida will randomly select one ball from the urn and note its color and pattern. The events "the ball Frida selects is red" and "the ball Frida selects is striped" may or may not be independent, depending on the outcome of Pablo's coin flips. The probability that these two events are independent can be written as $\frac$ mn, where m and n are relatively prime positive integers. What is m? (Recall that two events A and B are independent if P(A $\text{ and }B) = P(A) \cdot P(B).)$
+
+$\textbf{(A) } 243 \qquad \textbf{(B) } 245 \qquad \textbf{(C) } 247 \qquad \textbf{(D) } 249\qquad \textbf{(E) } 251$
+## Solution 1
+Let a be the number of balls that are both striped and red, x be the number of balls that are striped but blue, and y be the number of balls that are red but dotted. Then there must be 6-a-x-y balls that are dotted and blue.
+
+Let A be the event, "the ball Frida selects is red", and B be the event, "the ball Frida selects is striped". A and B are independent if and only if $\frac{a}{6}=\frac{a+x}{6}\cdot\frac{a+y}{6},$ i.e.,
+$$6a=(a+x)(a+y)$$
+
+Before we continue, I'd like to clarify that the sample space S, under which we are computing probability that A and B are independent, consists of $4^6$ total outcomes, each equally likely. Notice that once given a, x, y, there are {$6\choose$ a}{6-a $\choose$ x}{6-a-x $\choose$ y}=$\frac{6!}{a!x!y!(6-a-x-y)!}$ corresponding outcomes.
+
+Now, it remains to find all nonnegative integer solutions (a, x, y) to the above equation such that a+x+y<6, add up all the corresponding outcomes, and then divide by $4^6.$ We can find the solutions relatively easily by doing casework on $a=0$, 1, 2, 3, 4, 5, 6. Long story short, one finds the solutions to be
+
+$$
+(0, 0, 0), (0, 0, 1)\cdots (0, 0, 6)
+(0, 1, 0), (0, 2, 0)\cdots (0, 6, 0)
+$$
+
+(1, 5, 0), (1, 0, 5), (1, 2, 1), (1, 1, 2)
+(2, 4, 0), (2, 0, 4) (2, 2, 1), (2, 1, 2)
+(3, 3, 0), (3, 0, 3)
+(4, 2, 0), (4, 0, 2)
+(5, 1, 0), (5, 0, 1)
+(6, 0, 0)
+
+There are little tricks we can use to make the process of adding up the corresponding outcomes faster. First, we notice that the first, second, and last row of solutions contributes $2^7=128$ outcomes. Then we can take advantage of the symmetry between x, y to add up the rest of the outcomes. In the end we get
+$$128+2(6+180+15+180+20+15+6)=972$$
+
+Hence, the probability is $\frac{972}{4^6}=\frac{243}{2^{10}}.$ Therefore, the answer is \fbox{$\textbf{(A) } 243$}
+
+*~tsun26*
+
+## Solution 2 Symmetry + Observations = 5 min solve
+Let S be the number of balls with stripes, R the number of red balls, and N the number of balls that are red and have stripes.
+Now, P(A\ $\text{and}$\ B) = P(A) $\cdot P(B) \Rightarrow \frac{N}{6}=\frac{S \cdot R}{36},$ or 6N = SR.
+
+Make the trivial observation that whenever S or R equals 0, or both equal 6, there is one unique N satisfying the equality.
+Notice for S = 0 and R going from 0 to 6, we have a total probability of $\frac{2^6}{2^{12}}$ due to binomial theorem.
+By symmetry, we must multiply by 2 to account for switching R and S, and another 2 for the case where S=R=6. Finally, we subtract the four overlapping cases (0, 0), (0, 6), (6,0), and (6, 6), where each pair has format (S, R).
+Thus, the total probability is $\frac{4 \cdot 2^6 - 4}{2^{12}}.$
+
+Now, there are 4 more pairs (S,R) that satisfy the condition, namely (2, 3), (3, 4), (3, 2), and (4, 3).
+
+Again, make the trivial observation that each of these have the same probability due to R/S invariance and similar distribution.
+
+For a single pair, take (2, 3) as an example. We know N=1, and we fix S. The probability is therefore $\frac{\binom{6}{3} \binom{3}{1} \binom{3}{1}}{2^{12}} = \frac{180}{2^{12}}.$
+
+Adding all of them up, we get $\frac{4 \cdot 2^6 - 4 + 180 \cdot 4}{2^{12}} = \frac{2^6+179}{2^{10}} = \frac{243}{1024}.$
+Thus, the answer is $\boxed{A}.$
+
+*~Apollo Luo, edited by Mathemagician108*
+## Video Solution
+[https://youtu.be/V9YKdrGLQdE?si=2W17enGPJ2NqQ6r3 2024 AMC 12 B #25]
+
+[https://mathproblemsolvingskills.wordpress.com/ MathProblemSolvingSkills.com]
+## See also

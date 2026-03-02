@@ -1,0 +1,41 @@
+# 2007 AMC 12A Problem 16
+
+## Problem
+How many three-digit numbers are composed of three distinct digits such that one digit is the [average](https://artofproblemsolving.com/wiki/index.php/average) of the other two?
+
+
+$$\mathrm{(A)}\ 96\qquad \mathrm{(B)}\ 104\qquad \mathrm{(C)}\ 112\qquad \mathrm{(D)}\ 120\qquad \mathrm{(E)}\ 256$$
+
+## Solution 1
+We can find the number of increasing [arithmetic sequence](https://artofproblemsolving.com/wiki/index.php/arithmetic_sequence)s of length 3 possible from 0 to 9, and then find all the possible permutations of these sequences.
+
+{| class = "wikitable" border="1px solid"
+|-
+| Common difference || Sequences possible || Number of sequences
+|-
+$$| 1 || 012, \ldots, 789 || 8$$
+|-
+$$| 2 || 024, \ldots, 579 || 6$$
+|-
+$$| 3 || 036, \ldots, 369 || 4$$
+|-
+$$| 4 || 048, \ldots, 159 || 2$$
+|}
+
+This gives us a total of $2 + 4 + 6 + 8 = 20$ sequences. There are 3! = 6 to permute these, for a total of 120.
+
+However, we note that the conditions of the problem require three-digit numbers, and hence our numbers cannot start with zero. There are 2! $\cdot 4 = 8$ numbers which start with zero, so our answer is $120 - 8 = 112\Longrightarrow \mathrm{(C)}.$
+## Solution 2
+Observe that, if the smallest and largest digit have the same parity, this uniquely determines the middle digit. If the smallest digit is not zero, then any choice of the smallest and largest digit gives 3! = 6 possible 3-digit numbers; otherwise, 4 possible 3-digit numbers. Hence we can do simple casework on whether 0 is in the number or not.
+
+Case 1: 0 is not in the number. Then there are $\binom{5}{2} + \binom{4}{2} = 16$ ways to choose two nonzero digits of the same parity, and each choice generates 3! = 6 3-digit numbers, giving 16 $\times 6 = 96$ numbers.
+
+Case 2: 0 is in the number. Then there are 4 ways to choose the largest digit (2, 4, 6, or 8), and each choice generates 4 3-digit numbers, giving 4 $\times 4 = 16$ numbers.
+
+Thus the total is $96 + 16 = 112\Longrightarrow \mathrm{(C)}. (b$y scrabbler94)
+## Video Solution by OmegaLearn
+https://youtu.be/0W3VmFp55cM?t=2012
+
+*~pi_is_3.14*
+## Closely-related question and solution (podcast)
+https://www.buzzsprout.com/56982/episodes/415913 starts with a variation on this question (plus solution)

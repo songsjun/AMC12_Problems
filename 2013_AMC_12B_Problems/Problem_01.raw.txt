@@ -1,0 +1,26 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2013_AMC_12B_Problems/Problem_1&action=raw
+
+Published Time: Sat, 16 Apr 2022 03:30:44 GMT
+
+Markdown Content:
+{{duplicate|[[2013 AMC 12B Problems|2013 AMC 12B #1]] and [[2013 AMC 10B Problems|2013 AMC 10B #3]]}}
+
+==Problem==
+On a particular January day, the high temperature in Lincoln, Nebraska, was 16 degrees higher than the low temperature, and the average of the high and low temperatures was 3. In degrees, what was the low temperature in Lincoln that day?
+
+\textbf{(A)}\ -13 \qquad \textbf{(B)}\ -8 \qquad \textbf{(C)}\ -5 \qquad \textbf{(D)}\ -3 \qquad \textbf{(E)}\ 11
+
+==Solution==
+Let L be the low temperature. The high temperature is L+16. The average is \frac{L+(L+16)}{2}=3. Solving for L, we get L=\boxed{\textbf{(C)} \ -5}
+
+==Video Solution==
+https://youtu.be/OsnepwGjcw8
+
+~savannahsolver
+
+== See also ==
+{{AMC10 box|year=2013|ab=B|num-b=2|num-a=4}}
+{{AMC12 box|year=2013|ab=B|before=First Question|num-a=2}}
+{{MAA Notice}}

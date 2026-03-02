@@ -1,0 +1,116 @@
+{{duplicate|[[2019 AMC 10A Problems|2019 AMC 10A #7]] and [[2019 AMC 12A Problems|2019 AMC 12A #5]]}}
+
+==Problem==
+
+Two lines with slopes <math>\dfrac{1}{2}</math> and <math>2</math> intersect at <math>(2,2)</math>. What is the area of the triangle enclosed by these two lines and the line <math>x+y=10  ?</math>
+
+<math>\textbf{(A) } 4 \qquad\textbf{(B) } 4\sqrt{2} \qquad\textbf{(C) } 6 \qquad\textbf{(D) } 8 \qquad\textbf{(E) } 6\sqrt{2}</math>
+
+==Solution 1==
+Let's first work out the slope-intercept form of all three lines:
+<math>(x,y)=(2,2)</math> and <math>y=\frac{x}{2} + b</math> implies <math>2=\frac{2}{2} +b=> 2=1+b</math> so <math>b=1</math>, while <math>y=2x + c</math> implies <math>2= 2 \cdot 2+c=> 2=4+c</math> so <math>c=-2</math>. Also, <math>x+y=10</math> implies <math>y=-x+10</math>. Thus the lines are <math>y=\frac{x}{2} +1, y=2x-2,</math> and <math>y=-x+10</math>. 
+Now we find the intersection points between each of the lines with <math>y=-x+10</math>, which are <math>(6,4)</math> and <math>(4,6)</math>. Using the distance formula and then the Pythagorean Theorem, we see that we have an isosceles triangle with base <math>2\sqrt{2}</math> and height <math>3\sqrt{2}</math>, whose area is <math>\boxed{\textbf{(C) }6}</math>.
+
+==Solution 3==
+Like in the other solutions, solve the systems of equations to see that the triangle's two other vertices are at <math>(4, 6)</math> and <math>(6, 4)</math>. Then apply Heron's Formula: the semi-perimeter will be <math>s = \sqrt{2} + \sqrt{20}</math>, so the area reduces nicely to a difference of squares, making it <math>\boxed{\textbf{(C) }6}</math>.
+
+==Solution 4==
+Like in the other solutions, we find, either using algebra or simply by drawing the lines on squared paper, that the three points of intersection are <math>(2, 2)</math>, <math>(4, 6)</math>, and <math>(6, 4)</math>. We can now draw the bounding square with vertices <math>(2, 2)</math>, <math>(2, 6)</math>, <math>(6, 6)</math> and <math>(6, 2)</math>, and deduce that the triangle's area is <math>16-4-2-4=\boxed{\textbf{(C) }6}</math>.
+
+==Solution 5==
+Like in other solutions, we find that the three points of intersection are  <math>(2, 2)</math>, <math>(4, 6)</math>, and <math>(6, 4)</math>. Using graph paper, we can see that this triangle has <math>6</math> boundary lattice points and <math>4</math> interior lattice points. By Pick's Theorem, the area is <math>\frac62 + 4 - 1 = \boxed{\textbf{(C) }6}</math>.
+
+==Solution 6==
+Like in other solutions, we find the three points of intersection. Label these <math>A (2, 2)</math>, <math>B (4, 6)</math>, and <math>C (6, 4)</math>. By the Pythagorean Theorem, <math>AB = AC = 2\sqrt5</math> and <math>BC = 2\sqrt2</math>. By the Law of Cosines,
+<cmath>\cos A = \frac{(2\sqrt5)^2 + (2\sqrt5)^2 - (2\sqrt2)^2}{2 \cdot 2\sqrt5 \cdot 2\sqrt5} = \frac{20 + 20 - 8}{40} = \frac{32}{40} = \frac45</cmath>
+Therefore, <math>\sin A = \sqrt{1 - \cos^2 A} = \frac35</math>, so the area is <math>\frac12 bc \sin A = \frac12 \cdot 2\sqrt5 \cdot 2\sqrt5 \cdot \frac35 = \boxed{\textbf{(C) }6}</math>.
+
+==Solution 7==
+Like in other solutions, we find that the three points of intersection are  <math>(2, 2)</math>, <math>(4, 6)</math>, and <math>(6, 4)</math>. The area of the triangle is half the absolute value of the determinant of the matrix determined by these points.
+<cmath>
+\frac12\begin{Vmatrix}
+2&2&1\\
+4&6&1\\
+6&4&1\\
+\end{Vmatrix} = \frac12|-12| = \frac12 \cdot 12 = \boxed{\textbf{(C) }6}</cmath>
+
+
+==Solution 8==
+Like in other solutions, we find the three points of intersection. Label these <math>A (2, 2)</math>, <math>B (4, 6)</math>, and <math>C (6, 4)</math>. Then vectors <math>\overrightarrow{AB} = \langle 2, 4 \rangle</math> and <math>\overrightarrow{AC} = \langle 4, 2 \rangle</math>. The area of the triangle is half the magnitude of the cross product of these two vectors.
+<cmath>
+\frac12\begin{Vmatrix}
+i&j&k\\
+2&4&0\\
+4&2&0\\
+\end{Vmatrix} = \frac12|-12k| = \frac12 \cdot 12 = \boxed{\textbf{(C) }6}</cmath>
+
+==Solution 9==
+Like in other solutions, we find that the three points of intersection are <math>(2, 2)</math>, <math>(4, 6)</math>, and <math>(6, 4)</math>. By the Pythagorean theorem, this is an isosceles triangle with base <math>2\sqrt2</math> and equal length <math>2\sqrt5</math>. The area of an isosceles triangle with base <math>b</math> and equal length <math>l</math> is <math>\frac{b\sqrt{4l^2-b^2}}{4}</math>. Plugging  in <math>b = 2\sqrt2</math> and <math>l = 2\sqrt5</math>,
+<cmath>\frac{2\sqrt2 \cdot \sqrt{80-8}}{4} = \frac{\sqrt{576}}{4} = \frac{24}{4} = \boxed{\textbf{(C) }6}</cmath>
+
+==Solution 10 (Trig) ==
+Like in other solutions, we find the three points of intersection. Label these <math>A (2, 2)</math>, <math>B (4, 6)</math>, and <math>C (6, 4)</math>. By the Pythagorean Theorem, <math>AB = AC = 2\sqrt5</math> and <math>BC = 2\sqrt2</math>. By the Law of Cosines,
+<cmath>\cos A = \frac{(2\sqrt5)^2 + (2\sqrt5)^2 - (2\sqrt2)^2}{2 \cdot 2\sqrt5 \cdot 2\sqrt5} = \frac{20 + 20 - 8}{40} = \frac{32}{40} = \frac45</cmath>
+Therefore, <math>\sin A = \sqrt{1 - \cos^2 A} = \frac35</math>. By the extended Law of Sines,
+<cmath>2R = \frac{a}{\sin A} = \frac{2\sqrt2}{\frac35} = \frac{10\sqrt2}{3}</cmath>
+<cmath>R = \frac{5\sqrt2}{3}</cmath>
+Then the area is <math>\frac{abc}{4R} = \frac{2\sqrt2 \cdot 2\sqrt5^2}{4 \cdot \frac{5\sqrt2}{3}} = \boxed{\textbf{(C) }6}</math>.
+
+==Solution 11==
+The area of a triangle formed by three lines,
+<cmath>a_1x + a_2y + a_3 = 0</cmath>
+<cmath>b_1x + b_2y + b_3 = 0</cmath>
+<cmath>c_1x + c_2y + c_3 = 0</cmath>
+is the absolute value of
+<cmath>\frac12 \cdot \frac{1}{(b_1c_2-b_2c_1)(a_1c_2-a_2c_1)(a_1b_2-a_2b_1)} \cdot \begin{vmatrix}
+a_1&a_2&a_3\\
+b_1&b_2&b_3\\
+c_1&c_2&c_3\\
+\end{vmatrix}^2</cmath>
+Plugging in the three lines,
+<cmath>-x + 2y - 2 = 0</cmath>
+<cmath>-2x + y + 2 = 0</cmath>
+<cmath>x + y - 10 = 0</cmath>
+the area is the absolute value of
+<cmath>\frac12 \cdot \frac{1}{(-2-1)(-1-2)(-1+4)} \cdot \begin{vmatrix}
+-1&2&-2\\
+-2&1&2\\
+1&1&-10\\
+\end{vmatrix}^2 = \frac12 \cdot \frac{1}{27} \cdot 18^2 = \boxed{\textbf{(C) }6}</cmath>
+Source: Orrick, Michael L. “THE AREA OF A TRIANGLE FORMED BY THREE LINES.” Pi Mu Epsilon Journal, vol. 7, no. 5, 1981, pp. 294–298. JSTOR, www.jstor.org/stable/24336991.
+
+
+==Solution 12 (Heron's Formula) ==
+
+Like in other solutions, we find that our triangle is isosceles with legs of <math>2\sqrt5</math> and base <math>2\sqrt2</math>. Then, the semi - perimeter of our triangle is, <cmath>\frac{4\sqrt5+2\sqrt2}{2} = 2\sqrt5 + \sqrt2.</cmath> Applying Heron's formula, we find that the area of this triangle is equivalent to <cmath>\sqrt{{(2\sqrt5+\sqrt2)}{(2\sqrt5-\sqrt2)}{(2)}} = \sqrt{{(20-2)}{(2)}} = \boxed{\textbf{(C) }6}.</cmath>
+
+~rbcubed13
+
+==Solution 13==
+Like in the other solutions, we find that the three points of intersection are <math>(2, 2)</math>, <math>(4, 6)</math>, and <math>(6, 4)</math>. By the shoelace theorem, we have <cmath>\dfrac{1}{2} \left|(2*4 + 6*6 + 4*2) - (2*6 + 4*4 + 6*2) \right|</cmath> Evaluating this we get our answer of <math>\boxed{\textbf{(C) }6}.</math>
+
+~tontongoated110
+
+
+
+==Video Solution 1==
+
+https://youtu.be/KWs9FpLSi5A
+
+Education, the Study of Everything
+
+
+
+
+
+
+==Video Solution 2==
+https://youtu.be/D5FEuT5ExmU
+
+~savannahsolver
+
+==See Also==
+
+{{AMC10 box|year=2019|ab=A|num-b=6|num-a=8}}
+{{MAA Notice}}
+[[Category: Introductory Geometry Problems]]

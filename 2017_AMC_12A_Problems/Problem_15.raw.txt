@@ -1,0 +1,52 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2017_AMC_12A_Problems/Problem_15&action=raw
+
+Published Time: Sat, 23 Oct 2021 18:12:06 GMT
+
+Markdown Content:
+==Problem==
+
+Let f(x) = \sin{x} + 2\cos{x} + 3\tan{x}, using radian measure for the variable x. In what interval does the smallest positive value of x for which f(x) = 0 lie?
+
+ \textbf{(A)}\ (0,1) \qquad \textbf{(B)}\ (1, 2) \qquad\textbf{(C)}\ (2, 3) \qquad\textbf{(D)}\ (3, 4) \qquad\textbf{(E)}\ (4,5) 
+
+==Solution 1==
+We must first get an idea of what f(x) looks like:
+
+Between 0 and 1, f(x) starts at 2 and increases; clearly there is no zero here.
+
+Between 1 and \frac{\pi}{2}, f(x) starts at a positive number and increases to \infty; there is no zero here either.
+
+Between \frac{\pi}{2} and 3, f(x) starts at -\infty and increases to some negative number; there is no zero here either.
+
+Between 3 and \pi, f(x) starts at some negative number and increases to -2; there is no zero here either.
+
+Between \pi and \pi+\frac{\pi}{4} < 4, f(x) starts at -2 and increases to -\frac{\sqrt2}{2} + 2\left(-\frac{\sqrt2}{2}\right) + 3\left(1\right)=3\left(1-\frac{\sqrt2}{2}\right)>0. There is a zero here by the Intermediate Value Theorem. Therefore, the answer is \boxed{\textbf{(D)}}.
+
+==Solution 2 (Graphing)==
+If you quickly take a moment to sketch the graphs of the three functions, you will see that between 0 and \frac{\pi}{2} everything is positive, while the positive number created by the sin does not outweigh the negative by the cos and tan function. Upon further examination, it is clear that the positive the tan function creates will balance the other two functions, and thus the first solution is a little bit after \pi, which is around 3.14. Hence the answer is \boxed{\textbf{(D)}}.
+
+Solution by roadchicken~
+
+(Not original author) Here is the graph:
+ Label f; f.p=fontsize(6); xaxis(-5,5,Ticks(f, 1.0)); yaxis(-8,8,Ticks(f, 2.0)); real f(real x) { return sin(x); } draw(graph(f, -5,5)); real g(real x) { return 2*cos(x); } draw(graph(g, -5,5)); real h(real x) { return 3*tan(x); } draw(graph(h, -1.2,1.2)); draw(graph(h, 1.94, 4.34)); draw(graph(h, -4.34, -1.94)); 
+
+==Solution 3(More Detailed Answer of Solution 1)==
+Denote D_{f} as the domain of f(x). Obviously D_{f}=\left \{x|x\neq \frac{(2k+1)\pi}{2} \right \} .
+
+f^{'}(x)=\cos x-2\sin x+3\sec^{2}x=\sqrt{5}\cos(x+\phi)+3\sec^{2}x > 0  for all x in sub-intervals of  D_{f}.
+
+When x\in (0,\frac{\pi}{2}), f(0)=2, \lim_{x \to \frac{\pi}{2}^{-} }f(x)=+\infty . Hence f(x)>0 in this interval.
+
+When x\in (\frac{\pi}{2},\pi),\lim_{x \to \frac{\pi}{2}^{+} }f(x)=-\infty, f(\pi)=-2. Hence f(x)<0 in this interval.
+
+When x\in (\pi,\frac{3\pi}{2}),f(\pi)=-2<0. 
+
+Notice that \frac{5\pi}{4}<\frac{3.15*5}{4}<4<\frac{3\pi}{2}, f(\frac{5\pi}{4})=3-\frac{3\sqrt{2}}{2}>0 . Hence there must be a root located in the interval (3,4). Choose \boxed{\textbf{(D)}}.
+
+~PythZhou
+
+==See Also==
+{{AMC12 box|year=2017|ab=A|num-b=14|num-a=16}}
+{{MAA Notice}}

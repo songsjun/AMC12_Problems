@@ -1,0 +1,48 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2015_AMC_12B_Problems/Problem_12&action=raw
+
+Published Time: Sun, 25 Aug 2024 04:02:42 GMT
+
+Markdown Content:
+==Problem==
+Let a, b, and c be three distinct one-digit numbers. What is the maximum value of the sum of the roots of the equation (x-a)(x-b)+(x-b)(x-c)=0 ?
+
+\textbf{(A)}\; 15 \qquad\textbf{(B)}\; 15.5 \qquad\textbf{(C)}\; 16 \qquad\textbf{(D)} 16.5 \qquad\textbf{(E)}\; 17
+
+== Video Solution ==
+https://youtu.be/ba6w1OhXqOQ?t=423
+
+~ pi_is_3.14
+
+==Solution 1==
+The left-hand side of the equation can be factored as (x-b)(x-a+x-c) = (x-b)(2x-(a+c)), from which it follows that the roots of the equation are x=b, and x=\tfrac{a+c}{2}. The sum of the roots is therefore b + \tfrac{a+c}{2}, and the maximum is achieved by choosing b=9, and \{a,c\}=\{7,8\}. Therefore the answer is 9 + \tfrac{7+8}{2} = 9 + 7.5 = \boxed{\textbf{(D)}\; 16.5}.
+
+==Solution 2==
+Expand the polynomial. We get (x-a)(x-b)+(x-b)(x-c)=x^2-(a+b)x+ab+x^2-(b+c)x+bc=2x^2-(a+2b+c)x+(ab+bc). 
+
+Now, consider a general quadratic equation ax^2+bx+c=0. The two solutions to this are \dfrac{-b}{2a}+\dfrac{\sqrt{b^2-4ac}}{2a}, \dfrac{-b}{2a}-\dfrac{\sqrt{b^2-4ac}}{2a}. The sum of these roots is \dfrac{-b}{a}. 
+
+Therefore, reconsidering the polynomial of the problem, the sum of the roots is \dfrac{a+2b+c}{2}. Now, to maximize this, it is clear that b=9. Also, we must have a=8, c=7 (or vice versa). The reason a,c have to equal these values instead of larger values is because each of a,b,c is distinct.
+
+==Solution 3 (Vieta's Formula)==
+Expanding gives: 2x^2-(a+2b+c)x+(ab+bc).
+
+Dividing by the coefficient of the polynomial, 2, and applying Vieta's formulas we know that the sum of the roots of the polynomial is equal to \frac{a + 2b + c}{2}. Obviously, the largest value should occur when b = 9, and due to symmetrically a = 8, and c = 7, or a = 7 and c = 8. Both of these results give the same final answer of (D). 
+
+More on Vieta's Formulas: https://artofproblemsolving.com/wiki/index.php/Vieta%27s_formulas
+
+~PeterDoesPhysics
+
+==Solution 3 (Vieta's Formula)==
+Expanding the formula gives: 2x^2-(a+2b+c)x+(ab+bc).
+
+Dividing by the coefficient of the polynomial, 2, and applying Vieta's formulas we know that the sum of the roots of the polynomial is equal to \frac{a + 2b + c}{2}. Obviously, the largest value should occur when b = 9, and due to symmetrically a = 8, and c = 7, or a = 7 and c = 8. Both of these results give the same final answer of (D). 
+
+More on Vieta's Formulas: https://artofproblemsolving.com/wiki/index.php/Vieta%27s_formulas
+
+~PeterDoesPhysics
+
+==See Also==
+{{AMC12 box|year=2015|ab=B|num-a=13|num-b=11}}
+{{MAA Notice}}

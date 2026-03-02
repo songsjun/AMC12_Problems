@@ -1,0 +1,34 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2016_AMC_12B_Problems/Problem_8&action=raw
+
+Published Time: Tue, 19 Jan 2021 18:21:26 GMT
+
+Markdown Content:
+==Problem==
+
+A thin piece of wood of uniform density in the shape of an equilateral triangle with side length 3 inches weighs 12 ounces. A second piece of the same type of wood, with the same thickness, also in the shape of an equilateral triangle, has side length of 5 inches. Which of the following is closest to the weight, in ounces, of the second piece?
+
+\textbf{(A)}\ 14.0\qquad\textbf{(B)}\ 16.0\qquad\textbf{(C)}\ 20.0\qquad\textbf{(D)}\ 33.3\qquad\textbf{(E)}\ 55.6
+==Solution==
+By: dragonfly
+
+We can solve this problem by using similar triangles, since two equilateral triangles are always similar. We can then use
+
+\left(\frac{3}{5}\right)^2=\frac{12}{x}.
+
+We can then solve the equation to get x=\frac{100}{3} which is closest to \boxed{\textbf{(D)}\ 33.3}
+
+Sidenote - If we didn't know that \left(\frac{a}{b}\right)^2 for an equilateral triangle, using the area formula, \frac{1}{4}\sqrt{3}a^2, in proportion \frac{1/4(\sqrt{3}a^2)}{1/4(\sqrt{3}b^2)}, just cancel and simplify to get \frac{a^2}{b^2}.
+
+==Solution 2== 
+
+Another approach to this problem, very similar to the previous one but perhaps explained more thoroughly, is to use proportions. First, since the thickness and density are the same, we can set up a proportion based on the principle that d=\frac{m}{V}, thus dV=m. 
+
+However, since density and thickness are the same and A is proportional to s^2 (recognizing that the area of an equilateral triangle is \frac{(s)^2\sqrt{3}}{4}), we can say that m is proportional to s^2. 
+
+Then, by increasing s by a factor of \frac{5}{3}, s^2 is increased by a factor of \frac{25}{9}, thus m=12*\frac{25}{9} or \boxed{\textbf{(D)}\ 33.3}.
+
+==See Also==
+{{AMC12 box|year=2016|ab=B|num-b=7|num-a=9}}
+{{MAA Notice}}

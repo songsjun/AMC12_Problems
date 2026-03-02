@@ -1,0 +1,12 @@
+# 2007 AMC 12B Problem 2
+
+> This problem is the same as [2007 AMC 12B #2](https://artofproblemsolving.com/wiki/index.php/2007_AMC_12B_Problems) and [2007 AMC 10B #3](https://artofproblemsolving.com/wiki/index.php/2007_AMC_10B_Problems).
+## Problem
+A college student drove his compact car 120 miles home for the weekend and averaged 30 miles per gallon. On the return trip the student drove his parents' SUV and averaged only 20 miles per gallon. What was the average gas mileage, in miles per gallon, for the round trip?
+
+$\textbf{(A) } 22 \qquad\textbf{(B) } 24 \qquad\textbf{(C) } 25 \qquad\textbf{(D) } 26 \qquad\textbf{(E) } 28$
+## Solution 1
+The trip was 240 miles long and took $\dfrac{120}{30}+\dfrac{120}{20}=4+6=10$ gallons. Therefore, the average mileage was $\dfrac{240}{10}= \boxed{\textbf{(B) }24}$
+## Solution 2
+Alternatively, we can use the harmonic mean to get $\frac{2}{\frac{1}{20} + \frac{1}{30}} = \frac{2}{\frac{1}{12}} = \boxed{\textbf{(B) }24}$
+## See Also

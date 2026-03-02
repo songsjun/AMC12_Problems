@@ -1,0 +1,50 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2003_AMC_12A_Problems/Problem_20&action=raw
+
+Published Time: Thu, 16 Oct 2025 23:48:02 GMT
+
+Markdown Content:
+==Problem==
+How many 15-letter arrangements of 5 A's, 5 B's, and 5 C's have no A's in the first 5 letters, no B's in the next 5 letters, and no C's in the last 5 letters?
+
+ \textrm{(A)}\ \sum_{k=0}^{5}\binom{5}{k}^{3}\qquad\textrm{(B)}\ 3^{5}\cdot 2^{5}\qquad\textrm{(C)}\ 2^{15}\qquad\textrm{(D)}\ \frac{15!}{(5!)^{3}}\qquad\textrm{(E)}\ 3^{15} 
+
+== Video Solution ==
+https://youtu.be/3MiGotKnC_U?t=2323
+
+~ ThePuzzlr
+
+== Video Solution ==
+https://youtu.be/0W3VmFp55cM?t=3737
+
+~ Sohil Rathi
+
+== Video Solution (Meta-Solving Techniques) ==
+https://youtu.be/GmUWIXXf_uk?t=260
+
+~ Sohil Rathi
+
+==Solution 1==
+The answer is \boxed{\textrm{(A)}}.
+
+Note that the first five letters must be B's or C's, the next five letters must be C's or A's, and the last five letters must be A's or B's. If there are k B's in the first five letters, then there must be 5-k C's in the first five letters, so there must be k C's and 5-k A's in the next five letters, and k A's and 5-k B's in the last five letters. Therefore the number of each letter in each group of five is determined completely by the number of B's in the first 5 letters, and the number of ways to arrange these 15 letters with this restriction is \binom{5}{k}^3 (since there are \binom{5}{k} ways to arrange k B's and 5-k C's). Therefore the answer is \sum_{k=0}^{5}\binom{5}{k}^{3}.
+
+==Solution 2 (Answer Choices)==
+
+Note that answer choices B, D, and E have a power of 3 in them, which is impossible since every letter only has 2 options due to the restriction. Therefore, they are automatically eliminated.
+
+Answer choice C is eliminated due to the fact that not every combination is counted for in 2^15. 
+We can show this in a very simple way:
+
+If all 5 C’s are used in the first 5 letters of the arrangements, then the next 5 letters must be A’s, as B’s are not allowed according to the question. Therefore, there is only one option for these 5 letters, showing a case not accounted for in 2^15.
+
+Therefore, the only remaining answer choice is \boxed{\textrm{(A)}}.
+
+-SwordOfJustice
+
+==See Also==
+{{AMC12 box|year=2003|ab=A|num-b=19|num-a=21}}
+
+[[Category:Introductory Combinatorics Problems]]
+{{MAA Notice}}

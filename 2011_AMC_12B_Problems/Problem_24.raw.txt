@@ -1,0 +1,47 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2011_AMC_12B_Problems/Problem_24&action=raw
+
+Published Time: Sun, 22 Aug 2021 22:12:35 GMT
+
+Markdown Content:
+== Problem ==
+
+Let P(z) = z^8 + \left(4\sqrt{3} + 6\right)z^4 - \left(4\sqrt{3} + 7\right). What is the minimum perimeter among all the 8-sided polygons in the complex plane whose vertices are precisely the zeros of P(z)?
+
+\textbf{(A)}\ 4\sqrt{3} + 4 \qquad \textbf{(B)}\ 8\sqrt{2} \qquad \textbf{(C)}\ 3\sqrt{2} + 3\sqrt{6} \qquad \textbf{(D)}\ 4\sqrt{2} + 4\sqrt{3} \qquad \textbf{(E)}\ 4\sqrt{3} + 6
+
+== Solution ==
+
+Answer: (B)
+
+First of all, we need to find all z  such that P(z) = 0
+
+P(z) = \left(z^4 - 1\right)\left(z^4 + \left(4\sqrt{3} + 7\right)\right)
+
+So z^4 = 1 \implies z = e^{i\frac{n\pi}{2}}
+
+or z^4 = - \left(4\sqrt{3} + 7\right)
+
+z^2 = \pm i \sqrt{4\sqrt{3} + 7} = e^{i\frac{(2n+1)\pi}{2}} \left(\sqrt{3} + 2\right)
+
+z = e^{i\frac{(2n+1)\pi}{4}} \sqrt{\sqrt{3} + 2} = e^{i\frac{(2n+1)\pi}{4}} \left(\frac{\sqrt{3}}{\sqrt{2}} + \frac{1}{\sqrt{2}}\right)
+
+Now we have a solution at \frac{n\pi}{4} if we look at them in polar coordinate, further more, the 8-gon is symmetric (it is an equilateral octagon) . So we only need to find the side length of one and multiply by 8.
+
+So answer = 8 \times distance from 1 to \left(\frac{\sqrt{3}}{2} + \frac{1}{2}\right)\left(1 + i\right)
+
+Side length = \sqrt{\left(\frac{\sqrt{3}}{2} - \frac{1}{2}\right)^2 + \left(\frac{\sqrt{3}}{2} + \frac{1}{2}\right)^2} = \sqrt{2\left(\frac{3}{4} + \frac{1}{4}\right)} = \sqrt{2}
+
+Hence, answer is 8\sqrt{2}.
+
+== Solution 2 ==
+
+Use the law of cosines.
+We make a the distance.
+Now, since the angle does not change the distance from the origin, we can just use the distance. a^2 = (\frac{\sqrt{3}}{\sqrt{2}} + \frac{1}{\sqrt{2}})^2 + 1^2 -2 \times \Big( \frac{\sqrt{3}}{\sqrt{2}} + \frac{1}{\sqrt{2}} \Big)\times 1 \times \cos \frac{\pi}{4}, which simplifies to a^2= 2 + \sqrt3 +1 - 1 - \sqrt3, or a^2=2, or a=\sqrt2.
+Multiply the answer by 8 to get \boxed{ (B) 8\sqrt2}
+
+== See also ==
+{{AMC12 box|year=2011|num-b=23|num-a=25|ab=B}}
+{{MAA Notice}}

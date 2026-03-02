@@ -1,0 +1,46 @@
+# 2012 AMC 12B Problem 8
+
+## Problem 8
+A dessert chef prepares the dessert for every day of a week starting with Sunday. The dessert each day is either cake, pie, ice cream, or pudding. The same dessert may not be served two days in a row. There must be cake on Friday because of a birthday. How many different dessert menus for the week are possible?
+
+$\textbf{(A)}\ 729\qquad\textbf{(B)}\ 972\qquad\textbf{(C)}\ 1024\qquad\textbf{(D)}\ 2187\qquad\textbf{(E)}\ 2304$
+## Solution
+We can count the number of possible foods for each day and then multiply to enumerate the number of combinations.
+
+On Friday, we have one possibility: cake.
+
+On Saturday, we have three possibilities: pie, ice cream, or pudding. This is the end of the week.
+
+On Thursday, we have three possibilities: pie, ice cream, or pudding. We can't have cake because we have to have cake the following day, which is the Friday with the birthday party.
+
+On Wednesday, we have three possibilities: cake, plus the two things that were not eaten on Thursday.
+
+Similarly, on Tuesday, we have three possibilities: the three things that were not eaten on Wednesday.
+
+Likewise on Monday: three possibilities, the three things that were not eaten on Tuesday.
+
+On Sunday, it is tempting to think there are four possibilities, but remember that cake must be served on Friday. This serves to limit the number of foods we can eat on Sunday, with the result being that there are three possibilities: The three things that were not eaten on Monday.
+
+So the number of menus is 3 $\cdot 3 \cdot 3 \cdot 3 \cdot 3 \cdot 1 \cdot 3 = 729.$
+The answer is $\boxed{A}.$
+## Solution 2
+We can perform casework as an understandable means of getting the answer. We can organize our counting based on the food that was served on Wednesday, because whether cake is or is not served on Wednesday seems to significantly affect the number of ways the chef can make said foods for that week.
+
+Case 1: Cake is served on Wednesday. Here, we have three choices for food on Thursday and Saturday since cake must be served on Friday, and none of these choices are cake, which was served Wednesday. Likewise, we have three choices (pie, ice cream, and pudding) for the food served on Tuesday and thus three choices for those served on Monday and Sunday, with these three choices being whatever was not served on Tuesday and Monday, respectively. Hence, for this case, there are 3 $\cdot 3 \cdot 3 \cdot 3 \cdot 3 = 243$ possibilities.
+
+Case 2: Cake is not served on Wednesday. Obviously, this means that pie, ice cream, and pudding are our only choices for Wednesday's food. Since cake must be served on Friday, only ice cream, pudding, and cake can be served on Thursday. However, since one of those foods was chosen for Wednesday, we only have two possibilities for Thursday's food. Like our first case, we have three possibilities for the food served on Tuesday, Monday, and Sunday: whatever was not served on Wednesday, Tuesday, and Monday, respectively. 3 $\cdot 3 \cdot 3 \cdot 3 \cdot 2 \cdot 3 = 486$ possibilities thus exist for this case.
+
+Adding the number of possibilities together yields that $243 + 486 = 729$ is the total number of menus, making our answer $\boxed{A}.$
+## Solution 3
+Note that the choice of a food item on a given day is symmetric, i.e. the number of ways to create the meal plan with a cake on Friday is the same as the number of ways to create the meal plan with pudding on Friday, and the same reasoning holds for the other desserts. Since every meal plan is counted by the summation of the 4 aforementioned plans (note that Friday's dessert has to be one of the 4 given desserts) and that these cases are mutually exclusive (i.e. you cannot make both a cake and pudding on Friday), each case results in a quarter of the total meal plans (Since there are 4 desserts, we multiply by $\tfrac{1}{4}).$ The total number of plans with no restrictions can be counted with constructive counting, as follows:
+
+We note that there are 4 ways to choose the first dessert. Then, each dessert thereafter must be distinct from the prior one. Since there are 4 options, and 1 of them has been taken by the prior, each following dessert can be chosen in (4 - 1) = 3 ways. Thus, since there are 6 desserts other than the first, the total number (without restrictions) is 4 $\cdot 3^6$
+
+Thus, by our symmetry argument derived prior, we know that the number of desired meal plans is $\frac{\text{\# plans w/o restrictions}}{4} = \frac{4 \cdot 3^6}{4} = 3^6 = 729,$ choice $\boxed{A}$
+
+*~ftwmaster65*
+## Solution 4 (Answer choices)
+Notice that if we consider Friday cake day, Saturday has 3 choices. Thus, we consider everything from Sunday to Thursday. Suppose Sunday has 4 choices, and all the rest of the days have 3 choices. If we multiply 4 $\times 3^5,$ we obtain 972. However, if Wednesday had not been a cake day, there would only be 2 choices for Thursday. Hence, we know that the answer must be less than 972. Thus, 729 $\Rightarrow \boxed{A}.$
+
+*~hhuangterry*
+## See Also

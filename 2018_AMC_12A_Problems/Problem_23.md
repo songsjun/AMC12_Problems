@@ -1,0 +1,154 @@
+# 2018 AMC 12A Problem 23
+
+## Problem
+In $\triangle PAT, \angle P=36^{\circ}, \angle A=56^{\circ},$ and PA=10. Points U and G lie on sides $\overline{TP}$ and $\overline{TA},$ respectively, so that PU=AG=1. Let M and N be the midpoints of segments $\overline{PA}$ and $\overline{UG},$ respectively. What is the degree measure of the acute angle formed by lines MN and PA?
+
+$\textbf{(A) } 76 \qquad \textbf{(B) } 77 \qquad \textbf{(C) } 78 \qquad \textbf{(D) } 79 \qquad \textbf{(E) } 80$
+## Diagram
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+/* Made by MRENTHUSIASM */ size(375); pair P, A, T, U, G, M, N; P = origin; A = (10,0); U = intersectionpoint(Circle(P,1),P--P+2*dir(36)); G = intersectionpoint(Circle(A,1),A--A+2*dir(180-56)); T = extension(P,U,A,G); M = midpoint(P--A); N = midpoint(U--G); dot("$P$",P,1.5*SW,linewidth(4)); dot("$A$",A,1.5*SE,linewidth(4)); dot("$U$",U,1.5*(0,1),linewidth(4)); dot("$G$",G,1.5*NE,linewidth(4)); dot("$T$",T,1.5*(0,1),linewidth(4)); dot("$M$",M,1.5*S,linewidth(4)); dot("$N$",N,1.5*(0,1),linewidth(4)); draw(P--A--T--cycle^^U--G^^M--N); label("$1$",midpoint(G--A),1.5*dir(30)); label("$1$",midpoint(U--P),1.5*dir(150)); label("$\circ$",P,5*dir(18),fontsize(10)); label("$\circ$",A,3*dir(180-56/2),fontsize(10)); Label L = Label("$10$", align=(0,0), position=MidPoint, filltype=Fill(3,0,white)); draw(P-(0,1)--A-(0,1), L=L, arrow=Arrows(),bar=Bars(15)); add(pathticks(U--N, 2, .5, 4, 8, red)); add(pathticks(N--G, 2, .5, 4, 8, red)); add(pathticks(P--M, 1, .5, 0, 8, red)); add(pathticks(M--A, 1, .5, 0, 8, red));
+```
+
+*~MRENTHUSIASM*
+## Solution 1 (Trigonometry)
+Let P be the origin, and PA lie on the x-axis.
+
+We can find U=$\left(\cos(36), \sin(36)\right)$ and G=$\left(10-\cos(56), \sin(56)\right)$
+
+Then, we have M=(5, 0) and N is the midpoint of U and G, or $\left(\frac{10+\cos(36)-\cos(56)}{2}, \frac{\sin(36)+\sin(56)}{2}\right)$
+
+Notice that the tangent of our desired points is the the absolute difference between the y-coordinates of the two points divided by the absolute difference between the x-coordinates of the two points.
+
+This evaluates to $\frac{\sin(36)+\sin(56)}{\cos(36)-\cos(56)}$
+Now, using sum to product identities, we have this equal to $\frac{2\sin(46)\cos(10)}{-2\sin(46)\sin({-10})}=\frac{\sin(80)}{\cos(80)}=\tan(80)$
+so the answer is $\boxed{\textbf{(E) } 80}.$
+
+*~lifeisgood03*
+
+Note: Though this solution is excellent, setting M = (0,0) makes life a tad bit easier
+
+*~MathleteMA*
+## Solution 2 (Rotation, Isosceles Triangle, Parallel Lines)
+We will refer to the **Diagram** section. In this solution, all angle measures are in degrees.
+
+We rotate $\triangle PUM$ by $180^\circ$ about M to obtain $\triangle AU$'M. Let H be the intersection of $\overline{PA}$ and $\overline{GU'},$ as shown below.
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+/* Made by MRENTHUSIASM */ size(375); pair P, A, T, U, G, M, N, U1, H; P = origin; A = (10,0); U = intersectionpoint(Circle(P,1),P--P+2*dir(36)); G = intersectionpoint(Circle(A,1),A--A+2*dir(180-56)); T = extension(P,U,A,G); M = midpoint(P--A); N = midpoint(U--G); U1 = rotate(180,M)*U; H = intersectionpoint(P--A,G--U1); fill(U--P--M--cycle^^M--U1--A--cycle,yellow); dot("$P$",P,1.5*SW,linewidth(4)); dot("$A$",A,1.5*SE,linewidth(4)); dot("$U$",U,1.5*(0,1),linewidth(4)); dot("$G$",G,1.5*NE,linewidth(4)); dot("$T$",T,1.5*(0,1),linewidth(4)); dot("$M$",M,1.5*S,linewidth(4)); dot("$N$",N,1.5*(0,1),linewidth(4)); dot("$U'$",U1,1.5*S,linewidth(4)); dot("$H$",H,1.5*NW,linewidth(4)); draw(P--A--T--cycle^^U--G^^M--N^^U--U1--A); draw(G--U1,dashed); label("$1$",midpoint(G--A),1.5*dir(30)); label("$1$",midpoint(A--U1),1.5*dir(-30)); label("$1$",midpoint(U--P),1.5*dir(150)); label("$\circ$",P,5*dir(18),fontsize(8)); label("$\circ$",A,2.5*dir(180-56/2),fontsize(8)); label("$\circ$",A,2.5*dir(180+25),fontsize(8)); Label L = Label("$10$", align=(0,0), position=MidPoint, filltype=Fill(3,0,white)); draw(P-(0,1.5)--A-(0,1.5), L=L, arrow=Arrows(),bar=Bars(15)); add(pathticks(U--N, 2, .5, 4, 8, red)); add(pathticks(N--G, 2, .5, 4, 8, red)); add(pathticks(U--M, 1, .5, 0, 8, red)); add(pathticks(M--U1, 1, .5, 0, 8, red));
+```
+
+Note that $\triangle GU$'A is an isosceles triangle with GA=U'A=1, so $\angle AGU$'=$\angle AU$'G=$\frac{180-\angle GAU'}{2}=44.$ In $\triangle GHA,$ it follows that $\angle GHA=180-\angle GAH-\angle AGH=80.$
+
+Since $\frac{UM}{UU'}=\frac{UN}{UG}=\frac12,$ we conclude that $\triangle UMN\sim\triangle UU$'G by SAS, from which $\angle UMN=\angle UU$'G and $\angle UNM=\angle UGU$'. By the Converse of the Corresponding Angles Postulate, we deduce that $\overline{MN}$\parallel$\overline{U'G}.$
+
+Finally, we have $\angle NMA=\angle GHA=\boxed{\textbf{(E) } 80}$ by the Corresponding Angles Postulate.
+
+*~MRENTHUSIASM*
+## Solution 3 (Extending PN)
+Link PN, extend PN to Q so that QN=PN. Then link QG and QA.
+
+$$\because M,N are the midpoints of PA and PQ, respectively$$
+
+$$\therefore MN is the midsegment of \bigtriangleup PAQ$$
+
+$$\therefore \angle QAP=\angle NMP$$
+
+Notice that \bigtriangleup PUN\cong \bigtriangleup QGN
+
+As a result, QG=AG=UP=1, $\angle AQG=\angle QAG, \angle GQN=\angle NPU$
+
+Also, $\angle GQN+\angle QPA=\angle QPU+\angle QPA=\angle UPA=36^{\circ}$
+
+As a result, $2\angle QAG=180^{\circ}-56^{\circ}-36^{\circ}=88^{\circ}$
+
+Therefore, $\angle QAP=\angle QAG+\angle TAP=56^{\circ}+44^{\circ}=100^{\circ}$
+
+Since we are asked for the acute angle between the two lines, the answer to this problem is $\boxed{\textbf{(E) } 80}.$
+
+*~Solution by BladeRunnerAUG (Frank FYC)*
+## Solution 4 (Parallel Lines)
+Let the mid-point of $\overline{AT}$ be B and the mid-point of $\overline{GT}$ be C.
+Since BC=CG-BG and CG=AB$-\frac{1}{2},$ we can conclude that BC=$\frac{1}{2}.$
+Similarly, we can conclude that BM-CN=$\frac{1}{2}.$ Construct $\overline{ND}$\parallel$\overline{BC}$ and intersects $\overline{BM}$ at D, which gives MD=DN=$\frac{1}{2}.$
+Since $\angle{ABD}=\angle{BDN}, MD=DN,$ we can find the value of $\angle{DMN},$ which is equal to $\frac{1}{2}\angle T=44^{\circ}.$ Since $\overline{BM}$\parallel$\overline{PT},$ which means $\angle{DMN}+\angle{NMP}+\angle{P}=180^{\circ},$ we can infer that $\angle{NMP}=100^{\circ}.$
+As we are required to give the acute angle formed, the final answer would be $80^{\circ}$, which is $\boxed{\textbf{(E) } 80}.$
+
+*~Surefire2019*
+## Solution 5 (Angle Bisectors)
+Let the bisector of $\angle ATP$ intersect PA at X. We have $\angle ATX = \angle PTX = 44^{\circ},$ so $\angle TXA = 80^{\circ}.$ We claim that MN is parallel to this angle bisector, meaning that the acute angle formed by MN and PA is $80^{\circ}$, meaning that the answer is $\boxed{\textbf{(E) } 80}.$
+
+To prove this, let N(x) be the midpoint of U(x)G(x), where U(x) and G(x) are the points on PT and AT, respectively, such that PU = AG = x. (The points given in this problem correspond to $x=1$, but the idea we're getting at is that x will ultimately not matter.) Since U(x) and G(x) vary linearly with x, the locus of all points N(x) must be a line. Notice that N(0) = M, so M lies on this line. Let N$(x_0)$ be the intersection of this line with PT (we know that this line will intersect PT and not AT because PT > AT). Notice that G$(x_0)$ = T.
+
+Let AT = a, TP = b, PA = c. Then AG$(x_0) = PU(x_0)$ = AT = a and PG$(x_0)$ = PT = b. Thus, PN($x_0) = \frac{a+b}{2}.$ By the Angle Bisector Theorem, $\frac{PX}{AX} = \frac{PT}{AT} = \frac{b}{a},$ so PX = $\frac{bc}{a+b}.$ Since M is the midpoint of AP, we also have PM = $\frac{c}{2}.$ Notice that:
+
+
+$$
+\frac{PM}{PX} = \frac{\frac{c}{2}}{\frac{bc}{a+b}} = \frac{a+b}{2b}
+\frac{PN(x_0)}{PT} = \frac{\frac{a+b}{2}}{b} = \frac{a+b}{2b}
+$$
+
+
+Since $\frac{PN(x_0)}{PT} = \frac{PM}{PX},$ the line containing all points N(x) must be parallel to TX. This concludes the proof.
+
+The critical insight to finding this solution is that the length 1 probably shouldn't matter because a length ratio of 1:5 or 1:10 (as in the problem) is exceedingly unlikely to generate nice angles. This realization then motivates the idea of looking at all points similar to N, which then leads to looking at the most convenient such point (in this case, the one that lies on PT).
+
+*~sujaykazi*
+
+Shoutout to Richard Yi and Mark Kong for working with me to discover the necessary insights to this problem!
+## Solution 6 (Overkill: Miquel Points)
+Note that X, the midpoint of major arc PA on (PAT) is the Miquel Point of PUAG (Because PU = AG). Then, since 1 = $\frac{UN}{NG} = \frac{PM}{MA},$ this spiral similarity carries M to N. Thus, we have $\triangle XMN \sim \triangle XAG,$ so $\angle XMN = \angle XAG.$
+
+But, we have $\angle XAG = \angle PAG = \angle PAX = 56 - \frac{180 - \angle PXA}{2} =56 - \frac{180 - \angle T}{2} = 56 - \frac{\angle A + \angle P}{2} = 56 - \frac{56+36}{2} = 56 - 46 = 10$; thus $\angle XMN = 10.$
+
+Then, as X is the midpoint of the major arc, it lies on the perpendicular bisector of PA, so $\angle XMA = 90.$ Since we want the acute angle, we have $\angle NMA = \angle XMA - \angle XMN = 90 - 10 = 80,$ so the answer is $\boxed{\textbf{(E) } 80}.$
+
+*~stronto*
+
+**Sidenote**
+
+For another way to find $\angle XMN,$ note that $\angle XAM = 90 - \angle MXA = 90 - \frac{\angle AXP}{2} = 90 - \frac{\angle ATP}{2}= 90 - 44 = 46,$ giving $\angle XMN = \angle XAG = 56 - 46 = 10$ as desired.
+## Solution 7 (Olympiad Nuke)
+By https://artofproblemsolving.com/community/c6h489748p2745891, we get that MN is parallel to the angle bisector of $\angle ATP.$ Thus, $\angle NMA = 180^\circ - 56^\circ - \frac{180^\circ - 56^\circ - 36^\circ}{2} = \boxed{\textbf{(E) } 80}.$
+## Solution 8 (Vectors)
+The argument of the average of any two unit vectors is average of the arguments of the two vectors. Thereby, the acute angle formed is $\frac{36^\circ{} + 180^\circ{} - 56^\circ{}}{2} = \boxed{\textbf{(E) } 80}.$
+
+*~Professor-Mom (all credit for this amazing solution goes to $V_Enhance$)*
+## Solution 9
+Let P be at point (0, 0), A be at point (10, 0), and M is at point (5, 0). Let U be at point (x, y) and G be at point (a, b). We will use:
+
+$\tan(\theta) =$ |$\frac{m_1 - m_2}{1 + m_1m_2}$| where $\theta$ is the angle between two lines and m_1, m_2 are the slopes of the lines. Then we compute the slope of PA which is simply 0 because there is no change in y. The slope of PU is $\frac{y}{x}$ and the slope of AG is $\frac{b}{a - 10}.$ We can plug in to get:
+
+$\tan(36) =$ |$\frac{y}{x}$| because thankfully the 0 slope for PA cancels a lot out. Clearly $\frac{y}{x}$ is positive so $\frac{y}{x} = \tan(36) \implies$ y = $x\tan(36)$
+
+Similarly, $\tan(56) =$ |$\frac{b}{a - 10}$| = $\frac{b}{10 - a}$ because a < 10 in the coordinate plane. Let 10 - a = c. We have:
+
+$x^{2}+y^{2} = 1$ and y = $x\tan(36)$
+
+$b^{2}+c^{2} = 1$ and b = $c\tan(56)$
+
+simply from substituting 10 - a = c.
+
+Note that N is the midpoint of UG so its coordinates are just: N is at point ($\frac{x + a}{2}, \frac{y + b}{2})$
+
+We need to find the acute angle between NM and PA so again the 0 slope cancels out a lot and we are left with:
+
+$$\tan(\theta) = |\frac{y + b}{x + a - 10}| = |\frac{y + b}{x - c}|$$
+
+All of these variables can be trivially solved from our equations above and we can substitute to get:
+
+$$\tan(\theta) = |\frac{\sin(36) + \sin(56)}{\cos(36) - \cos(56)}|$$
+
+Now we can use sum-to-product identities to simplify this. Note that $\sin(a) + \sin(b) = 2\sin(\frac{a + b}{2})\cos(\frac{a - b}{2})$ and $\cos(a) - \cos(b) = -2\sin(\frac{a + b}{2})\sin(\frac{a - b}{2})$
+
+Note that we can simplify using this to get $\tan(\theta) =$ |$-\cot(\frac{36 - 56}{2})$| = |$-\cot(-10)$| = $\cot(10) = \tan(80)$ hence our answer is $\boxed{\textbf{(E)}}$
+
+*~ilikemath247365*
+## Video Solution by Richard Rusczyk
+https://artofproblemsolving.com/videos/amc/2018amc12a/473
+
+*~dolphin7*
+## See Also

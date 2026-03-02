@@ -1,0 +1,84 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2019_AMC_10A_Problems/Problem_25&action=raw
+
+Published Time: Sun, 19 Oct 2025 23:51:42 GMT
+
+Markdown Content:
+{{duplicate|[[2019 AMC 10A Problems|2019 AMC 10A #25]] and [[2019 AMC 12A Problems|2019 AMC 12A #24]]}}
+
+==Problem==
+
+For how many integers n between 1 and 50, inclusive, is \frac{(n^2-1)!}{(n!)^n} an integer? (Recall that 0! = 1.)
+
+\textbf{(A) } 31 \qquad \textbf{(B) } 32 \qquad \textbf{(C) } 33 \qquad \textbf{(D) } 34 \qquad \textbf{(E) } 35
+
+==Solution 1==
+The main insight is that 
+
+\frac{(n^2)!}{(n!)^{n+1}} 
+
+is always an integer. This is true because it is precisely the number of ways to split up n^2 objects into n unordered groups of size n. Thus,
+
+\frac{(n^2-1)!}{(n!)^n}=\frac{(n^2)!}{(n!)^{n+1}}\cdot\frac{n!}{n^2}
+
+is an integer if n^2 \mid n!, or in other words, if \frac{(n-1)!}{n}, is an integer. This condition is false precisely when n=4 or n is prime, by [[Wilson's Theorem]]. There are 15 primes between 1 and 50, inclusive, so there are 15 + 1 = 16 terms for which
+
+\frac{(n^2-1)!}{(n!)^{n}}
+
+is potentially not an integer. It can be easily verified that the above expression is not an integer for n=4 as there are more factors of 2 in the denominator than the numerator. Similarly, it can be verified that the above expression is not an integer for any prime n=p, as there are more factors of p in the denominator than the numerator. Thus all 16 values of n make the expression not an integer and the answer is 50-16=\boxed{\textbf{(D)}\ 34}.
+
+SideNote: Another method to prove that \frac{(n^2)!}{(n!)^{n+1}} is always an integer is instead as follows using Number Theory. Notice that n will divide the numerator n+1 times, since n^2 = n \times n contains not one but two factors of n. Also, for a < n, notice that a divides (n^2)! at least \lfloor \frac{n^2}{a} \rfloor \ge \lfloor \frac{n^2}{n-1} \rfloor \ge \lfloor \frac{n^2 - 1}{n-1} \rfloor \ge n+1 times. Thus, each integer from 1 to n will divide (n^2)! at least n+1 times, which proves such a lemma. \square{}
+
+==Solution 2==
+We can use the P-Adic Valuation (more info could be found here: [[Mathematical notation]]) of n to solve this problem (recall the P-Adic Valuation of 'n' is denoted by v_p (n) and is defined as the greatest power of some prime 'p' that divides n. For example, v_2 (6)=1 or v_7 (245)=2 .) Using Legendre's formula, we know that :
+
+ v_p (n!)= \sum_{i=1}^\infty \lfloor \frac {n}{p^i} \rfloor 
+
+Seeing factorials involved in the problem, this prompts us to use [[Legendre's Formula]] where n is a power of a prime.
+
+We also know that , v_p (m^n) = n \cdot v_p (m) .
+Knowing that a\mid b if v_p (a) \le v_p (b) , we have that :
+
+ n \cdot v_p (n!) \le v_p ((n^2 -1 )!)  and we must find all n for which this is true.
+
+If we plug in n=p, by Legendre's we get two equations:
+
+ v_p ((n^2 -1)!) = \sum_{i=1}^\infty \lfloor \frac {n^2 -1}{p^i} \rfloor = (p-1)+0+...+0 = p-1 
+
+And we also get :
+
+ v_p ((n!)^n) = n \cdot v_p (n!)= n \cdot \sum_{i=1}^\infty \lfloor \frac {n}{p^i} \rfloor = p \cdot ( 1+0+...0) = p 
+
+But we are asked to prove that  n \cdot v_p (n!) \le v_p ((n^2 -1 )!) \Longrightarrow p \le p-1  which is false for all 'n' where n is prime.
+
+Now we try the same for n=p^2 , where p is a prime. By Legendre we arrive at:
+
+v_p ((p^4 -1)!) = p^3 + p^2 + p -3 
+
+(as v_p(p^4!) = p^3 + p^2 + p + 1 and p^4 contains 4 factors of p) and 
+
+p^2 \cdot v_p (p^2 !) = p^3 + p^2 
+
+Then we get:
+
+ p^2 \cdot v_p (p!) \le v_p ((n^4 -1)!) \Longrightarrow p^3 + p^2 \le p^3 + p^2 + p -3  Which is true for all primes except for 2, so 2^2 = 4 doesn't work. It can easily be verified that for all n=p^i where i is an integer greater than 2, satisfies the inequality : n \cdot v_p (n!) \le v_p ((n^2 -1 )!).
+
+Therefore, there are 16 values that don't work and  50-16 = \boxed{\mathbf{(D)}\ 34} values that work.
+
+~qwertysri987
+
+==Solution 3 (Non-Rigorous)==
+Notice all 15 primes don't work as there are n factors of n in the denominator and n-1 factors of n in the numerator, as easily seen through the denominator n^n and the numerator (n^2-1)!, which doesn't get quite to n^2 hence it is one short of a factor of n, through 1n, 2n, \cdots, (n-1)n. Further experimentation finds that n=4 does not work as there are 11 factors of 2 in the numerator and 12 in the denominator. We also find that it seems that all other values of n where n is a square of a prime work. So we get 50-15-1=\boxed{34} and that happens to be right. 
+
+~[[BS2012]]
+~mathboy282
+
+==See Also==
+Video Solution by Richard Rusczyk:
+https://www.youtube.com/watch?v=9klaWnZojq0
+
+{{AMC10 box|year=2019|ab=A|num-b=24|after=Last Problem}}
+{{AMC12 box|year=2019|ab=A|num-b=23|num-a=25}}
+{{MAA Notice}}
+[[Category: Intermediate Number Theory Problems]]

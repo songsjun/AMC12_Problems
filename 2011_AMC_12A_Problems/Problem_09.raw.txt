@@ -1,0 +1,23 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2011_AMC_12A_Problems/Problem_9&action=raw
+
+Published Time: Thu, 16 Jul 2020 03:47:51 GMT
+
+Markdown Content:
+== Problem ==
+At a twins and triplets convention, there were 9 sets of twins and 6 sets of triplets, all from different families. Each twin shook hands with all the twins except his/her siblings and with half the triplets. Each triplet shook hands with all the triplets except his/her siblings and with half the twins. How many handshakes took place?
+
+ \textbf{(A)}\ 324 \qquad \textbf{(B)}\ 441 \qquad \textbf{(C)}\ 630 \qquad \textbf{(D)}\ 648 \qquad \textbf{(E)}\ 882 
+
+== Solution ==
+There are 18 total twins and 18 total triplets. Each of the twins shakes hands with the 16 twins not in their family and 9 of the triplets, a total of 25 people. Each of the triplets shakes hands with the 15 triplets not in their family and 9 of the twins, for a total of 24 people. Dividing by two to accommodate the fact that each handshake was counted twice, we get a total of \frac{1}{2}\times 18 \times (25+24) = 9 \times 49 = 441 \rightarrow \boxed{\textbf{B}}
+
+==Video Solution==
+
+https://www.youtube.com/watch?v=6tlqpAcmbz4
+~Shreyas S
+
+== See also ==
+{{AMC12 box|year=2011|num-b=8|num-a=10|ab=A}}
+{{MAA Notice}}

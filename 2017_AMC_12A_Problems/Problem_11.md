@@ -1,0 +1,16 @@
+# 2017 AMC 12A Problem 11
+
+## Problem
+Claire adds the degree measures of the interior angles of a convex polygon and arrives at a sum of 2017. She then discovers that she forgot to include one angle. What is the degree measure of the forgotten angle?
+
+$\textbf{(A)}\ 37\qquad\textbf{(B)}\ 63\qquad\textbf{(C)}\ 117\qquad\textbf{(D)}\ 143\qquad\textbf{(E)}\ 163$
+## Solution 1
+We know that the sum of the interior angles of the polygon is a multiple of 180. Note that $\left\lceil\frac{2017}{180}\right\rceil = 12$ and $180\cdot 12 = 2160,$ so the angle Claire forgot is $\equiv 2160-2017=143\mod 180.$ Since the polygon is convex, the angle is $\leq 180,$ so the answer is $\boxed{(D)\ =\ 143}.$
+## Solution 2 (fast with answer choices)
+Because the sum of the interior angles is a multiple of 180, we know that the sum of the angles in a polygon is 0 $\mod 9. 2017$ is congruent to 1 $\mod 9,$ so the answer has to be -1 $\mod 9.$ The only answer that is congruent to -1 $\mod 9$ is 143.
+*~harsha12345*
+## Video Solution (HOW TO THINK CREATIVELY!!!)
+https://youtu.be/4mVtT62THpA
+
+*~Education, the Study of Everything*
+## See Also

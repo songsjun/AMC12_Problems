@@ -1,0 +1,24 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2004_AMC_12A_Problems/Problem_6&action=raw
+
+Published Time: Wed, 30 Dec 2020 06:10:28 GMT
+
+Markdown Content:
+==Problem==
+Let U=2\cdot 2004^{2005}, V=2004^{2005}, W=2003\cdot 2004^{2004}, X=2\cdot 2004^{2004}, Y=2004^{2004} and Z=2004^{2003}. Which of the following is the largest? 
+
+\mathrm {(A)} U-V \qquad \mathrm {(B)} V-W \qquad \mathrm {(C)} W-X \qquad \mathrm {(D)} X-Y \qquad \mathrm {(E)} Y-Z \qquad
+
+==Solution==
+\begin{eqnarray*} U-V&=&2004*2004^{2004}\\ V-W&=&1*2004^{2004}\\ W-X&=&2001*2004^{2004}\\ X-Y&=&1*2004^{2004}\\ Y-Z&=&2003*2004^{2003} \end{eqnarray*}
+
+After comparison, U-V is the largest. \mathrm {(A)}
+
+==Solution 2==
+A quick check reveals the positive integers are in decreasing order. Then note V = 2004^{2005}. \newline
+U - V = 2004^{2005} = V, and any of the other differences cannot be greater than or equal to V, hence choose \boxed{A} as the answer.
+
+==See Also==
+{{AMC12 box|year=2004|ab=A|num-b=5|num-a=7}}
+{{MAA Notice}}

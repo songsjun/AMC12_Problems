@@ -1,0 +1,86 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2012_AMC_12A_Problems/Problem_16&action=raw
+
+Published Time: Tue, 23 Sep 2025 04:21:58 GMT
+
+Markdown Content:
+== Problem ==
+
+Circle C_1 has its center O lying on circle C_2.  The two circles meet at X and Y.  Point Z in the exterior of C_1 lies on circle C_2 and XZ=13, OZ=11, and YZ=7.  What is the radius of circle C_1?
+
+ \textbf{(A)}\ 5\qquad\textbf{(B)}\ \sqrt{26}\qquad\textbf{(C)}\ 3\sqrt{3}\qquad\textbf{(D)}\ 2\sqrt{7}\qquad\textbf{(E)}\ \sqrt{30} 
+
+==Diagram==
+ size(8cm,8cm); path circ1, circ2; circ1=circle((0,0),5); circ2=circle((3,4),3); pair O, Z; O=(3,4); Z=(3,-4); pair [] x=intersectionpoints(circ1,circ2); pair [] y=intersectionpoints(x[1]--Z,circ2); pair B; B=midpoint(x[1]--y[0]); draw(B--O); draw(x[0]--Z); draw(O--Z); draw(x[1]--Z); draw(O--x[0]); draw(circ1); draw(circ2); draw(rightanglemark(Z,B,O,15)); draw(x[1]--O--y[0]); label("$O$",O,NE); label("$Y$",x[0],SE); label("$X$",x[1],NW); label("$Z$",Z,S); label("$A$",y[0],SW); label("$B$",B,SW);
+
+==Solution 1==
+Let r denote the radius of circle C_1. Note that quadrilateral ZYOX is cyclic. By Ptolemy's Theorem, we have 11XY=13r+7r and XY=20r/11. Let t be the measure of angle YOX. Since YO=OX=r, the law of cosines on triangle YOX gives us \cos t =-79/121. Again since ZYOX is cyclic, the measure of angle YZX=180-t. We apply the law of cosines to triangle ZYX so that XY^2=7^2+13^2-2(7)(13)\cos(180-t). Since \cos(180-t)=-\cos t=79/121 we obtain XY^2=12000/121. But  XY^2=400r^2/121 so that r=\boxed{(E)\sqrt{30}}.
+
+==Solution 2==
+
+Let us call the r the radius of circle C_1, and R the radius of C_2. Consider \triangle OZX and \triangle OZY. Both of these triangles have the same circumcircle (C_2). From the Extended Law of Sines, we see that \frac{r}{\sin{\angle{OZY}}} = \frac{r}{\sin{\angle{OZX}}}= 2R. Therefore, \angle{OZY} \cong \angle{OZX}. We will now apply the Law of Cosines to \triangle OZX and \triangle OZY and get the equations 
+
+r^2 = 13^2 + 11^2 - 2 \cdot 13 \cdot 11 \cdot \cos{\angle{OZX}},
+
+r^2 = 11^2 + 7^2 - 2 \cdot 11 \cdot 7 \cdot \cos{\angle{OZY}}, 
+
+respectively. Because \angle{OZY} \cong \angle{OZX}, this is a system of two equations and two variables. Solving for r gives r = \sqrt{30}. \boxed{E}.
+
+===Note===
+Instead of using the Extended Law of Sines, you can note that OX = OY \implies \text{arc}\ OX =\text{arc}\ OY \implies \angle{OZY} \cong \angle{OZX}, since the angles inscribe arcs of the same length.
+
+==Solution 3==
+
+Let r denote the radius of circle C_1. Note that quadrilateral ZYOX is cyclic. By Ptolemy's Theorem, we have 11XY=13r+7r and XY=20r/11. Consider isosceles triangle XOY. Pulling an altitude to XY from O, we obtain \cos(\angle{OXY}) = \frac{10}{11}. Since quadrilateral ZYOX is cyclic, we have \angle{OXY}=\angle{OZY}, so \cos(\angle{OXY}) = \cos(\angle{OZY}). Applying the Law of Cosines to triangle OZY, we obtain \frac{10}{11} = \frac{7^2+11^2-r^2}{2(7)(11)}. Solving gives r=\sqrt{30}. \boxed{E}.
+
+-Solution by '''thecmd999'''
+
+==Solution 4==
+
+Let P = XY \cap OZ. Consider an inversion about C_1 \implies C_2 \to XY, Z \to P. So,  OP \cdot OZ = r^2 \implies OP = r^2/11 \implies PZ = \dfrac{121 - r^2}{11}. Using \triangle YPZ \sim OXZ \implies r = \sqrt{30} \implies \boxed{E}.
+
+-Solution by '''IDMasterz'''
+
+==Solution 5==
+
+Notice that \angle YZO=\angle XZO as they subtend arcs of the same length. Let A be the point of intersection of C_1 and XZ. We now have AZ=YZ=7 and XA=6. Furthermore, notice that \triangle XAO is isosceles, thus the altitude from O to XA bisects XZ at point B above. By the Pythagorean Theorem, \begin{align*}BZ^2+BO^2&=OZ^2\\(BA+AZ)^2+OA^2-BA^2&=11^2\\(3+7)^2+r^2-3^2&=121\\r^2&=30\end{align*}Thus, r=\sqrt{30}\implies\boxed{\textbf{E}}
+
+==Solution 6==
+
+Use the diagram above. Notice that \angle YZO=\angle XZO as they subtend arcs of the same length. Let A be the point of intersection of C_1 and XZ. We now have AZ=YZ=7 and XA=6. Consider the power of point Z with respect to Circle O, we have 13\cdot 7 = (11 + r)(11 - r) = 11^2 - r^2, which gives r=\boxed{\sqrt{30}}.
+
+==Solution 7 (Only Law of Cosines)==
+
+Note that OX and OY are the same length, which is also the radius R we want. Using the law of cosines on \triangle OYZ, we have 11^2=R^2+7^2-2\cdot 7 \cdot R \cdot \cos\theta, where \theta is the angle formed by \angle{OYZ}. Since \angle{OYZ} and \angle{OXZ} are supplementary, \angle{OXZ}=\pi-\theta. Using the law of cosines on \triangle OXZ, 11^2=13^2+R^2-2 \cdot 13 \cdot R \cdot \cos(\pi-\theta). As \cos(\pi-\theta)=-\cos\theta, 11^2=13^2+R^2+\cos\theta. Solving for theta on the first equation and substituting gives \frac{72-R^2}{14R}=\frac{48+R^2}{26R}. Solving for R gives R=\textbf{(E)}\ \boxed{\sqrt{30}} .
+
+==Solution 8==
+
+We first note that C_2 is the circumcircle of both \triangle XOZ and \triangle OYZ. Thus the circumradius of both the triangles are equal. We set the radius of C_1 as r, and noting that the circumradius of a triangle is \frac{abc}{4A} and that the area of a triangle by Heron's formula is \sqrt{(S)(S-a)(S-b)(S-c)} with S as the semi-perimeter we have the following, \begin{align*}\dfrac{r \cdot 13 \cdot 11}{4\sqrt{(12 + \frac{r}{2})(12 - \frac{r}{2})(1 + \frac{r}{2})(\frac{r}{2} - 1)}} &= \dfrac{r \cdot 7 \cdot 11}{4\sqrt{(9 + \frac{r}{2})(9 - \frac{r}{2})(2 + \frac{r}{2})(\frac{r}{2} - 2)}} \\ \dfrac{13}{\sqrt{(144- \frac{r^2}{4})(\frac{r^2}{4} - 1)}} &= \dfrac{7}{\sqrt{(81- \frac{r^2}{4})(\frac{r^2}{4} - 4)}} \\ 169 \cdot (81 - \frac{r^2}{4})(\frac{r^2}{4} - 4) &= 49 \cdot (144 - \frac{r^2}{4})(\frac{r^2}{4} - 1) .\end{align*}
+Now substituting a = \frac{r^2}{4}, \begin{align*}169a^2 - (85) \cdot 169 a + 4 \cdot 81 \cdot 169 &= 49a^2 - (145) \cdot 49 a + 144 \cdot 49 \\ 120a^2 - 7260a + 47700 &= 0 \\ 2a^2 - 121a + 795 &= 0 \\ (2a-15)(a-53) &= 0 \\ a = \frac{15}{2}, 53.\end{align*}
+This gives us 2 values for r namely r = \sqrt{4 \cdot \frac{15}{2}} = \sqrt{30} and r = \sqrt{4 \cdot 53} = 2\sqrt{53}.
+
+Now notice that we can apply Ptolemy's theorem on XOYZ to find XY in terms of r. We get \begin{align*}11 \cdot XY &= 13r + 7r \\ XY &= \frac{20r}{11}.\end{align*}
+Here we substitute our 2 values of r receiving XY = \frac{20\sqrt{30}}{11}, \frac{40\sqrt{53}}{11}. Notice that the latter of the 2 cases does not satisfy the triangle inequality for \triangle XYZ as \frac{40\sqrt{53}}{11} \approx 26.5 > 7 + 13 = 20. But the former does thus our answer is \textbf{(E)}\ \boxed{\sqrt{30}}. 
+
+~Aaryabhatta1
+
+==Solution 9 (Similar Triangles)==
+
+We first apply [[Ptolemy's Theorem]] on [[cyclic quadrilateral]] XZYO to get 13r+7r = 11 \cdot XY \Longrightarrow XY=\frac{20r}{11}.  Since \angle ZXY = \angle ZOY and \angle XZO = \angle XYO. From this, we can see \triangle ZPY \sim \triangle XPO and \triangle ZPX \sim \triangle YPO. That means ZP:PY = 13:r, \: ZP:PX = 7:r, \: XP:PO = 13:r. So, if you let PY=x, you will get ZP = \frac{13x}{r}. Continuing in this fashion, we can get XP = \frac{13x}{r} \cdot \frac{r}{7} = \frac{13x}{7} and PO = \frac{13x}{7} \cdot \frac{r}{13} = \frac{xr}{7}. Since XY = \frac{20r}{11} = XP+PY, we have x+\frac{13x}{7} = \frac{20r}{11} which gives us x=\frac{7r}{11}. Plugging it into ZO = 11 = ZP+PO gives 
+
+\frac{13x}{r} + \frac{xr}{7} = \frac{13 \cdot \frac{7r}{11}}{r} + \frac{r \cdot \frac{7r}{11}}{7} = \frac{91}{11} + \frac{r^2}{11} = 11.
+
+Solving for r yields r=\boxed{\sqrt{30}}.
+
+~sml1809
+
+==Video Solution by CanadaMath==
+https://youtu.be/iS2gKMCn6Os?si=yp4Ra1iQsu-szWMR&t=1559
+
+== See Also ==
+
+{{AMC12 box|year=2012|ab=A|num-b=15|num-a=17}}
+
+[[Category:Introductory Geometry Problems]]
+{{MAA Notice}}

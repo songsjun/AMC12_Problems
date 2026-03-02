@@ -1,0 +1,111 @@
+{{duplicate|[[2018 AMC 10A Problems/Problem 20|2018 AMC 10A #20]] and [[2018 AMC 12A Problems/Problem 15|2018 AMC 12A #15]]}}
+
+==Problem==
+
+A scanning code consists of a <math>7 \times 7</math> grid of squares, with some of its squares colored black and the rest colored white. There must be at least one square of each color in this grid of <math>49</math> squares. A scanning code is called <math>\textit{symmetric}</math> if its look does not change when the entire square is rotated by a multiple of <math>90 ^{\circ}</math> counterclockwise around its center, nor when it is reflected across a line joining opposite corners or a line joining midpoints of opposite sides. What is the total number of possible symmetric scanning codes?
+
+<math>\textbf{(A)} \text{ 510} \qquad \textbf{(B)} \text{ 1022} \qquad \textbf{(C)} \text{ 8190} \qquad \textbf{(D)} \text{ 8192} \qquad \textbf{(E)} \text{ 65,534}</math>
+
+==Solution 1==
+
+Draw a <math>7 \times 7</math> square.
+
+<cmath> \begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+K & J & H & G & H & J & K \\
+\hline
+J & F & E & D & E & F & J \\
+\hline
+H & E & C & B & C & E & H \\
+\hline
+G & D & B & A & B & D & G \\
+\hline
+H & E & C & B & C & E & H \\
+\hline
+J & F & E & D & E & F & J \\
+\hline
+K & J & H & G & H & J & K \\
+\hline
+\end{tabular} </cmath>
+
+Start from the center and label all protruding cells symmetrically. (Note that "I" is left out of this labelling, so there are only 10 labels, not 11, as ending in K would suggest!)
+
+More specifically, since there are <math>4</math> given lines of symmetry (<math>2</math> diagonals, <math>1</math> vertical, <math>1</math> horizontal) and they split the plot into <math>8</math> equivalent sections, we can take just one-eighth and study it in particular. Each of these sections has <math>10</math> distinct sub-squares, whether partially or in full. So since each can be colored either white or black, we choose <math>2^{10}=1024</math> but then subtract the <math>2</math> cases where all are white or all are black. That leaves us with <math>\fbox{\textbf{(B)} \text{ 1022}}</math>.
+
+There are only ten squares we get to actually choose, and two independent choices for each, for a total of <math>2^{10} = 1024</math> codes. Two codes must be subtracted (due to the rule that there must be at least one square of each color) for an answer of <math>\fbox{\textbf{(B) }1022}</math>.
+
+
+Note that this problem is very similar to the 1996 AIME Problem 7 https://artofproblemsolving.com/wiki/index.php/1996_AIME_Problems/Problem_7.
+
+==Solution 2 (Very Intuitive and Fast)==
+
+<asy>
+size(100pt);
+draw((1,0)--(8,0),linewidth(0.5));
+draw((1,2)--(6,2),linewidth(0.5));
+draw((1,4)--(4,4),linewidth(0.5));
+draw((1,6)--(2,6),linewidth(0.5));
+draw((2,6)--(2,0),linewidth(0.5));
+draw((4,4)--(4,0),linewidth(0.5));
+draw((6,2)--(6,0),linewidth(0.5));
+draw((1,0)--(1,7),dashed+linewidth(0.5));
+draw((1,7)--(8,0),dashed+linewidth(0.5));
+</asy>
+
+Imagine folding the scanning code along its lines of symmetry. There will be <math>10</math> regions which you have control over coloring. Since we must subtract off <math>2</math> cases for the all-black and all-white cases, the answer is <math>2^{10}-2=\boxed{\textbf{(B) } 1022.}</math>
+
+==Solution 3==
+
+<cmath> \begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+T & T & T & X & T & T & T \\
+\hline
+T & T & T & Y& T & T & T \\
+\hline
+T & T & T & Z & T & T & T \\
+\hline
+X & Y & Z & W & Z & Y & X \\
+\hline
+T & T & T & Z & T & T & T \\
+\hline
+T & T & T & Y & T & T & T \\
+\hline
+T & T & T & X & T & T & T \\
+\hline
+\end{tabular} </cmath>
+
+There are <math>3 \times 3</math> squares in the corners of this <math>7 \times 7</math> square, and there is a horizontal and vertical stripe through the middle. Because we need to have symmetry when the diagonals and midpoints of the large square is connected, we can create a table like this: (Different letters represent different color choices between black and white)
+
+<cmath> \begin{tabular}{|c|c|c|}
+\hline
+A & B & C \\
+\hline
+B & D & E \\
+\hline
+C & E & F \\
+\hline
+\end{tabular}</cmath>
+(Note that coloring one <math>3 \times 3</math> square will also determine the colorings of the other <math>3</math> because the large <math>7 \times 7</math> square must look the same when it is rotated by <math>90^\circ</math>)
+
+There are <math>6</math> different letters and <math>2</math> choices of color (black and white) for each letter, so there are <math>2^6=64</math> colorings of a proper <math>3 \times 3</math> square. Now, all that's left are the horizontal and vertical stripes. Using similar logic, we can see that there are <math>4</math> different letters, so there are <math>2^4=16</math> different colorings. Multiplying them together gives <math>16 \times 64 = 1024</math>. Going back to the question, we see that "there must be at least one square of each color in this grid of <math>49</math> squares." We must then eliminate <math>2</math> options: an all-black grid and an all-white grid. <math>1024-2= \boxed{\textbf{(B)} 1022} \\ \phantom{}</math> 
+-hansenhe
+
+==Video Solution by Pi Academy==
+
+https://youtu.be/lDk1--vGCYc?si=lPYpCtBdfuec72Xm
+
+~ Pi Academy
+
+== Video Solution 2==
+https://youtu.be/M22S82Am2zM
+
+~IceMatrix
+
+
+== See Also ==
+
+{{AMC10 box|year=2018|ab=A|num-b=19|num-a=21}}
+{{AMC12 box|year=2018|ab=A|num-b=14|num-a=16}}
+{{MAA Notice}}
+
+[[Category:Intermediate Combinatorics Problems]]

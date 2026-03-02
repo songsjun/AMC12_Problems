@@ -1,0 +1,116 @@
+{{duplicate|[[2020 AMC 12A Problems|2020 AMC 12A #20]] and [[2020 AMC 10A Problems|2020 AMC 10A #23]]}}
+
+== Problem ==
+Let <math>T</math> be the triangle in the coordinate plane with vertices <math>(0,0), (4,0),</math> and <math>(0,3).</math> Consider the following five isometries (rigid transformations) of the plane: rotations of <math>90^{\circ}, 180^{\circ},</math> and <math>270^{\circ}</math> counterclockwise around the origin, reflection across the <math>x</math>-axis, and reflection across the <math>y</math>-axis. How many of the <math>125</math> sequences of three of these transformations (not necessarily distinct) will return <math>T</math> to its original position? (For example, a <math>180^{\circ}</math> rotation, followed by a reflection across the <math>x</math>-axis, followed by a reflection across the <math>y</math>-axis will return <math>T</math> to its original position, but a <math>90^{\circ}</math> rotation, followed by a reflection across the <math>x</math>-axis, followed by another reflection across the <math>x</math>-axis will not return <math>T</math> to its original position.)
+
+<math>\textbf{(A) } 12 \qquad \textbf{(B) } 15 \qquad \textbf{(C) } 17 \qquad \textbf{(D) } 20 \qquad \textbf{(E) } 25</math>
+
+==Solution 1 (Simplest)==
+Label each rotation \( A, B, C, D \), and \( E \) respectively.
+
+One can notice that any rotation on any figure is formed by the transformation on its vertices. Therefore, instead of thinking about the entire triangle, just think of the point \( (x, y) \).
+
+We proceed with casework on the \( 180^\circ \) rotation (B)
+
+Case A: We don't consider \( B \) (\( 180^\circ \) degrees)
+
+We have \( A, C, D \), and \( E \).
+Notice that we cannot have two reflections with one another as that will finish the sequence in two moves, not three.
+
+We also may not have two rotations, as it will cause the sequence to end in two moves as well.
+
+So we have one rotation and one reflection, but now we have a dilemma. We must choose either another rotation or another reflection.
+
+However, we deduced this is impossible, as it will not take the coordinate back to its original position. Therefore, there are 0 cases that work here.
+
+Case B: We consider the \( 180^\circ \) degree
+
+We first look at reflections. If we have two reflections of one kind D or E, we see that the sequence will finish in 2 rounds. Therefore. we must have one reflection D, one reflection E, and one \( 180^\circ \) rotation. This means we have a transformation set \( \{B, D, E\} \). The elements of this set can be swapped in \( 3! = 6 \) ways.
+
+We now look at rotations. If we have two rotations of A, that is essentially \( 90^\circ + 90^\circ = 180^\circ \) of rotation, and therefore mixed in with a \( 180^\circ \) rotation guarantees the same coordinate \( (x, y) \). So, we have a transformation set \( \{A, A, B\} \), which can be arranged in \( \frac{3!}{2!} = 3 \) ways. What about \( C \)? We can just see that \( C \) is just a rotation \( 90^\circ \) clockwise, so if we apply 2 of these, we again get \( 90^\circ + 90^\circ = 180^\circ \) of rotation, giving us enough room for transformation B. Then, our set is \( \{C, C, B\} \), which can be again arranged in \( \frac{3!}{2!} = 3 \) ways.
+
+Do any other cases exist? Well, if we have two rotations, then it is impossible, as the rotations negate one another into a \( 360^\circ \) rotation in two moves.
+More importantly, we also see that if we have a mix between a rotation and a reflection, we can see that one will swap the places of \( x \) and \( y \) \( (x, y) \rightarrow (-y, x) \) for instance, and the only other way to change that is another rotation that is not \( B \), which we already deemed was impossible
+We already concluded in case A that we cannot have \( A, C, \) and then either \( D \) or \( E \), therefore, we can only have \( B \), but either through inspection or seeing that \( B \) negates the values of \( x \) and \( y \) while a rotation of A and C brings them back to normal, therefore, this can also not work.
+
+Thus the total number of cases is \( 3+3 = 6 \)
+
+We have examined all the cases, and therefore our answer is \( 6+6 = \) <math>\boxed{\textbf{(A)}  12}</math>
+
+~Pinotation
+
+== Solution 2 ==
+<asy>
+size(10cm);
+Label f; 
+f.p=fontsize(6); 
+xaxis(-6,6,Ticks(f, 2.0)); 
+yaxis(-6,6,Ticks(f, 2.0));
+
+filldraw(origin--(4,0)--(0,3)--cycle, gray, black+linewidth(1));
+</asy>
+
+First, any combination of motions we can make must reflect <math>T</math> an even number of times. This is because every time we reflect <math>T</math>, it changes orientation. Once <math>T</math> has been flipped once, no combination of rotations will put it back in place because it is the mirror image; however, flipping it again changes it back to the original orientation. Since we are only allowed <math>3</math> transformations and an even number of them must be reflections, we either reflect <math>T</math> <math>0</math> times or <math>2</math> times.
+
+
+
+Case 1: <math>0</math> reflections on <math>T</math>.
+
+
+
+In this case, we must use <math>3</math> rotations to return <math>T</math> to its original position. Notice that our set of rotations, <math>\{90^\circ,180^\circ,270^\circ\}</math>, contains every multiple of <math>90^\circ</math> except for <math>0^\circ</math>. We can start with any two rotations <math>a,b</math> in <math>\{90^\circ,180^\circ,270^\circ\}</math> and there must be exactly one <math>c \equiv -a - b \pmod{360^\circ}</math> such that we can use the three rotations <math>(a,b,c)</math> which ensures that <math>a + b + c \equiv 0^\circ \pmod{360^\circ}</math>. That way, the composition of rotations <math>a,b,c</math> yields a full rotation. For example, if <math>a = b = 90^\circ</math>, then <math>c \equiv -90^\circ - 90^\circ = -180^\circ \pmod{360^\circ}</math>, so <math>c = 180^\circ</math> and the rotations <math>(90^\circ,90^\circ,180^\circ)</math> yields a full rotation.
+
+The only case in which this fails is when <math>c</math> would have to equal <math>0^\circ</math>. This happens when <math>(a,b)</math> is already a full rotation, namely, <math>(a,b) = (90^\circ,270^\circ),(180^\circ,180^\circ),</math> or <math>(270^\circ,90^\circ)</math>. However, we can simply subtract these three cases from the total. Selecting <math>(a,b)</math> from <math>\{90^\circ,180^\circ,270^\circ\}</math> yields <math>3 \cdot 3 = 9</math> choices, and with <math>3</math> that fail, we are left with <math>6</math> combinations for case <math>1</math>.
+
+
+
+Case 2: <math>2</math> reflections on <math>T</math>.
+
+
+
+In this case, we first eliminate the possibility of having two of the same reflection. Since two reflections across the x-axis maps <math>T</math> back to itself, inserting a rotation before, between, or after these two reflections would change <math>T</math>'s final location, meaning that any combination involving two reflections across the x-axis would not map <math>T</math> back to itself. The same applies to two reflections across the y-axis.
+
+Therefore, we must use one reflection about the x-axis, one reflection about the y-axis, and one rotation. Since a reflection about the x-axis changes the sign of the y component, a reflection about the y-axis changes the sign of the x component, and a <math>180^\circ</math> rotation changes both signs, these three transformation composed (in any order) will suffice. It is therefore only a question of arranging the three, giving us <math>3! = 6</math> combinations for case 2.
+
+Combining both cases we get <math>6+6=\boxed{\textbf{(A)}  12}</math>.
+
+==Solution 3 (Rewording of Solution 2)==
+
+As in the previous solution, note that we must have either <math>0</math> or <math>2</math> reflections because of orientation since reflection changes orientation that is impossible to fix by rotation. We also know we can't have the same reflection twice, since that would give a net of no change and would require an identity rotation.
+
+Suppose there are no reflections. Denote <math>90^{\circ}</math> as <math>1</math>, <math>180^{\circ}</math> as <math>2</math>, and <math>270^{\circ}</math> as <math>3</math>, just for simplification purposes. We want a combination of <math>3</math> of these that will sum to either <math>4</math> or <math>8</math> (<math>0</math> and <math>12</math> are impossible since the minimum is <math>3</math> and the max is <math>9</math>). <math>4</math> can be achieved with any permutation of <math>(1-1-2)</math> and <math>8</math> can be achieved with any permutation of <math>(2-3-3)</math>. This case can be done in <math>3+3=6</math> ways.
+
+Suppose there are two reflections. As noted already, they must be different, and as a result will take the triangle to the opposite side of the origin if we don't do any rotation. We have <math>1</math> rotation left that we can do though, and the only one that will return to the original position is <math>2</math>, which is <math>180^{\circ}</math> AKA reflection across origin. Therefore, since all <math>3</math> transformations are distinct. The three transformations can be applied anywhere since they are commutative (think quadrants). This gives <math>6</math> ways.
+
+<math>6+6=\boxed{\textbf{(A)}  12}</math>.
+
+==Solution 4 (Group Theory)==
+Define <math>s</math> as a reflection, and <math>r</math> as a <math>90^{\circ}</math> counterclockwise rotation. Thus, <math>r^4=s^2=e</math>, and the five transformations can be represented as <math>{r, r^2, r^3, r^2s, s}</math>, and <math>rs=sr^{-1}</math>.
+
+Now either <math>s</math> doesn't appear at all or appears twice. For the former case, it's easy to see that only <math>r, r, r^2</math> and <math>r^2, r^3, r^3</math> will work. Both can be permuted in <math>3</math> ways, giving <math>6</math> ways in total.
+
+For the latter case, note that <math>s</math> can't appear twice, neither does <math>r^2s</math>, else we need to get <math>e</math> from <math>{r, r^2, r^3}</math>, which is not possible. So <math>r^2s</math> and <math>s</math> must appear once each. The last transformation must be <math>r^2</math>. A quick check shows that <math>{r^2, r^2s, s}</math> is permutable, since <math>r^2s=sr^{-2}=sr^2</math> (since <math>r^4=e</math>). This gives <math>6</math> ways.
+
+Thus the answer is <math>\boxed{\textbf{(A)} 12}</math>.
+
+~Xrider100
+
+==Video Solution by STEM Station(Quick and Easy to Understand)==
+https://youtu.be/t38EvyrglbQ
+
+==Video Solution by Education, The Study of Everything==
+https://youtu.be/SBhkM2frTUA
+
+==Video Solution by Richard Rusczyk==
+https://artofproblemsolving.com/videos/amc/2020amc10a/513
+
+==Video Solution by MathEx==
+https://www.youtube.com/watch?v=iXwvTmFvo0c
+
+==See Also==
+
+{{AMC10 box|year=2020|ab=A|num-b=22|num-a=24}}
+{{AMC12 box|year=2020|ab=A|num-b=19|num-a=21}}
+
+[[Category: Introductory Geometry Problems]]
+{{MAA Notice}}

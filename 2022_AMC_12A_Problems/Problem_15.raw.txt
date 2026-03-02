@@ -1,0 +1,110 @@
+{{duplicate|[[2022 AMC 10A Problems/Problem 16|2022 AMC 10A #16]] and [[2022 AMC 12A Problems/Problem 15|2022 AMC 12A #15]]}}
+
+==Problem==
+
+The roots of the polynomial <math>10x^3 - 39x^2 + 29x - 6</math> are the height, length, and width of a rectangular box (right rectangular prism). A new rectangular box is formed by lengthening each edge of the original box by <math>2</math>
+units. What is the volume of the new box?
+
+<math>\textbf{(A) } \frac{24}{5} \qquad \textbf{(B) } \frac{42}{5} \qquad \textbf{(C) } \frac{81}{5} \qquad \textbf{(D) } 30 \qquad \textbf{(E) } 48</math>
+
+==Solution 1 (Vieta's Formulas)==
+
+Let <math>a</math>, <math>b</math>, <math>c</math> be the three roots of the polynomial. The lengthened prism's volume is <cmath>V = (a+2)(b+2)(c+2) = abc+2ac+2ab+2bc+4a+4b+4c+8 = abc + 2(ab+ac+bc) + 4(a+b+c) + 8.</cmath>
+By Vieta's formulas, we know that a cubic polynomial <math>Ax^3+Bx^2+Cx+D</math> with roots <math>a</math>, <math>b</math>, <math>c</math> satisfies:
+<cmath>\begin{alignat*}{8}
+a+b+c &= -\frac{B}{A} &&= \frac{39}{10}, \\
+ab+ac+bc &= \hspace{2mm}\frac{C}{A} &&= \frac{29}{10}, \\
+abc &= -\frac{D}{A} &&= \frac{6}{10}.
+\end{alignat*}</cmath>
+We can substitute these into the expression, obtaining <cmath>V = \frac{6}{10} + 2\left(\frac{29}{10}\right) + 4\left(\frac{39}{10}\right) + 8 = \boxed{\textbf{(D) } 30}.</cmath>
+
+- phuang1024
+
+==Solution 2 (Guessing Roots)==
+
+From the answer choices, we can assume the roots are rational numbers, and therefore this polynomial should be easily factorable.
+The coefficients of <math>x</math> must multiply to <math>10</math>, so these coefficients must be <math>5,2,1</math> or <math>10,1,</math> in some order. We can try one at a time, and therefore write the factored form as follows: <cmath>(5x-p)(2x-q)(x-r).</cmath>
+Note that <math>p, q, r</math> have to multiply to <math>6</math>, so they must be either <math>3,2,1</math> or <math>6,1,1</math> in some order. Again, we can try one at a time in different positions and see if they multiply correctly.
+We try <math>(5x-2)(2x-1)(x-3)</math> and multiply the <math>x-</math>terms, and sure enough they add up to <math>29</math>. You can try to add up the <math>x^2</math> terms and they add up to <math>-39</math>. Therefore the roots are <math>\frac{2}{5}</math>, <math>\frac{1}{2}</math> and <math>3</math>. Now if you add <math>2</math> to each root, you get the volume is <math>\frac{12}{5} \cdot \frac{5}{2} \cdot 5 = 6 \cdot 5 = 30 = \boxed{\textbf{(D) } 30}</math>.
+
+~KingRavi
+
+== Solution 3 (Rational Root Theorem Bash) ==
+
+We can find the roots of the cubic using the Rational Root Theorem, which tells us that the rational roots of the cubic must be in the form <math>\frac{p}{q}</math>, where <math>p</math> is a factor of the constant <math>(-6)</math> and <math>q</math> is a factor of the leading coefficient <math>(10)</math>. Therefore, <math>p</math> is <math>\pm (1, 2, 3, 6)</math> and q is <math>\pm (1, 2, 5, 10).</math>
+
+Doing Synthetic Division, we find that <math>3</math> is a root of the cubic:
+<cmath>\begin{array}{c|rrrr}&10&-39&29&-6\\3&&30&-27&6\\\hline\\&10&-9&2&0\\\end{array}.</cmath>
+
+Then, we have a quadratic <math>10x^2-9x+2.</math> Using the Quadratic Formula, we can find the other two roots:
+<cmath>x=\frac{9 \pm \sqrt{(-9)^2-4(10)(2)}}{2 \cdot 10},</cmath>
+which simplifies to <math>x=\frac{1}{2}, \frac{2}{5}.</math>
+
+To find the new volume, we add <math>2</math> to each of the roots we found:
+<cmath>(3+2)\cdot\left(\frac{1}{2}+2\right)\cdot\left(\frac{2}{5}+2\right).</cmath>
+Simplifying, we find that the new volume is <math>\boxed{\textbf{(D) } 30}.</math>
+
+-MathWizard09
+
+== Solution 4 ==
+Let <math>P(x) = 10x^3 - 39x^2 + 29x - 6</math>, and let <math>a, b, c</math> be the roots of <math>P(x)</math>. The roots of <math>P(x-2)</math> are then <math>a + 2, b + 2, c + 2,</math> so the product of the roots of <math>P(x-2)</math> is the area of the desired rectangular prism.
+
+<math>P(x-2)</math> has leading coefficient <math>10</math> and constant term <math>P(0-2) = P(-2) = 10(-2)^3 - 39(-2)^2 + 29(-2) - 6 = -300</math>. 
+
+Thus, by Vieta's Formulas, the product of the roots of <math>P(x-2)</math> is <math>\frac{-(-300)}{10} = \boxed{\textbf{(D) } 30}</math>.
+
+-Orange_Quail_9
+
+== Solution 5 ==
+Let <math>P(x) = 10x^3 - 39x^2 + 29x - 6</math>. This can be factored m as <math>P(x) = 10(x-a)(x-b)(x-c)</math>, where <math>a</math>, <math>b</math>, and <math>c</math> are the roots of <math>P(x)</math>. We want <math>V = (a+2)(b+2)(c+2)</math>.
+
+"Luckily" <math>P(-2) = 10(-2-a)(-2-b)(-2-c) = -10V</math>.  <math>P(-2) = -300</math>, giving <math>V = \boxed{\textbf{(D) } 30}</math>.  
+
+-Oxymoronic15
+
+(It's not just lucky. If <math>P(x)</math> has roots <math>x \in \{r_i\}</math>, <math>Q(x) = P(x-2)</math> has roots <math>y \in \{r_i+2\}</math>. By Vieta, the product <math>V</math> of the roots is the negation of the constant term divided by the leading coefficient <math>10</math> , which is <math>-Q(0) / 10 </math>, which is <math>-P(0-2) / 10</math>. -oinava )
+
+== Solution 6 (Desperate Final Effort - Estimation Guess) ==
+By Vieta's, we can see that <math>ABC = \frac{6}{10}</math>.
+Using this, we can see that if each side <math>ABC</math> is the same length, the length is between <math>0.8</math>  (<math>0.512</math>) and <math>0.9</math> (<math>0.729</math>). Adding <math>2</math> to these numbers would give us three numbers that are close to <math>3</math>. Rounding up, we will just assume they are all three. 
+If we multiply all of them, it gives us <math>27</math>.
+The closest answer choice is <math>\boxed{\textbf{(D) } 30},</math> as all of the other choices are far from this number (the second closest answer choice being <math>11</math> away).
+
+~[[OrenSH|orenbad]]
+
+
+<math>(2+0.6^{1/3})^3 \approx 23</math> is a lower bound for the answer (if the roots are more spread out then adding to a smaller root stretches the product more than adding 2 to a larger root shrinks the product), but a different <math>P(x)</math> with the same product of roots could have roots that lead to a much larger answer (but not exactly 48, it turns out). Going by this bound alone, only answers A, B, and C can be eliminated, leaving a guess between D and E. 
+
+-oinava
+
+
+== Solution 7 (Very Nice Vieta Solve) == 
+If we let the roots of the cubic polynomial be <imath>p,q,r</imath>, then we can write what we want in terms of <imath>p, q, r</imath>. So, we have <cmath>(p+2)(q+2)(r+2) = pqr + 2pq + 2qr + 4q + 2pr + 4p + 4r + 8 = pqr + 2(pq + qr + pr) + 4(q + p + r) + 8.</cmath> Now, we can just use Vieta's to finish up from here! We have <imath>pqr = -(-\dfrac{6}{10}) = \dfrac{3}{5}</imath>. Now, we can find the sum of the pairwise roots which is just <imath>pq + qr + pr = \dfrac{29}{10}</imath> and then multiply by <imath>2</imath> which gives <imath>\dfrac{29}{5}</imath>. Looking good so far! Now, we need to find the sum of the roots which is just <imath>p + q + r = \dfrac{39}{10}</imath> and then multiply by <imath>4</imath> which gives <imath>\dfrac{78}{5}</imath>. Almost there! Now, we just add <imath>8</imath> to that sum, and then sum it all up to get <imath>\boxed{\textbf{(D) } 30}</imath>
+
+-jb2015007
+
+Note: This is the same as Solution 1.
+
+==Video Solution (Interactive Teaching Approach)==
+
+https://www.youtube.com/watch?v=Oc4aNpPlnkA
+
+~MathkidsbyMax
+
+==Video Solution 1==
+https://youtu.be/L0JxfaLH9Nk
+
+==Video Solution (Quick and Simple)==
+https://youtu.be/kvNM_USBoyE
+
+~Education, the Study of Everything
+
+==Video Solution (Very nice Trick)==
+https://youtu.be/7yAh4MtJ8a8?si=URJLqRFDNbizEVbM&t=3280
+
+~Math-X
+
+==See also==
+{{AMC10 box|year=2022|ab=A|num-b=15|num-a=17}}
+{{AMC12 box|year=2022|ab=A|num-b=14|num-a=16}}
+{{MAA Notice}}

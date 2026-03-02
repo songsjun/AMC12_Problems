@@ -1,0 +1,131 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2020_AMC_12B_Problems/Problem_12&action=raw
+
+Published Time: Mon, 04 Nov 2024 09:41:52 GMT
+
+Markdown Content:
+==Problem==
+Let \overline{AB} be a diameter in a circle of radius 5\sqrt2. Let \overline{CD} be a chord in the circle that intersects \overline{AB} at a point E such that BE=2\sqrt5 and \angle AEC = 45^{\circ}. What is CE^2+DE^2?
+
+\textbf{(A)}\ 96 \qquad\textbf{(B)}\ 98 \qquad\textbf{(C)}\ 44\sqrt5 \qquad\textbf{(D)}\ 70\sqrt2 \qquad\textbf{(E)}\ 100
+
+==Diagram==
+ /* Made by Shihan; edited by MRENTHUSIASM */ size(250); pair O, A, B, C, D, E; O = origin; A = (-5*sqrt(2),0); B = (5*sqrt(2),0); E = (5*sqrt(2)-2*sqrt(5),0); path p; p = Circle(O,5*sqrt(2)); C = intersectionpoint(p,E--E+10*dir(135)); D = intersectionpoint(p,E--E+10*dir(-45)); draw(p); dot(O,linewidth(4)); dot("$A$",A,1.5*dir(A),linewidth(4)); dot("$B$",B,1.5*dir(B),linewidth(4)); dot("$E$",E,1.5*dir(135/2),linewidth(4)); dot("$C$",C,1.5*dir(C),linewidth(4)); dot("$D$",D,1.5*dir(D),linewidth(4)); draw(A--B^^C--D); label("$45^\circ$",E,3.5*dir(155.5),red+fontsize(10)); label("$5\sqrt2$",midpoint(A--O),S); label("$2\sqrt5$",midpoint(E--B),S); 
+~Shihan ~MRENTHUSIASM
+
+==Solution 1 (Pythagorean Theorem) ==
+Let O be the center of the circle, and X be the midpoint of \overline{CD}. Let CX=a and EX=b. This implies that DE = a - b. Since CE = CX + EX = a + b, we now want to find (a+b)^2+(a-b)^2=2(a^2+b^2). Since \angle CXO is a right angle, by Pythagorean theorem a^2 + b^2 = CX^2 + OX^2 = (5\sqrt{2})^2=50. Thus, our answer is 2\times50=\boxed{\textbf{(E)}\ 100}. 
+
+~JHawk0224
+
+==Solution 2 (Power of a Point)==
+Let O be the center of the circle, and X be the midpoint of CD. Draw triangle OCD, and median OX. Because OC = OD, OCD is isosceles, so OX is also an altitude of OCD. OE = 5\sqrt2 - 2\sqrt5, and because angle OEC is 45 degrees and triangle OXE is right, OX = EX = \frac{5\sqrt2 - 2\sqrt5}{\sqrt2} = 5 - \sqrt{10}. Because triangle OXC is right, CX = \sqrt{(5\sqrt2)^2 - (5 - \sqrt{10})^2} = \sqrt{15 + 10\sqrt{10}}. Thus, CD = 2\sqrt{15 + 10\sqrt{10}}. 
+
+We are looking for CE^2 + DE^2 which is also (CE + DE)^2 - 2 \cdot CE \cdot DE. 
+
+Because CE + DE = CD = 2\sqrt{15 + 10\sqrt{10}}, (CE + DE)^2 = CD^2=4(15 + 10\sqrt{10}) = 60 + 40\sqrt{10}. 
+
+By Power of a Point, CE \cdot DE = AE \cdot BE = 2\sqrt5\cdot(10\sqrt2 - 2\sqrt5) = 20\sqrt{10} - 20, so 2 \cdot CE \cdot DE = 40\sqrt{10} - 40. 
+
+Finally, CE^2 + DE^2 = (CE+ED)^2-2\cdot CE \cdot DE=(60 + 40\sqrt{10}) - (40\sqrt{10} - 40) = \boxed{\textbf{(E)}\ 100}.
+
+==Solution 3 (Law of Cosines)==
+Let O be the center of the circle. Notice how OC = OD = r, where r is the radius of the circle. By applying the law of cosines on triangle OCE, r^2=CE^2+OE^2-2(CE)(OE)\cos{45}=CE^2+OE^2-(CE)(OE)\sqrt{2}.
+
+Similarly, by applying the law of cosines on triangle ODE, r^2=DE^2+OE^2-2(DE)(OE)\cos{135}=DE^2+OE^2+(DE)(OE)\sqrt{2}.
+
+By subtracting these two equations, we get CE^2-DE^2-(CE)(OE)\sqrt{2}-(DE)(OE)\sqrt{2}=0. We can rearrange it to get CE^2-DE^2=(CE)(OE)\sqrt{2}+(DE)(OE)\sqrt{2}=(CE+DE)(OE\sqrt{2}).
+
+Because both CE and DE are both positive, we can safely divide both sides by (CE+DE) to obtain CE-DE=OE\sqrt{2}. Because OE = OB - BE = 5\sqrt{2} - 2\sqrt{5}, (CE-DE)^2 = CE^2+DE^2 - 2(CE)(DE) = (OE\sqrt{2})^2 =2(5\sqrt{2} - 2\sqrt{5})^2 = 140 - 40\sqrt{10}.
+
+Through power of a point, we can find out that (CE)(DE)=20\sqrt{10} - 20, so CE^2+DE^2 = (CE-DE)^2+ 2(CE)(DE)= (140 - 40\sqrt{10}) + 2(20\sqrt{10} - 20) = \boxed{\textbf{(E)}\ 100}.
+
+~Math_Wiz_3.14 (legibility changes by eagleye)
+
+==Solution 4 (Reflections)==
+ /* Made by sofas103; edited by MRENTHUSIASM */ size(250); pair O, A, B, C, D, E, D1; O = origin; A = (-5*sqrt(2),0); B = (5*sqrt(2),0); E = (5*sqrt(2)-2*sqrt(5),0); path p; p = Circle(O,5*sqrt(2)); C = intersectionpoint(p,E--E+10*dir(135)); D = intersectionpoint(p,E--E+10*dir(-45)); D1 = (D.x,-D.y); draw(p); dot("$O$",O,1.5*S,linewidth(4)); dot("$A$",A,1.5*dir(A),linewidth(4)); dot("$B$",B,1.5*dir(B),linewidth(4)); dot("$E$",E,1.5*dir(180+135/2),linewidth(4)); dot("$C$",C,1.5*dir(C),linewidth(4)); dot("$D$",D,1.5*dir(D),linewidth(4)); dot("$D'$",D1,1.5*dir(D1),linewidth(4)); draw(A--B^^C--D^^C--D1--O--cycle^^D1--E); 
+Let O be the center of the circle. By reflecting D across the line AB to produce D', we have that \angle BED'=45. Since \angle AEC=45, \angle CED'=90. Since DE=ED', by the Pythagorean Theorem, our desired solution is just CD'^2.
+Looking next to circle arcs, we know that \angle AEC=\frac{\overarc{AC}+\overarc{BD}}{2}=45, so \overarc{AC}+\overarc{BD}=90. Since \overarc{BD'}=\overarc{BD}, and \overarc{AC}+\overarc{BD'}+\overarc{CD'}=180, \overarc{CD'}=90. Thus, \angle COD'=90.
+Since OC=OD'=5\sqrt{2}, by the Pythagorean Theorem, the desired CD'^2= \boxed{\textbf{(E)}\ 100}.
+
+~sofas103
+
+== Solution 5 (Basically Solution 2 With Motivation) ==
+ 
+Basically, by PoP, you have that CE \times DE = (10\sqrt{2}-2\sqrt{5})(2\sqrt{5}) = 20\sqrt{10} - 20. Therefore, as CE^2 + DE^2 = (CD)^2 - 2(CE \times DE), basically, once you find CD^2, the problem is done. Now, this is an IMPORTANT concept: If you have a circle which you know the radius of and you want to find the length of a chord of that circle, drop an altitude from the center of the circle to the chord to find distance between the center of the circle and the chord. 
+ 	
+In this case, let M be the midpoint of chord CD. Notice that now we can use our 45^\circ{} angle, since OME is a 45^\circ{}-45^\circ{}-90^\circ{} triangle so that ME = x and OE = x\sqrt{2}. However, we have that OE = 5\sqrt{2}-2\sqrt{5}, so that x = 5 - \sqrt{10}. Now, notice that x^2 = 35 - 10\sqrt{10}, so that CM^2 = 50 - x^2 = 50 - (35 - 10\sqrt{10}) = 15 + 10 \sqrt{10} and CD^2 = 60 + 40\sqrt{10}. Therefore, CE^2 + DE^2 = CD^2 - 2(CE \times DE) = (60+40\sqrt{10}) - 2(2\sqrt{10} - 20) = (60+40\sqrt{10}) + (40-40\sqrt{10}) = \boxed{\textbf{(E)}\ 100}. 
+	
+This may not be the “shortest solution”, but in my opinion is very well motivated and doesn’t require much creativity. [Not requiring much creativity, it also saves more time than you’d think. ;)]
+
+~ Professor-Mom
+
+== Solution 6 (Double Power of a Point) ==
+
+ /* Made by sofas103; edited by MRENTHUSIASM */ size(250); pair O, A, B, C, D, E, P, Q; O = origin; A = (-5*sqrt(2),0); B = (5*sqrt(2),0); E = (5*sqrt(2)-2*sqrt(5),0); P = (5*sqrt(2), -4.5); Q=(5*sqrt(2)-2*sqrt(5)-0.5, 0); path p; p = Circle(O,5*sqrt(2)); C = intersectionpoint(p,E--E+10*dir(135)); D = intersectionpoint(p,E--E+10*dir(-45)); draw(p); dot("$A$",A,1.5*dir(A),linewidth(4)); dot("$B$",B,1.5*dir(B),linewidth(4)); dot("$E$",E,1.5*dir(180+135/2),linewidth(4)); dot("$C$",C,1.5*dir(C),linewidth(4)); dot("$D$",D,1.5*dir(D),linewidth(4)); dot("$P$",P,1.5*dir(P),linewidth(4)); label("$45^{\circ}$",Q,NW); draw(A--B^^C--P--B); draw((5*sqrt(2), 0)--(5*sqrt(2)-0.4, 0)--(5*sqrt(2)-0.4, -0.4)--(5*sqrt(2), -0.4)); 
+For ease of notation, let x = DE and y=EC. 
+Extend \overline{CD} to point P until \overline{BP} is perpendicular to AB. It's given that \angle AEC = 45^{\circ}, so, by vertical angles, we have \angle BEP = \angle EPB = 45^{\circ}. 
+
+Since PEB is a 45-45-90 right triangle, we have BE = BP = 2\sqrt{5} and PE=2\sqrt{10}. Hence, PD = 2\sqrt{10}-x.
+
+By Power of a Point, we have
+
+PB^2 = PD\cdot PC
+20 = \left(2\sqrt{10}-x\right)\left(y + 2\sqrt{10}\right).
+
+Isolating the variables after expanding gives x-y = 2\sqrt{10}-10.
+
+Using Power of a Point again, we have 
+
+DE\cdot EC = BE\cdot EA
+xy = 2\sqrt{5}\left(10\sqrt{2}-2\sqrt{5} \right)
+xy = 20\sqrt{10}-20.
+To get x^2 + y^2, we can perform the operation (x-y)^2 + 2xy. Plugging these values in, 
+
+(x-y)^2 + 2xy = \left(2\sqrt{10}-10\right)^2 + 2\left(20\sqrt{10}-20\right)
+ = 40 + 100 - 40\sqrt{10} + 40\sqrt{10} - 40 = \boxed{\textbf{(E)}\ 100}
+
+-Benedict T (countmath1)
+
+== Solution 7 (Cheating) ==
+
+Perhaps not reliable in general, but very useful as a last resort.
+The choice of the radius 5\sqrt2 is strange, and is probably motivated by a nice answer in the end, so we only consider integer options. Notice that a 5 also appears in the condition BE=2\sqrt5, therefore it will likely be present in the answer as well; the only integer containing a factor of 5 amongst the choices is 100, thus the answer is  \boxed{\textbf{(E)}\ 100}
+
+~Maths357
+
+== Solution 7 (Coordinate Geometry + Vieta) ==
+
+set the origin at E (instead of circle center O) will reduce calculation. 
+line CD is y= -x ,   
+let OE = a , circle radius r=5\sqrt{2},  
+circle (x + a)^2 + y^2 = r^2  intersects line y = -x at 2 points  C(X_c, Y_c) and  D(X_d, Y_d) 
+X_c = -Y_c  , X_d = -Y_d  
+
+substitute y with x , circle becomes  (x + a)^2 + y^2 = (x + a)^2 + (-x)^2 = 2x^2 + 2ax + a^2 - r^2 = 0 
+
+X_c , X_d will be 2 roots of above quadratic and we will apply vieta X_c+ X_d , X_c \cdot X_d  below
+
+ CE^2 + DE^2 = ( (-X_c) + Y_c)^2 + ( X_d + (- Y_d) )^2 \\ = ( (-X_c) + (-X_c))^2 + ( X_d + (X_d) )^2 \\ = 4 (X_c^2 + X_d^2) \\ = 4 ((X_c + X_d)^2) - 2X_cX_d \\ = 4 ( (\frac{-2a}{2 \cdot 2})^2 + \frac{a^2- r^2}{2} ) 
+
+plug in a = OE  = OB - OE  =  5\sqrt{2} - 2 \sqrt{5}  and r = 5\sqrt{2} we get answer \boxed{\textbf{(E) }100}.
+[[Image:2020_AMC_12B_P20.PNG|thumb|center|600px]] 
+~[https://artofproblemsolving.com/wiki/index.php/User:Cyantist luckuso]
+
+== Video Solution by OmegaLearn ==
+https://youtu.be/HIPZ3nj_sT8?t=227
+
+~ pi_is_3.14
+
+==Video Solution by On The Spot STEM==
+https://www.youtube.com/watch?v=h-hhRa93lK4
+
+==Video Solution by TheBeautyOfMath==
+
+https://youtu.be/0xgTR3UEqbQ
+
+==See Also==
+
+{{AMC12 box|year=2020|ab=B|num-b=11|num-a=13}}
+{{MAA Notice}}

@@ -1,0 +1,96 @@
+{{duplicate|[[2022 AMC 10A Problems/Problem 12|2022 AMC 10A #12]] and [[2022 AMC 12A Problems/Problem 9|2022 AMC 12A #9]]}}
+
+==Problem==
+
+On Halloween <math>31</math> children walked into the principal's office asking for candy. They
+can be classified into three types: Some always lie; some always tell the truth; and
+some alternately lie and tell the truth. The alternaters arbitrarily choose their first
+response, either a lie or the truth, but each subsequent statement has the opposite
+truth value from its predecessor. The principal asked everyone the same three
+questions in this order.
+
+"Are you a truth-teller?" The principal gave a piece of candy to each of the <math>22</math>
+children who answered yes.
+
+"Are you an alternater?" The principal gave a piece of candy to each of the <math>15</math>
+children who answered yes.
+
+"Are you a liar?" The principal gave a piece of candy to each of the <math>9</math> children who
+answered yes.
+
+How many pieces of candy in all did the principal give to the children who always
+tell the truth?
+
+<math>\textbf{(A) } 7 \qquad \textbf{(B) } 12 \qquad \textbf{(C) } 21 \qquad \textbf{(D) } 27 \qquad \textbf{(E) } 31</math>
+
+==Solution 1==
+
+Note that:
+
+* Truth-tellers would answer yes-no-no to the three questions in this order.
+
+* Liars would answer yes-yes-no to the three questions in this order.
+
+* Alternaters who responded truth-lie-truth would answer no-no-no to the three questions in this order.
+
+* Alternaters who responded lie-truth-lie would answer yes-yes-yes to the three questions in this order.
+
+Suppose that there are <math>T</math> truth-tellers, <math>L</math> liars, and <math>A</math> alternaters who responded lie-truth-lie.
+
+The conditions of the first two questions imply that
+<cmath>\begin{align*}
+T+L+A&=22, \\
+L+A&=15.
+\end{align*}</cmath>
+Subtracting the second equation from the first, we have <math>T=22-15=\boxed{\textbf{(A) } 7}.</math>
+
+<u><b>Remark</b></u>
+
+The condition of the third question is extraneous. However, we know that <math>A=9</math> and <math>L=6,</math> so there are <math>9</math> alternaters who responded lie-truth-lie, <math>6</math> liars, and <math>9</math> alternaters who responded truth-lie-truth from this condition.
+
+~sigma ~[[OrenSH|orenbad]] ~MRENTHUSIASM
+
+==Solution 2==
+
+Consider when the principal asks "Are you a liar?": The truth tellers truthfully say no, and the liars lie and say no. This leaves only alternaters who lie on this question to answer yes. Thus, all <math>9</math> children that answered yes are alternaters that falsely answer Questions 1 and 3, and truthfully answer Question 2. The rest of the alternaters, however many there are, have the opposite behavior.
+
+Consider the second question, "Are you an alternater?": The truth tellers again answer no, the liars falsely answer yes, and alternaters that truthfully answer also say yes. From the previous part, we know that <math>9</math> alternaters truthfully answer here. Because only liars and <math>9</math> alternaters answer yes, we can deduce that there are <math>15-9=6</math> liars.
+
+Consider the first question, "Are you a truth teller?": Truth tellers say yes, liars also say yes, and alternaters that lie on this question also say yes. From the first part, we know that <math>9</math> alternaters lie here. From the previous part, we know that there are <math>6</math> liars. Because only the number of truth tellers is unknown here, we can deduce that there are <math>22-9-6=7</math> truth tellers.
+
+The final question is how many pieces of candy did the principal give to truth tellers. Because truth tellers answer yes on only the first question, we know that all <math>7</math> of them said yes once, resulting in <math>\boxed{\textbf{(A) } 7}</math> pieces of candy.
+
+~phuang1024
+
+==Remark (Fake Solve)==
+This problem is broken in an interesting way that helps the test-taker. Since the true answers alternate for alternaters, you can still get the correct answer if you misinterpret the problem as "alternaters alternate their yes/no answers, but not their truth values". Suppose that <math>A</math> alternaters answer yes-no-yes, and <math>A'</math> alternaters answer no-yes-no. You still get <math>A=A'=9</math>. 
+
+In addition, you can even get the correct answer with the misinterpretation "alternaters have two types: alternaters of the same type give the same arbitrary answers to the three questions, and alternaters of different types give the opposite arbitrary answers to the three questions".
+
+It's also notable that the misinterpretation makes the problem harder, so that the solution actually relies on all the information. This suggests that the question-writer may have been mistaken but got lucky.
+
+~oinava, based on demonstration of misinterpretation fakesolve by ~[[OrenSH|orenbad]]
+
+==Video Solution 1 (One Key Observation)==
+https://youtu.be/9IQRgWn4NAk
+
+~Education, the Study of Everything
+
+==Video Solution 2 (Let's first understand the question)==
+https://youtu.be/7yAh4MtJ8a8?si=_jfMzsAiHgAGJ1uo&t=1552
+
+~Math-X
+
+==Video Solution 3==
+
+https://youtu.be/ZSwg-xKAQiM
+
+==Video Solution by TheBeautyofMath==
+https://youtu.be/0kkc4-y8TkU?t=254
+
+~IceMatrix
+
+== See Also ==
+{{AMC10 box|year=2022|ab=A|num-b=11|num-a=13}}
+{{AMC12 box|year=2022|ab=A|num-b=8|num-a=10}}
+{{MAA Notice}}

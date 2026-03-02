@@ -1,0 +1,79 @@
+{{duplicate|[[2015 AMC 12A Problems|2015 AMC 12A #16]] and [[2015 AMC 10A Problems|2015 AMC 10A #21]]}}
+==Problem==
+Tetrahedron <imath>ABCD</imath> has <imath>AB=5</imath>, <imath>AC=3</imath>, <imath>BC=4</imath>, <imath>BD=4</imath>, <imath>AD=3</imath>, and <imath>CD=\tfrac{12}5\sqrt2</imath>.  What is the volume of the tetrahedron?
+
+<imath>\textbf{(A) }3\sqrt2\qquad\textbf{(B) }2\sqrt5\qquad\textbf{(C) }\dfrac{24}5\qquad\textbf{(D) }3\sqrt3\qquad\textbf{(E) }\dfrac{24}5\sqrt2</imath>
+
+==Solution 1==
+Drop altitudes of triangle <imath>ABC</imath> and triangle <imath>ABD</imath> down from <imath>C</imath> and <imath>D</imath>, respectively. Both will hit the same point; let this point be <imath>T</imath>. Because both triangle <imath>ABC</imath> and triangle <imath>ABD</imath> are 3-4-5 triangles, <imath>CT = DT = \dfrac{3\cdot4}{5} = \dfrac{12}{5}</imath>. Because <imath>CT^{2} + DT^{2} = 2\left(\frac{12}{5}\right)^{2} = \left(\frac{12}{5}\sqrt{2}\right)^{2} = CD^{2}</imath>, it follows that the <imath>CTD</imath> is a right triangle, meaning that <imath>\angle CTD = 90^\circ</imath>, and it follows that planes <imath>ABC</imath> and <imath>ABD</imath> are perpendicular to each other. Now, we can treat <imath>ABC</imath> as the base of the tetrahedron and <imath>TD</imath> as the height. Thus, the desired volume is <cmath>V = \dfrac{1}{3} bh = \dfrac{1}{3}\cdot[ABC]\cdot TD = \dfrac{1}{3} \cdot 6 \cdot \dfrac{12}{5} = \dfrac{24}{5}</cmath> which is answer <imath>\boxed{\textbf{(C) } \dfrac{24}{5}}</imath>
+
+==Solution 2==
+Let the midpoint of <imath>CD</imath> be <imath>E</imath>. We have <imath>CE = \dfrac{6}{5} \sqrt{2}</imath>, and so by the Pythagorean Theorem <imath>AE = \dfrac{\sqrt{153}}{5}</imath> and <imath>BE = \dfrac{\sqrt{328}}{5}</imath>. Because the altitude from <imath>A</imath> of tetrahedron <imath>ABCD</imath> passes touches plane <imath>BCD</imath> on <imath>BE</imath>, it is also an altitude of triangle <imath>ABE</imath>. The area <imath>A</imath> of triangle <imath>ABE</imath> is, by Heron's Formula, given by
+
+<cmath>16A^2 = 2a^2 b^2 + 2b^2 c^2 + 2c^2 a^2 - a^4 - b^4 - c^4 = -(a^2 + b^2 - c^2)^2 + 4a^2 b^2.</cmath>
+Substituting <imath>a = AE, b = BE, c = 5</imath> and performing huge (but manageable) computations yield <imath>A^2 = 18</imath>, so <imath>A = 3\sqrt{2}</imath>. Thus, if <imath>h</imath> is the length of the altitude from <imath>A</imath> of the tetrahedron, <imath>BE \cdot h = 2A = 6\sqrt{2}</imath>. Our answer is thus
+<cmath>V = \dfrac{1}{3} Bh = \dfrac{1}{3} h \cdot BE \cdot \dfrac{6\sqrt{2}}{5} = \dfrac{24}{5},</cmath>
+and so our answer is <imath>\boxed{\textbf{(C) } \dfrac{24}{5}}</imath>
+
+==Solution 3==
+
+Similar to solution 1, <imath>\triangle CTD</imath> is an isosceles right triangle. <imath>AB</imath> is perpendicular to the plane <imath>CTD</imath>. So, we can cut tetrahedron <imath>ABCD</imath> into 2 tetrahedrons <imath>ACTD</imath> and <imath>BCTD</imath> with <imath>\triangle CTD</imath> as their common base, <imath>BT</imath> and <imath>AT</imath> as their heights.
+
+
+<imath>[CTD]=\frac{1}{2} \cdot CT \cdot DT=\frac{1}{2} \cdot \frac{12}{5} \cdot \frac{12}{5}= \frac{72}{25}</imath>
+
+<imath>V_{ABCD}=V_{ACDT}+V_{BCDT}=\frac{1}{3} \left([CTD] \cdot AT + [CTD] \cdot BT \right)=\frac{1}{3} \cdot [CTD] \cdot (AT+BT)=\frac{1}{3} \cdot [CTD] \cdot AB  =\frac{1}{3} \cdot \frac{72}{25} \cdot 5 </imath>
+
+<imath>= \boxed{\textbf{(C) } \dfrac{24}{5}}</imath>
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+
+==Solution 4 (Francesca's Irregular Tetrahedron Formula)==
+Note: Please don't ever try doing this in an actual competition. It's fun to do, however.
+
+Using Piero della Francesca's Theorem:
+<cmath>V = \frac{1}{12} \left( \sqrt{-a^2b^2c^2 - a^2d^2e^2 - b^2d^2f^2 - c^2e^2f^2 + a^2c^2d^2 + b^2c^2d^2 + a^2b^2e^2 + b^2c^2e^2 + b^2d^2e^2 + c^2d^2e^2 + a^2b^2f^2 + a^2c^2f^2 + a^2d^2f^2 + c^2d^2f^2 + a^2e^2f^2 + b^2e^2f^2 - c^4d^2 - c^2d^4 - b^4e^2 - b^2e^4 - a^4f^2 - a^2f^4} \right)</cmath>
+Substituting this all in... You get
+<imath>\boxed{\textbf{(C) } \dfrac{24}{5}}</imath>
+
+~Banspeedrun
+
+==Solution 5 (Coord Bash)==
+Set <imath>B</imath> as <imath>(0,0,0)</imath>, <imath>C</imath> at <imath>(4,0,0)</imath>, and <imath>A</imath> at <imath>(4,3,0)</imath>. If we find <imath>D</imath>'s coordinates then the z-coordinate(the last coord) is the height we need since the rest of the coordinates have a z-coord of <imath>0</imath>. Notice that we are given every distance from point <imath>D</imath>, we can use basically satellite-type triangulation. <imath>D</imath> is at every point a radius from points <imath>A,B</imath> and <imath>C</imath>, or a sphere with the center at points <imath>A,B</imath> and <imath>C</imath>. We can set up a system of equations to find where all 3 spheres intersect. 
+<cmath>\begin{split}
+(x-4)^2+(y-3)^2+z^2 &=3^2 \\
+x^2+y^2+z^2 &=4^2 \\
+(x-4)^2+y^2+z^2 &=(\tfrac{12}{5}\sqrt2)^2
+\end{split}</cmath>
+Solving this system of equations gives you:
+<cmath>\begin{split}
+x &=\frac{64}{25} \\
+y &=\frac{48}{25} \\
+z &=\frac{12}{5} 
+\end{split}</cmath>
+Since <imath>z</imath> is the value we need, we can now solve for the volume. The base is just <imath>\frac{3*4}{2}=6</imath>
+<cmath>\begin{split}
+V &=\frac{1}{3}bh \\
+V &=\frac{1}{3}(6)(\frac{12}{5}) \\
+V &=\frac{72}{15} \\
+V &=\boxed{\textbf{(C)}\dfrac{24}{5}}
+\end{split}</cmath>
+
+== Video Solution by Richard Rusczyk ==
+
+https://www.youtube.com/watch?v=1J_P0tXszLQ
+
+==Video Solution by TheBeautyofMath==
+https://www.youtube.com/watch?v=ckRtrNuNgk4
+
+~IceMatrix
+
+== See Also ==
+
+{{AMC10 box|year=2015|ab=A|num-b=20|num-a=22}}
+{{AMC12 box|year=2015|ab=A|num-b=15|num-a=17}}
+
+{{MAA Notice}}
+
+[[Category: Introductory Geometry Problems]]

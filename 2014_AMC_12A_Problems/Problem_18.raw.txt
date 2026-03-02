@@ -1,0 +1,29 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2014_AMC_12A_Problems/Problem_18&action=raw
+
+Published Time: Sat, 10 Jul 2021 23:04:35 GMT
+
+Markdown Content:
+==Problem==
+The domain of the function f(x)=\log_{\frac12}(\log_4(\log_{\frac14}(\log_{16}(\log_{\frac1{16}}x)))) is an interval of length \tfrac mn, where m and n are relatively prime positive integers.  What is m+n?
+
+\textbf{(A) }19\qquad \textbf{(B) }31\qquad \textbf{(C) }271\qquad \textbf{(D) }319\qquad \textbf{(E) }511\qquad
+
+==Solution 1 (Generalization)==
+For all real numbers a,b, and c such that b>0 and b\neq1, note that:
+
+ 1.   \log_b a is defined if and only if a>0.
+
+2.   For 0 we conclude that: 
+    *   \log_b a if and only if a>b^c.
+    
+*   \log_b a>c if and only if 0
+
+ For b>1, we conclude that: 
+    *   \log_b a if and only if 0
+    
+*   \log_b a>c if and only if a>b^c.
+
+Therefore, we have
+\begin{align*} \log_{\frac12}(\log_4(\log_{\frac14}(\log_{16}(\log_{\frac1{16}}x)))) \text{ is defined} &\implies \log_4(\log_{\frac14}(\log_{16}(\log_{\frac1{16}}x)))>0 \\ &\implies \log_{\frac14}(\log_{16}(\log_{\frac1{16}}x))>1 \\ &\implies 0<\log_{16}(\log_{\frac1{16}}x)<\frac14 \\ &\implies 1<\log_{\frac1{16}}x<2 \\ &\implies \frac{1}{256} The domain of f(x) is an interval of length \frac{1}{16}-\frac{1}{256}=\frac{15}{256}, from which the answer is 15+256=\boxed{\textbf{(C) }271}.**Remark** This problem is quite similar to [[2004_AMC_12A_Problems/Problem_16|2004 AMC 12A Problem 16]]. ~MRENTHUSIASM ==Solution 2 (Substitution)== For simplicity, let a=\log_{\frac{1}{16}}{x},b=\log_{16}a,c=\log_{\frac{1}{4}}b, and d=\log_4c. The domain of \log_{\frac{1}{2}}x is x \in (0, \infty), so d \in (0, \infty). Thus, \log_4{c} \in (0, \infty) \Rightarrow c \in (1, \infty). Since c=\log_{\frac{1}{4}}b we have b \in \left(0, \left(\frac{1}{4}\right)^1\right)=\left(0, \frac{1}{4}\right). Since b=\log_{16}{a}, we have a \in (16^0,16^{1/4})=(1,2). Finally, since a=\log_{\frac{1}{16}}{x}, x \in \left(\left(\frac{1}{16}\right)^2,\left(\frac{1}{16}\right)^1\right)=\left(\frac{1}{256},\frac{1}{16}\right). The length of the x interval is \frac{1}{16}-\frac{1}{256}=\frac{15}{256} and the answer is \boxed{\textbf{(C) }271}. ==Solution 3 (Calculus)== The domain of f(x) is the range of the inverse function f^{-1}(x)=\left(\frac1{16}\right)^{16^{\left(\frac14\right)^{4^{\left(\frac12\right)^x}}}}. Now f^{-1}(x) can be seen to be strictly decreasing, since \left(\frac12\right)^x is decreasing, so 4^{\left(\frac12\right)^x} is decreasing, so \left(\frac14\right)^{4^{\left(\frac12\right)^x}} is increasing, so 16^{\left(\frac14\right)^{4^{\left(\frac12\right)^x}}} is increasing, therefore \left(\frac1{16}\right)^{16^{\left(\frac14\right)^{4^{\left(\frac12\right)^x}}}} is decreasing. Therefore, the range of f^{-1}(x) is the open interval \left(\lim_{x\to\infty}f^{-1}(x), \lim_{x\to-\infty}f^{-1}(x)\right). We find: \begin{align*} \lim_{x\to-\infty}\left(\frac1{16}\right)^{16^{\left(\frac14\right)^{4^{\left(\frac12\right)^x}}}}&= \lim_{a\to\infty}\left(\frac1{16}\right)^{16^{\left(\frac14\right)^{4^a}}}\\ &= \lim_{b\to\infty}\left(\frac1{16}\right)^{16^{\left(\frac14\right)^b}}\\ &= \left(\frac1{16}\right)^{16^0}\\ &= \frac{1}{16}. \end{align*} Similarly, \begin{align*} \lim_{x\to\infty}\left(\frac1{16}\right)^{16^{\left(\frac14\right)^{4^{\left(\frac12\right)^x}}}}&=\left(\frac1{16}\right)^{16^{\left(\frac14\right)^{4^0}}}\\ &= \left(\frac1{16}\right)^{16^{\frac14}}\\ &= \left(\frac1{16}\right)^2\\ &= \frac{1}{256}. \end{align*} Hence the range of f^{-1}(x) (which is then the domain of f(x)) is \left(\frac{1}{256},\frac{1}{16}\right) and the answer is \boxed{\textbf{(C) }271}. ==See Also== {{AMC12 box|year=2014|ab=A|num-b=17|num-a=19}} {{MAA Notice}}

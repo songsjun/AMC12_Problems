@@ -1,0 +1,58 @@
+{{duplicate|[[2024 AMC 10B Problems/Problem 3|2024 AMC 10B #3]] and [[2024 AMC 12B Problems/Problem 3|2024 AMC 12B #3]]}}
+
+==Problem==
+For how many integer values of <imath>x</imath> is <imath>|2x| \leq 7 \pi</imath>
+
+<imath>\textbf{(A) } 16 \qquad\textbf{(B) } 17 \qquad\textbf{(C) } 19 \qquad\textbf{(D) } 20 \qquad\textbf{(E) } 21</imath>
+
+===Modified Problem in Certain China Testpapers===
+
+For how many integer values of <imath>x</imath> is <imath>|2x| \leq 6 \pi</imath>
+
+<imath>\textbf{(A) } 16 \qquad\textbf{(B) } 17 \qquad\textbf{(C) } 19 \qquad\textbf{(D) } 20 \qquad\textbf{(E) } 21</imath>
+
+===Solution for Certain China Testpapers===
+
+Use the fact that <imath>\pi \approx 3.14</imath>, and thus you can get <imath>6\pi \approx 18.84</imath>. We could easily see that the answer is <imath>\{-9,-8,...,8,9\}\implies\boxed{\text{(C) }19}</imath>
+
+~RULE101
+
+==Solution 1==
+<imath>\pi = 3.14159\dots</imath> is slightly less than <imath>\dfrac{22}{7} = 3.\overline{142857}</imath>. So <imath>7\pi \approx 21.9</imath>
+The inequality expands to be <imath>-21.9 \le 2x \le 21.9</imath>. We find that <imath>x</imath> can take the integer values between <imath>-10</imath> and <imath>10</imath> inclusive. There are <imath>\boxed{\text{E. }21}</imath> such values.
+
+Note that if you did not know whether <imath>\pi</imath> was greater than or less than <imath>\dfrac{22}{7}</imath>, then you might perform casework. In the case that <imath>\pi > \dfrac{22}{7}</imath>, the valid solutions are between <imath>-11</imath> and <imath>11</imath> inclusive: <imath>23</imath> solutions. Since, <imath>23</imath> is not an answer choice, we can be confident that <imath>\pi < \dfrac{22}{7}</imath>, and that <imath>\boxed{\text{E. } 21}</imath> is the correct answer.
+
+~numerophile
+
+Test advice: If you are in the test and do not know if <imath>\frac{22}{7}</imath> is bigger or smaller than <imath>\pi</imath>, you can use the extremely sophisticated method of just dividing <imath>\dfrac{22}{7}</imath> via long division. Once you get to <imath>3.142</imath> you realise that you don't need to divide further since <imath>\pi = 3.1416</imath> when rounded to 4 decimal places.Therefore, you do not include <imath>11</imath> and <imath>-11</imath> and the answer is 21.
+
+~Rosiefork (first time using Latex)(and a complete noob)
+
+==Solution 2==
+<imath>7\pi</imath> is incredibly close to <imath>22</imath>, but doesn't reach it. This can be both computed by using <imath>\pi\approx3.142\implies7\cdot3.142=21.994<22</imath> or assumed. Therefore, including both positive and negative values, the answer is <imath>\{-10,-9,...,9,10\}\implies\boxed{\text{(E) }21}</imath>. ~Tacos_are_yummy_1
+
+==Video Solution 1 by Pi Academy (Fast and Easy ⚡🚀)==
+
+https://youtu.be/DIl3rLQQkQQ?feature=shared
+
+~ Pi Academy
+
+==Video Solution 2 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=24EZaeAThuE
+
+== Video Solution by Daily Dose of Math ==
+
+https://youtu.be/fJ2WqG-pchY
+
+~TheSmartGreekMathDude
+
+==Video Solution by TheBeautyofMath==
+https://youtu.be/mpnm_r6D3-w?t=431
+
+~IceMatrix
+
+==See also==
+{{AMC10 box|year=2024|ab=B|num-b=2|num-a=4}}
+{{AMC12 box|year=2024|ab=B|num-b=2|num-a=4}}
+{{MAA Notice}}

@@ -1,0 +1,58 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2002_AMC_12A_Problems/Problem_12&action=raw
+
+Published Time: Tue, 30 Sep 2025 16:25:07 GMT
+
+Markdown Content:
+{{duplicate|[[2002 AMC 12A Problems|2002 AMC 12A #12]] and [[2002 AMC 10A Problems|2002 AMC 10A #14]]}}
+
+== Problem ==
+
+Both roots of the quadratic equation x^2 - 63x + k = 0 are prime numbers. The number of possible values of k is 
+
+\text{(A)}\ 0 \qquad \text{(B)}\ 1 \qquad \text{(C)}\ 2 \qquad \text{(D)}\ 4 \qquad \text{(E) more than 4}
+
+==Solution 1==
+
+Consider a general quadratic with the coefficient of x^2 being 1 and the roots being r and s. It can be factored as (x-r)(x-s) which is just x^2-(r+s)x+rs. Thus, the sum of the roots is the negative of the coefficient of x and the product is the constant term. (In general, this leads to [[Vieta's Formulas]]).
+
+We now have that the sum of the two roots is 63 while the product is k. Since both roots are primes, one must be 2, otherwise, the sum would be even. That means the other root is 61 and the product must be 122. Hence, our answer is \boxed{\text{(B)}\ 1 }.
+
+==Solution 2==
+
+Let the quadratic be factored as (x-r)(x-s). Then -r-s=-63 and rs=k. We know that both r and s are prime, and all primes but 2 are odd. The sum of two odd numbers is also always even, but in this case the sum of two primes is odd, which means that one of the primes is 2. This leaves only one possible value for the other root and one possible value for their product k.
+
+==Solution 3==
+
+By Vieta's you have 
+a+b=63
+ab=k
+Since we know odd + even = odd, we must have either a or b equal to 2 and the other equal to 63-2=61. Both of these are prime so they satisfy the restraints. Thus there is \boxed{(B) 1} solution.
+
+== Video Solution ==
+https://youtu.be/0c7QMWYU8So
+
+https://youtu.be/5QdPQ3__a7I?t=130
+
+~ pi_is_3.14
+
+== Note == 
+All these solutions are principled in [[Vieta's Formulas]], and can be viewed as identical.
+
+==Video Solution by Daily Dose of Math==
+
+https://youtu.be/29XpsoXTXto
+
+~Thesmartgreekmathdude
+
+=== Note ===
+
+The solution in this video may be similar to others.
+
+==See Also==
+{{AMC12 box|year=2002|ab=A|num-b=11|num-a=13}}
+{{AMC10 box|year=2002|ab=A|num-b=13|num-a=15}}
+
+[[Category:Introductory Algebra Problems]]
+{{MAA Notice}}

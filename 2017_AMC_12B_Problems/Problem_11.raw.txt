@@ -1,0 +1,84 @@
+{{duplicate|[[2017 AMC 12B Problems|2017 AMC 12B #11]] and [[2017 AMC 10B Problems|2017 AMC 10B #17]]}}
+
+==Problem==
+Call a positive integer '''monotonous''' if it is a one-digit number or its digits, when read from left to right, form either a strictly increasing or a strictly decreasing sequence. For example, <math>3</math>, <math>23578</math>, and <math>987620</math> are monotonous, but <math>88</math>, <math>7434</math>, and <math>23557</math> are not. How many monotonous positive integers are there?
+
+<math>\textbf{(A)}\ 1024\qquad\textbf{(B)}\ 1524\qquad\textbf{(C)}\ 1533\qquad\textbf{(D)}\ 1536\qquad\textbf{(E)}\ 2048</math>
+
+==Solution 1==
+
+Case 1: monotonous numbers with digits in ascending order
+
+There are <math>\sum_{n=1}^{9} \binom{9}{n}</math> ways to choose n digits from the digits 1 to 9. For each of these ways, we can generate exactly one monotonous number by ordering the chosen digits in ascending order. Note that 0 is not included since it will always be a leading digit and that is not allowed. Also, <math>\emptyset</math> (the empty set) isn't included because it doesn't generate a number. The sum is equivalent to <math>\sum_{n=0}^{9} \binom{9}{n} -\binom{9}{0} = 2^9 - 1 = 511.</math>
+
+Case 2: monotonous numbers with digits in descending order
+
+There are <math>\sum_{n=1}^{10} \binom{10}{n}</math> ways to choose n digits from the digits 0 to 9. For each of these ways, we can generate exactly one monotonous number by ordering the chosen digits in descending order. Note that 0 is included since we are allowed to end numbers with zeros. However, <math>\emptyset</math> (the empty set) still isn't included because it doesn't generate a number. The sum is equivalent to <math>\sum_{n=0}^{10} \binom{10}{n} -\binom{10}{0} = 2^{10} - 1 = 1023.</math> We discard the number 0 since it is not positive. Thus there are <math>1022</math> here. 
+
+Since the 1-digit numbers 1 to 9 satisfy both case 1 and case 2, we have overcounted by 9. Thus there are <math>511+1022-9=\boxed{\textbf{(B) }  1524}</math> monotonous numbers.
+
+==Solution 2==
+Like Solution 1, divide the problem into an increasing and decreasing case:
+
+<math>\bullet</math> Case 1: Monotonous numbers with digits in ascending order.
+
+Arrange the digits 1 through 9 in increasing order, and exclude 0 because a positive integer cannot begin with 0.
+
+To get a monotonous number, we can either include or exclude each of the remaining 9 digits, and there are <math>2^9 = 512</math> ways to do this. However, we cannot exclude every digit at once, so we subtract 1 to get <math>512-1=511</math> monotonous numbers for this case.
+
+<math>\bullet</math> Case 2: Monotonous numbers with digits in descending order.
+
+This time, we arrange all 10 digits in decreasing order and repeat the process to find <math>2^{10} = 1024</math> ways to include or exclude each digit. We cannot exclude every digit at once, and we cannot include only 0, so we subtract 2 to get <math>1024-2=1022</math> monotonous numbers for this case.
+
+At this point, we have counted all of the single-digit monotonous numbers twice, so we must subtract 9 from our total.
+
+Thus our final answer is <math>511+1022-9 = \boxed{\textbf{(B) } 1524}</math>.
+
+==Solution 3==
+
+Unlike the first two solutions, we can do our casework based off of whether or not the number contains a <math>0</math>. 
+
+If it does, then we know the <math>0</math> must be the last digit in the number (and hence, the number has to be decreasing). Because <math>0</math> is not positive, <math>0</math> is not monotonous. So, we need to pick at least <math>1</math> number in the set <math>[1, 9].</math> After choosing our numbers, there will be just <math>1</math> way to arrange them so that the overall number is monotonous.
+
+In total, each of the <math>9</math> digits can either be in the monotonous number or not, yielding <math>2^9 = 512</math> total solutions. However, we said earlier that <math>0</math> cannot be by itself so we have to subtract out the case in which we picked none of the numbers <math>1-9</math>. So, this case gives us <math>511</math>. 
+
+
+Onto the second case, if there are no <math>0</math>s, then the number can either be arranged in ascending order or in descending order. So, for each selection of the digits <math>1- 9</math>, there are <math>2</math> solutions. This gives <cmath>2 \cdot (2^9 - 1) = 2 \cdot 511 = 1022</cmath> possibilities. Note that we subtracted out the <math>1</math> because we cannot choose none of the numbers. 
+
+However, realize that if we pick just <math>1</math> digit, then there is only <math>1</math> arrangement. We cannot put a single digit in both ascending and descending order. So, we must subtract out <math>9</math> from there (because there are <math>9</math> possible ways to select one number and for each case, we overcounted by <math>1</math>). 
+
+All in all, that gives <math>511 + 1022 - 9 = \boxed{\textbf{(B)  } 1524}</math> monotonous numbers.
+
+==Solution 4==
+
+Let <math>n</math> be the number of digits of a monotonous number. Notice for an increasing monotonous number with <math>n \ge 2</math>, we can obtain 2 more monotonous numbers that are decreasing by reversing its digits and adding a <math>0</math> to the end of the reversed digits. Whenever <math>n</math> digits are chosen, the order is fixed. There are <math>\binom{9}{n}</math> ways to obtain an increasing monotonous number with <math>n</math> digits. So, there are <math>3\cdot \sum_{n=2}^{9} \binom{9}{n}</math> monotonous numbers when <math>n \ge 2</math>. When <math>n=1</math>, there is no reverse but we could add <math>0</math> to the end, so there are <math>2 \cdot \binom{9}{1}</math> monotonous numbers.
+
+The answer is:
+
+<math>3\cdot \sum_{n=2}^{9} \binom{9}{n} + 2 \cdot \binom{9}{1}</math> <math>=3\cdot \sum_{n=1}^{9} \binom{9}{n}  -  \binom{9}{1}</math> <math>=3\cdot \left( \sum_{n=0}^{9} \binom{9}{n} - \binom{9}{0} \right) -  \binom{9}{1}</math> <math>= 3 \cdot (2^9-1) - 9</math> <math>=\boxed{\textbf{(B)  } 1524}</math>
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+==Solution 5 (Casework / 1-1 Correspondence)==
+We have 2 cases.
+
+'''Case 1: Ascending order'''
+
+We can set up a 1-1 Correspondence. For any subset of all the digits <math>1</math> to <math>9</math> (<math>0</math> cannot be a digit for ascending order), we can always rearrange them into an ascending monotonous number. Therefore, the number of subsets of the integers <math>1</math> to <math>9</math> is equivalent to the number of ascending integers. So, <math>2^9=512</math>. However, the empty set (<math>\emptyset</math>) is not an integer, so we must subtract 1. Thus, <math>512-1=511</math>.
+
+'''Case 2: Descending order'''
+
+Similarly, any subset of the digits <math>0</math> to <math>9</math> can be rearranged into a descending monotonous number. So, <math>2^{10}=1024</math>. However, <math>\emptyset</math> and <math>0</math> are not ''positive'' integers, so we must subtract 2. Thus, <math>1024-2=1022</math>.
+
+
+
+We have covered all the cases. We add <math>511</math> to <math>1022</math>, giving us <math>1533</math>. So now we just innocently go ahead and choose <math>\textbf{(C) } 1533</math> as our answer, right? No! We overcounted the <math>9</math> ''single-digit integers''. The answer is actually <math>1533-9=\boxed{\textbf{(B)  } 1524}</math>.
+
+~MrThinker
+
+==See Also==
+{{AMC10 box|year=2017|ab=B|num-b=16|num-a=18}}
+{{AMC12 box|year=2017|ab=B|num-b=10|num-a=12}}
+{{MAA Notice}}
+
+[[Category:Introductory Combinatorics Problems]]

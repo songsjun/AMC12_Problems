@@ -1,0 +1,39 @@
+==Problem==
+
+For what value of <math>x</math> does <math>10^{x}\cdot 100^{2x}=1000^{5}</math>?
+
+<math>\textbf{(A)}\ 1 \qquad\textbf{(B)}\ 2\qquad\textbf{(C)}\ 3\qquad\textbf{(D)}\ 4\qquad\textbf{(E)}\ 5</math>
+
+==Solution 1==
+
+We can rewrite <math>10^{x}\cdot 100^{2x}=1000^{5}</math> as <math>10^{5x}=10^{15}</math>:
+<cmath>\begin{split}
+10^x\cdot100^{2x} & =10^x\cdot(10^2)^{2x} \\
+10^x\cdot10^{4x} & =(10^3)^5 \\
+10^{5x} & =10^{15}
+\end{split}</cmath>
+Since the bases are equal, we can set the exponents equal, giving us <math>5x=15</math>. Solving the equation gives us <math>x = \boxed{\textbf{(C)}\;3}.</math>
+
+==Solution 2==
+
+We can rewrite this expression as <math>\log(10^x \cdot 100^{2x})=\log(1000^5)</math> , which can be simplified to <math>\log(10^{x}\cdot10^{4x})=5\log(1000)</math>, and that can be further simplified to <math>\log(10^{5x})=5\log(10^3)</math> . This leads to <math>5x=15</math>. Solving this linear equation yields <math>x = \boxed{\textbf{(C)}\;3}.</math>
+
+==Video Solution (HOW TO THINK CREATIVELY!!!)==
+ https://youtu.be/-U6n2jBDqSA
+
+~Education, the Study of Everything
+
+
+
+==Video Solution==
+https://youtu.be/VIt6LnkV4_w?t=044
+
+https://youtu.be/SZNMHoYzPDs
+
+~savannahsolver
+
+==See Also==
+{{AMC10 box|year=2016|ab=A|num-b=1|num-a=3}}
+{{AMC12 box|year=2016|ab=A|num-b=1|num-a=3}}
+{{MAA Notice}}
+[[Category: Introductory Algebra Problems]]

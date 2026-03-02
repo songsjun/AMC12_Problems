@@ -1,0 +1,364 @@
+{{duplicate|[[2018 AMC 12B Problems|2018 AMC 12B #20]] and [[2018 AMC 10B Problems|2018 AMC 10B #24]]}}
+
+==Problem==
+
+Let <math>ABCDEF</math> be a regular hexagon with side length <math>1</math>. Denote by <math>X</math>, <math>Y</math>, and <math>Z</math> the midpoints of sides <math>\overline {AB}</math>, <math>\overline{CD}</math>, and <math>\overline{EF}</math>, respectively. What is the area of the convex hexagon whose interior is the intersection of the interiors of <math>\triangle ACE</math> and <math>\triangle XYZ</math>?
+
+<math>\textbf{(A)}\ \frac {3}{8}\sqrt{3} \qquad \textbf{(B)}\ \frac {7}{16}\sqrt{3} \qquad \textbf{(C)}\ \frac {15}{32}\sqrt{3} \qquad  \textbf{(D)}\ \frac {1}{2}\sqrt{3} \qquad \textbf{(E)}\ \frac {9}{16}\sqrt{3} </math>
+
+==Diagram==
+<asy>
+/* Made by MRENTHUSIASM */
+size(200);
+draw(polygon(6));
+pair A, B, C, D, E, F, X, Y, Z, M, N, O, P, Q, R;
+A = dir(120);
+B = dir(60);
+C = dir(0);
+D = dir(300);
+E = dir(240);
+F = dir(180);
+X = midpoint(A--B);
+Y = midpoint(C--D);
+Z = midpoint(E--F);
+M = intersectionpoint(A--E,X--Z);
+N = intersectionpoint(A--C,X--Y);
+O = intersectionpoint(C--E,Y--Z);
+P = intersectionpoint(A--C,X--Z);
+Q = intersectionpoint(C--E,X--Y);
+R = intersectionpoint(A--E,Y--Z);
+fill(M--P--N--Q--O--R--cycle,mediumgray);
+dot("$A$",A,1.5*dir(A),linewidth(4));
+dot("$B$",B,1.5*dir(B),linewidth(4));
+dot("$C$",C,1.5*dir(C),linewidth(4));
+dot("$D$",D,1.5*dir(D),linewidth(4));
+dot("$E$",E,1.5*dir(E),linewidth(4));
+dot("$F$",F,1.5*dir(F),linewidth(4));
+dot("$X$",X,1.5*dir(X),linewidth(4));
+dot("$Y$",Y,1.5*dir(Y),linewidth(4));
+dot("$Z$",Z,1.5*dir(Z),linewidth(4));
+dot(M^^N^^O^^P^^Q^^R,linewidth(4));
+draw(A--C--E--cycle^^X--Y--Z--cycle);
+</asy>
+~MRENTHUSIASM
+
+==Solution 1 (Area Addition)==
+<asy>
+/* Made by MRENTHUSIASM */
+size(200);
+draw(polygon(6));
+pair A, B, C, D, E, F, X, Y, Z, M, N, O, P, Q, R;
+A = dir(120);
+B = dir(60);
+C = dir(0);
+D = dir(300);
+E = dir(240);
+F = dir(180);
+X = midpoint(A--B);
+Y = midpoint(C--D);
+Z = midpoint(E--F);
+M = intersectionpoint(A--E,X--Z);
+N = intersectionpoint(A--C,X--Y);
+O = intersectionpoint(C--E,Y--Z);
+P = intersectionpoint(A--C,X--Z);
+Q = intersectionpoint(C--E,X--Y);
+R = intersectionpoint(A--E,Y--Z);
+fill(M--P--N--Q--O--R--cycle,mediumgray);
+dot("$A$",A,1.5*dir(A),linewidth(4));
+dot("$B$",B,1.5*dir(B),linewidth(4));
+dot("$C$",C,1.5*dir(C),linewidth(4));
+dot("$D$",D,1.5*dir(D),linewidth(4));
+dot("$E$",E,1.5*dir(E),linewidth(4));
+dot("$F$",F,1.5*dir(F),linewidth(4));
+dot("$X$",X,1.5*dir(X),linewidth(4));
+dot("$Y$",Y,1.5*dir(Y),linewidth(4));
+dot("$Z$",Z,1.5*dir(Z),linewidth(4));
+dot("$M$",M,1.5*dir(165),linewidth(4));
+dot("$N$",N,1.5*dir(45),linewidth(4));
+dot("$O$",O,1.5*dir(-75),linewidth(4));
+dot("$P$",P,1.5*dir(105),linewidth(4));
+dot("$Q$",Q,1.5*dir(-15),linewidth(4));
+dot("$R$",R,1.5*dir(-135),linewidth(4));
+draw(A--C--E--cycle^^X--Y--Z--cycle);
+draw(M--N--O--cycle,dashed);
+</asy>
+
+The desired area (hexagon <math>MPNQOR</math>) consists of an equilateral triangle (<math>\triangle MNO</math>) and three right triangles (<math>\triangle MPN,\triangle NQO,</math> and <math>\triangle ORM</math>).
+
+Notice that <math>\overline {AD}</math> (not shown) and <math>\overline {BC}</math> are parallel. <math>\overline {XY}</math> divides transversals <math>\overline {AB}</math> and <math>\overline {CD}</math> into a <math>1:1</math> ratio (This can be shown by similar triangles.). Thus, it must also divide transversal <math>\overline {AC}</math> and transversal <math>\overline {CO}</math> into a <math>1:1</math> ratio. By symmetry, the same applies for <math>\overline {CE}</math> and <math>\overline {EA}</math> as well as <math>\overline {EM}</math> and <math>\overline {AN}.</math>
+
+In <math>\triangle ACE,</math> we see that <math>\frac{[MNO]}{[ACE]} = \frac{1}{4}</math> and <math>\frac{[MPN]}{[ACE]} = \frac{1}{8}.</math> Our desired area becomes <cmath>\left(\frac{1}{4}+3 \cdot \frac{1}{8}\right) \cdot \frac{(\sqrt{3})^2 \cdot \sqrt{3}}{4} = \boxed{\textbf{(C)}\ \frac {15}{32}\sqrt{3}}.</cmath>
+
+==Solution 2 (Area Subtraction)==
+Instead of directly finding the desired hexagonal area, <math>\triangle XYZ</math> can be found. It consists of three triangles and the desired hexagon. Given triangle rotational symmetry, the three triangles are congruent. See that <math>\triangle XYZ</math> and <math>\triangle ACE</math> are equilateral, so <math>m\angle PXN=60,</math> so <math>m\angle AXP = \frac{180-60}{2}=60.</math> As <math>\overline {AC}</math> is a transversal running through <math>\overline {FC}</math> (use your imagination) and <math>\overline {AB},</math> we have <math>m\angle BAC=m\angle FCA = \frac{m\angle ACE}{2}=30.</math> 
+
+Then, <math>\triangle APX</math> is a <math>30</math>-<math>60</math>-<math>90</math> triangle. By HL congruence, <math>\triangle APX \cong \triangle NPX.</math> Note that <math>AX=\frac{1}{2}.</math> Then, the area of <math>\triangle PXN</math> is <math>\frac{\sqrt{3}}{32}.</math> There are three such triangles for a total area of <math>\triangle XYZ</math> is <math>\frac{3\sqrt{3}}{32}.</math> Find the side of <math>\triangle XYZ</math> to be <math>\frac{3}{2},</math> so the area is <math>\frac{9\sqrt{3}}{16}.</math> 
+
+The answer is <cmath>\frac{9\sqrt{3}}{16}-\frac{3\sqrt{3}}{32}=\boxed{\textbf{(C)}\ \frac {15}{32}\sqrt{3}}.</cmath>
+~BJHHar
+
+==Solution 3 (Area Subtraction)==
+<asy>
+/* Made by MRENTHUSIASM */
+size(200);
+draw(polygon(6));
+pair A, B, C, D, E, F, X, Y, Z, M, N, O, P, Q, R;
+A = dir(120);
+B = dir(60);
+C = dir(0);
+D = dir(300);
+E = dir(240);
+F = dir(180);
+X = midpoint(A--B);
+Y = midpoint(C--D);
+Z = midpoint(E--F);
+M = intersectionpoint(A--E,X--Z);
+N = intersectionpoint(A--C,X--Y);
+O = intersectionpoint(C--E,Y--Z);
+P = intersectionpoint(A--C,X--Z);
+Q = intersectionpoint(C--E,X--Y);
+R = intersectionpoint(A--E,Y--Z);
+fill(M--P--N--Q--O--R--cycle,mediumgray);
+dot("$A$",A,1.5*dir(A),linewidth(4));
+dot("$B$",B,1.5*dir(B),linewidth(4));
+dot("$C$",C,1.5*dir(C),linewidth(4));
+dot("$D$",D,1.5*dir(D),linewidth(4));
+dot("$E$",E,1.5*dir(E),linewidth(4));
+dot("$F$",F,1.5*dir(F),linewidth(4));
+dot("$X$",X,1.5*dir(X),linewidth(4));
+dot("$Y$",Y,1.5*dir(Y),linewidth(4));
+dot("$Z$",Z,1.5*dir(Z),linewidth(4));
+dot("$M$",M,1.5*dir(165),linewidth(4));
+dot("$N$",N,1.5*dir(45),linewidth(4));
+dot("$O$",O,1.5*dir(-75),linewidth(4));
+dot("$P$",P,1.5*dir(105),linewidth(4));
+dot("$Q$",Q,1.5*dir(-15),linewidth(4));
+dot("$R$",R,1.5*dir(-135),linewidth(4));
+draw(A--C--E--cycle^^X--Y--Z--cycle);
+draw(M--N--O--cycle,dashed);
+</asy>
+
+Now, if we look at the figure, we can see that the complement of the hexagon we are trying to find is composed of <math>3</math> isosceles trapezoids (namely <math>AXZF,CYXB,</math> and <math>EZYD</math>) and <math>3</math> right triangles (namely <math>\triangle XPN,\triangle YQO,</math> and <math>\triangle ZRM</math>).
+
+Finding the trapezoid's area, we know that one base of each trapezoid is just the side length of the hexagon, which is <math>1,</math> and the other base is <math>\frac{3}{2}</math> (it is halfway in between the side and the longest diagonal, which has length <math>2</math>) with a height of <math>\frac{\sqrt{3}}{4}</math> (by using the Pythagorean Theorem and the fact that it is an isosceles trapezoid) to give each trapezoid having an area of <math>\frac{5\sqrt{3}}{16}</math> for a total area of <math>\frac{15\sqrt{3}}{16}.</math> (Alternatively, we could have calculated the area of hexagon <math>ABCDEF</math> and subtracted the area of <math>\triangle XYZ,</math> which, as we showed before, had a side length of <math>\frac{3}{2}</math>).
+
+Now, we need to find the area of each of the small triangles, which, if we look at the triangle that has a vertex on <math>X,</math> is similar to the triangle with a base of <math>YC = \frac12.</math> Using similar triangles, we calculate the base to be <math>\frac{1}{4}</math> and the height to be <math>\frac{\sqrt{3}}{4}</math> giving us an area of  <math>\frac{\sqrt{3}}{32}</math> per triangle, and a total area of <math>\frac{3\sqrt{3}}{32}.</math> Adding the two areas together, we get <math>\frac{15\sqrt{3}}{16} + \frac{3\sqrt{3}}{32} = \frac{33\sqrt{3}}{32}.</math> Finding the total area, we get <math>6 \cdot 1^2 \cdot \frac{\sqrt{3}}{4}=\frac{3\sqrt{3}}{2}.</math> Taking the complement, we get <math>\frac{3\sqrt{3}}{2} - \frac{33\sqrt{3}}{32} = \boxed{\textbf{(C)}\ \frac {15}{32}\sqrt{3}}.</math>
+
+==Solution 4 (Area Subtraction)==
+
+<asy>
+/* Made by MRENTHUSIASM */
+size(200);
+draw(polygon(6));
+pair A, B, C, D, E, F, X, Y, Z, M, N, O, P, Q, R;
+A = dir(120);
+B = dir(60);
+C = dir(0);
+D = dir(300);
+E = dir(240);
+F = dir(180);
+X = midpoint(A--B);
+Y = midpoint(C--D);
+Z = midpoint(E--F);
+M = intersectionpoint(A--E,X--Z);
+N = intersectionpoint(A--C,X--Y);
+O = intersectionpoint(C--E,Y--Z);
+P = intersectionpoint(A--C,X--Z);
+Q = intersectionpoint(C--E,X--Y);
+R = intersectionpoint(A--E,Y--Z);
+fill(M--P--N--Q--O--R--cycle,mediumgray);
+dot("$A$",A,1.5*dir(A),linewidth(4));
+dot("$B$",B,1.5*dir(B),linewidth(4));
+dot("$C$",C,1.5*dir(C),linewidth(4));
+dot("$D$",D,1.5*dir(D),linewidth(4));
+dot("$E$",E,1.5*dir(E),linewidth(4));
+dot("$F$",F,1.5*dir(F),linewidth(4));
+dot("$X$",X,1.5*dir(X),linewidth(4));
+dot("$Y$",Y,1.5*dir(Y),linewidth(4));
+dot("$Z$",Z,1.5*dir(Z),linewidth(4));
+dot("$M$",M,1.5*dir(165),linewidth(4));
+dot("$N$",N,1.5*dir(45),linewidth(4));
+dot("$O$",O,1.5*dir(-75),linewidth(4));
+dot("$P$",P,1.5*dir(105),linewidth(4));
+dot("$Q$",Q,1.5*dir(-15),linewidth(4));
+dot("$R$",R,1.5*dir(-135),linewidth(4));
+draw(A--C--E--cycle^^X--Y--Z--cycle);
+</asy>
+
+We could also subtract <math>\triangle APM,\triangle CQN,</math> and <math>\triangle ERO</math> from <math>\triangle ACE.</math>
+
+Since <math>\angle BAF = 120^{\circ}</math> and <math>\angle BAC = \angle FAE = 30^{\circ},</math> we have <math>\angle CAE = \angle BAF-\angle BAC-\angle FAE=60^{\circ}.</math>
+
+Since <math>AX=BX</math> and <math>FZ=EZ,</math> we have <math>AF \parallel XZ,</math> from which <math>\angle AMX= \angle FAM = 30^{\circ}.</math>
+
+We can show that <math>\triangle APM</math> is <math>30</math>-<math>60</math>-<math>90</math> using a similar method, <math>\triangle CQN</math> and <math>\triangle ERO</math> are also <math>30</math>-<math>60</math>-<math>90.</math>
+
+Since <math>AC=CE=AE=\sqrt{3},</math> we have <math>[ACE]=AC^2 \cdot \frac{\sqrt{3}}{4}=3 \cdot \frac{\sqrt{3}}{4} = \frac{3 \sqrt{3}}{4}.</math>
+
+Since <math>AX= \frac{1}{2}</math> and <math>AP = AX \cdot \frac{\sqrt{3}}{2}= \frac{1}{2} \cdot \frac{\sqrt{3}}{2} = \frac{\sqrt{3}}{4},</math> we have <math>PM = AP \cdot \sqrt{3} = \frac{\sqrt{3}}{4} \cdot \sqrt{3} = \frac{3}{4}.</math>
+
+Note that <cmath>[APM]=[CQN]=[ERO]=\frac{1}{2} \cdot AP \cdot PM = \frac{1}{2} \cdot \frac{\sqrt{3}}{4} \cdot \frac{3}{4} = \frac{3 \sqrt{3}}{32}.</cmath>
+Therefore, we get
+<cmath>[PNQORM]=[ACE]-[APM]-[CQN]-[ERO]=\frac{3 \sqrt{3}}{4} - 3 \cdot \frac{3 \sqrt{3}}{32} = \frac{24 \sqrt{3}}{32} - \frac{9 \sqrt{3}}{32} = \boxed{\textbf{(C)}\ \frac {15}{32}\sqrt{3}}.</cmath>
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+==Solution 5 (Partition the Hexagon)==
+We partition hexagon <math>ABCDEF</math> into <math>48</math> congruent <math>30^\circ\text{-}60^\circ\text{-}90^\circ</math> triangles, as shown below:
+<asy>
+/* Made by MRENTHUSIASM */
+size(200);
+pair A, B, C, D, E, F, X, Y, Z, M, N, O, P, Q, R;
+A = dir(120);
+B = dir(60);
+C = dir(0);
+D = dir(300);
+E = dir(240);
+F = dir(180);
+X = midpoint(A--B);
+Y = midpoint(C--D);
+Z = midpoint(E--F);
+M = intersectionpoint(A--E,X--Z);
+N = intersectionpoint(A--C,X--Y);
+O = intersectionpoint(C--E,Y--Z);
+P = intersectionpoint(A--C,X--Z);
+Q = intersectionpoint(C--E,X--Y);
+R = intersectionpoint(A--E,Y--Z);
+fill(M--P--N--Q--O--R--cycle,mediumgray);
+draw(A--D^^B--E^^C--F^^X--Y--Z--cycle^^midpoint(A--F)--midpoint(B--C)--midpoint(D--E)--cycle,red);
+draw(A--C--E--cycle^^M--N--O--cycle^^M--midpoint(F--Z)^^M--F+1/4*(A-F)^^N--midpoint(X--B)^^N--B+1/4*(C-B)^^O--midpoint(Y--D)^^O--D+1/4*(E-D),blue);
+draw(polygon(6));
+dot("$A$",A,1.5*dir(A),linewidth(4));
+dot("$B$",B,1.5*dir(B),linewidth(4));
+dot("$C$",C,1.5*dir(C),linewidth(4));
+dot("$D$",D,1.5*dir(D),linewidth(4));
+dot("$E$",E,1.5*dir(E),linewidth(4));
+dot("$F$",F,1.5*dir(F),linewidth(4));
+dot("$X$",X,1.5*dir(X),linewidth(4));
+dot("$Y$",Y,1.5*dir(Y),linewidth(4));
+dot("$Z$",Z,1.5*dir(Z),linewidth(4));
+dot(M^^N^^O^^P^^Q^^R,linewidth(4));
+</asy>
+Let the brackets denote areas. Note that the desired region contains <math>15</math> of the <math>48</math> small triangles, so the answer is <cmath>\frac{15}{48}[ABCDEF]=\frac{15}{48}\cdot\frac{3\sqrt3}{2}=\boxed{\textbf{(C)}\ \frac {15}{32}\sqrt{3}}.</cmath>
+~AlexLikeMath ~MRENTHUSIASM
+
+==Solution 6 (Partition the Hexagon)==
+Dividing <math>\triangle MNO</math> into two right triangles congruent to <math>\triangle PMN,</math> we see that <math>[MPNQOR]=\dfrac{5}{8}[ACE].</math> Because <math>[ACE] = \dfrac{1}{2}[ABCDEF],</math> we have <math>[MPNQOR]=\dfrac{5}{16}[ABCDEF].</math> From here, you should be able to tell that the answer will have a factor of <math>5,</math> and <math>\boxed{\textbf{(C)}\ \frac {15}{32}\sqrt{3}}</math> is the only answer that has a factor of <math>5.</math> However, if you want to actually calculate the area, you would calculate <math>[ABCDEF]</math> to be <math>6 \cdot \dfrac{\sqrt{3}}{2 \cdot 2} = \dfrac{3\sqrt{3}}{2},</math> so <math>[MPNQOR] = \dfrac{5}{16} \cdot \dfrac{3\sqrt{3}}{2} = \frac {15}{32}\sqrt{3}.</math>
+
+==Solution 7 (Trigonometry)==
+Notice, the area of the convex hexagon formed through the intersection of the <math>2</math> triangles can be found by finding the area of the triangle formed by the midpoints of the sides and subtracting the smaller triangles that are formed by the region inside this triangle but outside the other triangle. First, let's find the area of the triangle formed by the midpoint of the sides. Notice, this is an equilateral triangle, thus all we need is to find the length of its side. 
+To do this, we look at the isosceles trapezoid outside this triangle but inside the outer hexagon. Since the interior angle of a regular hexagon is <math>120^\circ</math> and the trapezoid is isosceles, we know that the angle opposite is <math>60^\circ,</math> and thus the side length of this triangle is <math>1+2\left(\frac{1}{2}\cos 60^\circ\right)=1+\frac{1}{2}=\frac{3}{2}.</math> So the area of this triangle is <math>\frac{\sqrt{3}}{4}s^2=\frac{9\sqrt{3}}{16}.</math>
+
+Now let's find the area of the smaller triangles. Notice, <math>\triangle ACE</math> cuts off smaller isosceles triangles from the outer hexagon. The base of these isosceles triangles is perpendicular to the base of the isosceles trapezoid mentioned before, thus we can use trigonometric ratios to find the base and height of these smaller triangles, which are all congruent due to the rotational symmetry of a regular hexagon. The area is then <math>\frac{1}{2}\left(\frac{1}{2}\cos 60^\circ\right)\left(\frac{1}{2}\sin 60^\circ\right)=\frac{\sqrt{3}}{32}</math> and the sum of the areas is <math>3\cdot \frac{\sqrt{3}}{32}=\frac{3\sqrt{3}}{32}.</math>
+
+Therefore, the area of the convex hexagon is <math>\frac{9\sqrt{3}}{16}-\frac{3\sqrt{3}}{32}=\frac{18\sqrt{3}}{32}-\frac{3\sqrt{3}}{32}=\boxed{\textbf{(C)}\ \frac {15}{32}\sqrt{3}}.</math>
+
+==Solution 8 (Linear Transformation)==
+If we try to coordinate bash this problem, it's going to look very ugly with a lot of radicals. However, we can alter and skew the diagram in such a way that all ratios of lengths and areas stay the same while making it a lot easier to work with. Then, we can find the ratio of the area of the wanted region to the area of <math>ABCDEF</math> then apply it to the old diagram.
+<asy>
+unitsize(1cm);
+draw((0,0)--(4,0)--(6,3.464)--(2,3.464)--(0,0));
+draw((2,0)--(1,1.732));
+draw((5,1.732)--(4,3.464));
+draw((1.5, 0.866)--(3, 3.464)--(4.5, 0.866)--cycle);
+draw((2,0)--(2,3.464)--(5,1.732)--cycle);
+</asy>
+
+<asy>
+unitsize(1cm);
+fill((1,4)--(1,3.5)--(2,3)--cycle,red);
+fill((1,1)--(1.5,1)--(1,2)--cycle,red);
+fill((3,1)--(3.5,1.5)--(4,1)--cycle,red);
+draw((1,0)--(1,4),gray(.7));
+draw((2,0)--(2,4),gray(.7));
+draw((3,0)--(3,4),gray(.7));
+draw((0,1)--(4,1),gray(.7));
+draw((0,2)--(4,2),gray(.7));
+draw((0,3)--(4,3),gray(.7));
+draw((0,0)--(4,0)--(4,4)--(0,4)--(0,0));
+draw((2,0)--(0,2));
+draw((4,2)--(2,4));
+draw((1,1)--(1,4)--(4,1)--cycle);
+draw((0,4)--(2,0)--(4,2)--cycle);
+</asy>
+
+The isosceles right triangle with a leg length of <math>3</math> in the new diagram is <math>\triangle XYZ</math> in the old diagram. We see that if we want to take the area of the new hexagon, we must subtract <math>\frac{3}{4}</math> from the area of <math>\triangle XYZ</math> (the red triangles), giving us <math>\frac{15}{4}.</math> However, we need to take the ratio of this area to the area of <math>ABCDEF,</math> which is <math>\frac{\frac{15}{4}}{12}=\frac{5}{16}.</math> Now we know that our answer is <math>\frac{5}{16} \cdot \frac{3\sqrt{3}}{2}=\boxed{\textbf{(C)}\ \frac {15}{32}\sqrt{3}}.</math>
+
+==Solution 9 (Midsegment Theorem)==
+
+<asy>
+/* Made by MRENTHUSIASM */
+size(200);
+draw(polygon(6));
+pair A, B, C, D, E, F, X, Y, Z, M, N, O, P, Q, R, G;
+A = dir(120);
+B = dir(60);
+C = dir(0);
+D = dir(300);
+E = dir(240);
+F = dir(180);
+X = midpoint(A--B);
+Y = midpoint(C--D);
+Z = midpoint(E--F);
+
+G = midpoint(A--D);
+
+M = intersectionpoint(A--E,X--Z);
+N = intersectionpoint(A--C,X--Y);
+O = intersectionpoint(C--E,Y--Z);
+P = intersectionpoint(A--C,X--Z);
+Q = intersectionpoint(C--E,X--Y);
+R = intersectionpoint(A--E,Y--Z);
+fill(M--P--N--Q--O--R--cycle,mediumgray);
+dot("$A$",A,1.5*dir(A),linewidth(4));
+dot("$B$",B,1.5*dir(B),linewidth(4));
+dot("$C$",C,1.5*dir(C),linewidth(4));
+dot("$D$",D,1.5*dir(D),linewidth(4));
+dot("$E$",E,1.5*dir(E),linewidth(4));
+dot("$F$",F,1.5*dir(F),linewidth(4));
+dot("$X$",X,1.5*dir(X),linewidth(4));
+dot("$Y$",Y,1.5*dir(Y),linewidth(4));
+dot("$Z$",Z,1.5*dir(Z),linewidth(4));
+
+dot(O^^Q^^R,linewidth(4));
+dot("$N$",N,1.5*dir(N),linewidth(4));
+dot("$M$",M,1.5*dir(M),linewidth(4));
+dot("$P$",P,1.5*dir(P),linewidth(4));
+
+dot("$G$",G,1.5*dir(G),linewidth(4));
+
+draw(A--C--E--cycle^^X--Y--Z--cycle);
+
+draw(A--G^^C--G);
+draw(N--B);
+draw(N--E--A--cycle^^M--P, red);
+
+</asy>
+(~MRENTHUSIASM's diagram + modifications)
+
+===Lemma 1: <math>MP</math> is midsegment of <math>\triangle ANE</math>.===
+As <math>ZX</math> is a midsegment of trapezoid <math>FEBA</math>, we know that <math>FA||ZX||EB</math>. Furthermore, by subdividing trapezoid <math>FEBA</math>, <math>ZM,MP,PX</math> are midsegments of <math>\triangle EFA, \triangle ANE, \triangle, ANB</math> respectively.
+
+===Lemma 2: <math>[ACE] = \frac12[ABCDEF]</math>===
+Due to radial symmetry about the center, <math>G</math>, we only have to prove <math>[AGC] = [CBA]</math>. As <math>\triangle AGB</math> and <math>\triangle CBG</math> are equilateral triangles, <math>AC</math> therefore divides rhombus <math>ABCG</math> into 2 congruent halves. <math>\triangle AGC</math> and <math>\triangle CBA</math> thus each contain two such congruent triangles, which means that their areas are equal.
+
+===Lemma 3: <math>[AMP] = \frac1{16}[ABCDEF]</math>===
+From Lemma 1, <math>\triangle AMP \simeq \triangle AEN</math> with a scale factor of <math>\frac12</math>, which means <math>[AMP] = \frac14[AEN]</math>. Furthermore, due to symmetry of <math>\triangle AEN</math> and <math>\triangle CEN</math> about <math>EN</math>, <math>[AEN] = \frac12[ACE]</math>. Therefore, <math>[AMP] =  \frac18[ACE]</math>, or (using lemma 2) <math>\frac1{16}[ABCDEF]</math>.
+
+===Lemma 4: <math>[ABCDEF] = \frac{3\sqrt3}2</math>===
+Because the hexagon is regular, <math>[ABCDEF] = 6[ABG] = \frac{6\sqrt3}4 = \frac{3\sqrt3}2</math>. (For more info on where <math>\frac{\sqrt3}4</math> came from, use the search term "area of equilateral triangle")
+
+===Final step:===
+To find the area of the shaded part, we seek <math>[ACE] - 3[AMP]</math>. Using lemmas 2 and 3, the expression resolves to <math>\frac12[ABCDEF] - 3\frac1{16}[ABCDEF] = \frac5{16} \cdot \frac{3\sqrt3}2 = \boxed{\textbf{(C)}\ \frac{15}{32}\sqrt{3}}</math>.
+
+~[https://artofproblemsolving.com/wiki/index.php/User:math660 math660]
+
+==Video Solution==
+https://www.youtube.com/watch?v=yDbn9Mx2myw
+
+==See Also==
+{{AMC10 box|year=2018|ab=B|num-b=23|num-a=25}}
+{{AMC12 box|year=2018|ab=B|num-b=19|num-a=21}}
+{{MAA Notice}}
+
+[[Category:Intermediate Geometry Problems]]

@@ -1,0 +1,65 @@
+# 2019 AMC 12A Problem 12
+
+## Problem
+Positive real numbers x $\neq 1$ and y $\neq 1$ satisfy $\log_2{x} = \log_y{16}$ and xy = 64. What is ($\log_2{\tfrac{x}{y}})^2$?
+
+$\textbf{(A) } \frac{25}{2} \qquad\textbf{(B) } 20 \qquad\textbf{(C) } \frac{45}{2} \qquad\textbf{(D) } 25 \qquad\textbf{(E) } 32$
+## Solution 1
+Let $\log_2{x} = \log_y{16}=k,$ so that $2^k=x$ and $y^k=16\impliesy=2^{\frac{4}{k}}$. Then we have $(2^k)(2^{\frac{4}{k}})=2^{k+\frac{4}{k}}=2^6$.
+
+We therefore have $k+\frac{4}{k}=6,$ and deduce $k^2-6k+4=0$. The solutions to this are $k = 3\pm \sqrt{5}.$
+
+To solve the problem, we now find
+
+$$
+\begin{align*} (\log_2\tfrac{x}{y})^2&=(\log_2 x - \log_2 y)^2\\ &=(k-\tfrac{4}{k})^2=(3 \pm \sqrt{5} - \tfrac{4}{3 \pm \sqrt{5}})^2 \\ &= (3 \pm \sqrt{5} - [3 \pm \sqrt{5}])^2\\ &= (3 \pm \sqrt{5} - 3 \pm \sqrt{5})^2\\ &=(\pm 2\sqrt{5})^2 \\ &= \boxed{\textbf{(B) } 20}. \\ \end{align*}
+$$
+
+*~Edits by BakedPotato66*
+## Solution 2 (slightly simpler)
+After obtaining k + $\frac{4}{k} = 6,$ notice that the required answer is $\left(k - \frac{4}{k}\right)^{2} =k^2 - 8 +\frac{16}{k^2} = \left(k^2 + 8 + \frac{16}{k^2}\right) - 16 = \left(k+\frac{4}{k}\right)^2 - 16 = 6^2 - 16 = \boxed{\textbf{(B) } 20},$ as before.
+## Solution 3
+From the given data, $\log_2(x) = \frac{1}{\log_{16}(y)},$ or $\log_2(x) = \frac{4}{{\log_{2}(y)}}$
+
+We know that xy=64, so $x=\frac{64}{y}.$
+
+Thus $\log_2\left(\frac{64}{y}\right) = \frac{4}{{\log_{2}(y)}},$ so $6-\log_2(y) = \frac{4}{{\log_{2}(y)}},$ so $6$(\log_2(y))$-(\log_2(y))^2=4.$
+
+Solving for $\log_2(y),$ we obtain $\log_2(y)=3+\sqrt{5}.$
+
+Easy resubstitution further gives $\log_2(x)=\frac{4}{3+\sqrt{5}}.$ Simplifying, we obtain $\log_2(x)= 3-\sqrt{5}.$
+
+Looking back at the original problem, we have What is ($\log_2{\tfrac{x}{y}})^2$?
+
+Deconstructing this expression using log rules, we get ($\log_2{x}-\log_2{y})^2.$
+
+Plugging in our known values, we get (($3-\sqrt{5})-(3+\sqrt{5}))^2$ or ($-2\sqrt{5})^2.$
+
+Our answer is $\boxed{\textbf{(B) } 20}.$
+## Solution 4
+Multiplying the first equation by $\log_2$ y, we obtain $\log_2x\cdot\log_2y=4$.
+
+From the second equation we have $\log_2x+\log_2y =\log_2 (xy) = 6.$
+
+Then, $\left(\log_2 \frac{x}{y}\right)^{2} = (\log_2 x-\log_2 y)^{2} = (\log_2 x+\log_2 y)^{2} - 4\log_2x\cdot\log_2 y = (6)^{2}-4(4) = 20 \Rightarrow \boxed{B}.$
+## Solution 5
+Let A=$\log_2$ x and B=$\log_2$ y.
+
+Writing the first given as
+$\log_2 x = \frac{\log_2 16}{\log_2 y}$ and the second as
+$\log_2 x + \log_2 y = \log_2 64,$ we get A$\cdot B = 4$ and A+B=6.
+
+Solving for B we get B = 3 $\pm \sqrt{5}.$
+
+Our goal is to find ( A-B )^2. From the above, it is equal to (6-2B) = $\left(2\sqrt{5}\right)^2 = 20 \Rightarrow \boxed{B}.$
+
+Alternatively, once we found AB=4 and A+B=6, we could have squared the latter to get $A^2+B^2+2AB=36$; subtracting 4 times the former equation, we find that $A^2+B^2-2AB=(A-B)^2=36-16=\boxed{\textbf{(B) }20}. ($Alternate finish by Technodoggo)
+## Video Solution 1
+https://youtu.be/ODOWgzhVKog
+
+*~Education, the Study of Everything*
+## Video Solution by OmegaLearn
+https://youtu.be/RdIIEhsbZKw?t=1821
+
+*~pi_is_3.14*
+## See Also

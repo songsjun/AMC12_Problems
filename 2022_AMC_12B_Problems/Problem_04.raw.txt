@@ -1,0 +1,61 @@
+{{duplicate|[[2022 AMC 10B Problems/Problem 7|2022 AMC 10B #7]] and [[2022 AMC 12B Problems/Problem 4|2022 AMC 12B #4]]}}
+
+==Problem==
+For how many values of the constant <imath>k</imath> will the polynomial <imath>x^{2}+kx+36</imath> have two distinct integer roots?
+
+<imath>\textbf{(A)}\ 6 \qquad\textbf{(B)}\ 8 \qquad\textbf{(C)}\ 9 \qquad\textbf{(D)}\ 14 \qquad\textbf{(E)}\ 16</imath>
+
+==Solution 1==
+Let <imath>p</imath> and <imath>q</imath> be the roots of <imath>x^{2}+kx+36.</imath> By [[Vieta's Formulas]], we have <imath>p+q=-k</imath> and <imath>pq=36.</imath>
+
+It follows that <imath>p</imath> and <imath>q</imath> must be distinct factors of <imath>36.</imath> The possibilities of <imath>\{p,q\}</imath> are <cmath>\pm\{1,36\},\pm\{2,18\},\pm\{3,12\},\pm\{4,9\}.</cmath>
+Each unordered pair gives a unique value of <imath>k.</imath> Therefore, there are <imath>\boxed{\textbf{(B) }8}</imath> values of <imath>k,</imath> corresponding to <imath>\mp37,\mp20,\mp15,\mp13,</imath> respectively.
+
+~stevens0209 ~MRENTHUSIASM ~<imath>\color{magenta}zoomanTV</imath>
+
+==Solution 2==
+
+Note that <imath>k</imath> must be an integer. Using the [[quadratic formula]], <imath>x=\frac{-k \pm \sqrt{k^2-144}}{2}.</imath> Since <imath>4</imath> divides <imath>144</imath> evenly, <imath>k</imath> and <imath>k^2-144</imath> have the same parity, so <imath>x</imath> is an integer if and only if <imath>k^2-144</imath> is a perfect square.
+
+Let <imath>k^2-144=n^2.</imath> Then, <imath>(k+n)(k-n)=144.</imath> Since <imath>k</imath> is an integer and <imath>144</imath> is even, <imath>k+n</imath> and <imath>k-n</imath> must both be even. Assuming that <imath>k</imath> is positive, we get <imath>5</imath> possible values of <imath>k+n</imath>, namely <imath>2, 4, 8, 6, 12</imath>, which will give distinct positive values of <imath>k</imath>, but <imath>k+n=12</imath> gives <imath>k+n=k-n</imath> and <imath>n=0</imath>, giving <imath>2</imath> identical integer roots. Therefore, there are <imath>4</imath> distinct positive values of <imath>k.</imath> Multiplying that by <imath>2</imath> to take the negative values into account, we get <imath>4\cdot2=\boxed{\textbf{(B) }8}</imath> values of <imath>k</imath>.
+
+~pianoboy
+
+==Solution 3 (Pythagorean Triples)==
+
+Proceed similar to Solution 2 and deduce that the discriminant of <imath>x^{2}+kx+36</imath> must be a perfect square greater than <imath>0</imath> to satisfy all given conditions. Seeing something like <imath>k^2-144</imath> might remind us of a right triangle, where <imath>k</imath> is the hypotenuse, and <imath>12</imath> is a leg. There are four ways we could have this: a <imath>9</imath>-<imath>12</imath>-<imath>15</imath> triangle, a <imath>12</imath>-<imath>16</imath>-<imath>20</imath> triangle, a <imath>5</imath>-<imath>12</imath>-<imath>13</imath> triangle, and a <imath>12</imath>-<imath>35</imath>-<imath>37</imath> triangle.
+
+Multiply by <imath>2</imath> to account for negative <imath>k</imath> values (since <imath>k</imath> is being squared), and our answer is <imath>\boxed{\textbf{(B) }8}</imath>.
+
+==Solution 4==
+Since <imath>36 = 2^2\cdot3^2</imath>, that means there are <imath>(2+1)(2+1) = 9</imath> possible factors of <imath>36</imath>. Since <imath>6 \cdot 6</imath> violates the distinct root condition, subtract <imath>1</imath> from <imath>9</imath> to get <imath>8</imath>. Each sum is counted twice, and we count of those twice for negatives. This cancels out, so we get <imath>\boxed{\textbf{(B) }8}</imath>.
+
+~songmath20  Edited 5.1.2023
+
+==Solution 5 (Discriminant and Factor Rainbow)==
+Since to have two solutions, the discriminant must be greater than <imath>0</imath>, <imath>k^2 - 144 > 0</imath> so k must be greater than <imath>12</imath> or less than <imath>-12</imath>(since it's squared). Next, we know that when factoring, the two numbers must multiply to <imath>36</imath>. So you can create a factor rainbow(remember from elementary school) which has the pairs of integers that multiply to <imath>36( 1, 2, 3, 4, 6, 6, 9, 12, 18, 36 )</imath> (you just look at the position and the one on the opposite side, for example <imath>2</imath> is the second value, and <imath>18</imath> is the second last value, and they multiply to 36). See that there are <imath>4</imath> pairs of values which add up to greater than <imath>12</imath>(<imath>6+6</imath> is equal to <imath>12,</imath> not greater), and we look at the negative values of them too(since k is squared) we get <imath>\boxed{\textbf{(B) }8}</imath> total values.
+
+~SIGMAMATHEMATICIAN
+
+==Video Solution (⚡️Lightning Fast⚡️)==
+https://youtu.be/WX871JJbdY4
+
+~Education, the Study of Everything
+
+==Video Solution(1-16)==
+https://youtu.be/SCwQ9jUfr0g
+
+~~Hayabusa1
+==Video Solution by Interstigation==
+https://youtu.be/_KNR0JV5rdI?t=679
+
+==Video Solution by Math4All999==
+https://youtube.com/watch?v=cnUq_Op3YzY&feature=shared
+
+==Video Solution by Gavin Does Math==
+https://youtu.be/1qO3eejxuPo
+
+== See Also ==
+{{AMC10 box|year=2022|ab=B|num-b=6|num-a=8}}
+{{AMC12 box|year=2022|ab=B|num-b=3|num-a=5}}
+{{MAA Notice}}

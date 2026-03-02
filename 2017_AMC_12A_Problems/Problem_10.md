@@ -1,0 +1,17 @@
+# 2017 AMC 12A Problem 10
+
+## Problem
+Chloe chooses a real number uniformly at random from the interval  [ 0,2017 ]. Independently, Laurent chooses a real number uniformly at random from the interval [ 0 , 4034 ]. What is the probability that Laurent's number is greater than Chloe's number?
+
+$\textbf{(A)}\ \dfrac{1}{2} \qquad\textbf{(B)}\ \dfrac{2}{3} \qquad\textbf{(C)}\ \dfrac{3}{4} \qquad\textbf{(D)}\ \dfrac{5}{6} \qquad\textbf{(E)}\ \dfrac{7}{8}$
+## Solution 1
+Suppose Laurent's number is in the interval  [ 0, 2017 ] . Then, by symmetry, the probability of Laurent's number being greater is $\dfrac{1}{2}.$ Next, suppose Laurent's number is in the interval  [ 2017, 4034 ] . Then Laurent's number will be greater with a probability of 1. Since each case is equally likely, the probability of Laurent's number being greater is $\dfrac{1 + \frac{1}{2}}{2} = \dfrac{3}{4},$ so the answer is  $\boxed{C}.$
+## Solution 2 (Geometric Probability)
+Let x be the number chosen randomly by Chloe. Because it is given that the number Chloe chooses is in the interval  [ 0, 2017 ] ,  0 $\leq$ x $\leq 2017.$  Next, let y  be the number chosen randomly by Laurent. Because it is given that the number Laurent chooses is in the interval  [ 0, 4034 ] ,  0 $\leq$ y $\leq 4034.$ Since we are looking for when Laurent's number is greater than Chloe's we write the equation y > x. When these three inequalities are graphed the area captured by  0 $\leq$ x $\leq 2017$ and  0 $\leq$ y $\leq 4034$ represents all the possibilities, forming a rectangle 2017 in width and 4034 in height. Thus making its area 4034 * 2017. The area captured by  0 $\leq$ x $\leq 2017,  0 \leq$ y $\leq 4034,$ and y > x represents the possibilities of Laurent winning, forming a trapezoid with a height 2017 in length and bases 4034 and 2017 length, thus making an area 2017 *$\frac{4034+2017}{2}.$   The simplified quotient of these two areas is the probability Laurent's number is larger than Chloe's, which is  $\boxed$ {C=$\frac{3}{4}$}.
+## Video Solution (HOW TO THINK CREATIVELY!!!)
+https://youtu.be/1f2JaybCZCY
+
+*~Education, the Study of Everything*
+## Video Solution
+https://youtu.be/LwtoLiBwO-E?t=79
+## See Also

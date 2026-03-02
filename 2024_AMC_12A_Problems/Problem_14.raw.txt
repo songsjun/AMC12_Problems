@@ -1,0 +1,119 @@
+{{duplicate|[[2024 AMC 10A Problems/Problem 21|2024 AMC 10A #21]] and [[2024 AMC 12A Problems/Problem 14|2024 AMC 12A #14]]}}
+==Problem==
+The numbers, in order, of each row and the numbers, in order, of each column of a <math>5 \times 5</math> array of integers form an arithmetic progression of length <math>5</math>. The numbers in positions <math>(5, 5), \,(2,4),\,(4,3),</math> and <math>(3, 1)</math> are <math>0, 48, 16,</math> and <math>12</math>, respectively. What number is in position <math>(1, 2)?</math>
+
+<cmath> \begin{bmatrix} . & ? &.&.&. \\ .&.&.&48&.\\ 12&.&.&.&.\\ .&.&16&.&.\\ .&.&.&.&0\end{bmatrix}</cmath>
+<math>\textbf{(A) } 19 \qquad \textbf{(B) } 24 \qquad \textbf{(C) } 29 \qquad \textbf{(D) } 34 \qquad \textbf{(E) } 39</math>
+
+==Video Solution by Scholars Foundation==
+https://youtu.be/bA95oaAbEbY
+
+==Solution 1 (Arithmetic Sequences)==
+Start from the <math>0</math>. Going up, let the common difference be <math>a</math>, and going left, let the common difference be <math>b</math>. Therefore, we have <cmath> \begin{bmatrix} . & ? &.&.&4a \\ .&.&.&48&3a\\ 12&.&.&.&2a\\ .&.&16&.&a\\ 4b&3b&2b&b&0\end{bmatrix}</cmath> Looking at the third column, we can see that the common difference going up is <math>16-2b</math>. We fill this in: <cmath> \begin{bmatrix} . & ? &64-6b&.&4a \\ .&.&48-4b&48&3a\\ 12&.&32-2b&.&2a\\ .&.&16&.&a\\ 4b&3b&2b&b&0\end{bmatrix}</cmath> Looking at the second row, <math>48</math> has two values beside it, so we can write <cmath>48=\dfrac{48-4b+3a}{2}\rightarrow96=48-4b+3a\rightarrow48=-4b+3a,</cmath> and we can do the same with the third row, which gives <cmath>32-2b=\dfrac{12+2a}{2}\rightarrow32-2b=6+a\rightarrow26=a+2b.</cmath> Now we have the system of equations <cmath>48=-4b+3a</cmath><cmath>26=a+2b,</cmath> and solving it gives <math>a=20,b=3</math>, therefore we can now fill in the grid with actual numbers. But before doing that, note that we're only looking for a value in the first row, and because we already have two known values in that row, we can find the common difference for that row and not focus on anything else. 
+
+Focusing only on the first row yields <cmath> \begin{bmatrix} . & ? &46&.&80\end{bmatrix}</cmath> This means that the common difference from right to left is <math>\dfrac{80-46}{2}=17</math>. Therefore, the desired value is <math>46-17=\boxed{\text{(C) }29}</math> ~Tacos_are_yummy_1
+
+==Solution 2 (Some Basic Algebra and Answer Choices)==
+Assume the number in position <math>(3, 3)</math> is <math>x</math>. 
+<cmath> \begin{bmatrix} .&?&.&.&. \\ .&.&.&48&.\\ 12&.&x&.&.\\ .&.&16&.&.\\ .&.&.&.&0\end{bmatrix}</cmath> 
+Then, the integer in position <math>(2, 3)</math> will be <math>2x-16</math>, since <math>2x-16</math> and <math>16</math> average out to x. (They form an arithmetic sequence).
+<cmath> \begin{bmatrix} .&?&.&.&. \\ .&.&2x-16&48&.\\ 12&.&x&.&.\\ .&.&16&.&.\\ .&.&.&.&0\end{bmatrix}</cmath>
+Similarly, the integer in position <math>(3, 2)</math> is <math>0.5x+6</math>, and the integer in position <math>(2, 2)</math> is <math>4x-80</math>. 
+<cmath> \begin{bmatrix} .&?&.&.&. \\ .&4x-80&2x-16&48&.\\ 12&0.5x+6&x&.&.\\ .&.&16&.&.\\ .&.&.&.&0\end{bmatrix}</cmath>
+This means the number <math>7.5x-166</math> is in position (1, 2).
+<cmath> \begin{bmatrix} .&7.5x-166&.&.&. \\ .&4x-80&2x-16&48&.\\ 12&0.5x+6&x&.&.\\ .&.&16&.&.\\ .&.&.&.&0\end{bmatrix}</cmath>
+
+The only answer choice that makes <math>x</math> an integer is <math>\boxed{\textbf{(C) }29}</math>
+
+~ElaineGu
+==Solution 3 (Bashy)==
+
+Let's look at the bottom-left corner. There can be <math>3</math> possible cases for the bottom row. Either the numbers are negative, all <math>0</math>, or positive. 
+
+Let's assume all the numbers are negative. We know that the numbers in between the <math>?</math> will be large, so we want to minimize it, because the largest answer choice is only <math>39</math>.
+
+<cmath> \begin{bmatrix} .&?&.&.&. \\ .&.&.&48&.\\ 12&.&.&.&.\\ .&.&16&.&.\\ -4&-3&-2&-1&0\end{bmatrix}</cmath>
+
+To fill in the <math>1</math>st and <math>3</math>rd column, we simply find the common differences. We get:
+
+<cmath> \begin{bmatrix} 28&?&70&.&. \\ 20&.&52&48&.\\ 12&.&34&.&.\\ 4&.&16&.&.\\ -4&-3&-2&-1&0\end{bmatrix}</cmath>
+
+Finding the <math>?</math> , we notice that it is <math>49</math>, which is bigger than any of the other answer choices, so the bottom row can't be negative. (As the common difference for the bottom row gets larger, so does the common difference for the <math>1</math>st and <math>3</math>rd column, making the <math>?</math> bigger, and because the smallest answer is <math>39</math> while the minimum value for negative numbers is <math>49</math>, it can't be negative.)
+
+Now let's assume that all the numbers are 0. By just filling in the <math>1</math>st and <math>3</math>rd column, we find that it is:
+
+<cmath> \begin{bmatrix} 24 & ? &64&.&. \\ 18&.&48&48&.\\ 12&.&32&.&.\\ 6&.&16&.&.\\ 0&0&0&0&0\end{bmatrix}</cmath>
+
+which makes the <math>?=44</math>. <math>44</math> is not an answer choice, so the bottom row cannot be all <math>0</math>'s.
+
+Now, we know that the bottom row must be positive. Here's where the bashing begins. Lucky for us, the numbers must all be integers, cutting down on the number of cases we need to test. Starting with the bottom row having a common difference of <math>1</math>, we get
+
+<cmath> \begin{bmatrix} . & ? &.&.&. \\ 16&30&44&48&.\\ 12&21&30&39&48\\ 8&12&16&20&24\\ 4&3&2&1&0\end{bmatrix}</cmath>
+
+At this point we notice that the second row does not form an arithmetic progression, so we test out the next case, with the common difference being <math>2</math>. We get
+
+<cmath> \begin{bmatrix} . & ? &.&.&. \\ 14&27&40&48&.\\ 12&20&28&36&44\\ 10&13&16&19&22\\ 8&6&4&2&0\end{bmatrix}</cmath>
+
+At this point we notice that the second row does not form an arithmetic progression, so we test out the next case, with the common difference being <math>3</math>. We get
+
+<cmath> \begin{bmatrix} 12 & 29 &46&63&80 \\ 12&24&36&48&60\\ 12&19&26&33&40\\ 12&14&16&18&20\\ 12&9&6&3&0\end{bmatrix}</cmath>
+
+, giving us the answer <math>\boxed{\textbf{(C) }29}</math>
+
+
+~ YTH
+~Astingo for submission and final array
+
+==Solution 4 (Arithmetic Sequences)==
+Let the bottom row of the grid have arithmetic difference <math>d</math>. Then the matrix becomes <cmath> \begin{bmatrix} . & ? &.&.&4d \\ .&.&.&48&3d\\ 12&.&.&.&2d\\ .&.&16&.&d\\ .&.&.&.&0\end{bmatrix}</cmath>
+Using the middle column, we have the middle item equal to <math>32-2d</math>.
+<cmath> \begin{bmatrix} . & ? &.&.&4d \\ .&.&.&48&3d\\ 12&.&32-2d&.&2d\\ .&.&16&.&d\\ .&.&.&.&0\end{bmatrix}</cmath>
+Filling in the middle row (which has a common difference of <math>10-d</math>)
+<cmath> \begin{bmatrix} . & ? &.&.&. \\ .&.&.&48&.\\ 12&22-d&32-2d&42-3d&52-4d\\ .&.&16&.&.\\ 4d&3d&2d&d&0\end{bmatrix}</cmath>
+The arithmetic sequence in the 4th column (2nd from the right) then has a common difference of <math>-3d-6</math>, so we
+<cmath> \begin{bmatrix} . & ? &.&.&. \\ .&.&.&48&.\\ 12&22-d&32-2d&42-3d&52-4d\\ .&.&16&36-6d&.\\ 4d&3d&2d&30-9d&0\end{bmatrix} = \begin{bmatrix} . & ? &.&.&. \\ .&.&.&48&.\\ 12&22-d&32-2d&42-3d&52-4d\\ .&.&16&36-6d&.\\ 4d&3d&2d&d&0\end{bmatrix}</cmath>
+From the cell in the 4th column, 5th row we have <math>30-9d=d</math>, or <math>d=3</math>. Finally, using the 2nd column, <math>\text{?} + 3d = 2(22-d)</math>, or <math>\text{?}+9=38 \Rightarrow \text{?}=\boxed{\text{(C) }29}</math>
+
+~Metavaria
+==Solution 5==
+We subtract <math>12</math> from each element of the array and denote <math>a_{i,j}</math> the number in position <math>(i,j), a_{3,1} = 0, a_{4,3} = 4,  a_{2,4} = 36,  a_{5,5} = - 12.</math>
+Denoting <math>a_{3,2} = x \implies</math> that in third row we get <math>(0, x, 2x, 3x, 4x).</math> 
+We use the property of an arithmetic progression and get
+<cmath>a_{4,4} = 2a_{3,4} - a_{2,4} = 6x - 36,</cmath> 
+<cmath>a_{4,5} = 2 a_{4,4}- a_{3,4} = 12x - 76,</cmath>
+<cmath>a_{5,5} = 2 a_{4,5}- a_{3,5} \implies  - 12 = 2(2x - 76) - 4x \implies x = 7 = a_{3,2},  a_{3,3}=14.</cmath>
+<cmath>\begin{bmatrix} .&.&.&.&. \\ .&.&.&36&.\\ 0&x&2x&3x&4x\\ .&.&4&6x-36&12x-76\\ .&.&.&.&-12\end{bmatrix}</cmath>
+<cmath>a_{2,3} = 2 a_{3,3}- a_{4,4} = 2 \cdot 14 - 4 = 24,</cmath>
+<cmath>a_{2,2} = 2 a_{2,3}- a_{2,4} = 2 \cdot 24 - 36 = 12,</cmath>
+<cmath>a_{1,2} = 2 a_{2,2}- a_{3,2} = 2 \cdot 12 - 7 = 17.</cmath>
+
+<cmath>\begin{bmatrix} .&17&.&&.& \\ .&12&24&36&.\\ 0&7&14&.&.\\ .&.&.&.&.\\ .&.&.&.&.\end{bmatrix}</cmath>
+We add <math>12</math> and get the number in position <math>(1,2)</math> as <math>17 + 12 = 29.</math>
+
+'''vladimir.shelomovskii@gmail.com, vvsss'''
+
+==Video Solution ==
+https://youtu.be/hFtxzUqOhc8
+
+== Video Solution by Power Solve ==
+https://www.youtube.com/watch?v=QvtOG8nexE8
+
+==Video Solution by SpreadTheMathLove==
+https://youtu.be/QYf2BnsnswQ?si=ypmCLRficNI5mYwm
+
+== Video solution by TheNeuralMathAcademy ==
+https://www.youtube.com/watch?v=4b_YLnyegtw&t=4541s
+
+==See Also==
+
+
+{{AMC10 box|year=2024|ab=A|num-b=20|num-a=22}}
+
+
+{{AMC12 box|year=2024|ab=A|num-b=13|num-a=15}}
+
+* [[AMC 10]]
+* [[AMC 10 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

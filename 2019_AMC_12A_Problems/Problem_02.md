@@ -1,0 +1,19 @@
+# 2019 AMC 12A Problem 2
+
+## Problem
+Suppose a is 150\% of b. What percent of a is $3b$?
+
+$\textbf{(A) } 50 \qquad \textbf{(B) } 66+\frac{2}{3} \qquad \textbf{(C) } 150 \qquad \textbf{(D) } 200 \qquad \textbf{(E) } 450$
+## Solution 1
+Since $a=1.5b$, that means $b=\frac{a}{1.5}.$ We multiply by 3 to get a $3b$ term, yielding $3b=2a$, and $2a$ is $\boxed{\textbf{(D) }200\%}$ of a.
+## Solution 2
+Without loss of generality, let $b=100$. Then, we have $a=150$ and $3b=300$. Thus, $\frac{3b}{a}=\frac{300}{150}=2,$ so $3b$ is 200\% of a. Hence the answer is $\boxed{\textbf{(D) }200\%}.$
+## Solution 3 (similar to Solution 1)
+As before, $a =1.5b$. Multiply by 2 to obtain $2a=3b$. Since 2 = 200\%, the answer is $\boxed{\textbf{(D) }200\%}.$
+## Solution 4 (similar to Solution 2)
+Without loss of generality, let $b=2$. Then, we have $a=3$ and $3b=6$. This gives $\frac{3b}{a}=\frac{6}{3}=2,$ so $3b$ is 200\% of a, so the answer is $\boxed{\textbf{(D) }200\%}.$
+## Video Solution 1
+https://youtu.be/CM2PqoCDvqo
+
+*~Education, the Study of Everything*
+## See Also

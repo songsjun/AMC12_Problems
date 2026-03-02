@@ -1,0 +1,18 @@
+# 2004 AMC 12B Problem 9
+
+## Problem
+The point (-3,2) is rotated $90^\circ$ clockwise around the origin to point B. Point B is then reflected over the line x=y to point C. What are the coordinates of C?
+
+
+$$\mathrm{(A)}\ (-3,-2) \qquad \mathrm{(B)}\ (-2,-3) \qquad \mathrm{(C)}\ (2,-3) \qquad \mathrm{(D)}\ (2,3) \qquad \mathrm{(E)}\ (3,2)$$
+
+## Solution
+The entire situation is in the picture below. The correct answer is $\boxed{\mathrm{(E)}\ (3,2)}.$
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+unitsize(1cm); defaultpen(0.8); pair A=(-3,2), B=rotate(-90)*A, C=(3,2); dot(A); dot(B); dot(C); draw( A -- (0,0) -- B -- C, Dotted ); draw( (-3,-3) -- (4,4), dashed ); label("$A=(-3,2)$", A, NW ); label("$B=(2,3)$", B, N ); label("$C=(3,2)$", C, E ); label("$x=y$",(4,4),NE); dot((0,0)); label("$(0,0)$", (0,0), SE);
+```
+## See Also

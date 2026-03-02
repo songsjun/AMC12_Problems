@@ -1,0 +1,151 @@
+{{duplicate|[[2018 AMC 10A Problems/Problem 12|2018 AMC 10A #12]] and [[2018 AMC 12A Problems/Problem 10|2018 AMC 12A #10]]}}
+
+== Problem ==
+How many ordered pairs of real numbers <math>(x,y)</math> satisfy the following system of equations?
+<cmath>\begin{align*}
+x+3y&=3 \\
+\big||x|-|y|\big|&=1
+\end{align*}</cmath>
+<math>\textbf{(A) } 1 \qquad 
+\textbf{(B) } 2 \qquad 
+\textbf{(C) } 3 \qquad 
+\textbf{(D) } 4 \qquad 
+\textbf{(E) } 8 </math>
+
+== Solution 1 ==
+We can solve this by graphing the equations. The second equation looks challenging to graph, but start by graphing it in the first quadrant only (which is easy since the inner absolute value signs can be ignored), then simply reflect that graph into the other quadrants.
+
+The graph looks something like this:
+<asy>
+draw((-3,0)--(3,0), Arrows);
+draw((0,-3)--(0,3), Arrows);
+draw((2,3)--(0,1)--(-2,3), blue);
+draw((-3,2)--(-1,0)--(-3,-2), blue);
+draw((-2,-3)--(0,-1)--(2,-3), blue);
+draw((3,-2)--(1,0)--(3,2), blue);
+draw((-3,2)--(3,0), red);
+dot((-3,2));
+dot((3/2,1/2));
+dot((0,1));
+</asy>
+Now, it becomes clear that there are <math>\boxed{\textbf{(C) } 3}</math> intersection points.
+
+(not the author)(the lines in the first quadrant are y=x+1 and y=x-1 and we reflect them into all quadrants as all instances of variables are in a context where flipping the sign does not affect the overall expression)
+
+== Solution 2 ==
+<math>x+3y=3</math> can be rewritten to <math>x=3-3y</math>. Substituting <math>3-3y</math> for <math>x</math> in the second equation will give <math>||3-3y|-y|=1</math>. Splitting this question into casework for the ranges of <math>y</math> will give us the total number of solutions. 
+
+<math>\textbf{Case 1:}</math> <math>y>1</math>:
+<math>3-3y</math> will be negative so <math>|3-3y| = 3y-3.</math>
+<math>|3y-3-y| = |2y-3| = 1</math>
+    Subcase 1: <math>y>\frac{3}{2}</math>
+<math>2y-3</math> is positive so <math>2y-3 = 1</math> and <math>y = 2</math> and <math>x = 3-3(2) = -3</math>
+    Subcase 2: <math>1<y<\frac{3}{2}</math>
+<math>2y-3</math> is negative so <math>|2y-3| = 3-2y = 1</math>. <math>2y = 2</math> and so there are no solutions (<math>y</math> can't equal to <math>1</math>)
+
+<math>\textbf{Case 2:}</math> <math>y = 1</math>:
+It is fairly clear that <math>x = 0.</math>
+
+<math>\textbf{Case 3:}</math> <math>y<1</math>:
+<math>3-3y</math> will be positive so <math>|3-3y-y| = |3-4y| = 1</math>
+    Subcase 1: <math>y>\frac{3}{4}</math>
+<math>3-4y</math> will be negative so <math>4y-3 = 1</math> <math>\rightarrow</math> <math>4y = 4</math>. We already have this solution from Case 2 as <math>y = 1</math>.
+    Subcase 2: <math>y<\frac{3}{4}</math>
+<math>3-4y</math> will be positive so <math>3-4y = 1</math> <math>\rightarrow</math> <math>4y = 2</math>. <math>y = \frac{1}{2}</math> and <math>x = \frac{3}{2}</math>.
+Thus, the solutions are: <math>(-3,2), (0,1), \left(\frac{3}{2},\frac{1}{2} \right)</math>, and the answer is <math>\boxed{\textbf{(C) } 3}</math>.
+
+== Solution 3 (Straightforward Casework) ==
+Note that <math>||x| - |y||</math> can take on one of four values where <math>x</math> and <math>y</math> are: <math>x + y</math> (positive, positive), <math>x - y</math> (positive, negative), <math>-x + y</math> (negative, positive), <math>-x -y</math> (negative, negative). So we have 4 cases which we solve by cancellation with the two equations from the problem:
+
+'''Case 1: ||x| - |y|| = x+y  '''
+<cmath>x+3y=3</cmath>
+<cmath>x+y=1</cmath>
+
+Subtracting:
+
+<math>2y=2 \Rightarrow y=1</math> and <math>x=0</math>.
+
+<math>\text{Result: } (0,1)</math>
+
+
+'''Case 2: ||x| - |y|| = x-y'''
+<cmath>x+3y=3</cmath>
+<cmath>x-y=1</cmath>
+
+Subtacting:
+
+<math>4y=2 \Rightarrow y=\dfrac{1}{2}</math> an <math>x=\dfrac{3}{2}</math>.
+
+<math>\text{Result: } \left(\dfrac{3}{2},\dfrac{1}{2}\right)</math>
+
+
+'''Case 3: ||x| - |y|| = -x+y'''
+<cmath>x+3y=3</cmath>
+<cmath>-x+y=1</cmath>
+
+Adding: 
+
+<math>4y=4 \Rightarrow y=1</math> and <math>x=0</math>.
+
+
+<math>\text{Result: } (0,1)</math>. Since this is the same solution as we got in Case 1, we can not count this (otherwise, we would have overcounted).
+
+
+'''Case 4: ||x| - |y|| = -x-y'''
+<cmath>x+3y=3</cmath>
+<cmath>-x-y=1</cmath>
+
+Adding: 
+
+<math>2y=4 \Rightarrow y=2</math> and <math>x=-3</math>.
+
+
+<math>\text{Result: } (-3,2)</math>.
+
+
+'''Answer'''
+
+We solved each case by elimination (either adding the two equations or subtracting), to obtain three solutions: <math>(0, 1)</math>, <math>(-3,2)</math>, <math>\left(\dfrac{3}{2}, \dfrac{1}{2}\right)</math>.
+
+Our answer is <math>\boxed{\textbf{(C) } 3}</math>.
+
+
+'''Contributors'''
+
+~trumpeter
+
+~ccx09
+
+~mXxHalo711
+
+~BakedPotato66
+
+~<B+
+
+== Solution 4 ==
+Just as in solution <math>2</math>, we derive the equation <math>||3-3y|-|y||=1</math>. If we remove the absolute values, the equation collapses into four different possible values. <math>3-2y</math>, <math>3-4y</math>, <math>2y-3</math>, and <math>4y-3</math>, each equal to either <math>1</math> or <math>-1</math>. Remember that if <math>P-Q=a</math>, then <math>Q-P=-a</math>. Because we have already taken <math>1</math> and <math>-1</math> into account, we can eliminate one of the conjugates of each pair, namely <math>3-2y</math> and <math>2y-3</math>, and <math>3-4y</math> and <math>4y-3</math>. Find the values of <math>y</math> when <math>3-2y=1</math>, <math>3-2y=-1</math>, <math>3-4y=1</math> and <math>3-4y=-1</math>. We see that <math>3-2y=1</math> and <math>3-4y=-1</math> give us the same value for <math>y</math>, so the answer is <math>\boxed{\textbf{(C) } 3}</math>
+
+~Zeric Hang
+
+== Solution 5 ==
+Just as in solution <math>2</math>, we derive the equation <math>x=3-3y</math>. Squaring both sides in the second equation gives <math>x^2+y^2-2|xy|=1</math>. Putting <math>x=3-3y</math> and doing a little calculation gives <math>10y^2-18y+9-2|3y-3y^2|=1</math>. From here we know that <math>3y-3y^2</math> is either positive or negative.
+
+When positive, we get <math>2y^2-3y+1=0</math> and then, <math>y=1/2</math> or <math>y=1</math>.
+When negative, we get <math>y^2-3y+2=0</math> and then, <math>y=2</math> or <math>y=1</math>. Clearly, there are <math>3</math> different pairs of values and that gives us <math>\boxed{\textbf{(C) } 3}</math>
+
+~OlutosinNGA
+
+== Video Solution 1 ==
+https://youtu.be/o63EtwelFp0
+
+~savannahsolver
+
+== Video Solution 2==
+https://www.youtube.com/watch?v=llMgyOkjNgU&ab_channel=TheBeautyofMath
+
+==See Also==
+{{AMC10 box|year=2018|ab=A|num-b=11|num-a=13}}
+{{AMC12 box|year=2018|ab=A|num-b=9|num-a=11}}
+{{MAA Notice}}
+
+[[Category:Introductory Algebra Problems]]

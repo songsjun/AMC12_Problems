@@ -1,0 +1,58 @@
+# 2013 AMC 12A Problem 8
+
+## Problem
+Given that x and y are distinct nonzero real numbers such that $x+\tfrac{2}{x} =$ y + $\tfrac{2}{y},$ what is xy?
+
+$\textbf{(A)}\ \frac{1}{4}\qquad\textbf{(B)}\ \frac{1}{2}\qquad\textbf{(C)}\ 1\qquad\textbf{(D)}\ 2\qquad\textbf{(E)}\ 4\qquad$
+## Solution 1
+$$x+\tfrac{2}{x}= y+\tfrac{2}{y}$$
+
+Since $x\not=y,$ we may assume that $x=\frac{2}{y}$ and/or, equivalently, $y=\frac{2}{x}.$
+
+Cross multiply in either equation, giving us xy=2.
+
+$$\boxed{\textbf{(D) }{2}}$$
+## Solution 2
+$$x+\tfrac{2}{x}= y+\tfrac{2}{y}$$
+
+$$x-y+\frac{2}{x}-\frac{2}{y} = 0$$
+
+$$(x-y)+2(\frac{y-x}{xy}) = 0$$
+
+$$(x-y)(1-\frac{2}{xy})=0$$
+
+Since $x\not=y$
+
+$$1 = \frac{2}{xy}$$
+
+$$xy = 2$$
+## Solution 3
+Let A = x + $\frac{2}{x} =$ y + $\frac{2}{y}.$ Consider the equation u + $\frac{2}{u} = A.$ Reorganizing, we see that u satisfies u^2 - Au + 2 = 0. Notice that there can be at most two distinct values of u which satisfy this equation, and x and y are two distinct possible values for u. Therefore, x and y are roots of this quadratic, and by Vieta’s formulas we see that xy thereby must equal $\boxed{2}.$
+
+*~Professor-Mom*
+## Solution 4
+$$x + \frac{2}{x} = y + \frac{2}{y}.$$
+
+Multiply both sides by xy to get
+
+$$x^2y + 2y = y^2x +2x$$
+
+Rearrange to get
+
+$$x^2y - y^2x = 2x - 2y$$
+
+Factor out xy on the left side and 2 on the right side to get
+
+$$xy(x-y) = 2(x-y)$$
+
+Divide by (x-y) {You can do this since x and y are distinct} to get
+
+$$\boxed{\textbf{(D) }{2}}$$
+## Video Solution
+https://youtu.be/ba6w1OhXqOQ?t=1129
+
+*~pi_is_3.14*
+## Video Solution
+https://youtu.be/CCjcMVtkVaQ
+*~sugar_rush*
+## See also

@@ -1,0 +1,83 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2019_AMC_10B_Problems/Problem_10&action=raw
+
+Published Time: Tue, 11 Nov 2025 20:45:15 GMT
+
+Markdown Content:
+{{duplicate|[[2019 AMC 10B Problems|2019 AMC 10B #10]] and [[2019 AMC 12B Problems|2019 AMC 12B #6]]}}
+
+==Problem==
+
+In a given plane, points A and B are 10 units apart. How many points C are there in the plane such that the perimeter of \triangle ABC is 50 units and the area of \triangle ABC is 100 square units?
+
+\textbf{(A) }0\qquad\textbf{(B) }2\qquad\textbf{(C) }4\qquad\textbf{(D) }8\qquad\textbf{(E) }\text{infinitely many}
+
+==Solution 1==
+
+Notice that whatever point we pick for C, AB will be the base of the triangle. Without loss of generality, let points A and B be (0,0) and (10,0), since for any other combination of points, we can just rotate the plane to make them (0,0) and (10,0) under a new coordinate system. When we pick point C, we have to make sure that its y-coordinate is \pm20, because that's the only way the area of the triangle can be 100. 
+
+Now when the perimeter is minimized, by symmetry, we put C in the middle, at (5, 20). We can easily see that AC and BC will both be \sqrt{20^2+5^2} = \sqrt{425}. The perimeter of this minimal triangle is 2\sqrt{425} + 10, which is larger than 50. Since the minimum perimeter is greater than 50, there is no triangle that satisfies the condition, giving us \boxed{\textbf{(A) }0}.
+
+~IronicNinja
+
+==Solution 2==
+Without loss of generality, let AB be a horizontal segment of length 10. Now realize that C has to lie on one of the lines parallel to AB and vertically 20 units away from it. But 10+20+20 is already 50, and this doesn't form a triangle. Otherwise, without loss of generality, AC<20. Dropping altitude CD, we have a right triangle ACD with hypotenuse AC<20 and leg CD=20, which is clearly impossible, again giving the answer as \boxed{\textbf{(A) }0}.
+
+==Solution 3 (A bit tedious)==
+We have:
+
+1. Area = 100
+
+2. Perimeter = 50
+
+3. Semiperimeter s = 50 \div 2 = 25
+
+We let:
+
+1. z = \overline{AB} = 10
+
+2. x = \overline{AC}
+
+3. y = 50-10-x = 40-x.
+
+Heron's formula states that for real numbers x, y, z, and semiperimeter s, the area is \sqrt{(s)(s-x)(s-y)(s-z)}.
+
+Plugging numbers in, we have 100 = \sqrt{(25)(25-10)(25-x)(25-(40-x))} = \sqrt{(375)(25-x)(x-15)}.
+
+Square both sides, divide by 375 and expand the polynomial to get 40x - x^2 - 375 = \frac{80}{3}.
+
+x^2 - 40x + \left(375 + \frac{80}{3}\right) = 0 and the discriminant is \left((-40)^2 - 4 \times 1 \times 401 \frac{2}{3}\right) < 0. Thus, there are no real solutions.
+~hashbrown2009
+
+==Solution 4 (graphing)==
+
+First, let's assume that A and B are (-5,0) and (5,0) respectively. The graph of "the perimeter is 50" means that \overline{AC}+\overline{BC}=50-10=40. So this is the graph of an ellipse (memorize that!). Now let the endpoints of the major axis be (-x,0) and (x,0). Then (x-5)+(x+5)=40 and x=20. So the 2 endpoints of the major axis are (-20,0) and (20,0). We can also figure out the endpoints of the minor axis must have a y-coordinate less than 20. It is actually \sqrt{395}. 
+
+Now, we consider "the area is 100". Since the base has length 10, then the height must have length 20. So the graph of "the area is 100" is 2 lines, one at y=20 and the other at y=-20. However, this graph does NOT intersect the ellipse, as \sqrt{395} < 20. So, there are no intersections and thus no solutions, so the answer is \boxed{\textbf{(A) }0}.
+
+~Yrock
+==Solution 5 (kinda bashy quadratics)==
+Since AB has a length of 10, the height must be 10 as well for the area to be 50, so we can drop an altitude from C that has length 10, and call the foot of the altitude on AB as D. Let AD have length x, so BD must have length 10-x. From the Pythagorean Theorem, AC has length \sqrt{x^2+100} and BC has length \sqrt{(10-x)^2+100}. For the perimeter to be 50, 10+\sqrt{x^2+100}+\sqrt{(10-x)^2+100}=50, so 40-\sqrt{x^2+100}=\sqrt{(10-x)^2+100}. Squaring both sides and simplifying, 1600-80\sqrt{x^2+100}=-20x+100. We can rearrange this and divide all sides by 10 to get 150+2x=8\sqrt{x^2+100}. Squaring both sides yet again, rearranging, and simplifying some more, we get the quadratic 3x^2-30x-805=0. So, from the quadratic formula, x = \frac{30+\sqrt{900+4\cdot3\cdot805}}{6} or x = \frac{30-\sqrt{900+4\cdot3\cdot805}}{6}. Immediately we can rule out the negative solution (it's negative because the square root of the discriminant is greater than 30, and we'll use this later too), as x must be a positive number since it is a length. However, for the positive solution, we see that the discriminant is greater than 900, so the square root is greater than 30, so the entire expression when divided by 6 for x is greater than 10, but this is not possible because x should be less than 10. Therefore, the number of possibilities is \boxed{\textbf{(A) }0}.
+
+~vaishnav
+
+==Video Solution==
+https://youtu.be/MNVKkjVvBUU
+
+~Education, the Study of Everything
+
+==Video Solution==
+https://youtu.be/7xf_g3YQk00
+
+~IceMatrix
+
+https://youtu.be/INvRdwQzC-w
+
+~savannahsolver
+
+==See Also==
+
+{{AMC10 box|year=2019|ab=B|num-b=9|num-a=11}}
+{{AMC12 box|year=2019|ab=B|num-b=5|num-a=7}}
+{{MAA Notice}}

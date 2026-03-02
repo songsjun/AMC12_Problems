@@ -1,0 +1,46 @@
+# 2019 AMC 12B Problem 12
+
+## Problem
+Right triangle ACD with right angle at C is constructed outwards on the hypotenuse $\overline{AC}$ of isosceles right triangle ABC with leg length 1, as shown, so that the two triangles have equal perimeters. What is $\sin(2\angle BAD)$?
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+/* Geogebra to Asymptote conversion, documentation at artofproblemsolving.com/Wiki go to User:Azjps/geogebra */ import graph; size(8.016233639805293cm); real labelscalefactor = 0.5; /* changes label-to-point distance */ pen dps = linewidth(0.7) + fontsize(10); defaultpen(dps); /* default pen style */ pen dotstyle = black; /* point style */ real xmin = -4.001920114613276, xmax = 4.014313525192017, ymin = -2.552570341575814, ymax = 5.6249093771911145; /* image dimensions */ draw((-1.6742337260757447,-1.)--(-1.6742337260757445,-0.6742337260757447)--(-2.,-0.6742337260757447)--(-2.,-1.)--cycle, linewidth(2.)); draw((-1.7696484586262846,2.7696484586262846)--(-1.5392969172525692,3.)--(-1.7696484586262846,3.2303515413737154)--(-2.,3.)--cycle, linewidth(2.)); /* draw figures */ draw((-2.,3.)--(-2.,-1.), linewidth(2.)); draw((-2.,-1.)--(2.,-1.), linewidth(2.)); draw((2.,-1.)--(-2.,3.), linewidth(2.)); draw((-0.6404058554606791,4.3595941445393205)--(-2.,3.), linewidth(2.)); draw((-0.6404058554606791,4.3595941445393205)--(2.,-1.), linewidth(2.)); label("$D$",(-0.9382446143428628,4.887784444795223),SE*labelscalefactor,fontsize(14)); label("$A$",(1.9411496528285788,-1.0783204767840298),SE*labelscalefactor,fontsize(14)); label("$B$",(-2.5046350956841272,-0.9861798602345433),SE*labelscalefactor,fontsize(14)); label("$C$",(-2.5737405580962416,3.5747806589650395),SE*labelscalefactor,fontsize(14)); label("$1$",(-2.665881174645728,1.2712652452278765),SE*labelscalefactor,fontsize(14)); label("$1$",(-0.3393306067712029,-1.3547423264324894),SE*labelscalefactor,fontsize(14)); /* dots and labels */ dot((-2.,3.),linewidth(4.pt) + dotstyle); dot((-2.,-1.),linewidth(4.pt) + dotstyle); dot((2.,-1.),linewidth(4.pt) + dotstyle); dot((-0.6404058554606791,4.3595941445393205),linewidth(4.pt) + dotstyle); clip((xmin,ymin)--(xmin,ymax)--(xmax,ymax)--(xmax,ymin)--cycle); /* end of picture */
+```
+
+
+$\textbf{(A) } \dfrac{1}{3} \qquad\textbf{(B) } \dfrac{\sqrt{2}}{2} \qquad\textbf{(C) } \dfrac{3}{4} \qquad\textbf{(D) } \dfrac{7}{9} \qquad\textbf{(E) } \dfrac{\sqrt{3}}{2}$
+## Solutions
+### Solution 1
+First, note by the Pythagorean Theorem in $\triangle ABC$ that AC = $\sqrt{2}.$ Now, the equal perimeter condition means that BC + BA = 2 = CD + DA, since side AC is common to both triangles and thus can be discounted. This relationship, in combination with the Pythagorean Theorem in $\triangle ACD,$ gives $AC^2+CD^2=\left(\sqrt{2}\right)^2+\left(2-DA\right)^2=DA^2.$ Hence 2 + 4 - 4DA + DA^2 = DA^2, so DA = $\frac{3}{2},$ and thus CD = $\frac{1}{2}.$
+
+Next, since $\angle BAC = 45^{\circ}, \sin{\left(\angle BAC\right)} = \cos{\left(\angle BAC\right)} = \frac{1}{\sqrt{2}}.$ Using the lengths found above, $\sin{\left(\angle CAD\right)} = \frac{\left(\frac{1}{2}\right)}{\left(\frac{3}{2}\right)} = \frac{1}{3},$ and $\cos{\left(\angle CAD\right)} = \frac{\sqrt{2}}{\left(\frac{3}{2}\right)} = \frac{2 \sqrt{2}}{3}.$
+
+Thus, by the addition formulae for $\sin$ and $\cos,$ we have
+
+$$
+\begin{split}\sin{\left(\angle BAD\right)}&=\sin{\left(\angle BAC + \angle CAD\right)}\\&=\sin{\left(\angle BAC\right)}\cos{\left(\angle CAD\right)}+\cos{\left(\angle BAC\right)}\sin{\left(\angle CAD\right)}\\&=\frac{1}{\sqrt{2}}\cdot\frac{2 \sqrt{2}}{3} + \frac{1}{\sqrt{2}}\cdot\frac{1}{3} \\ &= \frac{2 \sqrt{2} + 1}{3 \sqrt{2}}\end{split}
+$$
+
+and
+
+$$
+\begin{split}\cos{\left(\angle BAD\right)}&=\cos{\left(\angle BAC + \angle CAD\right)}\\&=\cos{\left(\angle BAC\right)}\cos{\left(\angle CAD\right)}-\sin{\left(\angle BAC\right)}\sin{\left(\angle CAD\right)}\\&=\frac{1}{\sqrt{2}}\cdot\frac{2 \sqrt{2}}{3} - \frac{1}{\sqrt{2}}\cdot\frac{1}{3} \\ &= \frac{2 \sqrt{2} - 1}{3 \sqrt{2}}\end{split}
+$$
+
+
+Hence, by the double angle formula for $\sin, \sin{\left(2\angle BAD\right)} = 2\sin{\left(\angle BAD\right)}\cos{\left(\angle BAD\right)} = \frac{2(8-1)}{18} = \boxed{\textbf{(D) } \frac{7}{9}}.$
+### Solution 2 (coordinate geometry)
+We use the Pythagorean Theorem, as in Solution 1, to find AD=$\frac{3}{2}$ and CD=$\frac{1}{2}.$ Now notice that the angle between CD and the vertical (i.e. the y-axis) is $45^{\circ}$ – to see this, drop a perpendicular from D to BA which meets BA at E, and use the fact that the angle sum of quadrilateral CBED must be $360^{\circ}$. Anyway, this implies that the line CD has slope 1, so since C is the point (0,1) and the length of CD is $\frac{1}{2}, D$ has coordinates $\left(0+\frac{\left(\frac{1}{2}\right)}{\sqrt{2}}, 1+\frac{\left(\frac{1}{2}\right)}{\sqrt{2}}\right) = \left(\frac{1}{2\sqrt{2}}, 1+\frac{1}{2\sqrt{2}}\right).$
+
+Thus we have the lengths DE=1+$\frac{1}{2\sqrt{2}} (i$t is just the y-coordinate) and AE = $1-\frac{1}{2\sqrt{2}}.$ By simple trigonometry in $\triangle DAE,$ we now find $\sin{\left(\angle BAD\right)} = \frac{\left(1+\frac{1}{2\sqrt{2}}\right)}{\left(\frac{3}{2}\right)} = \frac{\left(2+\frac{1}{\sqrt{2}}\right)}{3} = \frac{2\sqrt{2}+1}{3\sqrt{2}}$ and $\cos{\left(\angle BAD\right)} = \frac{\left(1-\frac{1}{2\sqrt{2}}\right)}{\left(\frac{3}{2}\right)} = \frac{\left(2-\frac{1}{\sqrt{2}}\right)}{3} = \frac{2\sqrt{2}-1}{3\sqrt{2}}$ just as before. We can then use the double angle formula (as in Solution 1) to deduce $\sin{\left(2\angle BAD\right)} = \boxed{\textbf{(D) } \frac{7}{9}}.$
+### Solution 3 (easier finish to Solution 1)
+Again, use Pythagorean Theorem to find that AD=$\frac{3}{2}$ and CD=$\frac{1}{2}.$ Let $\angle DAC=\theta.$ Note that we want $\sin{(90+2\theta)}=\cos{2\theta}$
+which is easy to compute $\cos{\theta}=\frac{2\sqrt{2}}{3}\implies \cos{2\theta}=2(\frac{8}{9})-1= \boxed{\textbf{(D) } \frac{7}{9}}$
+## Video Solution1
+https://youtu.be/Cx2OmVoFGsw
+
+*~Education, the Study of Everything*
+## Also See

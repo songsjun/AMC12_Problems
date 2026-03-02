@@ -1,0 +1,38 @@
+# 2003 AMC 12A Problem 15
+
+> This problem is the same as [2003 AMC 12A #15](https://artofproblemsolving.com/wiki/index.php/2003_AMC_12A_Problems) and [2003 AMC 10A #19](https://artofproblemsolving.com/wiki/index.php/2003_AMC_10A_Problems).
+## Problem
+A [semicircle](https://artofproblemsolving.com/wiki/index.php/semicircle) of [diameter](https://artofproblemsolving.com/wiki/index.php/diameter) 1 sits at the top of a semicircle of diameter 2, as shown. The shaded [area](https://artofproblemsolving.com/wiki/index.php/area) inside the smaller semicircle and outside the larger semicircle is called a *lune*. Determine the area of this lune.
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+import graph; size(150); defaultpen(fontsize(8)); pair A=(-2,0), B=(2,0); filldraw(Arc((0,sqrt(3)),1,0,180)--cycle,mediumgray); filldraw(Arc((0,0),2,0,180)--cycle,white); draw(2*expi(2*pi/6)--2*expi(4*pi/6)); label("1",(0,sqrt(3)),(0,-1)); label("2",(0,0),(0,-1));
+```
+
+
+$$\mathrm{(A) \ } \frac{1}{6}\pi-\frac{\sqrt{3}}{4}\qquad \mathrm{(B) \ } \frac{\sqrt{3}}{4}-\frac{1}{12}\pi\qquad \mathrm{(C) \ } \frac{\sqrt{3}}{4}-\frac{1}{24}\pi\qquad \mathrm{(D) \ } \frac{\sqrt{3}}{4}+\frac{1}{24}\pi\qquad \mathrm{(E) \ } \frac{\sqrt{3}}{4}+\frac{1}{12}\pi$$
+
+## Solution
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+import graph; size(150); defaultpen(fontsize(8)); pair A=(-2,0), B=(2,0); filldraw(Arc((0,sqrt(3)),1,0,180)--cycle,mediumgray); fill(Arc((0,0),2,0,180)--cycle,white); draw(Arc((0,0),2,0,180)--cycle); draw((0,0)--2*expi(2*pi/6)--2*expi(2*pi/6*2)--(0,0)); label("A",(0,2),(0,4)); label("B",(0,2),(0,-1)); label("C",(0,sqrt(3)/2),(0,2)); label("1",(-0.5,sqrt(3)/2),(-1,0)); label("1",(0.5,sqrt(3)/2),(1,0));
+```
+
+
+The shaded area [A] is equal to the area of the smaller semicircle [A+B] minus the area of a [sector](https://artofproblemsolving.com/wiki/index.php/sector) of the larger circle [B+C] plus the area of a [triangle](https://artofproblemsolving.com/wiki/index.php/triangle) formed by two [ radii](https://artofproblemsolving.com/wiki/index.php/radius_) of the larger semicircle and the diameter of the smaller semicircle [C].
+
+The area of the smaller semicircle is [A+B] = $\frac{1}{2}\pi\cdot\left(\frac{1}{2}\right)^{2}=\frac{1}{8}\pi.$
+
+Since the radius of the larger semicircle is equal to the diameter of the smaller half circle, the triangle is an equilateral triangle and the sector measures $60^\circ.$
+
+The area of the $60^\circ$ sector of the larger semicircle is [B+C] = $\frac{60}{360}\pi\cdot\left(\frac{2}{2}\right)^{2}=\frac{1}{6}\pi.$
+
+The area of the triangle is [C] = $\frac{1^{2}\sqrt{3}}{4}=\frac{\sqrt{3}}{4}.$
+
+So the shaded area is [A] = [A+B]-[B+C]+[C] = $\left(\frac{1}{8}\pi\right)-\left(\frac{1}{6}\pi\right)+\left(\frac{\sqrt{3}}{4}\right)=\boxed{\mathrm{(C)}\ \frac{\sqrt{3}}{4}-\frac{1}{24}\pi}.$ We have thus solved the problem.
+## Video Solution by SpreadTheMathLove
+https://www.youtube.com/watch?v=-4qnOdE0Dyk
+## See Also

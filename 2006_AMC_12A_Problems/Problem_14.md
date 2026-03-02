@@ -1,0 +1,19 @@
+# 2006 AMC 12A Problem 14
+
+> This problem is the same as [2006 AMC 12A #14](https://artofproblemsolving.com/wiki/index.php/2006_AMC_12A_Problems) and [2006 AMC 10A #22](https://artofproblemsolving.com/wiki/index.php/2006_AMC_10A_Problems/Problem_22).
+## Problem
+Two farmers agree that pigs are worth 300 dollars and that goats are worth 210 dollars. When one farmer owes the other money, he pays the debt in pigs or goats, with "change" received in the form of goats or pigs as necessary. (For example, a 390 dollar debt could be paid with two pigs, with one goat received in change.) What is the amount of the smallest positive debt that can be resolved in this way?
+
+$\textbf{(A) } 5\qquad \textbf{(B) } 10\qquad \textbf{(C) } 30\qquad \textbf{(D) } 90\qquad \textbf{(E) } 210$
+## Solution 1 (Diophantine Equation)
+The problem can be restated as an equation of the form $300p+210g$ = x, where p is the number of pigs, g is the number of goats, and x is the positive debt. The problem asks us to find the lowest *x* possible. *p* and *g* must be integers, which makes the equation a [Diophantine equation](https://artofproblemsolving.com/wiki/index.php/Diophantine_equation).  [Bezout%$27s$ Lemma](https://artofproblemsolving.com/wiki/index.php/Bezout%27s_Lemma) tells us that the smallest c for the Diophantine equation am + bn = c to have solutions is when c is the GCD ([greatest common divisor](https://artofproblemsolving.com/wiki/index.php/greatest_common_divisor)) of a and b. Therefore, the answer is gcd(300,210)=$\boxed{\textbf{(C) }30}.$
+## Solution 2 (Divisibility Analysis)
+Alternatively, note that $300p+210g = 30(10p+7g)$ is divisible by 30 no matter what p and g are, so our answer must be divisible by 30. Since we want the smallest integer, we can suppose that the answer is 30 and go on from there. Note that three goats minus two pigs gives us $630 - 600 = 30$ exactly.  Since our supposition can be achieved, the answer is $\boxed{\textbf{(C) }30}.$
+## Solution 3 (Simplifying the Problem)
+Let us simplify this problem.  Dividing by 30, we get a pig to be:  $\frac{300}{30} = 10,$ and a goat to be $\frac{210}{30}= 7.$
+It becomes evident that if you exchange 5 pigs for 7 goats, we get the smallest positive difference - $5\cdot 10 - 7\cdot 7 = 50-49 = 1,$ since we can't make a non-integer with a linear combination of integers.
+Since we originally divided by 30, we need to multiply again, thus getting the answer  $1\cdot 30 = \boxed{\textbf{(C) }30}.$
+## See also
+Bezout's Lemma:
+
+https://brilliant.org/wiki/bezouts-identity/

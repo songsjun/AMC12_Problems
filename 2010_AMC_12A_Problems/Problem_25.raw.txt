@@ -1,0 +1,64 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2010_AMC_12A_Problems/Problem_25&action=raw
+
+Published Time: Tue, 26 Aug 2025 01:59:38 GMT
+
+Markdown Content:
+== Problem ==
+Two quadrilaterals are considered the same if one can be obtained from the other by a rotation and a translation. How many different convex cyclic quadrilaterals are there with integer sides and perimeter equal to 32?
+
+\textbf{(A)}\ 560 \qquad \textbf{(B)}\ 564 \qquad \textbf{(C)}\ 568 \qquad \textbf{(D)}\ 1498 \qquad \textbf{(E)}\ 2255
+
+== Solution 1 ==
+It should first be noted that given any quadrilateral of fixed side lengths, there is exactly one way to manipulate the angles so that the quadrilateral becomes cyclic.
+
+'''Proof.''' Given a quadrilateral ABCD where all sides are fixed (in a certain order), we can construct the diagonal \overline{BD}. When BD is the minimum allowed by the triangle inequality, one of the angles \angle DAB or \angle BCD will be degenerate and measure 0^\circ, so opposite angles will sum to less than 180^\circ. When BD is the maximum allowed, one of the angles will be degenerate and measure 180^\circ, so opposite angles will sum to more than 180^\circ. Thus, since the sum of opposite angles increases continuously as BD is lengthened from the minimum to the maximum values, there is a unique value of BD somewhere in the middle such that the sum of opposite angles is exactly 180^\circ (due to IVT).
+
+Denote a, b, c, and d as the integer side lengths of the quadrilateral. Without loss of generality, let a\ge b \ge c \ge d.
+
+Since a+b+c+d = 32, the [[Triangle Inequality]] implies that a \le 15.
+
+We will now split into 5 cases.
+
+Case 1: a = b = c = d (4 side lengths are equal)
+
+Clearly there is only 1 way to select the side lengths (8,8,8,8), and no matter how the sides are rearranged only 1 unique quadrilateral can be formed.
+
+Case 2: a = b = c > d or a > b = c = d (3 side lengths are equal)
+
+If 3 side lengths are equal, then each of those side lengths can only be integers from 6 to 10 except for 8 (because that is counted in the first case). Obviously there is still only 1 unique quadrilateral that can be formed from one set of side lengths, resulting in a total of 4 quadrilaterals.
+
+Case 3: a = b > c = d (2 pairs of side lengths are equal)
+
+a and b can be any integer from 9 to 15, and likewise c and d can be any integer from 1 to 7. However, a single set of side lengths can form 2 different cyclic quadrilaterals (a rectangle and a kite), so the total number of quadrilaterals for this case is 7\cdot{2} = 14.
+
+Case 4: a = b > c > d or a > b = c > d or a > b > c = d (2 side lengths are equal)
+
+If the 2 equal side lengths are each 1, then the other 2 sides must each be 15, which we have already counted in an earlier case. If the equal side lengths are each 2, there is 1 possible set of side lengths. Likewise, for side lengths of 3 there are 2 sets. Continuing this pattern, we find a total of 1+2+3+4+4+5+7+5+4+4+3+2+1 = 45 sets of side lengths. (Be VERY careful when adding up the total for this case!) For each set of side lengths, there are 3 possible quadrilaterals that can be formed, so the total number of quadrilaterals for this case is 3\cdot{45} = 135.
+
+Case 5: a > b > c > d (no side lengths are equal)
+Using the same counting principles starting from a = 15 and eventually reaching a = 9, we find that the total number of possible side lengths is 69. There are 4! ways to arrange the 4 side lengths, but there is only 1 unique quadrilateral for 4 rotations, so the number of quadrilaterals for each set of side lengths is \frac{4!}{4} = 6. The total number of quadrilaterals is 6\cdot{69} = 414.
+
+And so, the total number of quadrilaterals that can be made is 414 + 135 + 14 + 4 + 1 = \boxed{568\ \textbf{(C)}}.
+
+==Solution 2==
+As with solution 1 we would  like to note that given any quadrilateral we can change its angles to make a cyclic one.
+
+Let a \ge b \ge c\ge d be the sides of the quadrilateral.
+
+There are \binom{31}{3} ways to partition 32. However, some of these will not be quadrilaterals since they would have one side bigger than the sum of the other three.  This occurs when a \ge 16.  For a=16, b+c+d=16. There are \binom{15}{2} ways to partition 16. Since a could be any of the four sides, we have counted 4\binom{15}{2} degenerate quadrilaterals. Similarly, there are 4\binom{14}{2}, 4\binom{13}{2} \cdots 4\binom{2}{2} for other values of a.  Thus, there are \binom{31}{3} - 4\left(\binom{15}{2}+\binom{14}{2}+\cdots+\binom{2}{2}\right) = \binom{31}{3} - 4\binom{16}{3} = 2255 non-degenerate partitions of 32 by the hockey stick theorem.  We then account for symmetry. If all sides are congruent (meaning the quadrilateral is a square), the quadrilateral will be counted once. If the quadrilateral is a rectangle (and not a square), it will be counted twice. In all other cases, it will be counted 4 times. Since there is 1 square case, and 7 rectangle cases, there are 2255-1-2\cdot7=2240 quadrilaterals counted 4 times. Thus there are 1+7+\frac{2240}{4} = \boxed{568} = \boxed{\textbf{(C)}} total quadrilaterals.
+
+==Solution 3 (Burnside)==
+As with solution 2 we find that there are 2255 ways to form a quadrilateral if we don't account for rotations. We now apply [[Burnside's Lemma]]. There are four types of actions in the group acting on the set of quadrilaterals. We will consider each individually:
+Identity: maps a quadrilateral with sides a,b,c,d in that order to a,b,c,d. Obviously all members of the set of quadrilaterals are fixed points, for a total of 2255.
+Rotation by one: maps a quadrilateral from a,b,c,d to b,c,d,a. For this to have a fixed point we need a=b,b=c,c=d,d=a, so the only quadrilateral that is a fixed point is the square with side length 8, for a total of 1.
+Rotation by two: maps a quadrilateral from a,b,c,d to c,d,a,b. For this to be a fixed point we need a=c and b=d. Thus the quadrilateral is of the form x,y,x,y—a rectangle. We can count that there are 15 rectangle cases, namely (a, b, c, d) = \{ (1, 15, 1, 15), (2, 14, 2, 14), \cdots, (15, 1, 15, 1) \}.
+Rotation by three: maps a quadrilateral from a,b,c,d to d,a,b,c. Similarly to the rotation by one case, there is one fixed point here.
+Summing up, we get that the total number of groups is 2255+1+15+1=2272. Since there are 4 members of the group our final answer is \frac{2272}{4}=\boxed{568} total orbits of the set of quadrilaterals, so the answer is \boxed{\textbf{C}}.
+
+== See also ==
+{{AMC12 box|year=2010|num-b=24|after=Last Problem|ab=A}}
+
+[[Category:Intermediate Combinatorics Problems]]
+{{MAA Notice}}

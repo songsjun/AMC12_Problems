@@ -1,0 +1,37 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2020_AMC_12A_Problems/Problem_9&action=raw
+
+Published Time: Fri, 08 Jul 2022 08:07:51 GMT
+
+Markdown Content:
+==Problem==
+
+How many solutions does the equation \tan(2x)=\cos(\tfrac{x}{2}) have on the interval [0,2\pi]?
+
+ \textbf{(A)}\ 1\qquad\textbf{(B)}\ 2\qquad\textbf{(C)}\ 3\qquad\textbf{(D)}\ 4\qquad\textbf{(E)}\ 5 
+
+==Solution==
+We count the intersections of the graphs of y=\tan(2x) and y=\cos\left(\frac x2\right):
+
+ 1.   The graph of y=\tan(2x) has a period of \frac{\pi}{2}, asymptotes at x=\frac{\pi}{4}+\frac{k\pi}{2}, and zeros at x=\frac{k\pi}{2} for some integer k. 
+On the interval [0,2\pi], the graph has five branches: \biggl[0,\frac{\pi}{4}\biggr),\left(\frac{\pi}{4},\frac{3\pi}{4}\right),\left(\frac{3\pi}{4},\frac{5\pi}{4}\right),\left(\frac{5\pi}{4},\frac{7\pi}{4}\right),\left(\frac{7\pi}{4},2\pi\right]. Note that \tan(2x)\in[0,\infty) for the first branch, \tan(2x)\in(-\infty,\infty) for the three middle branches, and \tan(2x)\in(-\infty,0] for the last branch. Moreover, all branches are strictly increasing.
+
+2.   The graph of y=\cos\left(\frac x2\right) has a period of 4\pi and zeros at x=\pi+2k\pi for some integer k. 
+On the interval [0,2\pi], note that \cos\left(\frac x2\right)\in[-1,1]. Moreover, the graph is strictly decreasing.
+
+The graphs of y=\tan(2x) and y=\cos\left(\frac x2\right) intersect once on each of the five branches of y=\tan(2x), as shown below:
+ /* Made by MRENTHUSIASM */ size(800,200); real f(real x) { return tan(2*x); } real g(real x) { return cos(x/2); } draw(graph(f,0,atan(3)/2),red,"$y=\tan(2x)$"); draw(graph(f,-atan(3)/2+pi/2,atan(3)/2+pi/2),red); draw(graph(f,-atan(3)/2+2*pi/2,atan(3)/2+2*pi/2),red); draw(graph(f,-atan(3)/2+3*pi/2,atan(3)/2+3*pi/2),red); draw(graph(f,-atan(3)/2+4*pi/2,2*pi),red); draw(graph(g,0,2pi),blue,"$y=\cos\left(\frac x2\right)$"); real xMin = 0; real xMax = 9/4*pi; real yMin = -3; real yMax = 3; //Draws the horizontal gridlines void horizontalLines() { for (real i = yMin+1; i < yMax; ++i) { draw((xMin,i)--(xMax,i), mediumgray+linewidth(0.4)); } } //Draws the vertical gridlines void verticalLines() { for (real i = xMin+pi/2; i < xMax; i+=pi/2) { draw((i,yMin)--(i,yMax), mediumgray+linewidth(0.4)); } } //Draws the horizontal ticks void horizontalTicks() { for (real i = yMin+1; i < yMax; ++i) { draw((-1/8,i)--(1/8,i), black+linewidth(1)); } } //Draws the vertical ticks void verticalTicks() { for (real i = xMin+pi/2; i < xMax; i+=pi/2) { draw((i,-1/8)--(i,1/8), black+linewidth(1)); } } horizontalLines(); verticalLines(); horizontalTicks(); verticalTicks(); draw((xMin,0)--(xMax,0),black+linewidth(1.5),EndArrow(5)); draw((0,yMin)--(0,yMax),black+linewidth(1.5),EndArrow(5)); label("$x$",(xMax,0),(2,0)); label("$y$",(0,yMax),(0,2)); pair A[], B[]; A[0] = (2pi,0); A[1] = (0,2); A[2] = (0,0); A[3] = (0,-2); B[0] = intersectionpoints(graph(f,0,atan(3)/2),graph(g,0,2pi))[0]; B[1] = intersectionpoints(graph(f,-atan(3)/2+pi/2,atan(3)/2+pi/2),graph(g,0,2pi))[0]; B[2] = intersectionpoints(graph(f,-atan(3)/2+2*pi/2,atan(3)/2+2*pi/2),graph(g,0,2pi))[0]; B[3] = intersectionpoints(graph(f,-atan(3)/2+3*pi/2,atan(3)/2+3*pi/2),graph(g,0,2pi))[0]; B[4] = intersectionpoints(graph(f,-atan(3)/2+4*pi/2,atan(3)/2+4*pi/2),graph(g,0,2pi))[0]; label("$2\pi$",A[0],(0,-2.5)); label("$2$",A[1],(-2.5,0)); label("$0$",A[2],(-2.5,0)); label("$-2$",A[3],(-2.5,0)); for (int i = 0; i < 5; ++i) { dot(B[i],black+linewidth(5)); } add(legend(),point(E),60E,UnFill); 
+Therefore, the answer is \boxed{\textbf{(E)}\ 5}.
+
+~MRENTHUSIASM ~lopkiloinm ~hi13 ~annabelle0913 ~codecow
+
+==Video Solution==
+https://youtu.be/ZdVut0V1O4g  with tips on graphing trig functions fast ~MathProblemSolvingSkills.com
+
+==See Also==
+
+{{AMC12 box|year=2020|ab=A|num-b=8|num-a=10}}
+
+[[Category:Introductory Trigonometry Problems]]
+{{MAA Notice}}

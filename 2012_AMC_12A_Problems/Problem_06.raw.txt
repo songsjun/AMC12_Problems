@@ -1,0 +1,60 @@
+{{duplicate|[[2012 AMC 12A Problems|2012 AMC 12A #6]] and [[2012 AMC 10A Problems|2012 AMC 10A #8]]}}
+
+== Problem ==
+The sums of three whole numbers taken in pairs are 12, 17, and 19. What is the middle number?
+
+<math> \textbf{(A)}\ 4\qquad\textbf{(B)}\ 5\qquad\textbf{(C)}\ 6\qquad\textbf{(D)}\ 7\qquad\textbf{(E)}\ 8 </math>
+
+==Solution 1==
+Let the three numbers be equal to <math>a</math>, <math>b</math>, and <math>c</math>. We can now write three equations:
+
+<math>a+b=12</math>
+
+<math>b+c=17</math>
+
+<math>a+c=19</math>
+
+Adding these equations together, we get that
+
+<math>2(a+b+c)=48</math> and
+
+<math>a+b+c=24</math>
+
+Substituting the original equations into this one, we find
+
+<math>c+12=24</math>
+
+<math>a+17=24</math>
+
+<math>b+19=24</math>
+
+Therefore, our numbers are 12, 7, and 5. The middle number is <math>\boxed{\textbf{(D)}\ 7}</math>
+
+==Solution 2 (Faster)==
+
+Let the three numbers be <math>a</math>, <math>b</math> and <math>c</math> and <math>a<b<c</math>. We get the three equations: 
+
+<math>a+b=12</math>
+
+<math>a+c=17</math>
+
+<math>b+c=19</math>
+
+To isolate <math>b</math>, We add the first and last equations and then subtract the second one.
+
+<math>(a+b)+(b+c)-(a+c) = 12+19-17 \Rightarrow 2b=14 \Rightarrow b = 7</math>
+
+Because <math>b</math> is the middle number, the middle number is <math>\boxed{\textbf{(D)}\ 7}</math>
+
+==Video Solution (CREATIVE THINKING)==
+https://youtu.be/sU5NAg6bhxI
+
+~Education, the Study of Everything
+
+== See Also ==
+
+{{AMC10 box|year=2012|ab=A|num-b=7|num-a=9}}
+{{AMC12 box|year=2012|ab=A|num-b=5|num-a=7}}
+
+[[Category:Introductory Algebra Problems]]
+{{MAA Notice}}

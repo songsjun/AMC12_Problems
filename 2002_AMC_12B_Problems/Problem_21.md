@@ -1,0 +1,49 @@
+# 2002 AMC 12B Problem 21
+
+## Problem
+For all positive [integer](https://artofproblemsolving.com/wiki/index.php/integer)s n less than 2002, let
+
+
+$$
+\begin{eqnarray*} a_n =\left\{ \begin{array}{lr} 11, & \text{if\ }n\ \text{is\ divisible\ by\ }13\ \text{and\ }14;\\ 13, & \text{if\ }n\ \text{is\ divisible\ by\ }14\ \text{and\ }11;\\ 14, & \text{if\ }n\ \text{is\ divisible\ by\ }11\ \text{and\ }13;\\ 0, & \text{otherwise}. \end{array} \right. \end{eqnarray*}
+$$
+
+
+Calculate $\sum_{n=1}^{2001}a_n$.
+
+
+$$\mathrm{(A)}\ 448 \qquad\mathrm{(B)}\ 486 \qquad\mathrm{(C)}\ 1560 \qquad\mathrm{(D)}\ 2001 \qquad\mathrm{(E)}\ 2002$$
+
+## Solution 1
+Since 2002 = 11 $\cdot 13 \cdot 14,$ it follows that
+
+$$
+\begin{eqnarray*} a_n =\left\{ \begin{array}{lr} 11, & \text{if\ }n=13 \cdot 14 \cdot k, \quad k = 1,2,\cdots 10;\\ 13, & \text{if\ }n=14 \cdot 11 \cdot k, \quad k = 1,2,\cdots 12;\\ 14, & \text{if\ }n=11 \cdot 13 \cdot k, \quad k = 1,2,\cdots 13;\\ \end{array} \right. \end{eqnarray*}
+$$
+
+
+Thus $\sum_{n=1}^{2001}a_n = 11\cdot 10 + 13 \cdot 12 + 14 \cdot 13 = 448 \Rightarrow \mathrm{(A)}.$
+
+$$
+\begin{array}{lr} 11, & \text{if\ }n=13 \cdot 14 \cdot k, \quad k = 1,2,\cdots 10;\\ 13, & \text{if\ }n=14 \cdot 11 \cdot k, \quad k = 1,2,\cdots 12;\\ 14, & \text{if\ }n=11 \cdot 13 \cdot k, \quad k = 1,2,\cdots 13;\\ \end{array}.
+$$
+
+## Solution 2
+Find the LCMs of the groups of the numbers.
+
+Notice that the groups are relatively prime.
+
+So $a_n$=:
+
+11 if n is a multiple of 182.
+
+13 if n is a multiple of 154.
+
+14 if n is a multiple of 143.
+
+When do we see ambiguities (for example: n is a multiple of 11, 13, and 14)? This is only done when n is a multiple of \operatorname{lcm}(11,13,14)=2002. However, since n<2002, this can never happen.
+
+So we have 10 multiples of 182 we have to count (1 to 10 *182), and similarly, 12 multiples of 154, and 13 multiples of 143. The sum is 10*11+12*13+13*14=448. Select $\boxed{A}.$
+
+*~hastapasta*
+## See also

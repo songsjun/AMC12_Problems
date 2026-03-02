@@ -1,0 +1,111 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2007_AMC_12B_Problems/Problem_20&action=raw
+
+Published Time: Mon, 21 Dec 2020 01:25:47 GMT
+
+Markdown Content:
+==Problem==
+The parallelogram bounded by the lines y=ax+c, y=ax+d, y=bx+c, and y=bx+d has area 18. The parallelogram bounded by the lines y=ax+c, y=ax-d, y=bx+c, and y=bx-d has area 72. Given that a, b, c, and d are positive integers, what is the smallest possible value of a+b+c+d?
+
+\mathrm {(A)} 13\qquad \mathrm {(B)} 14\qquad \mathrm {(C)} 15\qquad \mathrm {(D)} 16\qquad \mathrm {(E)} 17
+
+==Solution 1==
+
+Plotting the parallelogram on the coordinate plane, the 4 corners are at (0,c),(0,d),\left(\frac{d-c}{a-b},\frac{ad-bc}{a-b}\right),\left(\frac{c-d}{a-b},\frac{bc-ad}{a-b}\right). Because 72= 4\cdot 18, we have that 4(c-d)\left(\frac{c-d}{a-b}\right) = (c+d)\left(\frac{c+d}{a-b}\right) or that 2(c-d)=c+d, which gives c=3d (consider a [[homothety]], or dilation, that carries the first parallelogram to the second parallelogram; because the area increases by 4\times, it follows that the stretch along the diagonal, or the ratio of side lengths, is 2\times). The area of the triangular half of the parallelogram on the right side of the y-axis is given by 9 = \frac{1}{2} (c-d)\left(\frac{d-c}{a-b}\right), so substituting c = 3d:
+ \frac{1}{2} (c-d)\left(\frac{c-d}{a-b}\right) = 9 \quad \Longrightarrow \quad 2d^2 = 9(a-b)
+Thus 3|d, and we verify that d = 3, a-b = 2 \Longrightarrow a = 3, b = 1 will give us a minimum value for a+b+c+d. Then a+b+c+d = 3 + 1 + 9 + 3 = \boxed{\mathbf{(D)} 16}.
+
+==Solution 2==
+The key to this solution is that area is invariant under translation. By suitably shifting the plane, the problem is mapped to the lines c,d,(b-a)x+c,(b-a)x+d and c,-d,(b-a)x+c,(b-a)x-d. Now, the area of the parallelogram contained by is the former is equal to the area of a rectangle with sides d-c and \frac{d-c}{b-a}, \frac{(d-c)^2}{b-a}=18, and the area contained by the latter is \frac{(c+d)^2}{b-a}=72. Thus, d=3c and b-a must be even if the former quantity is to equal 18. c^2=18(b-a) so c is a multiple of 3. Putting this all together, the minimal solution for (a,b,c,d)=(3,1,3,9), so the sum is  \boxed{\textbf{(D)} 16} .
+
+==Solution 3==
+Let a and b be the slopes of the lines such that b > a (i.e. the line bx+c is steeper than ax+c) and c > d (i.e. the point (0, c) is higher than the point (0, d). Upon drawing a diagram, we see that both the smaller and the larger parallelogram can be split along the x-axis, such that both of their areas are the combinations of two corresponding triangles. The area of a triangle is \frac{bh}{2}, but since a parallelogram is two such triangles, the area becomes bh.
+
+Let b_1 and h_1 denote the base length and height, respectively, of the triangles pertaining to the smaller parallelogram and b_2 and h_2 denote those of the larger parallelogram. Notice that b_1 is simple the distance from (0, d) to (0, c), or (c-d). Also notice that h_1 is the distance from the x-axis to the intersection of lines ax+c and bx+d. This is equivalent to the value of the x-coordinate of intersection, so we solve for x:
+
+ax+c=bx+d
+
+\Rightarrow bx-ax = c-d
+
+\Rightarrow (b-a)x = c-d
+
+\Rightarrow x = \frac{c-d}{b-a}.
+
+The area of the smaller parallelogram is b_1*h_1, or
+
+(c-d) * \frac{c-d}{b-a}
+
+\Rightarrow \frac{(c-d)^2}{b-a}.
+
+b_2 is the distance from (0, -d) to (0, c), or (c+d). h_2 is the x-coordinate of the intersection of the lines ax+c and bx-d. Again, we solve for x:
+
+ax+c=bx-d
+
+\Rightarrow bx-ax = c+d
+
+\Rightarrow (b-a)x = c+d
+
+\Rightarrow x = \frac{c+d}{b-a}.
+
+The area of the larger parallelogram is b-1*h_1, or
+
+(c+d) * \frac{c+d}{b-a}
+
+\Rightarrow \frac{(c+d)^2}{b-a}.
+
+The areas of the parallelograms are given to us: 18 and 72. Therefore we can set up a ratio:
+
+\frac{18}{72} = \frac{\frac{(c-d)^2}{b-a}}{\frac{(c+d)^2}{b-a}}
+
+\Rightarrow 18(c+d)^2 = 72(c-d)^2
+
+\Rightarrow (c+d)^2 = 4(c-d)^2
+
+\Rightarrow c^2 + 2cd + d^2 = 4c^2 - 8cd + 4d^2
+
+\Rightarrow 3c^2 - 10cd +3d^2 = 0
+
+\Rightarrow (3c-d)(c-3d)=0
+
+\Rightarrow c=3d, c=\frac{d}{3}
+
+We established earlier that c>d, so c=3d. Plugging this into the intial equations yields
+
+\frac{16d^2}{b-a} = 72
+
+and
+
+\frac{4d^2}{b-a} = 18
+
+Solving for d, we get
+
+d = 3\sqrt{\frac{b-a}{2}}
+
+We want the sum of a, b, c, and d. We can now rewrite this
+
+a + b + 12\sqrt{\frac{b-a}{2}}
+
+We are told that a, b, c, and d are all positive integers. Therefore the value under the radical must be a perfect square greater than 0. We can rewrite this
+
+\frac{b-a}{2} = k^2
+
+where k is some positive integer.
+
+Rearranging, we get
+
+b = a + 2k^2
+
+Now we can rewrite the sum as
+
+a + a + 2k^2 +12k.
+
+Since both a and k must be at least 1, the minimum value is
+
+1 + 1 + 2(1)^2 + 12(1) = 16 \Rightarrow \boxed{\text{D}}.
+
+==See also==
+{{AMC12 box|year=2007|ab=B|num-b=19|num-a=21}}
+
+[[Category:Introductory Geometry Problems]]
+{{MAA Notice}}

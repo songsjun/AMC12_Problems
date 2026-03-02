@@ -1,0 +1,151 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2019_AMC_10B_Problems/Problem_24&action=raw
+
+Published Time: Sun, 26 Oct 2025 21:44:01 GMT
+
+Markdown Content:
+{{duplicate|[[2019 AMC 10B Problems|2019 AMC 10B #24]] and [[2019 AMC 12B Problems|2019 AMC 12B #22]]}}
+
+==Problem==
+
+Define a sequence recursively by x_0=5 and x_{n+1}=\frac{x_n^2+5x_n+4}{x_n+6} for all nonnegative integers n. Let m be the least positive integer such that
+
+x_m\leq 4+\frac{1}{2^{20}}.
+
+In which of the following intervals does m lie?
+
+\textbf{(A) } [9,26] \qquad\textbf{(B) } [27,80] \qquad\textbf{(C) } [81,242]\qquad\textbf{(D) } [243,728] \qquad\textbf{(E) } [729,\infty)
+
+== Solution 1 ==
+We first prove that x_n > 4 for all n \ge 0, by induction. Observe that
+ x_{n+1} - 4 = \frac{x_n^2 + 5x_n + 4 - 4(x_n+6)}{x_n+6} = \frac{(x_n - 4)(x_n+5)}{x_n+6}. 
+so (since x_n is clearly positive for all n, from the initial definition), x_{n+1} > 4 if and only if x_{n} > 4.
+
+We similarly prove that x_n is decreasing:
+ x_{n+1} - x_n = \frac{x_n^2 + 5x_n + 4 - x_n(x_n+6)}{x_n+6} = \frac{4-x_n}{x_n+6} < 0. 
+
+Now we need to estimate the value of x_{n+1}-4, which we can do using the rearranged equation:
+ x_{n+1} - 4 = (x_n-4)\cdot\frac{x_n + 5}{x_n+6}. 
+Since x_n is decreasing, \frac{x_n + 5}{x_n+6} is also decreasing, so we have
+ \frac{9}{10} < \frac{x_n + 5}{x_n+6} \le \frac{10}{11} 
+and
+ \frac{9}{10}(x_n-4) < x_{n+1} - 4 \le \frac{10}{11}(x_n-4). 
+
+This becomes
+ \left(\frac{9}{10}\right)^n = \left(\frac{9}{10}\right)^n \left(x_0-4\right) < x_{n} - 4 \le \left(\frac{10}{11}\right)^n \left(x_0-4\right) = \left(\frac{10}{11}\right)^n. 
+The problem thus reduces to finding the least value of n such that
+ \left(\frac{9}{10}\right)^n < x_{n} - 4 \le \frac{1}{2^{20}} \text{ and } \left(\frac{10}{11}\right)^{n-1} > x_{n-1} - 4 > \frac{1}{2^{20}}. 
+
+Taking logarithms, we get
+n \ln \frac{9}{10} < -20 \ln 2 and (n-1)\ln \frac{10}{11} > -20 \ln 2, i.e.
+
+ n > \frac{20\ln 2}{\ln\frac{10}{9}} \text{ and } n-1 < \frac{20\ln 2}{\ln\frac{11}{10}} .
+
+As approximations, we can use \ln\frac{10}{9} \approx \frac{1}{9}, \ln\frac{11}{10} \approx \frac{1}{10}, and \ln 2\approx 0.7. These approximations allow us to estimate
+ 126 < n < 141, 
+which gives \boxed{\textbf{(C) } [81,242]}.
+
+==Solution 2==
+
+The condition where x_m\leq 4+\frac{1}{2^{20}} gives the motivation to make a substitution to change the equilibrium from 4 to 0. We can substitute x_n = y_n + 4 to achieve that. Now, we need to find the smallest value of m such that y_m\leq \frac{1}{2^{20}} given that y_0 = 1. 
+
+Factoring the recursion x_{n+1} = \frac{x_n^2 + 5x_n+4}{x_n + 6}, we get: 
+
+x_{n+1}=\dfrac{(x_n + 4)(x_n + 1)}{x_n + 6} \Rightarrow y_{n+1}+4=\dfrac{(y_n+8)(y_n+5)}{y_n+10}
+
+y_{n+1}+4=\dfrac{y_n^2+13y_n+40}{y_n+10} = \dfrac{y_n^2+9y_n +(4y_n+40)}{y_n+10}
+
+y_{n+1}+4=\dfrac{y_n^2+9y_n}{y_n+10} + 4
+
+y_{n+1}=\dfrac{y_n^2+9y_n}{y_n+10}.
+
+Using wishful thinking, we can simplify the recursion as follows:
+
+y_{n+1} = \frac{y_n^2 + 9y_n + y_n - y_n}{y_n + 10}
+
+y_{n+1} = \frac{y_n(y_n + 10) - y_n}{y_n + 10}
+
+y_{n+1} = y_n - \frac{y_n}{y_n + 10}
+
+y_{n+1} = y_n\left(1 - \frac{1}{y_n + 10}\right).
+
+The recursion looks like a geometric sequence with the ratio changing slightly after each term. Notice from the recursion that the y_n sequence is strictly decreasing, so all the terms after y_0 will be less than 1. Also, notice that all the terms in sequence will be positive. Both of these can be proven by induction.
+
+With both of those observations in mind, \frac{9}{10} < 1 - \frac{1}{y_n + 10} \leq \frac{10}{11}. Combining this with the fact that the recursion resembles a geometric sequence, we conclude that \left(\frac{9}{10}\right)^n < y_n \leq \left(\frac{10}{11}\right)^n.
+
+\frac{9}{10} is approximately equal to \frac{10}{11} and the ranges that the answer choices give us are generous, so we should use either \frac{9}{10} or \frac{10}{11} to find a rough estimate for m.
+
+Since \dfrac{1}{2}=0.5, that means \frac{1}{\sqrt{2}}=2^{-\frac{1}{2}} \approx 0.7. Additionally, \left(\frac{9}{10}\right)^3=0.729
+
+Therefore, we can estimate that 2^{-\frac{1}{2}} < y_3.
+
+Raising both sides to the 40th power, we get 2^{-20} < (y_3)^{40}
+
+But y_3 = (y_0)^3, so 2^{-20} < (y_0)^{120} and therefore, 2^{-20} < y_{120}.
+
+This tells us that m is somewhere around 120, so our answer is \boxed{\textbf{(C) } [81,242]}.
+
+==Solution 3==
+Since the choices are rather wide ranges, we can use approximation to make it easier. Notice that
+x_{n+1} - x_n = \frac{4-x_n}{x_n+6}
+And x_0 =5, we know that x_n is a declining sequence, and as it get close to 4 its decline will slow, never falling below 4. So we'll use 4 to approximate x_n in the denominator so that we have a solvable difference equation:
+ x_{n+1} - x_n = \frac{4-x_n}{10}
+x_{n+1} = \frac{9}{10}x_n + \frac{2}{5}
+Solve it with x_0 = 5, we have
+x_n = 4 + (\frac{9}{10})^n
+Now we wish to find n so that
+ (\frac{9}{10})^n \approx \frac{1}{2^{20}}
+ n \approx \frac{\log{2^{20}}}{\log{10}-\log9} \approx \frac{20*0.3}{0.05} = 120
+Since 120 is safely within the range of [81,242], we have the answer.
+\boxed{\textbf{(C) } [81,242]}.
+
+-Mathdummy
+
+==Solution 4 (no logs)==
+We start by simplifying the recursion: x_{n+1} = x_n + \frac{4-x_n}{x_n+6}.
+While x_n > 4, x_n is a decreasing sequence. Let x_n = 4 + f_n. Then x_{n} - x_{n+1} = \frac{x_n-4}{x_n+6} = \frac{f_n}{10 + f_n} \approx \frac{f_n}{10}.
+Now notice that we want to find m, such that x_m \leq 4 + \frac{1}{2^{20}}, and x_0 = 4 + \frac{1}{2^0}. 
+We are going to find an approximate number of steps to go from 4 + \frac{1}{2^i} to 4 + \frac{1}{2^{i+1}}. 
+If x_j = 4 + \frac{1}{2^i}, then f_j = \frac{1}{2^i} and if x_k = 4 + \frac{1}{2^{i+1}}, then f_k = \frac{1}{2^{i+1}}. Then x_j - x_k = \frac{1}{2^{i+1}} \approx \frac{f_j}{10} + \frac{f_{j+1}}{10} + ... + \frac{f_{k-1}}{10}.
+Furthermore, \frac{1}{2^i} = f_j > f_{j+1} > f_{j+2} > ... > f_{k-1} > f_k = \frac{1}{2^{i+1}}. Therefore, (k-j) \cdot \frac{\frac{1}{2^i}}{10} > \frac{f_j}{10} + \frac{f_{j+1}}{10} + ... + \frac{f_{k-1}}{10} > (k-j) \cdot \frac{\frac{1}{2^{i+1}}}{10}, so 5 < k-j < 10. Therefore, to go from f_0 = \frac{1}{2^0} to f_m = \frac{1}{2^{20}}, we will need to do this 20 times, which means 100 < m - 0 < 200, which is within the range of [81,242], so we have the answer.
+\boxed{\textbf{(C) } [81,242]}.
+
+-alligator112
+
+==Solution 5==
+This solution uses approximation to estimate ranges.
+
+As in Solution 1, we first show that all x_n>4 by induction.
+
+Next, we let a_n=x_n-4, so then all a_n>0. Replacing this in the formula results in a_{n+1}+4=\frac{(a_n+4)^2+5(a_n+4)+4}{(a_n+4)+6}=\frac{a_n^2+13a_n+40}{a_n+10}, so then
+
+a_{n+1}=\frac{a_n^2+9a_n}{a_n+10}
+
+The problem statement asks us to find some m such that a_m\le\frac{1}{2^{20}}.
+
+Then we let b_n=\frac{1}{a_n}. Note that a_n>0, so b_n is never undefined. Replacing this in the formula results in \frac{1}{b_{n+1}}=\frac{\left(\frac{1}{b_n}\right)^2+9\cdot\frac{1}{b_n}}{\frac{1}{b_n}+10}=\frac{9b_n+1}{10b_n^2+b_n}, so b_{n+1}=\frac{10b_n^2+b_n}{9b_n+1}=\frac{10}{9}b_n-\frac{1}{81}+\frac{1}{729b_n+81}. Now we must find the least m such that b_m\ge2^{20}. Notice that only the \frac{10}{9}n portion of the equation plays a significant role in determining the value of the entire value at higher values of b_n, so we may simply let b_{n+1}\approx\frac{10}{9}b_n. 
+
+Since b_0=\frac{1}{a_n}=\frac{1}{x_0-4}=\frac{1}{5-4}=1, we know that b_n\approx\left(\frac{10}{9}\right)^n=\left(\frac{100}{81}\right)^{\frac{n}{2}}\approx\left(\frac{100}{80}\right)^{\frac{n}{2}}=\left(\frac{5}{4}\right)^{\frac{n}{2}}=\left(\frac{125}{64}\right)^{\frac{n}{6}}\approx\left(\frac{128}{64}\right)^{\frac{n}{6}}=2^{\frac{n}{6}}.
+
+Then we have \frac{m}{6}\ge20, so we can estimate that the smallest value m satisfying the condition is m=120. Since this solution is well inside one of the answer choices’ bounds, we can assume this is a good enough estimate, so the answer is \boxed{\textbf{(C) } [81,242]}.
+
+~eevee9406
+
+==Remark==
+The actual value of m is m=133. The 120 from above is incorrect.
+
+==Video Solution==
+
+https://www.youtube.com/watch?v=toHqTtcCcJQ
+
+~MathProblemSolvingSkills.com
+
+==Video Solution==
+
+Video Solution: https://www.youtube.com/watch?v=Ok7bYOdiF6M
+
+==See Also==
+{{AMC10 box|year=2019|ab=B|num-b=23|num-a=25}}
+{{AMC12 box|year=2019|ab=B|num-b=21|num-a=23}}
+{{MAA Notice}}

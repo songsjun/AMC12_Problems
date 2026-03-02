@@ -1,0 +1,213 @@
+{{duplicate|[[2020 AMC 10B Problems|2020 AMC 10B #24]] and [[2020 AMC 12B Problems|2020 AMC 12B #21]]}}
+
+==Problem==
+
+How many positive integers <math>n</math> satisfy <cmath>\dfrac{n+1000}{70} = \lfloor \sqrt{n} \rfloor?</cmath>(Recall that <math>\lfloor x\rfloor</math> is the greatest integer not exceeding <math>x</math>.)
+
+<math>\textbf{(A) } 2 \qquad\textbf{(B) } 4 \qquad\textbf{(C) } 6 \qquad\textbf{(D) } 30 \qquad\textbf{(E) } 32</math>
+
+==Solution 1 (Fakesolve)==
+
+We can first consider the equation without a floor function:
+
+<cmath>\dfrac{n+1000}{70} = \sqrt{n} </cmath>
+
+Multiplying both sides by 70 and then squaring:
+
+<cmath>n^2 + 2000n + 1000000 = 4900n</cmath>
+
+Moving all terms to the left:
+
+<cmath>n^2 - 2900n + 1000000 = 0</cmath>
+
+Now we can determine the factors:
+
+<cmath>(n-400)(n-2500) = 0</cmath>
+
+This means that for <math>n = 400</math> and <math>n = 2500</math>, the equation will hold without the floor function.
+
+Now we can simply check the multiples of 70 around 400 and 2500 in the original equation, which we abbreviate as <math>L=R</math>.
+
+For <math>n = 330</math>, <math>L=19</math> but <math>18^2 < 330 < 19^2</math> so <math>R=18</math>
+
+For <math>n = 400</math>,  <math>L=20</math> and  <math>R=20</math>
+
+For <math>n = 470</math>,  <math>L=21</math>,  <math>R=21</math>
+
+For <math>n = 540</math>, <math>L=22</math> but <math>540 > 23^2</math> so   <math>R=23</math>
+
+Now we move to <math>n = 2500</math>
+
+For <math>n = 2430</math>,  <math>L=49</math> and <math>49^2 < 2430 < 50^2</math> so <math>R=49</math>
+
+For <math>n = 2360</math>,  <math>L=48</math> and <math>48^2 < 2360 < 49^2</math> so <math>R=48</math>
+
+For <math>n = 2290</math>,  <math>L=47</math> and <math>47^2 < 2360 < 48^2</math> so  <math>R=47</math>
+
+For <math>n = 2220</math>, <math>L=46</math> but <math>47^2 < 2220</math> so  <math>R=47</math>
+
+For <math>n = 2500</math>,  <math>L=50</math> and <math>R=50</math>
+
+For <math>n = 2570</math>, <math>L=51</math> but <math>2570 < 51^2</math> so <math>R=50</math>
+
+Therefore we have 6 total solutions, <math>n = 400, 470, 2290, 2360, 2430, 2500 = \boxed{\textbf{(C) 6}}</math>
+
+==Solution 2==
+
+This is my first solution here, so please forgive me for any errors.
+
+We are given that <cmath>\frac{n+1000}{70}=\lfloor\sqrt{n}\rfloor.</cmath>
+
+We know <math>\lfloor\sqrt{n}\rfloor</math> must be an integer, which means that <math>n+1000</math> is divisible by <math>70</math>. As <math>1000\equiv 20\pmod{70}</math>, this means that <math>n\equiv 50\pmod{70}</math>, so we can write <math>n=70k+50</math> for <math>k\in\mathbb{Z}</math>. Note that <math>n</math> has to be nonnegative for <math>\sqrt{n}</math> to be defined. Thus, <math>n = 70k + 50 \geq 0</math>. Simplifying this, we have <math>k \geq -5/7</math>. In other words, <math>k</math> also has to be nonnegative.
+
+Therefore, <cmath>\frac{n+1000}{70}=\frac{70k+1050}{70}=k+15=\lfloor\sqrt{70k+50}\rfloor.</cmath>
+
+Also, we can say that <math>\sqrt{70k+50}-1 < k+15</math> and <math>k+15\leq\sqrt{70k+50}.</math>
+
+Since <math>k</math> is nonnegative, both sides of the second inequality are nonnegative, so we can square them to get <math>k^{2}+30k+225\leq70k+50\implies k^{2}-40k+175\leq 0\implies (k-5)(k-35)\leq0\implies 5\leq k\leq 35</math>.
+
+Similarly, solving the first inequality gives us <math>k < 19-\sqrt{155}</math> or <math>k > 19+\sqrt{155}.</math>
+
+We know that <math>\sqrt{155}</math> is larger than <math>12</math> and smaller than <math>13</math>, so instead, we can say <math>k\leq 6</math> or <math>k\geq 32</math>.
+
+Combining this with <math>5\leq k\leq 35</math>, we get <math>k=5,6,32,33,34,35</math> are all solutions for <math>k</math> that give a valid solution for <math>n</math>, meaning that our answer is <math>\boxed{\textbf{(C) 6}}</math>.
+-Solution By Qqqwerw
+
+==Solution 3==
+
+We start with the given equation<cmath>\dfrac{n+1000}{70} = \lfloor \sqrt{n} \rfloor</cmath>From there, we can start with the general inequality that <math>\lfloor \sqrt{n} \rfloor \leq \sqrt{n} < \lfloor \sqrt{n} \rfloor + 1</math>. This means that<cmath>\dfrac{n+1000}{70} \leq \sqrt{n} < \dfrac{n+1070}{70}</cmath>Solving each inequality separately gives us two inequalities:<cmath>n - 70\sqrt{n} +1000 \leq 0 \rightarrow (\sqrt{n}-50)(\sqrt{n}-20)\leq 0 \rightarrow 20\leq \sqrt{n} \leq 50</cmath><cmath>n-70\sqrt{n}+1070 > 0 \rightarrow \sqrt{n} < 35-\sqrt{155} , \sqrt{n} > 35+\sqrt{155}</cmath>Simplifying and approximating decimals yields 2 solutions for one inequality and 4 for the other. Hence, the answer is <math>2+4 = \boxed{\textbf{(C) } 6}</math>.
+
+~Rekt4
+
+==Solution 4==
+
+Let <math>n</math> be uniquely of the form <math>n=k^2+r</math> where <math>0 \le r \le 2k \; \bigstar</math>. Then, <cmath> \frac{k^2+r+1000}{70} = k</cmath> Rearranging and completeing the square gives <cmath>(k-35)^2 + r = 225</cmath> <cmath>\Rightarrow r = (k-20)(50-k)\; \smiley</cmath> This gives us <cmath>(k-35)^2 \le (k-35)^2+r=225 \le (k-35)^2 + 2k</cmath> Solving the left inequality shows that <math>20 \le k \le 50</math>. Combing this with the right inequality gives that <cmath>(k-35)^2+r=225 \le (k-35)^2 + 2k \le (k-35)^2+100 </cmath> which implies either <math>k \ge 47</math> or <math>k \le 23</math>. By directly computing the cases for <math>k = 20, 21, 22, 23, 47, 48, 49, 50</math> using <math>\smiley</math>, it follows that only <math> k = 22, 23</math> yield and invalid <math>r</math> from <math>\bigstar</math>. Since each <math>k</math> corresponds to one <math>r</math> and thus to one <math>n</math> (from <math>\smiley</math> and the original form), there must be 6 such <math>n</math>.  
+
+
+~the_jake314
+
+==Solution 5==
+
+Since the right-hand-side is an integer, so must be the left-hand-side. Therefore, we must have <math>n\equiv -20\pmod{70}</math>; let <math>n=70j-20</math>. The given equation becomes<cmath>j+14 = \lfloor \sqrt{70j-20} \rfloor</cmath>
+
+Since <math>\lfloor x \rfloor \leq x < \lfloor x \rfloor +1</math> for all real <math>x</math>, we can take <math>x=\sqrt{70j-20}</math> with <math>\lfloor x \rfloor =j+14</math> to get
+<cmath>j+14 \leq \sqrt{70j-20} < j+15</cmath>
+We can square the inequality to get<cmath>196+28j+j^{2} \leq 70j-20 < 225 + 30j + j^{2}</cmath>
+The left inequality simplifies to <math>(j-36)(j-6) \leq 0</math>, which yields <cmath>6 \le j \le 36.</cmath>
+The right inequality simplifies to <math>(j-20)^2 - 155 > 0</math>, which yields <cmath>j < 20 - \sqrt{155} < 8 \quad \text{or} \quad j > 20 + \sqrt{155} > 32</cmath> 
+
+Solving <math>j < 8</math>, and <math>6 \le j \le 36</math>, we get <math>6 \le j < 8</math>, for <math>2</math> values <math>j\in \{6, 7\}</math>.
+
+Solving <math>j >32</math>, and <math>6 \le j \le 36</math>, we get <math>32 < j \le 36</math>, for <math>4</math> values <math>k\in \{33, \ldots , 36\}</math>.
+ 
+Thus, our answer is <math>2 + 4 = \boxed{\textbf{(C) }6}</math>
+
+
+~KingRavi
+
+==Solution 6 ==
+
+Set <math>x=\sqrt{n}</math> in the given equation and solve for <math>x</math> to get <math>x^2 = 70 \cdot \lfloor x \rfloor - 1000</math>. Set <math>k = \lfloor x \rfloor \ge 0</math>; since <math>\lfloor x \rfloor^2 \le x^2 < (\lfloor x \rfloor + 1)^2</math>, we get  <cmath>k^2 \le  70k - 1000 < k^2 + 2k + 1.</cmath>
+The left inequality simplifies to <math>(k-20)(k-50) \le 0</math>, which yields <cmath>20 \le k \le 50.</cmath>
+The right inequality simplifies to <math>(k-34)^2 > 155</math>, which yields <cmath>k < 34 - \sqrt{155} < 22 \quad \text{or} \quad k > 34 + \sqrt{155} > 46</cmath> 
+Solving <math>k < 22</math>, and <math>20 \le k \le 50</math>, we get <math>20 \le k < 22</math>, for <math>2</math> values <math>k\in \{20, 21\}</math>.
+
+Solving <math>k >46</math>, and <math>20 \le k \le 50</math>, we get <math>46 < k \le 50</math>, for <math>4</math> values <math>k\in \{47, \ldots , 50\}</math>.
+
+Thus, our answer is <math>2 + 4 = \boxed{\textbf{(C) }6}</math>
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+==Solution 7 ==
+
+
+If <math>n</math> is a perfect square, we can write <math>n = k^2</math> for a positive integer <math>k</math>, so <math>\lfloor \sqrt{n} \rfloor = \sqrt{n} = k.</math> The given equation turns into 
+
+\begin{align*}
+\frac{k^2 + 1000}{70} &= k \\
+k^2 - 70k + 1000 &= 0 \\
+(k-20)(k-50) &= 0,
+\end{align*}
+
+so <math>k = 20</math> or <math>k= 50</math>, so <math>n = 400, 2500.</math>
+
+If <math>n</math> is not square, then we can say that, for a positive integer <math>k</math>, we have 
+\begin{align*}
+k^2 < &n < (k+1)^2 \\
+k^2 + 1000 < &n + 1000  = 70\lfloor \sqrt{n} \rfloor = 70k< (k+1)^2 + 1000 \\
+k^2 + 1000 < &70k < (k+1)^2 + 1000.
+\end{align*}
+
+To solve this inequality, we take the intersection of the two solution sets to each of the two inequalities 
+<math>k^2 + 1000 < 70k</math> and <math>70k < (k+1)^2 + 1000</math>. To solve the first one, we have 
+
+\begin{align*}
+k^2 - 70k + 1000 &< 0 \\
+(k-20)(k-50) &< 0\\
+\end{align*}
+<math>k\in (20, 50),</math> because the portion of the parabola between its two roots will be negative. 
+
+The second inequality yields 
+
+\begin{align*}
+70k &< k^2 + 2k + 1 + 1000 \\
+0 &< k^2 -68k + 1001.
+\end{align*}
+This time, the inequality will hold for all portions of the parabola that are not on or between the its two roots, which are <math>34 + \sqrt{155}>46</math> and <math>34-\sqrt{155}<22</math> (they are roughly equal, but this is to ensure that we do not miss any solutions). 
+
+Notation wise, we need all integers <math>k</math> such that 
+
+<cmath>k \in \left(20, 50\right) \cap \left(-\infty,34 - \sqrt{155} \right)</cmath>
+or 
+<cmath>k \in \left(20, 50\right) \cap \left(34 + \sqrt{155}, \infty \right).</cmath>
+
+For the first one, since our uppoer bound is a little less than <math>22</math>, the <math>k</math> that works is <math>21</math>. For the second, our lower bound is a little more than <math>46</math>, so the <math>k</math> that work are <math>47, 48,</math> and  <math>49</math>. 
+
+<math>\boxed{\textbf{(C) }6}</math> total solutions for <math>n</math>, since each value of <math>k</math> corresponds to exactly one value of <math>n</math>. 
+
+-Benedict T (countmath1)
+
+==Solution 8 ==
+First, express <math>\lfloor \sqrt{n} \rfloor = \sqrt{n} - \{\sqrt{n}\}</math> and simplify the equation out:
+<math>\newline</math>
+\begin{align*}
+n + 1000 = 70 \sqrt{n} - 70 \{\sqrt{n}\} \newline
+\end{align*}
+For simplicity, define <math>a = \sqrt{n}</math>.
+Then, <math>a^2 + 1000 = 70a - 70 \{a\}</math>
+Rearranging and factoring: <math>(a-20)(a-50) = -70 \{a\}</math>
+We know that <math>0 \leq \{a\} < 1</math>, so we can set <math>\{a\} = 0</math> to obtain <math>a = 20, 50 \implies n = 400, 2500</math>. 
+For the next solutions, we can use the quadratic formula on the equation <math>a^2 - 70a + (1000+70\{a\}) = 0</math>:
+<math>\newline</math>
+\begin{align*}
+a = 35 \pm \sqrt{1225 - (1000 + 70\{a\})} = 35 \pm \sqrt{225-70\{a\}}
+\end{align*}
+<math>\newline</math>
+Since \(a = 35 \pm \sqrt{225 - 70\{a\}}\) must produce real values of \(a\) that satisfy \(\lfloor a \rfloor = a - \{a\}\), the expression inside the square root must correspond to a value of \(a\) whose integer part stays consistent. Therefore, we only consider values of \(\{a\}\) that make \(a\) land near an integer, which happens when \(\sqrt{225 - 70\{a\}}\) is close to an integer. 
+<math>\newline</math>
+From earlier, we can use the bounds of <math>\{a\}</math> to find out that <math>225-70\{a\}</math> will approach a minimum of <math>225-70 = 155</math> but never reach it. Now, we can just list out the perfect squares between 155 and 225, as setting <math>225-70\{a\}</math> equal to that perfect square will result in an integer value of <math>a</math> corresponding to an integer value of <math>n</math>.
+<math>\newline</math>
+The two perfect squares that satisfy these restrictions are <math>k = 13</math> and <math>k = 14</math>. Then, <math>a = 35 \pm 14 \implies a = 49, 21</math> and <math>a = 35 \pm 13 \implies a = 48, 22</math>. 
+<math>\newline</math>
+We know that each value of <math>a = \sqrt{n}</math> corresponds to exactly one value of <math>n</math>, so we have a total of <math>2 + 4 = \boxed{\textbf{(C) }6}</math> total solutions for <math>n</math>.
+
+~cyberhacker
+
+==Video Solutions==
+===Video Solution 1===
+On The Spot STEM:
+https://youtu.be/BEJybl9TLMA
+
+===Video Solution 2===
+https://www.youtube.com/watch?v=VWeioXzQxVA&list=PLLCzevlMcsWNcTZEaxHe8VaccrhubDOlQ&index=9 ~ MathEx
+
+===Video Solution 3 by the Beauty of Math===
+https://youtu.be/4RVYoeiyC4w?t=62
+
+==See Also== 
+
+{{AMC10 box|year=2020|ab=B|num-b=23|num-a=25}}
+{{AMC12 box|year=2020|ab=B|num-b=20|num-a=22}}
+
+[[Category:Intermediate Number Theory Problems]]
+{{MAA Notice}}

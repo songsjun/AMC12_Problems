@@ -1,0 +1,27 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2007_AMC_10B_Problems/Problem_12&action=raw
+
+Published Time: Fri, 04 Jun 2021 17:32:28 GMT
+
+Markdown Content:
+{{duplicate|[[2007 AMC 12B Problems|2007 AMC 12B #8]] and [[2007 AMC 10B Problems|2007 AMC 10B #12]]}}
+
+==Problem ==
+
+Tom's age is T years, which is also the sum of the ages of his three children. His age N years ago was twice the sum of their ages then. What is T/N?
+
+\textbf{(A) } 2 \qquad\textbf{(B) } 3 \qquad\textbf{(C) } 4 \qquad\textbf{(D) } 5 \qquad\textbf{(E) } 6
+
+==Solution==
+
+Tom's age N years ago was T-N. The sum of the ages of his three children N years ago was T-3N, since there are three children. If his age N years ago was twice the sum of the children's ages then,
+\begin{align*}T-N&=2(T-3N)\\ T-N&=2T-6N\\ T&=5N\\ T/N&=\boxed{\mathrm{(D) \ } 5}\end{align*}
+Note that actual values were not found.
+
+==See Also==
+
+{{AMC12 box|year=2007|ab=B|num-b=7|num-a=9}}
+
+{{AMC10 box|year=2007|ab=B|num-b=11|num-a=13}}
+{{MAA Notice}}

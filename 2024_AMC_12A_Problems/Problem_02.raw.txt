@@ -1,0 +1,96 @@
+{{duplicate|[[2024 AMC 10A Problems/Problem 2|2024 AMC 10A #2]] and [[2024 AMC 12A Problems/Problem 2|2024 AMC 12A #2]]}}
+
+== Problem ==
+
+A model used to estimate the time it will take to hike to the top of the mountain on a trail is of the form <math>T=aL+bG,</math> where <math>a</math> and <math>b</math> are constants, <math>T</math> is the time in minutes, <math>L</math> is the length of the trail in miles, and <math>G</math> is the altitude gain in feet. The model estimates that it will take <math>69</math> minutes to hike to the top if a trail is <math>1.5</math> miles long and ascends <math>800</math> feet, as well as if a trail is <math>1.2</math> miles long and ascends <math>1100</math> feet. How many minutes does the model estimates it will take to hike to the top if the trail is <math>4.2</math> miles long and ascends <math>4000</math> feet?
+
+<math>
+\textbf{(A) }240\qquad\textbf{(B) }246\qquad\textbf{(C) }252\qquad\textbf{(D) }258\qquad\textbf{(E) }264
+</math>
+
+== Solution 1 ==
+Plug in the values into the equation to give you the following two equations:
+\begin{align*}
+69&=1.5a+800b, \\
+69&=1.2a+1100b.
+\end{align*}
+Solving for the values <math>a</math> and <math>b</math> gives you that <math>a=30</math> and <math>b=\frac{3}{100}</math>. These values can be plugged back in showing that these values are correct.
+Now, using the given length of the trail, <math>4.2</math>, and the given vertical increase, <math>4000</math> , we get a final answer of <math>\boxed{\textbf{(B) }246}.</math>
+
+Solution by [[User:Juwushu|juwushu]].
+
+Minor edits by ParticlePhysics and TigerSenju
+
+==Solution 2==
+Alternatively, observe that using <math>a=10x</math> and <math>b=\frac{y}{100}</math> makes the numbers much closer to each other in terms of magnitude.
+
+Plugging in the new variables:
+\begin{align*}
+69&=15x+8y, \\
+69&=12x+11y.
+\end{align*}
+
+The solution becomes more obvious in this way, with <math>15+8=12+11=23</math>, and since <math>23\cdot 3=69</math>, we determine that <math>x=y=3</math>.
+
+The question asks us for <math>4.2a+4000b=42x+40y</math>. Since <math>x=y</math>, we have <math>(40+42)\cdot 3=\boxed{\textbf{(B) }246}</math>.
+
+~
+
+==Video Solution==
+https://youtu.be/l3VrUsZkv8I
+~MC
+
+==Video Solution by Central Valley Math Circle==
+
+https://youtu.be/UewevLQ9qqE
+
+~mr_mathman
+
+== Video Solution by Math from my desk ==
+
+https://www.youtube.com/watch?v=ENbD-tbfbhU&t=2s
+
+== Video Solution (🚀 2 min solve 🚀) ==
+
+https://youtu.be/OmaG3iG7xFs
+
+<i>~Education, the Study of Everything</i>
+
+== Video Solution by Daily Dose of Math ==
+
+https://youtu.be/W0NMzXaULx4
+
+~Thesmartgreekmathdude
+
+== Video Solution by Power Solve ==
+https://youtu.be/j-37jvqzhrg?si=2zTY21MFpVd22dcR&t=100
+
+==Video Solution by SpreadTheMathLove==
+https://www.youtube.com/watch?v=6SQ74nt3ynw
+
+==Video Solution by FrankTutor==
+https://youtu.be/A72QJN_lVj8
+
+==Video Solution by TheBeautyofMath==
+For AMC 10: https://youtu.be/uKXSZyrIOeU?t=540
+
+For AMC 12: https://youtu.be/zaswZfIEibA?t=540
+
+~IceMatrix
+
+==Video Solution by Dr. David==
+https://youtu.be/mrlTB_0QNyI
+
+==Video Solution by yjtest==
+https://www.youtube.com/watch?v=kyDHwV_KEy4
+
+==Video solution by TheNeuralMathAcademy==
+https://www.youtube.com/watch?v=4b_YLnyegtw&t=158s
+
+==See Also==
+{{AMC10 box|year=2024|ab=A|before=[[2023 AMC 10B Problems]]|after=[[2024 AMC 10B Problems]]}}
+* [[AMC 10]]
+* [[AMC 10 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

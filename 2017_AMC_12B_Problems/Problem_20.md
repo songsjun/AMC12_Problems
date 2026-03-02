@@ -1,0 +1,12 @@
+# 2017 AMC 12B Problem 20
+
+## Problem
+Real numbers x and y are chosen independently and uniformly at random from the interval (0,1). What is the probability that $\lfloor\log_2x\rfloor=\lfloor\log_2y\rfloor$?
+
+$\textbf{(A)}\ \frac{1}{8}\qquad\textbf{(B)}\ \frac{1}{6}\qquad\textbf{(C)}\ \frac{1}{4}\qquad\textbf{(D)}\ \frac{1}{3}\qquad\textbf{(E)}\ \frac{1}{2}$
+## Solution
+First let us take the case that $\lfloor \log_2{x} \rfloor = \lfloor \log_2{y} \rfloor = -1.$ In this case, both x and y lie in the interval [{1\over2}, 1). The probability of this is $\frac{1}{2} \cdot \frac{1}{2} = \frac{1}{4}.$ Similarly, in the case that $\lfloor \log_2{x} \rfloor = \lfloor \log_2{y} \rfloor = -2,$ x and y lie in the interval [{1\over4}, {1\over2}), and the probability is $\frac{1}{4} \cdot \frac{1}{4} = \frac{1}{16}.$ Recall that the probability that A or B is the case, where case A and case B are mutually exclusive, is the sum of each individual probability. Symbolically that's P(A $\text{ or } B \text{ or } C...) = P(A) + P(B) + P(C)....$ Thus, the probability we are looking for is the sum of the probability for each of the cases $\lfloor \log_2{x} \rfloor = \lfloor \log_2{y} \rfloor = -1, -2, -3....$ It is easy to see that the probabilities for $\lfloor \log_2{x} \rfloor = \lfloor \log_2{y} \$rfloor = n for $-\infty <$ n < 0 are the infinite geometric series that starts at $\frac{1}{4}$ and with common ratio $\frac{1}{4}.$ Using the formula for the sum of an infinite geometric series, we get that the probability is $\frac{\frac{1}{4}}{1 - \frac{1}{4}} = \boxed{\textbf{(D)}\frac{1}{3}}.$
+
+Solution by: vedadehhc
+\\ Edited by: jingwei325
+## See Also

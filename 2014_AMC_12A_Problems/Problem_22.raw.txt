@@ -1,0 +1,41 @@
+{{duplicate|[[2014 AMC 12A Problems|2014 AMC 12A #22]] and [[2014 AMC 10A Problems|2014 AMC 10A #25]]}}
+
+== Problem ==
+The number <math>5^{867}</math> is between <math>2^{2013}</math> and <math>2^{2014}</math>.  How many pairs of integers <math>(m,n)</math> are there such that <math>1\leq m\leq 2012</math> and <cmath>5^n<2^m<2^{m+2}<5^{n+1}?</cmath>
+
+<math>\textbf{(A) }278\qquad
+\textbf{(B) }279\qquad
+\textbf{(C) }280\qquad
+\textbf{(D) }281\qquad
+\textbf{(E) }282\qquad</math>
+
+== Solution 1 ==
+Between any two consecutive powers of <math>5</math> there are either <math>2</math> or <math>3</math> powers of <math>2</math> (because <math>2^2<5^1<2^3</math>). Consider the intervals <math>(5^0,5^1),(5^1,5^2),\dots (5^{866},5^{867})</math>. We want the number of intervals with <math>3</math> powers of <math>2</math>.
+
+From the given that <math>2^{2013}<5^{867}<2^{2014}</math>, we know that these <math>867</math> intervals together have <math>2013</math> powers of <math>2</math>. Let <math>x</math> of them have <math>2</math> powers of <math>2</math> and <math>y</math> of them have <math>3</math> powers of <math>2</math>. Thus we have the system
+<cmath>x+y=867</cmath><cmath>2x+3y=2013</cmath>
+from which we get <math>y=279</math>, so the answer is <math>\boxed{\textbf{(B)}}</math>.
+
+==Solution 2==
+
+The problem is asking for between how many consecutive powers of <math>5</math> are there <math>3</math> power of <math>2</math>s
+
+There can be either <math>2</math> or <math>3</math> powers of <math>2</math> between any two consecutive powers of <math>5</math>, <math>5^n</math> and <math>5^{n+1}</math>. 
+
+The first power of <math>2</math> is between <math>5^n</math> and <math>2 \cdot 5^n</math>.
+
+The second power of <math>2</math> is between <math>2 \cdot 5^n</math> and <math>4 \cdot 5^n</math>.
+
+The third power of <math>2</math> is between <math>4 \cdot 5^n</math> and <math>8 \cdot 5^n</math>, meaning that it can be between <math>5^n</math> and <math>5^{n+1}</math> or not.
+
+If there are only <math>2</math> power of <math>2</math>s between every consecutive powers of <math>5</math> up to <math>5^{867}</math>, there would be <math>867\cdot 2 = 1734</math> power of <math>2</math>s. However, there are <math>2013</math> powers of <math>2</math> before  <math>5^{867}</math>, meaning the answer is <math>2013 - 1734 = \boxed{\textbf{(B)}279}</math>.
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+== Video Solution by Richard Rusczyk ==
+https://www.youtube.com/watch?v=DRJvUMsZtl4&t=4s
+
+== See Also ==
+{{AMC10 box|year=2014|ab=A|num-b=24|after=Last Problem}}
+{{AMC12 box|year=2014|ab=A|num-b=21|num-a=23}}
+{{MAA Notice}}

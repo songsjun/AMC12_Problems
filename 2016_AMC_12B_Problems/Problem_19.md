@@ -1,0 +1,30 @@
+# 2016 AMC 12B Problem 19
+
+## Problem
+Tom, Dick, and Harry are playing a game. Starting at the same time, each of them flips a fair coin repeatedly until he gets his first head, at which point he stops. What is the probability that all three flip their coins the same number of times?
+
+$\textbf{(A)}\ \frac{1}{8} \qquad \textbf{(B)}\ \frac{1}{7} \qquad \textbf{(C)}\ \frac{1}{6} \qquad \textbf{(D)}\ \frac{1}{4} \qquad \textbf{(E)}\ \frac{1}{3}$
+## Solution 1
+By: dragonfly
+
+We can solve this problem by listing it as an infinite geometric equation. We get that to have the same amount of tosses, they have a $\frac{1}{8}$ chance of getting all heads. Then the next probability is all of them getting tails and then on the second try, they all get heads. The probability of that happening is $\left(\frac{1}{8}\right)^2.$We then get the geometric equation
+
+$$x=\frac{1}{8}+\left(\frac{1}{8}\right)^2+\left(\frac{1}{8}\right)^3...$$
+
+And then we find that x equals to $\boxed{\textbf{(B)}\ \frac{1}{7}}$ because of the formula of the sum for an infinite series, $\frac{\frac{1}{8}}{1-\frac{1}{8}} = \frac{1}{8}*\frac{8}{7} = \frac{1}{7}.$
+## Solution 2
+Call it a "win" if the boys all flip their coins the same number of times, and the probability that they win is P. The probability that they win on their first flip is $\frac{1}{8}.$ If they don't win on their first flip, that means they all flipped tails (which also happens with probability $\frac{1}{8} )$ and that their chances of winning have returned to what they were at the beginning. This covers all possible sequences of winning flips. So we have
+
+$$P = \frac{1}{8} + \frac{1}{8}P$$
+
+Solving for P gives $\boxed{\textbf{(B)}\ \frac{1}{7}}.$
+## Video Solution by OmegaLearn
+https://youtu.be/rLAcJe3o-uA?t=75
+
+*~pi_is_3.14*
+## Video Solution by CanadaMath (Problem 11-20)
+Fast Forward to 39:00 for problem 19
+https://www.youtube.com/watch?v=4osvFatUv1o
+
+*~THEMATHCANADIAN*
+## See Also

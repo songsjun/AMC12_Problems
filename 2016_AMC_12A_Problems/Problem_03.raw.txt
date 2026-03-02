@@ -1,0 +1,47 @@
+==Problem==
+
+The remainder can be defined for all real numbers <math>x</math> and <math>y</math> with <math>y \neq 0</math> by <cmath>\text{rem} (x ,y)=x-y\left \lfloor \frac{x}{y} \right \rfloor</cmath>where <math>\left \lfloor \tfrac{x}{y} \right \rfloor</math> denotes the greatest integer less than or equal to <math>\tfrac{x}{y}</math>. What is the value of <math>\text{rem} (\tfrac{3}{8}, -\tfrac{2}{5} )</math>?
+
+<math>\textbf{(A) } -\frac{3}{8} \qquad \textbf{(B) } -\frac{1}{40} \qquad \textbf{(C) } 0 \qquad \textbf{(D) } \frac{3}{8} \qquad \textbf{(E) } \frac{31}{40}</math>
+
+==Solution 1==
+
+The value, by definition, is <cmath>\begin{align*}
+\text{rem}\left(\frac{3}{8},-\frac{2}{5}\right)
+&= \frac{3}{8}-\left(-\frac{2}{5}\right)\left\lfloor\frac{\frac{3}{8}}{-\frac{2}{5}}\right\rfloor \\
+&= \frac{3}{8}-\left(-\frac{2}{5}\right)\left\lfloor\frac{3}{8}\times\frac{-5}{2}\right\rfloor \\
+&= \frac{3}{8}-\left(-\frac{2}{5}\right)\left\lfloor\frac{-15}{16}\right\rfloor\\
+&= \frac{3}{8}-\left(-\frac{2}{5}\right)\left(-1\right)\\
+&= \frac{3}{8}-\frac{2}{5}\\
+&= \boxed{\textbf{(B) } -\frac{1}{40}}.
+\end{align*}</cmath>
+
+==Solution 2==
+Do note that the denominator of the answer will be a multiple of 5 and 8 (40) and that the answer will also be negative. The only answer choice that satisfies this is <imath>\boxed{B}</imath>
+
+==Video Solution (Interactive Teaching Approach)==
+
+https://www.youtube.com/watch?v=clcMXHuuIZU
+
+~MathkidsbyMax
+
+==Video Solution (HOW TO THINK CREATIVELY!!!)==
+ https://youtu.be/pu_Hqo5sfWs
+
+~Education, the Study of Everything
+
+
+
+
+==Video Solution==
+https://youtu.be/VIt6LnkV4_w?t=195
+
+https://youtu.be/CrW0Yx5tqV0
+
+~savannahsolver
+
+==See Also==
+{{AMC10 box|year=2016|ab=A|num-b=3|num-a=5}}
+{{AMC12 box|year=2016|ab=A|num-b=2|num-a=4}}
+{{MAA Notice}}
+[[Category: Introductory Algebra Problems]]

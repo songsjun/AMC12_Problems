@@ -1,0 +1,98 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2016_AMC_12A_Problems/Problem_25&action=raw
+
+Published Time: Sun, 01 Jun 2025 20:53:09 GMT
+
+Markdown Content:
+==Problem==
+
+Let k be a positive integer. Bernardo and Silvia take turns writing and erasing numbers on a blackboard as follows: Bernardo starts by writing the smallest perfect square with k+1 digits. Every time Bernardo writes a number, Silvia erases the last k digits of it. Bernardo then writes the next perfect square, Silvia erases the last k digits of it, and this process continues until the last two numbers that remain on the board differ by at least 2. Let f(k) be the smallest positive integer not written on the board. For example, if k = 1, then the numbers that Bernardo writes are 16, 25, 36, 49, 64, and the numbers showing on the board after Silvia erases are 1, 2, 3, 4, and 6, and thus f(1) = 5. What is the sum of the digits of f(2) + f(4)+ f(6) + \dots + f(2016)?
+
+\textbf{(A)}\ 7986\qquad\textbf{(B)}\ 8002\qquad\textbf{(C)}\ 8030\qquad\textbf{(D)}\ 8048\qquad\textbf{(E)}\ 8064
+
+==Solution 1==
+
+Consider f(2). The numbers left on the blackboard will show the hundreds place at the end. In order for the hundreds place to differ by 2, the difference between two perfect squares needs to be at least 100. Since 100\le (x+1)^2-x^2=2x+1, this first happens at x\ge \lfloor 99/2\rfloor = 50. The perfect squares from here go: 2500, 2601, 2704, 2809\dots. Note that the ones and tens also make the perfect squares, 1^2,2^2,3^2\dots. After the ones and tens make 100, the hundreds place will go up by 2, thus reaching our goal. Since 10^2=100, the last perfect square to be written will be \left(50+10\right)^2=60^2=3600. The missing number is one less than the number of hundreds (k=2) of 3600, or 35.
+
+Now consider f(4). Instead of the difference between two squares needing to be 100, the difference must now be 10000. This first happens at x\ge 5000. After this point, similarly, \sqrt{10000}=100 more numbers are needed to make the 10^4 th's place go up by 2. This will take place at \left(5000+100\right)^2=5100^2= 26010000. Removing the last four digits (the zeros) and subtracting one yields 2600 for the skipped value.
+
+In general, each new value of f(k+2) will add two digits to the "5" and one digit to the "1". This means that the last number Bernardo writes for k=6 is \left(500000+1000\right)^2, the last for k = 8 will be \left(50000000+10000\right)^2, and so on until k=2016. Removing the last k digits as Silvia does will be the same as removing k/2 trailing zeroes on the number to be squared. This means that the last number on the board for k=6 is 5001^2, k=8 is 50001^2, and so on. So the first missing number is 5001^2-1,50001^2-1\text{ etc.} The squaring will make a "25" with two more digits than the last number, a "10" with one more digit, and a "1". The missing number is one less than that, so the "1" will be subtracted from f(k). In other words, f(k) = 25\cdot 10^{k-2}+1\cdot 10^{k/2}.
+
+Therefore:
+
+f(2) =35 =25 +10
+f(4) =2600 =2500 +100
+f(6) =251000 =250000 +1000
+f(8) = 25010000 = 25000000 + 10000
+
+And so on. The sum f(2) + f(4) + f(6) +\dots + f(2016) is:
+
+2.52525252525\dots 2525\cdot 10^{2015} + 1.11111\dots 110\cdot 10^{1008}, with 2016 repetitions each of "25" and "1". 
+There is no carrying in this addition. Therefore each f(k) adds 2 + 5 + 1 = 8 to the sum of the digits. 
+Since 2n = 2016, 8n = 4\cdot 2016 = \boxed{\textbf{(E)}\text{ 8064}}.
+
+==Solution 2 (Rigorous)==
+
+We assume n \geq 1 for all claims.
+
+We will let g_k(x) = \left \lfloor \frac{x^2}{10^k}\right \rfloor. This is the result when the last k digits are truncated off x^2.
+
+Let x_n = the smallest a, such that g_{2n}(a) - g_{2n}(a-1) \geq 2 
+
+We then have \left \lfloor \frac{a^2}{10^{2n}} \right \rfloor - \left \lfloor \frac{(a-1)^2}{10^{2n}} \right \rfloor \geq 2
+
+'''Claim 1:''' x_n > 5\cdot10^{2n-1}
+
+'''Proof of Claim 1:'''
+
+Assume for the sake of contradiction, we have x_n \leq 5 \cdot 10^{2n-1}
+
+Let c = \frac{2x_n - 1}{10^{2n}}, d = \frac{(x_n-1)^2}{10^{2n}}
+
+Note that since x_n \leq 5 \cdot 10^{2n-1}, we have c < 1
+
+It is well known that \lfloor i+j \rfloor \leq \lfloor i \rfloor + \lfloor j \rfloor + 1 for any i and j 
+
+Since x_n satisfies the condition, we have:
+
+1 = \lfloor c \rfloor + 1 \geq \lfloor{c+d} \rfloor - \lfloor d \rfloor \geq 2
+
+This is a contradiction. \blacksquare
+
+'''Claim 2: x_n = 5 \cdot 10^{2n-1} + 10^n'''
+
+'''Proof of Claim 2:'''
+
+We will show our choice of x_n = 5 \cdot 10^{2n-1} + 10^n satisfies the criteria above.
+
+\left \lfloor \frac{{x_n}^2}{10^{2n}} \right \rfloor - \left \lfloor \frac{(x_n-1)^2}{10^{2n}} \right \rfloor = \left \lfloor \frac{25 \cdot 10^{4n - 2} + 10^{3n} + 10^{2n}}{10^{2n}} \right \rfloor - \left \lfloor \frac{25 \cdot 10^{4n - 2} + 10^{3n} - 2 \cdot 10^n + 1}{10^{2n}} \right \rfloor  
+
+= (25 \cdot 10^{2n-2} + 10^{n} + 1) - (25 \cdot 10^{2n-2} + 10^{n} - 1) = 2
+
+Now, we will show all values smaller than 5 \cdot 10^{2n-1} + 10^n don’t satisfy the criteria.
+We will assume for the sake of contradiction, there exists an x'_n which satisfies the criteria.
+
+We will write x'_n as 5 \cdot 10^{2n - 1} + k. By our hypothesis, we have k < 10^n. We also have k > 0 by claim 1.
+
+We have \left \lfloor \frac{{x'}_n^2}{10^{2n}} \right \rfloor - \left \lfloor \frac{(x'_n-1)^2}{10^{2n}} \right \rfloor = \left \lfloor \frac{25 \cdot 10^{4n - 2} + k \cdot 10^{2n} + k^2}{10^{2n}} \right \rfloor - \left \lfloor \frac{25 \cdot 10^{4n - 2} + (k-1) \cdot 10^{2n} + (k-1)^2 }{10^{2n}} \right \rfloor 
+
+= (25 \cdot 10^{2n-2} + k) - (25 \cdot 10^{2n-2} + k - 1) = 1 \geq 2. This gets a contradiction. \blacksquare
+
+'''Claim 3: f(2n) = 25 \cdot10^{2n - 2} + 10^{n}. '''
+
+'''Proof of Claim 3:'''
+Because of claim 2, x_n is 5 \cdot 10^{2n-1} + 10^n. Note that g_n(x_n) and g_n(x_n - 1) are the first numbers written that will differ by at least 2. Thus, f(2n) = g_n(x_n - 1) + 1 = 25 \cdot 10^{2n-2} + 10^n\blacksquare
+
+Thus, f(2) + f(4) \dots f(2016) = \underbrace{(2525 \dots 25)}_{1008 \ 25s} + \underbrace{(111111 \dots 1111)}_{1008 \ 1s}. This addition has no regroups/carry overs, so we can just take the sums of the digits of each of the addends, and sum them together to get 8064.\boxed{(E)}
+
+-Alexlikemath
+
+==Video Solution by The Art of Problem Solving==
+
+https://www.youtube.com/watch?v=xVKNTQ9bKcg&list=PLyhPcpM8aMvI7N78mYZyatqveRU30iNcf&index=5
+
+- AMBRIGGS
+
+==See Also=={{AMC12 box|year=2016|ab=A|num-b=24|after=Last Problem}}
+{{MAA Notice}}

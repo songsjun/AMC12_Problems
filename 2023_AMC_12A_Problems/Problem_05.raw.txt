@@ -1,0 +1,92 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2023_AMC_12A_Problems/Problem_5&action=raw
+
+Published Time: Tue, 05 Nov 2024 11:23:09 GMT
+
+Markdown Content:
+{{duplicate|[[2023 AMC 10A Problems/Problem 7|2023 AMC 10A #7]] and [[2023 AMC 12A Problems/Problem 5|2023 AMC 12A #5]]}}
+
+==Problem==
+Janet rolls a standard 6-sided die 4 times and keeps a running total of the numbers she rolls. What is the probability that at some point, her running total will equal 3?
+
+\textbf{(A) }\frac{2}{9}\qquad\textbf{(B) }\frac{49}{216}\qquad\textbf{(C) }\frac{25}{108}\qquad\textbf{(D) }\frac{17}{72}\qquad\textbf{(E) }\frac{13}{54}
+
+==Solution 1 (Casework)==
+
+There are 3 cases where the running total will equal 3: one roll; two rolls; or three rolls:
+
+'''Case 1:'''
+The chance of rolling a running total of 3, namely (3) in exactly one roll is \frac{1}{6}.
+
+'''Case 2:'''
+The chance of rolling a running total of 3 in exactly two rolls, namely (1, 2) and (2, 1) is \frac{1}{6}\cdot\frac{1}{6}\cdot2=\frac{1}{18}.
+
+'''Case 3:'''
+The chance of rolling a running total of 3 in exactly three rolls, namely (1, 1, 1) is \frac{1}{6}\cdot\frac{1}{6}\cdot\frac{1}{6}=\frac{1}{216}.
+
+Using the rule of sum we have \frac{1}{6}+\frac{1}{18}+\frac{1}{216}=\boxed{\textbf{(B) }\frac{49}{216}}.
+
+~walmartbrian ~andyluo ~DRBStudent ~MC_ADe
+
+==Solution 2 (Brute Force)==
+
+Because there is only a maximum of 3 rolls we must count (running total = 3 means there can't be a fourth roll counted), we can simply list out all of the probabilities.
+
+If we roll a 1 on the first, the rolls that follow must be 2 or {1,1}, with the following results not mattering. This leaves a probability of \frac{1}{6}\times\frac{1}{6} + \frac{1}{6}\times\frac{1}{6}\times\frac{1}{6} = \frac{7}{216}.
+
+If we roll a 2 on the first, the roll that follows must be 1, resulting in a probability of \frac{1}{6}\times\frac{1}{6} = \frac{1}{36}.
+
+If we roll a 3 on the first, the following rolls do not matter, resulting in a probability of \frac{1}{6}.
+Any roll greater than three will result in a running total greater than 3 no matter what, so those cases can be ignored.
+Summing the answers, we have \frac{7}{216} + \frac{1}{36} + \frac{1}{6} = \frac{7+6+36}{216} = \boxed{\textbf{(B) }\frac{49}{216}}.
+
+~Failure.net
+
+==Solution 3==
+
+Consider sequences of 4 integers with each integer between 1 and 6, the number of permutations of 6 numbers is 6^4=1296. 
+
+The following 4 types of sequences that might generate a running total of the numbers to be equal to 3 (x, y, or z denotes any integer between 1 and 6).
+
+Sequence #1, (1, 1, 1, x): there are 6 possible sequences. 
+
+Sequence #2, (1, 2, x, y): there are 6^2 = 36 possible sequences. 
+
+Sequence #3, (2, 1, x, y): there are 6^2 = 36 possible sequences. 
+
+Sequence #4, (3, x, y, z): there are 6^3 = 216 possible sequences.
+
+Out of 1296 possible sequences, there are a total of 6 + 36 + 36 + 216 = 294 sequences that qualify. Hence, the probability is 294 / 1296 = \boxed{\textbf{(B) }\frac{49}{216}}
+
+~sqroot
+
+==Video Solution by Little Fermat==
+https://youtu.be/h2Pf2hvF1wE?si=HU7yfXpTg9yBLwSA&t=1203
+~little-fermat
+==Video Solution by Math-X (First understand the problem!!!)==
+https://youtu.be/GP-DYudh5qU?si=xtdXIlJmV_1ivP3T&t=1507 
+~Math-X
+
+==Video Solution (easy to understand) by Power Solve==
+https://youtu.be/YXIH3UbLqK8?si=3p9Ap7UQ376Tfi1W&t=312
+
+== Video Solution by CosineMethod [🔥Fast and Easy🔥]==
+
+https://www.youtube.com/watch?v=FyVQW-1z60w
+
+==Video Solution==
+
+https://youtu.be/bqLA67R_5Bk
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+==Video Solution (⚡ Just 3 min ⚡)==
+https://youtu.be/8G5FfjUkQkQ
+
+~Education, the Study of Everything
+
+==See Also==
+{{AMC10 box|year=2023|ab=A|num-b=6|num-a=8}}
+{{AMC12 box|year=2023|ab=A|num-b=4|num-a=6}}
+{{MAA Notice}}

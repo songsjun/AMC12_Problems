@@ -1,0 +1,103 @@
+# 2008 AMC 12B Problem 25
+
+## Problem
+Let ABCD be a trapezoid with AB||CD, AB=11, BC=5, CD=19, and DA=7. Bisectors of $\angle A$ and $\angle D$ meet at P, and bisectors of $\angle B$ and $\angle C$ meet at Q. What is the area of hexagon ABQCDP?
+
+$\textbf{(A)}\ 28\sqrt{3}\qquad \textbf{(B)}\ 30\sqrt{3}\qquad \textbf{(C)}\ 32\sqrt{3}\qquad \textbf{(D)}\ 35\sqrt{3}\qquad \textbf{(E)}\ 36\sqrt{3}$
+## Solution
+[File:2008_$AMC_12B_25$.jpg‎](https://artofproblemsolving.com/wiki/index.php/File:2008_AMC_12B_25.jpg‎)
+
+Note: In the image AB and CD have been swapped from their given lengths in the problem. However, this doesn't affect any of the solving.
+
+Drop perpendiculars to CD from A and B, and call the intersections X,Y respectively. Now, DA^2-BC^2=(7-5)(7+5)=DX^2-CY^2 and DX+CY=$19-11=8$. Thus, DX-CY=3.
+We conclude DX=$\frac{11}{2}$ and CY=$\frac{5}{2}.$
+To simplify things even more, notice that $90^{\circ}=\frac{\angle D+\angle A}{2}=180^{\circ}-\angle APD,$ so $\angle P=\angle Q=90^{\circ}.$
+
+Also, $\sin(\angle PAD)=\sin(\frac12\angle XDA)=\sqrt{\frac{1-\cos(\angle XDA)}{2}}=\sqrt{\frac{3}{28}}$
+So the area of $\triangle APD$ is: R$\cdotc\sina\sin$ b =$\frac{7\cdot7}{2}\sqrt{\frac{3}{28}}\sqrt{1-\frac{3}{28}}=\frac{35}{8}\sqrt{3}$
+
+Over to the other side: $\triangle BCY$ is 30-60-90, and is therefore congruent to $\triangle BCQ.$ So [BCQ]=$\frac{5\cdot5\sqrt{3}}{8}.$
+
+The area of the hexagon is clearly
+
+$$
+\begin{align*} [ABCD]-([BCQ]+[APD]) &=\frac{15\cdot5\sqrt{3}}{2}-\frac{60\sqrt{3}}{8}\\ &=30\sqrt{3}\implies\boxed{\mathrm{B}} \end{align*}
+$$
+
+
+Note: Once DY is found, there is no need to do the trig. Notice that the hexagon consists of two trapezoids, ABPQ and CDPQ. PQ = $\frac{19-7-5 +11}{2} = 9.$ The height is one half of BY which is $\frac{5\sqrt{3}}{4}.$ So the area is
+$$\frac{1}{2} \cdot \frac{5\sqrt{3}}{4}(19+9+11+9)=30\sqrt{3}$$
+## Solution 2
+[File:2008_$AMC_12B_25_II$.JPG‎](https://artofproblemsolving.com/wiki/index.php/File:2008_AMC_12B_25_II.JPG‎)
+
+Let AP and BQ meet CD at X and Y, respectively.
+
+Since $\angle APD=90^{\circ}, \angle ADP=\angle XDP,$ and they share DP, triangles APD and XPD are congruent.
+
+By the same reasoning, we also have that triangles BQC and YQC are congruent.
+
+Hence, we have [ABQCDP]=[ABYX]+$\frac{[ABCD]-[ABYX]}{2}=\frac{[ABCD]+[ABYX]}{2}.$
+
+If we let the height of the trapezoid be x, we have [ABQCDP]=$\frac{\frac{11+19}{2}\cdot x+\frac{11+7}{2}\cdot x}{2}=12$x.
+
+Thusly, if we find the height of the trapezoid and multiply it by 12, we will be done.
+
+Let the projections of A and B to CD be A' and B', respectively.
+
+We have DA'+CB'=$19-11=$8, DA'=$\sqrt{DA^2-AA'^2}=\sqrt{49-x^2},$ and CB'=$\sqrt{CB^2-BB'^2}=\sqrt{25-x^2}.$
+
+Therefore, $\sqrt{49-x^2}+\sqrt{25-x^2}=8.$ Solving this, we easily get that $x=\frac{5\sqrt{3}}{2}.$
+
+Multiplying this by 12, we find that the area of hexagon ABQCDP is $30\sqrt{3},$ which corresponds to answer choice $\boxed{B}.$
+## Solution 3
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+unitsize(0.6cm); import olympiad; pair A,B,C,D,P,Q,M,N,W,X,Y,Z; A=(11/2,5sqrt(3)/2); B=(33/2,5sqrt(3)/2); C=(19,0); D=(0,0); P=incenter(A,D,(99999,5sqrt(3)/4)); Q=incenter(B,C,(-99999,5sqrt(3)/4)); W=P+(0,5sqrt(3)/4); X=P-(0,5sqrt(3)/4); Y=Q+(0,5sqrt(3)/4); Z=Q-(0,5sqrt(3)/4); M=reflect(A,P)*W; N=reflect(B,Q)*Y; draw(A--B--C--D--cycle); draw(A--P--D); draw(B--Q--C); label("$A$",A,dir(135)); label("$B$",B,dir(45)); label("$C$",C,dir(315)); label("$D$",D,dir(225)); dot("$P$",P,dir(0)); dot("$Q$",Q,dir(180)); draw(W--X); draw(Y--Z); draw(M--P); draw(N--Q); label("$11$",midpoint(A--B),dir(90)); label("$5$",midpoint(B--C),dir(45)); label("$19$",midpoint(C--D),dir(270)); label("$7$",midpoint(D--A),dir(135)); label("$x$",midpoint(P--W),dir(0)); label("$x$",midpoint(P--X),dir(0)); label("$x$",midpoint(P--M),dir(225)); label("$x$",midpoint(Q--Y),dir(180)); label("$x$",midpoint(Q--Z),dir(180)); label("$x$",midpoint(Q--N),dir(315)); draw(rightanglemark(P,W,B,12.5)); draw(rightanglemark(P,X,C,12.5)); draw(rightanglemark(P,M,D,12.5)); draw(rightanglemark(Q,Y,A,12.5)); draw(rightanglemark(Q,Z,D,12.5)); draw(rightanglemark(Q,N,C,12.5));
+```
+
+
+P is the intersection of the angle bisectors of $\angle A$ and $\angle D.$ By definition, angle bisectors are always equidistant from the sides of the angle, so P is equidistant from $\overline{AB}, \overline{AD},$ and $\overline{CD}.$  Likewise, point Q is equidistant from $\overline{AB}, \overline{BC},$ and $\overline{CD}.$  Because both points P and Q are equidistant from $\overline{AB}$ and $\overline{CD}$ and the distance between $\overline{AB}$ and $\overline{CD}$ is constant, the common distances from each of the points to the mentioned segments is equal for P and Q.  Call this distance x.
+
+The distance between a point and a line is the length of the segment perpendicular to the line with one endpoint on the line and the other on the point.  This means the altitude from P to $\overline{AD}$ is x, so the area of $\triangle ADP$ is equal to $\frac12\cdot AD\cdotx=\frac72$x.  Similarly, the area of $\triangle BCQ$ is $\frac12\cdot BC\cdotx=\frac52$x.  The altitude of the trapezoid is $2x$, because it is the sum of the distances from either P or Q to $\overline{AB}$ and $\overline{CD}.$  This means the area of trapezoid ABCD is $\frac12(AB+CD)\cdot2x=\frac12(11+19)\cdot2$x=$30x$.  Now, the area of hexagon ABQCDP is the area of trapezoid ABCD, minus the areas of triangles ADP and BCQ.  This is 30x$-\frac72x-\frac5$2x=$24x$.  Now it remains to find x.
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+unitsize(0.6cm); import olympiad; pair A,B,C,D,R,S; A=(11/2,5sqrt(3)/2); B=(33/2,5sqrt(3)/2); C=(19,0); D=(0,0); R=(11/2,0); S=(33/2,0); draw(A--B--C--D--cycle); draw(A--R); draw(B--S); label("$A$",A,dir(135)); label("$B$",B,dir(45)); label("$C$",C,dir(315)); label("$D$",D,dir(225)); label("$R$",R,dir(270)); label("$S$",S,dir(270)); label("$11$",midpoint(A--B),dir(90)); label("$5$",midpoint(B--C),dir(45)); label("$11$",midpoint(R--S),dir(270)); label("$7$",midpoint(D--A),dir(135)); label("$r$",midpoint(R--D),dir(270)); label("$s$",midpoint(C--S),dir(270)); label("$19$",midpoint(C--D),5*dir(270)); label("$2x$",midpoint(A--R),dir(0)); label("$2x$",midpoint(B--S),dir(180)); draw(rightanglemark(A,R,D,15)); draw(rightanglemark(B,S,C,15));
+```
+
+
+We let R and S be the feet of the altitudes of A and B, respectively, to $\overline{CD}.$  We define r=RD and s=SC.  We know that AB=RS, so RS=11 and $r+s=19-11=8$.  By the Pythagorean Theorem on $\triangle ADR$ and $\triangle BCS,$ we get $r^2+(2x)^2=7^2$ and $s^2+(2x)^2=5^2$, respectively.  Subtracting the second equation from the first gives us $r^2-s^2=49-25=24$.  The left hand side of this equation is a difference of squares and factors to (r+s)(r-s).  We know that r+$s=8$, so $r-s=\frac{24}8=3.$  Now we can solve for r by adding the two equations we just got to see that $2r=11$, or $r=\frac{11}2.$
+
+We now solve for x.  We know that $r^2+(2x)^2=49$, so $(2x)^$2=49-$\left(\frac{11}2\right)^2=\frac{75}4$ and $2x=\frac{5\sqrt3}2.$  We multiply both sides of this equation by 12 to get $24x=30\sqrt3.$  However, the area of hexagon ABQCDP is $24x$, so the answer is $30\sqrt 3,$ or answer choice $\boxed{B}.$
+## Solution 4
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+import olympiad; unitsize(0.5cm); pair A, B, C, D; A = 5*(Cos(120), Sin(120)); B = A + (-11, 0); C = origin + (-19, 0); D = origin; label("$A$", A, dir(30)); label("$B$", B, dir(150)); label("$C$", C, dir(150)); label("$D$", D, dir(30)); pair E, F, G, H; E = bisectorpoint(B, A, D); F = bisectorpoint(A, B, C); G = bisectorpoint(B, C, D); H = bisectorpoint(C, D, A); pair P, Q; P = extension(A, E, D, H); Q = extension(B, F, C, G); dot("$P$", P, dir(20)); dot("$Q$", Q, dir(150)); pair W, X, Y, Z; W = extension(A, P, D, C); X = extension(B, Q, C, D); Y = extension(C, Q, A, B); Z = extension(D, P, A, B); label("$W$", W, dir(100)); label("$X$", X, dir(60)); label("$Y$", Y, dir(50)); label("$Z$", Z, dir(140)); draw(A--W--X--B--Y--C--D--Z--B--C--Y--A--D);
+```
+
+
+Let W, X, Y, Z = $\overline{AP} \cap \overline{CD}, \overline{BQ} \cap \overline{CD}, \overline{CQ} \cap \overline{AB}, \overline{DP} \cap \overline{AB}$ respectively. Since $\angle{DCQ} = \angle{BCQ}, \angle{CBQ} = \angle{ABQ}$ we have $\angle{QCB} + \angle{CBQ} = 90 \iff \overline{BX}$\perp $\overline{CY}$; similarly we get $\overline{AW}$\perp $\overline{DZ}.$ Thus, $\overline{BQ}$ is both an angle bisector and altitude of $\triangle{CBY}$ so BC = BY. Using the same logic on $\triangle{BCX}$ gives BC = BX $\iff BYXC$ is a rhombus; similarly, ADWZ is a rhombus. Then, [ABQCDP] = [ABCD] - $\frac{1}{4}\left($[BYXC] + [ADWZ]$\right) = 15h - \frac{1}{4}(7h + 12h) = 12$h where h is the height of trapezoid ABCD. Finding h is the same as finding the altitude to the side of length 8 in a 5-7-8 triangle, and using Heron's, the area of such a triangle is $\sqrt{10(5)(3)(2)} = 10 \sqrt{3} = 4h \iffh =\frac{5\sqrt{3}}{2}.$ Multiply to get our answer is $\boxed{\mathrm{B}}.$
+## Solution 5
+Like above solutions, find out the height of ABCD is $\frac{5 \sqrt{3}}{2}.$ Let M be the intersection of the line through Q and parallel to AB, and N the intersection of the line through P and parallel to AB. Angle chasing shows that M is the midpoint of BC and N midpoint of AD. Then from midline theorem,  M, Q, N are collinear, and likewise for N, P, M. Thus, the line through PQ is in fact the midline of ABCD.
+
+Let BQ $\cap CD = X, AP \cap CD = Y.$ Then, angle chasing shows that CQ not only bisects BX, but is also perpendicular to it. This makes it a perpendicular bisector. The same is true for DP and AY. Thus, CX = CB = 5, and DY = DA = 7. This means XY = $19 - 5 - 7 = 7$. We can now find PQ as the midline of ABXY. Thus, PQ = $\frac{1}{2} (11+7) = 9.$
+
+Now, the answer is simply finding the area of ABQP plus area of CDPQ. This is $\frac{1}{2} \cdot \frac{5 \sqrt{3}}{2} \cdot \frac{11+9}{2} + \frac{1}{2} \cdot \frac{5 \sqrt{3}}{2} \cdot \frac{19+9}{2} = \boxed{30 \sqrt{3}}.$
+
+*~MelonGirl*
+## Solution 6
+Observe that if we reduce the lengths of the parallel sides by the length PQ, P and Q will coincide because PQ \parallel AB. When they coincide, they happen to be the incenter of ABCD because all four angle bisectors intersect there.
+
+Let the shortened trapezoid be AB'C'D.
+
+To determine the length of PQ, we can use the two tangent theorem to get AB' + C'D = AD + B'C', or $7+5=19$-PQ+11-PQ, so PQ = 9.
+
+The distance from P to both AB and CD is the same because it is the incenter. To find the height r of both trapezoids, translate BC to B*C* such that C'' maps to D. By using Heron's formula and the known base of $19-11=8$, we get that the altitude of ABCD is $\frac{5\sqrt{3}}{2}.$ Therefore each of the altitudes of ABQP and CDOQ are $\frac{5\sqrt{3}}{4}.$
+
+Therefore, the area of the hexagon is the sum of the area of the two trapezoids, which is just $\frac{5\sqrt{3}}{4} \left( \dfrac{19+9}{2}\right) + \frac{5\sqrt{3}}{4} \left( \dfrac{11+9}{2}\right) = \boxed{\text{(B) }30\sqrt{3}}.$
+
+- [https://artofproblemsolving.com/wiki/index.php/User:Spectraldragon8 spectraldragon8]

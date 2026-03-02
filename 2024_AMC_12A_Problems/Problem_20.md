@@ -1,0 +1,53 @@
+# 2024 AMC 12A Problem 20
+
+## Problem
+Points P and Q are chosen uniformly and independently at random on sides $\overline$ {AB} and $\overline{AC},$ respectively, of equilateral triangle $\triangle ABC.$ Which of the following intervals contains the probability that the area of $\triangle APQ$ is less than half the area of $\triangle ABC$?
+
+$\textbf{(A) } \left[\frac 38, \frac 12\right] \qquad \textbf{(B) } \left(\frac 12, \frac 23\right] \qquad \textbf{(C) } \left(\frac 23, \frac 34\right] \qquad \textbf{(D) } \left(\frac 34, \frac 78\right] \qquad \textbf{(E) } \left(\frac 78, 1\right]$
+## Solution 1
+Let $\overline{AP}=x$ and $\overline{AQ}=y.$ Applying the sine formula for a triangle's area, we see that
+[$\Delta APQ$]=$\dfrac12\cdotx\cdoty\sin(\angle PAQ)=\dfrac{xy}2\sin(60^\circ)=\dfrac{\sqrt3}4$xy.
+
+Without loss of generality, we let AB=BC=CA=1, and thus [$\Delta ABC$]=$\dfrac{\sqrt3}4$; we therefore require $\dfrac{\sqrt3}4xy\le\dfrac12\cdot\dfrac{\sqrt3}4\implies$ xy$\le\dfrac12$ for $0\le$ x,y$\le1. ($Note: You can skip most of this by using triangle area ratios ~$A_MatheMagician$.)
+
+A quick rough sketch of $y=\dfrac1{2x}$ on the square given by x,y$\in$[0,1] reveals that the curve intersects the boundaries at (0.5,1) and (1,0.5), and it is actually quite (very) obvious that the area bounded by the inequality xy$\le0.5$ and the aforementioned unit square is more than $\dfrac34$ but less than $\dfrac78 (c$f. the diagram below). Thus, our answer is $\boxed{\textbf{(D) }\left(\dfrac34,\dfrac78\right]}.$
+
+*~Technodoggo*
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+/*Asymptote visual by Technodoggo, 7 November 2024*/ unitsize(8cm); draw((0,0)--(1,0)--(1,1)--(0,1)--cycle); label("$0$",(-0.05,-0.05)); label("$1$",(1,-0.05),S); label("$1$",(-0.05,1),W); draw((-0.05,0)--(1,0)--(1,-0.05)); draw((0,-0.05)--(0,1)--(-0.05,1)); real f(real x) {return 1/(2*x);} path c = graph(f, 0.5,1)--(1,0)--(0,0)--(0,1)--cycle; filldraw(c,blue+white); draw((0.5,1)--(0.5,0.5)--(1,0.5),white+dashed+1.1); draw((0.5,1)--(1,0.5),red+dashed+1.1);
+```
+## Solution 2
+WLOG let AB=AC=1
+
+$$
+\frac{AP \cdot AQ \cdot \sin60}{2} < \frac{1 \cdot 1 \cdot \sin60}{4}
+AP \cdot AQ < \frac{1}{2}
+$$
+
+Which we can express as xy < $\frac{1}{2}.$
+
+We follow by graphing the equation xy < $\frac 1 2$ on x, y $\in$ [0, 1], and we follow the same way solution 1 does.
+
+We see that the probability is slightly less than $\frac{7}{8}$ but definitely greater than $\frac{3}{4}$
+
+Thus answer choice $\boxed{\text{(D)} \left(\frac{3}{4},\frac{7}{8} \right]}$
+## Solution 3
+The actual probability can be found by using calculus, and taking the integral.
+
+$$P=\int_{0.5}^{1}{\frac{1}{2x}}dx + 0.5= \frac{\ln2+1}{2}\approx 0.84657.$$
+
+Thus, since $\frac 3 4 < 0.84655 < \frac 7 8,$ we get $\boxed{\text{(D)} \left(\frac{3}{4},\frac{7}{8} \right]}$
+*~lptoggled*
+
+Note that if you do not know an approximation for $\ln2,$ you can use the following power series formula: $\ln(1+x)=x-\frac{x^2}2+\frac{x^3}3-\frac{x^4}4+...$ Using this formula to four terms gives the apprximation $\ln2 \approx \frac{19}{24},$ which is good enough to solve the problem.
+### Another note
+If you're feeling up to it, you can assume that the curve is actually a $90^{\circ}$ sector of a circle with radius $\frac{1}{2}.$ Doing so yields
+$$P = 1 - \pi\frac{\left(\frac{1}{2}\right)^2}{4} \approx 0.8037,$$
+which is clearly within the interval D. This is also an under-estimate, since the curve of $\frac{1}{2x}$ is not as steep on the interval $x\in (0.5, 1).$
+## Video Solution, Fast, Quick, Easy!
+https://youtu.be/g4xdfcFgwGo
+## See also

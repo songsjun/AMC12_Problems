@@ -1,0 +1,55 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2003_AMC_12B_Problems/Problem_17&action=raw
+
+Published Time: Sat, 21 Dec 2024 03:34:06 GMT
+
+Markdown Content:
+== Problem ==
+If \log (xy^3) = 1 and \log (x^2y) = 1, what is \log (xy)?
+
+\mathrm{(A)}\ -\frac 12 \qquad\mathrm{(B)}\ 0 \qquad\mathrm{(C)}\ \frac 12 \qquad\mathrm{(D)}\ \frac 35 \qquad\mathrm{(E)}\ 1 
+== Solution ==
+Since 
+\begin{align*} &\log(xy) +2\log y = 1 \\ \log(xy) + \log x = 1 \quad \Longrightarrow \quad &2\log(xy) + 2\log x = 2 \end{align*}
+Summing gives 
+3\log(xy) + 2\log y + 2\log x = 3 \Longrightarrow 5\log(xy) = 3
+
+Hence \log (xy) = \frac 35 \Rightarrow \mathrm{(D)}.
+
+It is not difficult to find x = 10^{\frac{2}{5}}, y = 10^{\frac{1}{5}}.
+
+== Solution 2 ==
+\log(xy)+\log(y^2)=1 \\ \log(xy)+\log(x)=1 \text{ subtracting, } \\ \log(y^2)-\log(x)=0 \\ \log \left(\frac{y^2}{x}\right)=0 \\ \frac{y^2}{x}=10^0 \\ y^2=x \\ \text{substitute and solve: } \log(y^5)=5\log(y)=1 \\ \text{ and we need } 3\log(y) \text{ which is } \frac{3}{5}
+
+== Solution 3 ==
+
+Converting the two equation to exponential form, \log_{10} xy^3 = 1 \implies 10 = xy^3 and \log_{10} x^2y = 1 \implies 10 = x^2y
+
+Solving for y in the second equation, y = \frac{10}{x^2}.
+
+Substituting this into the first equation, we see that
+ \frac{1000}{x^5} = 10 
+ x = \sqrt[5]{100} = 10^{\frac{2}{5}} 
+Solving for y, we see it's equal to  10^{\frac{1}{5}}.
+
+Thus, \log_{10} xy = \frac{3}{5} \implies \boxed{\frac{3}{5}}
+
+~YBSuburbanTea
+~Theoneandonlymathman (Grammar)
+
+==Solution 4==
+We rewrite the logarithms in the problem. \log(x) + 3\log(y) = 1 2\log(x) + \log(y) = 1 \log(x) + \log(y) = c where c is the desired quantity. Set u = \log(x) and v = \log(y). Then we have that u + 3y = 1 \textbf{(1)} 2u + y = 1 \textbf{(2)} u + v = c. Notice that 2 \cdot \textbf{(2)} + \textbf{(1)} = 5u + 5v = 3 \implies u + v = \frac{3}{5} \implies c = \boxed{\textbf{(D)}~\frac{3}{5}}.
+
+~ [https://artofproblemsolving.com/wiki/index.php/User:Cxsmi cxsmi]
+
+==Solution 5==
+Let \log(x) = a, \log(y) = b. The first equation can be written as a + 3b = 1, and the second as 2a + b = 1. Solving this system of equations, we get that a = \frac{2}{5}, and b = \frac{1}{5}. Thus, the value of the expression we want to find is a + b = \frac{1}{5} + \frac{2}{5} = \boxed{\textbf{(D)}~\frac{3}{5}}
+
+~andliu766
+
+== See also ==
+{{AMC12 box|year=2003|ab=B|num-b=16|num-a=18}}
+
+[[Category:Introductory Algebra Problems]]
+{{MAA Notice}}

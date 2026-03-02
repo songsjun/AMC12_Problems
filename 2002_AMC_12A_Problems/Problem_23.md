@@ -1,0 +1,90 @@
+# 2002 AMC 12A Problem 23
+
+## Problem
+In triangle ABC, side AC and the [perpendicular bisector](https://artofproblemsolving.com/wiki/index.php/perpendicular_bisector) of BC meet in point D, and BD bisects $\angle ABC.$ If AD=9 and DC=7, what is the area of triangle ABD?
+
+
+$$\text{(A)}\ 14 \qquad \text{(B)}\ 21 \qquad \text{(C)}\ 28 \qquad \text{(D)}\ 14\sqrt5 \qquad \text{(E)}\ 28\sqrt5$$
+
+## Solution 1
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+unitsize(0.25 cm); pair A, B, C, D, M; A = (0,0); B = (88/9, 28*sqrt(5)/9); C = (16,0); D = 9/16*C; M = (B + C)/2; draw(A--B--C--cycle); draw(B--D--M); label("$A$", A, SW); label("$B$", B, N); label("$C$", C, SE); label("$D$", D, S);
+```
+
+Looking at the triangle BCD, we see that its perpendicular bisector reaches the vertex, therefore implying it is isosceles. Let $x =\angle C,$ so that B=$2x$ from given and the previous deducted. Then $\angle ABD=x, \angle ADB=2$x because any exterior angle of a triangle has a measure that is the sum of the two interior angles that are not adjacent to the exterior angle. That means  $\triangle ABD$ and $\triangle ACB$ are [similar](https://artofproblemsolving.com/wiki/index.php/Similarity_(geometry)), so $\frac$ {16}{AB}=$\frac$ {AB}{9} $\Longrightarrow AB=12.$
+
+Then by using [Heron's Formula](https://artofproblemsolving.com/wiki/index.php/Heron's_Formula) on ABD (with sides 12,7,9), we have [$\triangle ABD$]= $\sqrt{14(2)(7)(5)} = 14\sqrt5 \Longrightarrow \boxed{\text{D}}.$
+## Solution 2
+Let M be the point of the perpendicular bisector on BC. By the perpendicular bisector theorem, BD = DC = 7 and BM = MC. Also, by the angle bisector theorem, $\frac$ {AB}{BC} = $\frac{9}{7}.$ Thus, let AB = $9x$ and BC = $7x$. In addition, BM = $3.5x$.
+
+Thus, $\cos\angle CBD = \frac$ {3.5x}{7} = $\frac$ {x}{2}. Additionally, using the Law of Cosines and the fact that $\angle CBD = \angle ABD, 81 = 49 + 81x^2 - 2(9x)(7)\cos\angle CBD$
+
+Substituting and simplifying, we get $x = 4/3$
+
+Thus, AB = 12. We now know all sides of  $\triangle ABD.$ Using [Heron's Formula](https://artofproblemsolving.com/wiki/index.php/Heron's_Formula) on $\triangle ABD, \sqrt{(14)(2)(7)(5)} = 14\sqrt5 \Longrightarrow \boxed{\text{D}}$
+
+"Note:-you could also drop a perpendicular from D to AB at point let say,F then BF = $3.5x$ by pyathgoras theorem we can find DF and (AB ×DF )÷2 is our answer"
+## Solution 3
+Note that because the perpendicular bisector and angle bisector meet at side AC and CD = BD as triangle BDC is isosceles, so BD = 7. By the angle bisector theorem, we can express AB and BC as $9x$ and $7x$ respectively. We try to find x through Stewart's Theorem. So
+
+$$16(7^2+9\cdot7) = (7x)^2 \cdot 9 + (9x)^2 \cdot 7$$
+
+$$16(49+63) = (49 \cdot 9 + 81 \cdot 7)x^2$$
+
+$$16(49+63) = 9(49+63) \cdot x^2$$
+
+$$x^2 = \frac{16}{9}$$
+
+$$x=\frac{4}{3}$$
+
+We plug this to find that the sides of $\triangle ABD$ are 12,7,9. By Heron's formula, the area is  $\sqrt{(14)(2)(7)(5)} = 14\sqrt5 \Longrightarrow \boxed{\text{D}}.$ ~skyscraper
+## Solution 4
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(12cm, 12cm); pair A, B, C, D, M, N; A = (0,0); B = (88/9, 28*sqrt(5)/9); C = (16,0); D = 9/16*C; M = (B + C)/2; N = (6,4.27); draw(A--B--C--cycle); draw(B--D--M); draw(D--N--B); label("$A$", A, SW); label("$B$", B, N); label("$C$", C, SE); label("$D$", D, S); label("$M$", M, NE); label("$N$", N, NW); draw(rightanglemark(B, M, D), linewidth(.5)); draw(rightanglemark(A, N, D), linewidth(.5));
+```
+
+
+Draw DN such that DN \bot AB, $\triangle BND$\cong $\triangle BMD$
+
+$\angle ACB = \angle DBC = \angle ABD, \triangle ABD \sim \triangle ACB$ by AA
+
+$$\frac{AB}{AD} = \frac{AC}{AB}, AB^2 = AD \cdot AC = 9 \cdot 16, AB = 12$$
+
+By the [Angle Bisector Theorem](https://artofproblemsolving.com/wiki/index.php/Angle_Bisector_Theorem), $\frac{BC}{AB} = \frac{CD}{AD}$
+
+$$\frac{BC}{12} = \frac{7}{9}$$
+
+
+$$BC = \frac{28}{3}, CM = \frac{14}{3}, DN = DM = \sqrt{CD^2 - CM^2} = \frac{7 \sqrt{5} }{3}$$
+
+
+[ABD] = $\frac12 \cdot AB \cdot DN = \frac12 \cdot 12 \cdot \frac{7 \sqrt{5} }{3} = \boxed{\textbf{(D) } 14 \sqrt{5} }$
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+## Solution 5 (Trigonometry)
+Let $\angle ACB = \theta, \angle DBC = \theta, \angle ABD = \theta, \angle ADB = 2 \theta, \angle BAC = 180^\circ - 3 \theta$
+
+[ABD] = $\frac12 \cdot AD \cdot BD \cdot \sin \angle ADB = \frac12 \cdot 9 \cdot 7 \cdot \sin 2\theta$
+
+By the [Law of Sines](https://artofproblemsolving.com/wiki/index.php/Law_of_Sines) we have $\frac{ \sin \angle BAC }{BD} = \frac{ \sin \angle ABD }{AD}$
+
+$$\frac{ \sin(180^\circ - 3 \theta) }{7} = \frac{ \sin \theta }{ 9 }$$
+
+$$\frac{ \sin 3 \theta }{7} = \frac{ \sin \theta }{ 9 }$$
+
+By the [https://artofproblemsolving.com/wiki/index.php/Trigonometric_identities#Triple-angle_identities Triple-angle Identities],  $\sin 3 \theta = 3 \sin \theta - 4 \sin^3 \theta$
+
+$$3 - 4 \sin^2 \theta = \frac79, 36 \sin^2 \theta = 20, \sin^2 \theta = \frac59$$
+
+$$\sin \theta = \frac{\sqrt{5}}{3}, \cos \theta = \frac{2}{3}$$
+
+By the [https://artofproblemsolving.com/wiki/index.php/Trigonometric_identities#Double-angle_identities Double Angle Identity] $\sin 2 \theta = 2 \sin \theta \cos \theta = 2 \cdot \frac{\sqrt{5}}{3} \cdot \frac{2}{3} = \frac{ 4 \sqrt{5} }{9}$
+
+[ABD] = $\frac12 \cdot 9 \cdot 7 \cdot \frac{ 4 \sqrt{5} }{9} = \boxed{\textbf{(D) } 14 \sqrt{5} }$
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+## See Also

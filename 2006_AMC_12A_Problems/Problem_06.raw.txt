@@ -1,0 +1,48 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2006_AMC_12A_Problems/Problem_6&action=raw
+
+Published Time: Tue, 07 May 2024 22:29:31 GMT
+
+Markdown Content:
+{{duplicate|[[2006 AMC 12A Problems|2006 AMC 12A #6]] and [[2006 AMC 10A Problems/Problem 7|2006 AMC 10A #7]]}}
+
+== Problem ==
+The 8\times18 [[rectangle]] ABCD is cut into two congruent hexagons, as shown, in such a way that the two hexagons can be repositioned without overlap to form a square.  What is y?
+
+ unitsize(3mm); defaultpen(fontsize(10pt)+linewidth(.8pt)); dotfactor=4; draw((0,4)--(18,4)--(18,-4)--(0,-4)--cycle); draw((6,4)--(6,0)--(12,0)--(12,-4)); label("$A$",(0,4),NW); label("$B$",(18,4),NE); label("$C$",(18,-4),SE); label("$D$",(0,-4),SW); label("$y$",(3,4),S); label("$y$",(15,-4),N); label("$18$",(9,4),N); label("$18$",(9,-4),S); label("$8$",(0,0),W); label("$8$",(18,0),E); dot((0,4)); dot((18,4)); dot((18,-4)); dot((0,-4));
+
+\mathrm{(A)}\ 6\qquad\mathrm{(B)}\ 7\qquad\mathrm{(C)}\ 8\qquad\mathrm{(D)}\ 9\qquad\mathrm{(E)}\ 10
+
+== Solution 1 ==
+Since the two [[hexagon]]s are going to be repositioned to form a [[square (geometry) | square]] without overlap, the [[area]] will remain the same. The rectangle's area is 18\cdot8=144. This means the square will have four sides of length 12. The only way to do this is shown below.
+
+ size(175); pair A,B,C,D,E,F,G,H; A=(0,8); B=(12,12); C=(12,4); D=(0,0); E=(0,12); F=(12,0); G=(6,4); H=(6,8); draw(A--E--B--C--G--H--A--D--F--C); label("$A$",A,W); label("$B$",B,NE); label("$C$",(12.6,4)); label("$D$",D,SW); label("$12$",E--B,N); label("$12$",D--F,S); label("$4$",E--A,W); label("$4$",(12.4,-1.75),E); label("$8$",A--D,W); label("$8$",(12.4,4),E); label("$y$",A--H,S); label("$y$",G--C,N); 
+
+As you can see from the diagram, the [[line segment]] denoted as y is half the length of the side of the square, which leads to  y = \frac{12}{2} = \boxed{\textbf{(A) }6}.
+
+=== Solution 2  (Shortcut)===
+
+As solution 1 says, the two hexagons are going to be repositioned to form a square without overlap. Thus we create this square out of the original rectangle.
+
+ size(175); pair A,B,C,D,E,F,G,H; A=(0,8); B=(12,12); C=(12,4); D=(0,0); E=(0,12); F=(12,0); G=(6,4); H=(6,8); draw(A--E--B--C--G--H--A--D--F--C); label("$y$",A--H,S); label("$y$",G--C,N); 
+
+As you can see from the diagram, the length y fits into the previously blank side, so we know that it is equal to y.
+
+ unitsize(3mm); defaultpen(fontsize(10pt)+linewidth(.8pt)); dotfactor=4; draw((0,4)--(18,4)--(18,-4)--(0,-4)--cycle); draw((6,4)--(6,0)--(12,0)--(12,-4)); label("$y$",(9,-2),NW); label("$A$",(0,4),NW); label("$B$",(18,4),NE); label("$C$",(18,-4),SE); label("$D$",(0,-4),SW); label("$y$",(3,4),S); label("$y$",(15,-4),N); label("$18$",(9,4),N); label("$18$",(9,-4),S); label("$8$",(0,0),W); label("$8$",(18,0),E); dot((0,4)); dot((18,4)); dot((18,-4)); dot((0,-4));
+
+From there we can say 3y = 18 so y = \frac{18}{3} = \boxed{\textbf{(A) }6}.
+
+~Ezraft
+
+== Solution 3 (Cheap) ==
+Because the two hexagons are congruent, we know that the perpendicular line to A is half of BC, or 4. Next, we plug the answer choices in to see which one works. Trying A, we get the area of one hexagon is 72 , as desired, so the answer is \boxed{\textbf{(A) }6} .
+
+~coolmath2017
+
+== See also ==
+{{AMC12 box|year=2006|ab=A|num-b=5|num-a=7}}
+{{AMC10 box|year=2006|ab=A|num-b=6|num-a=8}}
+{{MAA Notice}}
+
+[[Category:Introductory Geometry Problems]]

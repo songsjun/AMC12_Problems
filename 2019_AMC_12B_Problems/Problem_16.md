@@ -1,0 +1,65 @@
+# 2019 AMC 12B Problem 16
+
+## Problem
+There are lily pads in a row numbered 0 to 11, in that order. There are predators on lily pads 3 and 6, and a morsel of food on lily pad 10. Fiona the frog starts on pad 0, and from any given lily pad, has a $\frac{1}{2}$ chance to hop to the next pad, and an equal chance to jump 2 pads. What is the probability that Fiona reaches pad 10 without landing on either pad 3 or pad 6?
+
+$\textbf{(A) } \frac{15}{256} \qquad \textbf{(B) } \frac{1}{16} \qquad \textbf{(C) } \frac{15}{128}\qquad \textbf{(D) } \frac{1}{8} \qquad \textbf{(E) } \frac14$
+## Solution 1
+Firstly, notice that if Fiona jumps over the predator on pad 3, she must land on pad 4. Similarly, she must land on 7 if she makes it past 6. Thus, we can split the problem into 3 smaller sub-problems, separately finding the probability Fiona skips 3, the probability she skips 6 (starting at 4) and the probability she *doesn't* skip 10 (starting at 7). Notice that by symmetry, the last of these three sub-problems is the complement of the first sub-problem, so the probability will be 1 - $\text{the probability obtained in the first sub-problem}.$
+
+In the analysis below, we call the larger jump a 2-jump, and the smaller a 1-jump.
+
+For the first sub-problem, consider Fiona's options. She can either go 1-jump, 1-jump, 2-jump, with probability $\frac{1}{8},$ or she can go 2-jump, 2-jump, with probability $\frac{1}{4}.$ These are the only two options, so they together make the answer $\frac{1}{8}+\frac{1}{4}=\frac{3}{8}.$ We now also know the answer to the last sub-problem is $1-\frac{3}{8}=\frac{5}{8}.$
+
+For the second sub-problem, Fiona *must* go 1-jump, 2-jump, with probability $\frac{1}{4},$ since any other option would result in her death to a predator.
+
+Thus, since the three sub-problems are independent, the final answer is $\frac{3}{8} \cdot \frac{1}{4} \cdot \frac{5}{8} = \boxed{\textbf{(A) }\frac{15}{256}}.$
+## Solution 2
+Observe that since Fiona can only jump at most 2 places per move, and still wishes to avoid pads 3 and 6, she must also land on numbers 2, 4, 5, and 7.
+
+There are two ways to reach lily pad 2, namely 1-jump, 1-jump, with probability $\frac{1}{4},$ or just a 2-jump, with probability $\frac{1}{2}.$ The total is thus $\frac{1}{4} + \frac{1}{2} = \frac{3}{4}.$ Fiona must now make a 2-jump to lily pad 4, again with probability $\frac{1}{2},$ giving $\frac{3}{4} \cdot \frac{1}{2} = \frac{3}{8}.$
+
+Similarly, Fiona must now make a 1-jump to reach lily pad 5, again with probability $\frac{1}{2},$ giving $\frac{3}{8} \cdot \frac{1}{2} = \frac{3}{16}.$ Then she must make a 2-jump to reach lily pad 7, with probability $\frac{1}{2},$ yielding $\frac{3}{16} \cdot \frac{1}{2} = \frac{3}{32}.$
+
+Finally, to reach lily pad 10, Fiona has a few options - she can make 3 consecutive 1-jumps, with probability $\frac{1}{8},$ or 1-jump, 2-jump, with probability $\frac{1}{4},$ or 2-jump, 1-jump, again with probability $\frac{1}{4}.$ The final answer is thus $\frac{3}{32} \cdot \left(\frac{1}{8} + \frac{1}{4} + \frac{1}{4}\right) = \frac{3}{32} \cdot \frac{5}{8} = \boxed{\textbf{(A) } \frac{15}{256}}.$
+## Solution 3 (recursion)
+Let $p_n$ be the probability of landing on lily pad n. Observe that if there are no restrictions, we would have
+$$p_n = \frac{1}{2} \cdot p_{n-1} + \frac{1}{2} \cdot p_{n-2}$$
+
+This is because, given that Fiona is at lily pad $n-2$, there is a $\frac{1}{2}$ probability that she will make a 2-jump to reach lily pad n, and the same applies for a 1-jump to reach lily pad $n-1$. We will now compute the values of $p_n$ recursively, but we will skip over 3 and 6. That is, we will not consider any jumps from lily pads 3 or 6 when considering the probabilities. We obtain the following chart, where an X represents an unused/uncomputed value:
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+unitsize(40); string[] vals = {"1", "$1/$2", "3/4", "X", "3/8", "3/16", "X", "3/32", "3/64", "9/128", "$15/256$", "X"}; for(int $i =0$; i<= 11; ++i) { draw((i,0)--($i+1,0)--(i+1$,1)--(i,1)--cycle); label((string) i, ($i+0$.5,0), S); label(vals[i], ($i+0$.5, 0.5)); }
+```
+
+
+Hence the answer is $\boxed{\textbf{(A) } \frac{15}{256}}.$
+
+Note: If we let $p_n$ be the probability of surviving if the frog is on lily pad n, using $p_{10} = 1$, we can solve backwards and obtain the following chart:
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+unitsize(40); string[] vals = {"$15/$256", "5/128", "5/64", "X", "5/32", "5/16", "X", "5/8", "3/4", "$1/2$", "1", "X"}; for(int $i =0$; i<= 11; ++i) { draw((i,0)--($i+1,0)--(i+1$,1)--(i,1)--cycle); label((string) (11-i), ($i+0$.5,0), S); label(vals[(11-i)], ($i+0$.5, 0.5)); }
+```
+## Solution 4 (simple casework bash)
+This is equivalent to finding the probability for each of the valid ways of tiling a 1-by-11 rectangular grid (with one end being lilypad 0 and the other being lilypad 11) with tiles of size 1 $\cdot 1$ and 1 $\cdot 2$ that satisfies the conditions mentioned in the problem. Obviously, for Fiona to skip pads 3 and 6, a 1 $\cdot 2$ tile must be placed with one end at lilypad 2 and the other at lilypad 4, and another 1 $\cdot 2$ must be placed with one end at lilypad 5 and the other at lilypad 7. Thus, since only a 1 $\cdot 1$ tile can fit between the two aforementioned 1 $\cdot 2$ tiles, we will place it there. Now, we can solve this problem with simple casework.
+
+Case 1: Two 1 $\cdot 1$ tiles fill the space between lilypads 0 and 2.
+
+There are two ways to permute a placement of a 1 $\cdot 1$ tile and a 1 $\cdot 2$ tile between lilypads 7 and 10, so our probability for this sub-case is $\frac{2}{2^7} = \frac{1}{64}.$ In the other subcase where the space between lilypads 7 and 10 is completely filled with 1 $\cdot 1$ tiles, there is trivially only one tiling, thus the probability for this sub-case is $\frac{1}{2^8} = \frac{1}{256}.$ The total probability for this case is $\frac{1}{64} + \frac{1}{256} = \frac{5}{256}.$
+
+Case 2: A single 1 $\cdot 2$ tile fills the space between lilypads 0 and 2.
+
+Note that the combined probability for this case will be double that of Case 1, since a single 1 $\cdot 2$ tile takes up one less tile than two 1 $\cdot 1$ tiles. Thus, the probability for this case is 2 $\cdot \frac{5}{256} = \frac{10}{256}.$
+
+Summing our cases up, we obtain $\boxed{\textbf{(A) } \frac{15}{256}}.$
+
+*~fidgetboss_4000*
+## Solution 5 (answer choices)
+Note that there is exactly one way to reach lily pad 10 in 8 moves, and there is a probability of $\frac{1}{256}$ that this occurs. All other paths take less than 8 moves, and thus the probability of them occurring is $\frac{n}{2^k}$ for k < 8. Thus, the answer must have a denominator of 256, or answer choice $\boxed{\textbf{(A)}}.$
+## See Also

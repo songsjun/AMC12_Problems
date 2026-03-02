@@ -1,0 +1,65 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2014_AMC_12A_Problems/Problem_24&action=raw
+
+Published Time: Fri, 01 Nov 2024 20:42:10 GMT
+
+Markdown Content:
+==Problem==
+Let f_0(x)=x+|x-100|-|x+100|, and for n\geq 1, let f_n(x)=|f_{n-1}(x)|-1.  For how many values of x is f_{100}(x)=0?
+
+\textbf{(A) }299\qquad \textbf{(B) }300\qquad \textbf{(C) }301\qquad \textbf{(D) }302\qquad \textbf{(E) }303\qquad
+
+==Solution 1==
+
+1. Draw the graph of f_0(x) by dividing the domain into three parts.
+ unitsize(0); int w = 250; int h = 125; xaxis(-w,w,Ticks(100.0),Arrows); yaxis(-h,h,Ticks(100.0),Arrows); draw((-100,-h)--(-100,h),dashed); draw((100,-h)--(100,h),dashed); real f0(real x) { return x + abs(x-100) - abs(x+100); } draw(graph(f0,-w,w),Arrows); label("$f_0$",(-w,f0(-w)),W);  
+
+2. Apply the recursive rule a few times to find the pattern.
+
+**Note:** f_n(x) = |f_{n-1}(x)| - 10 is used to enlarge the difference, but the reasoning is the same.
+ unitsize(0); int w = 350; int h = 125; xaxis(-w,w,Ticks(100.0),Arrows); yaxis(-h,h,Ticks(100.0),Arrows); draw((-100,-h)--(-100,h),dashed); draw((100,-h)--(100,h),dashed); int s = 10; real f0(real x) { return x + abs(x-100) - abs(x+100); } real f(real x, int k) { real a = abs(f0(x))-s*k; return a >= -s ? a : k%2 == 0 ? abs(x%(2*s)-s)-s : -abs(x%(2*s)-s); } real f1(real x) { return f(x,1); } real f2(real x) { return f(x,2); } real f3(real x) { return f(x,3); } real f4(real x) { return f(x,4); } draw(graph(f0,-w,w,w*2#s),Arrows); draw(graph(f1,-w,w,w*2#s),red,Arrows); draw(graph(f2,-w,w,w*2#s),orange,Arrows); draw(graph(f3,-w,w,w*2#s),lightolive,Arrows); label("$f_0$",(-w,f0(-w)),W); label("$f_1$",(-w,f1(-w)),NW,red); label("$f_2$",(-w,f2(-w)),W,orange); label("$f_3$",(-w,f3(-w)),SW,lightolive); 
+
+3. Extrapolate to f_{100}. Notice that the summits start 100 away from 0 and get 1 closer each iteration, so they reach 0 exactly at f_{100}.
+ unitsize(0); int w = 350; int h = 125; xaxis(-w,w,Ticks(100.0),Arrows); yaxis(-h,h,Ticks(100.0),Arrows); draw((-100,-h)--(-100,h),dashed); draw((100,-h)--(100,h),dashed); int s = 10; real f0(real x) { return x + abs(x-100) - abs(x+100); } real f(real x, int k) { real a = abs(f0(x))-s*k; return a >= -s ? a : k%2 == 0 ? abs(x%(2*s)-s)-s : -abs(x%(2*s)-s); } real f1(real x) { return f(x,1); } real f2(real x) { return f(x,2); } real f3(real x) { return f(x,3); } real f4(real x) { return f(x,4); } real f98(real x) { return f(x,100#s-2); } real f99(real x) { return f(x,100#s-1); } real f100(real x) { return f(x,100#s); } draw(graph(f0,-w,w,w*2#s),Arrows); draw(graph(f1,-w,w,w*2#s),red,Arrows); draw(graph(f2,-w,w,w*2#s),orange,Arrows); draw(graph(f3,-w,w,w*2#s),lightolive,Arrows); draw(graph(f98,-w,w,w*2#s),heavygreen,Arrows); draw(graph(f99,-w,w,w*2#s),blue,Arrows); draw(graph(f100,-w,w,w*2#s),purple,Arrows); label("$f_0$",(-w,f0(-w)),W); label("$f_1$",(-w,f1(-w)),NW,red); label("$f_2$",(-w,f2(-w)),W,orange); label("$f_3$",(-w,f3(-w)),SW,lightolive); label("$f_{98}$",(-w,f98(-w)),NW,heavygreen); label("$f_{99}$",(-w,f99(-w)),W,blue); label("$f_{100}$",(-w,f100(-w)),SW,purple); 
+
+f_{100}(x) reaches 0 at x = -300, then zigzags between 0 and -1, hitting 0 at every even x, before leaving 0 at x = 300.
+
+This means that f_{100}(x) = 0 at all even x where -300 \le x \le 300. This is a 601-integer odd-size range with even numbers at the endpoints, so just over half of the integers are even, or \frac{601+1}{2} = \boxed{\textbf{(C) }301}.
+(Revised by Flamedragon & Jason,C & [[User:emerald_block|emerald_block]])
+
+==Solution 2==
+
+First, notice that the recursive rule moves the current value 1 closer to 0. Upon reaching 0, it alternates between -1 and 0. This means that f_{100}(x) = 0 exactly when |f_0(x)| \le 100 (to reach 0 in time) and f_0(x) is even (so f_{100}(x) \ne -1).
+
+Casework each part of f_0(x) (where the expressions in the absolute values do not change sign):
+x \le -100 \implies f_0(x) = x-(x-100)+(x+100) = x+200
+so even -300 \le x \le -100 work.
+-100 \le x \le 100 \implies f_0(x) = x-(x-100)-(x+100) = -x
+so even -100 \le x \le 100 work.
+100 \le x \implies f_0(x) = x+(x-100)-(x+100) = x-200
+so even 100 \le x \le 300 work.
+
+Putting these together, all even x where -300 \le x \le 300 work. So, the answer is 2\cdot150+1 = \boxed{\textbf{(C)}\ 301}.
+~revised by [[User:emerald_block|emerald_block]]
+
+==Solution 3==
+Note f_{100}(x) = 0 when |f_{99}(x)| -1 = 0. This occurs when f_{99}(x) = \pm 1. 
+
+Then, repeating this process, we note f_{99}(x) = \pm 1 \implies |f_{98}(x)| = 0, 2, and hence f_{98}(x) = 0, \pm 2.
+
+Similarly, f_{97}(x) = \pm 1, \pm 3. Extrapolating this pattern, we must have f_{0}(x) = 0, \pm 2, \dots, \pm 100. Then, drawing the graph of f_0, 
+ unitsize(0); int w = 250; int h = 125; xaxis(-w,w,Ticks(100.0),Arrows); yaxis(-h,h,Ticks(100.0),Arrows); real f0(real x) { return x + abs(x-100) - abs(x+100); } draw(graph(f0,-w,w),Arrows); label("$f_0$",(-w,f0(-w)),W);  
+we note for each of 0, \pm 2, \dots, \pm 98, there are three solutions. For \pm 100, there is exactly 2 solutions.
+
+So, the total amount of solutions is 99 \cdot 3 + 2 \cdot 2 = \boxed{\textbf{(C) }301}
+
+== Video Solution by Richard Rusczyk ==
+
+https://artofproblemsolving.com/videos/amc/2014amc12a/383
+
+~ dolphin7
+
+==See Also==
+{{AMC12 box|year=2014|ab=A|num-b=23|num-a=25}}
+{{MAA Notice}}

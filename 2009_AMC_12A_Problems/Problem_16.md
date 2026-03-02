@@ -1,0 +1,22 @@
+# 2009 AMC 12A Problem 16
+
+## Problem
+A circle with center C is tangent to the positive x and y-axes and externally tangent to the circle centered at (3,0) with radius 1. What is the sum of all possible radii of the circle with center C?
+
+$\textbf{(A)}\ 3 \qquad \textbf{(B)}\ 4 \qquad \textbf{(C)}\ 6 \qquad \textbf{(D)}\ 8 \qquad \textbf{(E)}\ 9$
+## Solution
+Let r be the radius of our circle. For it to be tangent to the positive x and y axes, we must have C=(r,r). For the circle to be externally tangent to the circle centered at (3,0) with radius 1, the distance between C and (3,0) must be exactly $r+1$.
+
+By the [Pythagorean theorem](https://artofproblemsolving.com/wiki/index.php/Pythagorean_theorem) the distance between (r,r) and (3,0) is $\sqrt{ (r-3)^2 + r^2 },$ hence we get the equation $(r-3)^2 + r^2 = (r+1)$$^2.$
+
+Simplifying, we obtain $r^2 -8r + 8 = 0$. By [Vieta's formulas](https://artofproblemsolving.com/wiki/index.php/Vieta's_formulas) the sum of the two roots of this equation is $\boxed{8}.$
+
+(We should actually solve for r to verify that there are two distinct positive roots. In this case we get $r=4\pm 2\sqrt 2.$ This is generally a good rule of thumb, but is not necessary as all of the available answers are integers, and the equation obviously doesn't factor as integers. You can also tell that there are two positive roots based on the visual interpretation.)
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+unitsize(0.5cm); defaultpen(0.8); filldraw( Circle( (3,0), 1 ), lightgray, black ); draw( (0,0) -- (15,0), Arrow ); draw( (0,0) -- (0,15), Arrow ); draw( (0,0) -- (15,15), dashed ); real r1 = 4 - 2*sqrt(2), r2 = 4 + 2*sqrt(2); pair S1=(r1,r1), S2=(r2,r2); dot(S1); dot(S2); dot((3,0)); draw( Circle(S1,r1) ); draw( Circle(S2,r2) );
+```
+## See Also

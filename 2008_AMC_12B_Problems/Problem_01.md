@@ -1,0 +1,11 @@
+# 2008 AMC 12B Problem 1
+
+## Problem
+A basketball player made 5 baskets during a game. Each basket was worth either 2 or 3 points. How many different numbers could represent the total points scored by the player?
+
+$\textbf{(A)}\ 2 \qquad \textbf{(B)}\ 3 \qquad \textbf{(C)}\ 4 \qquad \textbf{(D)}\ 5 \qquad \textbf{(E)}\ 6$
+## Solution 1
+If the basketball player makes x three-point shots and 5-x two-point shots, he scores $3x+2(5-x)=10$+x points. Clearly every value of x yields a different number of total points. Since he can make any number of three-point shots between 0 and 5 inclusive, the number of different point totals is 6 $\Rightarrow E.$
+### Solution 2
+Stars and bars can also be utilized to solve this problem. Since we need to decide what number of 2's and 3's are scored, and there are a total of 5 shots. It can be written like such: _ _ _ | _ _. Solving this, we get 6 $\Rightarrow E.$
+## See Also

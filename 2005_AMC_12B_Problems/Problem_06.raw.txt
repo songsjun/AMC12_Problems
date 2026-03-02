@@ -1,0 +1,38 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2005_AMC_12B_Problems/Problem_6&action=raw
+
+Published Time: Tue, 05 Jul 2022 19:29:06 GMT
+
+Markdown Content:
+{{duplicate|[[2005 AMC 12B Problems|2005 AMC 12B #6]] and [[2005 AMC 10B Problems|2005 AMC 10B #10]]}}
+== Problem ==
+In \triangle ABC, we have AC=BC=7 and AB=2. Suppose that D is a point on line AB such that B lies between A and D and CD=8. What is BD?
+
+ \textbf{(A) }\ 3 \qquad \textbf{(B) }\ 2\sqrt{3} \qquad \textbf{(C) }\ 4 \qquad \textbf{(D) }\ 5 \qquad \textbf{(E) }\ 4\sqrt{2} 
+
+== Solutions ==
+
+=== Solution 1 ===
+Draw height CH (Perpendicular line from point C to line AD). We have that BH=1. By the [[Pythagorean Theorem]], CH=\sqrt{48}. Since CD=8, HD=\sqrt{8^2-48}=\sqrt{16}=4, and BD=HD-1, so BD=\boxed{\textbf{(A) }3}.
+
+=== Solution 2 (Trig) ===
+
+After drawing out a diagram, let \angle{ABC}=\theta. By the Law of Cosines, 7^2=2^2+7^2-2(7)(2)\cos{\theta} \rightarrow 0=4-28\cos{\theta} \rightarrow \cos{\theta}=\frac{1}{7}. In \triangle CBD, we have \angle{CBD}=(180-\theta), and using the identity \cos(180-\theta)=-\cos{\theta} and Law of Cosines one more time: 8^2=7^2+x^2-2(7)(x)\left( \frac{-1}{7} \right) \rightarrow 64=49+x^2+2x \rightarrow x^2+2x-15=0. The only positive value for x is 3, which gives the length of \overline{BD}. Thus the answer is \boxed{\textbf{(A) }3}.
+
+~Bowser498
+
+== Solution 3 (Stewart's Theorem) ==
+Let BD=k. Then, by [[Stewart's Theorem]], 
+
+2k(2+k)+7^2(2+k)=7^2k+8^2\cdot 2 \implies k^2+2k-15=0 \implies k=\boxed{\textbf{(A) }3}
+
+~apsid
+
+~edited by always90degrees (tiny fix, sign error)
+
+== See also ==
+{{AMC10 box|year=2005|ab=B|num-b=9|num-a=11}}
+{{AMC12 box|year=2005|ab=B|num-b=5|num-a=7}}
+[[Category:Introductory Geometry Problems]]
+{{MAA Notice}}

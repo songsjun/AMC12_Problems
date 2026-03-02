@@ -1,0 +1,65 @@
+# 2003 AMC 12B Problem 18
+
+## Problem
+Let x and y be positive integers such that $7x^5 =11y^{13}$. The minimum possible value of x has a prime factorization a^cb^d. What is a + b + c + d?
+
+$\textbf{(A)}\ 30 \qquad \textbf{(B)}\ 31 \qquad \textbf{(C)}\ 32 \qquad \textbf{(D)}\ 33 \qquad \textbf{(E)}\ 34$
+## Solution 1
+Substitute a^cb^d into x. We then have $7(a^{5c}b^{5d})=11y^{13}$. Divide both sides by 7, and it follows that:
+
+$$(a^{5c}b^{5d}) = \frac{11y^{13}}{7}.$$
+
+Note that because 11 and 7 are prime, the minimum value of x must involve factors of 7 and 11 only. Thus, we try to look for the lowest power p of 11 such that $13p + 1 \equiv 0 \pmod{5},$ so that we can take $11^{13p + 1}$ to the fifth root. Similarly, we want to look for the lowest power n of 7 such that $13n - $1 $\equiv 0 \pmod{5}.$ Again, this allows us to take the fifth root of $7^{13n - 1}$. Obviously, we want to add 1 to $13p$ and subtract 1 from $13n$ because $11^{13p}$ and $7^{13n}$ are multiplied by 11 and divided by 7, respectively. With these conditions satisfied, we can simply multiply $11^{p}$ and $7^{n}$ and substitute this quantity into y to attain our answer.
+
+We can simply look for suitable values for p and n. We find that the lowest p, in this case, would be 3 because $13(3) + 1 \equiv 0 \pmod{5}.$ Moreover, the lowest q should be 2 because $13(2) - 1 \equiv 0 \pmod{5}.$ Hence, we can substitute the quantity $11^{3}\cdot 7^{2}$ into y. Doing so gets us:
+
+$$(a^{5c}b^{5d}) = \frac{11(11^{3} \cdot 7^{2})^{13}}{7} = 11^{40} \cdot 7^{25}.$$
+
+Taking the fifth root of both sides, we are left with $a^cb^d =11^{8}\cdot 7^{5}.$ a + b + c + $d = 11 + 7 + 8 + 5 =\boxed{\textbf{(B)}\ 31}$
+## Solution 2
+A simpler way to tackle this problem without all that modding is to keep the equation as:
+
+$$7*a^{5b}c^{5d} = 11y^{13}$$
+
+As stated above, a and c must be the factors 7 and 11 in order to keep x at a minimum. Moving all the non-y terms to the left hand side of the equation, we end up with:
+
+$$7^{5b+1}11^{5d-1}=y^{13}$$
+
+The above equation means that y must also contain only the factors 7 and 11 (again, in order to keep x at a minimum), so we end up with:
+
+$$7^{5b+1}11^{5d-1}=7^{13h}11^{13j}$$
+
+(h and j are arbitrary variables placed in order to show that y could have more than just one 7 or one 11 as factors)
+
+Since 7 and 11 are prime, we know that $5b+1=13h$ and $5d-1=13j$. The smallest positive combinations that would work are $b=$5,$h=2$ and $d=8,j=3$. Therefore, $a+b+c+d=7+5+11+8=31. \boxed{\textbf{(B)}\ 31}$ is correct.
+## Solution 3
+Another way to solve this problem solve for x. First, we can divide both sides by 7 to get:
+
+$$x^5 = \frac{11y^{13}}{7}$$
+
+Next, we take the fifth root on both sides, which gets us:
+
+$$x = \sqrt[5]{\frac{11y^{13}}{7}}$$
+
+$$x = y^2 \cdot \sqrt[5]{\frac{11y^{3}}{7}}$$
+
+Since we know x is a positive integer that we are trying to minimize, we can let y equal the smallest number that will make x an integer. In this case, we let $y = 11^3 \cdot 7^2($Make sure you see why this makes x the smallest integer possible!), which when plugged in, results in:
+
+$$x = (11^3 \cdot 7^2)^2 \cdot \sqrt[5]{\frac{11}{7}\cdot (11^3 \cdot 7^2)^3}$$
+
+$$x = (11^3 \cdot 7^2)^2 \cdot \sqrt[5]{\frac{11}{7}\cdot 11^9 \cdot 7^6}$$
+
+$$x = (11^3 \cdot 7^2)^2 \cdot \sqrt[5]{11^{10} \cdot 7^5}$$
+
+$$x = (11^3 \cdot 7^2)^2 \cdot 11^2 \cdot 7^1$$
+
+$$x = 7^5 \cdot 11^ 8$$
+
+This gets us $a^cb^d =7^5\cdot 11^8,$ so a + b + c + $d = 7 + 5 + 11 + 8 =\boxed{\textbf{(B)}\ 31}$
+*~lucaswujc, $\LaTeX$ help from Technodoggo*
+## Solution 4 (easy)
+According to the problem, we have that $x^5$ and $y^{13}$ must be a multiple of both 7 and 11. Thus, in their prime factorisation, there must be 7 and 11. Thus, we have $a=7$ and $b=11$. Now, let $x=7^c11^d\impliesx^5=7^{5c}11^{5d}\implies7x^5=7^{5c+1}11^{5d}$.
+We can now divide both sides by 11 in our original equation $7x^5=11y^{13}$ to get $y^{13}=7^{5c+1}11^{5d-1}$. As we are only considering integers, we have $5c+1\equiv0$~($\text{mod}$~13)$\implies5c\equiv1$2~($\text{mod}$~13) and $5d-1\equiv0$~($\text{mod}$~13)$\implies5d\equiv1$~($\text{mod}$~13).
+
+We can apply brute force to solve for c and d as the numbers aren't big. For the first congruence, we find that 25 is the smallest number that satisfies, thus $c=5$. For the second congruence, we find that 40 is the smallest number that satisfies, thus $d=8$. Summarising, we get $a+b+c+d=7+11+5+8=\boxed{\textbf{(B)}~31}.$
+## See Also

@@ -1,0 +1,35 @@
+{{duplicate|[[2012 AMC 12A Problems|2012 AMC 12A #1]] and [[2012 AMC 10A Problems|2012 AMC 10A #3]]}}
+
+== Problem ==
+
+A bug crawls along a number line, starting at <math>-2</math>. It crawls to <math>-6</math>, then turns around and crawls to <math>5</math>. How many units does the bug crawl altogether?
+
+<math> \textbf{(A)}\ 9\qquad\textbf{(B)}\ 11\qquad\textbf{(C)}\ 13\qquad\textbf{(D)}\ 14\qquad\textbf{(E)}\ 15 </math>
+
+== Solution ==
+
+<asy>
+draw((-2,1)--(-6,1),red+dashed,EndArrow);
+draw((-6,2)--(5,2),blue+dashed,EndArrow);
+dot((-2,0));
+dot((-6,0));
+dot((5,0));
+label("$-2$",(-2,0),dir(270));
+label("$-6$",(-6,0),dir(270));
+label("$5$",(5,0),dir(270));
+label("$4$",(-4,0.9),dir(270));
+label("$11$",(-1.5,2.5),dir(90));
+</asy>
+
+Crawling from <math>-2</math> to <math>-6</math> takes it a distance of <math>4</math> units. Crawling from <math>-6</math> to <math>5</math> takes it a distance of <math>11</math> units. Add <math>4</math> and <math>11</math> to get <math>\boxed{\textbf{(E)}\ 15}</math>
+
+==Video Solution (CREATIVE THINKING)==
+https://youtu.be/VKaj_HDCUuQ
+
+~Education, the Study of Everything
+
+== See Also ==
+
+{{AMC10 box|year=2012|ab=A|num-b=2|num-a=4}}
+{{AMC12 box|year=2012|ab=A|before=First Problem|num-a=2}}
+{{MAA Notice}}

@@ -1,0 +1,21 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2002_AMC_12B_Problems/Problem_7&action=raw
+
+Published Time: Thu, 02 Jan 2020 03:01:36 GMT
+
+Markdown Content:
+{{duplicate|[[2002 AMC 12B Problems|2002 AMC 12B #7]] and [[2002 AMC 10B Problems|2002 AMC 10B #11]]}}
+== Problem ==
+The product of three consecutive positive integers is 8 times their sum. What is the sum of their [[perfect square|squares]]?
+
+\mathrm{(A)}\ 50 \qquad\mathrm{(B)}\ 77 \qquad\mathrm{(C)}\ 110 \qquad\mathrm{(D)}\ 149 \qquad\mathrm{(E)}\ 194
+== Solution ==
+Let the three consecutive positive integers be a-1, a, and a+1. Since the mean is a, the sum of the integers is 3a. So 8 times the sum is just 24a. With this, we now know that a(a-1)(a+1)=24a\Rightarrow(a-1)(a+1)=24.  24=4\times6, so a=5. Hence, the sum of the squares is 4^2+5^2+6^2=\boxed{\mathrm{ (B)}\ 77}.
+
+== See also ==
+{{AMC10 box|year=2002|ab=B|num-b=10|num-a=12}}
+{{AMC12 box|year=2002|ab=B|num-b=6|num-a=8}}
+
+[[Category:Introductory Algebra Problems]]
+{{MAA Notice}}

@@ -1,0 +1,64 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2022_AMC_12A_Problems/Problem_17&action=raw
+
+Published Time: Sun, 13 Jul 2025 18:44:44 GMT
+
+Markdown Content:
+==Problem==
+
+Suppose a is a real number such that the equation a\cdot(\sin{x}+\sin{(2x)}) = \sin{(3x)}
+has more than one solution in the interval (0, \pi). The set of all such a that can be written
+in the form (p,q) \cup (q,r),
+where p, q, and r are real numbers with p < q< r. What is p+q+r?
+
+\textbf{(A) } {-}4 \qquad \textbf{(B) } {-}1 \qquad \textbf{(C) } 0 \qquad \textbf{(D) } 1 \qquad \textbf{(E) } 4
+
+==Solution 1==
+
+We are given that a\cdot(\sin{x}+\sin{(2x)})=\sin{(3x)}
+
+Using the sine double angle formula combine with the fact that \sin{(3x)} = \sin{x}\cdot(4\cos^2{x}-1), which can be derived using sine angle addition with \sin{(2x + x)}, we have a\cdot(\sin{x}+2\sin{x}\cos{x})=\sin{x}\cdot(4\cos^2{x}-1)
+Since \sin{x} \ne 0 as it is on the open interval (0, \pi), we can divide out \sin{x} from both sides, leaving us with a\cdot(1+2\cos{x})=4\cos^2{x}-1
+Now, distributing a and rearranging, we achieve the equation 4\cos^2{x} - 2a\cos{x} - (1+a) = 0 which is a quadratic in \cos{x}.
+
+Applying the quadratic formula to solve for \cos{x}, we get \cos{x} =\frac{2a\pm\sqrt{4a^2+4(4)(1+a)}}{8} and expanding the terms under the radical, we get \cos{x} =\frac{2a\pm\sqrt{4a^2+16a+16}}{8}
+Factoring, since 4a^2+16a+16 = (2a+4)^2, we can simplify our expression even further to \cos{x} =\frac{a\pm(a+2)}{4}
+
+Now, solving for our two solutions,  \cos{x} = -\frac{1}{2} and \cos{x} = \frac{a+1}{2}.
+
+Since \cos{x} = -\frac{1}{2} yields a solution that is valid for all a, that being x = \frac{2\pi}{3}, we must now solve for the case where \frac{a+1}{2} yields a valid value.
+
+As x\in (0, \pi), \cos{x}\in (-1, 1), and therefore \frac{a+1}{2}\in (-1, 1), and a\in(-3,1).
+
+There is one more case we must consider inside this interval though, the case where \frac{a+1}{2} = -\frac{1}{2}, as this would lead to a double root for \cos{x}, yielding only one valid solution for x. Solving for this case,  a \ne -2.
+
+Therefore, combining this fact with our solution interval, a\in(-3, -2) \cup (-2, 1), so the answer is -3-2+1 = \boxed{\textbf{(A) } {-}4}.
+
+- DavidHovey
+
+==Solution 2==
+
+We can optimize from the step from a\cdot(1+2\cos{x})=4\cos^2{x}-1 in solution 1 by writing
+
+a = \frac{4\cos^2{x}-1}{1+2\cos{x}} = 2\cos x - 1
+
+and then get
+ \cos x = \frac{a+1}{2}. 
+
+Now, solving for our two solutions,  \cos{x} = -\frac{1}{2} and \cos{x} = \frac{a+1}{2}.
+
+Since \cos{x} = -\frac{1}{2} yields a solution that is valid for all a, that being x = \frac{2\pi}{3}, we must now solve for the case where \frac{a+1}{2} yields a valid value.
+
+As x\in (0, \pi), \cos{x}\in (-1, 1), and therefore \frac{a+1}{2}\in (-1, 1), and a\in(-3,1).
+
+There is one more case we must consider inside this interval though, the case where \frac{a+1}{2} = -\frac{1}{2}, as this would lead to a double root for \cos{x}, yielding only one valid solution for x. Solving for this case,  a \ne -2.
+
+Therefore, combining this fact with our solution interval, a\in(-3, -2) \cup (-2, 1), so the answer is -3-2+1 = \boxed{\textbf{(A) } {-}4}.
+
+- Dan
+
+Remark: If you get to a \in (-3, 1), then you can observe from the answer choices that q must be -2, 1, or something greater than 1. Then you can guess that q=-2 since q can't be 1.
+
+==Solution 3==
+Use the sum to product formula to obtain 2a\cdot\sin{\frac{3x}{2}}\cos{\frac{x}{2}}=\sin{3x}. Use the double angle formula on the RHS to obtain a\cdot\sin{\frac{3x}{2}}\cos{\frac{x}{2}}=\sin{\frac{3x}{2}}\cos{\frac{3x}{2}}. From here, it is obvious that x=\frac{2\pi}{3} is always a solution, and thus we divide by \sin{\frac{3x}{2}} to get a\cdot\cos{\frac{x}{2}}=\cos{\frac{3x}{2}} We wish to find all a such that there is at least one more solution to this equation distinct from x=\frac{2\pi}{3}. Letting y=\cos{\frac{x}{2}}, and noting that \cos{\frac{3x}{2}}=4y^3-3y, we can rearrange our equation to 4y^3=y(3+a) The smallest value x where y=0 is \pi, which is not in our domain so we divide by y to obtain 4y^2=a+3. By the trivial inequality, a+3\ge{0}. Furthermore, y\neq{0}, so a+3>0. Also, if a=-2, then the solution to this equation would be shared with x=\frac{2\pi}{3}, so there would only be one distinct solution. Finally, because y\le{1} due to the restrictions of a sine wave, and that y\neq{1} due to the restrictions on x, we have -3 with a\neq{-2}. Thus, p=-3,q=-2, r=1, so our final answer is -3+(-2)+1=\boxed{\textbf{(A) } {-}4}. ~sigma ==Video Solution 1 (Quick and Simple)== https://youtu.be/Tl5hBEkHzbA ~Education, the Study of Everything ==Video Solution 2 by SpreadTheMathLove== https://www.youtube.com/watch?v=0gCMvUmZtpI == See Also == {{AMC12 box|year=2022|ab=A|num-b=16|num-a=18}} [[Category:Intermediate Trigonometry Problems]] {{MAA Notice}}

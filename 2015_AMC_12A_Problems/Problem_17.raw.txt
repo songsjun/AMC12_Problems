@@ -1,0 +1,389 @@
+{{duplicate|[[2015 AMC 12A Problems|2015 AMC 12A #17]] and [[2015 AMC 10A Problems|2015 AMC 10A #22]]}}
+==Problem==
+
+Eight people are sitting around a circular table, each holding a fair coin. All eight people flip their coins and those who flip heads stand while those who flip tails remain seated. What is the probability that no two adjacent people will stand?
+
+<math>\textbf{(A)}\dfrac{47}{256}\qquad\textbf{(B)}\dfrac{3}{16}\qquad\textbf{(C) }\dfrac{49}{256}\qquad\textbf{(D) }\dfrac{25}{128}\qquad\textbf{(E) }\dfrac{51}{256} </math>
+
+
+
+==Solution 1==
+We will count how many valid standing arrangements there are (counting rotations as distinct), and divide by <math>2^8 = 256</math> at the end. We casework on how many people are standing.
+
+Case <math>1:</math> <math>0</math> people are standing. This yields <math>1</math> arrangement.
+
+Case <math>2:</math> <math>1</math> person is standing. This yields <math>8</math> arrangements.
+
+Case <math>3:</math> <math>2</math> people are standing. This yields <math>\dbinom{8}{2} - 8 = 20</math> arrangements, because the two people cannot be next to each other.
+
+Case <math>5:</math> <math>4</math> people are standing. Then the people must be arranged in stand-sit-stand-sit-stand-sit-stand-sit fashion, yielding <math>2</math> possible arrangements.
+
+More difficult is:
+
+Case <math>4:</math> <math>3</math> people are standing. First, choose the location of the first person standing (<math>8</math> choices). Next, choose <math>2</math> of the remaining people in the remaining <math>5</math> legal seats to stand, amounting to <math>6</math> arrangements considering that these two people cannot stand next to each other. However, we have to divide by <math>3,</math> because there are <math>3</math> ways to choose the first person given any three. This yields <math>\dfrac{8 \cdot 6}{3} = 16</math> arrangements for Case <math>4.</math>
+
+Alternate Case <math>4:</math> Use complementary counting. Total number of ways to choose 3 people from 8 which is <math>\dbinom{8}{3}</math>. Sub-case <math>1:</math> three people are next to each other which is <math>\dbinom{8}{1}</math>. Sub-case <math>2:</math> two people are next to each other and the third person is not <math>\dbinom{8}{1}</math> <math>\dbinom{4}{1}</math>. This yields <math>\dbinom{8}{3} - \dbinom{8}{1} - \dbinom{8}{1} \dbinom{4}{1} = 16</math> 
+
+Summing gives <math>1 + 8 + 20 + 2 + 16 = 47,</math> and so our probability is <math>\boxed{\textbf{(A) } \dfrac{47}{256}}</math>.
+
+Alternate: (Quicksolve) - We know that for case 5, there are 8 ways to choose the first person, and 3 ways to choose the first person given any 3 - which means that for the case, there is 8 * something divided by 3. The sum of the other cases is 31/256. Thus, add a multiple of 8 to 31 to get an answer. The options are 31 + 8 = 39, 31 + 16 = 47, 31 + 24 = 55, etc. The only possible answer is 47/256.
+
+==Solution 1.5 (solution 1 but with visuals)== 
+'''Case 1:''' Everyone flips tails
+
+1 way:
+<asy>
+size(50);
+import graph;
+
+real R = 0.5;            // Radius of big circle
+real r = 0.05;         // Radius of small circles
+int n = 8;             // Number of small circles
+
+// Draw big circle
+draw(Circle((0,0), R), linewidth(1));
+
+// Place small circles on circumference
+for (int i = 0; i < n; ++i) {
+  real angle = 2*pi*i/n;
+  pair center = R * dir(degrees(angle));
+  draw(Circle(center, r), linewidth(0.8));
+}
+</asy>
+
+
+'''Case 2:''' One person flips heads 
+
+8 ways:
+<asy>
+size(400);
+import graph;
+
+real R = 1.5;            // Radius of big circle
+real r = 0.2;           // Radius of small circles
+int n = 8;               // Number of small circles
+
+for (int j = 0; j < 8; ++j) {
+  pair centerOffset = (j * 4, 0);  // space between diagrams
+
+  // Draw big circle
+  draw(shift(centerOffset) * Circle((0,0), R), linewidth(1));
+
+  // Draw small circles
+  for (int i = 0; i < n; ++i) {
+    real angle = 2 * pi * i / n;
+    pair pos = R * dir(degrees(angle));
+    pair finalPos = centerOffset + pos;
+
+    if (i == j) {
+      fill(Circle(finalPos, r), black); // Shade this one
+    } else {
+      draw(Circle(finalPos, r), linewidth(0.8)); // Outline others
+    }
+  }
+}
+</asy>
+
+'''Case 3:''' Two people flip heads 
+
+There are <math>\binom{8}{2}</math> ways to choose any <math>2</math> people in the circle and <math>8</math> ways to choose <math>2</math> people adjacent to each other. So this case gives us <math>\binom{8}{2} - 8 = 20</math> ways. An example of choosing two nonadjacent people is shown below. 
+  
+<asy>
+size(50);
+import graph;
+
+real R = 0.5;            // Radius of big circle
+real r = 0.05;           // Radius of small circles
+int n = 8;               // Number of small circles
+
+// Indices of two circles that are one circle apart
+int a = 0;
+int b = 2;
+
+// Compute centers of these two circles
+real angleA = 2*pi*a/n;
+real angleB = 2*pi*b/n;
+
+pair centerA = R * dir(degrees(angleA));
+pair centerB = R * dir(degrees(angleB));
+
+// Draw big circle
+draw(Circle((0,0), R), linewidth(1));
+
+// Draw small circles and shade the two chosen ones
+for (int i = 0; i < n; ++i) {
+  real angle = 2*pi*i/n;
+  pair center = R * dir(degrees(angle));
+  if (i == a || i == b) {
+    fill(Circle(center, r), black);
+  } else {
+    draw(Circle(center, r), linewidth(0.8));
+  }
+}
+
+// Draw line connecting the two shaded circles
+draw(centerA -- centerB, linewidth(1));
+</asy>
+
+
+'''Case 4:''' Three people flip heads
+
+We can choose the first person (shaded gray) in <math>8</math> ways. We can choose the other <math>2</math> people in <math>6</math> ways (purple-blue, yellow-red, green-yellow, green-blue, purple-red, green-red). We divide by <math>3</math> for overcounting to get <math>\frac{8 \cdot 6}{3} = 16</math> ways for this case. 
+
+<asy>
+size(50);
+import graph;
+
+real R = 1.5;   // Radius of big circle
+real r = 0.2;   // Radius of small circles
+int n = 8;      // Number of small circles
+
+pair center = (0, 0);
+
+// Draw big circle
+draw(Circle(center, R), linewidth(1));
+
+// Compute positions (clockwise, starting at top)
+pair[] pts;
+for (int i = 0; i < n; ++i) {
+  real angle = 90 - 360 * i / n; // Start at 90° and go clockwise
+  pts[i] = center + R * dir(angle);
+}
+
+// Draw circles with unique colors for shaded ones
+for (int i = 0; i < n; ++i) {
+  if (i == 0) {
+    fill(Circle(pts[i], r), gray);     // Circle 1
+  } else if (i == 2) {
+    fill(Circle(pts[i], r), red);      // Circle 3
+  } else if (i == 3) {
+    fill(Circle(pts[i], r), blue);     // Circle 4
+  } else if (i == 4) {
+    fill(Circle(pts[i], r), yellow);   // Circle 5
+  } else if (i == 5) {
+    fill(Circle(pts[i], r), purple);   // Circle 6
+  } else if (i == 6) {
+    fill(Circle(pts[i], r), green);    // Circle 7
+  } else {
+    draw(Circle(pts[i], r), linewidth(0.8)); // Others outlined only
+  }
+}
+
+// Draw triangle connecting circles 1, 4, 6 (indices 0, 3, 5)
+draw(pts[0] -- pts[3] -- pts[5] -- cycle, linewidth(1));
+</asy>
+
+'''Case 5:''' 4 people flip heads
+
+2 ways (we can either choose the people shaded in red or blue)
+
+<asy>
+size(50);
+import graph;
+
+real R = 1.5;
+real r = 0.15;
+
+// Circle centers, clockwise starting at top
+pair c0 = (0, R);
+pair c1 = R * dir(45);
+pair c2 = R * dir(90 - 2*45);
+pair c3 = R * dir(90 - 3*45);
+pair c4 = R * dir(90 - 4*45);
+pair c5 = R * dir(90 - 5*45);
+pair c6 = R * dir(90 - 6*45);
+pair c7 = R * dir(90 - 7*45);
+
+// Draw big circle
+draw(Circle((0,0), R), linewidth(1));
+
+// Group 1 vertices (blue)
+pen bluePen = blue + linewidth(1.5);
+filldraw(Circle(c0, r), blue);
+filldraw(Circle(c2, r), blue);
+filldraw(Circle(c4, r), blue);
+filldraw(Circle(c6, r), blue);
+draw(c0--c2--c4--c6--c0, bluePen);
+
+// Group 2 vertices (red)
+pen redPen = red + linewidth(1.5);
+filldraw(Circle(c1, r), red);
+filldraw(Circle(c3, r), red);
+filldraw(Circle(c5, r), red);
+filldraw(Circle(c7, r), red);
+draw(c1--c3--c5--c7--c1, redPen);
+</asy>
+
+It's impossible to have more than 4 people standing without anyone being next to each other, so we stop here. 
+
+The total number of ways is <math>2^8,</math> so the answer is <math>\frac{1 + 8 + 20 + 16 + 2}{2^8} = \boxed{\frac{47}{256}}.</math>
+
+~[[User:grogg007|grogg007]]
+
+==Solution 2==
+We will count how many valid standing arrangements there are counting rotations as distinct and divide by <math>256</math> at the end.
+Line up all <math>8</math> people linearly.  In order for no two people standing to be adjacent, we will place a sitting person to the right of each standing person.  In effect, each standing person requires <math>2</math> spaces and the standing people are separated by sitting people.  We just need to determine the number of combinations of pairs and singles and the problem becomes very similar to pirates and gold aka stars and bars aka sticks and stones aka balls and urns.
+
+If there are <math>4</math> standing, there are <math>{4 \choose 4}=1</math> ways to place them.
+For <math>3,</math> there are <math>{3+2 \choose 3}=10</math> ways.
+etc.
+Summing, we get <math>{4 \choose 4}+{5 \choose 3}+{6 \choose 2}+{7 \choose 1}+{8 \choose 0}=1+10+15+7+1=34</math> ways.
+
+Now we consider that the far right person can be standing as well, so we have
+<math>{3 \choose 3}+{4 \choose 2}+{5 \choose 1}+{6 \choose 0}=1+6+5+1=13</math> ways
+
+Together we have <math>34+13=47</math>, and so our probability is <math>\boxed{\textbf{(A) } \dfrac{47}{256}}</math>.
+
+== Solution 3 (Recursion) ==
+Because the denominator is always <math>256</math>, we can count the numerator with a recursion. Define <math>c_n</math> and <math>r_n</math> as the number of satisfying arrangements on a circle and row with <math>n</math> seats, respectively. 
+
+Then, observe that <cmath>c_n=r_{n-1}+r_{n-3}</cmath> <cmath>r_n=r_{n-1}+r_{n-2}</cmath>
+(From casework on whether the <math>n</math>th position has <math>T</math> or <math>H</math>.). 
+
+Because <math>r_0=1, r_1=2</math>, we can continue to write out each <math>r_i</math> and hence find <math>c_8=47</math>. Our answer is then <math>\boxed{\textbf{(A) } \dfrac{47}{256}}</math>.
+
+==Solution 4 (Recursion)==
+
+We know that the denominator of the probability is <math>2^8=256</math>. So now we only have to calculate the numerator, which is the number of arrangements for <math>8</math> people at a round table without <math>2</math> or more neighboring people standing.
+
+Denote <math>a_n</math> as number of arrangements for <math>n</math> people at a round table without <math>2</math> or more neighboring people standing. We can see that <math>a_2=3</math>, <math>a_3=4</math>, we are going to prove <math>a_n=a_{n-1}+a_{n-2}</math>
+
+We use <math>1</math> to represent standing people, and <math>0</math> as sitting people. The problem becomes arranging <math>n</math> numbers of <math>0</math> or <math>1</math> around a circle with no consecutive <math>1</math>'s.
+
+We elect one person as the chairman, let him be <math>p_1</math>, the first element in this circular sequence.
+There are <math>2</math> cases to generate the arrangement of <math>n</math> numbers.
+
+<math>Case</math> <math>1:</math> From the arrangement of <math>n-1</math> numbers, add <math>1</math> more number <math>p_n</math> counter-clockwise next to <math>p_1</math>. 
+
+If <math>p_1=1</math>, <math>p_{n-1}p_np_1</math> is <math>001</math>, as the diagram shows:
+
+<asy>
+draw(circle((0, 0), 5));
+pair A, B, C;
+A=(0, 5);
+B=rotate(72)*A;
+C=rotate(144)*A;
+label("$p_1=1$", A, N);
+label("$p_n=0$", B, NW);
+label("$p_{n-1}=0$", C, SW);
+</asy>
+
+If <math>p_1=0</math>, <math>p_{n-1}p_np_1</math> is <math>X00</math>, <math>X</math> could be <math>0</math> or <math>1</math>, as the diagram shows:
+
+<asy>
+draw(circle((0, 0), 5));
+pair A, B, C;
+A=(0, 5);
+B=rotate(72)*A;
+C=rotate(144)*A;
+label("$p_1=0$", A, N);
+label("$p_n=0$", B, NW);
+label("$p_{n-1}=X$", C, SW);
+</asy>
+
+<math>Case</math> <math>2:</math> From the arrangement of <math>n-2</math> numbers, add <math>2</math> more numbers <math>p_{n-1}</math> and <math>p_n</math> counter-clockwise next to <math>p_1</math>.
+
+If <math>p_1=1</math>, then <math>p_{n-2}=0</math>, let <math>p_{n-1}=1, p_n=0</math>, <math>p_{n-1}p_np_1</math> is <math>101</math>, as the diagram shows:
+
+<asy>
+draw(circle((0, 0), 5));
+pair A, B, C;
+A=(0, 5);
+B=rotate(72)*A;
+C=rotate(144)*A;
+label("$p_1=1$", A, N);
+label("$p_n=0$", B, NW);
+label("$p_{n-1}=1$", C, SW);
+</asy>
+
+If <math>p_1=0</math>, then <math>p_{n-2}</math> could be <math>0</math> or <math>1</math>. Let <math>p_{n-1}=0, p_n=1</math>, <math>p_{n-1}p_np_1</math> is <math>010</math>, as the diagram shows:
+
+<asy>
+draw(circle((0, 0), 5));
+pair A, B, C;
+A=(0, 5);
+B=rotate(72)*A;
+C=rotate(144)*A;
+label("$p_1=0$", A, N);
+label("$p_n=1$", B, NW);
+label("$p_{n-1}=0$", C, SW);
+</asy>
+
+From the above <math>2</math> cases and the <math>4</math> diagrams, the arrangements of <math>p_{n-1}p_np_1</math> are mutually exclusive collectively exhaustive, so <math>a_{n}=a_{n-1}+a_{n-2}</math>
+ <math>a_2=3</math>
+ <math>a_3=4</math>
+ <math>a_4=7</math>
+ <math>a_5=11</math>
+ <math>a_6=18</math>
+ <math>a_7=29</math>
+ <math>a_8=47</math>
+
+The answer is <math>\boxed{\textbf{(A) } \dfrac{47}{256}}</math>
+
+This sequence of numbers is called [https://en.wikipedia.org/wiki/Lucas_number Lucas Number].
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+==Solution 5 (Recursion)==
+Note that there are <math>2^8=256</math> cases in total, so it suffices to find the number of satisfying cases. Define <math>h_n</math> and <math>t_n</math> as sequences of <math>h</math>’s and <math>t</math>’s where no <math>2</math> <math>h</math>’s are adjacent. The sequences will end in <math>h</math> and <math>t</math>, respectively (ignore the fact that they are in a circle for now).
+
+In order for a sequence to end in <math>h</math>, the previous term has to be a <math>t</math>; a sequence with a length of <math>n</math> ending in <math>h</math> is equivalent to adding <math>h</math> to the end of a sequence of length <math>n-1</math> that ends with <math>t</math>. This means <math>h_n=t_{n-1}</math>. 
+
+In order for a sequence to end in <math>t</math>, the previous term can be <math>h</math> or <math>t</math>, so <math>t_n=t_{n-1}+h_{n-1}</math>.
+
+Now, we have to take account of the circle. Notice that <math>t_n</math> does not depend on if the people are in a circle or not, but <math>h_n</math> does. To guarantee that some sequence that ends with <math>h</math> does not start with <math>h</math>, we have to add a <math>t</math> in the beginning of the sequence. Since there are <math>n-1</math> terms left, there are <math>h_{n-1}</math> sequences which end with <math>h</math> that satisfy the circle condition.
+
+The length of our sequence is <math>8</math>, so we need to find <math>t_8+h_7</math>. Manipulating our recursions, we can find that <math>t_n=t_{n-1}+t_{n-2}</math>. Now, we proceed to find our terms.
+
+<math>t_1=1</math>
+
+<math>t_2=2</math>
+
+<math>t_3=3</math>
+
+<math>t_4=5</math>
+
+<math>t_5=8</math>
+
+<math>t_6=13</math>
+
+<math>t_7=21</math>
+
+<math>t_8=34</math>
+
+Since <math>h_7=t_6</math> due to the fact that <math>h_n=t_{n-1}</math>, our answer is <math>\frac{34+13}{256}=\boxed{\textbf{(A) } \dfrac{47}{256}}</math>.
+
+~kn07
+
+==Solution 6 (big fas)==
+There can be 0, 1, 2, 3, or 4 people standing up. 
+
+0 people standing up : 1 way
+
+
+1 person standing up : 8 ways
+
+
+2 people standing up : 8 for the first, 5 for the second, divide by 2 for double count, 20 ways.
+
+
+3 people standing up : we can start drawing, and notice we can only have gaps of (1,1,3) or (2,2,1). Rotating, we get 8+8=16.
+
+
+4 people standing up : must be alternating all the way through. 2 ways
+
+<math>1+8+20+16+2 = 47</math>, since there are <math>2^8=256</math> ways total, the answer is <math>\boxed{\textbf{(A)}\frac{47}{256}}</math>
+
+-skibbysiggy
+
+== Video Solution by Richard Rusczyk ==
+
+https://www.youtube.com/watch?v=krlnSWWp0I0
+
+== See Also ==
+{{AMC10 box|year=2015|ab=A|num-b=21|num-a=23}}
+{{AMC12 box|year=2015|ab=A|num-b=16|num-a=18}}
+
+{{MAA Notice}}
+
+[[Category: Introductory Combinatorics Problems]]

@@ -1,0 +1,21 @@
+{{duplicate|[[2015 AMC 12A Problems|2015 AMC 12A #8]] and [[2015 AMC 10A Problems|2015 AMC 10A #11]]}}
+==Problem 11==
+
+The ratio of the length to the width of a rectangle is <math>4</math> : <math>3</math>. If the rectangle has diagonal of length <math>d</math>, then the area may be expressed as <math>kd^2</math> for some constant <math>k</math>. What is <math>k</math>?
+
+<math>\textbf{(A)}\ \frac{2}{7}\qquad\textbf{(B)}\ \frac{3}{7}\qquad\textbf{(C)}\ \frac{12}{25}\qquad\textbf{(D)}\ \frac{16}{25}\qquad\textbf{(E)}\ \frac{3}{4}</math>
+
+==Solution==
+Let the rectangle have length <math>4x</math> and width <math>3x</math>. Then by <math>3-4-5</math> triangles (or the Pythagorean Theorem), we have <math>d = 5x</math>, and so <math>x = \dfrac{d}{5}</math>. Hence, the area of the rectangle is <math>3x \cdot 4x = 12x^2 = \dfrac{12d^2}{25}</math>, so the answer is <math>\boxed{\textbf{(C)}\;\frac{12}{25}}</math>
+
+==Video Solution==
+https://youtu.be/Ep-IQmOK-nU
+
+~savannahsolver
+
+== See also ==
+{{AMC10 box|year=2015|ab=A|num-b=10|num-a=12}}
+{{AMC12 box|year=2015|ab=A|num-b=7|num-a=9}}
+
+[[Category:Introductory Geometry Problems]]
+{{MAA Notice}}

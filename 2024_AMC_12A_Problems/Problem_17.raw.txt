@@ -1,0 +1,151 @@
+{{duplicate|[[2024 AMC 10A Problems/Problem 23|2024 AMC 10A #23]] and [[2024 AMC 12A Problems/Problem 17|2024 AMC 12A #17]]}}
+
+==Problem==
+Integers <math>a</math>, <math>b</math>, and <math>c</math> satisfy <math>ab + c = 100</math>, <math>bc + a = 87</math>, and <math>ca + b = 60</math>. What is <math>ab + bc + ca</math>?
+
+<math>
+\textbf{(A) }212 \qquad
+\textbf{(B) }247 \qquad
+\textbf{(C) }258 \qquad
+\textbf{(D) }276 \qquad
+\textbf{(E) }284 \qquad
+</math>
+
+==Solution 1==
+Subtracting the first two equations yields <math>(a-c)(b-1)=13</math>. Notice that both factors are integers, so <math>b-1</math> could equal one of <math>13,1,-1,-13</math> and <math>b=14,2,0,-12</math>. We consider each case separately:
+
+For <math>b=0</math>, from the second equation, we see that <math>a=87</math>. Then <math>87c=60</math>, which is not possible as <math>c</math> is an integer, so this case is invalid.
+
+For <math>b=2</math>, we have <math>2c+a=87</math> and <math>ca=58</math>, which by experimentation on the factors of <math>58</math> has no solution, so this is also invalid.
+
+For <math>b=14</math>, we have <math>14c+a=87</math> and <math>ca=46</math>, which by experimentation on the factors of <math>46</math> has no solution, so this is also invalid.
+
+Thus, we must have <math>b=-12</math>, so <math>a=12c+87</math> and <math>ca=72</math>. Thus <math>c(12c+87)=72</math>, so <math>c(4c+29)=24</math>. We can simply trial and error this to find that <math>c=-8</math> so then <math>a=-9</math>. The answer is then <math>(-9)(-12)+(-12)(-8)+(-8)(-9)=108+96+72=\boxed{\textbf{(D) }276}</math>.
+
+By Antony Huang ~Very Minor Edit by lucassf12
+
+==Solution 2==
+Adding up first two equations: <cmath>(a+c)(b+1)=187</cmath>
+<cmath>b+1=\pm 11,\pm 17</cmath>
+<cmath>b=-12,10,-18,16</cmath>
+
+Subtracting equation 1 from equation 2: <cmath>(a-c)(b-1)=13</cmath>
+<cmath>b-1=\pm 1,\pm 13</cmath>
+<cmath>b=0,2,-12,14</cmath>
+
+<cmath>\Rightarrow b=-12</cmath>
+
+Which implies that <math>a+c=-17</math> from <math>(a+c)(b+1)=187</math>
+
+Giving us that <math>a+b+c=-29</math>
+
+Therefore, <math>ab+bc+ac=100+87+60-(a+b+c)=\boxed{\text{(D) }276}</math>
+
+~lptoggled
+
+== Solution 3 (Guess and check) ==
+The idea is that you could guess values for <math>c</math>, since then <math>a</math> and <math>b</math> are factors of <math>100 - c</math>. The important thing to realize is that <math>a</math>, <math>b</math>, and <math>c</math> are all negative. Then, this can be solved in a few minutes, giving the solution <math>(-9, -12, -8)</math>, which gives the answer <math>\boxed{\textbf{(D)} 276}</math>
+~andliu766
+
+
+==Solution 4==
+
+<cmath>\begin{align}
+ab + c &= 100 \\
+bc + a &= 87 \\
+ca + b &= 60
+\end{align}</cmath>
+
+<cmath>(1) + (2) \implies  ab + c +bc + a = (a+c)(b+1)=187\implies b+1=\pm 11,\pm 17</cmath>
+
+<cmath>(1) - (2) \implies ab + c - bc - a = (a-c)(b-1)=13\implies b-1=\pm 1,\pm 13</cmath>
+
+Note that <math>(b+1)-(b-1)=2</math>, and the only possible pair of results that yields this is <math>b-1=-13</math> and <math>b+1=-11</math>, so <math>a+c=-17</math>. 
+
+Therefore, 
+
+<cmath>ab+ba+ac=ab + c +bc + a + ca + b -(a+b+c) = (1)+(2)+(3) - (a+b+c) = 100+87+60-(a+b+c)=\boxed{\textbf{(D) }276}.</cmath>
+~[https://artofproblemsolving.com/wiki/index.php/User:Cyantist luckuso], yuvag, Technodoggo (LaTeX credits to the latter two and editing to the latter)
+
+==Solution 5==
+<cmath>\begin{align}
+ab + c &= 100 \\
+bc + a &= 87 \\
+ca + b &= 60
+\end{align}</cmath>
+
+\begin{align*}
+(1) - (2) \implies ab + c -bc - a &=(a-c)(b-1)=13 \\
+(2) - (3) \implies bc + a -ca - b &=(b-a)(c-1)=27 \\
+(3) - (1) \implies ca + b -ab - c &=(c-b)(a-1)=-40
+\end{align*}
+
+There are <math>3</math> ordered pairs of <math>(a,b,c)</math>: <math>(5,14,4)</math>, <math>(-3,-12,-3)</math>, <math>(-9,-12,-8)</math>. 
+
+However, only the last ordered pair meets all three equations.
+
+Therefore, <math>ab+ba+ac= -9\cdot-12+-12\cdot-8+-8\cdot-9 = \boxed{\textbf{(D) }276}.</math>
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Cyantist luckuso], megaboy6679 (formatting), Technodoggo (LaTeX optimization/clarity adjustments)
+
+==Solution 6 (Elimination)==
+
+Before we start, keep in mind that the problem is asking for the sum \(ab+bc+ac\). This is nothing but \(100+87+60-a-b-c\), or \(247-(a+b+c\)). 
+
+To solve the problem, we systematically test the options using elimination:
+
+Let's first check options A and B, since they only happen when a,b, and c sum to 35 or 0.
+We begin by testing three positive values, but none satisfy the equation when there is a plus sign. For example, \( (12, 8, 4) \) satisfies \( ab + c = 100 \), but does not satisfy \( bc + a = 87\), or \( ac + b = 60\). If \(a+b+c=0\), then not all of the numbers can be positive or negative, so this would not work.
+From this observation, we conclude that the answer cannot be \( \textbf{A} \) or \( \textbf{B} \).
+
+Now let's test the next option, option C.
+Option \( \textbf{C} \) states \( ab + bc + ca = 258 \). If true, then:
+
+\(a + b + c = -11\)
+
+This sum is too large. Furthermore, if all three numbers are negative, the solution still fails. For example, testing \( (-4, -5, -2) \) confirms the equation is not satisfied, as we get results that are too small. Thus, we eliminate option \( \textbf{C} \).
+
+Finally, let's test the last two options: D and E.
+For option \( \textbf{E} \), the sum \( a + b + c \) would be:
+
+\(247 - 284 = -37\)
+
+Testing values such as \( (-11, -12, -14) \), the resulting sums \( ab + c \), \( bc + a \), and \( ac + b \) are far too large to satisfy the equation.  
+Therefore, \( \textbf{E} \) is also eliminated.
+
+Once we have this answer, we still need to verify it by testing out numbers:
+Finally, we test option \( \textbf{D} \). Using \( ab + bc + ca = 276 \), we get that \(a+b+c = -29\). Also note that a, b, and c all have to be different, because the sums from the three equations are all different. We want to get the three closest values of a, b, and c such that they are all different, and the sum \(a+b+c = -29\). The values \( (-9, -12, -8) \) are the closest three numbers. When we try them, they satisfy all three equations.
+So, the correct answer is:
+<math>ab+ba+ac= -9\cdot-12+-12\cdot-8+-8\cdot-9 = \boxed{\textbf{(D) }276}.</math>
+
+~pimathmonkey
+
+== Video Solution by STEM Station(Quick and Easy to Understand!) ==
+https://youtu.be/bfeqoUiWNhE
+
+==Video Solution, Fast, Quick, Easy! Simple Factoring Technique==
+https://youtu.be/g4xdfcFgwGo
+
+==Video Solution by SpreadTheMathLove==
+https://youtu.be/CVjqq_yRWvA?si=MgzdckiX0nCJP1jA
+
+==Video Solution by TheBeautyofMath==
+https://youtu.be/1JyBt8Bh_vI
+
+== Video solution by TheNeuralMathAcademy ==
+https://www.youtube.com/watch?v=4b_YLnyegtw&t=5249s
+
+==See Also==
+
+
+{{AMC10 box|year=2024|ab=A|num-b=22|num-a=24}}
+
+
+{{AMC12 box|year=2024|ab=A|num-b=16|num-a=18}}
+
+
+* [[AMC 10]]
+* [[AMC 10 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

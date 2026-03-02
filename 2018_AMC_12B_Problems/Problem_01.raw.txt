@@ -1,0 +1,30 @@
+{{duplicate|[[2018 AMC 12B Problems|2018 AMC 12B #1]] and [[2018 AMC 10B Problems|2018 AMC 10B #1]]}}
+
+==Problem==
+Kate bakes a <math>20</math>-inch by <math>18</math>-inch pan of cornbread. The cornbread is cut into pieces that measure <math>2</math> inches by <math>2</math> inches. How many pieces of cornbread does the pan contain?
+
+<math>\textbf{(A) } 90 \qquad \textbf{(B) } 100 \qquad \textbf{(C) } 180 \qquad \textbf{(D) } 200 \qquad \textbf{(E) } 360</math>
+
+== Solution 1 ==
+
+The area of the pan is <math>20\cdot18=360</math>. Since the area of each piece is <math>2\cdot2=4</math>, there are <math>\frac{360}{4} = \boxed{\textbf{(A) } 90}</math> pieces.
+
+== Solution 2 ==
+
+By dividing each of the dimensions by <math>2</math>, we get a <math>10\times9</math> grid that makes <math>\boxed{\textbf{(A) } 90}</math> pieces.
+
+==Video Solution (HOW TO THINK CRITICALLY!!!)==
+https://youtu.be/uCRbTeTlbuU
+
+~Education, the Study of Everything
+
+==Video Solution==
+https://youtu.be/o5MUHOmF1zo
+
+~savannahsolver
+
+==See Also==
+
+{{AMC10 box|year=2018|ab=B|before=First Problem|num-a=2}}
+{{AMC12 box|year=2018|ab=B|before=First Problem|num-a=2}}
+{{MAA Notice}}

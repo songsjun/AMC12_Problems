@@ -1,0 +1,100 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2022_AMC_12A_Problems/Problem_16&action=raw
+
+Published Time: Tue, 26 Nov 2024 13:39:48 GMT
+
+Markdown Content:
+==Problem==
+
+A \emph{triangular number} is a positive integer that can be expressed in the form t_n = 1+2+3+\cdots+n, for some positive integer n. The three smallest triangular numbers that are also perfect squares are
+t_1 = 1 = 1^2, t_8 = 36 = 6^2, and t_{49} = 1225 = 35^2. What is the sum of the digits of the fourth smallest triangular number that is also a perfect square?
+
+\textbf{(A) } 6 \qquad \textbf{(B) } 9 \qquad \textbf{(C) } 12 \qquad \textbf{(D) } 18 \qquad \textbf{(E) } 27 
+
+==Solution 1(Pell Equation)==
+We have t_n = \frac{n (n+1)}{2}.
+If t_n is a perfect square, then it can be written as
+\frac{n (n+1)}{2} = k^2,
+where k is a positive integer.
+
+Thus, n (n+1) = 2 k^2. Rearranging, we get (2n+1)^2-2(2k)^2=1, a Pell equation (see https://artofproblemsolving.com/wiki/index.php/Pell_equation
+). So \frac{2n+1}{2k} must be a truncation of the continued fraction for \sqrt{2}:
+
+\begin{eqnarray*} 1+\frac12&=&\frac{2\cdot1+1}{2\cdot1}\\ 1+\frac1{2+\frac1{2+\frac12}}&=&\frac{2\cdot8+1}{2\cdot6}\\ 1+\frac1{2+\frac1{2+\frac1{2+\frac1{2+\frac12}}}}&=&\frac{2\cdot49+1}{2\cdot35}\\ 1+\frac1{2+\frac1{2+\frac1{2+\frac1{2+\frac1{2+\frac1{2+\frac12}}}}}}&=&\frac{2\cdot288+1}{2\cdot204} \end{eqnarray*}
+
+Therefore, t_{288} = \frac{288\cdot289}{2} = 204^2 = 41616, so the answer is 4+1+6+1+6=\boxed{\textbf{(D) 18}}.
+
+- Steven Chen (Professor Chen Education Palace, www.professorchenedu.com) 
+
+Edited by wzs26843545602
+Edited by dad
+
+===Solution 1a (Alt. Pell)===
+
+As in Solution 1, we find that (2n+1)^2-8k^2=1. Let q=2n+1; applying the difference of squares, we see that (q-2\sqrt2k)(q+2\sqrt2k)=1. For this Pell equation, note that q+2\sqrt2k and q-2\sqrt2k are both algebraic integers that are conjugates of each other. WLOG let z=q-2\sqrt2k so that \overline z=q+2\sqrt2k; we know that z\overline z=1. It is clear that \overline{ab}=\overline a\overline b, and it immediately follows that \left(z^n\right)\overline{\left(z^n\right)}=1. In essence, for a solution z to z\overline z=1, then any integer power of z is also a solution. This is particularly useful in this problem: we are given that n=1\implies q=3 and k=1 is a solution, so z=3-2\sqrt2. From our result, we know that z^2=\left(3-2\sqrt2\right)^2=17-2\sqrt2\cdot6 is also a solution; this particular solution is n=8 and k=6, which is the second smallest desired number. Similarly, z^3 gives us the third-smallest desired number, so z^4 must give us our desired answer. We can calculate: z^4=\left(17-2\sqrt2\cdot6\right)^2=289+288-2\cdot17\cdot6\cdot2\sqrt2=577-2\sqrt2\cdot204. This lets n=288 and k=204; we thus know that T_{288}=204^2=41616, which has digit sum \boxed{\textbf{(D) }18}. QED. \Box
+
+~Technodoggo
+
+==Solution 2 (Bash)==
+
+As mentioned above, t_n = \frac{n (n+1)}{2}. If t_n is a perfect square, one of two things must occur when the fraction is split into a product. Either \frac{n}{2} and n+1 must both be squares, or n and \frac{n+1}{2} must both be squares, and thus the search for the next perfect square triangular number can be narrowed down by testing values of n that are close to or are perfect squares. After some work, we reach n = 288, 1 less than 289, and t_{288} = \frac{288\cdot289}{2} = 144 \cdot 289 = 41616. This product is a perfect square, and thus the sum of the digits of the fourth smallest perfect square triangular number is therefore 4+1+6+1+6=\boxed{\textbf{(D) 18}}. 
+
+~kingme271
+
+==Solution 3==
+According to the problem, we want to find integer p such \frac{n(n+1)}{2}=p^2, after expanding, we have n^2+n=2p^2, 4n^2+4n=8p^2, (2n+1)^2-8p^2=1, we call 2n+1=q, the equation becomes q^2-8p^2=1, obviously (q,p)=(3,1) is the elementary solution for this pell equation, thus the forth smallest solution set q_4+2\sqrt{2}p_4=(3+2\sqrt{2})^4=577+408\sqrt{2}, which indicates p=204, p^2=41616 leads to \boxed{18}
+
+~bluesoul
+
+==Solution 4==
+If n \choose 2 is a square, then {(2n-1)^2 \choose 2} is also a square. We can prove this quite simply:
+
+{(2n-1)^2 \choose 2}
+ = \frac{(2n-1)^2 \cdot ((2n-1)^2 - 1)}{2}
+ = \frac{(2n-1)^2 \cdot (2n \cdot (2n - 2))}{2}
+ = (2n-1)^2 \cdot 4{n \choose 2}.
+
+Therefore, {(2 \cdot 9 - 1)^2 \choose 2} is a square. Note that T_n = {n+1 \choose 2}. We can easily check all smaller possibilities using a bit of casework, and they don't work. Our solution is thus {289 \choose 2} = 204^2 = 41616, and so the answer is \boxed{18}.
+
+~mathboy100
+==Solution 5==
+We want to find integer n_i and m_i such that t_{n_i} =\frac{n_i (n_i + 1)}{2}=m_i^2, n_0 = 0.
+
+We use the formula \sqrt{n_{i+1}} = \sqrt{2n_i} + \sqrt{n_i + 1} and get
+
+n_1 = ( \sqrt{2n_0} + \sqrt{n_0 + 1})^2 = (0+1)^2 = 1,  
+n_2= ( \sqrt{2n_1} + \sqrt{n_1 + 1})^2 = ( \sqrt{2} + \sqrt{1 + 1})^2 = 8, 
+n_3= ( \sqrt{2n_2} + \sqrt{n_2 + 1})^2 = ( \sqrt{16} + \sqrt{8 + 1})^2 = 49,
+n_4 = ( \sqrt{2n_3} + \sqrt{n_3 + 1})^2 = ( \sqrt{98} + \sqrt{49 + 1})^2 = ((7 + 5)\sqrt{2})^2 = 288, 
+n_5 = ( \sqrt{2n_4} + \sqrt{n_4 + 1})^2 = ( \sqrt{576} + \sqrt{289})^2 = (24 + 17)^2 = 1681,
+n_6 = ( \sqrt{2n_5} + \sqrt{n_5 + 1})^2 = ( 41\sqrt{2} + \sqrt{1682})^2 = ((41 + 29)\sqrt{2})^2 = 9800,... 
+Therefore, t_{n_4} = t_{288} = \frac{288\cdot289}{2} = 41616 \implies 4+1+6+1+6=\boxed{\textbf{(D) 18}}
+
+*[[Pell's equation (simple solutions)]]
+
+'''vladimir.shelomovskii@gmail.com, vvsss'''
+
+==Solution 6(Fast and Simple)==
+This is an easy one to tackle by just noticing a pattern. Write out all the perfect squares before 300, and then notice that 4 and 9 are what are the factors of the 8th term. 25 and 49 are factors of the 49th term. 4 multiplied by 2 is one less then 9. 25 multiplied by 2 is one more than 49. Well, then we keep on writing out the perfect squares and then hunt for any that can be multiplied by two and then has an absolute value of 1 valued difference. 144 and 289 satisfy this. 288th term would give us these factors. By the way, this isn't  very rigorous. 
+
+No formula needed. 
+
+emilyyunhanq@gmail.com
+
+==Video Solution==
+
+https://youtu.be/ZmSg0JYEoTw
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+==Video Solution (Smart and Simple) ==
+
+https://youtu.be/7yAh4MtJ8a8?si=yGkqWQUlYlVmVbqj&t=3716
+
+~Math-X
+
+== See Also ==
+
+{{AMC12 box|year=2022|ab=A|num-b=15|num-a=17}}
+{{MAA Notice}}

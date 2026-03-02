@@ -1,0 +1,75 @@
+{{duplicate|[[2022 AMC 10A Problems/Problem 1|2022 AMC 10A #1]] and [[2022 AMC 12A Problems/Problem 1|2022 AMC 12A #1]]}}
+
+==Problem==
+What is the value of <cmath>3+\frac{1}{3+\frac{1}{3+\frac13}}?</cmath>
+<math>\textbf{(A)}\ \frac{31}{10}\qquad\textbf{(B)}\ \frac{49}{15}\qquad\textbf{(C)}\ \frac{33}{10}\qquad\textbf{(D)}\ \frac{109}{33}\qquad\textbf{(E)}\ \frac{15}{4}</math>
+
+== Solution 1 == 
+We have 
+<cmath>\begin{align*}
+3+\frac{1}{3+\frac{1}{3+\frac13}} &= 3+\frac{1}{3+\frac{1}{\left(\frac{10}{3}\right)}} \\
+&= 3+\frac{1}{3+\frac{3}{10}} \\
+&= 3+\frac{1}{\left(\frac{33}{10}\right)} \\
+&= 3+\frac{10}{33} \\
+&= \boxed{\textbf{(D)}\ \frac{109}{33}}.
+\end{align*}</cmath>
+~MRENTHUSIASM
+
+== Solution 2 == 
+Continued fractions with integer parts <math>q_i</math> and numerators all <math>1</math> can be calculated as 
+<cmath>\begin{align*}
+\dfrac{[q_0,q_1,q_2,\ldots,q_n]}{[q_1,q_2,\ldots,q_n]}
+\end{align*}</cmath>
+where
+<cmath>\begin{align*}
+[]&=1 \\
+[q_0,q_1,q_2,\ldots,q_n]&=q_0[q_1,q_2,\ldots,q_n]+[q_2,\ldots,q_n]\\
+\end{align*}</cmath>
+
+<cmath>\begin{align*}
+[3]&=3(1) = 3\\
+[3,3]&=3(3)+1=10\\
+[3,3,3]&=3(10)+3=33\\
+[3,3,3,3]&=3(33)+10=109\\
+\dfrac{[q_0,q_1,q_2,\ldots,q_n]}{[q_1,q_2,\ldots,q_n]}&=\dfrac{[3,3,3,3]}{[3,3,3]}\\
+&=\boxed{\textbf{(D)}\ \frac{109}{33}}
+\end{align*}</cmath>
+~lopkiloinm
+
+== Solution 3 ==
+
+Finite continued fractions of form <math>n+\frac{1}{n+\frac{1}{n+\cdots}}=\frac{x}{y}</math> have linear combinations of <math>x, y</math> that solve Pell's Equation. Specifically, the denominator <math>y</math> and numerator <math>x</math> are solutions to the Diophantine equation <math>(n^2+4)\left(\frac{y}{2}\right)^2-\left(x-\frac{ny}{2}\right)^2=\pm{1}</math>. So for this problem in particular, the denominator <math>y</math> and numerator <math>x</math> are solutions to the Diophantine equation <math>13\left(\frac{y}{2}\right)^2-\left(x-\frac{3y}{2}\right)^2=\pm{1}</math>. That leaves two answers. Since the number of <math>1</math>'s in the continued fraction is odd, we further narrow it down to <math>13\left(\frac{y}{2}\right)^2-\left(x-\frac{3y}{2}\right)^2=-1</math>, which only leaves us with <math>1</math> answer and that is <math>(x,y)=(109,33)</math> which means <math>\boxed{\textbf{(D)}\ \frac{109}{33}}</math>. 
+
+~lopkiloinm
+
+(Note: Integer solutions increase exponentially, so our next solution will have a numerator greater than <math>3^2(109)</math>. Therefore, when you don't see numerators greater than <math>3^2(109)</math> in the answer choices, this method should be fine.)
+
+==Video Solution 1 ==
+https://youtu.be/iVvBTapX3Fs
+
+~Education, the Study of Everything
+
+==Video Solution 2==
+https://youtu.be/4zoXEjrBAgk
+
+~Charles3829
+
+==Video Solution 3==
+https://www.youtube.com/watch?v=7yAh4MtJ8a8&t=222s
+
+~Math-X
+
+==Video Solution 4==
+https://youtu.be/0b8OGBp1Ew0
+
+==Video Solution 5==
+https://www.youtube.com/watch?v=PgJcNkO8Fh8
+
+~Math4All999
+
+== See Also ==
+
+{{AMC10 box|year=2022|ab=A|before=First Problem|num-a=2}}
+{{AMC12 box|year=2022|ab=A|before=First Problem|num-a=2}}
+{{MAA Notice}}
+[[Category: Introductory Algebra Problems]]

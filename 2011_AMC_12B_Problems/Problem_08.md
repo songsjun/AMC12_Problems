@@ -1,0 +1,27 @@
+# 2011 AMC 12B Problem 8
+
+## Problem
+Keiko walks once around a track at the same constant speed every day.  The sides of the track are straight, and the ends are semicircles.  The track has a width of 6 meters, and it takes her 36 seconds longer to walk around the outside edge of the track than around the inside edge.  What is Keiko's speed in meters per second?
+
+$\textbf{(A)}\ \frac{\pi}{3} \qquad \textbf{(B)}\ \frac{2\pi}{3} \qquad \textbf{(C)}\ \pi \qquad \textbf{(D)}\ \frac{4\pi}{3} \qquad \textbf{(E)}\ \frac{5\pi}{3}$
+## Solution
+To find Keiko's speed, all we need to find is the difference between the distance around the inside edge of the track and the distance around the outside edge of the track, and divide it by the difference in the time it takes her for each distance.  We are given the difference in time, so all we need to find is the difference between the distances.
+
+The track is divided into lengths and curves.  The lengths of the track will exhibit no difference in distance between the inside and outside edges, so we only need to concern ourselves with the curves.
+
+The curves of the track are semicircles, but since there are two of them, we can consider both of the at the same time by treating them as a single circle.  We need to find the difference in the circumferences of the inside and outside edges of the circle.
+
+The formula for the circumference of a circle is C = 2 * $\pi$* r where r is the radius of the circle.
+
+Let's define the circumference of the inside circle as $C_1$ and the circumference of the outside circle as $C_2$.
+
+If the radius of the inside circle $(r_1)$ is n, then given the thickness of the track is 6 meters, the radius of the outside circle $(r_2)$ is n + 6.
+
+Using this, the difference in the circumferences is:
+
+$$C_2 - C_1 = 2 * \pi * (r_2 - r_1) = 2 * \pi * (n + 6 - n) = 2 * \pi * 6 = 12\pi$$
+
+ $12\pi$  is the difference between the inside and outside lengths of the track.  Divided by the time differential, we get:
+
+$$12\pi \div 36 = \boxed {\textbf{(A)}\ \frac{\pi}{3}}$$
+## See also

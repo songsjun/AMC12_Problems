@@ -1,0 +1,86 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2013_AMC_12A_Problems/Problem_19&action=raw
+
+Published Time: Tue, 03 Dec 2024 14:16:03 GMT
+
+Markdown Content:
+== Problem==
+
+In  \bigtriangleup ABC ,  AB = 86 , and  AC = 97 . A circle with center  A  and radius  AB  intersects  \overline{BC}  at points  B  and  X . Moreover  \overline{BX}  and  \overline{CX}  have integer lengths. What is  BC ?
+
+ \textbf{(A)} \ 11 \qquad \textbf{(B)} \ 28 \qquad \textbf{(C)} \ 33 \qquad \textbf{(D)} \ 61 \qquad \textbf{(E)} \ 72 
+
+==Solution==
+===Solution 1 (Diophantine PoP)===
+
+ //Made by samrocksnature size(8cm); pair A,B,C,D,E,X; A=(0,0); B=(-53.4,-67.4); C=(0,-97); D=(0,-86); E=(0,86); X=(-29,-81); draw(circle(A,86)); draw(E--C--B--A--X); label("$A$",A,NE); label("$B$",B,SW); label("$C$",C,S); label("$D$",D,NE); label("$E$",E,NE); label("$X$",X,dir(250)); dot(A^^B^^C^^D^^E^^X); 
+
+Let circle A intersect AC at D and E as shown. We apply Power of a Point on point C with respect to circle A. This yields the diophantine equation 
+
+CX \cdot CB = CD \cdot CE
+CX(CX+XB) = (97-86)(97+86)
+CX(CX+XB) = 3 \cdot 11 \cdot 61.
+
+Since lengths cannot be negative, we must have CX+XB \ge CX. This generates the four solution pairs for (CX,CX+XB): (1,2013) \qquad (3,671) \qquad (11,183) \qquad (33,61).
+
+However, by the Triangle Inequality on \triangle ACX, we see that CX>13. This implies that we must have CX+XB= \boxed{\textbf{(D) }61}. 
+
+(Solution by unknown, latex/asy modified majorly by samrocksnature)
+
+===Solution 2===
+
+Let BX = q, CX = p, and AC meet the circle at Y and Z, with Y on AC.  Then AZ = AY = 86.  Using the Power of a Point, we get that p(p+q) = 11(183) = 11 * 3 * 61.  We know that p+q>p, and that p>13 by the triangle inequality on \triangle ACX.  Thus, we get that BC = p+q = \boxed{\textbf{(D) }61}
+
+===Solution 3===
+Let x represent CX, and let y represent BX. Since the circle goes through B and X, AB = AX = 86.
+Then by Stewart's Theorem,
+
+xy(x+y) + 86^2 (x+y) = 97^2 y + 86^2 x.
+
+x^2 y + xy^2 + 86^2 x + 86^2 y = 97^2 y + 86^2 x
+
+x^2 + xy + 86^2 = 97^2
+
+(Since y cannot be equal to 0, dividing both sides of the equation by y is allowed.)
+
+x(x+y) = (97+86)(97-86)
+
+x(x+y) = 2013
+
+The prime factors of 2013 are 3, 11, and 61. Obviously, x < x+y. In addition, by the Triangle Inequality, BC < AB + AC, so x+y < 183. Therefore, x must equal 33, and x+y must equal  \boxed{\textbf{(D) }61}
+
+===Solution 4===
+Motivation and general line of reasoning: we use a law of cosines condition on triangle ABX and triangle ABC to derive some equivalent formations of the same quantity \cos B, which looks promising since it involves the desired length BC, as well as BX and CX.An intermediate step would be to use the integer condition and pay attention to the divisors of stuff. 
+
+Let BX=x_1 and CX=x_2. 
+
+First we have 
+\cos(B)=\frac{86^2+x_{1}^2-86^2}{172x_{1}} 
+by applying the law of cosines to triangle ABX. Another equivalent formation of \cos B is
+\frac{86^2+(x_{1}+x_2)^2-97^2}{172(x_{1}+x_2)}. 
+Now that we have the necessary ingredients, we can make a system of equations and deduce that 
+x_1=\frac{(x_1+x_2)^2+86^2-97^2}{x_1+x_2}. 
+
+Don't lose focus by now-we try to find x_1+x_2, an integer value as given in the problem. To do this, we want the quantity 
+\frac{(x_1+x_2)^2+86^2-97^2}{x_1+x_2} 
+to 1) be an integer and 2) smaller than x_1+x_2. For the sake of conciseness in notation we let M=x_1+x_2, then M+\frac{86^2-97^2}{M} is an integer. Now recalling the fact that (a+b)(a-b)=a^2-b^2, we get that \frac{183(-11)}{M} must be an integer.
+
+Now the prime factor decomposition of 183 \cdot -11 is  (61)(3)(-11). Trying out all the possible integer values that divide this quantity, we get that the only viable option for M is 61 (verify that yourself!) Therefore the answer is  \boxed{\textbf{(D) }61}. (Solution by CreamyCream123)
+
+==Video Solution by Richard Rusczyk==
+https://artofproblemsolving.com/videos/amc/2013amc12a/357
+
+~dolphin7
+
+==Video Solution==
+https://youtu.be/zxW3uvCQFls
+
+~sugar_rush
+
+== See also ==
+{{AMC12 box|year=2013|ab=A|num-b=18|num-a=20}}
+
+[[Category:Introductory Geometry Problems]]
+[[Category:Number theory]]
+{{MAA Notice}}

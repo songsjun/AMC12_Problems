@@ -1,0 +1,25 @@
+{{duplicate|[[2009 AMC 10B Problems|2009 AMC 10B #23]] and [[2009 AMC 12B Problems|2009 AMC 12B #18]]}}
+
+== Problem ==
+Rachel and Robert run on a circular track.  Rachel runs counterclockwise and completes a lap every 90 seconds, and Robert runs clockwise and completes a lap every 80 seconds.  Both start from the same line at the same time.  At some random time between 10 minutes and 11 minutes after they begin to run, a photographer standing inside the track takes a picture that shows one-fourth of the track, centered on the starting line.  What is the probability that both Rachel and Robert are in the picture?
+
+<math>\mathrm{(A)}\frac {1}{16}\qquad
+\mathrm{(B)}\frac 18\qquad
+\mathrm{(C)}\frac {3}{16}\qquad
+\mathrm{(D)}\frac 14\qquad
+\mathrm{(E)}\frac {5}{16}</math>
+
+== Solution ==
+After <math>10</math> minutes <math>(600</math> seconds<math>),</math> Rachel will have completed <math>6</math> laps and be <math>30</math> seconds from completing her seventh lap. Because Rachel runs one-fourth of a lap in <math>22.5</math> seconds, she will be in the picture between <math>18.75</math> seconds and <math>41.25</math> seconds of the tenth minute.  After 10 minutes, Robert will have completed <math>7</math> laps and be <math>40</math> seconds from completing his eighth lap.  Because Robert runs one-fourth of a lap in <math>20</math> seconds, he will be in the picture between <math>30</math> seconds and <math>50</math> seconds of the tenth minute.  Hence both Rachel and Robert will be in the picture if it is taken between <math>30</math> seconds and <math>41.25</math> seconds of the tenth minute.  So the probability that both runners are in the picture is <math>\frac {41.25 - 30} {60} = \boxed{\frac {3}{16}}</math>.  The answer is <math>\mathrm{(C)}</math>.
+
+==Solution 2 (Video solution)==
+Video: https://youtu.be/eZjJ5MQV47o
+~DaBobWhoLikeMath
+
+== See also ==
+{{AMC10 box|year=2009|ab=B|num-b=22|num-a=24}}
+{{AMC12 box|year=2009|ab=B|num-b=17|num-a=19}}
+
+[[Category:Introductory Combinatorics Problems]]
+[[Category: Introductory Algebra Problems]]
+{{MAA Notice}}

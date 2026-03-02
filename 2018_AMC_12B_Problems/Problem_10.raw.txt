@@ -1,0 +1,36 @@
+{{duplicate|[[2018 AMC 12B Problems|2018 AMC 12B #10]] and [[2018 AMC 10B Problems|2018 AMC 10B #14]]}}
+
+== Problem ==
+
+A list of <math>2018</math> positive integers has a unique mode, which occurs exactly <math>10</math> times. What is the least number of distinct values that can occur in the list?
+
+<math>\textbf{(A)}\ 202\qquad\textbf{(B)}\ 223\qquad\textbf{(C)}\ 224\qquad\textbf{(D)}\ 225\qquad\textbf{(E)}\ 234</math>
+
+== Solution 1 (Statistics) ==
+
+To minimize the number of distinct values, we want to maximize the number of times a number appears. So, we could have <math>223</math> numbers appear <math>9</math> times, <math>1</math> number appear once, and the mode appear <math>10</math> times, giving us a total of <math>223 + 1 + 1 = \boxed{\textbf{(D)}\ 225}.</math>
+
+== Solution 2 (Algebra) ==
+
+As in Solution 1, we want to maximize the number of time each number appears to do so. We can set up an equation <math>10 + 9( x - 1 )\geq2018,</math> where <math>x</math> is the number of values. Notice how we can then rearrange the equation into <math>1 + 9 ( 1 )+9 ( x - 1 )\geq2018,</math> which becomes <math>9 x\geq2017,</math> or <math>x\geq224\frac19.</math> We cannot have a fraction of a value so we must round up to <math>\boxed{\textbf{(D)}\ 225}.</math>
+
+~Username_taken12
+
+==Solution 3 (Literally Solution 1)==
+
+There is a unique number \( n \) with a mode of 10. This means we have 2008 terms left. We see that \( \lfloor 2008/9 \rfloor = 223 \), with remainder 1. Our answer is simply \( 223 + 1 + 1 =\) <math>\boxed{\textbf{(D)}\ 225}.</math>
+
+~Pinotation
+
+==Video Solution (HOW TO THINK CRITICALLY!!!)==
+https://youtu.be/M-z7SJwlsLY
+
+~Education, the Study of Everything
+
+==See Also==
+
+{{AMC10 box|year=2018|ab=B|num-b=13|num-a=15}}
+{{AMC12 box|year=2018|ab=B|num-b=9|num-a=11}}
+{{MAA Notice}}
+
+[[Category:Introductory Combinatorics Problems]]

@@ -1,0 +1,32 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2022_AMC_12B_Problems/Problem_9&action=raw
+
+Published Time: Mon, 10 Jul 2023 03:04:22 GMT
+
+Markdown Content:
+== Problem ==
+The sequence a_0,a_1,a_2,\cdots is a strictly increasing arithmetic sequence of positive integers such that 2^{a_7}=2^{27} \cdot a_7. What is the minimum possible value of a_2?
+
+\textbf{(A)}\ 8 \qquad \textbf{(B)}\ 12 \qquad \textbf{(C)}\ 16 \qquad \textbf{(D)}\ 17 \qquad \textbf{(E)}\ 22
+
+== Solution 1 ==
+We can rewrite the given equation as 2^{a_7-27}=a_7. Hence, a_7 must be a power of 2 and larger than 27. The first power of 2 that is larger than 27, namely 32, does satisfy the equation: 2^{32 - 27} = 2^5 = 32. In fact, this is the only solution; 2^{a_7-27} is exponential whereas a_7 is linear, so their graphs will not intersect again.
+
+Now, let the common difference in the sequence be d. Hence, a_0 = 32 - 7d and a_2 = 32 - 5d. To minimize a_2, we maxmimize d. Since the sequence contains only positive integers, 32 - 7d > 0 and hence d \leq 4. When d = 4, a_2 = \boxed{\textbf{(B)}\ 12}.
+
+~[[User:Bxiao31415|Bxiao31415]]
+
+==Video Solution (Under 2 min!)==
+https://youtu.be/N_v7AXXsRfo
+
+~_Education, the Study of Everything_
+
+==Video Solution(1-16)==
+https://youtu.be/SCwQ9jUfr0g
+
+~~Hayabusa1
+
+== See also ==
+{{AMC12 box|year=2022|ab=B|num-b=8|num-a=10}}
+{{MAA Notice}}

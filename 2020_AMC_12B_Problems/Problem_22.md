@@ -1,0 +1,77 @@
+# 2020 AMC 12B Problem 22
+
+## Problem
+What is the maximum value of $\frac{(2^t-3t)t}{4^t}$ for real values of t?
+
+$\textbf{(A)}\ \frac{1}{16} \qquad\textbf{(B)}\ \frac{1}{15} \qquad\textbf{(C)}\ \frac{1}{12} \qquad\textbf{(D)}\ \frac{1}{10} \qquad\textbf{(E)}\ \frac{1}{9}$
+## Solution 1
+We proceed by using AM-GM. We get $\frac{(2^t-3t) + 3t}{2} \ge \sqrt{(2^t-3t)(3t)}.$ Thus, squaring gives us that $4^{t-1}\ge (2^t-3t)(3t).$ Remembering what we want to find, we divide both sides of the inequality by the positive amount of $\frac{1}{3\cdot4^t}.$ We get the maximal values as $\boxed{(C) \frac{1}{12}},$ and we are done.
+## Solution 2
+Set  $u =t2^{-t}$. Then the expression in the problem can be written as R = - $3t^24^{-t}+t2^{-t}= - 3u^2 + u = - 3 (u - 1/6)^2 +\frac{1}{12} \le \frac{1}{12}$ . It is easy to see that $u =\frac{1}{6}$ is attained for some value of t between $t = 0$ and $t = 1$, thus the maximal value of R is $\textbf{(C)}$\ $\frac{1}{12}.$
+## Solution 3 (Calculus Needed)
+We want to maximize f(t) = $\frac{(2^t-3t)t}{4^t} = \frac{t\cdot 2^t-3t^2}{4^t}.$ We can use the first derivative test. Use quotient rule to get the following:
+
+$$
+\frac{(2^t + t\cdot \ln{2} \cdot 2^t - 6t)4^t - (t\cdot 2^t - 3t^2)4^t \cdot 2\ln{2}}{(4^t)^2} = 0 \implies 2^t + t\cdot \ln{2} \cdot 2^t - 6t = (t\cdot 2^t - 3t^2) 2\ln{2}
+\implies 2^t + t\cdot \ln{2}\cdot 2^t - 6t = 2t\ln{2} \cdot 2^t - 6t^2 \ln{2}
+\implies 2^t(1-t\cdot \ln{2}) = 6t(1 - t\cdot \ln{2}) \implies 2^t = 6t Therefore, we plug this back into the original equation to get \boxed{\textbf{(C)} \frac{1}{12}}
+$$
+
+
+*~awesome1st*
+## Solution 4
+First, substitute $2^t = x (\log_2{x} =$ t) so that
+$$\frac{(2^t-3t)t}{4^t} = \frac{x\log_2{x}-3(\log_2{x})^2}{x^2}$$
+
+Notice that
+
+$$\frac{x\log_2{x}-3(\log_2{x})^2}{x^2} = \frac{\log_2{x}}{x}-3\Big(\frac{\log_2{x}}{x}\Big)^2.$$
+
+
+When seen as a function, $\frac{\log_2{x}}{x}-$3\Big($\frac{\log_2{x}}{x}$\$Big)^2$ is a synthesis function that has $\frac{\log_2{x}}{x}$ as its inner function.
+
+If we substitute $\frac{\log_2{x}}{x} =$ p, the given function becomes a quadratic function that has a maximum value of $\frac{1}{12}$ when $p =\frac{1}{6}.$
+
+Now we need to check if $\frac{\log_2{x}}{x}$ can have the value of $\frac{1}{6}$ in the range of real numbers.
+
+In the range of (positive) real numbers, function $\frac{\log_2{x}}{x}$ is a continuous function whose value gets infinitely smaller as x gets closer to 0 (as log_2{x} also diverges toward negative infinity in the same condition). When $x = 2, \frac{\log_2{x}}{x} = \frac{1}{2},$ which is larger than $\frac{1}{6}.$
+
+Therefore, we can assume that $\frac{\log_2{x}}{x}$ equals to $\frac{1}{6}$ when x is somewhere between 1 and 2 (at least), which means that the maximum value of $\frac{(2^t-3t)t}{4^t}$ is $\boxed{\textbf{(C)}\ \frac{1}{12}}.$
+## Solution 5
+Let the maximum value of the function be m. Then we have $\frac{(2^t-3t)t}{4^t} =$ m $\impliesm2^{2t}$ - t2^t + $3t^2 = 0$.
+Solving for $2^{t}$, we see $2^{t}=\frac{t}{2m} \pm \frac{\sqrt{t^2 - 12mt^2}}{2m} = \frac{t}{2m} \pm \frac{t\sqrt{1 - 12m}}{2m}.$ We see that 1 - $12m\geq 0 \implies$ m $\leq \frac{1}{12}.$ Therefore, the answer is $\boxed{\textbf{(C)}\ \frac{1}{12}}.$
+## Solution 6
+Let $z=2^t$. Then,
+
+
+$$\frac{\left(2^t-3t\right)t}{4^t}=\frac{\left(z-3t\right)t}{z^2} = \frac{-3t^2+zt}{z^2}.$$
+
+
+Upon inspection, the numerator of this expression grows at a relatively faster rate than the denominator, when t is close to 0.
+
+As the numerator is a quadratic in t with a negative leading coefficient, its maximum value occurs at $t=\frac{-z}{2\cdot -3}=\frac{z}{6},$ or when $6t=2^t$. Therefore,
+
+
+$$\frac{\left(2^t-3t\right)t}{4^t}=\frac{\left(6t-3t\right)t}{(6t)^2}=\frac{3t^2}{36t^2}=\boxed{\textbf{(C)}\ \frac{1}{12}}.$$
+
+
+*~Benedict T (countmath1)*
+## Solution 7 (fast)
+Note that
+
+$$\dfrac{(2^t-3t)t}{4^t}=\dfrac{t\cdot 2^t}{4^t}-\dfrac{3t^2}{4^t}=\dfrac{t}{2^t}-3\left(\dfrac{t}{2^t}\right)^2.$$
+
+Let $x=\frac{t}{2^t}.$ Then, the expression becomes $x-3x^2,$ which is minimized at $x=\frac{1}{6},$ giving a value of $\boxed{\textbf{(C)}\ \frac{1}{12}}.$
+
+Note: $\frac{t}{2^t}=\frac{1}{6}$ is possible as $\frac{t}{2^t}$ is continuous and that $\frac{0}{2^0}=0$ and $\frac{2}{2^2}=\frac{1}{2}$ so by the Intermediate Value Theorem (or just by intuition), there must be a t between 0 and 2 that satisfies $\frac{t}{2^t}=\frac{1}{6}.$
+
+*~BS2012*
+## Video Solution1
+https://youtu.be/c2_b18Lv7c4
+
+*~Education, the Study of Everything*
+## Video Solution
+Problem starts at 2:10 in this video: https://www.youtube.com/watch?v=5HRSzpdJaX0&t=130s
+
+*~MistyMathMusic*
+## See Also

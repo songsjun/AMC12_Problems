@@ -1,0 +1,71 @@
+# 2020 AMC 12B Problem 5
+
+## Problem
+Teams A and B are playing in a basketball league where each game results in a win for one team and a loss for the other team. Team A has won $\tfrac{2}{3}$ of its games and team B has won $\tfrac{5}{8}$ of its games. Also, team B has won 7 more games and lost 7 more games than team A. How many games has team A played?
+
+$\textbf{(A) } 21 \qquad \textbf{(B) } 27 \qquad \textbf{(C) } 42 \qquad \textbf{(D) } 48 \qquad \textbf{(E) } 63$
+## Solution 1 (One Variable)
+Suppose team A has played g games in total so that it has won $\frac23$g games.
+It follows that team B has played $g+14$ games in total so that it has won $\frac23$g+7 games.
+
+We set up and solve an equation for team B's win ratio:
+
+$$
+\begin{align*} \frac{\frac23g+7}{g+14}&=\frac58 \\ \frac{16}{3}g+56&=5g+70 \\ \frac13g&=14 \\ g&=\boxed{\textbf{(C) } 42}. \end{align*}
+$$
+
+*~MRENTHUSIASM*
+## Solution 2 (Two Variables)
+If we consider the number of games team B has played as x and the number of games that team A has played as y, then we can set up the following system of equations:
+
+$$
+\begin{align*} \frac{5}{8}x &= \frac{2}{3}y+7, \\ \frac{3}{8}x &= \frac{1}{3}y+7. \end{align*}
+$$
+
+The first system equated the number of wins of each team, while the second system equates the number of losses by each team. By multiplying the second equation by 2 and solving the system, we get $y = 42$ or answer choice $\boxed{\textbf{(C) } 42}.$
+
+*~AnkitAMC*
+## Solution 3 (Two Variables)
+First, let us assign some variables. Let
+
+$$
+A_w=2x, \ A_l=x, \ A_g=3x,
+B_w=5y, \ B_l=3y, \ B_g=8y,
+$$
+
+where $X_w$ denotes number of games won, $X_l$ denotes number of games lost, and $X_g$ denotes total games played for X$\in\{A, B\}$. Using the given information, we can set up the following two equations:
+
+$$
+\begin{align*} B_w=A_w+7&\implies 5y=2x+7, \\ B_l=A_l+7&\implies 3y=x+7. \end{align*}
+$$
+
+We can solve through substitution, as the second equation can be written as x=$3y-7$, and plugging this into the first equation gives $5y=$6y-$7\impliesy=7$, which means $x=3(7)-7=14$. Finally, we want the total number of games team A has played, which is $A_g=3(14)=\boxed{\textbf{(C) } 42}.$
+
+*~Argonauts16*
+## Solution 4 (Answer Choices: Substitutions)
+Using the information from the problem, we can note that team A has lost $\frac{1}{3}$ of their matches. Using the answer choices, we can construct the following list of possible win-lose scenarios for A, represented in the form (w, l) for convenience:
+
+$$
+\begin{align*} \textbf{(A)} &\implies (14, 7) \\ \textbf{(B)} &\implies (18, 9) \\ \textbf{(C)} &\implies (28, 14) \\ \textbf{(D)} &\implies (32, 16) \\ \textbf{(E)} &\implies (42, 21) \end{align*}
+$$
+
+Thus, we have 5 matching B scenarios, simply adding 7 to w and l. We can then test each of the five B scenarios for $\frac{w}{w+l} = \frac{5}{8}$ and find that (35, 21) fits this description. Then working backwards and subtracting 7 from w and l gives us the point (28, 14), making the answer $\boxed{\textbf{(C) } 42}.$
+## Solution 5 (Answer Choices: Observations)
+Let's say that team A plays n games in total. Therefore, team B must play n + 14 games in total (7 wins, 7 losses) Since the ratio of A is $\frac{2}{3} \implies$ n $\equiv 0 \pmod{3}$ Similarly, since the ratio of B is $\frac{5}{8} \implies$ n + 14 $\equiv 0 \pmod{8}$ Now, we can go through the answer choices and see which ones work:
+
+$$
+\begin{align*} \textbf{(A) } 21 &\implies 21 + 14 = 35 \not \equiv 0\pmod{8} \\ \textbf{(B) } 27 &\implies 27 + 14 = 41 \not \equiv 0\pmod{8} \\ \textbf{(C) } 42 &\implies 42 + 14 = 56 \equiv 0\pmod{8} \\ \textbf{(D) } 48 &\implies 48 + 14 = 62 \not \equiv 0\pmod{8} \\ \textbf{(E) } 63 &\implies 63 + 14 = 77 \not \equiv 0\pmod{8} \\ \end{align*}
+$$
+
+So we can see $\boxed{\textbf{(C) } 42}$ is the only valid answer.
+
+*~herobrine-india*
+## Video Solution (HOW TO THINK CREATIVELY!!!)
+https://youtu.be/KXySDYcUnHk
+
+*~Education, the Study of Everything*
+## Video Solution
+https://youtu.be/00Ngozqw2d0?t=13
+## Video Solution
+https://youtu.be/WfTty8Fe5Fo
+## See Also

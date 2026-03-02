@@ -1,0 +1,22 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2010_AMC_12B_Problems/Problem_13&action=raw
+
+Published Time: Sat, 18 Jan 2020 04:31:45 GMT
+
+Markdown Content:
+== Problem ==
+In \triangle ABC, \cos(2A-B)+\sin(A+B)=2 and AB=4. What is BC?
+
+\textbf{(A)}\ \sqrt{2} \qquad \textbf{(B)}\ \sqrt{3} \qquad \textbf{(C)}\ 2 \qquad \textbf{(D)}\ 2\sqrt{2} \qquad \textbf{(E)}\ 2\sqrt{3}
+
+== Solution ==
+We note that -1 \le \sin x \le 1 and -1 \le \cos x \le 1. 
+Therefore, there is no other way to satisfy this equation other than making both \cos(2A-B)=1 and \sin(A+B)=1, since any other way would cause one of these values to become greater than 1, which contradicts our previous statement.
+From this we can easily conclude that 2A-B=0^{\circ} and A+B=90^{\circ} and solving this system gives us A=30^{\circ} and B=60^{\circ}. It is clear that \triangle ABC is a 30^{\circ},60^{\circ},90^{\circ} triangle with BC=2　\Longrightarrow　(C).
+
+== See also ==
+{{AMC12 box|year=2010|num-b=12|num-a=14|ab=B}}
+
+[[Category:Introductory Geometry Problems]]
+{{MAA Notice}}

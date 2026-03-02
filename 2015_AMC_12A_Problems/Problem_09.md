@@ -1,0 +1,21 @@
+# 2015 AMC 12A Problem 9
+
+## Problem
+A box contains 2 red marbles, 2 green marbles, and 2 yellow marbles. Carol takes 2 marbles from the box at random; then Claudia takes 2 of the remaining marbles at random; and then Cheryl takes the last 2 marbles. What is the probability that Cheryl gets 2 marbles of the same color?
+
+$\textbf{(A)}\ \frac{1}{10} \qquad\textbf{(B)}\ \frac{1}{6} \qquad\textbf{(C)}\ \frac{1}{5} \qquad\textbf{(D)}\ \frac{1}{3} \qquad\textbf{(E)}\ \frac{1}{2}$
+## Solution 1
+If Cheryl gets two marbles of the same color, then Claudia and Carol must take all four marbles of the two other colors. The probability of this happening, given that Cheryl has two marbles of a certain color is $\frac{4}{6} \cdot \frac{3}{5} \cdot \frac{2}{4} \cdot \frac{1}{3} = \frac{1}{15}.$ Since there are three different colors, our final probability is 3 $\cdot \frac{1}{15} = \textbf{ (C)} \frac{1}{5}$ .
+## Solution 2
+The order of the girls' drawing the balls really does not matter. Thus, we can let Cheryl draw first, so after she draws one ball, the other must be of the same color. Thus, the answer is $\frac{1}{5} \textbf{ (C)}.$
+## Solution 3
+The total number of ways they can draw is {6 $\choose 2} {4 \choose 2} {2 \choose 2$}. Let Cheryl draw first and since there are three colors, there are {3 $\choose 1$} ways she can get 2 marbles of the same color. The other two pick two each, which leads to {4 $\choose 2$} and {2 $\choose 2$}, respectively.
+
+$$\frac{{3 \choose 1}{4 \choose 2}{2 \choose 2}}{{6 \choose 2}{4 \choose 2}{2 \choose 2}} = \frac{1}{5} \textbf{ (C)}$$
+
+## Solution 4
+As others have said, Carol and Claudia should not have an impact on the 2 marbles Cheryl takes. This simplifies the problem into a total number of arrangements of Cheryl choosing 2 out of 6, and a total number of successful outcomes of 3 (two reds, two blues, and two yellows). This gives:
+$$\frac{3} = \frac{1}{5} = \textbf{ (C)}.$$
+
+*~PeterDoesPhysics*
+## See Also

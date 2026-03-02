@@ -1,0 +1,214 @@
+{{duplicate|[[2022 AMC 10A Problems/Problem 23|2022 AMC 10A #23]] and [[2022 AMC 12A Problems/Problem 20|2022 AMC 12A #20]]}}
+
+==Problem==
+Isosceles trapezoid <math>ABCD</math> has parallel sides <math>\overline{AD}</math> and <math>\overline{BC},</math> with <math>BC < AD</math> and <math>AB = CD.</math> There is a point <math>P</math> in the plane such that <math>PA=1, PB=2, PC=3,</math> and <math>PD=4.</math> What is <math>\tfrac{BC}{AD}?</math>
+
+<math>\textbf{(A) }\frac{1}{4}\qquad\textbf{(B) }\frac{1}{3}\qquad\textbf{(C) }\frac{1}{2}\qquad\textbf{(D) }\frac{2}{3}\qquad\textbf{(E) }\frac{3}{4}</math>
+
+==Solution 1 (Reflections + Ptolemy's Theorem)==
+Consider the reflection <math>P^{\prime}</math> of <math>P</math> over the perpendicular bisector of <math>\overline{BC}</math>, creating two new isosceles trapezoids <math>DAPP^{\prime}</math> and <math>CBPP^{\prime}</math>. Under this reflection, <math>P^{\prime}A=PD=4</math>, <math>P^{\prime}D=PA=1</math>, <math>P^{\prime}C=PB=2</math>, and <math>P^{\prime}B=PC=3</math>. 
+
+Since <math>DAPP'</math> and <math>CBPP'</math> are isosceles trapezoids, they are cyclic. Using [[Ptolemy's theorem|Ptolemy's theorem]] on <math>DAPP'</math>, we get that <math>(PP')(AD) + (PA)(P'D) = (AP')(PD)</math>, so 
+<cmath>PP' \cdot AD + 1 \cdot 1 = 4 \cdot 4.</cmath> Then, using Ptolemy's theorem again on <math>CBPP'</math>, we get that <math>(BC)(PP') + (BP)(CP') = (BP')(CP)</math>, so 
+<cmath>PP' \cdot BC + 2 \cdot 2 = 3 \cdot 3.</cmath> Thus, <math>PP^{\prime}\cdot AD=15</math> and <math>PP^{\prime}\cdot BC=5</math>; dividing these two equations and taking the reciprocal yields <math>\frac{BC}{AD}=\boxed{\textbf{(B) }\frac{1}{3}}</math>.
+<asy>
+size(300);
+pair A = (0,0);
+pair B = (1, 2);
+pair C = (2,2);
+pair D = (3,0);
+label("$A$", A, SW);
+label("$B$", B, NW);
+label("$C$", C, NE);
+label("$D$", D, SE);
+draw(A--B--C--D--cycle, blue);
+pair P = (0.8, 0.6);
+dot("$P$", P, NW);
+draw(P--A, magenta);
+draw(P--B, magenta);
+draw(P--C);
+draw(P--D);
+label("$1$", P--A, NW);
+label("$2$", P--B, E);
+label("$3$", P--C, NW);
+label("$4$", P--D, S);
+pair P1 = (2.2, 0.6);
+dot("$P'$", P1, NE);
+draw(P1--D, magenta);
+draw(P1--C, magenta);
+draw(P1--A);
+draw(P1--B);
+label("$1$", P1--D, NE);
+label("$2$", P1--C, E);
+label("$3$", P1--B, NE);
+label("$4$", P1--A, SE);
+draw(P--P1, dashed+magenta);
+</asy>
+(diagram by cinnamon_e)
+
+==Solution 2 (Extensions + Stewart's Theorem)==
+<asy>
+size(7.5cm);
+draw((0,0)--(4.2,0));
+draw((0,0)--(1.4,2)--(2.8,2)--(4.2,0));
+draw((1.4,2)--(2.1,3)--(2.8,2));
+draw((0,0)--(1,0.5)--(1.4,2)--(1,0.5)--(2.8,2)--(1,0.5)--(4.2,0));
+label("$A$",(0,0),SW);
+label("$B$",(1.4,2),NW);
+label("$C$",(2.8,2),NE);
+label("$D$",(4.2,0),SE);
+label("$P$",(1,0.5),NW);
+label("$Q$",(2.1,3),N);
+draw((2.1,3)--(1,0.5));
+</asy>
+
+Extend <math>AB</math> and <math>CD</math> to a point <math>Q</math> as shown, and let <math>PQ = s</math>. Then let <math>BQ=CQ = a</math> and <math>AB=DC = b</math>. Notice that <math>\frac{BC}{AD} = \frac{QC}{QD} = \frac{a}{a+b}</math> by similar triangles.
+
+By [[Stewart's theorem|Stewart's theorem]] on <math>APQ</math> and <math>DPQ</math>, we have <cmath>\begin{align*} ab(a+b) + 9(a+b) &= 16a + s^2b \\ ab(a+b) + 4(a+b) &= a + s^2b \\ \end{align*}</cmath>
+
+Subtracting, <math>5(a+b) = 15a</math>, and so <math>\frac{BC}{AD} = \frac{a}{a+b} = \frac{5}{15} = \boxed{\textbf{(B) }\frac{1}{3}}</math>.
+
+~kred9 (minor edit by gwang2008)
+
+==Solution 3 (Coordinate Bashing)==
+
+Since we're given distances and nothing else, we can represent each point as a coordinate and use the distance formula to set up a series of systems and equations.
+Let the height of the trapezoid be <math>h</math>, and let the coordinates of <math>A</math> and <math>D</math> be at <math>(-a,0)</math> and <math>(a,0)</math>, respectively. Then let <math>B</math> and <math>C</math> be at <math>(-b,h)</math> and <math>(b,h)</math>, respectively. This follows the rules that this is an isosceles trapezoid since the origin is centered on the middle of <math>AD</math>. Finally, let <math>P</math> be located at point <math>(c,d)</math>.
+
+The distance from <math>P</math> to <math>A</math> is <math>1</math>, so by the distance formula: <cmath>\sqrt{(c+a)^2+(d-0)^2} = 1 \implies (c+a)^2+d^2 = 1</cmath>
+The distance from <math>P</math> to <math>D</math> is <math>4</math>, so <cmath>\sqrt{(c-a)^2+(d-0)^2} = 4 \implies (c-a)^2+d^2 = 16</cmath>
+
+Looking at these two equations alone, notice that the second term is the same for both equations, so we can subtract the equations. This yields <cmath>-4ac = 15</cmath>
+
+Next, the distance from <math>P</math> to <math>B</math> is <math>2</math>, so <cmath>\sqrt{(c+b)^2+(d-h)^2} = 2 \implies (c+b)^2+(d-h)^2 = 4</cmath>
+The distance from <math>P</math> to <math>C</math> is <math>3</math>, so <cmath>\sqrt{(c-b)^2+(d-h)^2} = 3 \implies (c-b)^2+(d-h)^2 = 9</cmath>
+
+Again, we can subtract these equations, yielding <cmath>-4bc = 5</cmath>
+
+We can now divide the equations to eliminate <math>c</math>, yielding <cmath>\frac{b}{a} = \frac{5}{15} = \frac{1}{3}</cmath>
+
+We wanted to find <math>\frac{BC}{AD}</math>. But since <math>b</math> is half of <math>BC</math> and <math>a</math> is half of <math>AD</math>, this ratio is equal to the ratio we want.
+
+Therefore <math>\frac{BC}{AD} = \boxed{\textbf{(B) }\frac{1}{3}}</math>.
+
+~KingRavi
+
+~edited by scinderella220
+
+==Solution 4 (Coordinate Bashing)==
+
+Let the point <math>P</math> be at the origin, and draw four concentric circles around <math>P</math> each with radius <math>1</math>, <math>2</math>, <math>3</math>, and <math>4</math>, respectively. The vertices of the trapezoid would be then on each of the four concentric circles. WLOG, let <math>BC</math> and <math>AD</math> be parallel to the <math>x</math>-axis. Assigning coordinates to each point, we have: <cmath>A=(x_1,y_1)</cmath> <cmath>B=(x_2,y_2)</cmath> <cmath>C=(x_3,y_2)</cmath> <cmath>D=(x_4,y_1)</cmath> which satisfy the following: 
+<cmath>x_1^2 + y_1^2 = 1 \;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\; (1)</cmath>
+<cmath>x_2^2 + y_2^2 = 4 \;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\; (2)</cmath>
+<cmath>x_3^2 + y_2^2 = 9 \;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\; (3)</cmath>
+<cmath>x_4^2 + y_1^2 = 16 \;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\; (4)</cmath>
+In addition, because the trapezoid is isosceles (<math>AB=CD</math>), the midpoints of the two bases would then have the same <math>x</math>-coordinate, giving us 
+<cmath> x_1 + x_4 = x_2 + x_3 \;\;\;\;\;\;\;\;\;\;\;\;\; (5)</cmath>
+Subtracting Equation <math>2</math> from Equation <math>3</math>, and Equation <math>1</math> from Equation <math>4</math>, we have
+<cmath>x_3^2 - x_2^2 = 5 \;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\; (6)</cmath>
+<cmath>x_4^2 - x_1^2 = 15 \;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\; (7)</cmath>
+Dividing Equation <math>6</math> by Equation <math>7</math>, we have
+<cmath>\frac{x_3^2-x_2^2}{x_4^2-x_1^2}=\frac{1}{3}</cmath>
+<cmath>\frac{(x_3-x_2)(x_3+x_2)}{(x_4-x_1)(x_4+x_1)}=\frac{1}{3}.</cmath>
+Cancelling <math>(x_3+x_2)</math> and <math>(x_4+x_1)</math> with Equation <math>5</math>, we get
+<cmath>\frac{(x_3-x_2)}{(x_4-x_1)}=\frac{1}{3}.</cmath>
+In other words,
+<cmath>\frac{BC}{AD}=\frac{1}{3}=\boxed{\textbf{(B) }\frac{1}{3}}.</cmath>
+~G63566
+
+==Solution 5 (Polar Coordinates)==
+
+As <math>ABCD</math> is an isosceles trapezoid, it is cyclic. We will use polar coordinates with origin <math>O</math> as in the following figure.
+
+[[File:2022AMC12AP20.png|center|500px]]
+
+The <math>x</math>-coordinate of <math>C</math> is <math>r \cos \beta</math>, <math>BC = 2r \cos \beta</math>. The <math>x</math>-coordinate of <math>D</math> is <math>r \cos \alpha</math>, <math>AD = 2r \cos \alpha</math>, <math>\frac{BC}{AD} = \frac{ \cos \beta }{ \cos \alpha }</math>
+
+By the law of cosines, 
+
+<cmath>OD^2 + OP^2 - 2 \cdot OD \cdot OP \cdot \cos (\theta - \alpha) = PD^2</cmath>
+<cmath>OC^2 + OP^2 - 2 \cdot OC \cdot OP \cdot \cos (\theta - \beta) = PC^2</cmath>
+<cmath>OB^2 + OP^2 - 2 \cdot OB \cdot OP \cdot \cos (\theta - \pi + \beta) = PB^2</cmath>
+<cmath>OA^2 + OP^2 - 2 \cdot OA \cdot OP \cdot \cos (\theta - \pi + \alpha) = PA^2</cmath>
+
+<cmath>\begin{align*}
+r^2 + d^2 - 2rd \cos (\theta - \alpha) = 16 \quad \quad (1) \\
+r^2 + d^2 - 2rd \cos (\theta - \beta) = 9 \quad \quad (2) \\
+r^2 + d^2 - 2rd \cos (\theta - \pi + \beta) = 4 \quad \quad (3) \\
+r^2 + d^2 - 2rd \cos (\theta - \pi + \alpha) = 1 \quad \quad (4) 
+\end{align*}</cmath>
+
+<cmath>\begin{align*}
+(3) - (2), \quad 2rd \cos (\theta - \beta) - 2rd \cos (\theta - \pi + \beta) = 4-9, \quad 2rd(\cos (\theta - \beta) + \cos (\theta + \beta)) = -5 \quad \quad (5) \\
+(4) - (1), \quad 2rd \cos (\theta - \alpha) - 2rd \cos (\theta - \pi + \alpha) = 1-16, \quad 2rd(\cos (\theta - \alpha) + \cos (\theta + \alpha)) = -15  \quad \quad (6)
+\end{align*}</cmath>
+
+<cmath>(5)/(6), \quad \frac{ 2rd(\cos (\theta - \beta) + \cos (\theta + \beta)) }{ 2rd(\cos (\theta - \alpha) + \cos (\theta + \alpha)) } = \frac{-5}{ -15 }, \quad \frac{ \cos (\theta - \beta) + \cos (\theta + \beta) }{ \cos (\theta - \alpha) + \cos (\theta + \alpha) } = \frac13</cmath>
+
+By the sum to product identity
+
+<cmath> \frac{ \cos (\theta - \beta) + \cos (\theta + \beta) }{ \cos (\theta - \alpha) + \cos (\theta + \alpha) } = \frac{  2 \cos ( \frac{\theta - \beta + \theta + \beta}{2}) \cos ( \frac{\theta - \beta - \theta - \beta}{2}) }{ 2 \cos ( \frac{\theta - \alpha + \theta + \alpha}{2}) \cos ( \frac{\theta - \alpha - \theta - \alpha}{2}) } = \frac{\cos \theta \cos \beta}{\cos \theta \cos \alpha} = \frac{\cos \beta}{\cos \alpha} = \boxed{\textbf{(B) }\frac{1}{3}}</cmath>
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+==Solution 6 (EZ)==
+[[File:AMC_12A_2022_Q20-Cheese_Diagram.png|500px|right]]
+Notice that the question never says what the height of the trapezoid is; the only property we know about it is that <math>AC=BD</math>. Therefore, we can assume that the height of the trapezoid is <math>0</math> and all <math>5</math> points, including <math>P</math>, lie on the same line with <math>PA=AB=BC=CD=1</math>. Notice that this satisfies the problem requirements because <math>PA=1, PB=2, PC=3,PD=4</math>, and <math>AC=BD=2</math>.
+Now all we have to find is <math>\frac{BC}{AD} = \boxed{\textbf{(B) }\frac{1}{3}}</math>.
+
+~KingRavi
+
+~ShawnX (Diagram)
+
+==Solution 7 (Pythagorean Theorem)==
+[[File:2022 AMC 12A 24.png|360px|right]]
+Consider the reflection <math>P^{\prime}</math> of <math>P</math> over the perpendicular bisector of <math>\overline{BC}</math>. 
+<cmath>PB = P^{\prime}C = a, PC = P^{\prime}B = b.</cmath>
+Let <math>PE \perp BC, P^{\prime}E^{\prime} \perp BC.</math>
+<cmath>BE = CE^{\prime}, PP^{\prime} = EE^{\prime} \implies </cmath>
+<cmath>b^2 - a^2 = PC^2 - PB^2 = CE^2 - BE^2</cmath>
+<cmath>=(CE - BE)(CE + BE) = EE^{\prime} \cdot BC = PP^{\prime} \cdot BC.</cmath>
+Similarly,
+<cmath>d^2 - c^2 = PP^{\prime} \cdot AD \implies \frac {BC}{AD} = \frac {b^2 - a^2}{d^2 - c^2}= \boxed{\textbf{(B) }\frac{1}{3}}.</cmath>
+'''vladimir.shelomovskii@gmail.com, vvsss'''
+
+==Solution 8 (Pythagorean Theorem)==
+Let the feet of the altitude from <math>P</math> to <math>BC</math> be <math>E</math>, and the feet of the altitude from <math>P</math> to <math>AD</math> be <math>F</math>. Let <math>CE=y</math>, <math>BE=x</math>. Observe that <math>DF=y+d</math>, <math>AF=x+d</math> where <math>AD=BC+2d</math> due to the properties of iscoceles trapezoids. 
+
+Then <math>y^2-x^2=CE^2-BE^2=CP^2-BP^2=5</math> by the Pythagorean Theorem. Hence, <math>5+2d(y-x)=y^2-x^2+2d(y-x)=(y+d)^2-(x+d)^2=4^2-1^2=15 \implies d(y-x)=5</math>. But <math>y^2-x^2=5</math>, so <math>d(y-x)=y^2-x^2 \implies d=y+x</math>. But <math>AD=BC+2d=x+y+2d=3(x+y)</math>, so <math>\frac{BC}{AD}=\frac{1}{3}</math>.
+
+-mathMagicOPS
+
+==Video Solution by OmegaLearn==
+https://youtu.be/jnm2alniaM4
+
+~ pi_is_3.14
+
+== Video Solution By ThePuzzlr == 
+https://youtu.be/KqtpaHy-eoU
+
+~ MathIsChess
+
+==Video Solution by Steven Chen==
+
+https://youtu.be/hvIOvjjQvIw
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+== Video Solution by MRENTHUSIASM (English & Chinese) ==
+
+https://youtu.be/OXlyX-WzMfg
+
+~MRENTHUSIASM
+
+==Video Solution by Math-X (Smart and Simple)==
+https://youtu.be/7yAh4MtJ8a8?si=DZJywiBKH7yK97Hw&t=6149 
+
+~Math-X
+
+==See also==
+{{AMC10 box|year=2022|ab=A|num-b=22|num-a=24}}
+{{AMC12 box|year=2022|ab=A|num-b=19|num-a=21}}
+
+[[Category:Intermediate Geometry Problems]]
+{{MAA Notice}}

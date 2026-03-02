@@ -1,0 +1,89 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2013_AMC_12A_Problems/Problem_21&action=raw
+
+Published Time: Sun, 28 Sep 2025 03:07:54 GMT
+
+Markdown Content:
+== Problem ==
+Consider A = \log (2013 + \log (2012 + \log (2011 + \log (\cdots + \log (3 + \log 2) \cdots )))). Which of the following intervals contains A?
+
+ \textbf{(A)} \ (\log 2016, \log 2017) 
+ \textbf{(B)} \ (\log 2017, \log 2018) 
+ \textbf{(C)} \ (\log 2018, \log 2019) 
+ \textbf{(D)} \ (\log 2019, \log 2020) 
+ \textbf{(E)} \ (\log 2020, \log 2021) 
+
+== Solutions ==
+=== Solution 1 ===
+Let f(x) = \log(x + f(x-1)) and f(2) = \log(2), and from the problem description, A = f(2013)
+
+We can reason out an approximation, by ignoring the f(x-1):
+
+f_{0}(x) \approx \log x
+
+And a better approximation, by plugging in our first approximation for f(x-1) in our original definition for f(x):
+
+f_{1}(x) \approx \log(x + \log(x-1))
+
+And an even better approximation:
+
+f_{2}(x) \approx \log(x + \log(x-1 + \log(x-2)))
+
+Continuing this pattern, obviously, will eventually terminate at f_{x-1}(x), in other words our original definition of f(x).
+
+However, at x = 2013, going further than f_{1}(x) will not distinguish between our answer choices. \log(2012 + \log(2011)) is nearly indistinguishable from \log(2012).
+
+So we take f_{1}(x) and plug in.
+
+f(2013) \approx \log(2013 + \log 2012)
+
+Since 1000 < 2012 < 10000, we know 3 < \log(2012) < 4. This gives us our answer range:
+
+\log 2016 < \log(2013 + \log 2012) < \log(2017)
+
+(\log 2016, \log 2017)
+
+=== Solution 2 ===
+Suppose A=\log(x). 
+Then \log(2012+ \cdots)=x-2013. 
+So if x>2017, then \log(2012+\log(2011+\cdots))>4. 
+So 2012+\log(2011+\cdots)>10000. 
+Repeating, we then get 2011+\log(2010+\cdots)>10^{7988}. 
+This is clearly absurd (the RHS continues to grow more than exponentially for each iteration).
+So, x is not greater than 2017. 
+So A<\log(2017). 
+But this leaves only one answer, so we are done.
+
+=== Solution 3 ===
+Define f(2) = \log(2), and f(n) = \log(n+f(n-1)), \text{ for } n > 2. We are looking for f(2013). First we show
+
+'''Lemma.''' For any integer n>2, if n < 10^k-k then f(n) < k.
+
+'''Proof.''' First note that f(2) < 1. Let n<10^k-k. Then n+k<10^k, so \log(n+k)< k. Suppose the claim is true for n-1. Then f(n) = \log(n+f(n-1)) < \log(n + k) < k.  The Lemma is thus proved by induction.
+
+Finally, note that 2012 < 10^4 - 4 so that the Lemma implies that f(2012) < 4. This means that f(2013) = \log(2013+f(2012)) < \log(2017), which leaves us with only one option \boxed{\textbf{(A) } (\log 2016, \log 2017)}.
+
+=== Solution 4 ===
+Define f(2) = \log(2), and f(n) = \log(n+f(n-1)), \text{ for } n > 2. We start with a simple observation:
+
+'''Lemma.''' For x,y>2, \log(x+\log(y)) < \log(x)+\log(y)=\log(xy).
+
+'''Proof.''' Since x,y>2, we have xy-x-y = (x-1)(y-1) - 1 > 0, so xy - x-\log(y) > xy - x - y > 0.
+
+It follows that \log(z+\log(x+\log(y))) < \log(x)+\log(y)+\log(z), and so on. 
+
+Thus f(2010) < \log 2 + \log 3 + \cdots + \log 2010 < \log 2010 + \cdots + \log 2010 < 2009\cdot 4 = 8036. 
+
+Then f(2011) = \log(2011+f(2010)) < \log(10047) < 5. 
+
+It follows that f(2012) = \log(2012+f(2011)) < \log(2017) < 4. 
+
+Finally, we get f(2013) = \log(2013 + f(2012)) < \log(2017), which leaves us with only option \boxed{\textbf{(A)}}.
+
+=== Solution 5 (nonrigorous + abusing answer choices.) ===
+
+Intuitively, you can notice that \log(2012+\log(2011+\cdots(\log(2)\cdots))<\log(2013+\log(2012+\cdots(\log(2))\cdots)), therefore (by the answer choices) \log(2012+\log(2011+\cdots(\log(2)\cdots))<\log(2021). We can then say:
+
+x=\log(2013+\log(2012+\cdots(\log(2))\cdots))
+\log(2013)\log(2013)\log(2013) The only answer choice that is possible given this information is \boxed{\textbf{(A)}} === Solution 6 (super quick) === Let f(x) = \log(x + \log((x-1) + \log((x-2) + \ldots + \log 2 \ldots ))). From the answer choices, we see that 3 < f(2013) < 4. Since f(x) grows very slowly, we can assume 3 < f(2012) < 4. Therefore, f(2013) = \log(2013 + f(2012)) \in (\log 2016, \log 2017) \implies \boxed{\textbf{(A)}}. ~rayfish === Solution 7 (Not rigorous but it works) === Start small from \log(3+\log2). Because \log2 is close to 0, the expression is close to \log 3. This continues for the 1 digit numbers. However, when we get to \log(11+\log10), \log10=1 so the expression equals \log12. We can round down how much each new log contributes to the expression as an approximate answer. There are 90 2 digit numbers, 900 3 digit numbers, and 1014 4 digit numbers that increase the expression. 1000< 90 \cdot 1 + 900 \cdot 2 + 1014 \cdot 3< 10000, so it increases between 3 and 4. The answer is \boxed{\textbf{(A)}}. ~dragnin === Solution 8 (Assumption) === Consider \log (2013+\log(2012)) and disregard every other log. We do this because we assume that the logs from 2011 onward cannot contribute more than 7987 because of the nature of logs. We have \log(2016)<\log (2013+\log(2012))<\log(2017) so the answer is \boxed{A}. === Solution 9 (i just lost my dawg) == It seems that \log (2012+x) is going to be less than four, since otherwise, it would imply that x>7987, and going down, that seems very impossible. Then, the answer is just \boxed{\textbf{A} (\log{2016}, \log{2017})} Note: This solution is only for people with unlimited aura. (And veryyy limited time) === Video Solution by Richard Rusczyk === https://artofproblemsolving.com/videos/amc/2013amc12a/360 == See Also == {{AMC12 box|year=2013|ab=A|num-b=20|num-a=22}} {{MAA Notice}}

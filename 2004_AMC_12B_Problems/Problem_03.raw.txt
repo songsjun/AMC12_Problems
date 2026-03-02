@@ -1,0 +1,24 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2004_AMC_12B_Problems/Problem_3&action=raw
+
+Published Time: Sat, 22 Oct 2022 23:21:57 GMT
+
+Markdown Content:
+== Problem ==
+If x and y are positive integers for which 2^x3^y=1296, what is the value of x+y?
+
+(\mathrm {A})\ 8 \qquad (\mathrm {B})\ 9 \qquad (\mathrm {C})\ 10 \qquad (\mathrm {D})\ 11 \qquad (\mathrm {E})\ 12
+
+== Solution ==
+
+1296 = 2^4 3^4 and 4+4=\boxed{8} \Longrightarrow \mathrm{(A)}.
+
+== Video Solution 1==
+https://youtu.be/So54Ar_fxdE
+
+~Education, the Study of Everything
+
+== See Also ==
+{{AMC12 box|year=2004|ab=B|num-b=2|num-a=4}}
+{{MAA Notice}}

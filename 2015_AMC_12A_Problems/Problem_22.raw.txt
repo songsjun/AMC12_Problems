@@ -1,0 +1,58 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2015_AMC_12A_Problems/Problem_22&action=raw
+
+Published Time: Mon, 28 Jul 2025 02:42:06 GMT
+
+Markdown Content:
+==Problem==
+
+For each positive integer n, let S(n) be the number of sequences of length n consisting solely of the letters A and B, with no more than three As in a row and no more than three Bs in a row. What is the remainder when S(2015) is divided by 12?
+
+\textbf{(A)}\ 0\qquad\textbf{(B)}\ 4\qquad\textbf{(C)}\ 6\qquad\textbf{(D)}\ 8\qquad\textbf{(E)}\ 10 
+
+==Solution 1==
+
+One method of approach is to find a recurrence for S(n). 
+
+Let us define A(n) as the number of sequences of length n ending with an A, and B(n) as the number of sequences of length n ending in B. Note that A(n) = B(n) and S(n) = A(n) + B(n), so S(n) = 2A(n).
+
+For a sequence of length n ending in A, it must be a string of As appended onto a sequence ending in B of length n-1, n-2, \text{or}\ n-3. So we have the recurrence: A(n) = B(n-1) + B(n-2) + B(n-3) = A(n-1) + A(n-2) + A(n-3)
+
+We can thus begin calculating values of A(n). We see that the sequence goes (starting from A(0) = 1): 1,1,2,4,7,13,24... 
+
+A problem arises though: the values of A(n) increase at an exponential rate. Notice however, that we need only find S(2015)\ \text{mod}\ 12. In fact, we can use the fact that S(n) = 2A(n) to only need to find A(2015)\ \text{mod}\ 6. Going one step further, we need only find A(2015)\ \text{mod}\ 2 and A(2015)\ \text{mod}\ 3 to find A(2015)\ \text{mod}\ 6.
+
+Here are the values of A(n)\ \text{mod}\ 2, starting with A(0): 1,1,0,0,1,1,0,0...
+
+Since the period is 4 and 2015 \equiv 3\ \text{mod}\ 4, A(2015) \equiv 0\ \text{mod}\ 2.
+
+Similarly, here are the values of A(n)\ \text{mod}\ 3,  starting with A(0): 1,1,2,1,1,1,0,2,0,2,1,0,0,1,1,2...
+
+Since the period is 13 and 2015 \equiv 0\ \text{mod}\ 13, A(2015) \equiv 1\ \text{mod}\ 3.
+
+Knowing that A(2015) \equiv 0\ \text{mod}\ 2 and A(2015) \equiv 1\ \text{mod}\ 3, we see that A(2015) \equiv 4\ \text{mod}\ 6, and S(2015) \equiv 8\ \text{mod}\ 12. Hence, the answer is \textbf{(D)}.
+
+* Note that instead of introducing A(n) and B(n), we can simply write the relation S(n)=S(n-1)+S(n-2)+S(n-3), and proceed as above.
+
+==Recursion Solution 2==
+The huge n value in place, as well as the "no more than... in a row" are key phrases that indicate recursion is the right way to go. 
+Let's go with finding the case of S(n) from previous cases.
+So how can we make the words of S(n)? Do we choose 3-in-a-row of one letter, A or B, or do we want 2 consecutive ones or 1? Note that this covers all possible cases of ending with A and B with a certain number of consecutive letters. And obviously they are all distinct.
+
+[Convince yourself that each case for S(n) is considered exactly once by using these cues: does it end in 3, 2, or 1 consecutive letter(s) (1 consecutive means a string like ...BA, ...AB, as in the letter switches) and does it WLOG consider both A and B?]
+
+From there we realize that S(n)=S(n-1)+S(n-2)+S(n-3) because 3 in a row requires S(n-3), and so on. We need to find S(2015) mod 12. We first compute S(2015) mod 3 and mod 4. By listing out the residues mod 3, we find that the cycle length for mod 3 is 13. 2015 is 0 mod 13 so S(2015) = S(13) = 2 mod 3. By listing out the residues mod 4, we find that the cycle length for mod 4 is 4. S(2015) = S(3) = mod 4. By Chinese Remainder Theorem, S(2015) =\boxed{8} mod 12.
+
+==Solution 3 (Easy Version)==
+We can start off by finding patterns in S(n). When we calculate a few values we realize either from performing the calculation or because the calculation was performed in the exact same way that S(n) = 2^n - 2((n_4)- (n_5) \dots (n_n)). Rearranging the expression we realize that the terms aside from 2^{2015} are congruent to 0 mod 12(Just put the equation in terms of 2^{2015} and the four combinations excluded and calculate the combinations mod 12). Using patterns we can see that 2^{2015} is congruent to 8 mod 12. Therefore \boxed {8} is our answer.
+~Very minor edit in LaTeX by get-rickrolled
+
+== Video Solution by Richard Rusczyk ==
+
+https://artofproblemsolving.com/videos/amc/2015amc12a/400
+
+~ dolphin7
+
+== See Also ==
+{{AMC12 box|year=2015|ab=A|num-b=21|num-a=23}}

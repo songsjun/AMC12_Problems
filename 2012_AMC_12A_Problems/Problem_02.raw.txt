@@ -1,0 +1,39 @@
+{{duplicate|[[2012 AMC 12A Problems|2012 AMC 12A #2]] and [[2012 AMC 10A Problems|2012 AMC 10A #1]]}}
+
+== Problem ==
+
+Cagney can frost a cupcake every 20 seconds and Lacey can frost a cupcake every 30 seconds. Working together, how many cupcakes can they frost in 5 minutes?
+
+<math> \textbf{(A)}\ 10\qquad\textbf{(B)}\ 15\qquad\textbf{(C)}\ 20\qquad\textbf{(D)}\ 25\qquad\textbf{(E)}\ 30 </math>
+
+== Solution 1 ==
+
+Cagney can frost one in <math>20</math> seconds, and Lacey can frost one in <math>30</math> seconds. Working together, they can frost one in <math>\frac{20\cdot30}{20+30} = \frac{600}{50} = 12</math> seconds. In <math>300</math> seconds (<math>5</math> minutes), they can frost <math>\boxed{\textbf{(D)}\ 25}</math> cupcakes.
+
+== Solution 2 ==
+
+In <math>300</math> seconds (<math>5</math> minutes), Cagney will frost <math>\dfrac{300}{20} = 15</math> cupcakes, and Lacey will frost <math>\dfrac{300}{30} = 10</math> cupcakes. Therefore, working together they will frost <math>15 + 10 = \boxed{\textbf{(D)}\ 25}</math> cupcakes.
+
+== Solution 3 ==
+
+Since Cagney frosts <math>3</math> cupcakes a minute, and Lacey frosts <math>2</math> cupcakes a minute, they together frost <math>3+2=5</math> cupcakes a minute. Therefore, in <math>5</math> minutes, they frost <math>5\times5 = 25 \Rightarrow \boxed{\textbf{(D)}}</math>
+
+==Video Solution (CREATIVE THINKING)==
+https://youtu.be/uhy-Cu0xXkg
+
+~Education, the Study of Everything
+
+
+
+==Video Solution==
+https://youtu.be/56N_nohFC0k
+
+~savannahsolver
+
+== See Also ==
+
+{{AMC10 box|year=2012|ab=A|before=First Problem|num-a=2}}
+{{AMC12 box|year=2012|ab=A|num-b=1|num-a=3}}
+
+[[Category:Introductory Algebra Problems]]
+{{MAA Notice}}

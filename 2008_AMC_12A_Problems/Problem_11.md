@@ -1,0 +1,32 @@
+# 2008 AMC 12A Problem 11
+
+## Problem
+Three cubes are each formed from the pattern shown. They are then stacked on a table one on top of another so that the 13 visible numbers have the greatest possible sum. What is that sum?
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+unitsize(.8cm); pen p = linewidth(1); draw(shift(-2,0)*unitsquare,p); label("1",(-1.5,0.5)); draw(shift(-1,0)*unitsquare,p); label("2",(-0.5,0.5)); draw(unitsquare,p); label("32",(0.5,0.5)); draw(shift(1,0)*unitsquare,p); label("16",(1.5,0.5)); draw(shift(0,1)*unitsquare,p); label("4",(0.5,1.5)); draw(shift(0,-1)*unitsquare,p); label("8",(0.5,-0.5));
+```
+
+
+$$\mathrm{(A)}\ 154\qquad\mathrm{(B)}\ 159\qquad\mathrm{(C)}\ 164\qquad\mathrm{(D)}\ 167\qquad\mathrm{(E)}\ 189$$
+
+## Solution
+To maximize the sum of the 13 faces that are showing, we can minimize the sum of the numbers of the 5 faces that are not showing.
+
+The bottom 2 cubes each have a pair of opposite faces that are covered up. When the cube is folded, (1,32); (2,16); and (4,8) are opposite pairs. Clearly $4+8=12$ has the smallest sum.
+
+The top cube has 1 number that is not showing. The smallest number on a face is 1.
+
+So, the minimum sum of the 5 unexposed faces is $2\cdot12+1=25.$  Since the sum of the numbers on all the cubes is $3(32+16+8+4+2+1)=189$, the maximum possible sum of 13 visible numbers is $189-25=164\Rightarrow C.$
+## Solution 2
+Conversely, maximize the sum. Two cubes have 4 exposed faces. Since $32>16+8+4+2$, 32 must be on the side. There are two distinct (asymmetrical) configurations with 32 on the side, but (32,16,2,1) is the greatest at 51. There are 2 such cubes, so 51*2. The top cube has one unexposed face, so use 1 as the unexposed face. $2(51)+32+16+8+4+2=164\implies \boxed{\textbf{(C)} 164}$
+
+*~BJHHar*
+## Solution 3
+Two cubes have 4 exposed faces in the same configuration (a ring of 4 squares around the cube). Since the numbers are the same on each cube, they will have the same maximal sum, which is at least $32+16 = 48$.
+The third cube has 5 visible faces. Obviously, the non-visible face on this cube will be the smallest, which is 1. So, this third cube contributes $32+16+8+4+2 = 62$.
+The sum is then at least 62 + 48 + 48. The sum must be even because 62 is even and there are two cubes with the same sum. The only answer choice left is $\boxed{\textbf{(C)} 164}$
+## See Also

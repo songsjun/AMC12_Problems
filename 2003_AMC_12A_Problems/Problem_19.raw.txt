@@ -1,0 +1,35 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2003_AMC_12A_Problems/Problem_19&action=raw
+
+Published Time: Sat, 05 Jan 2019 02:55:51 GMT
+
+Markdown Content:
+==Problem==
+
+A parabola with equation y=ax^2+bx+c is reflected about the x-axis. The parabola and its reflection are translated horizontally five units in opposite directions to become the graphs of y=f(x) and y=g(x), respectively. Which of the following describes the graph of y=(f+g)(x)?
+
+ \textbf{(A)}\ \text{a parabola tangent to the }x\text{-axis} 
+ \textbf{(B)}\ \text{a parabola not tangent to the }x\text{-axis}\qquad\textbf{(C)}\ \text{a horizontal line} 
+ \textbf{(D)}\ \text{a non-horizontal line}\qquad\textbf{(E)}\ \text{the graph of a cubic function} 
+
+==Solution 1==
+
+If we take the parabola ax^2 + bx + c and reflect it over the x - axis, we have the parabola -ax^2 - bx - c. Without loss of generality, let us say that the parabola is translated 5 units to the left, and the reflection to the right. Then:
+ 
+ \begin{align*} f(x) = a(x+5)^2 + b(x+5) + c = ax^2 + (10a+b)x + 25a + 5b + c \\ g(x) = -a(x-5)^2 - b(x-5) - c = -ax^2 + 10ax -bx - 25a + 5b - c \end{align*}  
+
+Adding them up produces: 
+ \begin{align*} (f + g)(x) = ax^2 + (10a+b)x + 25a + 5b + c - ax^2 + 10ax -bx - 25a + 5b - c = 20ax + 10b \end{align*} 
+
+This is a line with slope 20a. Since a cannot be 0 (because ax^2 + bx + c would be a line) we end up with \boxed{\textbf{(D)} \text{ a non-horizontal line }}
+
+==Solution 2: less computation==
+
+WLOG let the parabola be y=x^2, and the reflected parabola is thus y=-x^2. We can also assume f(x) = (x+5)^2 = x^2 + 10x + 25 and g(x) = -(x-5)^2 = -x^2 + 10x - 25. Therefore, (f+g)(x) = x^2 + 10x + 25 - x^2 + 10x - 25 = 20x, which is a non-horizontal line \Rightarrow \boxed{\textbf{D}}.
+
+-MP8148
+
+==See Also==
+{{AMC12 box|year=2003|ab=A|num-b=18|num-a=20}}
+{{MAA Notice}}

@@ -1,0 +1,84 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2021_AMC_12A_Problems/Problem_6&action=raw
+
+Published Time: Tue, 11 Nov 2025 17:09:39 GMT
+
+Markdown Content:
+==Problem==
+A deck of cards has only red cards and black cards. The probability of a randomly chosen card being red is \frac13. When 4 black cards are added to the deck, the probability of choosing red becomes \frac14. How many cards were in the deck originally?
+
+\textbf{(A) }6 \qquad \textbf{(B) }9 \qquad \textbf{(C) }12 \qquad \textbf{(D) }15 \qquad \textbf{(E) }18
+
+==Solution 1 (Algebra)==
+If the probability of choosing a red card is \frac{1}{3}, the red and black cards are in ratio 1:2. This means at the beginning there are x red cards and 2x black cards.
+
+After 4 black cards are added, there are 2x+4 black cards. This time, the probability of choosing a red card is \frac{1}{4} so the ratio of red to black cards is 1:3. This means in the new deck the number of black cards is also 3x for the same x red cards.
+
+So, 3x = 2x + 4 and x=4 meaning there are 4 red cards in the deck at the start and 2(4) = 8 black cards. 
+
+So, the answer is 8+4 = 12 = \boxed{\textbf{(C) }12}.
+
+--abhinavg0627
+
+==Solution 2 (Arithmetic)==
+In terms of the number of cards, the original deck is 3 times the red cards, and the final deck is 4 times the red cards. So, the final deck is \frac43 times the original deck. We are given that adding 4 cards to the original deck is the same as increasing the original deck by \frac13 of itself. Since 4 cards are equal to \frac13 of the original deck, the original deck has 4\cdot3=\boxed{\textbf{(C) }12} cards.
+
+~MRENTHUSIASM
+
+==Solution 3 (Observations)==
+Suppose there were x cards in the deck originally. Now, the deck has x+4 cards, which must be a multiple of 4.
+
+Only 12+4=16 is a multiple of 4, so the answer is x=\boxed{\textbf{(C) }12}.
+
+~MRENTHUSIASM
+
+==Solution 4 (Ratios and Proportions)==
+By looking at the ratio of black cards to the total number of cards, we can say that there are 2x black cards and 3x cards in total. We can write the probability of getting a black card as \frac{2x}{3x}. But when we increase the number of black cards by 4 the probability becomes \frac{3}{4}. So the equation is:
+\frac{2x+4}{3x+4}=\frac{3}{4},
+8x+16=9x+12,
+x=4.
+The answer is 3x=\boxed{\textbf{(C) }12}.
+
+~Param Gor
+
+==Solution 5 (Simpler Ratios)==
+This could in a way be considered a more efficient/alternate version of Solution 4. Since the problem mentions that there is initially a \frac{1}{3} chance of getting a red card, we can represent the number of red cards as \frac{x}{3}, where x is the number of cards in the deck originally. Since the modification to the deck makes no changes to the number of red cards, you can see that if there is a \frac{1}{4} probability of having a red card in a deck of x+4 cards, \frac{x}{3} = \frac{x+4}{4}. Solving this for x gives x=\boxed{\textbf{(C) }12}.
+
+~Almond_Oil
+
+==Solution 6 (Observation)==
+Notice that in a deck with 1 red card and 2 black cards, the probability of a red ball is \frac{1}{3}
+
+Adding a single black card would make the chance \frac{1}{4}
+
+If we scale this deck by 4, making so that there are 4 red cards and 8 black cards, the original chance is still \frac{1}{3}
+
+Adding 4 black cards will make the chance \frac{1}{4}
+
+The answer is \boxed{\textbf{(C) }12}.
+
+==Video Solution (Quick and Easy)==
+https://youtu.be/oYGeTN2-82s
+
+~Education, the Study of Everything
+
+==Video Solution by Aaron He==
+https://www.youtube.com/watch?v=xTGDKBthWsw&t=5m51s
+
+==Video Solution by Hawk Math==
+https://www.youtube.com/watch?v=P5al76DxyHY
+
+== Video Solution by OmegaLearn (Using Probability and System of Equations) ==
+https://youtu.be/C6x361JPLzU
+
+~ pi_is_3.14
+
+==Video Solution by TheBeautyofMath==
+https://youtu.be/cckGBU2x1zg
+
+~IceMatrix
+
+==See also==
+{{AMC12 box|year=2021|ab=A|num-b=5|num-a=7}}
+{{MAA Notice}}

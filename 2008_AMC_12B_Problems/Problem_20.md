@@ -1,0 +1,70 @@
+# 2008 AMC 12B Problem 20
+
+> This problem is the same as [2008 AMC 12B #20](https://artofproblemsolving.com/wiki/index.php/2008_AMC_12B_Problems) and [2008 AMC 10B #25](https://artofproblemsolving.com/wiki/index.php/2008_AMC_10B_Problems).
+## Problem
+Michael walks at the rate of 5 feet per second on a long straight path. Trash pails are located every 200 feet along the path. A garbage truck traveling at 10 feet per second in the same direction as Michael stops for 30 seconds at each pail. As Michael passes a pail, he notices the truck ahead of him just leaving the next pail. How many times will Michael and the truck meet?
+
+
+$$\mathrm{(A)}\ 4\qquad\mathrm{(B)}\ 5\qquad\mathrm{(C)}\ 6\qquad\mathrm{(D)}\ 7\qquad\mathrm{(E)}\ 8$$
+
+## Solution 1
+Pick a coordinate system where Michael's starting pail is 0 and the one where the truck starts is 200.
+Let M(t) and T(t) be the coordinates of Michael and the truck after t seconds.
+Let D(t)=T(t)-M(t) be their (signed) distance after t seconds.
+Meetings occur whenever $D(t)=0.$
+We have D(0)=200.
+
+The truck always moves for 20 seconds, then stands still for 30. During the first 20 seconds of the cycle the truck moves by 200 feet and Michael by 100, hence during the first 20 seconds of the cycle D(t) increases by 100.
+During the remaining 30 seconds D(t) decreases by 150.
+
+From this observation it is obvious that after four full cycles, i.e. at $t=200$, we will have $D(t)=0$ for the first time.
+
+During the fifth cycle, D(t) will first grow from 0 to 100, then fall from 100 to -50. Hence Michael overtakes the truck while it is standing at the pail.
+
+During the sixth cycle, D(t) will first grow from -50 to 50, then fall from 50 to -100. Hence the truck starts moving, overtakes Michael on their way to the next pail, and then Michael overtakes the truck while it is standing at the pail.
+
+During the seventh cycle, D(t) will first grow from -100 to 0, then fall from 0 to -150. Hence the truck meets Michael at the moment when it arrives to the next pail.
+
+Obviously, from this point on D(t) will always be negative, meaning that Michael is already too far ahead. Hence we found all $\boxed{5 \Longrightarrow B}$ meetings.
+
+The movement of Michael and the truck is plotted below: Michael in blue, the truck in red.
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+import graph; size(400,300,IgnoreAspect); real[] xt = new real[21]; real[] yt = new real[21]; for (int $i=0$; i<11; ++i) xt[2*i]=50*i; for (int $i=$0; i<10; ++i) xt[2*$i+$1]=50*$i+20$; for (int $i=$0; i<11; ++i) yt[2*i]=200*(i+1)$$; for (int $i=$0; i<10; ++i) yt[2*$i+$1]=200*(i+2)$$; real[] xm={0,500}; real[] ym={0,2500}; draw(graph(xt,yt),red); draw(graph(xm,ym),blue); xaxis("$\mathrm{time}$",Bottom,LeftTicks); yaxis("$\mathrm{position}$",Left,LeftTicks);
+```
+## Solution 2
+The truck takes 20 seconds to go from one pail to the next and then stops for 30 seconds at the new pail. Thus it sets off from a pail every 50 sec. Let t denote the time elapsed and write $t=50k+\Delta,$ where $\Delta \in$ [0,50). In  this time Michael has traveled $5t = 250k+5\Delta$ feet. What about the truck? In the first $50k$ seconds the truck covers k pails, i.e. $200k$ feet so it moves 200+$200k$ feet from Michael's starting point. Then we have two cases:
+
+**(a)** if $\Delta < 20,$ then the truck travels an additional $10\Delta$ feet. For them to intersect we must have 200+$200k+10\Delta = 250k + 5\Delta.$ Solving, we get $\Delta = 10$k - 40. Since $\Delta$ must lie in the interval [0,20) we get k $\in\{4, 5\}$.
+
+**(b)** if $\Delta \in$ [20, 50), then the truck travels an additional 200 feet. For them to intersect we must have 200+$200k+200 =$250k + $5\Delta.$ Solving, we get $\Delta = 10(8-k).$ Since $\Delta$ must lie in the interval [20,50) we get k $\in\{4, 5, 6\}$.
+
+Thus Michael intersects with the truck 5 times, which is option $\boxed{\textbf{(B)}}.$
+## Solution 3
+We make a chart by seconds in increments of ten.
+
+
+$$
+\begin{tabular}{c|c|c}Time (s) &Distance of Michael&Distance of Garbage\\ \hline 0&0&200\\ 10&50&300\\ 20&100&400\\ 30&150&400\\ 40&200&400\\ 50&250&400\\ 60&300&500\\ 70&350&600\\ 80&400&600\\ 90&450&600\\ 100&500&600\\ 110&550&700\\ 120&600&800\\ 130&650&800\\ 140&700&800\\ 150&750&800\\ 160&800&900\\ 170&850&1000\\ 180&900&1000\\ 190&950&1000\\ 200&1000&1000\\ 210&1050&1100\\ 220&1100&1200\\ 230&1150&1200\\ 240&1200&1200\\ 250&1250&1200\\ 260&1300&1300\\ 270&1350&1400\\ 280&1400&1400\\ 290&1450&1400\\ 300&1500&1400\\ 310&1550&1500\\ 320&1600&1600\\ 330&1650&1600\\ 340&1700&1600\\ 350&1750&1600\\ 360&1800&1700\\ 370&1850&1800\\ 380&1900&1800\\ 390&1950&1800\\ 400&2000&1800\\ \end{tabular}
+$$
+
+
+Notice at 200, 240, 260, 280, and 320 seconds, Michael and the garbage truck meet. It is clear that they met at these times, and will meet no more. Thus the answer is $\boxed{\textbf{(B)}}.$
+
+*~superagh*
+## Solution 4 (Educated Guess)
+We can record the time of the truck and the time of Micheal at each trash pail.
+
+
+$$
+\begin{tabular}{c|c|c}Distance (s) &Truck Time&Micheal Time\\ \hline 400&20, 50&40\\ 600&70, 100&80\\ 800&120, 150&120\\ 1000&170, 200&160\\ 1200&220, 250&200\\ 1400&270, 300&240\\ 1600&320, 350&320\\ \end{tabular}
+$$
+
+
+Since Micheal moves faster than the truck, the truck will not catch up to Micheal afterwards.
+
+We see that there are 4 correct times and we add 1 because they also pass between pails once which is option $\boxed{\textbf{(B)}}$
+## See also

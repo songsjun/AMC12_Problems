@@ -1,0 +1,42 @@
+# 2013 AMC 12B Problem 12
+
+## Problem
+Cities A, B, C, D, and E are connected by roads $\widetilde{AB}, \widetilde{AD}, \widetilde{AE}, \widetilde{BC}, \widetilde{BD}, \widetilde{CD},$ and $\widetilde{DE}.$ How many different routes are there from A to B that use each road exactly once? (Such a route will necessarily visit some cities more than once.)
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+unitsize(10mm); defaultpen(linewidth(1.2pt)+fontsize(10pt)); dotfactor=4; pair A=(1,0), B=(4.24,0), C=(5.24,3.08), D=(2.62,4.98), E=(0,3.08); dot (A); dot (B); dot (C); dot (D); dot (E); label("$A$",A,S); label("$B$",B,SE); label("$C$",C,E); label("$D$",D,N); label("$E$",E,W); guide squiggly(path g, real stepsize, real slope=45) { real len = arclength(g); real step = len / round(len / stepsize); guide squig; for (real $u = 0$; u < len; u += step){ real a = arctime(g, u); real b = arctime(g, u + step / 2); pair p = point(g, a); pair q = point(g, b); pair np = unit( rotate(slope) * dir(g,a)); pair nq = unit( rotate(0 - slope) * dir(g,b)); squig = squig .. p{np} .. q{nq}; } squig = squig .. point(g, length(g)){unit(rotate(slope)*dir(g,length(g)))}; return squig; } pen pp = defaultpen + 2.718; draw(squiggly(A--B, 4.04, 30), pp); draw(squiggly(A--D, 7.777, 20), pp); draw(squiggly(A--E, 5.050, 15), pp); draw(squiggly(B--C, 5.050, 15), pp); draw(squiggly(B--D, 4.04, 20), pp); draw(squiggly(C--D, 2.718, 20), pp); draw(squiggly(D--E, 2.718, -60), pp);
+```
+
+
+$\textbf{(A)}\ 7 \qquad \textbf{(B)}\ 9 \qquad \textbf{(C)}\ 12 \qquad \textbf{(D)}\ 16 \qquad \textbf{(E)}\ 18$
+## Solution
+Note that cities C and E can be removed when counting paths because if a path goes in to C or E, there is only one possible path to take out of cities C or E.
+So the diagram is as follows:
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+unitsize(10mm); defaultpen(linewidth(1.2pt)+fontsize(10pt)); dotfactor=4; pair A=(1,0), B=(4.24,0), C=(5.24,3.08), D=(2.62,4.98), E=(0,3.08); dot (A); dot (B); dot (D); label("$A$",A,S); label("$B$",B,SE); label("$D$",D,N); draw(A--B..D..cycle); draw(A--D); draw(B--D);
+```
+
+
+Now we proceed with casework. Remember that there are two ways to travel from A to D, D to A, B to D and D to B.:
+
+Case 1 A $\Rightarrow D$: From D, if the path returns to A, then the next path must go to B$\Rightarrow D \Rightarrow B.$ There are 2 $\cdot 1 \cdot 2 = 4$ possibilities of the path ADABDB. If the path goes to D from B, then the path must continue with either BDAB or BADB. There are 2 $\cdot 2 \cdot 2 = 8$ possibilities. So, this case gives $4+8=12$ different possibilities.
+
+Case 2 A $\Rightarrow B$: The path must continue with BDADB. There are 2 $\cdot 2 = 4$ possibilities for this case.
+
+Putting the two cases together gives 12+4 = $\boxed{\textbf{(D)} \ 16}$
+## Alcumus Solution (Directly Copied from Alcumus)
+Solution:
+The presence of cities C and E is irrelevant to the problem, because upon entering either city, there is only one road going out. Therefore, we can remove those cities, and instead note that there are two roads connecting A and D, two roads connecting B and D, and one road connecting A and B. We can assume that the order in which each pair of roads is traversed does not matter, and then multiply by 2 $\cdot 2 =4$ at the end.
+
+Now, take cases on whether B or D is visited first:
+Suppose D is visited first. If the other road back to A is then taken, then the only possibility is to travel to B and then travel the two roads between B and D in either order. If, instead, one of the roads to B is taken, then either A, D, B must be visited in that order, or D, A, B must be visited in that order. This gives 3 possible routes in total.
+Suppose B is visited first. Then D, A, D, B must be visited in that order, so there is only one possible route.
+Putting the two cases together and multiplying by 4 gives the answer, $4(1+3)=\boxed{16}.$
+## See Also

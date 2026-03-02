@@ -1,0 +1,22 @@
+# 2007 AMC 12B Problem 10
+
+> This problem is the same as [2007 AMC 12B #10](https://artofproblemsolving.com/wiki/index.php/2007_AMC_12B_Problems) and [2007 AMC 10B #14](https://artofproblemsolving.com/wiki/index.php/2007_AMC_10B_Problems).
+## Problem
+Some boys and girls are having a car wash to raise money for a class trip to China. Initially 40\% of the group are girls. Shortly thereafter two girls leave and two boys arrive, and then 30\% of the group are girls. How many girls were initially in the group?
+
+$\textbf{(A) } 4 \qquad\textbf{(B) } 6 \qquad\textbf{(C) } 8 \qquad\textbf{(D) } 10 \qquad\textbf{(E) } 12$
+## Solution 1
+If we let p be the number of people initially in the group, then $0.4p$ is the number of girls. If two girls leave and two boys arrive, the number of people in the group is still p, but the number of girls is 0.4$p-2$. Since only 30\% of the group are girls,
+
+$$
+\begin{align*} \frac{0.4p-2}{p}&=\frac{3}{10}\\ 4p-20&=3p\\ p&=20\end{align*}
+$$
+
+The number of girls initially in the group is $0.4p=0.4(20)=\boxed{\mathrm{(C) \ } 8}$
+## Solution 2
+There are the same number of total people before and after, but the number of girls has dropped by two or 10\% of the total.  $\frac{2}{0.1}=20,$ and 40\%$\cdot20=8,$ so the answer is $\mathrm{(C)}.$
+## Solution 3
+Let x be the number of people initially in the group and g the number of girls. $\frac{2}{5}$x = g, so $x =\frac{5}{2}$g. Also, the problem states $\frac{3}{10}$x = $g-2$. Substituting x in terms of g into the second equation yields that $g =\boxed{ 8\ \mathrm{(C)}}.$
+
+*~mobius247*
+## See Also

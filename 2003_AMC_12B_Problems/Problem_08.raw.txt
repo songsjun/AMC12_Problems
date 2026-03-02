@@ -1,0 +1,23 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2003_AMC_12B_Problems/Problem_8&action=raw
+
+Published Time: Thu, 01 Aug 2024 15:40:01 GMT
+
+Markdown Content:
+{{duplicate|[[2003 AMC 12B Problems|2003 AMC 12B #8]] and [[2003 AMC 10B Problems|2003 AMC 10B #13]]}}
+==Problem==
+
+Let \clubsuit(x) denote the sum of the digits of the positive integer x. For example, \clubsuit(8)=8 and \clubsuit(123)=1+2+3=6. For how many two-digit values of x is \clubsuit(\clubsuit(x))=3?
+
+\textbf{(A) } 3 \qquad\textbf{(B) } 4 \qquad\textbf{(C) } 6 \qquad\textbf{(D) } 9 \qquad\textbf{(E) } 10 
+
+==Solution==
+Let y=\clubsuit (x). Since x \leq 99, we have y \leq 18. Thus if \clubsuit (y)=3, then y=3 or y=12. The 3 values of x for which \clubsuit (x)=3 are 12, 21, and 30, and the 7 values of x for which \clubsuit (x)=12 are 39, 48, 57, 66, 75, 84, and 93. There are \boxed{E} = \boxed{10} values in all.
+
+~Andrew_Lu/Mismatchedcubing
+
+==See Also==
+{{AMC12 box|year=2003|ab=B|num-b=7|num-a=9}}
+{{AMC10 box|year=2003|ab=B|num-b=12|num-a=14}}
+{{MAA Notice}}

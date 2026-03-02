@@ -1,0 +1,79 @@
+# 2019 AMC 12B Problem 24
+
+## Problem
+Let $\omega=-\tfrac{1}{2}+\tfrac{1}{2}i\sqrt3.$ Let S denote all points in the complex plane of the form $a+b\omega+c\omega^2,$ where $0\leq$ a $\leq 1,0\leqb\leq 1,$ and $0\leqc\leq 1.$ What is the area of S?
+
+$\textbf{(A) } \frac{1}{2}\sqrt3 \qquad\textbf{(B) } \frac{3}{4}\sqrt3 \qquad\textbf{(C) } \frac{3}{2}\sqrt3\qquad\textbf{(D) } \frac{1}{2}\pi\sqrt3 \qquad\textbf{(E) } \pi$
+## Solution 1
+Notice that $\omega=e^{\frac{2i\pi}{3}},$ which is one of the cube roots of unity. We wish to find the span of ($a+b\omega+c\omega^2)$ for reals $0\le$ a,b,c$\le 1.$
+Observe also that if a,b,c>0, then replacing a, b, and c by $a-\min(a,b,c),b-\min(a,b,c),$ and $c-\min(a,b,c)$ leaves the value of $a+b\omega+c\omega^2$ unchanged. Therefore, assume that at least one of a,b,c is equal to 0. If exactly one of them is 0, we can form an equilateral triangle of side length 1 using the remaining terms. A similar argument works if exactly two of them are 0. In total, we get 3+{3 $\choose 2$} = 6 equilateral triangles, whose total area is 6 $\cdot \frac{\sqrt{3}}{4} = \boxed{\textbf{(C) } \frac{3}{2}\sqrt3}.$
+
+*Note*: A diagram of the six equilateral triangles is shown below.
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(200,200); draw((0,0)--(1,0)--(1/2,sqrt(3)/2)--cycle); draw((0,0)--(1/2,sqrt(3)/2)--(-1/2,sqrt(3)/2)--cycle); draw((0,0)--(-1/2,sqrt(3)/2)--(-1,0)--cycle); draw((0,0)--(-1,0)--(-1/2,-sqrt(3)/2)--cycle); draw((0,0)--(-1/2,-sqrt(3)/2)--(1/2,-sqrt(3)/2)--cycle); draw((0,0)--(1/2,-sqrt(3)/2)--(1,0)--cycle); draw((-2,0)--(2,0)); draw((0,-2)--(0,2));
+```
+## Solution 1 but not exactly
+WLOG c is the smallest of the 3. Then the expression is equivalent to $a+b\omega.$ To find the area of the region, we need only consider the extremities $(a=0, a=1, b=0, b=1)$, as they will form a polygon which contains all points. So, when $a=0, b=0$ we have the origin (diagram omitted). When $a=1, b=0$ we have 1:
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(100,100); draw((-2,0)--(2,0), gray); draw((0,-2)--(0,2), gray); draw((0,0)--(1,0), red);
+```
+
+
+When $a=0, b=1$ we have $-\frac{1}{2}, \frac{\sqrt{3}}{2}$:
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(100,100); draw((-2,0)--(2,0), gray); draw((0,-2)--(0,2), gray); draw((0,0)--(-1/2,sqrt(3)/2), red); draw((0,0)--(1,0), red);
+```
+
+
+When $a=1, b=1$ we have $\frac{1}{2}, \frac{\sqrt{3}}{2}$:
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(100,100); draw((-2,0)--(2,0), gray); draw((0,-2)--(0,2), gray); draw((0,0)--(-1/2,sqrt(3)/2), red); draw((0,0)--(1,0), red); draw((-1/2,sqrt(3)/2)--(1/2,sqrt(3)/2), red); draw((1,0)--(1/2,sqrt(3)/2), red);
+```
+
+
+The area of this is $\frac{\sqrt{3}}{2}.$ Multiply this by 3 to get C.
+## Solution 2
+We can add on each term one at a time. Firstly, the possible values of \textstyle $c\omega^2=c\left(-\frac{1}{2}-\frac{\sqrt{3}}{2}i\right)$ lie on the following line:
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(100,100); draw((0,0)--(-1/2,-sqrt(3)/2), blue); draw((-2,0)--(2,0)); draw((0,-2)--(0,2));
+```
+
+
+For each point on the line, we can add \textstyle $b\omega=b\left(-\frac{1}{2}+\frac{\sqrt{3}}{2}i\right).$ This means that we can extend the area to
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(100,100); fill((0,0)--(-1/2,sqrt(3)/2)--(-1,0)--(-1/2,-sqrt(3)/2)--cycle, lightgray); draw((0,0)--(-1/2,sqrt(3)/2)--(-1,0)--(-1/2,-sqrt(3)/2)--cycle); draw((0,0)--(-1/2,sqrt(3)/2), red); draw((0,0)--(-1/2,-sqrt(3)/2), blue); draw((-2,0)--(2,0)); draw((0,-2)--(0,2));
+```
+
+
+by "moving" the blue line along the red line. Finally, we can add a to every point, giving
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(100,100); fill((-1/2,sqrt(3)/2)--(-1,0)--(-1/2,-sqrt(3)/2)--(1/2,-sqrt(3)/2)--(1,0)--(1/2,sqrt(3)/2)--cycle, lightgray); draw((-1/2,sqrt(3)/2)--(-1,0)--(-1/2,-sqrt(3)/2)--(1/2,-sqrt(3)/2)--(1,0)--(1/2,sqrt(3)/2)--cycle); draw((0,0)--(-1/2,sqrt(3)/2), red); draw((0,0)--(-1/2,-sqrt(3)/2), blue); draw((-2,0)--(2,0)); draw((0,-2)--(0,2)); draw((0,0)--(1,0), heavygreen);
+```
+
+
+by "moving" the previous area along the green line. This leaves us with a regular hexagon with side length 1, so, as in Solution 1, the total area is $\boxed{\textbf{(C) } \frac{3}{2}\sqrt{3}}.$
+## See Also

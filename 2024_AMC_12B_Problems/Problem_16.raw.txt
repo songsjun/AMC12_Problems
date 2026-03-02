@@ -1,0 +1,80 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2024_AMC_12B_Problems/Problem_16&action=raw
+
+Published Time: Tue, 11 Nov 2025 16:16:32 GMT
+
+Markdown Content:
+{{duplicate|[[2024 AMC 10B Problems/Problem 22|2024 AMC 10B #22]] and [[2024 AMC 12B Problems/Problem 16|2024 AMC 12B #16]]}}
+==Problem==
+
+A group of 16 people will be partitioned into 4 indistinguishable 4-person committees. Each committee will have one chairperson and one secretary. The number of different ways to make these assignments can be written as 3^{r}M, where r and M are positive integers and M is not divisible by 3. What is r?
+
+\textbf{(A) }5 \qquad \textbf{(B) }6 \qquad \textbf{(C) }7 \qquad \textbf{(D) }8 \qquad \textbf{(E) }9 \qquad
+
+==Solution 1==
+There are {16 \choose 4} ways to choose the first committee, {12 \choose 4} ways to choose the second, {8 \choose 4} for the third, and {4 \choose 4}=1 for the fourth. Since the committees are indistinguishable, we need to divide the product by 4!. Thus the 16 people can be grouped in
+\frac{1}{4!}{16 \choose 4}{12 \choose 4}{8 \choose 4}{4 \choose 4}=\frac{16!}{(4!)^5}
+ways.
+
+In each committee, there are 4 \cdot 3=12 ways to choose the chairperson and secretary, so 12^4 ways for all 4 committees. Therefore, there are
+\frac{16!}{(4!)^5}12^4
+total possibilities.
+
+Since 16! contains 6 factors of 3, (4!)^5 contains 5, and 12^4 contains 4, r=6-5+4=\boxed{\textbf{(A) }5}.
+
+~[https://artofproblemsolving.com/community/user/1201585 kafuu_chino]
+
+==Solution 2 (Multinomial Coefficients)==
+There are \binom{16}{4,4,4,4} ways to choose the 4 committees. You have to divide by another 4! since the order of the committees does not matter. Furthermore, in each committee, you can have 4 \cdot 3 ways to choose chairperson and secretary. Hence a total of \lfloor{\frac{16}{3}\rfloor}+\lfloor{\frac{16}{9}\rfloor}+4-5=5.
+
+~mathboy282
+
+==Solution 3==
+
+There will be 16 ways to pick the chairperson of the first committee, then 15 to pick the secretary, and lastly {14 \choose 2} ways to pick the other two members of the first committee. Similarly, we can complete the rest of the terms as follows:
+\frac{(16)(15){14 \choose 2}(12)(11){10 \choose 2}(8)(7){6\choose 2}(4)(3){2\choose 2}}{4!}
+We notice the numerator has at most 3^6, and the denominator has just 3. Thus, the value of r in question is \boxed{\textbf{(A)}\ 5}.
+
+~lisztepos
+
+==Solution 4 ==  
+We can convert the question into arranging people in a line of length 16.
+
+First, arrange all 16 people in a line. There are 16! possible ways to do this. Then, divide the line into 4 groups of 4, which represent the committees. Since the committees are indistinguishable, we divide by the number of ways to permute the 4 groups, 4!.  
+
+Within each group of 4, the first two positions in the line are assigned as the chairperson and the secretary, while the remaining two are ordinary members. Since the roles of chairperson and secretary are distinct, but the order of the remaining two members does not matter, we divide by 2 for each group. Thus, we divide by 2^4 to account for all 4 committees.  
+
+The total number of ways to assign people into committees with roles is given by:
+ \frac{16!}{4! \cdot 2^4}.   
+(This is equivalent to Solution 1's \frac{16!}{(4!)^5} \cdot 12^4.)
+
+To find r, we use Legendre's Formula to count the total power of 3 in 16!:  
+ \lfloor \frac{16}{3} \rfloor + \lfloor \frac{16}{9} \rfloor = 5 + 1 = 6.   
+Each 4! contributes one factor of 3, and since we divide by 4! a total of 1 times, we subtract 1 from 6:  
+ 6 - 1 = 5.   
+Thus, the value of r is \boxed{5}.
+~ryk
+
+==Video Solution 1 by Pi Academy (In A Lot More Than 2 Mins ⚡🚀)==
+
+https://youtu.be/9ymwnHnTbDQ?feature=shared
+
+~ Pi Academy
+
+==Video Solution 2 by Innovative Minds==
+https://youtu.be/HMPHdBiaYQc
+
+==Video Solution 3 by SpreadTheMathLove==
+https://youtu.be/cBSUd_938_0?si=Mh-HiALvrRM3mfBQ
+
+==Video Solution 4 by sevenblade (standard approach!)==
+https://www.youtube.com/watch?v=5BXclh_DLEg
+
+==Fast Solution==
+https://www.youtube.com/watch?v=jPTL8hf0Ur0&t=1s
+
+==See also==
+{{AMC10 box|year=2024|ab=B|num-b=21|num-a=23}}
+{{AMC12 box|year=2024|ab=B|num-b=15|num-a=17}}
+{{MAA Notice}}

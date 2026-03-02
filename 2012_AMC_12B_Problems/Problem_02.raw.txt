@@ -1,0 +1,21 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2012_AMC_12B_Problems/Problem_2&action=raw
+
+Published Time: Mon, 19 Oct 2020 05:07:26 GMT
+
+Markdown Content:
+== Problem ==
+A circle of radius 5 is inscribed in a rectangle as shown. The ratio of the length of the rectangle to its width is 2:1. What is the area of the rectangle?
+
+ draw((0,0)--(0,10)--(20,10)--(20,0)--cycle); draw(circle((10,5),5)); 
+
+\textbf{(A)}\ 50\qquad\textbf{(B)}\ 100\qquad\textbf{(C)}\ 125\qquad\textbf{(D)}\ 150\qquad\textbf{(E)}\ 200
+
+== Solution ==
+If the radius is 5, then the width is 10, hence the length is 20. 10\times20= \boxed{\textbf{(E)}\ 200}.
+
+== See Also ==
+
+{{AMC12 box|year=2012|ab=B|num-b=1|num-a=3}}
+{{MAA Notice}}

@@ -1,0 +1,34 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2004_AMC_12A_Problems/Problem_15&action=raw
+
+Published Time: Wed, 16 Aug 2023 02:27:56 GMT
+
+Markdown Content:
+{{duplicate|[[2004 AMC 12A Problems|2004 AMC 12A #15]] and [[2004 AMC 10A Problems/Problem 17|2004 AMC 10A #17]]}}
+
+==Problem==
+Brenda and Sally run in opposite directions on a circular track, starting at [[diameter|diametrically]] opposite points.  They first meet after Brenda has run 100 meters.  They next meet after Sally has run 150 meters past their first meeting point.  Each girl runs at a constant speed.  What is the length of the track in meters?
+
+ \mathrm{(A) \ } 250 \qquad \mathrm{(B) \ } 300 \qquad \mathrm{(C) \ } 350 \qquad \mathrm{(D) \ } 400\qquad \mathrm{(E) \ } 500 
+
+==Solutions==
+=== Solution 1 ===
+
+Call the length of the race track x. When they meet at the first meeting point, Brenda has run 100 meters, while Sally has run \frac{x}{2} - 100 meters. By the second meeting point, Sally has run 150 meters, while Brenda has run x - 150 meters. Since they run at a constant speed, we can set up a [[proportion]]: \frac{100}{x- 150} = \frac{\frac{x}{2} - 100}{150}. Cross-multiplying, we get that x = 350\Longrightarrow\boxed{\mathrm{(C)}\ 350}.
+
+== Solution by Alcumus ==
+
+The total distance the girls run between the start and the first meeting is one half of the track length. The total distance they run between the two meetings is the track length. As the girls run at constant speeds, the interval between the meetings is twice as long as the interval between the start and the first meeting. Thus between the meetings Brenda will run 2\times100=200 meters. Therefore the length of the track is 150 + 200 = 350 meters \Rightarrow\boxed{\mathrm{(C)}\ 350}
+
+==Video Solution==
+https://youtu.be/4Amr36L7otc
+
+Education, the Study of Everything
+
+==See also==
+{{AMC12 box|year=2004|ab=A|num-b=14|num-a=16}}
+{{AMC10 box|year=2004|ab=A|num-b=16|num-a=18}}
+
+[[Category:Introductory Algebra Problems]]
+http://www.artofproblemsolving.com/Wiki/index.php?title=2004_AMC_12A_Problems/Problem_16&action=edit§ion=3

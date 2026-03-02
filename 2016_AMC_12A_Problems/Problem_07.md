@@ -1,0 +1,26 @@
+# 2016 AMC 12A Problem 7
+
+## Problem
+Which of these describes the graph of $x^2(x+y+1)=y^2(x+y+1)$ ?
+
+$\textbf{(A)}\ \text{two parallel lines}\\ \textbf{(B)}\ \text{two intersecting lines}\\ \textbf{(C)}\ \text{three lines that all pass through a common point}\\ \textbf{(D)}\ \text{three lines that do not all pass through a common point}\\ \textbf{(E)}\ \text{a line and a parabola}$
+## Solution 1
+The equation $x^2(x+y+1)=y^2(x+y+1)$ tells us $x^2=y^2$ or x+$y+1=0 . x^2=y^2$ generates two lines y=x and y=-x . x+$y+1=0$ is another straight line. The only intersection of y=x and y=-x is (0,0) , which is not on x+$y+1=0$ . Therefore, the graph is three lines that do not have a common intersection, or $\boxed{\textbf{(D)}\; \text{three lines that do not all pass through a common point}}$
+## Solution 2
+If $x+y+1\neq0,$ then dividing both sides of the equation by x+$y+1$ gives us x^2=y^2. Rearranging and factoring, we get $x^2-y^2=(x+y)(x-y)=0. If x+y+1=0$, then the equation is satisfied. Thus either x+$y=0, x-y=0$, or x+$y+1=0$. These equations can be rearranged into the lines y=-x, y=x, and y=-$x-1$, respectively. Since these three lines are distinct, the answer is $\boxed{\textbf{(D)}\; \text{three lines that do not all pass through a common point}}.$
+## Solution 3
+Subtract $y^2(x+y+1)$ on both sides of the equation to get $x^2(x+y+1)-y^2(x+y+1)=0$. Factoring x+$y+1$ gives us (x+$y+1)(x^2-y^2)=(x+y+1$)(x+y)(x-y)=0, so either x+$y+1=0, x+y=0$, or x-$y=0$. Continue on with the second half of solution 2.
+## Diagram:
+AB: y=x
+
+CD: y=-x
+
+EF: x+$y+1=0$
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+size(7cm); pair F= (5,0), E=(-1,6), D=(0,0), C=(6,0), B=(6,6), A=(0,6); draw(A--C); draw(B--D); draw(E--F); label("$A$", A, dir(135)); label("$B$", C, dir(-45)); label("$C$", B, dir(45)); label("$D$", D, dir(-135)); label("$E$", E, dir(135)); label("$F$", F, dir(-45));
+```
+## See Also

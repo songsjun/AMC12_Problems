@@ -1,0 +1,19 @@
+# 2017 AMC 12B Problem 17
+
+## Problem
+A coin is biased in such a way that on each toss the probability of heads is $\frac{2}{3}$ and the probability of tails is $\frac{1}{3}.$ The outcomes of the tosses are independent. A player has the choice of playing Game A or Game B. In Game A she tosses the coin three times and wins if all three outcomes are the same. In Game B she tosses the coin four times and wins if both the outcomes of the first and second tosses are the same and the outcomes of the third and fourth tosses are the same. How do the chances of winning Game A compare to the chances of winning Game B?
+
+$\textbf{(A)} The probability of winning Game A is \frac{4}{81} less than the probability of winning Game B.$
+
+$\textbf{(B)} The probability of winning Game A is \frac{2}{81} less than the probability of winning Game B.$
+
+$\textbf{(C)} The probabilities are the same.$
+
+$\textbf{(D)} The probability of winning Game A is \frac{2}{81} greater than the probability of winning Game B.$
+
+$\textbf{(E)} The probability of winning Game A is \frac{4}{81} greater than the probability of winning Game B.$
+## Solution
+The probability of winning Game A is the sum of the probabilities of getting three tails and getting three heads which is $\left(\frac{2}{3}\right)^3 + \left(\frac{1}{3}\right)^3 = \frac{8}{27} + \frac{1}{27} = \frac{9}{27} = \frac{27}{81}.$ The probability of winning Game B is the sum of the probabilities of getting two heads and getting two tails squared. This gives us $\left(\left(\frac{2}{3}\right)^2 + \left(\frac{1}{3}\right)^2 \right)^2 = \left(\frac{5}{9}\right)^2 = \frac{25}{81}.$ The probability of winning Game A is $\frac{27}{81}$ and the probability of winning Game B is $\frac{25}{81},$ so the answer is $\boxed{\textbf{(D)}}$
+
+Solution by: vedadehhc
+## See Also

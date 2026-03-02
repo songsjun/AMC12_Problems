@@ -1,0 +1,67 @@
+# 2019 AMC 12B Problem 20
+
+> This problem is the same as [2019 AMC 10B #23](https://artofproblemsolving.com/wiki/index.php/2019_AMC_10B_Problems#Problem_23) and [2019 AMC 12B #20](https://artofproblemsolving.com/wiki/index.php/2019_AMC_12B_Problems#Problem_20).
+## Problem
+Points A=(6,13) and B=(12,11) lie on circle $\omega$ in the plane. Suppose that the tangent lines to $\omega$ at A and B intersect at a point on the x-axis. What is the area of $\omega$?
+
+$\textbf{(A) }\frac{83\pi}{8}\qquad\textbf{(B) }\frac{21\pi}{2}\qquad\textbf{(C) } \frac{85\pi}{8}\qquad\textbf{(D) }\frac{43\pi}{4}\qquad\textbf{(E) }\frac{87\pi}{8}$
+## Solution 1
+First, observe that the two tangent lines are of identical length. Therefore, supposing that the point of intersection is (x, 0), the Pythagorean Theorem gives $\sqrt{(x-6)^2 + 13^2} = \sqrt{(x-12)^2 + 11^2}.$ This simplifies to $x = 5$.
+
+Further, notice (due to the right angles formed by a radius and its tangent line) that the quadrilateral (a kite) AOBX is cyclic.
+
+Therefore, we can apply [Ptolemy's Theorem](https://artofproblemsolving.com/wiki/index.php/Ptolemy's_Theorem) to give:
+
+$2\sqrt{170}$r = d $\sqrt{40},$ where r is the radius of the circle and d is the distance between the circle's center and (5, 0). Therefore, d = $\sqrt{17}$r.
+
+Using the Pythagorean Theorem on the right triangle OAX (or OBX), we find that 170 + $r^2 =17r^2$, so $r^2 =\frac{85}{8},$ and thus the area of the circle is $\boxed{\textbf{(C) }\frac{85}{8}\pi}.$
+### Diagram for Solution 1
+[900px|caption](https://artofproblemsolving.com/wiki/index.php/File:Desmos-graph_(1).png)
+
+*~BakedPotato66*
+## Solution 2 (coordinate bash)
+We firstly obtain $x=5$ as in Solution 1. Label the point (5,0) as C. The midpoint M of segment AB is (9, 12). Notice that the center of the circle must lie on the line passing through the points C and M. Thus, the center of the circle lies on the line y=3$x-15$.
+
+Line AC is y=$13x-65$. Therefore, the slope of the line perpendicular to AC is $-\frac{1}{13},$ so its equation is $y=-\frac{x}{13}+\frac{175}{13}.$
+
+But notice that this line must pass through A(6, 13) and (x, $3x-15$). Hence $3x-15=-\frac{x}{13}+\frac{175}{13} \Rightarrowx=\frac{37}{4}.$ So the center of the circle is $\left(\frac{37}{4}, \frac{51}{4}\right).$
+
+Finally, the distance between the center, $\left(\frac{37}{4}, \frac{51}{4}\right),$ and point A is $\frac{\sqrt{170}}{4}.$ Thus the area of the circle is $\boxed{\textbf{(C) }\frac{85}{8}\pi}.$
+## Solution 3
+The midpoint of AB is D(9,12). Let the tangent lines at A and B intersect at C(a,0) on the x-axis. Then CD is the perpendicular bisector of AB. Let the center of the circle be O. Then $\triangle AOC$ is similar to $\triangle DAC,$ so $\frac{OA}{AC} = \frac{AD}{DC}.$
+The slope of AB is $\frac{13-11}{6-12}=\frac{-1}{3},$ so the slope of CD is 3. Hence, the equation of CD is $y-12=3(x-9)\Rightarrow$ y=$3x-15$. Letting $y=0$, we have $x=5$, so C = (5,0).
+
+Now, we compute AC=$\sqrt{(6-5)^2+(13-0)^2}=\sqrt{170},$
+AD=$\sqrt{(6-9)^2+(13-12)^2}=\sqrt{10},$ and
+$$DC=\sqrt{(9-5)^2+(12-0)^2}=\sqrt{160}.$$
+
+Therefore OA = $\frac{AC\cdot AD}{DC}=\sqrt{\frac{85}{8}},$
+and consequently, the area of the circle is $\pi\cdot OA^2 = \boxed{\textbf{(C) }\frac{85}{8}\pi}.$
+## Solution 4 (how fast can you multiply two-digit numbers?)
+Let (x,0) be the intersection on the x-axis. By Power of a Point Theorem, $(x-6)^2+13^2=(x-12)^2+11^2\impliesx=5$. Then the equations  for the tangent lines passing A and B, respectively, are $13(x-6)+13$=y and $\frac{11}{7}(x-12)+11=y.$ Then the lines normal (perpendicular) to them are $-\frac{1}{13}(x-6)+13=y$ and $-\frac{7}{11}(x-12)+11=y.$ Solving for x, we have
+
+
+$$
+-\frac{7}{11}(x-12)+11=-\frac{1}{13}(x-6)+13
+\frac{13\cdot7x-11x}{13\cdot11}=\frac{84\cdot13-6\cdot11-2\cdot11\cdot13}{11\cdot13}
+13\cdot7x-11x=84\cdot13-6\cdot11-2\cdot11\cdot13
+$$
+
+
+After condensing, $x=\frac{37}{4}.$ Then, the center of $\omega$ is $\left(\frac{37}{4}, \frac{51}{4}\right).$ Apply distance formula. WLOG, assume you use A. Then, the area of $\omega$ is $\left(\sqrt{\frac{1^2}{4^2}+\frac{13^2}{4^2}}\right)^2\pi=\frac{170\pi}{16} \implies \boxed{\textbf{(C) }\frac{85}{8}\pi}.$
+## Solution 5 (tangent cheese)
+After getting $x=5$, let C=(5,0). Get the slopes of the lines AC and BC, namely $\frac{13}{6-5}=13, \frac{11}{12-5}=\frac{11}{7}.$ Then, use tangent angle subtraction to get $\tan{2x}=\frac{13-\frac{11}{7}}{1+13*\frac{11}{7}}=\frac{80}{150}=\frac{8}{15}.$ Then, apply tangent double angle to get $\tan{2x}=\frac{8}{15}=\frac{2\tan{x}}{1-\tan^2{x}}.$ Solving, we obtain $\tan{x}=\frac{1}{4}.$ Then, note that $\tan{x}=r$/{BC}, so $r=\frac{1}{4}*\sqrt{170}.$ Finishing off, we obtain A=$\pi*r^2=\pi*170/16=\boxed{\textbf{(C) }\frac{85}{8}\pi}.$
+
+*~SigmaPiE*
+## Video Solution
+For those who want a video solution: (Is similar to Solution 1)
+https://youtu.be/WI2NVuIp1Ik
+## Video Solution by TheBeautyofMath
+https://youtu.be/W1zuqr
+
+*~IceMatrix*
+## Video Solution by The Power of Logic
+https://www.youtube.com/watch?
+
+*~The Power of Logic*
+## See Also

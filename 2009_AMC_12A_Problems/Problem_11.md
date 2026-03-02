@@ -1,0 +1,48 @@
+# 2009 AMC 12A Problem 11
+
+> This problem is the same as [2009 AMC 12A #11](https://artofproblemsolving.com/wiki/index.php/2009_AMC_12A_Problems) and [2009 AMC 10A #15](https://artofproblemsolving.com/wiki/index.php/2009_AMC_10A_Problems).
+## Problem
+The figures $F_1, F_2, F_3$, and $F_4$ shown are the first in a sequence of figures. For $n\ge3, F_n$ is constructed from $F_{n - 1}$ by surrounding it with a square and placing one more diamond on each side of the new square than $F_{n - 1}$ had on each side of its outside square. For example, figure $F_3$ has 13 diamonds. How many diamonds are there in figure $F_{20}$?
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+unitsize(3mm); defaultpen(linewidth(.8pt)+fontsize(8pt)); path d=(1/2,0)--(0,sqrt(3)/2)--(-1/2,0)--(0,-sqrt(3)/2)--cycle; marker m=marker(scale(5)*d,Fill); path f1=(0,0); path f2=(0,0)--(-1,1)--(1,1)--(1,-1)--(-1,-1); path[] $g2=(-1,1)--(-1,-1)--(0,0)^^(1,-1)--(0,0)--(1,1)$; path f3=f2--(-2,-2)--(-2,0)--(-2,2)--(0,2)--(2,2)--(2,0)--(2,-2)--(0,-2); path[] $g3=g2^^(-2,-2)--(0,-2)^^(2,-2)--(1,-1)^^(1,1)--(2,2)^^(-1,1)--(-2,2)$; path[] $f4=f3^^(-3,-3)--(-3,-1)--(-3,1)--(-3,3)--(-1,3)--(1,3)--(3,3)-- (3,1)--(3,-1)--(3,-3)--(1,-3)--(-1,-3)$; path[] $g4=g3^^(-2,-2)--(-3,-3)--(-1,-3)^^(3,-3)--(2,-2)^^(2,2)--(3,3)^^ (-2,2)--(-3,3)$; draw(f1,m); draw(shift(5,0)*f2,m); draw(shift(5,0)*g2); draw(shift(12,0)*f3,m); draw(shift(12,0)*g3); draw(shift(21,0)*f4,m); draw(shift(21,0)*g4); label("$F_1$",(0,-4)); label("$F_2$",(5,-4)); label("$F_3$",(12,-4)); label("$F_$4",(21,-4)); $\textbf{(A)}$\ 401 $\qquad \textbf{(B)}$\ 485 $\qquad \textbf{(C)}$\ 585 $\qquad \textbf{(D)}$\ 626 $\qquad \textbf{(E)}$\ 761
+```
+## Solution 1
+Split $F_n$ into 4 congruent triangles by its diagonals (like in the pictures in the problem). This shows that the number of diamonds it contains is equal to 4 times the $(n-2)$th triangular number (i.e. the diamonds within the triangles or between the diagonals) and $4(n-1)+1$ (the diamonds on sides of the triangles or on the diagonals). The nth triangular number is $\frac{n(n+1)}{2}.$ Putting this together for $F_{20}$ this gives:
+
+$$\frac{4(18)(19)}{2}+4(19)+1=\boxed{761}$$
+## Solution 2
+Color the diamond layers alternately blue and red, starting from the outside. You'll get the following pattern:
+
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+unitsize(3mm); defaultpen(linewidth(.8pt)+fontsize(8pt)); path d=(1/2,0)--(0,sqrt(3)/2)--(-1/2,0)--(0,-sqrt(3)/2)--cycle; marker mred=marker(scale(5)*d,red,Fill); marker mblue=marker(scale(5)*d,blue,Fill); path f1=(0,0); path f2=(-1,1)--(1,1)--(1,-1)--(-1,-1)--cycle; path f3=(-2,-2)--(-2,0)--(-2,2)--(0,2)--(2,2)--(2,0)--(2,-2)--(0,-2)--cycle; path f4=(-3,-3)--(-3,-1)--(-3,1)--(-3,3)--(-1,3)--(1,3)--(3,3)--(3,1)--(3,-1)--(3,-3)--(1,-3)--(-1,-3)--cycle; draw((-3,-3)--(3,3)); draw((-3,3)--(3,-3)); draw(f1,mred); draw(f2,mblue); draw(f3,mred); draw(f4,mblue);
+```
+
+
+In the figure $F_n$, the blue diamonds form a $n\times$ n square, and the red diamonds form a ($n-1)\times(n-1)$ square.
+Hence the total number of diamonds in $F_{20}$ is $20^2 + 19^2 =\boxed{761}.$
+## Solution 3
+When constructing $F_n$ from $F_{n-1}$, we add $4(n-1)$ new diamonds. Let $d_n$ be the number of diamonds in $F_n$. We now know that $d_1=1$ and $\forall$ n>1:~ $d_n=d_{n-1}+4(n-1)$.
+
+Hence we get:
+
+$$
+\begin{align*} d_{20} & = d_{19} + 4\cdot 19 \\ & = d_{18} + 4\cdot 18 + 4\cdot 19 \\ & = \cdots \\ & = 1 + 4(1+2+\cdots+18+19) \\ & = 1 + 4\cdot\frac{19\cdot 20}2 \\ & = \boxed{761} \end{align*}
+$$
+
+## Solution 4
+The sequence $\{ d_n\}$ goes 1, 5, 13, 25, 41,$\dots.$ The first finite differences go 4, 8, 12, 16, $\dots.$ The second finite differences go 4, 4, 4, $\dots,$ so we see that the second finite difference is constant. Thus, $d_n$ can be represented as a quadratic, $d_n$ = an^2 + bn + c. However, we already know $d_1 = 1, d_2 = 3$, and $d_3 = 13$. Thus,
+
+$$
+a + b + c = d_1 = 1
+4a + 2b + c = d_2 = 3
+9a + 3b + c = d_3 = 13
+$$
+
+Solving this system for a, b, and c gives $a = 2, b = -2, c = 1$. Finally, $d_n = 2n^2 - 2n+1\impliesd_{20}=\boxed{(E)761}$
+## See Also

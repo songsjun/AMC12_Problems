@@ -1,0 +1,23 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2007_AMC_12A_Problems/Problem_1&action=raw
+
+Published Time: Tue, 23 Mar 2021 02:13:11 GMT
+
+Markdown Content:
+{{duplicate|[[2007 AMC 12A Problems|2007 AMC 12A #1]] and [[2007 AMC 10A Problems/Problem 1|2007 AMC 10A #1]]}}
+== Problem ==
+One ticket to a show costs \20 at full price. Susan buys 4 tickets using a coupon that gives her a 25% discount. Pam buys 5 tickets using a coupon that gives her a 30% discount. How many more dollars does Pam pay than Susan?
+
+\mathrm{(A)}\ 2\qquad \mathrm{(B)}\ 5\qquad \mathrm{(C)}\ 10\qquad \mathrm{(D)}\ 15\qquad \mathrm{(E)}\ 20
+
+== Official Solution ==
+\textbf{Answer: (C)} 
+Susan pays (4)(0.75)(20) = 60 dollars. Pam pays (5)(0.70)(20) = 70 dollars, so she pays 70-60=10 more dollars than Susan.
+
+== See also ==
+{{AMC12 box|year=2007|ab=A|before=First question|num-a=2}}
+{{AMC10 box|year=2007|ab=A|before=First question|num-a=2}}
+
+[[Category:Introductory Algebra Problems]]
+{{MAA Notice}}

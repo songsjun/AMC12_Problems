@@ -1,0 +1,84 @@
+# 2018 AMC 12B Problem 9
+
+## Problem
+What is
+$$\sum^{100}_{i=1} \sum^{100}_{j=1} (i+j) ?$$
+
+$\textbf{(A) }100{,}100 \qquad \textbf{(B) }500{,}500\qquad \textbf{(C) }505{,}000 \qquad \textbf{(D) }1{,}001{,}000 \qquad \textbf{(E) }1{,}010{,}000 \qquad$
+## Solution 1
+Recall that the sum of the first 100 positive integers is $\sum^{100}_{k=1}k =\frac{101\cdot100}{2}=5050.$ It follows that
+
+$$
+\begin{align*} \sum^{100}_{i=1} \sum^{100}_{j=1} (i+j) &= \sum^{100}_{i=1} \sum^{100}_{j=1}i + \sum^{100}_{i=1} \sum^{100}_{j=1}j \\ &= \sum^{100}_{i=1} (100i) + 100 \sum^{100}_{j=1}j \\ &= 100 \sum^{100}_{i=1}i + 100 \sum^{100}_{j=1}j \\ &= 100\cdot5050 + 100\cdot5050 \\ &= \boxed{\textbf{(E) }1{,}010{,}000}. \end{align*}
+$$
+
+*~MRENTHUSIASM*
+## Solution 2
+Recall that the sum of the first 100 positive integers is $\sum^{100}_{k=1}k =\frac{101\cdot100}{2}=5050.$ It follows that
+
+$$
+\begin{align*} \sum^{100}_{i=1} \sum^{100}_{j=1} (i+j) &= \sum^{100}_{i=1} \left(\sum^{100}_{j=1} i + \sum^{100}_{j=1} j\right) \\ &= \sum^{100}_{i=1} (100i+5050) \\ &= 100\sum^{100}_{i=1} i + \sum^{100}_{i=1} 5050 \\ &= 100\cdot5050+5050\cdot100 \\ &= \boxed{\textbf{(E) }1{,}010{,}000}. \end{align*}
+$$
+
+*~Vfire ~MRENTHUSIASM*
+## Solution 3
+Recall that the sum of the first 100 positive integers is $\sum^{100}_{k=1}k =\frac{101\cdot100}{2}=5050.$ Since the nested summation is symmetric with respect to i and j, it follows that
+
+$$
+\begin{align*} \sum^{100}_{i=1} \sum^{100}_{j=1} (i+j) &= \sum^{100}_{i=1} \sum^{100}_{i=1} (2i) \\ &= 2\sum^{100}_{i=1} \sum^{100}_{i=1} i \\ &= 2\sum^{100}_{i=1} 5050 \\ &= 2\cdot(5050\cdot100) \\ &= \boxed{\textbf{(E) }1{,}010{,}000}. \end{align*}
+$$
+
+*~Vfire ~MRENTHUSIASM*
+## Solution 4
+The sum contains $100\cdot100=10000$ terms, and the average value of both i and j is $\frac{101}{2}.$ Therefore, the sum becomes $10000\cdot\left(\frac{101}{2}+\frac{101}{2}\right)=\boxed{\textbf{(E) }1{,}010{,}000}.$
+*~Rejas ~MRENTHUSIASM*
+## Solution 5
+We start by writing out the first few terms:
+
+$$
+\begin{array}{ccccccccc} (1+1) &+ &(1+2) &+ &(1+3) &+ &\cdots &+ &(1+100) \\ (2+1) &+ &(2+2) &+ &(2+3) &+ &\cdots &+ &(2+100) \\ (3+1) &+ &(3+2) &+ &(3+3) &+ &\cdots &+ &(3+100) \\ [-1ex] &&&&\vdots&&&& \\ (100+1) &+ &(100+2) &+ &(100+3) &+ &\cdots &+ &(100+100). \end{array}
+$$
+
+From the first terms in the parentheses, the sum $1+2+3+\cdots+100$ occurs 100 times vertically.
+
+From the second terms in the parentheses, the sum $1+2+3+\cdots+100$ occurs 100 times horizontally.
+
+Recall that the sum of the first 100 positive integers is $1+2+3+\cdots+100=\frac{101\cdot100}{2}=5050.$ Therefore, the answer is $2\cdot\left(5050\cdot100\right)=\boxed{\textbf{(E) }1{,}010{,}000}.$
+*~RandomPieKevin ‎~MRENTHUSIASM*
+## Solution 6
+When we expand the nested summation as shown in Solution 5, note that:
+
+ 1.   The term 2 occurs 1 time.
+The term 3 occurs 2 times.
+
+The term 4 occurs 3 times.
+
+$$\cdots$$
+
+The term 101 occurs 100 times.
+
+More generally, the term $k+1$ occurs k times for $k\in\{1,2,3,\ldots,100\}$.
+
+ 2.   The term 102 occurs 99 times.
+The term 103 occurs 98 times.
+
+The term 104 occurs 97 times.
+
+$$\cdots$$
+
+The term 200 occurs 1 time.
+
+More generally, the term $k+101$ occurs 100-k times for $k\in\{1,2,3,\ldots,99\}$.
+
+Together, the nested summation becomes
+
+$$
+\begin{align*} \sum^{100}_{k=1}\left[(k+1)k\right] + \sum^{99}_{k=1}\left[(k+101)(100-k)\right] &= \sum^{100}_{k=1}\left[k^2+k\right] + \sum^{99}_{k=1}\left[-k^2-k+10100\right] \\ &= \sum^{100}_{k=1}k^2 + \sum^{100}_{k=1}k - \sum^{99}_{k=1}k^2 - \sum^{99}_{k=1}k + \sum^{99}_{k=1}10100 \\ &= \left(\sum^{100}_{k=1}k^2 - \sum^{99}_{k=1}k^2\right) + \left(\sum^{100}_{k=1}k - \sum^{99}_{k=1}k\right) + \sum^{99}_{k=1}10100 \\ &= 100^2+100+10100\cdot99 \\ &= \boxed{\textbf{(E) }1{,}010{,}000}. \end{align*}
+$$
+
+*~MRENTHUSIASM*
+## Video Solution (HOW TO THINK CRITICALLY!!!)
+https://youtu.be/flvmGmDmwZ8
+
+*~Education, the Study of Everything*
+## See Also

@@ -1,0 +1,173 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2022_AMC_12B_Problems/Problem_25&action=raw
+
+Published Time: Sat, 08 Nov 2025 00:35:13 GMT
+
+Markdown Content:
+==Problem==
+
+Four regular hexagons surround a square with side length 1, each one sharing an edge with the square,
+as shown in the figure below. The area of the resulting 12-sided outer nonconvex polygon can be
+written as m \sqrt{n} + p, where m, n, and p are integers and n is not divisible by the square of any prime.
+What is m+n+p?
+ import geometry; unitsize(3cm); draw((0,0) -- (1,0) -- (1,1) -- (0,1) -- cycle); draw(shift((1/2,1-sqrt(3)/2))*polygon(6)); draw(shift((1/2,sqrt(3)/2))*polygon(6)); draw(shift((sqrt(3)/2,1/2))*rotate(90)*polygon(6)); draw(shift((1-sqrt(3)/2,1/2))*rotate(90)*polygon(6)); draw((0,1-sqrt(3))--(1,1-sqrt(3))--(3-sqrt(3),sqrt(3)-2)--(sqrt(3),0)--(sqrt(3),1)--(3-sqrt(3),3-sqrt(3))--(1,sqrt(3))--(0,sqrt(3))--(sqrt(3)-2,3-sqrt(3))--(1-sqrt(3),1)--(1-sqrt(3),0)--(sqrt(3)-2,sqrt(3)-2)--cycle,linewidth(2)); 
+\textbf{(A) } -12 \qquad \textbf{(B) }-4 \qquad \textbf{(C) } 4 \qquad \textbf{(D) }24 \qquad \textbf{(E) }32
+
+== Solution 1 (Coord bash) ==
+
+ import geometry; unitsize(3cm); draw((0,0) -- (1,0) -- (1,1) -- (0,1) -- cycle); draw(shift((1/2,1-sqrt(3)/2))*polygon(6)); draw(shift((1/2,sqrt(3)/2))*polygon(6)); draw(shift((sqrt(3)/2,1/2))*rotate(90)*polygon(6)); draw(shift((1-sqrt(3)/2,1/2))*rotate(90)*polygon(6)); draw((0,1-sqrt(3))--(1,1-sqrt(3))--(3-sqrt(3),sqrt(3)-2)--(sqrt(3),0)--(sqrt(3),1)--(3-sqrt(3),3-sqrt(3))--(1,sqrt(3))--(0,sqrt(3))--(sqrt(3)-2,3-sqrt(3))--(1-sqrt(3),1)--(1-sqrt(3),0)--(sqrt(3)-2,sqrt(3)-2)--cycle,linewidth(1.5)); draw((3-sqrt(3),3-sqrt(3)) -- (3-sqrt(3),sqrt(3)-2) -- (sqrt(3)-2,sqrt(3)-2) -- (sqrt(3)-2,3-sqrt(3)) -- cycle,linewidth(1.5)); label("$O (0, 0)$",(0.5,0.5),S); dot((0.5,0.5)); label("$A$", (3-sqrt(3), 3-sqrt(3)), NE); label("$B$", (sqrt(3) - 2, 3-sqrt(3)), NW); label("$M$", (0, sqrt(3)), NW); label("$N$", (1, sqrt(3)), NE); 
+
+Refer to the diagram above.
+
+Let the origin be at the center of the square, A be the intersection of the top and right hexagons, B be the intersection of the top and left hexagons, and M and N be the top points in the diagram.
+
+By symmetry, A lies on the line y = x. The equation of line AN is y = -x\sqrt{3} + \frac{3}{2}\sqrt{3} - \frac{1}{2} (due to it being one of the sides of the top hexagon). Thus, we can solve for the coordinates of A by finding the intersection of the two lines:
+x = -x\sqrt{3} + \frac{3\sqrt{3} - 1}{2}
+x(\sqrt{3} + 1) = \frac{3\sqrt{3} - 1}{2}
+x = \frac{3\sqrt{3}-1}{2} \cdot \frac{1}{\sqrt{3} + 1}
+ = \frac{3\sqrt{3}-1}{2(\sqrt{3} + 1)} \cdot \frac{\sqrt{3} - 1}{\sqrt{3} - 1}
+ = \frac{10 - 4\sqrt{3}}{4}
+ = \frac{5}{2} - \sqrt{3}
+\therefore A = \left(\frac{5}{2} - \sqrt{3}, \frac{5}{2} - \sqrt{3}\right).
+
+This means that we can find the length AB, which is equal to 2(\frac{5}{2} - \sqrt{3}) = 5 - 2\sqrt{3}. We will next find the area of trapezoid ABMN. The lengths of the bases are 1 and 5 - 2\sqrt{3}, and the height is equal to the y-coordinate of M minus the y-coordinate of A. The height of the hexagon is \sqrt{3} and the bottom of the hexagon lies on the line y = \frac{1}{2}. Thus, the y-coordinate of M is \sqrt{3} - \frac{1}{2}, and the height is 2\sqrt{3} - 3. We can now find the area of the trapezoid:
+[ABMN] = (2\sqrt{3} - 3)\left(\frac{1 + 5 - 2\sqrt{3}}{2}\right)
+ = (2\sqrt{3} - 3)(3 - \sqrt{3})
+ = 6\sqrt{3} + 3\sqrt{3} - 9 - 6
+ = 9\sqrt{3} - 15.
+
+The total area of the figure is the area of a square with side length AB plus four times the area of this trapezoid:
+\textrm{Area} = (5 - 2\sqrt{3})^2 + 4(9\sqrt{3} - 15)
+ = 37 - 20\sqrt{3} + 36\sqrt{3} - 60
+ = 16\sqrt{3} - 23.
+
+Our answer is 16 + 3 - 23 = \boxed{\textbf{(B) }-4}.
+
+~mathboy100
+
+== Solution 2 ==
+
+ import geometry; unitsize(3cm); draw((0,0) -- (1,0) -- (1,1) -- (0,1) -- cycle); draw(shift((1/2,1-sqrt(3)/2))*polygon(6)); draw(shift((1/2,sqrt(3)/2))*polygon(6)); draw(shift((sqrt(3)/2,1/2))*rotate(90)*polygon(6)); draw(shift((1-sqrt(3)/2,1/2))*rotate(90)*polygon(6)); draw((0,1-sqrt(3))--(1,1-sqrt(3))--(3-sqrt(3),sqrt(3)-2)--(sqrt(3),0)--(sqrt(3),1)--(3-sqrt(3),3-sqrt(3))--(1,sqrt(3))--(0,sqrt(3))--(sqrt(3)-2,3-sqrt(3))--(1-sqrt(3),1)--(1-sqrt(3),0)--(sqrt(3)-2,sqrt(3)-2)--cycle,linewidth(2)); draw((0.5,sqrt(3))--(0.5,1-sqrt(3)),linewidth(2)); draw((1-sqrt(3),0.5)--(sqrt(3),0.5),linewidth(2)); draw((-2+sqrt(3),-2+sqrt(3))--(3-sqrt(3),3-sqrt(3)),linewidth(2)); draw((1, sqrt(3))--(1,1),linewidth(2)); label("$O$",(0.5,0.5),SE); dot((0.5,0.5)); label("$A$", (3-sqrt(3), 3-sqrt(3)), NE); label("$B$", (1, sqrt(3)), NE); label("$C$", (1,1), E); label("$D$", (1/2, sqrt(3)), N); 
+
+Begin by dividing the figure as shown above. Clearly, the entire figure has 8-fold symmetry. Therefore, we can calculate the area of ODBA and multiply it by 8. We split [ODBA] into [ODBC]+[ABC].
+
+Knowing the side length of the hexagon is 1, we can use 30-60-90 triangles within the hexagon to find the total distance between opposite edges is 2\cdot \frac{\sqrt{3}}{2}=\sqrt{3}. Thus, OD=\sqrt{3}-\frac{1}{2} and BC=\sqrt{3}-1. Recognizing DB=\frac{1}{2} and ODBC is a trapezoid, 8\cdot[ODBC]=2\left(\sqrt{3}-\frac{1}{2}+\sqrt{3}-1\right)=4\sqrt{3}-3.
+
+Next, we aim to find [ABC]. By angle chasing, we find \angle A=105^\circ, \angle B=30^\circ, and \angle C = 45^\circ. We can use the law of sines to find AB:
+
+\frac{\sin(105^\circ)}{\sqrt{3}-1}=\frac{\sin(45^\circ)}{AB}\implies AB=\frac{\sqrt{6}-\sqrt{2}}{2\sin(105^\circ)}.
+
+We may not know what \sin(105^\circ) is by memory, but we can cleverly calculate it using a common trig identity:
+
+ \begin{align*} \sin(105^\circ)&=\sin(60^\circ+45^\circ),\\ &=\sin(60^\circ)\cos(45^\circ)+\cos(60^\circ)\sin(45^\circ),\\ &=\frac{\sqrt{3}}{2}\cdot\frac{\sqrt{2}}{2}+\frac{1}{2}\cdot\frac{\sqrt{2}}{2},\\ &=\frac{\sqrt{6}+\sqrt{2}}{4}. \end{align*} 
+
+With some simplification, we'll find AB=4-2\sqrt{3}. Now, we can easily calculate 8\cdot [ABC] as 8\cdot\frac{1}{2}\cdot(\sqrt{3}-1)(4-2\sqrt{3})\sin(30^\circ)=12\sqrt{3}-20.
+
+Thus, the area of the dodecagon is 8\cdot [ODBA] = 8\cdot [ODBC] + 8 \cdot [ABC] =4\sqrt{3}-3+12\sqrt{3}-20=16\sqrt{3}-23.
+
+Finally, we find 16+3-23=\boxed{\textbf{(B)}\ -4}.
+
+~Jackson La Vallee
+
+==Solution 3 (Euclidean Geometry)==
+
+ import geometry; unitsize(3cm); draw((0,0) -- (1,0) -- (1,1) -- (0,1) -- cycle); draw(shift((1/2,1-sqrt(3)/2))*polygon(6)); draw(shift((1/2,sqrt(3)/2))*polygon(6)); draw(shift((sqrt(3)/2,1/2))*rotate(90)*polygon(6)); draw(shift((1-sqrt(3)/2,1/2))*rotate(90)*polygon(6)); draw((0,1-sqrt(3))--(1,1-sqrt(3))--(3-sqrt(3),sqrt(3)-2)--(sqrt(3),0)--(sqrt(3),1)--(3-sqrt(3),3-sqrt(3))--(1,sqrt(3))--(0,sqrt(3))--(sqrt(3)-2,3-sqrt(3))--(1-sqrt(3),1)--(1-sqrt(3),0)--(sqrt(3)-2,sqrt(3)-2)--cycle,linewidth(2)); draw((1,1)--(3-sqrt(3),3-sqrt(3)),linewidth(2)); draw((0,1)--(sqrt(3)-2,3-sqrt(3)),linewidth(2)); draw((0,0)--(sqrt(3)-2,sqrt(3)-2),linewidth(2)); draw((1,0)--(3-sqrt(3),sqrt(3)-2),linewidth(2)); draw((0, sqrt(3))--(0, -sqrt(3)+1),linewidth(2)); draw((1, sqrt(3))--(1, -sqrt(3)+1),linewidth(2)); draw((1-sqrt(3),0)--(sqrt(3),0),linewidth(2)); draw((1-sqrt(3),1)--(sqrt(3),1),linewidth(2)); label("$A$", (3-sqrt(3), 3-sqrt(3)), NE); label("$B$", (1, sqrt(3)), NE); label("$C$", (1,1), SW); label("$D$", (1,0), NW); label("$E$", (1, -sqrt(3)+1), SE); label("$F$", (0, -sqrt(3)+1), SW); label("$G$", (0, sqrt(3)), NW); 
+
+Divide this polygon into a 'cross' and 8 triangles like \triangle ABC. BD = 2 \cdot \frac{ \sqrt{3} }{2} = \sqrt{3}, BE = 2BD - CD = 2\sqrt{3} - 1, EF = 1, [BEFG] = 1 \cdot (2\sqrt{3} - 1) = 2\sqrt{3} - 1, [\text{cross}] = 2\cdot [BEFG] - 1 = 2(2\sqrt{3} - 1)- 1 = 4\sqrt{3} - 3
+
+[[File:2022AMC12BP25.png|center|150px]]
+
+\angle ABC = 120^{\circ} - 90^{\circ} = 30^{\circ}, \angle ACB = \frac{90^{\circ}}{2} = 45^{\circ}, \angle BAC = 180^{\circ} - 30^{\circ} - 45^{\circ} = 105^{\circ}, BC = BD - CD = \sqrt{3} - 1. Draw a perpendicular line AG to side BC.
+
+BG + CG = BC, AG \cdot \sqrt{3} + AG = \sqrt{3} - 1, AG = \frac{\sqrt{3} - 1}{\sqrt{3} + 1} = \frac{(\sqrt{3} - 1)^2}{2} = \frac{4 - 2\sqrt{3}}{2} = 2 - \sqrt{3}, [ABC] = \frac12 \cdot AG \cdot BC = \frac12 (2 - \sqrt{3})(\sqrt{3} - 1)
+
+[\text{12-sided outer polygon}] = [\text{cross}] + 8 \cdot [ABC] = 4\sqrt{3} - 3 + 8 \cdot \frac12 (2 - \sqrt{3})(\sqrt{3} - 1) = 4\sqrt{3} - 3 + 4 (3\sqrt{3} - 5) = 16\sqrt{3}-23
+
+16+3-23=\boxed{\textbf{(B)}\ -4}
+
+~[https://artofproblemsolving.com/wiki/index.php/User:Isabelchen isabelchen]
+
+==Solution 4==
+
+We calculate the area as the area of the red octagon minus the four purple congruent triangles:
+ import geometry; unitsize(3cm); draw((1-sqrt(3),1-sqrt(3))--(1-sqrt(3),sqrt(3))--(sqrt(3),sqrt(3))--(sqrt(3),1-sqrt(3))--cycle,dashed); filldraw((0,1-sqrt(3))--(1,1-sqrt(3))--(sqrt(3),0)--(sqrt(3),1)--(1,sqrt(3))--(0,sqrt(3))--(1-sqrt(3),1)--(1-sqrt(3),0)--cycle,red*0.2+white,red); filldraw((1,1-sqrt(3))--(3-sqrt(3),sqrt(3)-2)--(sqrt(3),0)--cycle,purple*0.2+white,blue); filldraw((sqrt(3),1)--(3-sqrt(3),3-sqrt(3))--(1,sqrt(3))--cycle,purple*0.2+white,blue); filldraw((0,sqrt(3))--(sqrt(3)-2,3-sqrt(3))--(1-sqrt(3),1)--cycle,purple*0.2+white,blue); filldraw((0,1-sqrt(3))--(1-sqrt(3),0)--(sqrt(3)-2,sqrt(3)-2)--cycle,purple*0.2+white,blue); draw((0,0) -- (1,0) -- (1,1) -- (0,1) -- cycle); draw(shift((1/2,1-sqrt(3)/2))*polygon(6)); draw(shift((1/2,sqrt(3)/2))*polygon(6)); draw(shift((sqrt(3)/2,1/2))*rotate(90)*polygon(6)); draw(shift((1-sqrt(3)/2,1/2))*rotate(90)*polygon(6)); 
+We first find the important angles in the figure. We note that 2 adjacent hexagons are rotated 90^\circ with respect to the other, so the angles between any sides is 150^\circ. In particular, as the purple triangles are isosceles, they have angles 150^\circ,15^\circ, and 15^\circ, and the octagon is equiangular (all its angles are 135^\circ). Thus, we can draw a square around the octagon, and we note that the ``cut out" triangles are all isosceles right triangles.
+
+Now, we calculate the side length of the square. Note that the hexagon has a height of \sqrt 3, so the length of a side of the square is 2\sqrt 3-1. In particular, the horizontal/vertical sides of the octagon have length 1, so the legs of the isosceles triangles are
+\frac{2\sqrt3-1-1}2=\sqrt3-1Thus, the area of the octagon is
+(2\sqrt3-1)^2-4\cdot\frac 12(\sqrt3-1)^2=5Now, we calculate the area of one of the four isosceles triangles. The base of the triangle is (\sqrt 3-1)\sqrt 2, so the area is
+\frac 14\mathrm{base length}^2\cdot\tan(\mathrm{base angle})=\frac 14((\sqrt3-1)\sqrt2)^2\cdot\tan15^\circ=\frac 14(8-4\sqrt3)(2-\sqrt3)=7-4\sqrt 3Thus, the area of the dodecagon is
+5-4(7-4\sqrt3)=16\sqrt3-23Thus the answer is 16+3-23=-4, or \boxed{\textbf{(B)}}.
+
+~cr. naman12
+
+==Solution 5 (No Trig, No Coordbash)==
+[[Image:2022AMC12B.jpeg|thumb|none|509px]]
+
+Note that each of the green sections is a rectangle, so its interior angles are all 90^{\circ}. Since \angle{ABC}=120^{\circ}, every one of the orange sections is a 30-60-90 right triangle. 
+
+Define x to be the distance from the corner of the square with side length 1 to the corner of the larger blue square. Due to the sides of the two squares being parallel to each other, the large blue triangle is a 45-45-90 right triangle. By AAA similarity, the smaller blue triangles are also 45-45-90, and have side lengths of \frac{x\sqrt{2}}{2}, \frac{x\sqrt{2}}{2}, and x. By 30-60-90 triangle relations, the largest altitude of the orange triangle is \frac{x\sqrt{6}}{2}. 
+
+Now, we can find the height of the hexagon to obtain an equation in terms of x. Consider a hexagon with side length 1, where point P is the foot of the perpendicular dropped from B, bisecting \angle{ABC}:
+ import geometry; import fontsize; defaultpen(fontsize(9pt)); unitsize(3cm); draw(shift((1/2,1-sqrt(3)/2))*polygon(6)); draw((1,1-sqrt(3))--(1, 1)--cycle,linewidth(1)); draw((3/2,1-sqrt(3)/2)--(1, 1-sqrt(3)/2)--cycle,linewidth(1)); draw((1, 1-sqrt(3)/2)--(1.1, 1-sqrt(3)/2)--(1.1, 1-sqrt(3)/2 +0.1)--(1, 1-sqrt(3)/2+0.1)--cycle,linewidth(1)); draw((1, 1-sqrt(3)/2)--(1.1, 1-sqrt(3)/2)--(1.1, 1-sqrt(3)/2 -0.1)--(1, 1-sqrt(3)/2-0.1)--cycle,linewidth(1)); label("$A$", (1, 1), N); label("$P$", (1, 1-sqrt(3)/2), W); label("$C$", (1, 1-sqrt(3)), S); label("$B$", (3/2, 1-sqrt(3)/2), E); label("$60^{\circ}$", (3/2-0.025, 1-sqrt(3)/2), NW); label("$60^{\circ}$", (3/2-0.025, 1-sqrt(3)/2), SW); 
+Note that triangles \triangle{APB} and \triangle{CPB} are congruent 30-60-90 triangles, by SAS congruence. Since the side length of this hexagon is 1, the length of AP is \frac{1}{2}\cdot \sqrt{3} =\frac{\sqrt{3}}{2}, by 30-60-90 triangle relations. The height of the hexagon is twice this value, or \sqrt{3}. 
+
+The height is also equal to the sum of the values along the long blue line, in the first diagram. Therefore, 1+\frac{x\sqrt{2}}{2}+\frac{x\sqrt{6}}{2}=\sqrt{3}. Solving and rationalizing, x=2\sqrt{2}-\sqrt{6}.
+
+The area of the dodecagon is equal to the sum of the areas of the four rectangles, eight orange triangles, and purple square. In terms of x, this is 
+8\cdot \frac{1}{2}\cdot \frac{x\sqrt{2}}{2}\cdot \frac{x\sqrt{6}}{{2}}+4\cdot 1\cdot\frac{x\sqrt{6}}{2}+(x\sqrt{2}+1)^2.
+
+Plugging in x=2\sqrt{2}-\sqrt{6}, the area of the dodecagon is 16\sqrt{3}-23. Therefore, the answer is 16+3-23= \boxed{\textbf{(B) }-4}.
+
+-Benedict T (countmath1)
+
+==Solution 6 (PIE bash)==
+Obviously, each of the hexagon have area of \frac{3\sqrt{3}}{2}, which gives a total of 6\sqrt{3} (without accounting for the overcounted overlapped areas). Now we calculate the area of the intersection of two hexagons. There are two cases : 
+
+'''Case 1''': The hexagons are on the opposite sides
+
+In this case, we see that the two hexagons' intersection is the middle square plus two triangles on its side. The square have area 1. Each of the triangles are 120-30-30, and hence its short side is \frac{\sqrt{3}}{3} because its longer side is 1. Therefore, each of the small triangles have area of \frac{\sqrt{3}}{12}, so each of the intersections have 1+\frac{\sqrt{3}}{6} area. Since there are 2 pairs of hexagons on opposite side of each other, that gives a total area of 2+\frac{\sqrt{3}}{3}.
+
+'''Case 2''': The hexagons are adjacent
+ pair[] A,B; path h1, h2,h3,h4; h1 = shift((sqrt(3)-1)/2*dir(90))*polygon(6); h2 = shift((sqrt(3)-1)/2*dir(0))*rotate(90)*polygon(6); h3 = shift((sqrt(3)-1)/2*dir(-90))*polygon(6); h4 = shift((sqrt(3)-1)/2*dir(180))*rotate(90)*polygon(6); B.cyclic=true; B.push((0,0)); int indexSquare[] = sequence(4); int indexPolygon[] = sequence(12); for(int i : indexSquare){ A.push(1/sqrt(2)*dir(45+90*i)); } draw(A[0]--A[1]--A[2]--A[3]--cycle); fill(h1,green); fill(h2,red); fill(buildcycle(h2,h1),yellow); draw(h1); draw(h2); draw(h3); draw(h4); for(int i : sequence(4)) { for(int j : sequence(3)) { B.push(B[3*i+j]+((sqrt(3)-1.5)*(j-1)*(j)+4-2*sqrt(3))*dir(90*i+60+30*j*(1.5*(j-1)-1))); } } for(int i=0; i <12; ++i) { draw(shift(0.5,0.5-sqrt(3))*(B[i])--shift(0.5,0.5-sqrt(3))*(B[i + 1]),linewidth(2)); } 
+
+In this case, their intersection is a convex hexagon. We cut it in half and we're left with a quadrilateral with two sides with length one (because it shares these sides with one of the hexagons, and for this reason the angle between the two sides is 120 degrees) and one short side and one long side. Here, we divide the area even further. We draw a line that divide the quadrilateral into a triangle with side lengths 1, 1, and \sqrt{3}(because it is 30-30-120) and another triangle with unknown side lengths. Simple angle chasing yields the triangle with unknown side lengths is a 15-75-90 triangle. If you remembered your sines and cosines, you know that \sin{15}=\frac{\sqrt{6}-\sqrt{2}}{4} or you can calculate it by using the fact that \sin{15}=\sin{45-30}. Also, \sin{75}=\frac{\sqrt{6}+\sqrt{2}}{4}. Now, because the 15-75-90 triangle have one side with length \sqrt{3}(it shares the side with the other triangle) and it corresponds to the 75 degrees angle, we have 
+
+\frac{\sqrt{3}}{\frac{\sqrt{6}+\sqrt{2}}{4}}=\frac{x}{\frac{\sqrt{6}-\sqrt{2}}{4}}
+
+\implies x=\frac{\sqrt{3}{(\sqrt{6}-\sqrt{2})}}{\sqrt{6}+\sqrt{2}}=2\sqrt{3}-3
+
+where x denote the shorter leg of the 15-75-90 triangle. Hence, that triangle have area 
+
+\frac{\sqrt{3}}{2} x=\frac{\sqrt{3}}{2}(2\sqrt{3}-3)=\frac{6-3\sqrt{3}}{2}. 
+
+The isosceles 120-30-30 triangle obviously have area \frac{\sqrt{3}}{4}, and that gives a total of \frac{12-5\sqrt{3}}{4}. We multiply that by 2 because \frac{12-5\sqrt{3}}{4} is only half of the intersection of the hexagons. We multiply the result by 4 because there are 4 pairs of adjacent hexagons. That gives 24-10\sqrt{3}, which is it for Case 2. 
+
+Now that we got the total area of the intersection of two hexagons, we find the area of the intersection of three hexagons. Note that the intersection of any three hexagons is just the middle square plus one small triangle on the side. Again, the middle square have area 1 and the triangle have area \frac{\sqrt{3}}{12}, so the total is 1+\frac{\sqrt{3}}{12}. We multiply that by 4\choose3 to get 4+\frac{\sqrt{3}}{3}.
+
+Then, we calculate the area of the intersection of all four hexagons, which is just the middle square with area 1. 
+
+Finally, we apply PIE. The total area is 
+
+6\sqrt{3}-[(2+\frac{\sqrt{3}}{3})+(24-10\sqrt{3})]+(4+\frac{\sqrt{3}}{3})-1=16\sqrt{3}-23,
+
+so our final answer is 16+3-23=\boxed{(B)-4}. \blacksquare ~[[Ddk001]]
+
+==Video Solution==
+
+https://youtu.be/QYclqXWnxxE
+
+~Steven Chen (Professor Chen Education Palace, www.professorchenedu.com)
+
+==Video Solution by the Power of Logic==
+
+https://youtu.be/jLKP3VFaTkk
+
+==Video Solution by Challenge 25==
+
+https://www.youtube.com/watch?v=GRrRLIwSPGY
+
+==See Also==
+{{AMC12 box|year=2022|ab=B|num-b=24|after=Last problem}}
+{{MAA Notice}}

@@ -1,0 +1,26 @@
+# 2011 AMC 12A Problem 25
+
+## Problem
+Triangle ABC has $\angle BAC = 60^{\circ}, \angle CBA \leq 90^{\circ}, BC=1,$ and AC $\geq AB.$ Let H, I, and O be the orthocenter, incenter, and circumcenter of $\triangle ABC,$ respectively. Assume that the area of pentagon BCOIH is the maximum possible. What is $\angle CBA$?
+
+$\textbf{(A)}\ 60^{\circ} \qquad \textbf{(B)}\ 72^{\circ} \qquad \textbf{(C)}\ 75^{\circ} \qquad \textbf{(D)}\ 80^{\circ} \qquad \textbf{(E)}\ 90^{\circ}$
+## Solution 1 (MAA)
+By the Inscribed Angle Theorem, $\angle BOC = 2\angle BAC = 120^\circ$ .Let D and E be the feet of the altitudes of $\triangle ABC$ from B and C, respectively. In $\triangle ACE$ we get $\angle ACE = 30^\circ,$ and as exterior angle $\angle BHC = 90^\circ + \angle ACE = 120^\circ$ .Because the lines BI and CI are bisectors of $\angle CBA$ and $\angle ACB,$ respectively, it follows that$\angle BIC = 90^\circ + \tfrac 12\angle A = 120^\circ$ .Thus the points B, C, O, I, and H are all on a circle.
+
+> [Asymptote diagram - not rendered in Markdown]
+
+```asy
+import geometry; size(200); defaultpen(fontsize(12)+0.8); pair O,A,B,C,D,E,I,H; real $h=2$*sqrt(3); O=(0,1/h); B=(-0.5,0); C=(0.5,0); path c1=CR(O,length(O-B)); // A=IP(c1,O--O+5*dir(120)); A=IP(c1,B--B+5*dir(80)); I=incenter(A,B,C); H=orthocenter(A,B,C); D=extension(A,C,B,H); E=extension(A,B,C,H); path c2=circumcircle(O,I,H); pair o2=circumcenter(O,I,H); draw(c1, royalblue); draw(A--B--C--A); draw(B--D^^C--E, dotted); draw(arc(o2,length(O-o2),10,170), dotted+red); draw(B--I--C--O--B, black+0.3); pen p =black+3.25; dot("$O$", O, N,p); dot("$A$", A, dir(110),p); dot("$B$", B, dir(210),p); dot("$C$", C, dir(-30),p); dot("$I$", I, N,p); dot("$H$", H, N,p); dot("$D$", D, D-H,p); dot("$E$", E, (E-C),p);
+```
+
+Further, since
+$\angle OCI = \angle OCB - \angle ICB = 30^\circ - \tfrac 12\angle C$
+$\angle ICH = \angle ACE - \angle ACI = 30^\circ - \tfrac 12\angle C$
+we have OI=IH.
+
+Because [BCOIH]=[BCO]+[BOIH], it is sufficient to maximize the area of quadrilateral BOIH. If $P_1, P_2$ are two points in an arc of circle BO with $BP_1$, then the maximum area of $BOP_1P_2$ occurs when $BP_1=P_1P_2=P_2O$. Indeed, if BP_$1\neq P_1P_2,$ then replacing $P_1$ by the point $P_1$’ located halfway in the arc of the circle $BP_2$ yields a triangle $BP_$1’$P_2$ with larger area than $\triangle BP_1P_2,$ and the area of $\triangle BOP_2$ remains the same. Similarly, if $P_1P_2\neq P_2O.$ Therefore the maximum is achieved when OI=IH=HB, that is, when $\angle OCI = \angle ICH = \angle HCB = \tfrac 13 \angle OCB = 10^\circ.$Thus $\angle ACB = 40^\circ$ and $\angle CBA = 80^\circ.$
+## Solution 2
+Let $\angle CAB=A, \angle ABC=B, \angle BCA=C$ for convenience. It's well-known that $\angle BOC=2A, \angle BIC=90+\frac{A}{2},$ and $\angle BHC=180-A (v$erifiable by angle chasing). Then, as A=60, it follows that $\angle BOC=\angle BIC=\angle BHC=120$ and consequently pentagon BCOIH is cyclic. Observe that BC=1 is fixed, hence the circumcircle of cyclic pentagon BCOIH is also fixed. Similarly, as OB=OC(both are radii), it follows that O and also [BCO] is fixed. Since [BCOIH]=[BCO]+[BOIH] is maximal, it suffices to maximize [BOIH]. Verify that $\angle IBC=\frac{B}{2}, \angle HBC=90-C$ by angle chasing; it follows that $\angle IBH=\angle HBC-\angle IBC=90-C-\frac{B}{2}=\frac{A}{2}-\frac{C}{2}=30-\frac{C}{2}$ since A+B+C=$180\implies\frac{A}{2}+\frac{B}{2}+\frac{C}{2}=90$ by Triangle Angle Sum. Similarly, $\angle OBC=(180-120)/2=30$ (isosceles base angles are equal), hence $\angle IBO=\angle IBC-\angle OBC=\frac{B}{2}-30=60-\frac{A}{2}-\frac{C}{2}=30-\frac{C}{2}$ Since $\angle IBH=\angle IBO, IH=IO$ by Inscribed Angles. There are two ways to proceed. Letting O' and R be the circumcenter and circumradius, respectively, of cyclic pentagon BCOIH, the most straightforward is to write [BOIH]=[OO'I]+[IO'H]+[HO'B]-[BO'O], whence [BOIH]=$\frac{1}{2}R^2(\sin(60-C)+\sin(60-C)+\sin(2C-60)-\sin(60))$ and, using the fact that R is fixed, maximize $2\sin(60-C)+\sin(2C-60)$ with Jensen's Inequality. A more elegant way is shown below. **Lemma:** [BOIH] is maximized only if HB=HI. **Proof by contradiction:** Suppose [BOIH] is maximized when HB$\neq HI.$ Let H' be the midpoint of minor arc BI be and I' the midpoint of minor arc H'O. Then [BOIH']=[IBO]+[IBH']>[IBO]+[IBH]=[BOIH] since the altitude from H' to BI is greater than that from H to BI; similarly [BH'I'O]>[BOIH']>[BOIH]. Taking H', I' to be the new orthocenter, incenter, respectively, this contradicts the maximality of [BOIH], so our claim follows. \blacksquare With our lemma(HB=HI) and IH=IO from above, along with the fact that inscribed angles that intersect the same length chords are equal, $\angle ABC=2\angle IBC=2(\angle OBC+\angle OBI)=2(30+\frac{1}{3}\angle OCB)=80\implies\boxed{(D)}$
+## Video Solution by Osman Nal
+https://www.youtube.com/watch?v=O3amRG9zEHE&ab_channel=OsmanNal
+## See also

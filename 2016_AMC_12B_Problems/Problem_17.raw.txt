@@ -1,0 +1,58 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2016_AMC_12B_Problems/Problem_17&action=raw
+
+Published Time: Sun, 10 Nov 2024 05:26:18 GMT
+
+Markdown Content:
+==Problem==
+
+In \triangle ABC shown in the figure, AB=7, BC=8, CA=9, and \overline{AH} is an altitude. Points D and E lie on sides \overline{AC} and \overline{AB}, respectively, so that \overline{BD} and \overline{CE} are angle bisectors, intersecting \overline{AH} at Q and P, respectively. What is PQ?
+
+ import graph; size(9cm); real labelscalefactor = 0.5; /* changes label-to-point distance */ pen dps = linewidth(0.7) + fontsize(10); defaultpen(dps); /* default pen style */ pen dotstyle = black; /* point style */ real xmin = -4.381056062031275, xmax = 15.020004395092375, ymin = -4.051697595316909, ymax = 10.663513514111651; /* image dimensions */ draw((0.,0.)--(4.714285714285714,7.666518779999279)--(7.,0.)--cycle); /* draw figures */ draw((0.,0.)--(4.714285714285714,7.666518779999279)); draw((4.714285714285714,7.666518779999279)--(7.,0.)); draw((7.,0.)--(0.,0.)); label("7",(3.2916797119724284,-0.07831656949355523),SE*labelscalefactor); label("9",(2.0037562070503783,4.196493361737088),SE*labelscalefactor); label("8",(6.114150371695219,3.785453945272603),SE*labelscalefactor); draw((0.,0.)--(6.428571428571427,1.9166296949998194)); draw((7.,0.)--(2.2,3.5777087639996634)); draw((4.714285714285714,7.666518779999279)--(3.7058823529411766,0.)); /* dots and labels */ dot((0.,0.),dotstyle); label("$A$", (-0.2432592696221352,-0.5715638692509372), NE * labelscalefactor); dot((7.,0.),dotstyle); label("$B$", (7.0458397156813835,-0.48935598595804014), NE * labelscalefactor); dot((3.7058823529411766,0.),dotstyle); label("$E$", (3.8123296394941084,0.16830708038513573), NE * labelscalefactor); dot((4.714285714285714,7.666518779999279),dotstyle); label("$C$", (4.579603216894479,7.895848109917452), NE * labelscalefactor); dot((2.2,3.5777087639996634),linewidth(3.pt) + dotstyle); label("$D$", (2.1407693458718726,3.127790878929427), NE * labelscalefactor); dot((6.428571428571427,1.9166296949998194),linewidth(3.pt) + dotstyle); label("$H$", (6.004539860638023,1.9494778850645704), NE * labelscalefactor); dot((5.,1.49071198499986),linewidth(3.pt) + dotstyle); label("$Q$", (4.935837377830365,1.7302568629501784), NE * labelscalefactor); dot((3.857142857142857,1.1499778169998918),linewidth(3.pt) + dotstyle); label("$P$", (3.538303361851119,1.2370095631927964), NE * labelscalefactor); clip((xmin,ymin)--(xmin,ymax)--(xmax,ymax)--(xmax,ymin)--cycle); /* end of picture */ 
+
+\textbf{(A)}\ 1 \qquad \textbf{(B)}\ \frac{5}{8}\sqrt{3} \qquad \textbf{(C)}\ \frac{4}{5}\sqrt{2} \qquad \textbf{(D)}\ \frac{8}{15}\sqrt{5} \qquad \textbf{(E)}\ \frac{6}{5}
+
+==Solution 1==
+Get the area of the triangle by [https://artofproblemsolving.com/wiki/index.php/Heron%27s_Formula Heron's Formula]: 
+\sqrt{s(s-a)(s-b)(s-c)} = \sqrt{(12)(3)(4)(5)} = 12\sqrt{5}
+Use the area to find the height AH with known base BC:
+Area = 12\sqrt{5} = \frac{1}{2}bh = \frac{1}{2}(8)(AH)
+AH = 3\sqrt{5}
+BH = \sqrt{AB^2 - AH^2} = \sqrt{7^2 - (3\sqrt{5})^2} = 2
+CH = BC - BH = 8 - 2 = 6
+Apply the [https://artofproblemsolving.com/wiki/index.php/Angle_Bisector_Theorem Angle Bisector Theorem] on  \triangle ACH and \triangle ABH, we get AP:PH = 9:6 and AQ:QH = 7:2, respectively.
+To find AP, PH, AQ, and QH, apply variables, such that AP:PH = 9:6 is \frac{3\sqrt{5} - x}{x} = \frac{9}{6} and AQ:QH = 7:2 is \frac{3\sqrt{5} - y}{y} = \frac{7}{2}. Solving them out, you will get AP = \frac{9\sqrt{5}}{5}, PH = \frac{6\sqrt{5}}{5}, AQ = \frac{7\sqrt{5}}{3}, and QH = \frac{2\sqrt{5}}{3}. Then, since AP + PQ = AQ according to the Segment Addition Postulate, and thus manipulating, you get PQ = AQ - AP = \frac{7\sqrt{5}}{3} - \frac{9\sqrt{5}}{5} = \boxed{\textbf{(D)}\frac{8}{15}\sqrt{5}}
+
+==Solution 2==
+Let the intersection of BD and CE be the point I. Then let the foot of the altitude from I to BC be I'. Note that II' is an inradius and that II' \cdot s = [ABC], where s is the semiperimeter of the triangle.
+
+Using Heron's Formula, we see that II' \cdot 12 = \sqrt{12 \cdot 3 \cdot 4 \cdot 5} = 12\sqrt{5}, so II' = \sqrt{5}.
+
+Then since II' and AH are parallel, \triangle CI'I \sim \triangle CHP and \triangle BHQ \sim \triangle BI'I.
+
+Thus, \frac{II'}{PQ + QH} = \frac{CI'}{CH} and \frac{II'}{QH} = \frac{BI'}{BH}, so 
+PQ = \frac{II' \cdot CH}{CI'} - \frac{II' \cdot BH}{BI'}.
+
+By the Dual Principle, CI' = 5 and BI' = 3. With the same method as Solution 1, CH = 6 and BH = 2.
+Then PQ = \frac{8}{15} II' =  \boxed{\textbf{(D)}\frac{8}{15}\sqrt{5}}
+
+==Solution 3 (FAST)==
+PQ lies on altitude AH, which we find to have a length of 3\sqrt{5} by Heron's Formula and dividing twice the area by BC. From H we can construct a segment HX with X on CE such that HX is parallel to EB. A similar construction gives Y on BD such that HY is parallel to DC. We can hence generate a system of ratios that will allow us to find PQ/AH. Note that such a system will generate a rational number for the ratio PQ/AH. Thus, we choose the only answer that has a \sqrt{5} term in it, giving us \boxed{\textbf{(D)}} .
+
+==Solution 4 ==
+
+Let h=AH and BH=x.  Then, CH=8-x.  By the Pythagorean Theorem on right triangles ABH and ACH, we have h^2+x^2=49 x^2+(8-x)^2=81.  Subtracting the prior from the latter yields -16x+64=32\implies x=2.  So, BH=2, CH=6, and AH=3\sqrt{5}.  Continue with Solution 1.
+
+==Video Solution==
+https://www.youtube.com/watch?v=ccB-z4_OHqw
+
+==Video Solution by CanadaMath (Problem 11-20)==
+Fast Forward to 26:14 for problem 17
+https://www.youtube.com/watch?v=4osvFatUv1o
+
+~THEMATHCANADIAN
+
+==See Also==
+{{AMC12 box|year=2016|ab=B|num-b=16|num-a=18}}
+{{MAA Notice}}

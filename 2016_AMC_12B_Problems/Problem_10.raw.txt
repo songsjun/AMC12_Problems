@@ -1,0 +1,32 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2016_AMC_12B_Problems/Problem_10&action=raw
+
+Published Time: Fri, 19 Feb 2021 11:08:16 GMT
+
+Markdown Content:
+==Problem==
+
+A quadrilateral has vertices P(a,b), Q(b,a), R(-a, -b), and S(-b, -a), where a and b are integers with a>b>0. The area of PQRS is 16. What is a+b?
+
+\textbf{(A)}\ 4 \qquad\textbf{(B)}\ 5 \qquad\textbf{(C)}\ 6 \qquad\textbf{(D)}\ 12 \qquad\textbf{(E)}\ 13
+
+==Solution==
+Note that the slope of PQ is \frac{a-b}{b-a}=-1 and the slope of PS is \frac{b+a}{a+b}=1.  Hence, PQ\perp PS and we can similarly prove that the other angles are right angles.  This means that PQRS is a rectangle. By distance formula we have (a-b)^2+(b-a)^2*2*(a+b)^2 = 256. Simplifying we get (a-b)(a+b) = 8. Thus a+b and a-b have to be a factor of 8. The only way for them to be factors of 8 and remain integers is if a+b = 4 and a-b = 2. So the answer is \boxed{\textbf{(A)}\ 4}
+
+Solution by I_Dont_Do_Math
+
+==Solution 2==
+Solution by e_power_pi_times_i
+
+By the Shoelace Theorem, the area of the quadrilateral is 2a^2 - 2b^2, so a^2 - b^2 = 8. Since a and b are integers, a = 3 and b = 1, so a + b = \boxed{\textbf{(A)}\ 4}.
+
+==Video Solution by TheBeautyofMath==
+https://www.youtube.com/watch?v=Eq2A2TTahqU
+with a second example of Shoelace Theorem done after this problem
+
+~IceMatrix
+
+==See Also==
+{{AMC12 box|year=2016|ab=B|num-b=9|num-a=11}}
+{{MAA Notice}}

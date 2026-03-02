@@ -1,0 +1,83 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2022_AMC_12A_Problems/Problem_5&action=raw
+
+Published Time: Mon, 04 Nov 2024 00:05:35 GMT
+
+Markdown Content:
+==Problem==
+
+The _taxicab distance_ between points (x_1, y_1) and (x_2, y_2) in the coordinate plane is given by |x_1 - x_2| + |y_1 - y_2|.
+For how many points P with integer coordinates is the taxicab distance between P and the origin less than or equal to 20?
+
+\textbf{(A)} \, 441 \qquad\textbf{(B)} \, 761 \qquad\textbf{(C)} \, 841 \qquad\textbf{(D)} \, 921 \qquad\textbf{(E)} \, 924 
+
+==Diagram==
+All possible locations of P are lattice points such that |x|+|y|\leq 20, whose graph is shown below:
+ /* Made by MRENTHUSIASM */ size(350); int xMin = -21; int xMax = 21; int yMin = -21; int yMax = 21; filldraw((20,0)--(0,20)--(-20,0)--(0,-20)--cycle,yellow,linewidth(1.25)); //Draws the horizontal gridlines void horizontalLines() { for (int i = yMin+1; i < yMax; ++i) { draw((xMin,i)--(xMax,i), mediumgray+linewidth(0.4)); } } void verticalLines() { for (int i = xMin+1; i < xMax; ++i) { draw((i,yMin)--(i,yMax), mediumgray+linewidth(0.4)); } } void horizontalTicks() { for (int i = yMin+1; i < yMax; ++i) { draw((-3/8,i)--(3/8,i), black+linewidth(1.5)); } } //Draws the vertical ticks void verticalTicks() { for (int i = xMin+1; i < xMax; ++i) { draw((i,-3/8)--(i,3/8), black+linewidth(1.5)); } } horizontalLines(); verticalLines(); horizontalTicks(); verticalTicks(); label("$20$",(0,20),(-2,0),fontsize(10)); label("$20$",(20,0),(0,-2),fontsize(10)); label("${-}20$",(0,-20),(-2,0),fontsize(10)); label("${-}20$",(-20,0),(0,-2),fontsize(10)); draw((xMin,0)--(xMax,0),black+linewidth(1.5),EndArrow(5)); draw((0,yMin)--(0,yMax),black+linewidth(1.5),EndArrow(5)); label("$x$",(xMax,0),(2,0)); label("$y$",(0,yMax),(0,2)); for (int y = 20; y >= 0; --y) { for (int x = y-20; x <= 20-y; ++x) { dot((x,y),linewidth(4)); } } for (int y = -1; y >= -20; --y) { for (int x = -y-20; x <= y+20; ++x) { dot((x,y),linewidth(4)); } } 
+
+~MRENTHUSIASM
+
+== Solution 1 (Arithmetic Series) ==
+Let us consider the number of points for a certain x-coordinate. For any x, the viable points are in the range [-20 + |x|, 20 - |x|]. This means that our total sum is equal to 
+\begin{align*} 1 + 3 + 5 + \cdots + 41 + 39 + 37 + \cdots + 1 &= (1 + 3 + 5 + \cdots + 39) + (1 + 3 + 5 + \cdots + 41) \\ & = 20^2 + 21^2 \\ & = 29^2 \\ &= \boxed{\textbf{(C)} \, 841}. \end{align*}
+~mathboy100
+
+==Solution 2 (Arithmetic Series With Symmetry)==
+Since the second point is the origin, this is equivalent to finding all points (x, y) such that |x| + |y| \leq 20. Due to the absolute values, the set of all such points will be symmetric about the origin meaning we can focus on the first quadrant and multiply by 4.
+
+To avoid overcounts, ignore points on the axes. This means x, y > 0. If x = 1, there are 19 solutions for y (y = 1, 2, 3, \ldots, 19). If x = 2, there are 18 solutions. This pattern repeats until x = 19, at which point there is 1 solution for y.
+
+So we get 19 + 18 + 17 + \cdots + 1 = \frac{19(20)}{2} = 190 points in the first quadrant. Multiplying by 4 gives 760. Now, the x axis has y = 0 which gives |x| \leq 20, meaning there are 41 solutions. This is the same with the y axis, but we overcounted the origin by 1.
+
+Our final answer is 760 + 41 + 41 - 1 = \boxed{\textbf{(C)} \, 841}.
+
+==Solution 3 (Triangular Numbers)==
+This solution refers to the **Diagram** section.
+ /* Made by MRENTHUSIASM */ size(350); for (int y = 20; y >= 1; --y) { for (int x = 0; x <= 20-y; ++x) { dot((x,y),green+linewidth(4)); } } for (int y = 0; y >= -20; --y) { for (int x = 1; x <= y+20; ++x) { dot((x,y),blue+linewidth(4)); } } for (int y = 20; y >= 0; --y) { for (int x = y-20; x <= -1; ++x) { dot((x,y),purple+linewidth(4)); } } for (int y = -1; y >= -20; --y) { for (int x = -y-20; x <= 0; ++x) { dot((x,y),red+linewidth(4)); } } dot(origin,black+linewidth(4)); 
+The problem can be visualized as depicted on the right split equally into four "triangular" parts excluding the origin. The "triangular" parts are identical the ones that would be used in a visual proof of the formula for triangular numbers. Becuase of this the number of points in each part is equal to \frac{n(n+1)}{2} where n is the length of a "leg" of the "triangle" which is 20 for this problem. Substituting and computing, we get 210. Multiplying by 4 and adding 1 to account for all parts and the origin, we get 210\cdot4 + 1 = \boxed{\textbf{(C)} \, 841}.
+
+~Apersoma
+
+==Solution 4 (Two Square Arrays)==
+
+This solution refers to the **Diagram** section.
+
+As shown below, the taxicab distance between each red point and the origin is even, and the taxicab distance between each blue point and the origin is odd.
+ /* Made by MRENTHUSIASM */ size(350); for (int y = 20; y >= 0; --y) { for (int x = y-20; x <= 20-y; x+=2) { dot((x,y),red+linewidth(4)); } } for (int y = -1; y >= -20; --y) { for (int x = -y-20; x <= y+20; x+=2) { dot((x,y),red+linewidth(4)); } } for (int y = 19; y >= 0; --y) { for (int x = y-19; x <= 19-y; x+=2) { dot((x,y),blue+linewidth(4)); } } for (int y = -1; y >= -19; --y) { for (int x = -y-19; x <= y+19; x+=2) { dot((x,y),blue+linewidth(4)); } } draw((20,0)--(0,20)--(-20,0)--(0,-20)--cycle,red+linewidth(1.25)); draw((19,0)--(0,19)--(-19,0)--(0,-19)--cycle,blue+linewidth(1.25)); 
+Note that the red array consists of 21^2=441 points, and the blue array consists of 20^2=400 points.
+
+Together, the answer is 441+400=\boxed{\textbf{(C)} \, 841}.
+
+~MRENTHUSIASM
+
+==Solution 5 (Pick's Theorem)==
+Let P = (x, y). Since the problem asks for taxicab distances from the origin, we want |x| + |y| \le 20. The graph of all solutions to this equation on the xy-plane is a square with vertices at (0, \pm 20) and (\pm 20, 0) (In order to prove this, one can divide the sections of this graph into casework on the four quadrants, and tie together the resulting branches.) We want the number of lattice points on the border of the square and inside the square. 
+Each side of the square goes through an equal number of lattice points, so if we focus on one side going from (0,20) to (20, 0), we can see that it goes through 21 points in total. In addition, each of the vertices gets counted twice, so the total number of border points is 21\cdot4 - 4 = 80. Also, the area of the square is 800, so when we plug this information inside Pick's theorem, we get 800 = i + \frac{80}{2} - 1 \implies i = 761. Then our answer is 761+80 = \boxed{\textbf{(C)} \, 841}.
+ 
+~ Oxymoronic15
+
+==Solution 6 (Stars and Bars)==
+Instead of considering all points with integer coordinates, first consider points with nonnegative coordinates only. Then, we want x + y \le 20 where x and y are nonnegative integers. We can introduce a third variable, say z, such that z = 20 - (x + y). Note that counting the number of ways to have x + y + z = 20 is the same as counting the number of ways to have x + y \le 20. Therefore, by stars and bars, there are \dbinom{20 + 3 - 1}{3 - 1} = 231 solutions with nonnegative integer coordinates.
+
+Then, we can copy our solutions over to the other four quadrants. First, so as not to overcount, we remove all points on the axes. There are 20 + 20 + 1 = 41 such points with nonnegative integer coordinates. We multiply the 190 remaining points by 4 to get 760 points that are not on the axes. Then, we can add back the 41 nonnegative points on the axes, as well as the 40 other points on the negative axes to get 760 + 41 + 40 = \boxed{\textbf{(C)} \, 841}.
+
+~ jamesl123456
+
+==Solution 7 (Fast, Cheese)==
+
+The number of lattice points is roughly equal to the area of a rhombus with diagonals of length 41. The area of the quadrilateral is 41^2/2 = 840.5. The closest answer is \boxed{\textbf{(C)} \, 841}..
+
+==Video Solution 1 (HOW TO THINK CREATIVELY!!!)==
+https://youtu.be/zTGRlr7eYKM
+
+~Education, the Study of Everything
+
+==Video Solution 2 (First Understand the problem)==
+https://youtu.be/7yAh4MtJ8a8?si=0CHICdALPhDnrgTx&t=834
+
+~Math-X
+
+== See Also ==
+{{AMC12 box|year=2022|ab=A|num-b=4|num-a=6}}
+{{MAA Notice}}

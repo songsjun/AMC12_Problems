@@ -1,0 +1,15 @@
+# 2011 AMC 12B Problem 11
+
+## Problem
+A frog located at (x,y), with both x and y integers, makes successive jumps of length 5 and always lands on points with integer coordinates. Suppose that the frog starts at (0,0) and ends at (1,0). What is the smallest possible number of jumps the frog makes?
+
+$\textbf{(A)}\ 2 \qquad \textbf{(B)}\ 3 \qquad \textbf{(C)}\ 4 \qquad \textbf{(D)}\ 5 \qquad \textbf{(E)}\ 6$
+## Solution
+Since the frog always jumps in length 5 and lands on a lattice point, the sum of its coordinates must change either by 5 (by jumping parallel to the x- or y-axis), or by 3 or 4 (3-4-5 right triangle).
+
+Because either 1, 5, or 7 is always the change of the sum of the coordinates, the sum of the coordinates will always change from odd to even or vice versa. Thus, it can't go from (0,0) to (1,0) in an even number of moves. Therefore, the frog cannot reach (1,0) in two moves.
+
+However, a path is possible in 3 moves:  from (0,0) to (3,4) to (6,0) to (1,0).
+
+Thus, the answer is   = $\boxed{3 \textbf{}}$ .
+## See also

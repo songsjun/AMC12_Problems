@@ -1,0 +1,55 @@
+# 2005 AMC 12B Problem 23
+
+## Problem
+Let S be the set of ordered triples (x,y,z) of real numbers for which
+
+$\log_{10}(x+y) =$ z $\text{ and } \log_{10}(x^{2}+y^{2}) =$ z+1.
+There are real numbers a and b such that for all ordered triples (x,y,z) in S we have $x^{3}+y^{3}=a \cdot 10^{3z} +$ b $\cdot 10^{2z}.$ What is the value of a+b?
+
+$\textbf{(A)}\ \frac {15}{2} \qquad \textbf{(B)}\ \frac {29}{2} \qquad \textbf{(C)}\ 15 \qquad \textbf{(D)}\ \frac {39}{2} \qquad \textbf{(E)}\ 24$
+## Solution 1
+Let x + y = s and $x^2 + y^2 = t.$
+Then, $\log(s)=z$ implies $\log(10s) =z+1=\log(t),s$o $t=10s$.
+Therefore, x^3 + $y^3 =s\cdot\dfrac{3t-s^2}{2} =$ s($15s-\dfrac{s^2}{2}).$
+Since $s = 10^z$, we find that $x^3 +y^3 =15\cdot10^{2z} - (1/2)\cdot10^{3z}.$
+Thus, a+b = $\frac{29}{2} \Rightarrow \boxed{B}$
+## Solution 2
+First, remember that $x^3 + y^3$ factors $to (x + y) (x^2 - xy + y^2).$ By the givens, x + $y = 10^z$ and $x^2 +y^2 =10^{z + 1}$. These can be used to find xy:
+
+$$
+(x + y)^2 = 10^{2z}
+x^2 + 2xy + y^2 = 10^{2z}
+2xy = 10^{2z} - 10^{z + 1}
+xy = \frac{10^{2z} - 10^{z + 1}}{2}
+$$
+
+
+Therefore,
+
+$$
+x^3 + y^3 = a \cdot 10^{3z} + b \cdot 10^{2z} = 10^z\left(10^{z + 1} - \frac{10^{2z} - 10^{z + 1}}{2}\right)
+= 10^z\left(10^{z + 1} - \frac{10^{2z} - 10^{z + 1}}{2}\right)
+= 10^{2z + 1} - \frac{10^{3z} - 10^{2z + 1}}{2}
+= -\frac{1}{2} \cdot 10^{3z} + \frac{3}{2} \cdot 10^{2z + 1}
+= -\frac{1}{2} \cdot 10^{3z} + 15 \cdot 10^{2z}.
+$$
+
+
+It follows that $a =-\frac{1}{2}$ and $b = 15$, thus a + $b =\frac{29}{2}.$
+## Solution 3
+We can rearrange $\log_{10}(x+y)=z$ into $x+y=10^{z}$ and $\log_{10}(x^2+y^2)=z+1$ into $x^2+y^2=10^{z+1}$
+
+We can then put x+y to the third power or (x+$y)^{3}=10^{3z}$. Basic polynomial multiplication shows us that (x+$y)^{3}=x^3+3x^{2}$y+$3xy^{2}+y^3=10^{3z}$ Thus, $x^3+y^3=10^{3z}-3x^{2}$y-$3xy^{2}$ or  $x^3+y^3=10^{3z}-3$xy(x+y). We know that $x+y=10^{z}$ so we have $x^3+y^3=10^{3z}-3xy(10^{z}$).
+
+Now we need to find out what xy is equal to in terms of z. We will find xy by squaring x+y. It is basic polynomial multiplication to figure out that (x+$y)^{2}=x^2+2xy+y^2.$ We are also given that $x^2+y^2=10^{z+1}$ and $x+y=10^{z}$. Thus ($10^{z})^{2}=10^{z+1}+2$xy or $10^{2z}=10^{z+1}+2$xy. Rearranging the terms of this equation we obtain that $xy=\frac{10^{2z}-10^{z+1}}{2}$ or $xy=\frac{10^z(10^z-10)}{2}.$ Now plugging this equation into our original equation  $x^3+y^3=10^{3z}-3xy(10^{z}$), we obtain the equation $x^3+y^3=10^{3z}-3($\frac{10^z(10^z-10)$}{2})(10^{z})$
+Simple rearranging of this equation yields the result that $x^3+y^3=10^{3z}-3($\frac{10^{3z}}{2})+$30(\frac{10^{2z}}{2}).$
+Combining like terms we obtain the equation $x^3+y^3= -(\frac{10^{3z}}{2})+30(\frac{10^{2z}}{2}).$
+
+Now we know the coefficients of $10^{3z}$ and $10^{2z}$ which are $\frac{-1}{2}$ and $\frac{30}{2}$ respectively. Adding the two coefficients we obtain an answer of $\frac{29}{2}. \Rightarrow \boxed{B} ($Author: David Camacho)
+## Solution 4 (Alcumus)
+From the given conditions it follows that
+$$x+y=10^z, \quad x^2+y^2=10\cdot 10^z\quad\text{and}\quad 10^{2z}=(x+y)^2=x^2+2xy+y^2.$$
+Thusxy=$\frac{1}{2}(10^{2z}-10\cdot 10^z).$Also(x+y)^$3=10^{3z}\quad\text{and}\quad$ x^3+y^3=(x+y)^3-3xy(x+y),which yields$\begin{align*}x^3+$y^3&=$10^{3z}-\frac{3}{2}(10^{2z}-10\cdot 10^z)(10^z)$ \\ &=$10^{3z}-\frac{3}{2}(10^{3z}-10\cdot 10^{2z}) =-\frac{1}{2}10^{3z}+15\cdot 10^{2z}, \end{align*}$and $a+b=-\frac{1}{2}+15=\boxed{29/2}.$
+
+No other value of a + b is possible for all members of S, because the triple $\left(\frac{1}{2}(1 + \sqrt{19}), \frac{1}{2}(1 - \sqrt{19}), 0\right)$ is in S, and for this ordered triple, the equation $x^3 +y^3 =a\cdot 10^{3z} +b\cdot 10^{2z}$ reduces to a + $b = 29/2$.
+## See Also

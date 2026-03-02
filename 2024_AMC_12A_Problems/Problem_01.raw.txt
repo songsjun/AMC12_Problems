@@ -1,0 +1,137 @@
+{{duplicate|[[2024 AMC 10A Problems/Problem 1|2024 AMC 10A #1]] and [[2024 AMC 12A Problems/Problem 1|2024 AMC 12A #1]]}}
+
+== Problem ==
+
+What is the value of <math>9901\cdot101-99\cdot10101?</math> 
+
+<math>\textbf{(A)}~2\qquad\textbf{(B)}~20\qquad\textbf{(C)}~200\qquad\textbf{(D)}~202\qquad\textbf{(E)}~2020</math>
+
+== Solution 1 (Direct Computation) ==
+The likely fastest method will be direct computation. <math>9901\cdot101</math> evaluates to <math>1000001</math> and <math>99\cdot10101</math> evaluates to <math>999999</math>. The difference is <math>\boxed{\textbf{(A) }2}.</math>
+
+Solution by [[User:Juwushu|juwushu]].
+
+== Solution 2 (Distributive Property) ==
+We have
+<cmath>\begin{align*}
+9901\cdot101-99\cdot10101 &= (10000-99)\cdot101-99\cdot(10000+101) \\
+&= 10000\cdot101-99\cdot101-99\cdot10000-99\cdot101 \\
+&= (10000\cdot101-99\cdot10000)-2\cdot(99\cdot101) \\
+&= 2\cdot10000-2\cdot9999 \\
+&= \boxed{\textbf{(A) }2}.
+\end{align*}</cmath>
+~MRENTHUSIASM
+
+== Solution 3 (Solution 1 but Distributive) ==
+Note that <math>9901\cdot101=9901\cdot100+9901=990100+9901=1000001</math> and  <math>99\cdot10101=100\cdot10101-10101=1010100-10101=999999</math>, therefore the answer is <math>1000001-999999=\boxed{\textbf{(A) }2}</math>.
+
+~Tacos_are_yummy_1
+
+== Solution 4 (Modular Arithmetic) ==
+Evaluating the given expression <math>\pmod{10}</math> yields <math>1-9\equiv 2 \pmod{10}</math>, so the answer is either <math>\textbf{(A)}</math> or <math>\textbf{(D)}</math>. Evaluating <math>\pmod{101}</math> yields <math>0-99\equiv 2\pmod{101}</math>. Because answer <math>\textbf{(D)}</math> is <math>202=2\cdot 101</math>, that cannot be the answer, so we choose choice <math>\boxed{\textbf{(A) }2}</math>.
+
+== Solution 5 (Process of Elimination) ==
+
+We simply look at the units digit of the problem we have (or take mod <imath>10</imath>)
+<cmath>9901\cdot101-99\cdot10101 \equiv 1\cdot1 - 9\cdot1 = 2 \mod{10}.</cmath>
+Since the only answers with <imath>2</imath> in the units digit are <imath>\textbf{(A)}</imath> and <imath>\textbf{(D)}</imath>, we can then continue if you are desperate to use guess and check or an actually valid method to find the answer is <imath>\boxed{\textbf{(A) }2}</imath>.
+
+~[[User:Mathkiddus|mathkiddus]]
+
+== Solution 6 (Faster Distribution) ==
+Observe that <math>9901=9900+1=99\cdot100+1</math> and <math>10101=10100+1=101\cdot100+1</math>
+<cmath>\begin{align*}
+\Rightarrow9901\cdot101-99\cdot10101 & = ((9900\cdot101)+(1\cdot101))-((99\cdot10100)+(99\cdot1)) \\
+&=(99\cdot100\cdot101)+101-(99\cdot100\cdot101)-99 \\
+&=101-99 \\
+&=\boxed{\textbf{(A) }2}.
+\end{align*}</cmath>
+
+~laythe_enjoyer211
+
+==Solution 7 (Cubes)==
+
+Let <math>x=100</math>. Then, we have
+\begin{align*}
+101\cdot 9901=(x+1)\cdot (x^2-x+1)=x^3+1, \\
+99\cdot 10101=(x-1)\cdot (x^2+x+1)=x^3-1.
+\end{align*}
+Then, the answer can be rewritten as <math>(x^3+1)-(x^3-1)= \boxed{\textbf{(A) }2}.</math>
+
+~erics118
+
+==Solution 8 (Super Fast)==
+
+It's not hard to observe and express <math>9901</math> into <math>99\cdot100+1</math>, and <math>10101</math> into <math>101\cdot100+1</math>.
+
+We then simplify the original expression into <math>(99\cdot100+1)\cdot101-99\cdot(101\cdot100+1)</math>, which could then be simplified into <math>99\cdot100\cdot101+101-99\cdot100\cdot101-99</math>, which we can get the answer of <math>101-99=\boxed{\textbf{(A) }2}</math>.
+
+~RULE101
+
+==Solution 9 (Estimation) *🔥VERY FAST🔥*==
+Notice that the answer choices are significantly different in value. This allows us to estimate the answer. <math>9901</math> is about <math>10000</math>, and <math>101</math> is about <math>100</math>. <math>99</math> is about <math>100</math>, and <math>10101</math> is about <math>10000</math>. Computing, we get <math>10000 \cdot 100-100 \cdot 10000 = 0</math>. The closest answer to this estimation is <math>\boxed{\textbf{(A) }2}</math>.
+
+==Solution 10==
+We can see that the units digit of the expression is <math>1 - 9 \Rightarrow 11 - 9 \Rightarrow 2</math>, elimination options B, C, and E. Next, notice that <math>(9901)(101)</math> is divisible by 101 while <math>(99)(10101)</math> is not divisible by 101 (to see this, notice that 101 is prime, and <math>10101 = 10100 + 1</math>, so is not divisible by 101). This means that the final answer is not divisible by 101, eliminating <math>\textbf{(D)}</math>, so the answer is <math>\boxed{\textbf{(A) }2}</math>.
+
+==Video Solution(Don't do the actual computation- be fast by taking mods!)==
+https://youtu.be/l3VrUsZkv8I 
+
+~MC
+
+==Video Solution by Central Valley Math Circle==
+
+https://youtu.be/eLs748wDmMs
+
+~mr_mathman
+
+== Video Solution (⚡️ 1 min solve ⚡️) ==
+
+https://youtu.be/RODYXdpipdc
+
+<i>~Education, the Study of Everything </i>
+
+== Video Solution by Pi Academy ==
+https://youtu.be/GPoTfGAf8bc?si=JYDhLVzfHUbXa3DW
+
+== Video Solution by FrankTutor ==
+https://www.youtube.com/watch?v=ez095SvW5xI
+
+== Video Solution Daily Dose of Math ==
+
+https://youtu.be/Z76bafQsqTc
+
+~Thesmartgreekmathdude
+
+== Video Solution 1 by Power Solve ==
+https://www.youtube.com/watch?v=j-37jvqzhrg
+
+==Video Solution by SpreadTheMathLove==
+https://www.youtube.com/watch?v=6SQ74nt3ynw
+
+==Video Solution by Math from my desk ==
+https://www.youtube.com/watch?v=n_G6wi1ulzY
+
+==Video Solution by TheBeautyofMath==
+For AMC 10: https://youtu.be/uKXSZyrIOeU
+
+For AMC 12: https://youtu.be/zaswZfIEibA
+
+~IceMatrix
+
+==Video Solution by Dr. David ==
+https://youtu.be/aWu4BJMn9oc
+
+==Video Solution by yjtest (2 Solutions, Good Approaches for Competitions)==
+https://www.youtube.com/watch?v=CSR-edmK52I
+
+==Video solution by TheNeuralMathAcademy==
+https://www.youtube.com/watch?v=4b_YLnyegtw&t=0s
+
+==See Also==
+{{AMC10 box|year=2024|ab=A|before=[[2023 AMC 10B Problems]]|after=[[2024 AMC 10B Problems]]}}
+* [[AMC 10]]
+* [[AMC 10 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

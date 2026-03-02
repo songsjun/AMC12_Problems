@@ -1,0 +1,33 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2015_AMC_12A_Problems/Problem_14&action=raw
+
+Published Time: Sun, 23 Mar 2025 19:45:07 GMT
+
+Markdown Content:
+==Problem==
+
+What is the value of a for which \frac{1}{\log_2a} + \frac{1}{\log_3a} + \frac{1}{\log_4a} = 1?
+
+ \textbf{(A)}\ 9\qquad\textbf{(B)}\ 12\qquad\textbf{(C)}\ 18\qquad\textbf{(D)}\ 24\qquad\textbf{(E)}\ 36
+
+==Solution==
+We use the change of base formula to show that
+\log_a b = \dfrac{\log_b b}{\log_b a} = \dfrac{1}{\log_b a}.
+Thus, our equation becomes
+\log_a 2 + \log_a 3 + \log_a 4 = 1,
+which becomes after combining:
+\log_a 24 = 1.
+
+Hence a = 24, and the answer is \textbf{(D)}.
+
+== Video Solution by OmegaLearn ==
+https://youtu.be/RdIIEhsbZKw?t=482
+
+~ pi_is_3.14
+
+==Video Solution==
+Video starts at 1:04, uses the above solution: https://www.youtube.com/watch?v=OJyWHzjiu2A&t=44s
+
+== See Also ==
+{{AMC12 box|year=2015|ab=A|num-b=13|num-a=15}}

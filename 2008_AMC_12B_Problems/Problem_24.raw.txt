@@ -1,0 +1,79 @@
+Title: 
+
+URL Source: http://artofproblemsolving.com/wiki/index.php?title=2008_AMC_12B_Problems/Problem_24&action=raw
+
+Published Time: Fri, 31 Oct 2025 00:47:58 GMT
+
+Markdown Content:
+==Problem==
+Let A_0=(0,0). Distinct points A_1,A_2,\dots lie on the x-axis, and distinct points B_1,B_2,\dots lie on the graph of y=\sqrt{x}. For every positive integer n,\ A_{n-1}B_nA_n is an equilateral triangle. What is the least n for which the length A_0A_n\geq100?
+
+\textbf{(A)}\ 13\qquad \textbf{(B)}\ 15\qquad \textbf{(C)}\ 17\qquad \textbf{(D)}\ 19\qquad \textbf{(E)}\ 21
+
+==Solution 1==
+Let a_n=|A_{n-1}A_n|. We need to rewrite the recursion into something manageable. The two strange conditions, B's lie on the graph of y=\sqrt{x} and A_{n-1}B_nA_n is an equilateral triangle, can be compacted as follows: \left(a_n\frac{\sqrt{3}}{2}\right)^2=\frac{a_n}{2}+a_{n-1}+a_{n-2}+\cdots+a_1
+which uses y^2=x, where x is the height of the equilateral triangle and therefore \frac{\sqrt{3}}{2} times its base.
+
+The relation above holds for n=k and for n=k-1 (k>1), so \left(a_k\frac{\sqrt{3}}{2}\right)^2-\left(a_{k-1}\frac{\sqrt{3}}{2}\right)^2=
+=\left(\frac{a_k}{2}+a_{k-1}+a_{k-2}+\cdots+a_1\right)-\left(\frac{a_{k-1}}{2}+a_{k-2}+a_{k-3}+\cdots+a_1\right)
+Or, a_k-a_{k-1}=\frac23 This implies that each segment of a successive triangle is \frac23 more than the last triangle. To find a_{1}, we merely have to plug in k=1 into the aforementioned recursion and we have a_{1} - a_{0} = \frac23. Knowing that a_{0} is 0, we can deduce that a_{1} = 2/3.Thus, a_n=\frac{2n}{3}, so A_0A_n=a_n+a_{n-1}+\cdots+a_1=\frac{2}{3} \cdot \frac{n(n+1)}{2} = \frac{n(n+1)}{3}. We want to find n so that n^2<300<(n+1)^2. n=\boxed{17} is our answer.
+
+==Solution 2==
+
+Consider two adjacent equilateral triangles obeying the problem statement. For each, drop an altitude to the x axis and denote the resulting heights h_n and h_{n+1}. From 30-60-90 rules, the distance between the points where these altitudes meet the x-axis is \frac{h_{n+1}}{\sqrt{3}}+\frac{h_n}{\sqrt{3}} = \frac{h_{n+1}+h_n}{\sqrt{3}}
+
+But the square root curve means that this distance is also expressible as h_{n+1}^2-h_n^2 (the x coordinates are the squares of the heights). Setting these expressions equal and dividing throughout by h_{n+1}+h_n leaves h_{n+1}-h_n=\frac{1}{\sqrt{3}}. So the difference in height of successive triangles is \frac{1}{\sqrt{3}}, meaning their bases are wider by 2/3 units each time. From here, one can proceed as in Solution 1 to arrive at n=\boxed{17}.
+
+==Solution 3==
+Note that A_{1} is of the form (2x,0) for some x, and thus B_{1} is of the form (x, x \sqrt{3}). Then, we are told that B_{1} lies on the graph of y = \sqrt{x}, so (x \sqrt{3})^{2} = x. Solving for x, we get that x = \frac{1}{3}, and so A_{1} = (2/3,0). 
+
+Now, similarly to before, let |A_{1}A_{2}|=2y. Then, B_{2} = (y+\frac{2}{3},y \sqrt{3}), and so 
+(y \sqrt{3})^{2} = (y+\frac{2}{3}).
+Solving using the quadratic formula gives 
+y = \frac{-(-1) \pm \sqrt{1^{2}-4(3)(-\frac{2}{3})}}{6} = \frac{1 \pm \sqrt{1^{2}+8}}{6} = \frac{2}{3}.
+Then, 2y = \frac{4}{3}, so A_{2} = (2,0).
+
+In general, if A_{n} = (a_{n},0) for all integers n, and  |A_{n}A_{n+1}| = 2x for some real number x, we have the following equation for x:
+(x \sqrt{3})^{2} = x+a_{n},
+which give us when plugged into the quadratic formula gives
+x = \frac{1 \pm \sqrt{1+12a_{n}}}{6},
+but since x must be positive, we have that
+x = \frac{1 + \sqrt{1+12a_{n}}}{6},
+and so 
+a_{n+1} = a_{n}+2x = a_{n}+\frac{1 + \sqrt{1+12a_{n}}}{3}.
+Computing a few terms of a_{n} using this method gives a_{3} = 4, a_{4} = \frac{20}{3}, and a_{5} = 10. 
+
+Notice how all our a_{n} terms so far are rational, even though there is an abundance of radicals in the recurrence. This motivates us to look at our discriminants in the quadratic formula that is solved for x. 
+
+The discriminant of (x \sqrt{3})^{2} = x+a_{2} is 1+12 \cdot \frac{2}{3} = 9. Similarly, the discriminant of (x \sqrt{3})^{2} = x+a_{3} is 1+12 \cdot a_{3} = 25, and 1+12 \cdot a_{4} = 49. 
+
+Note how our results keep coming out as the squares of the odd integers. Moreover, it seems that 
+1+12a_{n} = (2n+1)^{2}.
+We will prove this with induction. The base case, n=2, we have already verified.
+
+Now, for the Inductive step, assume that 1+12a_{n-1} = (2n-1)^{2}. for some integer n-1. We will prove that this is true for n as well. 
+
+Plugging this into our recurrence formula gives us
+a_{n} = a_{n}+2x = a_{n-1}+\frac{1 + \sqrt{1+12a_{n-1}}}{3}
+a_{n} = \frac{(2n-1)^{2}-1}{12} + \frac{1 + (2n-1)}{3}
+a_{n} = \frac{4n^{2}-4n+1-1}{12} + \frac{8n}{12}
+a_{n} = \frac{4n^{2}+4n+1-1}{12}
+a_{n} = \frac{(2n+1)^{2}-1}{12}.
+Therefore, we have proved our claim. Now, we have that |A_{0}A_{n}|=a_{n}, so we just need the least integer n so that 
+a_{n} > 100,
+or
+(2n+1)^{2} > 1201.
+Then, we see that 35^{2} = 1225 is the smallest odd square larger than 1201. Therefore, we have 2n+1=35, so n = \boxed{17}.
+
+-Mr.Sharkman
+
+==Solution 4 (Pattern Observation)==
+We can iteratively calculate out the first few A_i and B_i. We know that A_0 = (0,0) and the line through A_0 and B_1 needs to make a 60^{\circ} angle with the x-axis (because the triangle is equilateral). The equation of a line that makes an angle \theta with the x-axis and passes through the origin has equation \tan(\theta)x, so the line through A_0 and B_1 has equation \sqrt{3}x. We set this equal to \sqrt{x} (to find where the two curves intersect) and, when solving, find that x = \frac{1}{3}. Therefore, B_1 = (\frac{1}{3}, \frac{\sqrt{3}}{3}). By equilateral triangle properties, we must then have that A_1 = (\frac{2}{3}, 0). To find B_2, we find the equation of the line through A_1 that makes a 60^{\circ} angle with the x-axis. This is the same line as the one through the origin (which we already found) shifted \frac{2}{3} to the right, so it has equation y = \sqrt{3}(x - \frac{2}{3}). Setting this equal to \sqrt{x} and solving for x, we get x = \frac{4}{3}, so B_2 = (\frac{4}{3}, \frac{2\sqrt{3}}{3}). By equilateral triangle properties, we have that A_2 = (2, 0). Repeating this process, we find that B_3 = (3, \sqrt{3}) and A_3 = (4,0). At this point, we notice that the y-coordinate of each B_i is \frac{\sqrt{3}}{3} more than that of B_{i-1}, so B_4 = (\frac{16}{3}, \frac{4\sqrt{3}}{3}) and A_4 = (\frac{20}{3}, 0). It may be helpful to continue calculating out the A_i and B_i if the pattern in the x-coordinates of the A_i isn't visible yet. At this point, it can be noticed that the differences between the x coordinates of consecutive A_i form an arithmetic sequence (x_{A_1} - x_{A_0} = \frac{2}{3}, x_{A_2} - x_{A_1} = \frac{4}{3}, etc.). Additionally, the numerator of each of the fractions is a consecutive even number, and the sum of the first n even numbers is n(n+1). Thus, we must find the least integral solution to \frac{n(n+1)}{3} \geq 100. This least solution is \boxed{\textbf{(C)}~17}.
+
+~ [https://artofproblemsolving.com/wiki/index.php/User:Cxsmi cxsmi]
+
+==See Also==
+{{AMC12 box|year=2008|ab=B|num-b=23|num-a=25}}
+
+[[Category:Intermediate Geometry Problems]]
+{{MAA Notice}}

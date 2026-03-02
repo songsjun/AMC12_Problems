@@ -1,0 +1,95 @@
+# 2021 AMC 12A Problem 14
+
+## Problem
+What is the value of $\left(\sum_{k=1}^{20} \log_{5^k} 3^{k^2}\right)\cdot\left(\sum_{k=1}^{100} \log_{9^k} 25^k\right)$?
+
+$\textbf{(A) }21 \qquad \textbf{(B) }100\log_5 3 \qquad \textbf{(C) }200\log_3 5 \qquad \textbf{(D) }2{,}200\qquad \textbf{(E) }21{,}000$
+## Solution 1 (Properties of Logarithms)
+We will apply the following logarithmic identity:
+$$\log_{p^n}{q^n}=\log_{p}{q},$$
+which can be proven by the Change of Base Formula: $\log_{p^n}{q^n}=\frac{\log_{p}{q^n}}{\log_{p}{p^n}}=\frac{n\log_{p}{q}}{n}=\log_{p}{q}.$
+Now, we simplify the expressions inside the summations:
+
+$$
+\begin{align*} \log_{5^k}{{3^k}^2}&=\log_{5^k}{(3^k)^k} \\ &=k\log_{5^k}{3^k} \\ &=k\log_{5}{3}, \end{align*}
+$$
+
+and
+
+$$
+\begin{align*} \log_{9^k}{25^k}&=\log_{3^{2k}}{5^{2k}} \\ &=\log_{3}{5}. \end{align*}
+$$
+
+Using these results, we evaluate the original expression:
+
+$$
+\begin{align*} \left(\sum_{k=1}^{20} \log_{5^k} 3^{k^2}\right)\cdot\left(\sum_{k=1}^{100} \log_{9^k} 25^k\right)&=\left(\sum_{k=1}^{20} k\log_{5}{3}\right)\cdot\left(\sum_{k=1}^{100} \log_{3}{5}\right) \\ &= \left(\log_{5}{3}\cdot\sum_{k=1}^{20} k\right)\cdot\left(\log_{3}{5}\cdot\sum_{k=1}^{100} 1\right) \\ &= \left(\sum_{k=1}^{20} k\right)\cdot\left(\sum_{k=1}^{100} 1\right) \\ &= \frac{21\cdot20}{2}\cdot100 \\ &= \boxed{\textbf{(E) }21{,}000}. \end{align*}
+$$
+
+*~MRENTHUSIASM (Solution)*
+
+*~JHawk0224 (Proposal)*
+## Solution 2 (Properties of Logarithms)
+First, we can get rid of the k exponents using properties of logarithms: $\log_{5^k} 3^{k^2} =k^2 \cdot \frac{1}{k} \cdot \log_{5} 3 =k\log_{5} 3 = \log_{5} 3^k. ($Leaving the single k in the exponent will come in handy later). Similarly, $\log_{9^k} 25^{k} =$ k $\cdot \frac{1}{k} \cdot \log_{9} 25 = \log_{9} 5^2.$
+Then, evaluating the first few terms in each parentheses, we can find the simplified expanded forms of each sum using the additive property of logarithms:
+
+$$
+\begin{align*} \sum_{k=1}^{20} \log_{5} 3^k &= \log_{5} 3^1 + \log_{5} 3^2 + \dots + \log_{5} 3^{20} \\ &= \log_{5} 3^{(1 + 2 + \dots + 20)} \\ &= \log_{5} 3^{\frac{20(20+1)}{2}} &&\hspace{15mm}(*) \\ &= \log_{5} 3^{210}, \\ \sum_{k=1}^{100} \log_{9} 5^2 &= \log_{9} 5^2 + \log_{9} 5^2 + \dots + \log_{9} 5^2 \\ &= \log_{9} 5^{2(100)} \\ &= \log_{9} 5^{200}. \end{align*}
+$$
+
+In (*), we use the triangular numbers equation: 1 + 2 + $\dots +n =\frac{n(n+1)}{2} = \frac{20(20+1)}{2} = 210.$
+Finally, multiplying the two logarithms together, we can use the chain rule property of logarithms to simplify:
+$$\log_{a} b\log_{x} y = \log_{a} y\log_{x} b.$$
+Thus,
+
+$$
+\begin{align*} \left(\log_{5} 3^{210}\right)\left(\log_{3^2} 5^{200}\right) &= \left(\log_{5} 5^{200}\right)\left(\log_{3^2} 3^{210}\right) \\ &= \left(\log_{5} 5^{200}\right)\left(\log_{3} 3^{105}\right) \\ &= (200)(105) \\ &= \boxed{\textbf{(E) }21{,}000}. \end{align*}
+$$
+
+*~Joeya (Solution)*
+
+*~MRENTHUSIASM (Reformatting)*
+## Solution 3 (Estimations and Answer Choices)
+In $\sum_{k=1}^{20} \log_{5^k} 3^{k^2},$ note that the addends are greater than 1 for all $k\geq2.$
+
+In $\sum_{k=1}^{100} \log_{9^k} 25^k,$ note that the addends are greater than 1 for all $k\geq1.$
+
+We have the inequality $\left(\sum_{k=1}^{20} \log_{5^k} 3^{k^2}\right)\cdot\left(\sum_{k=1}^{100} \log_{9^k} 25^k\right)>\left(\sum_{k=2}^{20} 1\right)\cdot\left(\sum_{k=1}^{100} 1\right)=19\cdot100=1{,}900,$ which eliminates choices $\textbf{(A)}, \textbf{(B)},$ and $\textbf{(C)}.$ We get the answer $\boxed{\textbf{(E) }21{,}000}$ by either an educated guess or a continued approximation:
+
+Observe that $\sum_{k=1}^{20} \log_{5^k} 3^{k^2} >> \sum_{k=2}^{20} 1 = 19$ and $\sum_{k=1}^{100} \log_{9^k} 25^k\approx\sum_{k=1}^{100} \log_{9^k} 27^k = \sum_{k=1}^{100} \frac{3}{2} = 150.$ Therefore, we obtain the following rough underestimation: $\left(\sum_{k=1}^{20} \log_{5^k} 3^{k^2}\right)\cdot\left(\sum_{k=1}^{100} \log_{9^k} 25^k\right)>\left(\sum_{k=2}^{20} 1\right)\cdot\left(\sum_{k=1}^{100} \frac{3}{2}\right)=19\cdot150=2{,}850.$
+From here, it should be safe to guess that the answer is $\textbf{(E)}.$
+
+*~MRENTHUSIASM*
+## Solution 4 (Properties of Logarithms)
+Using the identity $\log_{p^n}{q^n}=\log_{p}{q},$ simplify $\begin{align*} \log_{5^k}{{3^k}^2}$&=$\log_{5^k}{(3^k)^k}$ \\ &=$\log_{5}{3^k}$ \\ $\end{align*}$
+and
+
+$$
+\begin{align*} \log_{9^k}{25^k}&=\log_{3^{2k}}{5^{2k}} \\ &=\log_{3}{5}. \end{align*}. Now we have the product: \left(\sum_{k=1}^{20} \log_{5} 3^{k}\right)\cdot\left(\sum_{k=1}^{100} \log_{3} 5\right)
+$$
+
+
+$$
+\begin{align*} \sum_{k=1}^{20} \log_{5} 3^k &= \log_{5} 3^1 + \log_{5} 3^2 + \dots + \log_{5} 3^{20} \\ &= \log_{5} 3^{(1 + 2 + \dots + 20)} \\ &= \log_{5} 3^{\frac{20(20+1)}{2}} \\ &= \log_{5} 3^{210} \\ &= {210}\cdot\log_{5} {3}, \\ \sum_{k=1}^{100}\log_{3} {5} &= {100}\cdot\log_{3} {5}. \end{align*}
+$$
+
+With the reciprocal rule the logarithms cancel out leaving: $\boxed{\textbf{(E) }21{,}000}.$
+
+*~PowerQualimit*
+## Video Solution by Punxsutawney Phil
+https://youtube.com/watch?v=FD9BE7hpRvg&t=322s
+## Video Solution by Hawk Math
+https://www.youtube.com/watch?v=AjQARBvdZ20
+## Video Solution by OmegaLearn (Using Logarithmic Manipulations)
+https://youtu.be/vgFPZ-hyd-I
+## Video Solution by TheBeautyofMath (Using Magical Ability)
+https://youtu.be/ySWSHyY9TwI?t=999
+
+*~IceMatrix*
+## Video Solution by The Power of Logic
+https://youtu.be/b7xEeR7HXkE
+## Video Solution (Logic and Simplification)
+https://youtu.be/F6w9zsiMZ8w
+
+*~Education, the Study of Everything*
+## See also

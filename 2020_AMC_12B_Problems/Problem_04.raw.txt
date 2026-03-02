@@ -1,0 +1,51 @@
+{{duplicate|[[2020 AMC 10B Problems|2020 AMC 10B #4]] and [[2020 AMC 12B Problems|2020 AMC 12B #4]]}}
+
+==Problem==
+
+The acute angles of a right triangle are <math>a^{\circ}</math> and <math>b^{\circ}</math>, where <math>a>b</math> and both <math>a</math> and <math>b</math> are prime numbers. What is the least possible value of <math>b</math>?
+
+<math>\textbf{(A)}\ 2 \qquad\textbf{(B)}\ 3 \qquad\textbf{(C)}\  5 \qquad\textbf{(D)}\ 7 \qquad\textbf{(E)}\ 11</math>
+
+==Solution 1==
+
+Since the three angles of a triangle add up to <math>180^{\circ}</math> and one of the angles is <math>90^{\circ}</math> because it's a right triangle, <math>a^{\circ} + b^{\circ} = 90^{\circ}</math>.
+
+The greatest prime number less than <math>90</math> is <math>89</math>. If <math>a=89^{\circ}</math>, then <math>b=90^{\circ}-89^{\circ}=1^{\circ}</math>, which is not prime.
+
+The next greatest prime number less than <math>90</math> is <math>83</math>. If <math>a=83^{\circ}</math>, then <math>b=7^{\circ}</math>, which IS prime, so we have our answer <math>\boxed{\textbf{(D)}\ 7}</math> ~quacker88
+
+==Solution 2==
+
+Looking at the answer choices, only <math>7</math> and <math>11</math> are coprime to <math>90</math>. Testing <math>7</math>, the smaller angle, makes the other angle <math>83</math> which is prime, therefore our answer is <math>\boxed{\textbf{(D)}\ 7}</math>
+
+==Solution 3 (Euclidean Algorithm)==
+It is clear that <math>\gcd(a,b)=1.</math> By the Euclidean Algorithm, we have <cmath>\gcd(a,b)=\gcd(a+b,b)=\gcd(90,b)=1,</cmath> so <math>90</math> and <math>b</math> are relatively prime.
+
+The least such prime number <math>b</math> is <math>7,</math> from which <math>a=90-b=83</math> is also a prime number. Therefore, the answer is <math>\boxed{\textbf{(D)}\ 7}.</math>
+
+~MRENTHUSIASM
+
+==Video Solution (HOW TO CREATIVELY PROBLEM SOLVE!!!)==
+https://youtu.be/hE2fEOfviDw
+
+~Education, the Study of Everything
+
+
+
+==Video Solutions==
+https://youtu.be/Gkm5rU5MlOU
+
+
+https://youtu.be/y_nsQ7pO63c
+
+~savannahsolver
+
+https://youtu.be/wH7xhYxwaFc
+
+~AlexExplains
+
+==See Also==
+
+{{AMC10 box|year=2020|ab=B|num-b=3|num-a=5}}
+{{AMC12 box|year=2020|ab=B|num-b=3|num-a=5}}
+{{MAA Notice}}

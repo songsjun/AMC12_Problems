@@ -1,0 +1,182 @@
+{{duplicate|[[2018 AMC 12B Problems|2018 AMC 12B #18]] and [[2018 AMC 10B Problems|2018 AMC 10B #20]]}}
+
+==Problem==
+
+A function <math>f</math> is defined recursively by <math>f(1)=f(2)=1</math> and <cmath>f(n)=f(n-1)-f(n-2)+n</cmath>for all integers <math>n \geq 3</math>. What is <math>f(2018)</math>?
+
+<math>\textbf{(A) } 2016 \qquad \textbf{(B) } 2017 \qquad \textbf{(C) } 2018 \qquad \textbf{(D) } 2019 \qquad \textbf{(E) } 2020</math>
+
+==Solution 1 (Algebra)==
+For all integers <math>n \geq 7,</math> note that
+<cmath>\begin{align*}
+f(n)&=f(n-1)-f(n-2)+n \\
+&=[f(n-2)-f(n-3)+n-1]-f(n-2)+n \\
+&=-f(n-3)+2n-1 \\
+&=-[f(n-4)-f(n-5)+n-3]+2n-1 \\
+&=-f(n-4)+f(n-5)+n+2 \\
+&=-[f(n-5)-f(n-6)+n-4]+f(n-5)+n+2 \\
+&=f(n-6)+6.
+\end{align*}</cmath>
+It follows that
+<cmath>\begin{align*}
+f(2018)&=f(2012)+6 \\
+&=f(2006)+12 \\
+&=f(2000)+18 \\
+& \ \vdots \\
+&=f(2018-6\cdot336)+6\cdot336 \\
+&=f(2)+2016 \\
+&=\boxed{\textbf{(B) } 2017}.
+\end{align*}</cmath>
+~MRENTHUSIASM
+
+==Solution 2 (Algebra)==
+For all integers <math>n\geq3,</math> we rearrange the given equation: <cmath>f(n)-f(n-1)+f(n-2)=n. \hspace{28.25mm}(1)</cmath>
+For all integers <math>n\geq4,</math> it follows that <cmath>f(n-1)-f(n-2)+f(n-3)=n-1. \hspace{15mm}(2)</cmath>
+For all integers <math>n\geq4,</math> we add <math>(1)</math> and <math>(2):</math> <cmath>f(n)+f(n-3)=2n-1. \hspace{38.625mm}(3)</cmath>
+For all integers <math>n\geq7,</math> it follows that <cmath>f(n-3)+f(n-6)=2n-7. \hspace{32mm}(4)</cmath>
+For all integers <math>n\geq7,</math> we subtract <math>(4)</math> from <math>(3):</math> <cmath>f(n)-f(n-6)=6. \hspace{47.5mm}(5)</cmath>
+From <math>(5),</math> we have the following system of <math>\frac{2018-8}{6}+1=336</math> equations:
+<cmath>\begin{align*}
+f(2018)-f(2012)&=6, \\
+f(2012)-f(2006)&=6, \\
+f(2006)-f(2000)&=6, \\
+& \ \vdots \\
+f(8)-f(2)&=6.
+\end{align*}</cmath>
+We add these equations up to get <cmath>f(2018)-f(2)=6\cdot336=2016,</cmath> from which <math>f(2018)=f(2)+2016=\boxed{\textbf{(B) } 2017}.</math>
+
+~AopsUser101 ~MRENTHUSIASM
+
+==Solution 3 (Finite Differences)==
+
+Preamble: In this solution, we define the sequence <math>A</math> to satisfy <math>a_n = f(n),</math> where <math>a_n</math> represents the <math>n</math>th term of the sequence <math>A.</math> This solution will show a few different perspectives. Even though it may not be as quick as some of the solutions above, I feel like it is an interesting concept, and may be more motivated. 
+
+To begin, we consider the sequence <math>B</math> formed when we take the difference of consecutive terms between <math>A.</math> Define <math>b_n = a_{n+1} - a_n.</math> Notice that for <math>n \ge 4,</math> we have <center><math>\begin{cases}\begin{aligned} a_{n+1} &= a_{n} - a_{n-1} + (n+1) \\ a_{n} &= a_{n-1} - a_{n-2} + n \end{aligned}.\end{cases}</math></center> Notice that subtracting the second equation from the first, we see that <math>b_{n} = b_{n-1} - b_{n-2} + 1.</math> 
+
+If you didn’t notice that <math>B</math> repeated directly in the solution above, you could also, possibly more naturally, take the finite differences of the sequence <math>b_n</math> so that you could define <math>c_n = b_{n+1} - b_n.</math> Using a similar method as above through reindexing and then subtracting, you could find that <math>c_n = c_{n-1} - c_{n-2}.</math> The sum of any six consecutive terms of a sequence which satisfies such a recursion is <math>0,</math> in which you have that <math>b_{n} = b_{n+6}.</math> In the case in which finite differences didn’t reduce to such a special recursion, you could still find the first few terms of <math>C</math> to see if there are any patterns, now that you have a much simpler sequence. Doing so in this case, it can also be seen by seeing that the sequence <math>C</math> looks like <cmath>\underbrace{2, 1, -1, -2, -1, 1,}_{\text{cycle period}} 2, 1, -1, -2, -1, 1, \ldots</cmath> in which the same result follows. 
+
+Using the fact that <math>B</math> repeats every six terms, this motivates us to look at the sequence <math>B</math> more carefully. Doing so, we see that <math>B</math> looks like <cmath>\underbrace{2, 3, 2, 0, -1, 0,}_{\text{cycle period}} 2, 3, 2, 0, -1, 0, \ldots</cmath> (If you tried pattern finding on sequence <math>B</math> directly, you could also arrive at this result, although I figured defining a second sequence based on finite differences was more motivated.)
+
+Now, there are two ways to finish. 
+
+Finish Method #1: Notice that any six consecutive terms of <math>B</math> sum to <math>6,</math> after which we see that <math>a_n = a_{n-6} + 6.</math> Therefore, <math>a_{2018} = a_{2012} + 6 = \cdots = a_{2} + 2016 = \boxed{\textbf{(B) } 2017}.</math>
+
+Finish Method #2: Notice that <math>a_{2018} = a_{2017} - a_{2016} + 2018 = B_{2016} + 2018 = -1 + 2018 = \boxed{\textbf{(B) } 2017}.</math> 
+
+~Professor-Mom
+
+==Solution 4 (Pattern)==
+Start out by listing some terms of the sequence. 
+<cmath>\begin{align*}
+f(1)&=1 \\
+f(2)&=1 \\
+f(3)&=3 \\
+f(4)&=6 \\
+f(5)&=8 \\
+f(6)&=8 \\ 
+f(7)&=7 \\
+f(8)&=7 \\
+f(9)&=9 \\
+f(10)&=12 \\
+f(11)&=14 \\
+f(12)&=14 \\
+f(13)&=13 \\
+f(14)&=13 \\
+f(15)&=15 \\
+& \ \vdots
+\end{align*}</cmath>
+Notice that <math>f(n)=n</math> whenever <math>n</math> is an odd multiple of <math>3</math>, and the pattern of numbers that follow will always be <math>+3</math>, <math>+2</math>, <math>+0</math>, <math>-1</math>, <math>+0</math>, <math>+2</math>.
+The largest odd multiple of <math>3</math> smaller than <math>2018</math> is <math>2013</math>, so we have
+<cmath>\begin{align*}
+f(2013)&=2013 \\
+f(2014)&=2016 \\
+f(2015)&=2018 \\
+f(2016)&=2018 \\
+f(2017)&=2017 \\
+f(2018)&=\boxed{\textbf{(B) } 2017}.
+\end{align*}</cmath>
+
+==Solution 5 (Pattern)==
+Writing out the first few values, we get
+<cmath>1,1,3,6,8,8,7,7,9,12,14,14,13,13,15,18,20,20,19,19,\ldots.</cmath> We see that every number <math>x</math> where <math>x \equiv 1\pmod 6</math> has <math>f(x)=x,f(x+1)=f(x)=x,</math> and <math>f(x-1)=f(x-2)=x+1.</math> The greatest number that's <math>1\pmod{6}</math> and less than <math>2018</math> is <math>2017,</math> so we have <math>f(2017)=f(2018)=\boxed{\textbf{(B) } 2017}.</math>
+
+==Solution 6 (Complex Numbers)==
+<cmath>\begin{align*}
+f(n)&=f(n-1)-f(n-2)+n \\
+f(n-1)&=f(n-2)-f(n-3)+n-1
+\end{align*}</cmath>
+Subtracting those two and rearranging gives 
+<cmath>\begin{align*}
+f(n)-2f(n-1)+2f(n-2)-f(n-3)&=1 \\
+f(n-1)-2f(n-2)+2f(n-3)-f(n-4)&=1
+\end{align*}</cmath>
+Subtracting those two gives <math>f(n)-3f(n-1)+4f(n-2)-3f(n-3)+f(n-4)=0.</math>
+
+The characteristic polynomial is <math>x^4-3x^3+4x^2-3x+1=0.</math>
+
+<math>x=1</math> is a root, so using synthetic division results in <math>(x-1)(x^3-2x^2+2x-1)=0.</math>
+
+<math>x=1</math> is a root, so using synthetic division results in <math>(x-1)^2(x^2-x+1)=0.</math>
+
+<math>x^2-x+1=0</math> has roots <math>x=\frac{1}{2}\pm\frac{i\sqrt{3}}{2}.</math>
+
+And <cmath>f(n)=(An+D)\cdot1^n+B\cdot\left(\frac{1}{2}-\frac{i\sqrt{3}}{2}\right)^n+C\cdot\left(\frac{1}{2}+\frac{i\sqrt{3}}{2}\right)^n.</cmath>
+Plugging in <math>n=1</math>, <math>n=2</math>, <math>n=3</math>, and <math>n=4</math> results in a system of <math>4</math> linear equations<math>\newline</math>
+Solving them gives <math>A=1, \ B=\frac{1}{2}-\frac{i\sqrt{3}}{2}, \ C=\frac{1}{2}+\frac{i\sqrt{3}}{2}, \ D=1.</math> Note that you can guess <math>A=1</math> by answer choices.
+
+So plugging in <math>n=2018</math> results in 
+<cmath>\begin{align*}
+2018+1+\left(\frac{1}{2}-\frac{i\sqrt{3}}{2}\right)^{2019}+\left(\frac{1}{2}+\frac{i\sqrt{3}}{2}\right)^{2019}&=2019+(\cos(-60^{\circ})+i\sin(-60^{\circ}))^{2019})+(\cos(60^{\circ})+i\sin(60^{\circ}))^{2019}) \\
+&=2019+(\cos(-60^{\circ}\cdot2019)+i\sin(-60^{\circ}\cdot2019))+(\cos(60^{\circ}\cdot2019)+i\sin(60^{\circ}\cdot2019)) \\
+&=\boxed{\textbf{(B) } 2017}.
+\end{align*}</cmath>
+~ryanbear
+
+==Solution 7==
+We utilize patterns to solve this equation:
+<cmath>\begin{align*}
+f(3)&=3, \\
+f(4)&=6, \\
+f(5)&=8, \\
+f(6)&=8, \\
+f(7)&=7, \\
+f(8)&=8.
+\end{align*}</cmath>
+We realize that the pattern repeats itself. For every six terms, there will be four terms that we repeat, and two terms that we don't repeat. We will exclude the first two for now, because they don't follow this pattern. 
+
+First, we need to know whether or not <math>2016</math> is part of the skip or repeat. We notice that <math>f(6),f(12), \ldots,f(6n)</math> all satisfy <math>6+6(n-1)=n,</math> and we know that <math>2016</math> satisfies this, leaving <math>n=336.</math> Therefore, we know that <math>2016</math> is part of the repeat section. But what number does it repeat? 
+
+We know that the repeat period is <math>2,</math> and it follows that pattern of <math>1,1,8,8,7,7.</math> Again, since <math>f(6) = f(5)</math> and so on  for the repeat section, <math>f(2016)=f(2015),</math> so we don't need to worry about which one, since it repeats with period <math>2.</math> We see that the repeat pattern of <math>f(6),f(12),\ldots,f(6n)</math> follows <math>8,14,20,</math> it is an arithmetic sequence with common difference <math>6.</math> Therefore, <math>2016</math> is the <math>335</math>th term of this, but including <math>1,</math> it is <math>336\cdot6+1=\boxed{\textbf{(B) } 2017}.</math>
+
+~CharmaineMa07292010
+
+==Solution 8==
+
+We list out the first <imath>13</imath> terms and their differences: 
+
+[[File:2018_10b_S8.png|500px|center| ]]
+
+We see the differences are clearly repeating every <imath>6</imath> terms here; we see that <imath>2018\equiv2\pmod6</imath>. We see that the values for <imath>2</imath> and <imath>8</imath> are both one less, so we conclude our answer is <imath>2018-1=\boxed{\textbf{(B)}~2017}.</imath> 
+
+~Technodoggo
+
+==Video Solution==
+
+https://www.youtube.com/watch?v=L0BnK6QhNFA
+
+~Coach J
+
+https://www.youtube.com/watch?v=aubDsjVFFTc
+
+~bunny1
+
+https://youtu.be/ub6CdxulWfc
+
+~savannahsolver
+
+==See Also==
+{{AMC10 box|year=2018|ab=B|num-b=19|num-a=21}}
+{{AMC12 box|year=2018|ab=B|num-b=17|num-a=19}}
+{{MAA Notice}}
+
+[[Category:Introductory Algebra Problems]]
