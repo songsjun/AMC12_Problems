@@ -1,0 +1,3 @@
+- hostname: amc12.kapy.ca
+  service: http://localhost:8084
+
