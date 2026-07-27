@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kapy.example/schema/amc-practice-approved-answer-key-v1.json",
+  "title": "AMC Practice Approved Answer Key v1",
+  "type": "object",
+  "required": ["schemaVersion", "formId", "formVersion", "answerKeyVersion", "questionBundleHash", "approval", "answers"],
+  "properties": {
+    "schemaVersion": {"const": "amc-practice-approved-answer-key-v1"},
+    "formId": {"type": "string", "minLength": 1},
+    "formVersion": {"type": "string", "minLength": 1},
+    "answerKeyVersion": {"type": "string", "minLength": 1},
+    "questionBundleHash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "approval": {
+      "type": "object",
+      "required": ["status", "approvedBy", "approvedAt", "evidence", "reviewedBy"],
+      "properties": {
+        "status": {"const": "approved"},
+        "approvedBy": {"type": "string", "minLength": 1},
+        "approvedAt": {"type": "string", "minLength": 1},
+        "evidence": {"type": "string", "minLength": 1},
+        "reviewedBy": {
+          "type": "array",
+          "minItems": 2,
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "answers": {
+      "type": "array",
+      "minItems": 25,
+      "maxItems": 25,
+      "items": {
+        "type": "object",
+        "required": ["number", "correctOption"],
+        "properties": {
+          "number": {"type": "integer", "minimum": 1, "maximum": 25},
+          "correctOption": {"enum": ["A", "B", "C", "D", "E"]}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

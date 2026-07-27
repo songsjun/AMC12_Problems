@@ -1,0 +1,10 @@
+{
+  "name": "amc12-public-archive",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test reader.test.mjs",
+    "test:browser": "node browser-smoke.mjs",
+    "verify": "node verify-security.mjs && npm test && npm run test:browser"
+  }
+}

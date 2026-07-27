@@ -1,0 +1,215 @@
+import Fastify from 'fastify';
+import cookie from '@fastify/cookie';
+import cors from '@fastify/cors';
+import helmet from '@fastify/helmet';
+import rateLimit from '@fastify/rate-limit';
+import { ApiError, badRequest, toErrorPayload, unauthorized } from './errors.js';
+
+function cookieOptions(config) {
+  return {
+    path: config.cookiePath,
+    sameSite: 'strict',
+    secure: config.secureCookies,
+    maxAge: Math.floor(config.sessionTtlMs / 1_000)
+  };
+}
+
+function readSignedCookie(request, name) {
+  const raw = request.cookies[name];
+  if (!raw) return null;
+  const unsigned = request.unsignCookie(raw);
+  return unsigned.valid ? unsigned.value : null;
+}
+
+function idempotencyKey(request) {
+  const value = request.headers['idempotency-key'];
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function csrfHeader(request) {
+  const value = request.headers['x-csrf-token'];
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function bodyObject(body) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    throw badRequest('VALIDATION_ERROR', 'Request body must be a JSON object.');
+  }
+  return body;
+}
+
+/** Build an injectable API app; server.js is intentionally the only network entrypoint. */
+export async function buildApp({ service, config, logger = false }) {
+  const app = Fastify({
+    logger,
+    bodyLimit: config.bodyLimit,
+    trustProxy: config.trustedProxy || false
+  });
+
+  await app.register(cookie, { secret: config.sessionSecret, hook: 'onRequest' });
+  await app.register(helmet, {
+    global: true,
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false
+  });
+  await app.register(rateLimit, {
+    global: true,
+    max: 240,
+    timeWindow: '1 minute',
+    keyGenerator: (request) => request.ip
+  });
+  if (config.corsOrigin) {
+    await app.register(cors, {
+      origin: config.corsOrigin,
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'X-CSRF-Token', 'Idempotency-Key']
+    });
+  }
+
+  app.setErrorHandler((error, request, reply) => {
+    const apiError = error instanceof ApiError ? error : null;
+    if (!apiError && error.statusCode === 429) {
+      return reply.status(429).send({
+        error: { code: 'RATE_LIMITED', message: 'Too many requests. Please try again later.' }
+      });
+    }
+    if (!apiError) request.log.error({ err: error }, 'Unhandled AMC practice API error');
+    const statusCode = apiError?.statusCode || 500;
+    return reply.status(statusCode).send(toErrorPayload(apiError || error));
+  });
+
+  async function requireAuth(request) {
+    if (request.auth) return request.auth;
+    const sessionId = readSignedCookie(request, config.cookieName);
+    if (!sessionId) throw unauthorized();
+    const authenticated = await service.authenticateSession(sessionId);
+    request.auth = { ...authenticated, sessionToken: sessionId };
+    return request.auth;
+  }
+
+  async function requireCsrf(request) {
+    const auth = await requireAuth(request);
+    service.assertCsrf(auth.session, csrfHeader(request));
+    return auth;
+  }
+
+  function setSessionCookies(reply, session, csrfToken) {
+    reply.setCookie(config.cookieName, session.sessionToken, {
+      ...cookieOptions(config),
+      httpOnly: true,
+      signed: true
+    });
+    // This signed, SameSite token is intentionally readable by the SPA so it
+    // can put the token in a custom header. The session cookie stays HttpOnly.
+    reply.setCookie(config.csrfCookieName, csrfToken, {
+      ...cookieOptions(config),
+      httpOnly: false,
+      signed: true
+    });
+  }
+
+  function clearSessionCookies(reply) {
+    reply.clearCookie(config.cookieName, { path: config.cookiePath });
+    reply.clearCookie(config.csrfCookieName, { path: config.cookiePath });
+  }
+
+  const base = config.basePath;
+  app.get(`${base}/health`, async () => ({ status: 'ok' }));
+
+  app.post(`${base}/auth/login`, {
+    config: { rateLimit: { max: 10, timeWindow: '1 minute' } }
+  }, async (request, reply) => {
+    const body = bodyObject(request.body);
+    const result = await service.login(body.accessCode);
+    setSessionCookies(reply, result, result.csrfToken);
+    return reply.status(200).send({ student: result.student, csrfToken: result.csrfToken });
+  });
+
+  app.get(`${base}/auth/me`, async (request) => {
+    const auth = await requireAuth(request);
+    const csrfToken = readSignedCookie(request, config.csrfCookieName);
+    if (!csrfToken) throw unauthorized('SESSION_CSRF_MISSING', 'Sign in again to establish a CSRF token.');
+    service.assertCsrf(auth.session, csrfToken);
+    return { student: auth.student, csrfToken };
+  });
+
+  app.post(`${base}/auth/logout`, async (request, reply) => {
+    const auth = await requireCsrf(request);
+    await service.logout(auth.sessionToken);
+    clearSessionCookies(reply);
+    return reply.status(204).send();
+  });
+
+  app.get(`${base}/forms`, async (request) => {
+    await requireAuth(request);
+    return { forms: await service.listForms() };
+  });
+  app.get(`${base}/forms/:formId`, async (request) => {
+    await requireAuth(request);
+    return { form: await service.getPublicForm(request.params.formId) };
+  });
+  app.get(`${base}/forms/:formId/versions/:version`, async (request) => {
+    await requireAuth(request);
+    return { form: await service.getPublicFormVersion(request.params.formId, request.params.version) };
+  });
+
+  app.post(`${base}/attempts`, async (request, reply) => {
+    const auth = await requireCsrf(request);
+    const body = bodyObject(request.body);
+    const result = await service.createAttempt(auth.student.id, body.formId);
+    return reply.status(result.created ? 201 : 200).send({ attempt: result.attempt });
+  });
+  app.get(`${base}/attempts`, async (request) => {
+    const auth = await requireAuth(request);
+    return { attempts: await service.listAttempts(auth.student.id) };
+  });
+  app.get(`${base}/attempts/:attemptId`, async (request) => {
+    const auth = await requireAuth(request);
+    return { attempt: await service.getAttempt(auth.student.id, request.params.attemptId) };
+  });
+  app.get(`${base}/attempts/:attemptId/form`, async (request) => {
+    const auth = await requireAuth(request);
+    return { form: await service.getAttemptPublicForm(auth.student.id, request.params.attemptId) };
+  });
+  app.put(`${base}/attempts/:attemptId/answers`, async (request) => {
+    const auth = await requireCsrf(request);
+    return { attempt: await service.putAnswers(auth.student.id, request.params.attemptId, bodyObject(request.body)) };
+  });
+  app.post(`${base}/attempts/:attemptId/pause`, async (request) => {
+    const auth = await requireCsrf(request);
+    return service.pause(auth.student.id, request.params.attemptId, idempotencyKey(request));
+  });
+  app.post(`${base}/attempts/:attemptId/resume`, async (request) => {
+    const auth = await requireCsrf(request);
+    return service.resume(auth.student.id, request.params.attemptId, idempotencyKey(request));
+  });
+  app.post(`${base}/attempts/:attemptId/checkpoint`, async (request) => {
+    const auth = await requireCsrf(request);
+    return service.checkpoint(auth.student.id, request.params.attemptId, idempotencyKey(request), bodyObject(request.body));
+  });
+  app.post(`${base}/attempts/:attemptId/final`, async (request) => {
+    const auth = await requireCsrf(request);
+    return service.final(auth.student.id, request.params.attemptId, idempotencyKey(request), bodyObject(request.body));
+  });
+  app.post(`${base}/attempts/:attemptId/deadline-decision`, async (request) => {
+    const auth = await requireCsrf(request);
+    const body = bodyObject(request.body);
+    return service.deadlineDecision(auth.student.id, request.params.attemptId, body.decision, idempotencyKey(request), body);
+  });
+  app.post(`${base}/attempts/:attemptId/reset`, async (request, reply) => {
+    const auth = await requireCsrf(request);
+    const result = await service.reset(auth.student.id, request.params.attemptId, idempotencyKey(request));
+    return reply.status(201).send(result);
+  });
+  app.get(`${base}/attempts/:attemptId/results`, async (request) => {
+    const auth = await requireAuth(request);
+    return service.getResults(auth.student.id, request.params.attemptId);
+  });
+  app.get(`${base}/attempts/:attemptId/solutions`, async (request) => {
+    const auth = await requireAuth(request);
+    return service.getSolutions(auth.student.id, request.params.attemptId);
+  });
+
+  return app;
+}

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kapy.example/schema/amc-practice-public-form-v1.json",
+  "title": "AMC Practice Public Form v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "version",
+    "title",
+    "publicationStatus",
+    "isSynthetic",
+    "durationSeconds",
+    "scoringPolicyVersion",
+    "scoringPolicy",
+    "questionBundleHash",
+    "questions",
+    "contentHash"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "amc-practice-public-form-v1"},
+    "id": {"type": "string", "minLength": 1},
+    "version": {"type": "string", "minLength": 1},
+    "title": {"type": "string", "minLength": 1},
+    "publicationStatus": {"enum": ["review-required", "approved", "test-only"]},
+    "isSynthetic": {"type": "boolean"},
+    "durationSeconds": {"const": 4500},
+    "scoringPolicyVersion": {"type": "string", "minLength": 1},
+    "scoringPolicy": {"$ref": "#/$defs/scoringPolicy"},
+    "questionBundleHash": {"$ref": "#/$defs/hash"},
+    "contentHash": {"$ref": "#/$defs/hash"},
+    "questions": {
+      "type": "array",
+      "minItems": 25,
+      "maxItems": 25,
+      "items": {"$ref": "#/$defs/publicQuestion"}
+    }
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "scoringPolicy": {
+      "type": "object",
+      "required": ["version", "correct", "blank", "incorrect", "questionCount", "maxScore"],
+      "properties": {
+        "version": {"type": "string", "minLength": 1},
+        "correct": {"type": "number", "minimum": 0},
+        "blank": {"type": "number", "minimum": 0},
+        "incorrect": {"type": "number", "minimum": 0},
+        "questionCount": {"const": 25},
+        "maxScore": {"type": "number", "minimum": 0}
+      },
+      "additionalProperties": true
+    },
+    "choices": {
+      "type": "object",
+      "required": ["A", "B", "C", "D", "E"],
+      "properties": {
+        "A": {"type": "string", "minLength": 1},
+        "B": {"type": "string", "minLength": 1},
+        "C": {"type": "string", "minLength": 1},
+        "D": {"type": "string", "minLength": 1},
+        "E": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "publicQuestion": {
+      "type": "object",
+      "required": ["number", "promptMarkdown", "choices"],
+      "properties": {
+        "number": {"type": "integer", "minimum": 1, "maximum": 25},
+        "promptMarkdown": {"type": "string", "minLength": 1},
+        "choices": {"$ref": "#/$defs/choices"}
+      },
+      "not": {"anyOf": [{"required": ["correctOption"]}, {"required": ["solutionMarkdown"]}]},
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": true
+}

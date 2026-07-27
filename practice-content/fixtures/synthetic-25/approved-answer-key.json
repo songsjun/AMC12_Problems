@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "amc-practice-approved-answer-key-v1",
+  "formId": "synthetic-amc12-25",
+  "formVersion": "1",
+  "answerKeyVersion": "synthetic-fixture-v1",
+  "questionBundleHash": "9e9c8c2d1e7af8ad76cff574c159bb296e17e162ac86edff1170315afcb45740",
+  "approval": {
+    "status": "approved",
+    "approvedBy": "practice-content fixture maintainer",
+    "approvedAt": "2026-07-27T00:00:00Z",
+    "evidence": "Synthetic fixture authoring record: every source question explicitly says the designated answer is A. This approval is not evidence for any AMC contest question.",
+    "reviewedBy": ["synthetic-fixture-author", "synthetic-fixture-validator"]
+  },
+  "answers": [
+    {"number": 1, "correctOption": "A"},
+    {"number": 2, "correctOption": "A"},
+    {"number": 3, "correctOption": "A"},
+    {"number": 4, "correctOption": "A"},
+    {"number": 5, "correctOption": "A"},
+    {"number": 6, "correctOption": "A"},
+    {"number": 7, "correctOption": "A"},
+    {"number": 8, "correctOption": "A"},
+    {"number": 9, "correctOption": "A"},
+    {"number": 10, "correctOption": "A"},
+    {"number": 11, "correctOption": "A"},
+    {"number": 12, "correctOption": "A"},
+    {"number": 13, "correctOption": "A"},
+    {"number": 14, "correctOption": "A"},
+    {"number": 15, "correctOption": "A"},
+    {"number": 16, "correctOption": "A"},
+    {"number": 17, "correctOption": "A"},
+    {"number": 18, "correctOption": "A"},
+    {"number": 19, "correctOption": "A"},
+    {"number": 20, "correctOption": "A"},
+    {"number": 21, "correctOption": "A"},
+    {"number": 22, "correctOption": "A"},
+    {"number": 23, "correctOption": "A"},
+    {"number": 24, "correctOption": "A"},
+    {"number": 25, "correctOption": "A"}
+  ]
+}

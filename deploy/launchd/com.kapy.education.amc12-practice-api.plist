@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.kapy.education.amc12-practice-api</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/ss/.nvm/versions/node/v24.14.0/bin/node</string>
+    <string>--env-file=/etc/kapy/amc12-practice.env</string>
+    <string>/Users/ss/Workspaces/education/AMC12_Problems/practice-api/src/server.js</string>
+  </array>
+
+  <!-- Bind and production behavior are non-secret. Credentials, access-code
+       peppers, and database URLs belong only in the protected env file. -->
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>NODE_ENV</key>
+    <string>production</string>
+    <key>AMC12_HOST</key>
+    <string>127.0.0.1</string>
+    <key>AMC12_PORT</key>
+    <string>8090</string>
+    <key>AMC12_TRUST_PROXY</key>
+    <string>loopback</string>
+    <key>PATH</key>
+    <string>/Users/ss/.nvm/versions/node/v24.14.0/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+  </dict>
+
+  <key>UserName</key>
+  <string>ss</string>
+  <key>WorkingDirectory</key>
+  <string>/Users/ss/Workspaces/education/AMC12_Problems/practice-api</string>
+
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+  <key>Umask</key>
+  <integer>63</integer>
+
+  <key>StandardOutPath</key>
+  <string>/var/log/kapy/amc12-practice-api.stdout.log</string>
+  <key>StandardErrorPath</key>
+  <string>/var/log/kapy/amc12-practice-api.stderr.log</string>
+</dict>
+</plist>

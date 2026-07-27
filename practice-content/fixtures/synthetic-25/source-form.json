@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "amc-practice-source-form-v1",
+  "id": "synthetic-amc12-25",
+  "version": "1",
+  "title": "Synthetic 25-question AMC integration fixture",
+  "publicationStatus": "test-only",
+  "isSynthetic": true,
+  "durationSeconds": 4500,
+  "scoringPolicyVersion": "amc12-2025-practice-v1",
+  "scoringPolicy": {
+    "version": "amc12-2025-practice-v1",
+    "correct": 6,
+    "blank": 1.5,
+    "incorrect": 0,
+    "questionCount": 25,
+    "maxScore": 150,
+    "scope": "Synthetic integration fixture only."
+  },
+  "contentRights": {
+    "status": "synthetic",
+    "evidence": "All prompt and solution text in this fixture was authored for automated integration testing."
+  },
+  "sourceFiles": [
+    {"number": 1, "path": "fixtures/synthetic-25/source/Problem_01.md"},
+    {"number": 2, "path": "fixtures/synthetic-25/source/Problem_02.md"},
+    {"number": 3, "path": "fixtures/synthetic-25/source/Problem_03.md"},
+    {"number": 4, "path": "fixtures/synthetic-25/source/Problem_04.md"},
+    {"number": 5, "path": "fixtures/synthetic-25/source/Problem_05.md"},
+    {"number": 6, "path": "fixtures/synthetic-25/source/Problem_06.md"},
+    {"number": 7, "path": "fixtures/synthetic-25/source/Problem_07.md"},
+    {"number": 8, "path": "fixtures/synthetic-25/source/Problem_08.md"},
+    {"number": 9, "path": "fixtures/synthetic-25/source/Problem_09.md"},
+    {"number": 10, "path": "fixtures/synthetic-25/source/Problem_10.md"},
+    {"number": 11, "path": "fixtures/synthetic-25/source/Problem_11.md"},
+    {"number": 12, "path": "fixtures/synthetic-25/source/Problem_12.md"},
+    {"number": 13, "path": "fixtures/synthetic-25/source/Problem_13.md"},
+    {"number": 14, "path": "fixtures/synthetic-25/source/Problem_14.md"},
+    {"number": 15, "path": "fixtures/synthetic-25/source/Problem_15.md"},
+    {"number": 16, "path": "fixtures/synthetic-25/source/Problem_16.md"},
+    {"number": 17, "path": "fixtures/synthetic-25/source/Problem_17.md"},
+    {"number": 18, "path": "fixtures/synthetic-25/source/Problem_18.md"},
+    {"number": 19, "path": "fixtures/synthetic-25/source/Problem_19.md"},
+    {"number": 20, "path": "fixtures/synthetic-25/source/Problem_20.md"},
+    {"number": 21, "path": "fixtures/synthetic-25/source/Problem_21.md"},
+    {"number": 22, "path": "fixtures/synthetic-25/source/Problem_22.md"},
+    {"number": 23, "path": "fixtures/synthetic-25/source/Problem_23.md"},
+    {"number": 24, "path": "fixtures/synthetic-25/source/Problem_24.md"},
+    {"number": 25, "path": "fixtures/synthetic-25/source/Problem_25.md"}
+  ]
+}

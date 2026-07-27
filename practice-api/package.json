@@ -1,0 +1,27 @@
+{
+  "name": "amc12-practice-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Authenticated, server-timed AMC 12 practice API",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/server.js",
+    "dev": "node --env-file-if-exists=.env --watch src/server.js",
+    "test": "node --test test/**/*.test.js",
+    "test:unit": "node --test test/domain.test.js test/service.test.js",
+    "test:integration": "node --test test/api.test.js test/postgres-smoke.test.js",
+    "import-form": "node --env-file-if-exists=.env scripts/import-form.js",
+    "create-access-code": "node --env-file-if-exists=.env scripts/create-access-code.js"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/cors": "^11.0.1",
+    "@fastify/helmet": "^13.0.1",
+    "@fastify/rate-limit": "^10.2.1",
+    "fastify": "^5.2.1",
+    "pg": "^8.13.1"
+  }
+}

@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>AMC 12 Practice</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script defer src="./mathjax-config.js"></script>
+  <script defer src="./vendor/mathjax/tex-svg-full.js" integrity="sha384-4kE/rQ11E8xT9QgrCBTyvenkuPfQo8rXYQvJZuMgxyPOoUfpatjQPlgdv6V5yhUK" crossorigin="anonymous"></script>
+  <script type="module" src="./app.mjs"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <header class="site-header">
+    <a class="brand" href="../" aria-label="Return to AMC 12 archive">AMC 12</a>
+    <span class="brand-divider" aria-hidden="true">/</span>
+    <span class="brand-context">Practice</span>
+    <div class="header-spacer"></div>
+    <p id="user-name" class="user-name" hidden></p>
+    <button id="dashboard-button" class="button button-quiet" type="button" hidden>My tests</button>
+    <button id="logout-button" class="button button-quiet" type="button" hidden>Sign out</button>
+  </header>
+
+  <div id="global-status" class="global-status" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+  <div id="global-error" class="global-error" role="alert" aria-atomic="true" hidden>
+    <span id="global-error-message"></span>
+    <button id="global-error-dismiss" class="icon-button" type="button" aria-label="Dismiss error">×</button>
+  </div>
+
+  <main id="main-content" tabindex="-1">
+    <section id="loading-view" class="centered-view" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <p>Loading practice workspace…</p>
+    </section>
+
+    <section id="login-view" class="auth-view" hidden aria-labelledby="login-title">
+      <div class="auth-card">
+        <p class="eyebrow">AMC 12 practice</p>
+        <h1 id="login-title">Sign in to continue</h1>
+        <p class="muted">Your answers, timer, and submission history are saved to your account.</p>
+        <form id="login-form" novalidate>
+          <div class="field">
+            <label for="login-access-code">Access code</label>
+            <input id="login-access-code" name="accessCode" type="password" autocomplete="one-time-code" required>
+          </div>
+          <p id="login-error" class="form-error" role="alert" hidden></p>
+          <button id="login-submit" class="button button-primary button-wide" type="submit">Sign in</button>
+        </form>
+        <p class="auth-footer"><a href="../">Browse the public problem archive</a></p>
+      </div>
+    </section>
+
+    <section id="dashboard-view" class="page-shell" hidden aria-labelledby="dashboard-title">
+      <div class="page-intro">
+        <div>
+          <p class="eyebrow">Your workspace</p>
+          <h1 id="dashboard-title">AMC 12 practice tests</h1>
+          <p class="muted">Choose a paper to begin a new attempt or resume one already in progress.</p>
+        </div>
+        <button id="refresh-forms-button" class="button button-secondary" type="button">Refresh</button>
+      </div>
+      <p id="forms-empty" class="empty-state" hidden>No practice forms are available yet.</p>
+      <div id="forms-list" class="forms-grid" aria-live="polite"></div>
+    </section>
+
+    <section id="practice-view" hidden>
+      <header class="test-header">
+        <div class="test-identification">
+          <p id="form-label" class="eyebrow">AMC 12 practice</p>
+          <h1 id="attempt-title">Practice test</h1>
+          <p id="attempt-state" class="attempt-state" aria-live="polite"></p>
+        </div>
+        <div class="timer-cluster">
+          <div class="timer-card" aria-live="polite" aria-atomic="true">
+            <span class="timer-label">Active time</span>
+            <time id="timer-value" class="timer-value" datetime="PT0M">00:00</time>
+            <span id="timer-limit" class="timer-limit">of 75:00</span>
+          </div>
+          <button id="pause-button" class="button button-secondary" type="button">Pause</button>
+          <button id="resume-button" class="button button-primary" type="button" hidden>Resume</button>
+        </div>
+      </header>
+
+      <div class="test-toolbar">
+        <p id="save-status" class="save-status" role="status" aria-live="polite">All changes saved</p>
+        <div class="test-actions">
+          <button id="practice-reset-button" class="button button-secondary" type="button">Reset attempt</button>
+          <button id="checkpoint-button" class="button button-secondary" type="button">Check score</button>
+          <button id="final-button" class="button button-danger" type="button">Submit final answers</button>
+        </div>
+      </div>
+
+      <div class="test-layout">
+        <aside class="question-sidebar" aria-label="Question navigation">
+          <div class="sidebar-heading">
+            <h2>Questions</h2>
+            <span id="answered-count" class="answered-count">0 of 25 answered</span>
+          </div>
+          <ol id="question-nav" class="question-nav"></ol>
+          <p class="sidebar-help">Answered questions have a filled dot. Use the question buttons, or the previous and next buttons.</p>
+        </aside>
+
+        <section class="question-panel" aria-labelledby="question-heading">
+          <div class="question-meta">
+            <p id="question-position" class="question-position">Question 1</p>
+            <p id="question-save-indicator" class="question-save-indicator" aria-live="polite"></p>
+          </div>
+          <h2 id="question-heading" class="visually-hidden">Question</h2>
+          <article id="question-content" class="question-content" aria-live="polite"></article>
+          <form id="answer-form" class="answer-form" aria-describedby="answer-help">
+            <fieldset id="answer-options">
+              <legend>Choose one answer</legend>
+            </fieldset>
+            <p id="answer-help" class="muted">Selecting an answer saves it automatically.</p>
+          </form>
+          <div class="question-controls">
+            <button id="previous-question" class="button button-secondary" type="button">Previous</button>
+            <button id="clear-answer-button" class="button button-secondary" type="button">Clear answer</button>
+            <button id="next-question" class="button button-primary" type="button">Next</button>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section id="results-view" class="page-shell results-view" hidden aria-labelledby="results-title">
+      <div class="page-intro results-intro">
+        <div>
+          <p class="eyebrow">Final submission</p>
+          <h1 id="results-title">Your results</h1>
+          <p id="results-summary" class="muted"></p>
+        </div>
+        <div class="result-actions">
+          <button id="reset-button" class="button button-secondary" type="button">Start a new attempt</button>
+          <button id="results-dashboard-button" class="button button-primary" type="button">My tests</button>
+        </div>
+      </div>
+
+      <section class="score-card" aria-label="Final score">
+        <p class="score-label">Final score</p>
+        <p id="final-score" class="final-score">—</p>
+        <p id="score-details" class="muted"></p>
+      </section>
+
+      <section id="submission-history-section" class="content-section" aria-labelledby="submission-history-title">
+        <h2 id="submission-history-title">Submission history</h2>
+        <div id="submission-history" class="submission-history"></div>
+      </section>
+
+      <section class="content-section" aria-labelledby="answer-review-title">
+        <h2 id="answer-review-title">Answer review</h2>
+        <p class="muted">Correct answers and explanations are available after a final submission.</p>
+        <div id="results-questions" class="results-questions" aria-live="polite"></div>
+      </section>
+
+      <section class="content-section" aria-labelledby="solutions-title">
+        <div class="section-heading-row">
+          <div>
+            <h2 id="solutions-title">Solutions</h2>
+            <p class="muted">Read the official solution for each question below.</p>
+          </div>
+          <button id="expand-solutions-button" class="button button-secondary" type="button">Expand all</button>
+        </div>
+        <div id="solutions-list" class="solutions-list" aria-live="polite"></div>
+      </section>
+    </section>
+  </main>
+
+  <div id="modal-backdrop" class="modal-backdrop" hidden>
+    <section id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-message">
+      <div class="modal-header">
+        <h2 id="modal-title"></h2>
+        <button id="modal-close" class="icon-button" type="button" aria-label="Close dialog">×</button>
+      </div>
+      <div id="modal-message" class="modal-message"></div>
+      <div id="modal-actions" class="modal-actions"></div>
+    </section>
+  </div>
+</body>
+</html>

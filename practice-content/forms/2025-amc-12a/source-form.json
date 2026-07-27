@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "amc-practice-source-form-v1",
+  "id": "amc12-2025-a",
+  "version": "1",
+  "title": "2025 AMC 12A",
+  "publicationStatus": "review-required",
+  "isSynthetic": false,
+  "durationSeconds": 4500,
+  "scoringPolicyVersion": "amc12-2025-practice-v1",
+  "scoringPolicy": {
+    "version": "amc12-2025-practice-v1",
+    "correct": 6,
+    "blank": 1.5,
+    "incorrect": 0,
+    "questionCount": 25,
+    "maxScore": 150,
+    "scope": "Candidate 2025 pilot only; independently review before reuse for another historical AMC form."
+  },
+  "contentRights": {
+    "status": "review-required",
+    "evidence": "Current source is an internal AoPS-derived conversion. Do not distribute an exam form until a rights owner and approved source record are documented."
+  },
+  "sourceFiles": [
+    {"number": 1, "path": "2025_AMC_12A_Problems/Problem_01.md"},
+    {"number": 2, "path": "2025_AMC_12A_Problems/Problem_02.md"},
+    {"number": 3, "path": "2025_AMC_12A_Problems/Problem_03.md"},
+    {"number": 4, "path": "2025_AMC_12A_Problems/Problem_04.md"},
+    {"number": 5, "path": "2025_AMC_12A_Problems/Problem_05.md"},
+    {"number": 6, "path": "2025_AMC_12A_Problems/Problem_06.md"},
+    {"number": 7, "path": "2025_AMC_12A_Problems/Problem_07.md"},
+    {"number": 8, "path": "2025_AMC_12A_Problems/Problem_08.md"},
+    {"number": 9, "path": "2025_AMC_12A_Problems/Problem_09.md"},
+    {"number": 10, "path": "2025_AMC_12A_Problems/Problem_10.md"},
+    {"number": 11, "path": "2025_AMC_12A_Problems/Problem_11.md"},
+    {"number": 12, "path": "2025_AMC_12A_Problems/Problem_12.md"},
+    {"number": 13, "path": "2025_AMC_12A_Problems/Problem_13.md"},
+    {"number": 14, "path": "2025_AMC_12A_Problems/Problem_14.md"},
+    {"number": 15, "path": "2025_AMC_12A_Problems/Problem_15.md"},
+    {"number": 16, "path": "2025_AMC_12A_Problems/Problem_16.md"},
+    {"number": 17, "path": "2025_AMC_12A_Problems/Problem_17.md"},
+    {"number": 18, "path": "2025_AMC_12A_Problems/Problem_18.md"},
+    {"number": 19, "path": "2025_AMC_12A_Problems/Problem_19.md"},
+    {"number": 20, "path": "2025_AMC_12A_Problems/Problem_20.md"},
+    {"number": 21, "path": "2025_AMC_12A_Problems/Problem_21.md"},
+    {"number": 22, "path": "2025_AMC_12A_Problems/Problem_22.md"},
+    {"number": 23, "path": "2025_AMC_12A_Problems/Problem_23.md"},
+    {"number": 24, "path": "2025_AMC_12A_Problems/Problem_24.md"},
+    {"number": 25, "path": "2025_AMC_12A_Problems/Problem_25.md"}
+  ]
+}

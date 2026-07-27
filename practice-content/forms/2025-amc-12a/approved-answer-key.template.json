@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "amc-practice-approved-answer-key-v1",
+  "formId": "amc12-2025-a",
+  "formVersion": "1",
+  "answerKeyVersion": "replace-after-independent-review",
+  "questionBundleHash": "REPLACE_WITH_THE_64_CHARACTER_HASH_FROM_A_CLEAN_SOURCE_REVIEW",
+  "approval": {
+    "status": "draft",
+    "approvedBy": "",
+    "approvedAt": "",
+    "evidence": "Do not mark approved until two reviewers have checked the exact source prompts and an authoritative answer key. Community solution text is not evidence.",
+    "reviewedBy": []
+  },
+  "answers": []
+}

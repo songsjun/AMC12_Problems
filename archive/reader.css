@@ -1,0 +1,292 @@
+:root {
+  --c-bg: #f7f8fa;
+  --c-card: #fff;
+  --c-primary: #1e293b;
+  --c-accent: #2563eb;
+  --c-text: #334155;
+  --c-muted: #64748b;
+  --c-border: #e2e8f0;
+  --c-details: #f8fafc;
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 8%);
+  --shadow-md: 0 4px 12px rgb(15 23 42 / 10%);
+  --radius: 8px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  color: var(--c-text);
+  background: var(--c-bg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  line-height: 1.6;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  color: #fff;
+  background: var(--c-primary);
+  box-shadow: 0 2px 8px rgb(15 23 42 / 25%);
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 17px;
+  letter-spacing: -.3px;
+}
+
+.spacer { flex: 1 1 4px; }
+
+.nav-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.header label,
+.header-label {
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+}
+
+.header select,
+.header button {
+  border: 1px solid #475569;
+  border-radius: 6px;
+  color: #fff;
+  background: #334155;
+  font: inherit;
+  cursor: pointer;
+}
+
+.header select {
+  padding: 5px 9px;
+  font-size: 14px;
+}
+
+.header select:hover,
+.header button:hover { background: #475569; }
+
+.header select:focus-visible,
+.header button:focus-visible,
+.practice-link:focus-visible,
+.toolbar button:focus-visible,
+.content a:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+.practice-link {
+  padding: 5px 10px;
+  border: 1px solid #60a5fa;
+  border-radius: 6px;
+  color: #eff6ff;
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.practice-link:hover { background: var(--c-accent); color: #fff; }
+
+.problem-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.problem-nav button {
+  width: 30px;
+  height: 26px;
+  padding: 0;
+  color: #cbd5e1;
+  font-size: 12px;
+}
+
+.problem-nav button.active {
+  border-color: var(--c-accent);
+  color: #fff;
+  background: var(--c-accent);
+  font-weight: 700;
+}
+
+.nav-arrow {
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  color: #cbd5e1;
+  font-size: 14px;
+}
+
+.container {
+  max-width: 900px;
+  margin: 24px auto;
+  padding: 0 16px;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.toolbar button {
+  padding: 5px 14px;
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  color: var(--c-text);
+  background: var(--c-card);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.toolbar button:hover {
+  border-color: var(--c-accent);
+  color: var(--c-accent);
+  background: #f1f5f9;
+}
+
+.content {
+  min-height: 200px;
+  padding: 36px 44px;
+  border-radius: var(--radius);
+  background: var(--c-card);
+  box-shadow: var(--shadow-md);
+  font-size: 16px;
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+}
+
+.content h1 {
+  margin: 0 0 12px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--c-border);
+  color: var(--c-primary);
+  font-size: 22px;
+}
+
+.content h2 {
+  margin: 20px 0 10px;
+  color: var(--c-primary);
+  font-size: 18px;
+}
+
+.content h3 { margin: 16px 0 8px; color: var(--c-primary); font-size: 17px; }
+.content p { margin: 8px 0; }
+.content ul, .content ol { margin: 8px 0 8px 1.5em; }
+.content li + li { margin-top: 4px; }
+
+.content blockquote {
+  margin: 12px 0;
+  padding: 8px 16px;
+  border-left: 3px solid var(--c-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  color: var(--c-muted);
+  background: var(--c-details);
+  font-size: 14px;
+}
+
+.content pre {
+  overflow-x: auto;
+  padding: 14px;
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  background: #f1f5f9;
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+
+.content code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  font-size: 14px;
+}
+
+.content pre code { padding: 0; background: transparent; }
+.content em { color: var(--c-muted); }
+.content a { color: var(--c-accent); }
+.content a:hover { text-decoration-thickness: 2px; }
+
+.content table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+
+.content th, .content td { padding: 6px 10px; border: 1px solid var(--c-border); }
+.content th { background: var(--c-details); }
+
+.content details {
+  margin: 16px 0;
+  overflow: hidden;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+}
+
+.content details:hover,
+.content details[open] { box-shadow: var(--shadow-sm); }
+
+.content details summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  color: var(--c-primary);
+  background: var(--c-details);
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 650;
+  list-style: none;
+}
+
+.content details summary::-webkit-details-marker { display: none; }
+.content details summary::before { color: var(--c-accent); content: '▸'; }
+.content details[open] summary::before { transform: rotate(90deg); }
+.content .section-body { padding: 16px 20px 20px; border-top: 1px solid var(--c-border); }
+.content .section-body > h2:first-child { display: none; }
+.content .section-body > :first-child { margin-top: 0; }
+
+.status-bar {
+  padding: 12px 8px;
+  color: #94a3b8;
+  font-size: 13px;
+  text-align: center;
+}
+
+.status-bar a { color: var(--c-accent); }
+.kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: #475569;
+  background: #e2e8f0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+}
+
+.loading,
+.error { padding: 48px; text-align: center; }
+.loading { color: #94a3b8; font-style: italic; }
+.error { color: #b91c1c; }
+
+@media (max-width: 700px) {
+  .header { gap: 8px; padding: 8px 12px; }
+  .header h1 { font-size: 15px; }
+  .problem-nav button { width: 26px; height: 24px; font-size: 11px; }
+  .content { padding: 20px 18px; }
+}
