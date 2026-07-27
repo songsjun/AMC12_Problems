@@ -33,3 +33,7 @@ cloudflared tunnel --config /Users/ss/.cloudflared/config.yml ingress validate
 sudo launchctl kickstart -k system/com.cloudflare.cloudflared
 ```
 
+The workspace nginx is managed at boot by the system LaunchDaemon
+`com.kapy.education.workspace-nginx`. Its plist and lifecycle commands are in
+`/Users/ss/Workspaces/education/.nginx/launchd/README.md`. This is separate
+from Homebrew's nginx daemon.
