@@ -6,11 +6,21 @@ Six chairs are arranged around a round table. Two students and two teachers rand
 
 $\textbf{(A) } \frac 16 \qquad \textbf{(B) } \frac 15 \qquad \textbf{(C) } \frac 29 \qquad \textbf{(D) } \frac 3{13} \qquad \textbf{(E) } \frac 14$
 ## Solution 1 (20 seconds)
-Pair two students together and put them adjacent on any two seats. There are 6 ways to do this. Considering one of these cases (they are all the same), there are 4 seats left, in which we wish to arrange the teachers together. So pair the teachers together and put them adjacent on any two seats not already occupied by two of the students. There are 3 ways to do this. For all 6 cases, there are $6 \times 3 = 18$ favorable outcomes.
+It is enough to choose the two student seats and the two teacher seats: each such choice corresponds to $2!\,2!$ assignments of the four distinct people, so these factors cancel in the probability.
 
-The number of ways to arrange the 2 students and 2 teachers is  $\binom{6}{2} \times \binom{4}{2} = 90$ .
+There are 6 adjacent pairs of chairs for the students. Once one is chosen, the remaining four chairs contain 3 adjacent pairs for the teachers. Thus there are $6\cdot3=18$ favorable seat choices.
 
-Our probability is $\frac{18}{90} =\boxed{\textbf{(B) } \frac 15}$
+In all cases, choose 2 of the 6 chairs for the students and then 2 of the 4 remaining chairs for the teachers, giving
+
+$$
+\binom{6}{2}\binom{4}{2}=90
+$$
+
+seat choices. Therefore the probability is
+
+$$
+\frac{18}{90}=\boxed{\textbf{(B) }\frac{1}{5}}.
+$$
 
 *~Pinotation*
 ## Solution 2

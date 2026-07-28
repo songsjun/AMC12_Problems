@@ -6,19 +6,26 @@ Call a positive integer fair if no digit is used more than once, it has no $0s$,
 
 $\textbf{(A) } 511 \qquad \textbf{(B) } 2584 \qquad \textbf{(C) } 9841 \qquad \textbf{(D) } 17711 \qquad \textbf{(E) } 19682$
 ## Solution 1
-To satisfy the conditions, a $\textit{fair}$ integer must have no digit be a local minimum. Let's say we have n distinct digits, with each digit being a number from 1 to 9. To create a $\textit{fair}$ integer, we begin by placing the largest digit. For the second-largest digit, we can either place this digit to the right or to the left of the string already created. We have these 2 options for the third-largest digit, and so on. Therefore, there are $2^{n-1}$ valid permutations to create a $\textit{fair}$ integer.
+For any chosen set of $n$ digits, a fair integer has no local minimum. Start with the largest chosen digit. Insert the next-largest digit either to the left or to the right of the existing string; repeat for every smaller chosen digit. This produces every fair arrangement exactly once, so there are $2^{n-1}$ fair arrangements of a fixed set of $n$ digits.
 
-We must also choose which digits will be in the permutation. If you are creating an n-digit long $\textit{fair}$ integer, there are $9\choose{n}$ ways to pick which digits will be in the number.
+There are $\binom{9}{n}$ ways to choose those digits. Hence the number of fair $n$-digit integers is
 
-Therefore, for each n $\in\{1,2,\dots, 9\}$, the number of fair integers of length n is:
-$$\binom{9}{n} \cdot 2^{n-1}.$$
-Summing over all n:
+$$
+\binom{9}{n}2^{n-1}.
+$$
 
-$$\sum_{n=1}^9{\binom{9}{n} \cdot 2^{n-1}}=\frac{1}{2}\left(\sum_{n=0}^9{\binom{9}{n}}2^n -1\right)=\frac{1}{2}\left((1+2)^9 -1 \right) = \frac{1}{2}(19682) = \boxed{9841}.$$
+Summing over all possible lengths gives
 
-Note that the Binomial Theorem was used to equate
-$$\sum_{n=0}^9{\binom{9}{n}}2^n = (1+2)^9.$$
-*~lprado*
+$$
+\begin{aligned}
+\sum_{n=1}^{9}\binom{9}{n}2^{n-1}
+&=\frac12\left(\sum_{n=0}^{9}\binom{9}{n}2^n-1\right)\\
+&=\frac12\left((1+2)^9-1\right)\\
+&=\frac{19683-1}{2}=9841.
+\end{aligned}
+$$
+
+Therefore the answer is $\boxed{\textbf{(C)}\ 9841}$.
 ## Solution 2
 Note every $\textit{fair}$ number will have an increasing string of digits, a maximum digit, then a decreasing string of digits. This is because if it decreases then increases, then the digit in the middle will be less than its adjacent digits.
 

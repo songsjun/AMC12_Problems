@@ -4,26 +4,30 @@
 In the figure shown below, major arc $\widehat{AD}$ and minor arc $\widehat{BC}$ have the same center, O. Also, A lies between O and B, and D lies between O and C. Major arc $\widehat{AD},$ minor arc $\widehat{BC},$ and each of the two segments $\overline{AB}$ and $\overline{CD}$ have length $2\pi.$ What is the distance from O to A?
 
 
-> [Asymptote diagram - not rendered in Markdown]
-
-```asy
-usepackage("mathptmx"); size(6cm); defaultpen(linewidth(0.7)); real $r = 1$ - pi + sqrt(pi^2 + 1); pair O = (0, 0), A = r * dir(-30), B = (r + 2pi) * dir(-30), C = (r + 2pi) * dir(30), D = r * dir(30); draw(arc(O, r, 30, 330)); draw(arc(O, r + 2pi, -30, 30)); draw(O--A, dashed); draw(O--D, dashed); draw(A--B); draw(C--D); dot("$O$", O, dir(135)); dot("$A$", A, dir(270)); dot("$B$", B, dir(0)); dot("$C$", C, dir(0)); dot("$D$", D, 1.5 * dir(70));
-```
+![Concentric major and minor arcs with endpoints A, B, C, D and center O](../2025_AMC_12A_Problems/media/problem-10-concentric-arcs.svg)
 
 
 $\textbf{(A)}~1 \qquad \textbf{(B)}~1 - \pi + \sqrt{\pi^{2} + 1} \qquad \textbf{(C)}~\frac{\pi}{2} \qquad \textbf{(D)}~\frac{\sqrt{\pi^{2} + 1}}{2} \qquad \textbf{(E)}~2$
 ## Solution 1 (Simple)
-The ratio between the radius and the arc length is constant. For the inner circle, the radius, which we will denote as r, has a corresponding arc length of $2\pi$ r - $2\pi (t$he circumference minus the major arc length). For the outer circle, the radius, which is r + $2\pi,$ has a corresponding arc length of $2\pi.$ We therefore write the equation
-
-$$\frac{r}{2\pi r - 2\pi} = \frac{r+2\pi}{2\pi},$$
-which simplifies to
+Let $r=OA$. The outer radius is $r+2\pi$, because $AB=2\pi$. The two minor arcs subtend the same central angle. Their lengths are $2\pi r-2\pi$ for the inner circle (its circumference minus the given major arc) and $2\pi$ for the outer circle. Hence their arc-length-to-radius ratios are equal:
 
 $$
-r = (r+2\pi)(r-1)
-0 = r^2 + (2\pi-2)r - 2\pi.
+\frac{2\pi r-2\pi}{r}=\frac{2\pi}{r+2\pi}.
 $$
 
-Applying the Quadratic Formula, we get that r =$\boxed{\textbf{(B)} 1 - \pi + \sqrt{1 +\pi^2}}$
+$$
+\begin{aligned}
+(r-1)(r+2\pi)&=r,\\
+r^2+(2\pi-2)r-2\pi&=0,\\
+r&=1-\pi\pm\sqrt{1+\pi^2}.
+\end{aligned}
+$$
+
+Only the positive root is a possible radius. Therefore,
+
+$$
+r=\boxed{\textbf{(B)}\ 1-\pi+\sqrt{1+\pi^2}}.
+$$
 
 *~lprado*
 ## Solution 2

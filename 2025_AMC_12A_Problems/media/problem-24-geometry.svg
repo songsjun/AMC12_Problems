@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-labelledby="title desc">
+  <title id="title">Geometry construction in the twelve-circle configuration</title>
+  <desc id="desc">Centers A through D of adjacent circles are connected, with radii from O to A and D.</desc>
+  <rect width="320" height="320" fill="#ffffff"/>
+  <circle cx="160" cy="160" r="72" fill="#f8fbff" stroke="#1f3b5b" stroke-width="2.2"/>
+  <g fill="#eef6ff" stroke="#2563eb" stroke-width="1.5">
+    <circle cx="257" cy="160" r="25"/><circle cx="244" cy="111.5" r="25"/><circle cx="208.5" cy="76" r="25"/>
+    <circle cx="160" cy="63" r="25"/><circle cx="111.5" cy="76" r="25"/><circle cx="76" cy="111.5" r="25"/>
+    <circle cx="63" cy="160" r="25"/><circle cx="76" cy="208.5" r="25"/><circle cx="111.5" cy="244" r="25"/>
+    <circle cx="160" cy="257" r="25"/><circle cx="208.5" cy="244" r="25"/><circle cx="244" cy="208.5" r="25"/>
+  </g>
+  <path d="M160 160 L257 160 M160 160 L160 63" fill="none" stroke="#172033" stroke-width="2"/>
+  <path d="M257 160 L244 111.5 L208.5 76 L160 63 M257 160 L160 63" fill="none" stroke="#be123c" stroke-width="2.4"/>
+  <g fill="#172033"><circle cx="160" cy="160" r="3.2"/><circle cx="257" cy="160" r="3.2"/><circle cx="244" cy="111.5" r="3.2"/><circle cx="208.5" cy="76" r="3.2"/><circle cx="160" cy="63" r="3.2"/></g>
+  <g font-family="serif" font-size="17" fill="#172033"><text x="145" y="153">O</text><text x="264" y="164">A</text><text x="250" y="108">B</text><text x="212" y="67">C</text><text x="154" y="49">D</text></g>
+</svg>

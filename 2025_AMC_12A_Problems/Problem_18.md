@@ -5,7 +5,21 @@ How many ordered triples (x, y, z) of different positive integers less than or e
 
 $\textbf{(A)}~36 \qquad \textbf{(B)}~84 \qquad \textbf{(C)}~186 \qquad \textbf{(D)}~336 \qquad \textbf{(E)}~486$
 ## Solution 1
-Let 0; x cannot be 1 because it makes xy>z $\rightarrow$ y>z; $x=2, y=3$, z can be 4, 5 but not others; $x=2, y=4$, z can be 5, 6, 7; $x=2, y=5$, z can be 6, 7, 8; $x=2, y=6$, z can be 7, 8; $x=2, y=7$, z can be 8; for $x=2$, total 11 cases; Similarly, for $x=3, y=4$, 5, 6, 7, total 10 cases; for $x=4, y=5$, 6, 7, total 6 cases; $x=5, y=6$, 7, 3 cases; $x=6, y=7, z=8$, 1 cases; Total = $11 + 10 + 6 + 3 + 1 = 31$. Permutate x, y, z for ordered triple, it is 31 $\cdot 6=186,$\fbox{C}. ~imagination ~mathcantcount1plus1is3 (latex stuff) ~bouttaswitchy (minor)
+Because the conditions are symmetric, first count sets of three values in increasing order, say $x<y<z$. The value $1$ cannot occur: if $x=1$, then $xy>z$ and $xz>y$ would require both $y>z$ and $z>y$.
+
+Thus choose three values from $\{2,3,4,5,6,7,8\}$. For $x<y<z$, the inequalities $xz>y$ and $yz>x$ hold automatically. The only possible failure is $xy\le z$, which occurs in exactly four cases:
+
+$$
+(x,y,z)=(2,3,6),(2,3,7),(2,3,8),(2,4,8).
+$$
+
+There are $\binom{7}{3}=35$ increasing triples, so $35-4=31$ sets work. Each set has $3!=6$ orderings. Therefore the number of ordered triples is
+
+$$
+31\cdot 6=186,
+$$
+
+which is $\boxed{\textbf{(C)}\ 186}$.
 ## Solution 2
 For now, assume $x\leqy\leq$ z. First note that no number can be 0, as it would imply $0y$>z. Similarly, no number can be 1, as it would imply $1y$>z. So we only need to consider numbers between 2 and 8, inclusive. We may use complementary counting: Consider when xy$\leq$ z. This implies xy$\leq 8.$ Some quick calculations gives us the products $2\cdot2,2\cdot3,2\cdot4.$ We may now calculate the number of times each happens (we are no longer assuming $x\leqy\leq$ z):
 - $2\cdot2$: This case is invalid as it asks for distinct integers.

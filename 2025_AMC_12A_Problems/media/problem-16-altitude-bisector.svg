@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 300" role="img" aria-labelledby="title desc">
+  <title id="title">Triangle with altitude and angle bisector</title>
+  <desc id="desc">In triangle ABC, altitude CD and angle bisector BE meet at P. A perpendicular from E to AB meets AB at F.</desc>
+  <rect width="420" height="300" fill="#ffffff"/>
+  <path d="M60 230 L279 85 L340 230 Z" fill="#f8fbff" stroke="#1f3b5b" stroke-width="2.5"/>
+  <path d="M279 85 V230 M340 230 L200 137 M200 137 V230" fill="none" stroke="#2563eb" stroke-width="2" stroke-dasharray="6 4"/>
+  <path d="M279 230 h-13 v-13 h13 M200 230 h-11 v-11 h11" fill="none" stroke="#475569" stroke-width="1.4"/>
+  <g fill="#172033"><circle cx="60" cy="230" r="3.5"/><circle cx="340" cy="230" r="3.5"/><circle cx="279" cy="85" r="3.5"/><circle cx="279" cy="230" r="3.5"/><circle cx="200" cy="137" r="3.5"/><circle cx="200" cy="230" r="3.5"/><circle cx="279" cy="190" r="3.5"/></g>
+  <g font-family="serif" font-size="18" fill="#172033">
+    <text x="53" y="253">A</text><text x="335" y="253">B</text><text x="276" y="76">C</text><text x="275" y="252">D</text>
+    <text x="189" y="132">E</text><text x="191" y="252">F</text><text x="285" y="188">P</text>
+  </g>
+</svg>

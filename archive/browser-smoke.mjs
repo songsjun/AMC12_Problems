@@ -14,7 +14,8 @@ const mimeTypes = new Map([
   ['.html', 'text/html; charset=utf-8'],
   ['.js', 'text/javascript; charset=utf-8'],
   ['.mjs', 'text/javascript; charset=utf-8'],
-  ['.md', 'text/plain; charset=utf-8']
+  ['.md', 'text/plain; charset=utf-8'],
+  ['.svg', 'image/svg+xml']
 ]);
 
 const server = createServer(async (request, response) => {
@@ -63,6 +64,14 @@ try {
   );
   if (!archiveOutput.includes('2025 AMC 12A Problem 1') || !archiveOutput.includes('<details>') || !archiveOutput.includes('Solution 1')) {
     throw new Error('Archive page did not preserve its problem and collapsible solution rendering.');
+  }
+
+  const diagramOutput = await runChrome(
+    `http://127.0.0.1:${address.port}/index.html#2025AP5`,
+    ['--virtual-time-budget=5000']
+  );
+  if (!diagramOutput.includes('problem-05-nested-squares.svg')) {
+    throw new Error('Archive page did not preserve the reviewed local problem diagram.');
   }
 
   const historicalOutput = await runChrome(

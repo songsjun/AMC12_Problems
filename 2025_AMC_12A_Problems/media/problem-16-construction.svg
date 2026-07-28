@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 300" role="img" aria-labelledby="title desc">
+  <title id="title">Compass construction of a scaled triangle</title>
+  <desc id="desc">The circles centered at A and B determine the third vertex C of a triangle with sides in the ratio 8, 7.5, and 4.5.</desc>
+  <rect width="420" height="300" fill="#ffffff"/>
+  <circle cx="60" cy="230" r="262.5" fill="none" stroke="#94a3b8" stroke-width="1.3" stroke-dasharray="6 5"/>
+  <circle cx="340" cy="230" r="157.5" fill="none" stroke="#94a3b8" stroke-width="1.3" stroke-dasharray="6 5"/>
+  <path d="M60 230 L279 85 L340 230 Z" fill="#f8fbff" stroke="#1f3b5b" stroke-width="2.5"/>
+  <g fill="#172033"><circle cx="60" cy="230" r="3.5"/><circle cx="340" cy="230" r="3.5"/><circle cx="279" cy="85" r="3.5"/></g>
+  <g font-family="serif" font-size="18" fill="#172033"><text x="53" y="253">A</text><text x="335" y="253">B</text><text x="276" y="76">C</text></g>
+  <g font-family="serif" font-size="15" fill="#475569"><text x="184" y="252">8 cm</text><text x="126" y="142">7.5 cm</text><text x="321" y="158">4.5 cm</text></g>
+</svg>

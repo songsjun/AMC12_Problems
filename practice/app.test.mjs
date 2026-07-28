@@ -21,6 +21,7 @@ import {
   formCacheKey,
   hasUsedPreliminarySubmission,
   idempotencyHeaderValue,
+  safeUrl,
   sameAttemptId,
   scoreFromSubmission,
   resetReplacementFromHistory,
@@ -201,6 +202,19 @@ test('same-origin API base works both at the direct host and portal mount', () =
   assert.equal(apiBaseForModuleUrl('https://amc12.kapy.ca/practice/app.mjs'), '/api/amc12');
   assert.equal(apiBaseForModuleUrl('https://kapy.ca/amc12/practice/app.mjs'), '/amc12/api/amc12');
   assert.equal(apiBaseForModuleUrl('file:///workspace/practice/app.mjs', { browser: false }), '/api/amc12');
+});
+
+test('reviewed local image references preserve the direct and portal mount prefixes', () => {
+  const sourceImage = '../2025_AMC_12A_Problems/media/problem-05-nested-squares.svg';
+  assert.equal(
+    safeUrl(sourceImage, 'https://amc12.kapy.ca/practice/'),
+    'https://amc12.kapy.ca/2025_AMC_12A_Problems/media/problem-05-nested-squares.svg'
+  );
+  assert.equal(
+    safeUrl(sourceImage, 'https://kapy.ca/amc12/practice/'),
+    'https://kapy.ca/amc12/2025_AMC_12A_Problems/media/problem-05-nested-squares.svg'
+  );
+  assert.equal(safeUrl('javascript:alert(1)', 'https://amc12.kapy.ca/practice/'), null);
 });
 
 test('a stale response cannot be identified as the newly opened attempt', () => {

@@ -14,12 +14,30 @@ $$\prod_{k=1}^{2025} (kx^2-4x-3)=(x^2-4x-3)(2x^2-4x-3)(3x^2-4x-3)...(2025x^2-4x-
 
 $\textbf{(A)}~-\frac{5}{3}\qquad\textbf{(B)}~-\frac{3}{2}\qquad\textbf{(C)}~-\frac{6}{5}\qquad\textbf{(D)}~-\frac{5}{6}\qquad\textbf{(E)}~-\frac{2}{3}$
 ## Solution 1
-We will need to determine the sum of the reciprocals of the roots. To find the sum of the reciprocals of the roots p,q of the quadratic $ax^2+bx+c,$ we use Vieta's formulas. Recall that p+q = -b/a and pq = c/a. Therefore, $\frac{1}{p} + \frac{1}{q} = \frac{p+q}{pq} = \frac{\frac{-b}{a}}{\frac{c}{a}} = \frac{-b}{a} \cdot \frac{a}{c} = \frac{-b}{c},$
-which doesn't depend on a.
+For roots $p$ and $q$ of $ax^2+bx+c$, Vieta's formulas give
 
-The sum of the reciprocals of the roots of the quadratic $x^2-4x-3$ is $\frac{-(-4)}{-3} = -4/3$. The same is true for every quadratic in the form $ax^2-4x-3$. The sum of all the reciprocals of the roots of $ax^2+bx+c$ is 2025 $\cdot \left(-\frac{4}{3}\right).$
+$$
+\frac1p+\frac1q=\frac{p+q}{pq}
+=\frac{-b/a}{c/a}=-\frac bc.
+$$
 
-Because we have 2025 quadratics, there are 2 $\cdot 2025 = 4050$ total roots. Our answer is $\frac{1}{\frac{1}{4050}\cdot \frac{-4\cdot 2025}{3}} =\boxed{(B)\ -\dfrac{3}{2}}.$
+For every factor $kx^2-4x-3$, this reciprocal sum is
+
+$$
+-\frac{-4}{-3}=-\frac43.
+$$
+
+There are $2025$ such factors, so the sum of the reciprocals of all $4050$ roots is
+
+$$
+2025\left(-\frac43\right).
+$$
+
+Therefore their harmonic mean is
+
+$$
+\frac{4050}{2025(-4/3)}=\boxed{\textbf{(B)}\ -\frac32}.
+$$
 
 *~lprado*
 
@@ -159,7 +177,7 @@ $$So, HM = \dfrac{4050c_0}{-c_1}.$$
 
 The constant term in f(x) is just $c_0=(-3)^{2025}$. For the coefficient of the x term in f(x), there are $\dbinom{2025}{2024}=2025$ ways to choose 2024 of the trinomials to include a -3, and the one trinomial not chosen will include a -$4x$. Hence, c_$1=2025\cdot (-3)^{2024}\cdot (-4).$
 
-Finally, HM=$\dfrac{4050\cdot(-3)^{2025}}{-2025\cdot (-3)^{2024}\cdot (-4)}=\dfrac{2\cdot(-3)}{-(-4)}=\boxed{\text{(A) }-\dfrac{3}{2}}.$
+Finally, HM=$\dfrac{4050\cdot(-3)^{2025}}{-2025\cdot (-3)^{2024}\cdot (-4)}=\dfrac{2\cdot(-3)}{-(-4)}=\boxed{\text{(B) }-\dfrac{3}{2}}.$
 
 *~Tacos_are_yummy_1*
 ## Solution 7 (Cheese 🧀)

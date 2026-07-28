@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-import { normalizeHref, normalizeProblem, problemPath, protectMath } from './reader.js';
+import { normalizeHref, normalizeImageSrc, normalizeProblem, problemPath, protectMath } from './reader.js';
 
 test('problem paths are constrained to the fixed archive corpus', () => {
   assert.deepEqual(normalizeProblem('2025', 'B', '25'), { year: 2025, variant: 'B', number: 25 });
@@ -18,6 +18,16 @@ test('only HTTP(S) destinations survive link normalization', () => {
   assert.equal(normalizeHref('java\nscript:alert(1)'), null);
   assert.equal(normalizeHref('data:text/html,boom'), null);
   assert.equal(normalizeHref('mailto:test@example.com'), null);
+});
+
+test('reviewed images are same-origin and resolve from the fetched source file', () => {
+  const sourceBase = 'https://kapy.ca/amc12/2025_AMC_12A_Problems/Problem_05.md';
+  assert.equal(
+    normalizeImageSrc('../2025_AMC_12A_Problems/media/problem-05-nested-squares.svg', sourceBase),
+    'https://kapy.ca/amc12/2025_AMC_12A_Problems/media/problem-05-nested-squares.svg'
+  );
+  assert.equal(normalizeImageSrc('https://example.com/figure.svg', sourceBase), null);
+  assert.equal(normalizeImageSrc('javascript:alert(1)', sourceBase), null);
 });
 
 test('math protection retains inline and display TeX without exposing it to Markdown HTML parsing', () => {

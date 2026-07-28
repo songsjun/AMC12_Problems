@@ -4,26 +4,28 @@
 ## Problem
 Agnes writes the following four statements on a blank piece of paper.
 
-\bullet At least one of these statements is true.
+- At least one of these statements is true.
 
-\bullet At least two of these statements are true.
+- At least two of these statements are true.
 
-\bullet At least two of these statements are false.
+- At least two of these statements are false.
 
-\bullet At least one of these statements is false.
+- At least one of these statements is false.
 
 Each statement is either true or false. How many false statements did Agnes write on the paper?
 
 $\textbf{(A) } 0 \qquad\textbf{(B) } 1 \qquad\textbf{(C) } 2 \qquad\textbf{(D) } 3 \qquad\textbf{(E) } 4$
 ## Solution 1
-We first number all the statements:
+Number the statements as follows:
 
-1) At least one of these statements is true.
-2) At least two of these statements are true.
-3) At least two of these statements are false.
-4) At least one of these statements is false.
+1. At least one of these statements is true.
+2. At least two of these statements are true.
+3. At least two of these statements are false.
+4. At least one of these statements is false.
 
-We can immediately see that statement 4 must be true, as it would contradict itself if it were false. Similarly, statement 1 must be true, as all the other statements must be false if it were false, which is contradictory because statement 4 is true. Since both 1 and 4 are true, statement 2 has to be true. Therefore, statement 3 is the only false statement, making the answer $\boxed{\text{(B) }1}.$
+Statement 4 cannot be false: that would mean that no statement is false, so statement 4 would be true after all. Statement 1 cannot be false either, because then all statements would be false, contradicting the fact that statement 4 is true.
+
+Thus statements 1 and 4 are true, so statement 2 is also true. Consequently statement 3 is false, and there is exactly one false statement. The answer is $\boxed{\textbf{(B) }1}$.
 *~Rainjs*
 ## Solution 2
 Statements I,II, and IV are true, while statement III is false. Hence, there are 3 true statements and $\boxed{\text{(B) }1}$ false statement. This result can be checked by examining the statements individually again.

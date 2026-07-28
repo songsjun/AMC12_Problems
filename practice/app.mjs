@@ -412,11 +412,10 @@ export function idempotencyHeaderValue(idempotency, generate = idempotencyKey) {
   return typeof idempotency === 'string' ? idempotency : generate();
 }
 
-export function safeUrl(value) {
+export function safeUrl(value, baseUrl = globalThis.location?.href || globalThis.location?.origin || 'http://localhost/') {
   if (!value || typeof value !== 'string') return null;
   try {
-    const origin = globalThis.location?.origin || 'http://localhost';
-    const url = new URL(value, origin);
+    const url = new URL(value, baseUrl);
     if (url.protocol === 'https:' || url.protocol === 'http:') return url.href;
     if (url.protocol === 'data:' && /^data:image\/(?:png|gif|jpe?g|webp);/i.test(value)) return url.href;
   } catch {

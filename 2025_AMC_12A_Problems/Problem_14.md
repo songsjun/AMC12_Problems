@@ -4,32 +4,42 @@
 Points F, G, and H are collinear with G between F and H. The ellipse with foci at G and H is internally tangent to the ellipse with foci at F and G, as shown below.
 
 
-> [Asymptote diagram - not rendered in Markdown]
-
-```asy
-/* Made by Mathemagician108 */ import graph; unitsize(0.15 inch); draw(ellipse((0,0), 12, 4)); draw(ellipse((8,0), 4, 1.45)); pair F = (-6,0); pair G = (6,0); pair H = (10,0); dot(F^^G^^H); label("$F$", F, 1.5*S, p=fontsize(8pt)); label("$G$", G, 1.5*S, p=fontsize(8pt)); label("$H$", H, 1.5*S, p=fontsize(8pt));
-```
+![Two internally tangent ellipses with collinear foci F, G, and H](../2025_AMC_12A_Problems/media/problem-14-tangent-ellipses.svg)
 
 
 The two ellipses have the same eccentricity e, and the ratio of their areas is 2025. (Recall that the eccentricity of an ellipse is $e =\tfrac{c}{a},$ where c is the distance from the center to a focus, and $2a$ is the length of the major axis.) What is e?
 
 $\textbf{(A)}~\frac35\qquad\textbf{(B)}~\frac{16}{25}\qquad\textbf{(C)}~\frac45\qquad\textbf{(D)}~\frac{22}{23}\qquad\textbf{(E)}~\frac{44}{45}$
 ## Solution 1(Simple)
-Let the outer ellipse be ellipse 1, and the inner ellipse be ellipse 2. Let $a_1, b_1$, and $c_1$, correspond to the semimajor axis, semiminor axis, and focal distance of ellipse 1, respectively. Similarly, let $a_2, b_2$, and $c_2$ correspond to the semimajor axis, semiminor axis, and focal distance of ellipse 2, respectively.
-
-Ellipses with the same eccentricity are similar, so $\frac{a_1}{a_2} = \sqrt{2025} = 45$ because the ratio of semimajor axes between similar ellipses is equal to the square root of the ratio between their areas. Notice how
-$$a_1 = c_1 + c_2 + a_2.$$
-Substituting from the eccentricity equation,
-$$a_1 = ea_1 + ea_2 + a_2.$$
-Rearranging gives us
+Let $a_i$ and $c_i$ denote the semimajor axis and focal distance, respectively, of ellipse $i$, where ellipse $1$ is the outer ellipse. Equal eccentricities make the ellipses similar. Since their area ratio is $2025=45^2$, their linear scale factor is $45$, so
 
 $$
-a_1 - ea_1 = ea_2 + a_2
-a_1(1-e) = a_2(1+e)
-\frac{a_1}{a_2} = \frac{1+e}{1-e} = 45.
+\frac{a_1}{a_2}=45.
 $$
 
-Solving for e then yields $\boxed{\text{(D) }\dfrac{22}{23}}.$
+Along the common major axis, internal tangency gives
+
+$$
+a_1=c_1+c_2+a_2.
+$$
+
+Because $c_i=ea_i$, this becomes
+
+$$
+\begin{aligned}
+a_1&=ea_1+ea_2+a_2,\\
+a_1(1-e)&=a_2(1+e),\\
+45&=\frac{1+e}{1-e}.
+\end{aligned}
+$$
+
+Thus
+
+$$
+45-45e=1+e,
+\qquad
+e=\boxed{\textbf{(D)}\ \frac{22}{23}}.
+$$
 
 *~Kevin Wang*
 *~Edits by pythagoreanMath*

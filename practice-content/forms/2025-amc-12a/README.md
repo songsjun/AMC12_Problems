@@ -1,7 +1,9 @@
-# 2025 AMC 12A source status
+# 2025 AMC 12A adapted-Q25 source status
 
-This catalog is a **review-required candidate**, not an online exam form. It
-exists so that source quality can be measured and repaired consistently.
+This catalog is a **review-required candidate**, not an online exam form. Its
+Question 25 is an explicitly labelled ordered-pairs adaptation, so the catalog
+must not be represented as an exact archival AMC 12A form. It exists so that
+source quality can be measured and repaired consistently.
 
 Run the review from `practice-content`:
 
@@ -13,19 +15,18 @@ python3 -m amc_content.cli review \
   --markdown-output reports/2025-amc-12a-source-review.md
 ```
 
+The source-structure and rendering repairs are reflected in the checked-in
+review report under `../../reports/`. A clean source review only means the
+question prompts and local media can be parsed consistently; it does not make
+the form releasable.
+
+`first-solution-answer-key.provisional.json` records the option obtained by
+reading each current first solution. It is intentionally marked
+`notForScoring`; it is not accepted by the importer and must not be renamed to
+`approved-answer-key.json`.
+
 Do not rename `approved-answer-key.template.json` to
-`approved-answer-key.json` until every review error is resolved. The template
-has deliberately invalid/draft values; the build rejects it. The correct key
-must be separately approved and bound to the review's `questionBundleHash`.
-
-Known blockers in the converted Markdown include:
-
-- `Problem_25.md` has an extra `(F)` choice and editorial material describing a
-  disputed/corrected question version.
-- Several prompts contain only `[Asymptote diagram - not rendered in Markdown]`
-  plus source code, not a reviewed image that an exam client can render.
-- `Problem_22.md` contains a second problem variant heading before its source
-  solutions.
-
-The review report is checked in under `../../reports/` to make this non-release
-decision auditable. It does not establish any answer letter as correct.
+`approved-answer-key.json`. The template has deliberately invalid/draft
+values; the build rejects it. A formal key still needs independent review,
+explicit approval, and the review's matching `questionBundleHash`. Content
+rights also remain `review-required` in `source-form.json`.

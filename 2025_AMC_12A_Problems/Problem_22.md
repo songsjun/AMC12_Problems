@@ -1,23 +1,31 @@
 # 2025 AMC 12A Problem 22
 
 ## Problem 22
-Three real numbers are chosen independently and uniformly at random between 0 and 1. What is the probability that the greatest of these three numbers is greater than 2 times each of the other two numbers? (In other words, if the chosen numbers are a $\geq$ b $\geq$ c, then a > $2b$.)
+Three real numbers are chosen independently and uniformly at random between 0 and 1. What is the probability that the greatest of these three numbers is greater than twice each of the other two numbers? In other words, if the chosen numbers are $a\geq b\geq c$, what is the probability that $a>2b$?
 
 $\textbf{(A)}~\frac{1}{12}\qquad\textbf{(B)}~\frac19\qquad\textbf{(C)}~\frac18\qquad\textbf{(D)}~\frac16\qquad\textbf{(E)}~\frac14$
-## Problem 22 (Chinese exams)
-Three real numbers are chosen independently and uniformly at random between 0 and 1. What is the probability that the greatest of these three numbers is greater than the sum of the other two numbers?
+
 ## Solution 1
-We can solve the problem by approaching it geometrically by mapping each possible triple to a coordinate (a, b, c) in a unit cube. Now, we just have to find the volume of the solution set over 1.
+First suppose a specified value, say $X$, is the greatest of the three choices and has value $x$. The other two values must both lie in the interval $[0,x/2)$, whose area is
 
-WLOG, assume that a is the greatest number. The intersection between a>$2b$, a>$2c$ and the unit cube is an oblique square pyramid with apex (0,0,0) and base vertices (1,0,0), (1,0,$\frac12), (1,\frac12,0), \text{ and } (1,\frac12, \frac12).$ It helps to visualize the two planes cutting into the cube and leaving triangular traces in the xy and xz planes. The square base $b=s^2=(\frac12) ^2=\frac14,$ and the height $h=1$, so the volume $v=\frac13bh=\frac13(\frac14)(1)=\frac{1}{12}.$
+$$
+\left(\frac{x}{2}\right)^2.
+$$
 
-From here, we can multiply this volume by 3 to account for b,c being the greatest (all mutually exclusive). Alternatively, we can find P(a>$2b$, $2c$|a>b,c) by taking $\frac{1}{12}$ over the volume of the interesction between a>b, a>c and the unit cube (a pyramid wth base 1 and height 1). Either way, we get the final probability of $\boxed{\text{(E) } \frac{1}{4}}.$
+Thus the probability that $X$ is the greatest and is more than twice each other value is
 
-*~Zak2155*
+$$
+\int_0^1\left(\frac{x}{2}\right)^2\,dx
+=\frac{1}{12}.
+$$
 
-*~Revised by Zhixing*
+Any of the three chosen values can be the greatest, and the three cases are disjoint except for ties, which have probability $0$. Therefore the desired probability is
 
-Here is a desmos version created for a clear overview: https://www.desmos.com/3d/eidrbnqnvz ~DRA777
+$$
+3\cdot\frac{1}{12}=\frac14.
+$$
+
+The answer is $\boxed{\textbf{(E)}\ \frac14}$.
 ## Solution 1.1 (same logic but faster)
 Call the numbers x, y, and z for parity with the coordinate plane.
 
@@ -51,30 +59,6 @@ $$
 Since there are 6 equally likely permutations of a, b, and c, we multiply $6\cdot\frac{1}{24}$ to obtain our answer of $\boxed{\text{(E) } \frac{1}{4}}.$
 
 Note that this is almost the same solution as Solution 1, where we find the volume of a similar polyhedron using a different method (except we do not need to visualize it). This method would remain effective even if the bounds were non-linear or if there were more than three variables.
-## Solution 4 (Chinese exams)
-Let the three numbers be a, b, and c. By symmetry, the probability that we want to find is exactly
-
-$$3 \Pr(a>b+c)$$
-
-Taking the cube [0,1]^3 in a Cartesian plane, we see that the region that corresponds to the event a>b+c is the set of points
-
-$$\{(x, \, y, \, z) \mid 0 \leq x, \, y, \, z \leq 1, x > y+z\}$$
-
-Let $u=1$-x, v=y, and w=z, then the set above is equivalent to the set
-
-$$\{(u, \, v, \, w) \mid 0 \leq u, \, v, \, w \leq 1, u + v + w \leq 1 \}$$
-
-It is then obvious that the solid given by this set is a tetrahedron formed by cutting the first octant with the plane u + v + $w = 1$. The volume of it can be found by integration:
-
-
-$$\int\!\!\int\!\!\int_{u, \, v, \, w \geq 0, \, u + v + w \leq 1} du\, dv\, dw =\frac{1}{6}$$
-
-
-Hence, the answer is
-
-$$3 \Pr(a>b+c) = 3 \cdot \frac{1}{6} = \frac{1}{2}$$
-
-*~Bloggish*
 ## Solution 5
 Consider three independent uniform random variables X, Y, Z on [0, 1]. The goal is to find the probability that the maximum value is greater than twice each of the other two values. Equivalently, if we order them as a $\geq$ b $\geq$ c, this is the probability that a > $2b$ (which implies a > $2c$ since b $\geq$ c).
 

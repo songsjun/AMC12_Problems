@@ -1,25 +1,36 @@
 # 2025 AMC 12A Problem 19
 
 ## Problem
-Let a, b, and c be the roots of the polynomial x^3 + kx + 1. What is the suma^$3b^2+a^2b^3 +b^3c^2+b^2c^3 +c^3a^2+c^2a^3$?
+Let $a$, $b$, and $c$ be the roots of the polynomial $x^3+kx+1$. What is
+
+$$
+a^3b^2+a^2b^3+b^3c^2+b^2c^3+c^3a^2+c^2a^3?
+$$
 $\textbf{(A)}~-k\qquad\textbf{(B)}~-k+1\qquad\textbf{(C)}~1\qquad\textbf{(D)}~k-1\qquad\textbf{(E)}~k$
 ## Solution 1
-We begin by factoring:
+Let $S$ denote the requested sum. Group the terms in pairs:
 
 $$
-\begin{equation}
-\begin{split}
-&a^3b^2+a^2b^3+b^3c^2+b^2c^3+c^3a^2+c^2a^3 \\
+\begin{aligned}
+S
 &=a^2b^2(a+b)+b^2c^2(b+c)+c^2a^2(c+a)\\
-&=(a^2b^2+b^2c^2+c^2a^2)(a+b+c) - a^2b^2c-b^2c^2a-c^2a^2b\\
-&=(a^2b^2+b^2c^2+c^2a^2)(a+b+c) - (abc)(ab+bc+ca).\\
-\end{split}
-\end{equation}
+&=(a^2b^2+b^2c^2+c^2a^2)(a+b+c)-(abc)(ab+bc+ca).
+\end{aligned}
 $$
 
-From Vieta's Formulas, we know that a+b+$c = 0$, ab+bc+ca = k, and abc = -1. Therefore, the answer equals $(a^2b^2+b^2c^2+c^2a^2)$(0) - (-1)(k) = $\boxed{k}.$
+Vieta's formulas for $x^3+kx+1$ give
 
-*~lprado*
+$$
+a+b+c=0,\qquad ab+bc+ca=k,\qquad abc=-1.
+$$
+
+Therefore
+
+$$
+S=0-(-1)k=k.
+$$
+
+The answer is $\boxed{\textbf{(E)}\ k}$.
 ## Solution 2
 Notice that this is $\sum_{\text{cyc}}a^2b^2(a+b)$.
 By Vieta's (just like in solution 1), we have a+b+$c=0$, so a+b=-c, abc=-1, and ab+bc+ac=k, so this is equivalent to $\sum_{\text{cyc}} -$$a^2b^2c =\sum_{\text{cyc}} -(abc)(ab) = \sum_{\text{cyc}}$ ab = k by Vieta's.

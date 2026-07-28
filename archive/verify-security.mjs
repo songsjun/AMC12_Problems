@@ -50,5 +50,13 @@ for (const route of ['/index.html', '/viewer.html']) {
   if (!nginx.includes(`location = ${route}`)) fail(`${route} has no explicit archive route`);
 }
 if (!nginx.includes("script-src 'self'")) fail('archive CSP does not restrict scripts to self');
+if (!nginx.includes('location ~* \\.svg$')) fail('reviewed SVG files have no dedicated static location');
+if (!nginx.includes('default_type image/svg+xml')) fail('reviewed SVG files have no explicit image MIME type');
+if (!nginx.includes("default-src 'none'; base-uri 'none'; object-src 'none'; script-src 'none'")) {
+  fail('reviewed SVG files have no restrictive direct-navigation CSP');
+}
+if (!nginx.includes('X-Content-Type-Options "nosniff" always')) {
+  fail('reviewed SVG files have no nosniff response header');
+}
 
 console.log('Archive static security verification passed.');

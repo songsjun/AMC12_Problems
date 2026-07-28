@@ -6,16 +6,26 @@ A team of students is going to compete against a team of teachers in a trivia co
 
 $\textbf{(A)}~28\qquad\textbf{(B)}~29\qquad\textbf{(C)}~30\qquad\textbf{(D)}~32\qquad\textbf{(E)}~33$
 ## Solution 1
-When Ash joins a team, the team's average is pulled towards his age. Let A be Ash's age and N be the number of people on the student team. This means that there are 15-N people in the teacher team. Let us write an expression for the change in the average for each team.
+When Ash joins a team, the team's average is pulled towards his age. Let $A$ be Ash's age and $N$ be the number of people on the student team. Thus, there are $15-N$ people on the teacher team.
 
-The students originally had an average of 12, which became 14 when Ash joined, so there was an increase of 2. The term A-12 represents how much older Ash is compared to the average of the students'. If we divide this by N+1, which is the number of people on the student team when Ash joins, we get the average change per team member once Ash is added. Therefore,
+The students' average increases from 12 to 14, so
 $$\frac{A-12}{N+1} = 2.$$
 
-Similarly, for teachers, the average was originally 55, which decreased by 3 to become 52 when Ash joined. Intuitively, 55-A represents how much younger Ash is than the average age of the teachers. Dividing this by the expression (15-N)+1, which is the new total number of people on the teacher team, represents the average change per team member once Ash joins. We can write the equation
+Similarly, the teachers' average decreases from 55 to 52, so
 
 $$\frac{55-A}{16-N} = 3.$$
 
-To solve the system, multiply equation (1) by N+1, and similarly multiply equation (2) by 16-N. Then add the equations together, canceling A, leaving equation 43=50-N. From this we get N=7 and A= $\boxed{28}.$
+Clearing denominators and adding the two equations gives
+
+$$
+\begin{aligned}
+A-12&=2(N+1),\\
+55-A&=3(16-N),\\
+43&=2(N+1)+3(16-N)=50-N.
+\end{aligned}
+$$
+
+Thus $N=7$, and the first equation gives $A=2(7+1)+12=28$. Therefore Ash is $\boxed{\textbf{(A) }28}$ years old.
 
 *~lprado*
 ## Solution 2

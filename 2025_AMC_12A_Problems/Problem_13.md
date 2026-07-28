@@ -5,19 +5,29 @@ Let C = $\{1, 2, 3, \dots, 13\}$. Let N be the greatest integer such that there 
 
 $\textbf{(A)}~\frac{3}{130} \qquad \textbf{(B)}~\frac{3}{143} \qquad \textbf{(C)}~\frac{5}{143} \qquad \textbf{(D)}~\frac{1}{26} \qquad \textbf{(E)}~\frac{5}{78}$
 ## Solution 1
-We first find what N is by figuring out how many numbers we need to take out of the set so that the set does not contain 5 consecutive integers. Since N must be maximized, we must minimize what numbers are removed, and we quickly find that taking two numbers out works. Consider taking out 5 and 10. You are left with $\{1,2,3,4,6,7,8,9,11,12,13\}$, which does not have a string of 5 consecutive integers.
+Removing only one element cannot work: one of the two remaining end blocks has at least six consecutive integers. Removing 5 and 10 does work, leaving
 
-There are only 3 ways to take out two integers such that the resulting set meets our condition (5 and 10, 5 and 9, or 4 and 9), and {$\binom{13}{2}$}=78 total ways to choose such integers. Therefore, the probability is $\boxed{\dfrac{1}{26}}.$
+$$
+\{1,2,3,4,6,7,8,9,11,12,13\}.
+$$
 
-*~Kevin Wang*
+Thus the largest possible subset has $N=11$ elements. Let $a<b$ be the two elements removed. To avoid a run of five consecutive integers, we need
 
-Minor edits ~aashrithm29
+$$
+a\leq5,\qquad b-a\leq5,\qquad 14-b\leq5.
+$$
 
-Very minor LaTeX edit ~ PerseverePlayer
+The first and third inequalities give $a\leq5$ and $b\geq9$; together with $b\leq a+5$, the only possibilities are
 
-Note: An alternative way to come to the conclusion that there are only three possible subsets of length twelve is as follows:
+$$
+(a,b)=(4,9),\ (5,9),\ (5,10).
+$$
 
-Let the two numbers removed from C be a and b such that a. Then, because we cannot have any sequence of five consecutive numbers, a $\leq 5,$ b-a $\leq 5,$ and 13 - b +$1\leq 5.$ Then, graphing this system in the ab plane, we easily see that there are only three solutions for (a,b): (5,10), (4,9), and (5,9). Then, simply proceed as described above. ~ 526
+There are therefore $3$ successful $11$-element subsets out of $\binom{13}{11}=\binom{13}{2}=78$ possible subsets. The desired probability is
+
+$$
+\frac{3}{78}=\boxed{\textbf{(D)}\ \frac{1}{26}}.
+$$
 ## Solution 2
 Trying to find a subset that satisfies the condition, we get $\{1,2,3,4,6,7,8,9,11,12,13\}$, which has N=11 elements. The subsets $\{1,2,3,5,6,7,8,10,11,12,13\}$ and $\{1,2,3,4,6,7,8,10,11,12,13\}$ also work. In total, we have 3 subsets and $\binom{13}{11}$ ways to choose 11 elements from C, so the probability is $\dfrac{3}{\binom{13}{11}} = \dfrac{1}{26}.$ Thus, the answer is $\boxed{\textbf{(D)}}$ ~anzhuPro
 ## Solution 3

@@ -33,6 +33,12 @@ def _heading_kind(heading: str) -> str:
         return "problem"
     if normalized == "diagram" or normalized.startswith("figure"):
         return "question-support"
+    # A video can be useful archival material but is never the canonical
+    # written explanation sent to the post-submission practice view.  Some
+    # converted files put it before Solution 1, so it needs its own kind
+    # rather than matching the generic "solution" test below.
+    if "video" in normalized:
+        return "video"
     if "solution" in normalized or normalized.startswith("answer"):
         return "solution"
     if normalized.startswith(("why ", "see also", "related")):
@@ -41,7 +47,7 @@ def _heading_kind(heading: str) -> str:
 
 
 def _find_problem_bounds(lines: list[str], issues: list[Issue]) -> tuple[int | None, int | None, int | None]:
-    """Return (problem_heading, prompt_end, solution_bundle_start) line indexes."""
+    """Return (problem_heading, prompt_end, first_written_solution) indexes."""
 
     problem_start: int | None = None
     for index, line in enumerate(lines):
@@ -55,31 +61,37 @@ def _find_problem_bounds(lines: list[str], issues: list[Issue]) -> tuple[int | N
         return None, None, None
 
     prompt_end = len(lines)
-    boundary: int | None = None
-    has_solution_heading = False
+    prompt_boundary_found = False
+    first_solution_start: int | None = None
     for index in range(problem_start + 1, len(lines)):
         match = _H2_RE.match(lines[index])
         if not match:
             continue
         kind = _heading_kind(match.group(1))
-        # Once a prompt boundary has been found, later solution/video/editorial
-        # headings belong to the solution bundle. They must not be misreported
-        # as defects in the prompt itself. Keep scanning only to establish that
-        # an actual solution heading exists after a non-solution boundary.
-        if boundary is not None:
-            if kind == "solution":
-                has_solution_heading = True
-            continue
-        if kind == "question-support":
+        if kind == "question-support" and not prompt_boundary_found:
             continue
         if kind == "solution":
-            has_solution_heading = True
-            boundary = index
-            prompt_end = index
+            if first_solution_start is None:
+                first_solution_start = index
+            if not prompt_boundary_found:
+                prompt_end = index
+                prompt_boundary_found = True
+            continue
+        if kind == "video":
+            # Do not expose pre-solution video links in the question prompt;
+            # keep scanning for a written solution section instead.
+            if not prompt_boundary_found:
+                prompt_end = index
+                prompt_boundary_found = True
+            continue
+        # Once the student prompt has ended, later non-solution H2 headings
+        # cannot change its bounds or become the selected explanation. Continue
+        # only to find a genuine written solution heading.
+        if prompt_boundary_found:
             continue
         if kind == "problem":
-            boundary = index
             prompt_end = index
+            prompt_boundary_found = True
             issues.append(
                 Issue(
                     "additional-problem-heading",
@@ -89,8 +101,8 @@ def _find_problem_bounds(lines: list[str], issues: list[Issue]) -> tuple[int | N
             )
             continue
         if kind == "editorial":
-            boundary = index
             prompt_end = index
+            prompt_boundary_found = True
             issues.append(
                 Issue(
                     "editorial-before-solution",
@@ -112,8 +124,8 @@ def _find_problem_bounds(lines: list[str], issues: list[Issue]) -> tuple[int | N
                 )
             )
             continue
-        boundary = index
         prompt_end = index
+        prompt_boundary_found = True
         issues.append(
             Issue(
                 "unknown-heading-before-solution",
@@ -122,11 +134,30 @@ def _find_problem_bounds(lines: list[str], issues: list[Issue]) -> tuple[int | N
             )
         )
 
-    if not has_solution_heading:
+    if first_solution_start is None:
         issues.append(Issue("missing-solution-heading", "Expected at least one level-two solution heading."))
-    # Once the prompt ends, retain all source material as an unreviewed solution
-    # bundle. A reviewer can decide which explanation(s) are suitable to show.
-    return problem_start, prompt_end, boundary
+    # The caller deliberately retains only the first H2 solution section for
+    # student display. Later source headings may contain alternate solutions,
+    # raw diagram code, or unreviewed editorial material.
+    return problem_start, prompt_end, first_solution_start
+
+
+def _first_h2_section(lines: list[str], start: int) -> list[str]:
+    """Return one H2 section, including its heading and excluding the next H2.
+
+    Source files commonly contain several solutions. The candidate private
+    artifact carries only the first section for review as the student-facing
+    explanation; every subsequent H2 is a boundary, including headings such
+    as ``Solution 1.1``. This selection never substitutes for editorial
+    review or answer-key approval.
+    """
+
+    end = len(lines)
+    for index in range(start + 1, len(lines)):
+        if _H2_RE.match(lines[index]):
+            end = index
+            break
+    return lines[start:end]
 
 
 def _choice_run(body: str) -> tuple[list[re.Match[str]], list[Issue]]:
@@ -307,7 +338,7 @@ def parse_problem_markdown(
         if not prompt.strip():
             issues.append(Issue("empty-prompt", "No prompt text remains after extracting choices."))
     if solution_start is not None:
-        solution = normalize_markdown("\n".join(lines[solution_start:]))
+        solution = normalize_markdown("\n".join(_first_h2_section(lines, solution_start)))
     else:
         solution = ""
 

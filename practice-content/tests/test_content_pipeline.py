@@ -49,6 +49,57 @@ The explanation is intentionally separate. The answer is $\\boxed{\\textbf{(E)} 
         self.assertIn("E", parsed.solution_answer_candidates)
         self.assertFalse(parsed.errors)
 
+    def test_parser_exposes_only_first_solution_h2_section(self) -> None:
+        parsed = self._parse(
+            """# Demo Problem 1
+
+## Problem
+What is the test value?
+
+$\\textbf{(A) } 1 \\qquad \\textbf{(B) } 2 \\qquad \\textbf{(C) } 3 \\qquad \\textbf{(D) } 4 \\qquad \\textbf{(E) } 5$
+
+## Solution 1
+First explanation. The answer is $\\boxed{\\textbf{(E)} 5}$.
+
+### First-solution detail
+This remains part of the first solution.
+
+## Solution 1.1
+This alternate explanation must not be exposed. The answer is $\\boxed{\\textbf{(C)} 3}$.
+
+## Solution 2
+This later explanation must not be exposed either.
+"""
+        )
+        self.assertIn("Solution 1", parsed.solution_markdown)
+        self.assertIn("First-solution detail", parsed.solution_markdown)
+        self.assertNotIn("Solution 1.1", parsed.solution_markdown)
+        self.assertNotIn("alternate explanation", parsed.solution_markdown)
+        self.assertNotIn("Solution 2", parsed.solution_markdown)
+        self.assertEqual(parsed.solution_answer_candidates, ["E"])
+
+    def test_parser_skips_a_video_heading_before_the_first_written_solution(self) -> None:
+        parsed = self._parse(
+            """# Demo Problem 1
+
+## Problem
+What is the test value?
+
+$\\textbf{(A) } 1 \\qquad \\textbf{(B) } 2 \\qquad \\textbf{(C) } 3 \\qquad \\textbf{(D) } 4 \\qquad \\textbf{(E) } 5$
+
+## Video Solution
+https://example.invalid/video
+
+## Solution 1
+The written explanation is the student-facing one. The answer is $\\boxed{\\textbf{(B)} 2}$.
+"""
+        )
+        self.assertNotIn("example.invalid", parsed.prompt_markdown)
+        self.assertIn("written explanation", parsed.solution_markdown)
+        self.assertNotIn("Video Solution", parsed.solution_markdown)
+        self.assertEqual(parsed.solution_answer_candidates, ["B"])
+        self.assertFalse(parsed.errors)
+
     def test_parser_blocks_extra_option_and_unrendered_diagram(self) -> None:
         parsed = self._parse(
             """# Demo Problem 1
@@ -197,7 +248,7 @@ class ArtifactTests(unittest.TestCase):
 
 
 class ExistingSourceReviewTests(unittest.TestCase):
-    def test_2025_candidate_is_reported_but_not_publishable(self) -> None:
+    def test_2025_candidate_has_clean_structure_but_remains_release_blocked(self) -> None:
         form = load_source_form(
             CONTENT_ROOT / "forms" / "2025-amc-12a" / "source-form.json",
             source_root=AMC_ROOT,
@@ -205,16 +256,66 @@ class ExistingSourceReviewTests(unittest.TestCase):
         parsed = parse_source_form(form)
         review = review_data(form, parsed)
         self.assertEqual(len(parsed), 25)
-        self.assertFalse(review["summary"]["publishable"])
+        self.assertTrue(review["summary"]["publishable"])
+        expected_first_solution_options = [
+            "E", "B", "A", "B", "D", "B", "C", "E", "E", "B",
+            "A", "B", "D", "D", "C", "D", "A", "C", "E", "C",
+            "A", "E", "C", "C", "E",
+        ]
+        self.assertEqual(
+            [question.solution_answer_candidates for question in parsed],
+            [[option] for option in expected_first_solution_options],
+        )
+        # The student-facing explanation is intentionally a single written H2
+        # section. In particular, a video link must not become Question 5's
+        # selected "solution" merely because it was earlier in the source.
+        self.assertNotIn("youtube", parsed[4].solution_markdown.lower())
+        self.assertNotIn("Solution 2", parsed[4].solution_markdown)
         problems = {question["number"]: question for question in review["questions"]}
-        self.assertIn("choice-count-invalid", {issue["code"] for issue in problems[25]["issues"]})
-        self.assertIn("additional-problem-heading", {issue["code"] for issue in problems[22]["issues"]})
-        self.assertIn("unrendered-asymptote", {issue["code"] for issue in problems[5]["issues"]})
-        with self.assertRaises(ContentBuildError):
+        self.assertEqual(set(problems[25]["choices"]), set("ABCDE"))
+        for number in (5, 8, 10, 14, 20, 24):
+            self.assertTrue(problems[number]["media"])
+            self.assertTrue(all(item["status"] == "present" for item in problems[number]["media"]))
+        for entry in form.data["sourceFiles"]:
+            source = (AMC_ROOT / entry["path"]).read_text(encoding="utf-8")
+            self.assertNotIn("[Asymptote diagram - not rendered", source)
+            self.assertNotIn("```asy", source)
+            self.assertNotIn(r"\logv", source)
+            self.assertNotIn(r"\bullet", source)
+
+        provisional = json.loads(
+            (CONTENT_ROOT / "forms" / "2025-amc-12a" / "first-solution-answer-key.provisional.json").read_text(encoding="utf-8")
+        )
+        self.assertTrue(provisional["notForScoring"])
+        self.assertEqual(provisional["status"], "requires-independent-verification")
+        self.assertEqual(provisional["questionBundleHash"], review["questionBundleHash"])
+        self.assertEqual([answer["number"] for answer in provisional["answers"]], list(range(1, 26)))
+        self.assertEqual(
+            [answer["provisionalOption"] for answer in provisional["answers"]],
+            expected_first_solution_options,
+        )
+
+        # A future metadata approval must not accidentally turn this
+        # first-solution reading record into a grading key. Simulate the
+        # source-form gate having been cleared, then prove the key contract
+        # itself still rejects the provisional schema.
+        approved_form = copy.deepcopy(form)
+        approved_form.data = copy.deepcopy(form.data)
+        approved_form.data["publicationStatus"] = "approved"
+        approved_form.data["contentRights"]["status"] = "approved"
+        with self.assertRaises(ContentBuildError) as rejected_provisional:
+            build_artifacts(
+                approved_form,
+                answer_key_path=CONTENT_ROOT / "forms" / "2025-amc-12a" / "first-solution-answer-key.provisional.json",
+            )
+        self.assertIn("approved answer key missing fields: approval", str(rejected_provisional.exception))
+
+        with self.assertRaises(ContentBuildError) as rejected:
             build_artifacts(
                 form,
                 answer_key_path=CONTENT_ROOT / "forms" / "2025-amc-12a" / "approved-answer-key.template.json",
             )
+        self.assertIn("publicationStatus approved", str(rejected.exception))
 
 
 if __name__ == "__main__":

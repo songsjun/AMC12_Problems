@@ -6,12 +6,32 @@ A set of numbers is called _sum-free_ if whenever x and y are (not necessarily d
 
 $\textbf{(A) } 8 \qquad\textbf{(B) } 9 \qquad\textbf{(C) } 10 \qquad\textbf{(D) } 11 \qquad\textbf{(E) } 12$
 ## Solution 1
-Let our subset be $\{11,12,13,...,20\}$. If we add any element from the set $\{1,2,3,...,10\}$ to our current subset, we will have to remove at least one element from our subset. Hence, the maximum size of our subset is $\boxed{\text{(C) }10}.$
+The set
 
-*~Tacos_are_yummy_1*
+$$
+\{11,12,\ldots,20\}
+$$
 
-*~nithins minor edit*
-## Solution 2(Quicksolve)
+is sum-free and has $10$ elements, because every sum of two of its elements is at least $22$.
+
+Now let $A$ be any sum-free subset of $\{1,2,\ldots,20\}$, and let $m$ be its largest element. If both $x$ and $m-x$ belonged to $A$, their sum would be $m\in A$, which is impossible. Thus $A$ contains at most one member of every pair whose entries sum to $m$.
+
+If $m=2k$, then $k\notin A$ (otherwise $k+k=m$), and $A$ can contain at most one member of each pair
+
+$$
+\{1,m-1\},\ \{2,m-2\},\ \ldots,\ \{k-1,k+1\}.
+$$
+
+Together with $m$, this gives $|A|\leq 1+(k-1)=k=m/2\leq10$.
+
+If $m=2k-1$, then $A$ can contain at most one member of each of the $k-1$ pairs
+
+$$
+\{1,m-1\},\ \{2,m-2\},\ \ldots,\ \{k-1,k\}.
+$$
+
+Together with $m$, this gives $|A|\leq k=(m+1)/2\leq10$, since an odd $m$ is at most $19$. Hence no sum-free subset has more than $10$ elements, so the answer is $\boxed{\textbf{(C)}\ 10}$.
+## Solution 2 (Quicksolve)
 Notice that an odd number plus an odd number always results in an even number. Consider the subset of all odd numbers S = $\{1, 3, 5, ..., 19\}$. The addition of any even number will result in a violation of the rules, so the maximum number of elements in this subset is $\boxed{\text{(C) }10}.$
 
 *~Kevin Wang*

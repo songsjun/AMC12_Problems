@@ -5,26 +5,34 @@
 In the figure below, the outside square contains infinitely many squares, each of them with the same center and sides parallel to the outside square. The ratio of the side length of a square to the side length of the next inner square is k, where 0 < k < 1. The spaces between squares are alternately shaded, as shown in the figure (which is not necessarily drawn to scale).
 
 
-> [Asymptote diagram - not rendered in Markdown]
-
-```asy
-unitsize(1cm); int $n = 25$; real $s = 6$; real ratio = 0.767; real a = s; for (int $i = 0$; i < n; ++i) { real b = a * ratio; // Draw current square draw(box((-a/2,-a/2),(a/2,a/2))); if (i % 2 == 1) { fill(box((-a/2,-a/2),(a/2,a/2)), gray(1)); } else { fill(box((-a/2,-a/2),(a/2,a/2)), lightred); } a = b; } draw(box((-a/2,-a/2),(a/2,a/2)));
-```
+![Nested concentric squares with alternating shaded regions](../2025_AMC_12A_Problems/media/problem-05-nested-squares.svg)
 
 
 The area of the shaded portion of the figure is 64\% of the area of the original square. What is k?
 
 $\textbf{(A) } \frac 35 \qquad \textbf{(B) } \frac {16}{25} \qquad \textbf{(C) } \frac 23 \qquad \textbf{(D) } \frac 34 \qquad \textbf{(E) } \frac 45$
-## Video Solution
-https://youtu.be/CCYoHk2Af34
 ## Solution 1
-Let the side length of the largest square be a, so it has area a^2. Hence, the second-largest square has area $a^2k^2$, the third-largest has $a^2k^4$, and so on.
+Let the side length of the largest square be $a$, so it has area $a^2$. Hence, the second-largest square has area $a^2k^2$, the third-largest has $a^2k^4$, and so on.
 
-It follows that the total shaded area is $a^2-a^2k^2+a^2k^4-a^2k^6+...=a^2(1-k^2+k^4-k^6+...)=a^2\dfrac{1}{1+k^2}.$
+The total shaded area is the alternating geometric series
 
-The ratio of the area of the shaded region to that of the original square is then $\dfrac{a^2\frac{1}{1+k^2}}{a^2}=\dfrac{1}{1+k^2}=\dfrac{64}{100}$
+$$
+a^2-a^2k^2+a^2k^4-a^2k^6+\cdots
+=a^2(1-k^2+k^4-k^6+\cdots)
+=\frac{a^2}{1+k^2}.
+$$
 
-$$\implies 64+64k^2=100\implies k^2=\dfrac{36}{64}\implies k=\boxed{\text{(D) }\dfrac{3}{4}}.$$
+Therefore
+
+$$
+\frac{1}{1+k^2}=\frac{64}{100}
+\quad\Longrightarrow\quad
+64+64k^2=100
+\quad\Longrightarrow\quad
+k^2=\frac{36}{64}.
+$$
+
+Because $0<k<1$, we have $k=\boxed{\textbf{(D) }\frac{3}{4}}$.
 
 
 *~Tacos_are_yummy_1*
@@ -32,6 +40,8 @@ $$\implies 64+64k^2=100\implies k^2=\dfrac{36}{64}\implies k=\boxed{\text{(D) }\
 We can just let $a=1$ because the question deals with ratios, meaning that there wouldn't be a loss of generality if we let the side length equal some value, getting the same answer $\boxed{D}.$ This was done in solution 3.
 
 *~vgarg (minor clarifications by ~Logibyte)*
+## Video Solution
+https://youtu.be/CCYoHk2Af34
 ## Solution 2
 Let the side length of the first square be a and the second square be b. The area of the original square is $a^2.$ The area of the outermost shaded region is $a^2 - b^2.$ Let $\frac{a}{b} =$ r. We have b = $\frac{a}{r}.$ So the outermost shaded region area becomes:
 

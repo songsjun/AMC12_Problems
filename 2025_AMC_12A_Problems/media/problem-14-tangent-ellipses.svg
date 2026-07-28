@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 300" role="img" aria-labelledby="title desc">
+  <title id="title">Internally tangent ellipses</title>
+  <desc id="desc">A smaller ellipse with foci G and H is internally tangent to a larger ellipse with foci F and G.</desc>
+  <rect width="360" height="300" fill="#ffffff"/>
+  <ellipse cx="160" cy="150" rx="140" ry="112" fill="#f8fbff" stroke="#1f3b5b" stroke-width="2.5"/>
+  <ellipse cx="265" cy="150" rx="35" ry="28" fill="#e8f2ff" stroke="#2563eb" stroke-width="2.5"/>
+  <path d="M76 150 H286" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="5 4"/>
+  <path d="M300 137 V163" stroke="#be123c" stroke-width="2"/>
+  <g fill="#172033"><circle cx="76" cy="150" r="3.5"/><circle cx="244" cy="150" r="3.5"/><circle cx="286" cy="150" r="3.5"/></g>
+  <g font-family="serif" font-size="18" fill="#172033"><text x="71" y="178">F</text><text x="239" y="178">G</text><text x="281" y="178">H</text></g>
+  <text x="242" y="102" font-family="serif" font-size="15" fill="#2563eb">internal tangency</text>
+</svg>

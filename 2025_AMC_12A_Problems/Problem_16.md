@@ -6,11 +6,64 @@ Triangle $\triangle ABC$ has side lengths AB = 80, BC = 45, and AC = 75. The bis
 
 $\textbf{(A)}~18\qquad\textbf{(B)}~19\qquad\textbf{(C)}~20\qquad\textbf{(D)}~21\qquad\textbf{(E)}~22$
 ## Solution 1
-Let CD \perp AB with foot D. Right triangles ACD and BCD give $AC^2 = AD^2+CD^2, BC^2 = BD^2+CD^2, AC^2-BC^2 = AD^2-BD^2 =(AD-BD)(AD+BD).$
+Let $D$ be the foot of the altitude from $C$ to $\overline{AB}$. The right triangles $ACD$ and $BCD$ give
 
-Since AD+BD = AB = 80 and $AC^2-BC^2 = 75^2-45^2 = 3600,$ we get the equation $3600 =80(AD-BD)$. This equation simplifies to 45 = AD - BD. We can solve the system of equations AD + BD = 80 and AD - BD = 45 easily via elimination, and we get AD = $\frac{125}{2}, BD = \frac{35}{2}. CD^2 = AC^2-AD^2 = 75^2-\left(\frac{125}{2}\right)^2 = \frac{6875}{4}, CD = \frac{25\sqrt{11}}{2}.$
+$$
+\begin{aligned}
+AC^2-BC^2&=AD^2-BD^2\\
+&=(AD-BD)(AD+BD).
+\end{aligned}
+$$
 
-By Angle Bisector Theorem, $\frac{DP}{PC} = \frac{DB}{BC} = \frac{\frac{35}{2}}{45} = \frac{7}{18}, PC = CD-DP$ thus, 18DP = $7(CD-DP)$, 25DP = 7CD, DP = $\left(\frac{7}{25}\right)CD = \left(\frac{7}{25}\right)\left(\frac{25\sqrt{11}}{2}\right) = \frac{7\sqrt{11}}{2}. BP^2 = BD^2+DP^2 = \left(\frac{35}{2}\right)^2+\left(\frac{7\sqrt{11}}{2}\right)^2 = \frac{1225}{4}+\frac{49(11)}{4} = \frac{1764}{4} = 441,$ thus BP = $\boxed{\text{(D) }21}.$
+Since $AD+BD=AB=80$, we obtain
+
+$$
+75^2-45^2=80(AD-BD),
+$$
+
+so $AD-BD=45$. Therefore,
+
+$$
+AD=\frac{125}{2},
+\qquad
+BD=\frac{35}{2}.
+$$
+
+Then
+
+$$
+CD^2=75^2-\left(\frac{125}{2}\right)^2=\frac{6875}{4},
+\qquad
+CD=\frac{25\sqrt{11}}{2}.
+$$
+
+Because $D$ lies on $\overline{AB}$, $BP$ bisects $\angle DBC$. Applying the Angle Bisector Theorem in $\triangle DBC$ gives
+
+$$
+\frac{DP}{PC}=\frac{BD}{BC}=\frac{35/2}{45}=\frac7{18}.
+$$
+
+As $DP+PC=CD$, it follows that
+
+$$
+DP=\frac7{25}CD=\frac{7\sqrt{11}}2.
+$$
+
+Finally, triangle $BDP$ is right at $D$, so
+
+$$
+\begin{aligned}
+BP^2&=BD^2+DP^2\\
+&=\left(\frac{35}{2}\right)^2+\left(\frac{7\sqrt{11}}{2}\right)^2\\
+&=441.
+\end{aligned}
+$$
+
+Hence
+
+$$
+BP=\boxed{\textbf{(D)}\ 21}.
+$$
 
 *~pigwash*
 *~aldzandrtc(fixed logical jump)*
@@ -30,21 +83,13 @@ Preface: When we have a problem as such, involving a simple diagram with minimal
 Start with the longest side, drawing a line with a length of 8\,$\text{cm} (AB).$ Then, using a compass, draw 2 circles centered around points A and B, 7.5\,$\text{cm}$ and 4.5\,$\text{cm}$ radiuses respectfully. At the point of intersection of these 2 circles, we have point C, completing a perfectly scaled drawing of $\triangle ABC. ($Note the circles are not necessary with a bit of trial and error with the side lengths, they simply offer a way to get it done first try).
 
 
-> [Asymptote diagram - not rendered in Markdown]
-
-```asy
-unitsize(0.25cm); pair A=(0,0), B=(8,0); path cA=circle(A,7.5), cB=circle(B,4.5); pair C=intersectionpoint(cA,cB); draw(A--B); draw(cA); draw(cB); draw(A--C--B--cycle); dot(A); dot(B); dot(C); label("A",A,S, fontsize(8)); label("B",B,S, fontsize(8)); label("C",C,N, fontsize(8)); label("8 cm",(A+B)/2, S, fontsize(6)); label("7.5 cm",(A+C)/2 + (-0.85,0.8),fontsize(6)); label("4.5 cm",(B+C)/2 + (1.75,-0.1),fontsize(6));
-```
+![Scaled triangle construction with compass circles centered at A and B](../2025_AMC_12A_Problems/media/problem-16-construction.svg)
 
 
 After this, dropping the altitude to AB is simple with a ruler and careful placement, and angle bisector can be estimated quite accurately. (Note: Alternately, a compass can be used to accurately place the altitude and the bisector, which are both trivial constructions ~ZingiberiMaracandae)
 
 
-> [Asymptote diagram - not rendered in Markdown]
-
-```asy
-unitsize(0.55cm); import olympiad; pair A=(0,0), B=(8,0); pair C=intersectionpoint(circle(A,7.5),circle(B,4.5)); draw(A--B--C--cycle); pair F=foot(C,A,B); draw(C--F); draw(rightanglemark(A,F,C,2)); pair U=unit(unit(A-B)+unit(C-B)); pair P=intersectionpoint(B--(B+100*U), C--F); draw(B--P,dashed); dot(A);dot(B);dot(C);dot(P); label("A",A,S,fontsize(12)); label("B",B,S,fontsize(12)); label("C",C,N,fontsize(12)); label("P",P,NE,fontsize(12));
-```
+![Triangle ABC with the altitude from C and the angle bisector from B meeting at P](../2025_AMC_12A_Problems/media/problem-16-altitude-bisector.svg)
 
 
 After all of this, we can reuse our ruler and measure BP = 2.1\,$\text{cm},$ and using our scale of 80=8\,$\text{cm},$ our final answer is $\boxed{\text{(D) }21}.$
@@ -86,11 +131,7 @@ Finally, multiplying the side lengths by $5$ again gives $BP = 21.$, or $\boxed{
 
 *~Voidling*
 ## Solution 6 (Similar Triangle)
-> [Asymptote diagram - not rendered in Markdown]
-
-```asy
-/* Figure drawn by reda*/ import geometry; unitsize(2.5); pair _A = (0, 0); pair _B = (80, 0); pair _C = (75*(75^2+80^2-45^2)/(2*75*80), 75*sqrt(1-((75^2+80^2-45^2)/(2*75*80))^2)); pair _D = (_C.x, 0); pair _E = (_A * 45 + _C * 80)/(45 + 80); pair _F = (_E.x, 0); pair _P = extension(_C, _D, _B, _E); draw(_B -- _A -- _C -- _B -- _E ^^ _C -- _D); draw(_E -- _F, dashed); /*dot(_A ^^ _B ^^ _C ^^ _D ^^ _E ^^ _F ^^ _P);*/ markrightangle(_B, _D, _P, 0.2*markangleradius()); markrightangle(_B, _F, _E, 0.2*markangleradius()); markangle(_P, _B, _D, radius = 0.25*markangleradius()); markangle(_P, _B, _D, radius = 0.3*markangleradius()); markangle(_C, _B, _P, radius = 0.25*markangleradius()); markangle(_C, _B, _P, radius = 0.3*markangleradius()); markangle(_B, _A, _C, radius = 0.25*markangleradius()); markangle(_B, _A, _C, radius = 0.3*markangleradius()); label("$A$", _A, S); label("$B$", _B, S); label("$C$", _C, N); label("$D$", _D, S); label("$E$", _E, NW); label("$F$", _F, S); label("$P$", _P, NE); label("$27$", (_C + _E)/2, N); label("$48$", (_A + _E)/2, N); label("$45$", (_B + _C)/2, E); label("$80$", (_A + _B)/2, 4S);
-```
+![Triangle ABC with its altitude and the angle bisector from B used in the similar-triangle argument](../2025_AMC_12A_Problems/media/problem-16-altitude-bisector.svg)
 
 
 Due to Angle Bisector Theorem

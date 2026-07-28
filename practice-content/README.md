@@ -9,7 +9,7 @@ The pipeline produces two different artifacts:
 | Artifact | Contains | Safe audience |
 | --- | --- | --- |
 | `public-form.json` | prompts, choices, and public content hash | authenticated exam client before final submission |
-| `private-form.json` | the exact backend-import contract, including source references, `correctOption`, and `solutionMarkdown` | server-side importer only; never static-host or send before final submission |
+| `private-form.json` | the exact backend-import contract, including source references, `correctOption`, and the reviewed first-solution `solutionMarkdown` | server-side importer only; never static-host or send before final submission |
 
 The private artifact has the compatibility fields expected by the AMC backend:
 
@@ -121,9 +121,11 @@ JSON hashes make an equivalent build byte-for-byte stable.
 ## Releasing a real form
 
 The existing `2025_AMC_12A_Problems` conversion is intentionally not released.
-It currently contains a six-choice Question 25, non-rendered Asymptote diagrams,
-and at least one additional problem heading embedded before the source solutions.
-Its generated review report is evidence for repair, not approval.
+Its source structure and local media have been repaired, but it still lacks
+content-rights clearance and an independently approved answer key. Its Question
+25 is explicitly an adapted ordered-pairs review candidate, so this catalog must
+not be represented as an exact archival AMC form. Its generated review report is
+evidence for repair, not approval.
 
 To release an actual form:
 
@@ -154,6 +156,7 @@ The parser leaves a source untouched and blocks publication instead of guessing:
   be isolated is an error.
 - A second `Problem` heading or unknown section before a solution is an error;
   it can otherwise expose editorial text or a different prompt.
-- Community solution headings and answer-looking boxed text are retained only
-  in the private solution bundle after approval. They never populate an answer
-  key.
+- Only the first level-two solution section is retained as candidate
+  `solutionMarkdown`; later community solutions and editorial material remain
+  in the source archive and are never sent by the practice API. Answer-looking
+  text is a review signal only and never populates an answer key.

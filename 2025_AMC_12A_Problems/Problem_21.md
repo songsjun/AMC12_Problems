@@ -5,51 +5,50 @@ There is a unique ordered triple (a,k,m) of nonnegative integers such that $\fra
 
 $\textbf{(A) } 8 \qquad \textbf{(B) } 9 \qquad \textbf{(C)} 10 \qquad \textbf{(D) } 11 \qquad \textbf{(E) } 12$
 ## Solution 1
-The numerator can be written as $2^{2a}+2^{2a+2k}+...+2^{2a+2mk}$, which is actually a sum of geometric series. This can be expressed as $2^{2a}\cdot \frac{1-2^{2k(m+1)}}{1-2^{2k}}.$ The denominator in the same way can be expressed as $2^a\cdot \frac{1-2^{k(m+1)}}{1-2^k}.$
+If $k=0$, then every term in each sum is the same and the quotient is $2^a$, which cannot equal $964$. Thus $k>0$.
 
-Doing some algebra on the top and bottom we get:
-
-
-$$
-\begin{equation}
-2^a \cdot \frac{1+2^{k(m+1)}}{1+2^k} = 964
-\end{equation}
-$$
-
-
-The prime factorization of 964 is 241 $\cdot 2^2.$
-
-Equating $2^a = 2^2$, we get $a = 2$.
-
-Next since 241 is a prime number we equate the latter half of the product to 241.
+Let $q=2^k$. Applying the geometric-series formula to the numerator and denominator gives
 
 $$
-\begin{equation}
-\frac{1+2^{k(m+1)}}{1+2^k} = 241
-\end{equation}
+\frac{2^{2a}(1-q^{2(m+1)})/(1-q^2)}
+     {2^a(1-q^{m+1})/(1-q)}
+=2^a\frac{1+q^{m+1}}{1+q}
+=964.
 $$
 
-Doing some algebra we get, that $2^k(2^{km}-241) = 240$
+Since $q$ is even, $1+q$ is odd and coprime to $2^a$. The displayed equality therefore implies that $1+q$ divides $1+q^{m+1}$, so the fraction after $2^a$ is an odd integer. As
 
-The closest power of 2 to 241 is 256 which is $2^8.$ So setting km = 8, we get $2^8-241 = 15$
+$$
+964=2^2\cdot241,
+$$
 
-$$2^k(15) = 240, 2^k = 16, k = 4.$$
+we must have $a=2$, and then
 
-This we know that if $k = 4$, then $4m = 8$, so $m = 2$.
+$$
+\frac{1+2^{k(m+1)}}{1+2^k}=241.
+$$
 
-Finally, we conclude that $a = 2, m = 2$, and $k = 4$.
+Rearranging gives
 
-$4+2+2 = 8$, so the answer is \fbox{A}
+$$
+2^k\bigl(2^{km}-241\bigr)=240.
+$$
 
-*~MATHEMATICIAN635*
-*~Minor Edits by MALICIOUSFISH23*
-*~Minor edits by KINGFIREBOY*
+Here $m>0$, since $m=0$ would make the left-hand side negative. Thus $2^{km}-241$ is a positive odd integer. The full power of $2$ in $240$ is $16$, so $2^k=16$ and $k=4$. It follows that
 
-Actually when it comes $to 2^k(2^{km}-241) = 240$;
-we can directly observe the answer by discovering $2^k$ is even and $2^{km}-241$ must be odd. So, the only available divisors of 240 is 16 and 15.
-And we can have $m = 2$, and $k = 4$.
+$$
+2^{4m}-241=15,
+$$
 
-*~DRA777*
+so $2^{4m}=256=2^8$ and $m=2$.
+
+Therefore
+
+$$
+a+k+m=2+4+2=8,
+$$
+
+and the answer is $\boxed{\textbf{(A)}\ 8}$.
 ## Solution 1.1
 We start from this equation derived in Solution 1:
 

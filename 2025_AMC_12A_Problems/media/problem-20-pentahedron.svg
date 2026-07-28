@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 300" role="img" aria-labelledby="title desc">
+  <title id="title">Pentahedron with a rectangular base</title>
+  <desc id="desc">A perspective drawing of the pentahedron: base dimensions 13 and 8, top edge 7, and lateral edges 13.</desc>
+  <rect width="420" height="300" fill="#ffffff"/>
+  <path d="M50 220 L260 250 L365 175 L155 145 Z" fill="#eef4fb" stroke="#1f3b5b" stroke-width="2"/>
+  <path d="M50 220 L125 60 L290 95 L260 250 Z" fill="#dceeff" stroke="#1f3b5b" stroke-width="2"/>
+  <path d="M155 145 L125 60 L290 95 L365 175" fill="#e8f2ff" stroke="#1f3b5b" stroke-width="2"/>
+  <path d="M155 145 L365 175 M365 175 L290 95" fill="none" stroke="#64748b" stroke-width="1.6" stroke-dasharray="6 4"/>
+  <path d="M125 60 L290 95" fill="none" stroke="#172033" stroke-width="2.5"/>
+  <g font-family="serif" font-size="17" fill="#172033">
+    <text x="150" y="260">13</text><text x="85" y="177">8</text><text x="197" y="65">7</text>
+    <text x="71" y="137">13</text><text x="294" y="178">13</text>
+  </g>
+</svg>

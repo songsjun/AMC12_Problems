@@ -14,12 +14,12 @@ const MATH_TOKEN_SUFFIX = '\uE001';
 
 const SANITIZE_OPTIONS = Object.freeze({
   ALLOWED_TAGS: [
-    'a', 'abbr', 'b', 'blockquote', 'br', 'center', 'code', 'del', 'div',
+    'a', 'abbr', 'b', 'blockquote', 'br', 'center', 'code', 'del', 'div', 'img',
     'em', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'i', 'li', 'ol', 'p',
     'pre', 's', 'span', 'strong', 'sub', 'sup', 'table', 'tbody', 'td',
     'th', 'thead', 'tr', 'u', 'ul'
   ],
-  ALLOWED_ATTR: ['align', 'href', 'start', 'title'],
+  ALLOWED_ATTR: ['align', 'alt', 'href', 'src', 'start', 'title'],
   FORBID_ATTR: ['class', 'id', 'name', 'rel', 'style', 'target'],
   ALLOW_DATA_ATTR: false,
   SANITIZE_NAMED_PROPS: true,
@@ -62,6 +62,19 @@ export function normalizeHref(rawHref, baseHref = 'https://archive.invalid/') {
   try {
     const url = new URL(value, baseHref);
     return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Resolve only same-origin image URLs from reviewed archive Markdown. */
+export function normalizeImageSrc(rawSrc, baseHref = 'https://archive.invalid/') {
+  const href = normalizeHref(rawSrc, baseHref);
+  if (!href) return null;
+  try {
+    const destination = new URL(href);
+    const base = new URL(baseHref);
+    return destination.origin === base.origin ? destination.href : null;
   } catch {
     return null;
   }
@@ -172,8 +185,7 @@ function restoreMath(fragment, blocks) {
   }
 }
 
-function hardenLinks(fragment) {
-  const baseHref = window.location.href;
+function hardenLinks(fragment, baseHref) {
   for (const anchor of fragment.querySelectorAll('a')) {
     const href = normalizeHref(anchor.getAttribute('href'), baseHref);
     if (!href) {
@@ -183,14 +195,30 @@ function hardenLinks(fragment) {
 
     anchor.setAttribute('href', href);
     const destination = new URL(href, baseHref);
-    if (destination.origin !== window.location.origin) {
+    if (destination.origin !== new URL(baseHref).origin) {
       anchor.setAttribute('target', '_blank');
       anchor.setAttribute('rel', 'noopener noreferrer');
     }
   }
 }
 
-export function createSafeMarkdownFragment(markdown) {
+function hardenImages(fragment, baseHref) {
+  for (const image of fragment.querySelectorAll('img')) {
+    const src = normalizeImageSrc(image.getAttribute('src'), baseHref);
+    if (!src) {
+      image.remove();
+      continue;
+    }
+    image.setAttribute('src', src);
+    image.setAttribute('loading', 'lazy');
+    image.setAttribute('decoding', 'async');
+  }
+}
+
+export function createSafeMarkdownFragment(
+  markdown,
+  { baseHref = globalThis.location?.href || 'https://archive.invalid/' } = {}
+) {
   if (!globalThis.marked || !globalThis.DOMPurify) {
     throw new Error('The local archive rendering dependencies did not load.');
   }
@@ -200,7 +228,8 @@ export function createSafeMarkdownFragment(markdown) {
   if (typeof rendered !== 'string') throw new Error('Markdown parser returned an unexpected result.');
 
   const fragment = globalThis.DOMPurify.sanitize(rendered, SANITIZE_OPTIONS);
-  hardenLinks(fragment);
+  hardenLinks(fragment, baseHref);
+  hardenImages(fragment, baseHref);
   restoreMath(fragment, blocks);
   return fragment;
 }
@@ -250,8 +279,8 @@ function makeCollapsible(fragment) {
   return result;
 }
 
-export function renderArchiveMarkdown(markdown, { collapsible = false } = {}) {
-  const fragment = createSafeMarkdownFragment(markdown);
+export function renderArchiveMarkdown(markdown, { collapsible = false, baseHref } = {}) {
+  const fragment = createSafeMarkdownFragment(markdown, { baseHref });
   return collapsible ? makeCollapsible(fragment) : fragment;
 }
 
@@ -363,7 +392,10 @@ function bootstrap() {
       const markdown = await response.text();
       if (thisRequest !== requestNumber) return;
 
-      content.replaceChildren(renderArchiveMarkdown(markdown, { collapsible: !viewerMode }));
+      content.replaceChildren(renderArchiveMarkdown(markdown, {
+        collapsible: !viewerMode,
+        baseHref: response.url || new URL(problemPath(current.year, current.variant, current.number), window.location.href).href
+      }));
       if (toolbar) toolbar.hidden = false;
       await typesetMath(content);
       if (thisRequest !== requestNumber) return;

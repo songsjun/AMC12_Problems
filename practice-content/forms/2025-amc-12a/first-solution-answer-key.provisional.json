@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "amc-practice-provisional-first-solution-key-v1",
+  "formId": "amc12-2025-a",
+  "formVersion": "1",
+  "answerKeyVersion": "first-solution-pass-2026-07-27",
+  "questionBundleHash": "b9cd74554c6a57374cde2f62cc685e5f7d567eae9287cf44f7bbcb784329b058",
+  "status": "requires-independent-verification",
+  "notForScoring": true,
+  "derivationMethod": "Each option was read from the current source file's first solution section. This is an AI-assisted candidate record, not an independently approved answer key.",
+  "knownSourceVariants": [
+    {
+      "number": 22,
+      "note": "The retained prompt asks whether the greatest number exceeds twice each other number; an unrelated historical variant was removed from this source candidate."
+    },
+    {
+      "number": 25,
+      "note": "The retained prompt asks for ordered pairs of polynomials. It is explicitly marked as an adapted review candidate, and historical function-counting material was removed."
+    }
+  ],
+  "answers": [
+    {"number": 1, "provisionalOption": "E", "firstSolution": "Solution 1", "evidence": "Concludes 4:30, choice E."},
+    {"number": 2, "provisionalOption": "B", "firstSolution": "Solution 1", "evidence": "Concludes 4 pounds of cashews, choice B."},
+    {"number": 3, "provisionalOption": "A", "firstSolution": "Solution 1", "evidence": "Concludes Ash is 28, choice A."},
+    {"number": 4, "provisionalOption": "B", "firstSolution": "Solution 1", "evidence": "Concludes there is 1 false statement, choice B."},
+    {"number": 5, "provisionalOption": "D", "firstSolution": "Solution 1", "evidence": "Concludes k equals 3/4, choice D."},
+    {"number": 6, "provisionalOption": "B", "firstSolution": "Solution 1", "evidence": "Concludes the probability is 1/5, choice B."},
+    {"number": 7, "provisionalOption": "C", "firstSolution": "Solution 1", "evidence": "Concludes k+a+b equals 22, choice C."},
+    {"number": 8, "provisionalOption": "E", "firstSolution": "Solution 1", "evidence": "Concludes BF equals 63/11, choice E."},
+    {"number": 9, "provisionalOption": "E", "firstSolution": "Solution 1", "evidence": "Concludes r equals 5/3, choice E."},
+    {"number": 10, "provisionalOption": "B", "firstSolution": "Solution 1", "evidence": "Solves for the radius 1-pi+sqrt(pi^2+1), choice B."},
+    {"number": 11, "provisionalOption": "A", "firstSolution": "Solution 1", "evidence": "Finds orthocenter (2,3), whose coordinate sum is 5, choice A."},
+    {"number": 12, "provisionalOption": "B", "firstSolution": "Solution 1", "evidence": "Concludes the harmonic mean is -3/2, choice B."},
+    {"number": 13, "provisionalOption": "D", "firstSolution": "Solution 1", "evidence": "Concludes the probability is 1/26, choice D."},
+    {"number": 14, "provisionalOption": "D", "firstSolution": "Solution 1", "evidence": "Concludes the eccentricity is 22/23, choice D."},
+    {"number": 15, "provisionalOption": "C", "firstSolution": "Solution 1", "evidence": "Concludes the maximum size is 10, choice C."},
+    {"number": 16, "provisionalOption": "D", "firstSolution": "Solution 1", "evidence": "Concludes BP equals 21, choice D."},
+    {"number": 17, "provisionalOption": "A", "firstSolution": "Solution 1", "evidence": "Concludes the triangle area is 6, choice A."},
+    {"number": 18, "provisionalOption": "C", "firstSolution": "Solution 1", "evidence": "Concludes there are 186 ordered triples, choice C."},
+    {"number": 19, "provisionalOption": "E", "firstSolution": "Solution 1", "evidence": "Concludes the requested sum is k, choice E."},
+    {"number": 20, "provisionalOption": "C", "firstSolution": "Solution 1", "evidence": "Concludes the volume is 528, choice C."},
+    {"number": 21, "provisionalOption": "A", "firstSolution": "Solution 1", "evidence": "Concludes a+k+m equals 8, choice A."},
+    {"number": 22, "provisionalOption": "E", "firstSolution": "Solution 1", "evidence": "Concludes the probability is 1/4, choice E."},
+    {"number": 23, "provisionalOption": "C", "firstSolution": "Solution 1", "evidence": "Concludes there are 9841 fair positive integers, choice C."},
+    {"number": 24, "provisionalOption": "C", "firstSolution": "Solution 1", "evidence": "Concludes a+b+c equals 7, choice C."},
+    {"number": 25, "provisionalOption": "E", "firstSolution": "Solution 1", "evidence": "For the retained ordered-pairs wording, counts 13 pairs, choice E."}
+  ]
+}

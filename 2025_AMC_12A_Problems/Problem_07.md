@@ -1,29 +1,42 @@
 # 2025 AMC 12A Problem 7
 
 ## Problem
-In a certain alien world, the maximum running speed v of an organism is dependent on its number of toes n and number of eyes m. The relationship can be expressed as $v = kn^am^b$ centimeters per hour, where k, a, b are integer constants. In a population where all organisms have 5 toes, $\logv =4+2\log$ m; and in a population where all organisms have 25 eyes, $\logv = 4 + 4 \log$ n, where all logs are in base 10. What is k+a+b?
+In a certain alien world, the maximum running speed $v$ of an organism is dependent on its number of toes $n$ and number of eyes $m$. The relationship can be expressed as $v=kn^am^b$ centimeters per hour, where $k$, $a$, and $b$ are integer constants. In a population where all organisms have 5 toes, $\log v=4+2\log m$; and in a population where all organisms have 25 eyes, $\log v=4+4\log n$, where all logs are in base 10. What is $k+a+b$?
 
 $\textbf{(A) } 20 \qquad \textbf{(B) } 21 \qquad \textbf{(C) } 22 \qquad \textbf{(D) } 23 \qquad \textbf{(E) } 24$
 ## Solution 1 (logs and system of equations)
-Substituting v in the equation where $n=5$, we have:
+Substitute $v=kn^am^b$ into the equation for the population with $n=5$:
 
-$$\log(k \cdot 5^a m^b) = 4+2\log m.$$
+$$
+\log(k\cdot5^a m^b)=4+2\log m=\log(10^4m^2).
+$$
 
-Using logarithmic properties, we can write this as:
+For the population with $m=25$, the same substitution gives
 
-$$\log(k \cdot 5^a m^b) = \log(10^4 \cdot m^2)$$
+$$
+\log(kn^a\cdot25^b)=4+4\log n=\log(10^4n^4).
+$$
 
-We can do this with the other equation where $m=25$:
+Because the logarithm is one-to-one, these become
 
-$$\log(k \cdot n^a 25^b) = \log(10^4 \cdot n^4)$$
+$$
+\begin{aligned}
+k\cdot5^a m^b&=10^4m^2,\\
+kn^a\cdot25^b&=10^4n^4.
+\end{aligned}
+$$
 
-Now we can get rid of the logs on both sides and are left with the following system of equations:
+Since these identities hold for every positive $m$ and $n$, comparison of exponents gives $b=2$ and $a=4$. Substituting $a=4$ into the first identity yields
 
-$$k \cdot 5^am^b = 10^4 m^2$$
+$$
+k\cdot5^4=10^4=2^4\cdot5^4,
+$$
 
-$$k \cdot n^a25^b = 10^4 n^4$$
+so $k=16$. Therefore
 
-Notice that in the first equation, we can change m arbitrarily, so we know that the exponent of m must be the same - hence $b=2$. Similarly, from the second equation, we get $a=4. 10^4$ can be written as $2^$4 $\cdot 5^4,$ which means that $k=2^4 = 16$. Thus the answer is $2+4+16 =\boxed{(C) 22}.$
+$$
+k+a+b=16+4+2=\boxed{\textbf{(C) }22}.
+$$
 
 *~Cyrus825 ~ScoutViolet (mostly minor fixes) ~knight10 (minor fixes)*
 ## Solution 2

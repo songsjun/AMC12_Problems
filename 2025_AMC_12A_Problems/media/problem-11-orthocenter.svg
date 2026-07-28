@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 430 360" role="img" aria-labelledby="title desc">
+  <title id="title">Triangle ABC and its orthocenter</title>
+  <desc id="desc">A vertical altitude from A and an altitude from C meet at the orthocenter below the base.</desc>
+  <rect width="430" height="360" fill="#ffffff"/>
+  <path d="M80 70 L180 180 L360 180 Z" fill="#f8fbff" stroke="#1f3b5b" stroke-width="2.5"/>
+  <path d="M80 70 L80 332 M360 180 L80 332" fill="none" stroke="#be123c" stroke-width="2" stroke-dasharray="7 5"/>
+  <path d="M80 180 h14 v14 h-14" fill="none" stroke="#475569" stroke-width="1.4"/>
+  <g fill="#172033"><circle cx="80" cy="70" r="3.5"/><circle cx="180" cy="180" r="3.5"/><circle cx="360" cy="180" r="3.5"/><circle cx="80" cy="332" r="3.5"/></g>
+  <g font-family="serif" font-size="18" fill="#172033">
+    <text x="65" y="61">A</text><text x="174" y="204">B</text><text x="366" y="188">C</text>
+    <text x="46" y="177">H₁</text><text x="43" y="350">H</text>
+  </g>
+</svg>

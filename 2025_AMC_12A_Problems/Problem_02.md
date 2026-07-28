@@ -6,21 +6,21 @@ A box contains 10 pounds of a nut mix that is 50 percent peanuts, 20 percent cas
 
 $\textbf{(A) } 3.5 \qquad\textbf{(B) } 4 \qquad\textbf{(C) } 4.5 \qquad\textbf{(D) } 5 \qquad\textbf{(E) } 6$
 ## Solution 1
-We are given $0.2(10) = 2$ pounds of cashews in the first box.
-
-Denote the pounds of nuts in the second nut mix as x.
-
+The first mix contains $0.2(10)=2$ pounds of cashews. Let $x$ be the number of pounds in the second mix. Comparing the amount of peanuts gives
 
 $$
-5 + 0.2x = 0.4(10 + x)
-0.2x = 1
-x = 5
+\begin{aligned}
+5+0.2x&=0.4(10+x),\\
+0.2x&=1,\\
+x&=5.
+\end{aligned}
 $$
 
+The second mix therefore contributes $0.4(5)=2$ pounds of cashews, so the total is
 
-Thus, we have 5 pounds of the second mix.
-
-$$0.4(5) + 2 = 2 + 2 = \boxed{\text{(B) }4}$$
+$$
+2+0.4(5)=2+2=\boxed{\textbf{(B) }4}.
+$$
 
 *~pigwash*
 
