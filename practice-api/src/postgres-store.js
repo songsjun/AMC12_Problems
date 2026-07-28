@@ -71,6 +71,7 @@ function mapSubmission(row) {
     correctCount: row.correct_count,
     incorrectCount: row.incorrect_count,
     blankCount: row.blank_count,
+    unscoredCount: row.unscored_count ?? 0,
     createdAt: row.created_at
   };
 }
@@ -93,6 +94,9 @@ function mapFormHeader(row) {
     scoringPolicy: row.scoring_policy,
     manifestHash: row.manifest_hash,
     importedAt: row.imported_at,
+    practiceKind: row.source_schema_version === 'amc-practice-archive-form-v1' ? 'archive' : 'standard',
+    archiveNotice: row.provenance?.archiveNotice || null,
+    scoredQuestionCount: row.scored_question_count === undefined ? undefined : Number(row.scored_question_count),
     questions: []
   };
 }
@@ -103,6 +107,10 @@ function mapQuestion(row) {
     promptMarkdown: row.prompt_markdown,
     choices: row.choices,
     correctOption: row.correct_option,
+    acceptedOptions: Array.isArray(row.accepted_options) && row.accepted_options.length
+      ? row.accepted_options
+      : (row.correct_option ? [row.correct_option] : []),
+    isScored: row.is_scored !== false,
     solutionMarkdown: row.solution_markdown
   };
 }
@@ -118,12 +126,68 @@ async function getFormUsing(queryable, id, version = undefined) {
   if (!header.rowCount) return null;
   const form = mapFormHeader(header.rows[0]);
   const questions = await queryable.query(
-    `SELECT question_number, prompt_markdown, choices, correct_option, solution_markdown
+    `SELECT question_number, prompt_markdown, choices, correct_option, accepted_options, is_scored, solution_markdown
      FROM amc_practice.form_questions WHERE form_id = $1 AND form_version = $2 ORDER BY question_number`,
     [form.id, form.version]
   );
   form.questions = questions.rows.map(mapQuestion);
   return form;
+}
+
+async function importFormUsing(client, form, { publish = false, allowTestOnlyPublish = false } = {}) {
+  const shouldPublish = Boolean(publish && (form.publishEligible || (form.developmentPublishEligible && allowTestOnlyPublish)));
+  const existingResult = await client.query(
+    'SELECT manifest_hash, published, published_at, imported_at FROM amc_practice.form_revisions WHERE form_id = $1 AND version = $2 FOR UPDATE',
+    [form.id, form.version]
+  );
+  if (existingResult.rowCount) {
+    const existing = existingResult.rows[0];
+    if (existing.manifest_hash !== form.manifestHash) {
+      throw conflict('FORM_VERSION_IMMUTABLE', 'A form version cannot be changed after import.');
+    }
+  }
+  if (shouldPublish) {
+    // The caller already holds the logical-form advisory lock. Clear a prior
+    // revision *before* setting/inserting this one as published so the
+    // database's partial unique index is valid throughout the transaction.
+    // Historical attempts remain pinned to their immutable revision.
+    await client.query(
+      `UPDATE amc_practice.form_revisions
+       SET published = false
+       WHERE form_id = $1 AND version <> $2 AND published = true`,
+      [form.id, form.version]
+    );
+  }
+  if (existingResult.rowCount) {
+    const existing = existingResult.rows[0];
+    if (shouldPublish && !existing.published) {
+      await client.query(
+        'UPDATE amc_practice.form_revisions SET published = true, published_at = now() WHERE form_id = $1 AND version = $2',
+        [form.id, form.version]
+      );
+    }
+  } else {
+    await client.query(
+      `INSERT INTO amc_practice.form_revisions
+       (form_id, version, title, duration_ms, published, test_only, published_at, publication_status,
+        source_schema_version, source_manifest_hash, content_hash, question_bundle_hash, provenance, scoring_policy, manifest_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, CASE WHEN $5 THEN now() ELSE NULL END, $7, $8, $9, $10, $11, $12::jsonb, $13::jsonb, $14)`,
+      [form.id, form.version, form.title, form.durationMs, shouldPublish, form.testOnly, form.publicationStatus,
+        form.sourceSchemaVersion, form.sourceManifestHash, form.contentHash, form.questionBundleHash,
+        form.provenance ? JSON.stringify(form.provenance) : null, JSON.stringify(form.scoringPolicy), form.manifestHash]
+    );
+    for (const question of form.questions) {
+      await client.query(
+        `INSERT INTO amc_practice.form_questions
+         (form_id, form_version, question_number, prompt_markdown, choices, correct_option, accepted_options, is_scored, solution_markdown)
+         VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7::jsonb, $8, $9)`,
+        [form.id, form.version, question.number, question.promptMarkdown, JSON.stringify(question.choices), question.correctOption,
+          JSON.stringify(question.acceptedOptions || (question.correctOption ? [question.correctOption] : [])),
+          question.isScored !== false, question.solutionMarkdown]
+      );
+    }
+  }
+  return getFormUsing(client, form.id, form.version);
 }
 
 /** PostgreSQL implementation of the same store contract used by MemoryStore. */
@@ -190,56 +254,31 @@ export class PostgresStore {
   }
 
   async importForm(form, { publish = false, allowTestOnlyPublish = false } = {}) {
+    const [stored] = await this.importForms([form], { publish, allowTestOnlyPublish });
+    return stored;
+  }
+
+  /** Prevalidated release import with one database transaction for every form. */
+  async importForms(forms, { publish = false, allowTestOnlyPublish = false } = {}) {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      const existingResult = await client.query(
-        'SELECT manifest_hash, published, published_at, imported_at FROM amc_practice.form_revisions WHERE form_id = $1 AND version = $2 FOR UPDATE',
-        [form.id, form.version]
-      );
-      const shouldPublish = Boolean(publish && (form.publishEligible || (form.developmentPublishEligible && allowTestOnlyPublish)));
-      if (existingResult.rowCount) {
-        const existing = existingResult.rows[0];
-        if (existing.manifest_hash !== form.manifestHash) {
-          throw conflict('FORM_VERSION_IMMUTABLE', 'A form version cannot be changed after import.');
-        }
-        if (shouldPublish && !existing.published) {
-          await client.query(
-            'UPDATE amc_practice.form_revisions SET published = true, published_at = now() WHERE form_id = $1 AND version = $2',
-            [form.id, form.version]
-          );
-        }
-      } else {
+      // Serialize publication changes for each logical form. Acquire every
+      // batch lock in a deterministic order before locking any revision row;
+      // two overlapping batches therefore cannot deadlock by taking A/B in
+      // opposite orders, and two versions of one form cannot both observe a
+      // vacant published slot.
+      const formIds = [...new Set(forms.map((form) => form.id))].sort();
+      for (const formId of formIds) {
         await client.query(
-          `INSERT INTO amc_practice.form_revisions
-           (form_id, version, title, duration_ms, published, test_only, published_at, publication_status,
-            source_schema_version, source_manifest_hash, content_hash, question_bundle_hash, provenance, scoring_policy, manifest_hash)
-           VALUES ($1, $2, $3, $4, $5, $6, CASE WHEN $5 THEN now() ELSE NULL END, $7, $8, $9, $10, $11, $12::jsonb, $13::jsonb, $14)`,
-          [form.id, form.version, form.title, form.durationMs, shouldPublish, form.testOnly, form.publicationStatus,
-            form.sourceSchemaVersion, form.sourceManifestHash, form.contentHash, form.questionBundleHash,
-            form.provenance ? JSON.stringify(form.provenance) : null, JSON.stringify(form.scoringPolicy), form.manifestHash]
-        );
-        for (const question of form.questions) {
-          await client.query(
-            `INSERT INTO amc_practice.form_questions
-             (form_id, form_version, question_number, prompt_markdown, choices, correct_option, solution_markdown)
-             VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7)`,
-            [form.id, form.version, question.number, question.promptMarkdown, JSON.stringify(question.choices), question.correctOption, question.solutionMarkdown]
-          );
-        }
-      }
-      if (shouldPublish) {
-        // A public catalog exposes one current revision per logical form.
-        // Historical attempts retain their foreign-keyed form revision and are
-        // still accessible only through owner-scoped attempt routes.
-        await client.query(
-          `UPDATE amc_practice.form_revisions
-           SET published = false
-           WHERE form_id = $1 AND version <> $2 AND published = true`,
-          [form.id, form.version]
+          "SELECT pg_advisory_xact_lock(hashtext('amc_practice_form_publication'), hashtext($1))",
+          [formId]
         );
       }
-      const stored = await getFormUsing(client, form.id, form.version);
+      const stored = [];
+      for (const form of forms) {
+        stored.push(await importFormUsing(client, form, { publish, allowTestOnlyPublish }));
+      }
       await client.query('COMMIT');
       return stored;
     } catch (error) {
@@ -266,7 +305,12 @@ export class PostgresStore {
          SELECT count(*)::integer
          FROM amc_practice.form_questions q
          WHERE q.form_id = f.form_id AND q.form_version = f.version
-       ) AS question_count
+       ) AS question_count,
+       (
+         SELECT count(*)::integer
+         FROM amc_practice.form_questions q
+         WHERE q.form_id = f.form_id AND q.form_version = f.version AND q.is_scored = true
+       ) AS scored_question_count
        FROM current_revisions f
        ORDER BY f.form_id`,
     );
@@ -435,18 +479,20 @@ class PostgresAttemptTransaction {
       const result = await this.client.query(
         `INSERT INTO amc_practice.submissions
          (id, attempt_id, kind, slot, trigger, active_elapsed_ms, scoring_policy, total_points, maximum_points,
-          answered_count, correct_count, incorrect_count, blank_count, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, $10, $11, $12, $13, $14) RETURNING *`,
+          answered_count, correct_count, incorrect_count, blank_count, unscored_count, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *`,
         [submission.id, submission.attemptId, submission.kind, submission.slot, submission.trigger, submission.activeElapsedMs,
           JSON.stringify(submission.scoringPolicy), submission.totalPoints, submission.maximumPoints, submission.answeredCount,
-          submission.correctCount, submission.incorrectCount, submission.blankCount, submission.createdAt]
+          submission.correctCount, submission.incorrectCount, submission.blankCount, submission.unscoredCount || 0, submission.createdAt]
       );
       for (const snapshot of snapshots) {
         await this.client.query(
           `INSERT INTO amc_practice.submission_answers
-           (submission_id, question_number, selected_option, correct_option, is_correct, points)
-           VALUES ($1, $2, $3, $4, $5, $6)`,
-          [submission.id, snapshot.questionNumber, snapshot.selectedOption, snapshot.correctOption, snapshot.isCorrect, snapshot.points]
+           (submission_id, question_number, selected_option, correct_option, accepted_options, is_scored, is_correct, points)
+           VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8)`,
+          [submission.id, snapshot.questionNumber, snapshot.selectedOption, snapshot.correctOption,
+            JSON.stringify(snapshot.acceptedOptions || (snapshot.correctOption ? [snapshot.correctOption] : [])),
+            snapshot.isScored !== false, snapshot.isCorrect, snapshot.points]
         );
       }
       return mapSubmission(result.rows[0]);
@@ -460,13 +506,17 @@ class PostgresAttemptTransaction {
 
   async getSubmissionAnswers(submissionId) {
     const result = await this.client.query(
-      `SELECT question_number, selected_option, correct_option, is_correct, points
+      `SELECT question_number, selected_option, correct_option, accepted_options, is_scored, is_correct, points
        FROM amc_practice.submission_answers WHERE submission_id = $1 ORDER BY question_number`, [submissionId]
     );
     return result.rows.map((row) => ({
       questionNumber: row.question_number,
       selectedOption: row.selected_option,
       correctOption: row.correct_option,
+      acceptedOptions: Array.isArray(row.accepted_options) && row.accepted_options.length
+        ? row.accepted_options
+        : (row.correct_option ? [row.correct_option] : []),
+      isScored: row.is_scored !== false,
       isCorrect: row.is_correct,
       points: number(row.points)
     }));

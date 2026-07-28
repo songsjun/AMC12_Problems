@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 import math
+import re
 from typing import Any
 
 from .canonical import MAX_CANONICAL_DECIMAL_PLACES, canonical_hash
@@ -15,6 +16,12 @@ from .canonical import MAX_CANONICAL_DECIMAL_PLACES, canonical_hash
 
 EXPECTED_OPTIONS = {"A", "B", "C", "D", "E"}
 EXPECTED_QUESTION_NUMBERS = list(range(1, 26))
+ARCHIVE_PRIVATE_MANIFEST_SCHEMA = "amc-practice-archive-form-v1"
+ARCHIVE_PUBLIC_MANIFEST_SCHEMA = "amc-practice-public-form-v1"
+ARCHIVE_PUBLICATION_STATUS = "archive-practice"
+_ARCHIVE_AMC12_ID_RE = re.compile(r"^amc12-(?P<year>\d{4})-[ab]$")
+_EARLY_ARCHIVE_POLICY_VERSION = "amc12-archive-2002-2006-v1"
+_LATE_ARCHIVE_POLICY_VERSION = "amc12-archive-2007-plus-v1"
 
 
 def score_value_error(value: Any) -> str | None:
@@ -240,6 +247,271 @@ def validate_private_manifest(manifest: dict[str, Any]) -> list[str]:
             errors.append("private manifestHash does not match canonical private content")
     except ValueError as error:
         errors.append(f"private content cannot be canonicalized: {error}")
+    return errors
+
+
+def _archive_type_errors(manifest: dict[str, Any], *, private: bool) -> list[str]:
+    """Validate the distinct archive-practice envelope without weakening v1.
+
+    Archive releases intentionally have a different authorization and scoring
+    contract from the two-reviewer private-v1 flow. Keeping the checks here
+    separate means a historical exception (for example, a documented
+    unscored item) cannot accidentally become valid input for an approved
+    contemporary form.
+    """
+
+    errors: list[str] = []
+    required = {
+        "schemaVersion",
+        "id",
+        "version",
+        "title",
+        "publicationStatus",
+        "isSynthetic",
+        "durationSeconds",
+        "scoringPolicyVersion",
+        "scoringPolicy",
+        "questions",
+        "questionBundleHash",
+        "contentHash",
+        "archiveNotice",
+    }
+    if private:
+        required.update({"manifestHash", "provenance"})
+    missing = sorted(required - set(manifest))
+    if missing:
+        errors.append(f"archive manifest missing required fields: {', '.join(missing)}")
+    if not isinstance(manifest.get("id"), str) or not manifest.get("id").strip():
+        errors.append("archive id must be a non-empty string")
+    if not isinstance(manifest.get("version"), str) or not manifest.get("version").strip():
+        errors.append("archive version must be a non-empty immutable form revision identifier")
+    if not isinstance(manifest.get("title"), str) or not manifest.get("title").strip():
+        errors.append("archive title must be a non-empty string")
+    if manifest.get("durationSeconds") != 75 * 60:
+        errors.append("archive durationSeconds must be exactly 4500 for an AMC timed form")
+    if manifest.get("isSynthetic") is not False:
+        errors.append("archive forms must be non-synthetic")
+    if manifest.get("publicationStatus") != ARCHIVE_PUBLICATION_STATUS:
+        errors.append("archive publicationStatus must be archive-practice")
+    if not isinstance(manifest.get("archiveNotice"), str) or not manifest["archiveNotice"].strip():
+        errors.append("archiveNotice must be non-empty text")
+    if private:
+        provenance = manifest.get("provenance")
+        if not isinstance(provenance, dict):
+            errors.append("archive private manifest provenance must be an object")
+        else:
+            authorization = provenance.get("releaseAuthorization")
+            if not isinstance(authorization, dict) or authorization.get("status") != "authorized-archive-practice":
+                errors.append("archive provenance requires authorized-archive-practice releaseAuthorization")
+            answer_key = provenance.get("answerKey")
+            if not isinstance(answer_key, dict) or not isinstance(answer_key.get("catalogHash"), str):
+                errors.append("archive provenance requires answerKey catalog metadata")
+            media = provenance.get("media")
+            if not isinstance(media, dict) or not isinstance(media.get("assetIds"), list):
+                errors.append("archive provenance requires media asset metadata")
+    else:
+        leaked_top_level = sorted(
+            {"manifestHash", "provenance", "answerKey", "answerKeyApproval", "correctOptions", "solutions"}
+            & set(manifest)
+        )
+        if leaked_top_level:
+            errors.append(f"public archive manifest leaks private top-level fields: {', '.join(leaked_top_level)}")
+    return errors
+
+
+def _archive_scoring_errors(manifest: dict[str, Any], questions: Any) -> list[str]:
+    policy = manifest.get("scoringPolicy")
+    errors: list[str] = []
+    if not isinstance(policy, dict):
+        return ["archive scoringPolicy must be an object"]
+    for key in ("correct", "blank", "incorrect", "questionCount", "scoredQuestionCount", "maxScore"):
+        if key not in policy:
+            errors.append(f"archive scoringPolicy missing {key}")
+    for key in ("correct", "blank", "incorrect", "maxScore"):
+        if key in policy:
+            issue = score_value_error(policy[key])
+            if issue:
+                errors.append(f"archive scoringPolicy.{key} {issue}")
+    if policy.get("questionCount") != 25:
+        errors.append("archive scoringPolicy.questionCount must be 25")
+    scored_count = None
+    if not isinstance(questions, list):
+        errors.append("archive questions must be a list before scoring can be validated")
+    elif any(not isinstance(question, dict) or not isinstance(question.get("isScored"), bool) for question in questions):
+        errors.append("archive questions must declare boolean isScored before scoring can be validated")
+    else:
+        scored_count = sum(question["isScored"] for question in questions)
+        if policy.get("scoredQuestionCount") != scored_count:
+            errors.append("archive scoringPolicy.scoredQuestionCount must equal the number of scored questions")
+    if scored_count is not None and score_value_error(policy.get("correct")) is None and score_value_error(policy.get("maxScore")) is None:
+        if not score_values_equal(policy.get("maxScore"), Decimal(str(policy["correct"])) * scored_count):
+            errors.append("archive scoringPolicy.maxScore must equal correct points times scoredQuestionCount")
+    version = manifest.get("scoringPolicyVersion")
+    if not isinstance(version, str) or not version:
+        errors.append("archive scoringPolicyVersion must be a non-empty string")
+    elif policy.get("version") != version:
+        errors.append("archive scoringPolicy.version must equal scoringPolicyVersion")
+    # The archive builder emits canonical AMC 12 ids.  Tie their scoring
+    # policy to the historical scoring-era boundary so a future manifest
+    # cannot silently give a 2002--2006 blank response the post-2006 value.
+    # Non-canonical ids remain usable for isolated contract fixtures; all
+    # production archive ids are checked here and again by the Node importer.
+    form_id = manifest.get("id")
+    id_match = _ARCHIVE_AMC12_ID_RE.fullmatch(form_id) if isinstance(form_id, str) else None
+    if id_match:
+        year = int(id_match.group("year"))
+        if year < 2002 or year > 2025:
+            errors.append("archive AMC 12 id year must be from 2002 through 2025")
+        else:
+            early = year <= 2006
+            expected_blank = 2.5 if early else 1.5
+            expected_version = _EARLY_ARCHIVE_POLICY_VERSION if early else _LATE_ARCHIVE_POLICY_VERSION
+            if not score_values_equal(policy.get("correct"), 6):
+                errors.append("archive AMC 12 scoringPolicy.correct must be 6")
+            if not score_values_equal(policy.get("incorrect"), 0):
+                errors.append("archive AMC 12 scoringPolicy.incorrect must be 0")
+            if not score_values_equal(policy.get("blank"), expected_blank):
+                errors.append(f"archive AMC 12 scoringPolicy.blank must be {expected_blank} for {year}")
+            if version != expected_version:
+                errors.append(f"archive AMC 12 scoringPolicyVersion must be {expected_version} for {year}")
+    return errors
+
+
+def _archive_question_errors(question: Any, expected_number: int, *, private: bool) -> list[str]:
+    if not isinstance(question, dict):
+        return [f"archive question {expected_number} must be an object"]
+    errors: list[str] = []
+    required = {"number", "promptMarkdown", "choices", "isScored"}
+    if private:
+        required.update({"sourceRef", "correctOption", "acceptedOptions", "solutionMarkdown"})
+    missing = required - set(question)
+    if missing:
+        errors.append(f"archive question {expected_number} missing {', '.join(sorted(missing))}")
+    if question.get("number") != expected_number:
+        errors.append(f"expected archive question number {expected_number}, got {question.get('number')!r}")
+    if not isinstance(question.get("promptMarkdown"), str) or not question.get("promptMarkdown").strip():
+        errors.append(f"archive question {expected_number} promptMarkdown must be non-empty")
+    allowed = {"number", "promptMarkdown", "choices", "isScored"}
+    if private:
+        allowed.update({"sourceRef", "correctOption", "acceptedOptions", "solutionMarkdown"})
+    unexpected = sorted(set(question) - allowed)
+    if unexpected:
+        errors.append(f"archive question {expected_number} has unsupported fields: {', '.join(unexpected)}")
+    choices = question.get("choices")
+    if not isinstance(choices, dict) or set(choices) != EXPECTED_OPTIONS:
+        errors.append(f"archive question {expected_number} choices must be exactly A through E")
+    elif any(not isinstance(value, str) or not value.strip() for value in choices.values()):
+        errors.append(f"archive question {expected_number} has an empty choice")
+    if not isinstance(question.get("isScored"), bool):
+        errors.append(f"archive question {expected_number} isScored must be boolean")
+    if private:
+        source_ref = question.get("sourceRef")
+        if (
+            not isinstance(source_ref, dict)
+            or not isinstance(source_ref.get("path"), str)
+            or not isinstance(source_ref.get("sha256"), str)
+            or len(source_ref["sha256"]) != 64
+            or any(character not in "0123456789abcdef" for character in source_ref["sha256"])
+        ):
+            errors.append(f"archive question {expected_number} sourceRef requires path and lowercase SHA-256")
+        if not isinstance(question.get("solutionMarkdown"), str) or not question.get("solutionMarkdown").strip():
+            errors.append(f"archive question {expected_number} solutionMarkdown must be non-empty")
+        is_scored = question.get("isScored")
+        accepted = question.get("acceptedOptions")
+        if is_scored is True:
+            if question.get("correctOption") not in EXPECTED_OPTIONS:
+                errors.append(f"archive question {expected_number} correctOption must be A through E when scored")
+            if (
+                not isinstance(accepted, list)
+                or not accepted
+                or any(option not in EXPECTED_OPTIONS for option in accepted)
+                or len(set(accepted)) != len(accepted)
+                or question.get("correctOption") not in accepted
+            ):
+                errors.append(f"archive question {expected_number} acceptedOptions must be unique A-E options including correctOption")
+        elif is_scored is False:
+            if question.get("correctOption") is not None:
+                errors.append(f"archive question {expected_number} must use null correctOption when unscored")
+            if accepted != []:
+                errors.append(f"archive question {expected_number} must use empty acceptedOptions when unscored")
+    else:
+        leaked = sorted({"correctOption", "acceptedOptions", "solutionMarkdown", "sourceRef"} & set(question))
+        if leaked:
+            errors.append(f"public archive question {expected_number} leaks private fields: {', '.join(leaked)}")
+    return errors
+
+
+def archive_public_projection(private_manifest: dict[str, Any]) -> dict[str, Any]:
+    """Create the redacted archive projection used for its content hash."""
+
+    copied_keys = (
+        "id",
+        "version",
+        "title",
+        "publicationStatus",
+        "isSynthetic",
+        "durationSeconds",
+        "scoringPolicyVersion",
+        "scoringPolicy",
+        "questionBundleHash",
+        "archiveNotice",
+    )
+    projection: dict[str, Any] = {key: private_manifest[key] for key in copied_keys if key in private_manifest}
+    projection["schemaVersion"] = ARCHIVE_PUBLIC_MANIFEST_SCHEMA
+    questions = private_manifest.get("questions", [])
+    projection["questions"] = [
+        {key: question[key] for key in ("number", "promptMarkdown", "choices", "isScored") if key in question}
+        if isinstance(question, dict) else question
+        for question in questions
+    ] if isinstance(questions, list) else []
+    projection["contentHash"] = canonical_hash(projection, omit=("contentHash",))
+    return projection
+
+
+def validate_archive_public_manifest(manifest: dict[str, Any]) -> list[str]:
+    """Validate a redacted archive-practice public manifest."""
+
+    errors = _archive_type_errors(manifest, private=False)
+    if manifest.get("schemaVersion") != ARCHIVE_PUBLIC_MANIFEST_SCHEMA:
+        errors.append(f"archive public schemaVersion must be {ARCHIVE_PUBLIC_MANIFEST_SCHEMA}")
+    questions = manifest.get("questions")
+    errors.extend(_archive_scoring_errors(manifest, questions))
+    if not isinstance(questions, list) or len(questions) != 25:
+        errors.append("archive public manifest must contain exactly 25 questions")
+    elif isinstance(questions, list):
+        for expected_number, question in zip(EXPECTED_QUESTION_NUMBERS, questions):
+            errors.extend(_archive_question_errors(question, expected_number, private=False))
+    try:
+        expected_hash = canonical_hash(manifest, omit=("contentHash",))
+        if manifest.get("contentHash") != expected_hash:
+            errors.append("archive public contentHash does not match canonical content")
+    except ValueError as error:
+        errors.append(f"archive public content cannot be canonicalized: {error}")
+    return errors
+
+
+def validate_archive_private_manifest(manifest: dict[str, Any]) -> list[str]:
+    """Validate a full archive-practice import manifest and redacted hash."""
+
+    errors = _archive_type_errors(manifest, private=True)
+    if manifest.get("schemaVersion") != ARCHIVE_PRIVATE_MANIFEST_SCHEMA:
+        errors.append(f"archive private schemaVersion must be {ARCHIVE_PRIVATE_MANIFEST_SCHEMA}")
+    questions = manifest.get("questions")
+    errors.extend(_archive_scoring_errors(manifest, questions))
+    if not isinstance(questions, list) or len(questions) != 25:
+        errors.append("archive private manifest must contain exactly 25 questions")
+    elif isinstance(questions, list):
+        for expected_number, question in zip(EXPECTED_QUESTION_NUMBERS, questions):
+            errors.extend(_archive_question_errors(question, expected_number, private=True))
+    try:
+        projection = archive_public_projection(manifest)
+        if manifest.get("contentHash") != projection["contentHash"]:
+            errors.append("archive private contentHash does not match its public projection")
+        expected_manifest_hash = canonical_hash(manifest, omit=("manifestHash",))
+        if manifest.get("manifestHash") != expected_manifest_hash:
+            errors.append("archive private manifestHash does not match canonical private content")
+    except ValueError as error:
+        errors.append(f"archive private content cannot be canonicalized: {error}")
     return errors
 
 

@@ -10,6 +10,23 @@ const DEFAULT_LEGACY_POLICY = Object.freeze({
   incorrectPoints: 0
 });
 
+export const PRIVATE_MANIFEST_SCHEMA = 'amc-practice-private-form-v1';
+export const ARCHIVE_MANIFEST_SCHEMA = 'amc-practice-archive-form-v1';
+export const ARCHIVE_RELEASE_BATCH_SCHEMA = 'amc-practice-archive-release-batch-v1';
+const ARCHIVE_AMC12_ID = /^amc12-(\d{4})-[ab]$/;
+const EARLY_ARCHIVE_POLICY_VERSION = 'amc12-archive-2002-2006-v1';
+const LATE_ARCHIVE_POLICY_VERSION = 'amc12-archive-2007-plus-v1';
+
+// A release is deliberately all-or-nothing: the public AMC 12 archive is the
+// complete 2002--2025 A/B collection, not an arbitrary subset that happens to
+// have passed per-form validation. Keeping the expected IDs here lets both the
+// release importer and its unit tests share one audited definition.
+export const ARCHIVE_RELEASE_FORM_IDS = Object.freeze(
+  Array.from({ length: 24 }, (_, offset) => 2002 + offset)
+    .flatMap((year) => [`amc12-${year}-a`, `amc12-${year}-b`])
+);
+const ARCHIVE_RELEASE_FORM_ID_SET = new Set(ARCHIVE_RELEASE_FORM_IDS);
+
 function isScoreValue(value) {
   return typeof value === 'number'
     && Number.isFinite(value)
@@ -123,6 +140,60 @@ function strictPrivatePolicy(input, questionCount) {
   };
 }
 
+function strictArchivePolicy(input, questions) {
+  const policy = input.scoringPolicy;
+  if (!policy || typeof policy !== 'object' || Array.isArray(policy)) {
+    throw badRequest('INVALID_MANIFEST', 'Archive scoringPolicy must be an object.');
+  }
+  const version = asNonEmptyString(input.scoringPolicyVersion, 'scoringPolicyVersion', 100);
+  if (policy.version !== version) {
+    throw badRequest('INVALID_MANIFEST', 'Archive scoringPolicy.version must equal scoringPolicyVersion.');
+  }
+  for (const key of ['correct', 'blank', 'incorrect', 'maxScore']) {
+    if (!isScoreValue(policy[key])) {
+      throw badRequest('INVALID_MANIFEST', `Archive scoringPolicy.${key} must be a finite number from 0 to 1000 with at most four decimal places.`);
+    }
+  }
+  const scoredQuestionCount = questions.filter((question) => question.isScored).length;
+  if (policy.questionCount !== 25 || questions.length !== 25) {
+    throw badRequest('INVALID_MANIFEST', 'Archive scoringPolicy.questionCount and questions must both equal 25.');
+  }
+  if (policy.scoredQuestionCount !== scoredQuestionCount) {
+    throw badRequest('INVALID_MANIFEST', 'Archive scoringPolicy.scoredQuestionCount must match the scored questions.');
+  }
+  if (roundPoints(policy.maxScore) !== roundPoints(policy.correct * scoredQuestionCount)) {
+    throw badRequest('INVALID_MANIFEST', 'Archive scoringPolicy.maxScore must equal correct × scoredQuestionCount.');
+  }
+  // Archived AMC 12 papers retain the blank-answer rule from their contest
+  // era.  Enforce this at import as well as at content-build time, so a
+  // hand-edited release cannot silently score 2002--2006 blanks as 1.5.
+  const idMatch = typeof input.id === 'string' ? input.id.match(ARCHIVE_AMC12_ID) : null;
+  if (!idMatch || !ARCHIVE_RELEASE_FORM_ID_SET.has(input.id)) {
+    throw badRequest('INVALID_MANIFEST', 'Archive form id must be an AMC 12A/12B paper from 2002 through 2025.');
+  }
+  const year = Number(idMatch[1]);
+  const early = year <= 2006;
+  const expectedVersion = early ? EARLY_ARCHIVE_POLICY_VERSION : LATE_ARCHIVE_POLICY_VERSION;
+  const expectedBlank = early ? 2.5 : 1.5;
+  if (roundPoints(policy.correct) !== 6 || roundPoints(policy.incorrect) !== 0
+    || roundPoints(policy.blank) !== expectedBlank || version !== expectedVersion) {
+    throw badRequest(
+      'INVALID_MANIFEST',
+      `Archive AMC 12 ${year} must use ${expectedVersion}: 6 correct, ${expectedBlank} blank, 0 incorrect.`
+    );
+  }
+  return {
+    id: version,
+    version,
+    correctPoints: policy.correct,
+    blankPoints: policy.blank,
+    incorrectPoints: policy.incorrect,
+    questionCount: 25,
+    scoredQuestionCount,
+    maxScore: policy.maxScore
+  };
+}
+
 function normalizePrivateV1(input) {
   const required = [
     'schemaVersion', 'id', 'version', 'title', 'publicationStatus', 'isSynthetic', 'durationSeconds',
@@ -130,7 +201,7 @@ function normalizePrivateV1(input) {
   ];
   const missing = required.filter((key) => input[key] === undefined);
   if (missing.length) throw badRequest('INVALID_MANIFEST', `Private v1 manifest is missing: ${missing.join(', ')}.`);
-  if (input.schemaVersion !== 'amc-practice-private-form-v1') {
+  if (input.schemaVersion !== PRIVATE_MANIFEST_SCHEMA) {
     throw badRequest('INVALID_MANIFEST', 'Unsupported private manifest schemaVersion.');
   }
   const publicationStatus = input.publicationStatus;
@@ -229,6 +300,178 @@ function normalizePrivateV1(input) {
   };
 }
 
+function normalizeArchiveV1(input) {
+  const required = [
+    'schemaVersion', 'id', 'version', 'title', 'publicationStatus', 'isSynthetic', 'durationSeconds',
+    'scoringPolicyVersion', 'scoringPolicy', 'questionBundleHash', 'contentHash', 'manifestHash', 'provenance',
+    'archiveNotice', 'questions'
+  ];
+  const missing = required.filter((key) => input[key] === undefined);
+  if (missing.length) throw badRequest('INVALID_MANIFEST', `Archive manifest is missing: ${missing.join(', ')}.`);
+  const allowedTopLevel = new Set(required);
+  const unexpectedTopLevel = Object.keys(input).filter((key) => !allowedTopLevel.has(key));
+  if (unexpectedTopLevel.length) {
+    throw badRequest('INVALID_MANIFEST', `Archive manifest has unsupported fields: ${unexpectedTopLevel.join(', ')}.`);
+  }
+  if (input.schemaVersion !== ARCHIVE_MANIFEST_SCHEMA) {
+    throw badRequest('INVALID_MANIFEST', 'Unsupported archive manifest schemaVersion.');
+  }
+  if (typeof input.id !== 'string' || !ARCHIVE_RELEASE_FORM_ID_SET.has(input.id)) {
+    throw badRequest('INVALID_MANIFEST', 'Archive form id must be an AMC 12A/12B paper from 2002 through 2025.');
+  }
+  if (input.publicationStatus !== 'archive-practice' || input.isSynthetic !== false) {
+    throw badRequest('INVALID_MANIFEST', 'Archive manifests must be non-synthetic archive-practice releases.');
+  }
+  if (input.durationSeconds !== 4_500) {
+    throw badRequest('INVALID_MANIFEST', 'Archive manifest durationSeconds must be exactly 4500.');
+  }
+  for (const key of ['questionBundleHash', 'contentHash', 'manifestHash']) {
+    if (!isLowerSha256(input[key])) throw badRequest('INVALID_MANIFEST', `Archive ${key} must be a lowercase SHA-256 hash.`);
+  }
+  if (!input.provenance || typeof input.provenance !== 'object' || Array.isArray(input.provenance)) {
+    throw badRequest('INVALID_MANIFEST', 'Archive provenance must be an object.');
+  }
+  const authorization = input.provenance.releaseAuthorization;
+  if (!authorization || typeof authorization !== 'object' || Array.isArray(authorization)
+    || authorization.status !== 'authorized-archive-practice') {
+    throw badRequest('INVALID_MANIFEST', 'Archive provenance requires authorized-archive-practice releaseAuthorization.');
+  }
+  for (const key of ['authorizedBy', 'authorizedAt', 'evidence']) {
+    asNonEmptyString(authorization[key], `Archive releaseAuthorization.${key}`, 2_000);
+  }
+  const answerKey = input.provenance.answerKey;
+  if (!answerKey || typeof answerKey !== 'object' || Array.isArray(answerKey)) {
+    throw badRequest('INVALID_MANIFEST', 'Archive provenance requires answerKey metadata.');
+  }
+  for (const key of ['catalogHash', 'catalogSchemaVersion', 'sourceUrl', 'canonicalAnswerKeyUrl']) {
+    if (key === 'catalogHash') {
+      if (!isLowerSha256(answerKey[key])) throw badRequest('INVALID_MANIFEST', 'Archive answerKey.catalogHash must be a lowercase SHA-256 hash.');
+    } else {
+      asNonEmptyString(answerKey[key], `Archive answerKey.${key}`, 2_000);
+    }
+  }
+  const media = input.provenance.media;
+  if (!media || typeof media !== 'object' || Array.isArray(media)) {
+    throw badRequest('INVALID_MANIFEST', 'Archive provenance requires media metadata.');
+  }
+  asNonEmptyString(media.manifestSchemaVersion, 'Archive media.manifestSchemaVersion', 200);
+  if (!isLowerSha256(media.manifestSha256)) {
+    throw badRequest('INVALID_MANIFEST', 'Archive media.manifestSha256 must be a lowercase SHA-256 hash.');
+  }
+  if (!Array.isArray(media.assetIds) || media.assetIds.some((assetId) => typeof assetId !== 'string' || assetId.trim() === '')) {
+    throw badRequest('INVALID_MANIFEST', 'Archive media.assetIds must be an array of non-empty strings.');
+  }
+  const archiveNotice = asNonEmptyString(input.archiveNotice, 'archiveNotice', 2_000);
+  if (!Array.isArray(input.questions) || input.questions.length !== 25) {
+    throw badRequest('INVALID_MANIFEST', 'Archive manifest must contain exactly 25 questions.');
+  }
+  const questions = input.questions.map((question, index) => {
+    const number = index + 1;
+    if (!question || typeof question !== 'object' || Array.isArray(question) || question.number !== number) {
+      throw badRequest('INVALID_MANIFEST', `Archive question ${number} must occur in sequential order.`);
+    }
+    const allowed = new Set([
+      'number', 'sourceRef', 'promptMarkdown', 'choices', 'correctOption', 'acceptedOptions', 'isScored', 'solutionMarkdown'
+    ]);
+    const unexpected = Object.keys(question).filter((key) => !allowed.has(key));
+    if (unexpected.length) {
+      throw badRequest('INVALID_MANIFEST', `Archive question ${number} has unsupported fields: ${unexpected.join(', ')}.`);
+    }
+    const sourceRef = question.sourceRef;
+    if (!sourceRef || typeof sourceRef !== 'object' || Array.isArray(sourceRef)
+      || Object.keys(sourceRef).some((key) => !['path', 'sha256'].includes(key))
+      || !asNonEmptyString(sourceRef.path, `Archive question ${number} sourceRef.path`, 1_000)
+      || !isLowerSha256(sourceRef.sha256)) {
+      throw badRequest('INVALID_MANIFEST', `Archive question ${number} needs a source path and lowercase SHA-256.`);
+    }
+    if (typeof question.isScored !== 'boolean') {
+      throw badRequest('INVALID_MANIFEST', `Archive question ${number} isScored must be boolean.`);
+    }
+    let correctOption = question.correctOption;
+    let acceptedOptions;
+    if (question.isScored) {
+      if (!isOption(correctOption)) {
+        throw badRequest('INVALID_MANIFEST', `Archive question ${number} correctOption must be A-E when scored.`);
+      }
+      const rawAccepted = question.acceptedOptions === undefined ? [correctOption] : question.acceptedOptions;
+      if (!Array.isArray(rawAccepted) || rawAccepted.length === 0 || rawAccepted.some((option) => !isOption(option))) {
+        throw badRequest('INVALID_MANIFEST', `Archive question ${number} acceptedOptions must be one or more A-E options.`);
+      }
+      const accepted = new Set(rawAccepted);
+      if (accepted.size !== rawAccepted.length || !accepted.has(correctOption)) {
+        throw badRequest('INVALID_MANIFEST', `Archive question ${number} acceptedOptions must be unique and include correctOption.`);
+      }
+      acceptedOptions = OPTIONS.filter((option) => accepted.has(option));
+    } else {
+      if (correctOption !== null) {
+        throw badRequest('INVALID_MANIFEST', `Archive question ${number} must have null correctOption when unscored.`);
+      }
+      if (question.acceptedOptions !== undefined
+        && (!Array.isArray(question.acceptedOptions) || question.acceptedOptions.length !== 0)) {
+        throw badRequest('INVALID_MANIFEST', `Archive question ${number} must not define acceptedOptions when unscored.`);
+      }
+      acceptedOptions = [];
+    }
+    return {
+      number,
+      promptMarkdown: asNonEmptyString(question.promptMarkdown, `Archive question ${number} promptMarkdown`),
+      choices: normalizeChoices(question.choices, number),
+      correctOption,
+      acceptedOptions,
+      isScored: question.isScored,
+      solutionMarkdown: asNonEmptyString(question.solutionMarkdown, `Archive question ${number} solutionMarkdown`)
+    };
+  });
+  const expectedPrivateHash = sha256Canonical(Object.fromEntries(Object.entries(input).filter(([key]) => key !== 'manifestHash')));
+  if (input.manifestHash !== expectedPrivateHash) {
+    throw badRequest('INVALID_MANIFEST', 'Archive manifestHash does not match canonical private content.');
+  }
+  const publicProjection = {
+    schemaVersion: 'amc-practice-public-form-v1',
+    id: input.id,
+    version: input.version,
+    title: input.title,
+    publicationStatus: input.publicationStatus,
+    isSynthetic: input.isSynthetic,
+    durationSeconds: input.durationSeconds,
+    scoringPolicyVersion: input.scoringPolicyVersion,
+    scoringPolicy: input.scoringPolicy,
+    questionBundleHash: input.questionBundleHash,
+    archiveNotice,
+    questions: input.questions.map((question) => ({
+      number: question.number,
+      promptMarkdown: question.promptMarkdown,
+      choices: question.choices,
+      isScored: question.isScored
+    }))
+  };
+  publicProjection.contentHash = sha256Canonical(publicProjection);
+  if (input.contentHash !== publicProjection.contentHash) {
+    throw badRequest('INVALID_MANIFEST', 'Archive contentHash does not match its canonical public projection.');
+  }
+  return {
+    id: asNonEmptyString(input.id, 'id', 160),
+    version: asNonEmptyString(input.version, 'version', 100),
+    title: asNonEmptyString(input.title, 'title', 300),
+    durationMs: input.durationSeconds * 1_000,
+    publishEligible: true,
+    developmentPublishEligible: false,
+    published: false,
+    testOnly: false,
+    practiceKind: 'archive',
+    archiveNotice,
+    publicationStatus: input.publicationStatus,
+    sourceSchemaVersion: input.schemaVersion,
+    contentHash: input.contentHash,
+    questionBundleHash: input.questionBundleHash,
+    sourceManifestHash: input.manifestHash,
+    provenance: structuredClone({ ...input.provenance, archiveNotice }),
+    scoringPolicy: strictArchivePolicy(input, questions),
+    questions,
+    manifestHash: input.manifestHash
+  };
+}
+
 /**
  * Normalizes the content-pipeline contract. `published` deliberately defaults
  * to false: importer callers must explicitly opt in to publishing verified data.
@@ -237,7 +480,8 @@ export function normalizeManifest(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     throw badRequest('INVALID_MANIFEST', 'Manifest must be a JSON object.');
   }
-  if (input.schemaVersion === 'amc-practice-private-form-v1') return normalizePrivateV1(input);
+  if (input.schemaVersion === PRIVATE_MANIFEST_SCHEMA) return normalizePrivateV1(input);
+  if (input.schemaVersion === ARCHIVE_MANIFEST_SCHEMA) return normalizeArchiveV1(input);
   const id = asNonEmptyString(input.id ?? input.formId, 'id', 160);
   const version = asNonEmptyString(String(input.version ?? '1'), 'version', 100);
   const title = asNonEmptyString(input.title ?? id, 'title', 300);
@@ -283,6 +527,125 @@ export function normalizeManifest(input) {
     scoringPolicy: normalizePolicy(input.scoringPolicy),
     questions
   };
+}
+
+/**
+ * Validate the one production archive release accepted by
+ * import-archive-release.js. Per-form validation alone is insufficient here:
+ * it would allow a partial catalog or a mixture of independently built
+ * revisions to be published together.
+ *
+ * The return value intentionally remains the original manifests. The service
+ * normalizes them again immediately before its transactional import, keeping
+ * authorization and storage behavior on the same production path as every
+ * other importer.
+ */
+export function validateArchiveReleaseBatch(input) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    throw badRequest('INVALID_ARCHIVE_RELEASE', 'Archive release payload must be a JSON object.');
+  }
+  const allowedTopLevel = new Set(['schemaVersion', 'forms']);
+  const unexpectedTopLevel = Object.keys(input).filter((key) => !allowedTopLevel.has(key));
+  if (unexpectedTopLevel.length) {
+    throw badRequest(
+      'INVALID_ARCHIVE_RELEASE',
+      `Archive release has unsupported fields: ${unexpectedTopLevel.join(', ')}.`
+    );
+  }
+  if (input.schemaVersion !== ARCHIVE_RELEASE_BATCH_SCHEMA) {
+    throw badRequest('INVALID_ARCHIVE_RELEASE', `Expected ${ARCHIVE_RELEASE_BATCH_SCHEMA}.`);
+  }
+  if (!Array.isArray(input.forms) || input.forms.length !== ARCHIVE_RELEASE_FORM_IDS.length) {
+    throw badRequest(
+      'INVALID_ARCHIVE_RELEASE',
+      `Archive release must contain exactly ${ARCHIVE_RELEASE_FORM_IDS.length} forms.`
+    );
+  }
+
+  const seenIds = new Set();
+  let releaseVersion = null;
+  let answerKeyCatalogHash = null;
+  let answerKeyCatalogSchemaVersion = null;
+  let mediaManifestHash = null;
+  let mediaManifestSchemaVersion = null;
+  for (const [index, manifest] of input.forms.entries()) {
+    if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) {
+      throw badRequest('INVALID_ARCHIVE_RELEASE', `Archive form at index ${index} must be an object.`);
+    }
+    if (manifest.schemaVersion !== ARCHIVE_MANIFEST_SCHEMA) {
+      throw badRequest(
+        'INVALID_ARCHIVE_RELEASE',
+        `Archive form ${index + 1} must use ${ARCHIVE_MANIFEST_SCHEMA}.`
+      );
+    }
+    const id = manifest.id;
+    if (typeof id !== 'string' || !ARCHIVE_RELEASE_FORM_ID_SET.has(id)) {
+      throw badRequest('INVALID_ARCHIVE_RELEASE', `Archive form ${index + 1} has an unexpected AMC 12 id.`);
+    }
+    if (seenIds.has(id)) {
+      throw badRequest('DUPLICATE_ARCHIVE_FORM', `Archive release contains ${id} more than once.`);
+    }
+    seenIds.add(id);
+
+    if (typeof manifest.version !== 'string' || manifest.version.trim() === '' || manifest.version.length > 100) {
+      throw badRequest('INVALID_ARCHIVE_RELEASE', `Archive form ${id} needs a non-empty release version.`);
+    }
+    if (releaseVersion === null) {
+      releaseVersion = manifest.version;
+    } else if (manifest.version !== releaseVersion) {
+      throw badRequest(
+        'MIXED_ARCHIVE_RELEASE_VERSION',
+        `Archive release must use one version; ${id} differs from ${releaseVersion}.`
+      );
+    }
+
+    // Re-run the strict private/public hash and archive-policy checks here,
+    // before opening a database connection. This is intentionally not a
+    // shallow schema check.
+    const normalized = normalizeManifest(manifest);
+    if (normalized.sourceSchemaVersion !== ARCHIVE_MANIFEST_SCHEMA || normalized.practiceKind !== 'archive') {
+      throw badRequest('INVALID_ARCHIVE_RELEASE', `Archive form ${id} is not a validated archive-practice manifest.`);
+    }
+    const answerKey = normalized.provenance.answerKey;
+    const media = normalized.provenance.media;
+    if (answerKeyCatalogHash === null) {
+      answerKeyCatalogHash = answerKey.catalogHash;
+      answerKeyCatalogSchemaVersion = answerKey.catalogSchemaVersion;
+      mediaManifestHash = media.manifestSha256;
+      mediaManifestSchemaVersion = media.manifestSchemaVersion;
+    } else {
+      if (answerKey.catalogHash !== answerKeyCatalogHash) {
+        throw badRequest(
+          'MIXED_ARCHIVE_ANSWER_KEY_CATALOG',
+          `Archive release must use one answer-key catalog; ${id} differs from the first form.`
+        );
+      }
+      if (answerKey.catalogSchemaVersion !== answerKeyCatalogSchemaVersion) {
+        throw badRequest(
+          'MIXED_ARCHIVE_ANSWER_KEY_SCHEMA',
+          `Archive release must use one answer-key catalog schema; ${id} differs from the first form.`
+        );
+      }
+      if (media.manifestSha256 !== mediaManifestHash) {
+        throw badRequest(
+          'MIXED_ARCHIVE_MEDIA_MANIFEST',
+          `Archive release must use one media manifest; ${id} differs from the first form.`
+        );
+      }
+      if (media.manifestSchemaVersion !== mediaManifestSchemaVersion) {
+        throw badRequest(
+          'MIXED_ARCHIVE_MEDIA_SCHEMA',
+          `Archive release must use one media manifest schema; ${id} differs from the first form.`
+        );
+      }
+    }
+  }
+
+  const missing = ARCHIVE_RELEASE_FORM_IDS.filter((id) => !seenIds.has(id));
+  if (missing.length) {
+    throw badRequest('PARTIAL_ARCHIVE_RELEASE', `Archive release is missing: ${missing.join(', ')}.`);
+  }
+  return input.forms;
 }
 
 export function manifestHash(manifest) {

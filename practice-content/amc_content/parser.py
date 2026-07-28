@@ -16,13 +16,92 @@ from .model import Issue, ParsedProblem
 
 _H1_RE = re.compile(r"^#\s+(.+?)\s*$")
 _H2_RE = re.compile(r"^##\s+(.+?)\s*$")
-_PROBLEM_HEADING_RE = re.compile(r"^problem(?:\s+\d+)?$", re.IGNORECASE)
+_H3_RE = re.compile(r"^###\s+(.+?)\s*$")
+_PROBLEM_HEADING_RE = re.compile(r"^problems?(?:\s+\d+)?$", re.IGNORECASE)
 _CHOICE_RE = re.compile(
-    r"\\textbf\s*\{\s*\(\s*([A-Za-z])\s*\)\s*[^}]*\}", re.IGNORECASE
+    r"""
+    (?:
+        # Most converted source uses a TeX text-style command around either
+        # just the `(A)` label or the whole `(A) choice` fragment.  The
+        # closing brace is deliberately not consumed here: `_extract_choices`
+        # needs to distinguish those two layouts before it cuts the value.
+        \\(?:textbf|mathrm|textrm|text|bf|rm)\s*(?:\$\s*)?\{
+            \s*\(\s*(?P<styled>[A-Za-z])\s*\)
+        |
+        # Older AoPS pages instead write `({\\mathrm {A}})`.  This complete
+        # label is safe to consume because its type-setting brace ends before
+        # the option value begins.
+        \(\s*\\(?:textbf|mathrm|textrm|text|bf|rm)\s*\{
+            \s*(?P<outer>[A-Za-z])\s*\}\s*\)
+        |
+        # A handful of old pages omit parentheses for option A but retain the
+        # normal `(B)` through `(E)` sequence. Require a visible choice-row
+        # separator so ordinary bold variables never become answer markers.
+        \\(?:textbf|mathrm|textrm|text|bf|rm)\s*\{
+            \s*(?P<bare>[A-Za-z])\s*\}(?=\s*(?:[-—]|\\qquad|\\quad))
+    )
+    """,
+    re.IGNORECASE | re.VERBOSE,
 )
 _IMAGE_RE = re.compile(r"!\[[^\]]*\]\(([^)\s]+)(?:\s+[^)]*)?\)")
 _HTML_IMAGE_RE = re.compile(r"<img\b[^>]*?\bsrc\s*=\s*[\"']([^\"']+)[\"']", re.IGNORECASE)
+# AoPS-derived Markdown sometimes carries a visual as a normal-looking wiki
+# link, e.g. ``[File:diagram.png](https://.../File:diagram.png)``.  Markdown
+# itself does not mark that as an image, but treating it as a harmless text
+# link would release an incomplete question.  Keep it in the same media gate
+# as ordinary image syntax so archive importers must mirror it first.
+_AOPS_MEDIA_LINK_RE = re.compile(
+    r"\[(?:file|image):[^\]]+\]\(([^)\s]+)(?:\s+[^)]*)?\)",
+    re.IGNORECASE,
+)
+# Converted wiki syntax may discard the `File:` label and leave a visual link
+# such as `[300px|center](.../index.php/File:diagram.png)`.  The destination,
+# rather than the visible label, identifies it as required question media.
+_AOPS_WIKI_IMAGE_LINK_RE = re.compile(
+    r"\[[^\]]*\]\((https?://artofproblemsolving\.com/wiki/index\.php/(?:file|image):[^)\s]+)(?:\s+[^)]*)?\)",
+    re.IGNORECASE,
+)
 _ASY_FENCE_RE = re.compile(r"^```\s*(?:asy|asymptote)\b", re.IGNORECASE | re.MULTILINE)
+_FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
+
+
+def _headings_outside_fences(lines: list[str], heading_pattern: re.Pattern[str]):
+    """Yield requested Markdown headings while ignoring literal source code blocks.
+
+    A few historical Asymptote snippets contain lines beginning with ``##``.
+    Treating those as Markdown headings truncates a question before its option
+    row, which is worse than reporting an unrendered diagram: it silently
+    changes what a student would be asked.  Fence tracking is intentionally
+    small and Markdown-compatible (matching backtick/tilde fences only).
+    """
+
+    active_fence: tuple[str, int] | None = None
+    for index, line in enumerate(lines):
+        fence_match = _FENCE_RE.match(line)
+        if fence_match:
+            marker = fence_match.group(1)
+            if active_fence is None:
+                active_fence = (marker[0], len(marker))
+            elif marker[0] == active_fence[0] and len(marker) >= active_fence[1]:
+                active_fence = None
+            continue
+        if active_fence is not None:
+            continue
+        match = heading_pattern.match(line)
+        if match:
+            yield index, match
+
+
+def _h2_headings_outside_fences(lines: list[str]):
+    """Yield level-two headings while ignoring literal source code blocks."""
+
+    yield from _headings_outside_fences(lines, _H2_RE)
+
+
+def _h3_headings_outside_fences(lines: list[str]):
+    """Yield level-three headings while ignoring literal source code blocks."""
+
+    yield from _headings_outside_fences(lines, _H3_RE)
 
 
 def _heading_kind(heading: str) -> str:
@@ -31,7 +110,7 @@ def _heading_kind(heading: str) -> str:
     normalized = heading.strip().lower()
     if _PROBLEM_HEADING_RE.fullmatch(normalized) or normalized.startswith("problem "):
         return "problem"
-    if normalized == "diagram" or normalized.startswith("figure"):
+    if normalized in {"diagram", "graph"} or normalized.startswith("figure"):
         return "question-support"
     # A video can be useful archival material but is never the canonical
     # written explanation sent to the post-submission practice view.  Some
@@ -39,6 +118,11 @@ def _heading_kind(heading: str) -> str:
     # rather than matching the generic "solution" test below.
     if "video" in normalized:
         return "video"
+    # Notes such as "Note Regarding Solutions" are source metadata, not a
+    # second student prompt.  Keep them out of the question without treating a
+    # known archival disclaimer as a malformed exam question.
+    if normalized.startswith("note") or normalized in {"a brief note", "hints and method of attack"}:
+        return "metadata"
     if "solution" in normalized or normalized.startswith("answer"):
         return "solution"
     if normalized.startswith(("why ", "see also", "related")):
@@ -50,9 +134,8 @@ def _find_problem_bounds(lines: list[str], issues: list[Issue]) -> tuple[int | N
     """Return (problem_heading, prompt_end, first_written_solution) indexes."""
 
     problem_start: int | None = None
-    for index, line in enumerate(lines):
-        match = _H2_RE.match(line)
-        if match and _PROBLEM_HEADING_RE.fullmatch(match.group(1).strip()):
+    for index, match in _h2_headings_outside_fences(lines):
+        if _PROBLEM_HEADING_RE.fullmatch(match.group(1).strip()):
             problem_start = index
             break
 
@@ -63,9 +146,8 @@ def _find_problem_bounds(lines: list[str], issues: list[Issue]) -> tuple[int | N
     prompt_end = len(lines)
     prompt_boundary_found = False
     first_solution_start: int | None = None
-    for index in range(problem_start + 1, len(lines)):
-        match = _H2_RE.match(lines[index])
-        if not match:
+    for index, match in _h2_headings_outside_fences(lines):
+        if index <= problem_start:
             continue
         kind = _heading_kind(match.group(1))
         if kind == "question-support" and not prompt_boundary_found:
@@ -80,6 +162,14 @@ def _find_problem_bounds(lines: list[str], issues: list[Issue]) -> tuple[int | N
         if kind == "video":
             # Do not expose pre-solution video links in the question prompt;
             # keep scanning for a written solution section instead.
+            if not prompt_boundary_found:
+                prompt_end = index
+                prompt_boundary_found = True
+            continue
+        if kind == "metadata":
+            # Do not leak a community-maintenance note into the timed prompt;
+            # unlike editorial material, it is not a source ambiguity by
+            # itself.  Continue looking for a written explanation.
             if not prompt_boundary_found:
                 prompt_end = index
                 prompt_boundary_found = True
@@ -153,11 +243,34 @@ def _first_h2_section(lines: list[str], start: int) -> list[str]:
     """
 
     end = len(lines)
-    for index in range(start + 1, len(lines)):
-        if _H2_RE.match(lines[index]):
+    for index, _ in _h2_headings_outside_fences(lines):
+        if index > start:
             end = index
             break
+    heading_match = _H2_RE.match(lines[start])
+    heading = heading_match.group(1).strip().lower() if heading_match else ""
+    if heading == "solutions":
+        # A plural H2 is an AoPS container, not itself a written solution. It
+        # often holds several H3 alternatives, and later community variants
+        # can be inconsistent. Keep the first actual written subsolution only
+        # (while preserving any H4 detail inside it), matching the stated
+        # first-solution display policy.
+        h3_solutions = [
+            index
+            for index, match in _h3_headings_outside_fences(lines)
+            if start < index < end and _heading_kind(match.group(1)) == "solution"
+        ]
+        if h3_solutions:
+            first = h3_solutions[0]
+            next_h3 = next((index for index in h3_solutions[1:] if index > first), end)
+            return lines[first:next_h3]
     return lines[start:end]
+
+
+def _choice_letter(marker: re.Match[str]) -> str:
+    """Return the A--E marker captured by either supported legacy layout."""
+
+    return (marker.group("styled") or marker.group("outer") or marker.group("bare")).upper()
 
 
 def _choice_run(body: str) -> tuple[list[re.Match[str]], list[Issue]]:
@@ -170,12 +283,12 @@ def _choice_run(body: str) -> tuple[list[re.Match[str]], list[Issue]]:
 
     best: list[re.Match[str]] = []
     for start, marker in enumerate(markers):
-        if marker.group(1).upper() != "A":
+        if _choice_letter(marker) != "A":
             continue
         run = [marker]
         expected = ord("B")
         for next_marker in markers[start + 1 :]:
-            letter = next_marker.group(1).upper()
+            letter = _choice_letter(next_marker)
             if letter != chr(expected):
                 break
             run.append(next_marker)
@@ -185,7 +298,7 @@ def _choice_run(body: str) -> tuple[list[re.Match[str]], list[Issue]]:
 
     if not best:
         return [], [Issue("choice-order-invalid", "Could not find choices beginning with A in alphabetical order.")]
-    letters = "".join(marker.group(1).upper() for marker in best)
+    letters = "".join(_choice_letter(marker) for marker in best)
     if letters != "ABCDE":
         issues.append(
             Issue(
@@ -200,10 +313,110 @@ def _trim_choice(value: str, *, math_block: bool) -> str:
     value = value.strip()
     # Separators belong to the old single-line answer layout, not to a choice.
     value = re.sub(r"(?:(?:\\qquad|\\quad|~)\s*)+$", "", value).strip()
+    value = re.sub(r"^(?:(?:\\qquad|\\quad|~)\s*)+", "", value).strip()
+    if not math_block:
+        # Some converted rows open a fresh inline math span for every label
+        # and leave an extra closing ``$`` after the final ``\\qquad``. It is
+        # row punctuation, not part of the choice value (for example,
+        # ``\\textbf{(E) }135 \\qquad$$``). Strip it before normalizing the
+        # actual value, otherwise the final option and the timed prompt both
+        # receive malformed TeX.
+        value = re.sub(r"(?:(?:\\qquad|\\quad|~)\s*)+(?:\$\s*)+$", "", value).strip()
+        # The next independently-delimited option often starts with a dollar
+        # delimiter on a new line. Its opener is included in the preceding
+        # value slice because the marker itself begins after that delimiter.
+        # Remove only terminal delimiter runs; interior math remains.
+        value = re.sub(r"(?:\$\s*)+$", "", value).strip()
+    # A line-break command immediately before the next label's opening `$`
+    # belongs to the option-row layout, not to this choice.
+    value = re.sub(r"\\\\\s*\$$", "", value).strip()
+    if not math_block and value.startswith("$"):
+        # Older pages often put only the `(A)` label in one math span and its
+        # value in the next one: ``$\\mathrm{(A)}$\\ $\\text{one}$``. The
+        # first dollar is the label's closing delimiter, not part of the
+        # choice. Normalize the remaining fragment into one safe math span.
+        value = value[1:].lstrip()
+        value = re.sub(r"^\\\s+", "", value).strip()
+        if value.startswith("$"):
+            # The value itself is already a math fragment. Some legacy rows
+            # omit its closing delimiter because the next label opens a new
+            # span; complete it deterministically rather than nesting `$$`.
+            return value if value.count("$") % 2 == 0 else f"{value}$"
+        if value.endswith("$"):
+            value = value[:-1].rstrip()
+        return f"${value}$" if value else ""
+    # A legacy ``\\mathrm{(A) \\ 48 }`` layout keeps the value inside the
+    # typesetting command. The caller removes the matching outer brace; this
+    # remaining TeX-space escape is presentation-only and should not become a
+    # malformed leading command in the structured option.
+    value = re.sub(r"^\\\s+", "", value).strip()
     if math_block:
         value = value.strip().strip("$").strip()
         return f"${value}$" if value else ""
     return value
+
+
+def _matching_brace(text: str, opening: int) -> int | None:
+    """Return the index of the closing brace paired with ``opening``."""
+
+    if opening < 0 or opening >= len(text) or text[opening] != "{":
+        return None
+    depth = 1
+    for index in range(opening + 1, len(text)):
+        if text[index] == "{":
+            depth += 1
+        elif text[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return index
+    return None
+
+
+def _styled_marker_value_bounds(body: str, marker: re.Match[str], next_start: int) -> tuple[int, int]:
+    """Find a choice's value bounds without swallowing a legacy style brace.
+
+    ``\\textbf{(A) } 1`` has a style command around the label only, while
+    ``\\mathrm{(A) \\ 1 }`` has one around label *and* value. Both appear in
+    the archive. Using the matching brace lets us support each form without
+    guessing from whitespace or accidentally retaining a literal ``}`` in a
+    student-visible option.
+    """
+
+    start = marker.end()
+    if marker.group("styled") is None:
+        return start, next_start
+
+    opening = body.find("{", marker.start(), marker.end())
+    closing = _matching_brace(body, opening)
+    if closing is None or closing >= next_start:
+        return start, next_start
+
+    style_tail = body[start:closing]
+    # ``\\mathrm{(A) \\ }`` is a label-only command: TeX's escaped space is
+    # not the option value. Conversely ``\\mathrm{(A) \\ 48 }`` retains 48
+    # after removing formatting-only spacing.
+    visible_tail = re.sub(r"(?:\\\s+|~|\s)+", "", style_tail)
+    if visible_tail:
+        # The option's payload lives inside the style command.
+        return start, closing
+    # The style command contains only `(A)`; skip its closing brace and retain
+    # the ordinary value that follows it.
+    return closing + 1, next_start
+
+
+def _final_non_math_choice_end(body: str, marker_end: int) -> int:
+    """Return the end of the final independently-delimited choice row.
+
+    Historical exports commonly put each option in its own inline math span.
+    The final option is sometimes followed immediately by a `## Diagram`
+    rather than a blank paragraph, so using the next blank line would absorb
+    the diagram into choice E. In this layout every option row is line-local;
+    retaining only the marker's line removes the option row without deleting
+    following question support.
+    """
+
+    line_end = body.find("\n", marker_end)
+    return len(body) if line_end < 0 else line_end
 
 
 def _extract_choices(body: str, issues: list[Issue]) -> tuple[str, dict[str, str]]:
@@ -216,31 +429,56 @@ def _extract_choices(body: str, issues: list[Issue]) -> tuple[str, dict[str, str
     # before A and ends directly after E. Preserve that mathematical context for
     # each individual option in the structured artifact.
     before = body[: run[0].start()].rstrip()
-    opening_math = len(before) - 1 if before.endswith("$") else -1
-    closing_math = body.find("$", run[-1].end()) if opening_math >= 0 else -1
-    math_block = opening_math >= 0 and closing_math >= run[-1].end()
+    if before.endswith("$$"):
+        opening_math = len(before) - 2
+        closing_math = body.find("$$", run[-1].end())
+        math_block = closing_math >= run[-1].end()
+        closing_width = 2
+    elif before.endswith("$"):
+        opening_math = len(before) - 1
+        closing_math = body.find("$", run[-1].end())
+        # A single `$` at every option label means five independent inline
+        # spans, not one option row. Only call it a shared math block when no
+        # extra dollar delimiter occurs between the A and E labels.
+        math_block = (
+            closing_math >= run[-1].end()
+            and "$" not in body[run[0].end() : run[-1].start()]
+        )
+        closing_width = 1
+    else:
+        opening_math = -1
+        closing_math = -1
+        math_block = False
+        closing_width = 0
     choices: dict[str, str] = {}
+    final_choice_end = len(body)
     for index, marker in enumerate(run):
         if index + 1 < len(run):
-            end = run[index + 1].start()
+            next_start = run[index + 1].start()
         elif math_block:
-            end = closing_math
+            next_start = closing_math
         else:
-            # Non-math option rows are uncommon in the converted corpus. Stop at
-            # their first blank line instead of accidentally absorbing prompt
-            # prose that follows a malformed choice row.
-            paragraph_end = body.find("\n\n", marker.end())
-            end = paragraph_end if paragraph_end >= 0 else len(body)
+            next_start = _final_non_math_choice_end(body, marker.end())
+            final_choice_end = next_start
         # Limit final choice to the closing math delimiter / immediately trailing
         # whitespace; prompt text after a malformed row should not become E.
-        raw = body[marker.end() : end]
-        letter = marker.group(1).upper()
+        value_start, value_end = _styled_marker_value_bounds(body, marker, next_start)
+        raw = body[value_start:value_end]
+        letter = _choice_letter(marker)
         choices[letter] = _trim_choice(raw, math_block=math_block)
 
-    prompt = body[: run[0].start()] + body[run[-1].end() :]
     if math_block:
         # Remove the now-empty outer delimiters surrounding the old answer row.
-        prompt = body[:opening_math] + body[closing_math + 1 :]
+        prompt = body[:opening_math] + body[closing_math + closing_width :]
+    else:
+        # In independently-delimited rows the opening dollar immediately before
+        # choice A is not part of the question. Remove the complete choice E
+        # line too (rather than just its label), which prevents a duplicate
+        # final option from appearing below the timed stem.
+        prompt_start = run[0].start()
+        while prompt_start > 0 and body[prompt_start - 1] == "$":
+            prompt_start -= 1
+        prompt = body[:prompt_start] + body[final_choice_end:]
     prompt = normalize_markdown(prompt)
 
     if set(choices) != set("ABCDE"):
@@ -261,8 +499,17 @@ def _collect_media(prompt: str, *, source_file: Path, source_root: Path, issues:
             )
         )
 
-    for match in list(_IMAGE_RE.finditer(prompt)) + list(_HTML_IMAGE_RE.finditer(prompt)):
+    seen_references: set[str] = set()
+    for match in (
+        list(_IMAGE_RE.finditer(prompt))
+        + list(_HTML_IMAGE_RE.finditer(prompt))
+        + list(_AOPS_MEDIA_LINK_RE.finditer(prompt))
+        + list(_AOPS_WIKI_IMAGE_LINK_RE.finditer(prompt))
+    ):
         reference = match.group(1)
+        if reference in seen_references:
+            continue
+        seen_references.add(reference)
         entry = {"kind": "image", "reference": reference}
         if re.match(r"https?://", reference, re.IGNORECASE):
             entry["status"] = "remote-unpinned"

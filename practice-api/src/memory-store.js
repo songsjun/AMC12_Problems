@@ -68,6 +68,27 @@ export class MemoryStore {
   }
 
   async importForm(form, { publish = false, allowTestOnlyPublish = false } = {}) {
+    return this.#withGlobalLock(() => this.#importFormUnlocked(form, { publish, allowTestOnlyPublish }));
+  }
+
+  /** Import a prevalidated release atomically, matching PostgreSQL's batch transaction. */
+  async importForms(forms, { publish = false, allowTestOnlyPublish = false } = {}) {
+    return this.#withGlobalLock(async () => {
+      const previousForms = new Map([...this.forms].map(([key, value]) => [key, clone(value)]));
+      try {
+        const stored = [];
+        for (const form of forms) {
+          stored.push(await this.#importFormUnlocked(form, { publish, allowTestOnlyPublish }));
+        }
+        return stored;
+      } catch (error) {
+        this.forms = previousForms;
+        throw error;
+      }
+    });
+  }
+
+  async #importFormUnlocked(form, { publish = false, allowTestOnlyPublish = false } = {}) {
     const key = formKey(form.id, form.version);
     const existing = this.forms.get(key);
     if (existing && existing.manifestHash !== form.manifestHash) {

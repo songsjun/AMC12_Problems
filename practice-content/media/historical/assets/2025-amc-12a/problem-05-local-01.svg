@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-labelledby="title desc">
+  <title id="title">Nested squares with alternating shaded regions</title>
+  <desc id="desc">Concentric squares, with the bands between them alternately shaded.</desc>
+  <rect width="320" height="320" fill="#ffffff"/>
+  <rect x="28" y="28" width="264" height="264" fill="#dceeff" stroke="#1f3b5b" stroke-width="2"/>
+  <rect x="52" y="52" width="216" height="216" fill="#ffffff" stroke="#1f3b5b" stroke-width="2"/>
+  <rect x="73" y="73" width="174" height="174" fill="#dceeff" stroke="#1f3b5b" stroke-width="2"/>
+  <rect x="91" y="91" width="138" height="138" fill="#ffffff" stroke="#1f3b5b" stroke-width="2"/>
+  <rect x="106" y="106" width="108" height="108" fill="#dceeff" stroke="#1f3b5b" stroke-width="2"/>
+  <rect x="119" y="119" width="82" height="82" fill="#ffffff" stroke="#1f3b5b" stroke-width="2"/>
+  <rect x="130" y="130" width="60" height="60" fill="#dceeff" stroke="#1f3b5b" stroke-width="2"/>
+  <rect x="139" y="139" width="42" height="42" fill="#ffffff" stroke="#1f3b5b" stroke-width="2"/>
+  <rect x="146" y="146" width="28" height="28" fill="#dceeff" stroke="#1f3b5b" stroke-width="2"/>
+</svg>

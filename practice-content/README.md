@@ -69,10 +69,64 @@ The scoring policy bundled in the test fixture is versioned and deliberately
 limited to that fixture/pilot: correct = 6, blank = 1.5, incorrect = 0. Do not
 reuse it for another historical form without an explicit content review.
 
+## Historical archive-practice release
+
+The checked-in 2002–2025 AMC 12 collection has a deliberately separate
+`archive-practice` release path. It is for online practice, not an assertion of
+an official contest result. Its inputs are all auditable and are kept out of
+the public/static path before an attempt is final:
+
+- `historical-answer-keys.json` is the 48-form answer-letter catalog, with a
+  source and canonical answer-key URL for each form. The corresponding first
+  written solution is preserved for post-submission reading and used as a
+  cross-check/review signal. When that first solution has an explicit final
+  boxed option, the archive build requires it to agree with the catalog (and
+  records aggregate cross-check counts in the private release report). An
+  answer-looking phrase alone is never silently treated as a trustworthy key.
+- `historical-overrides.json` contains the narrowly scoped repairs for damaged
+  source conversions, each with its reason and source evidence.
+- `media/historical/media-manifest.json` pins every required prompt visual to
+  a verified, same-origin file under `../historical-media/assets/`. It covers
+  both timed prompts and post-final first solutions; no remote image or
+  Asymptote source is allowed into either emitted scope.
+
+One adapted 2025 AMC 12A item (Question 25) has no safely matchable option in
+the historical record. It remains readable in the form but is explicitly
+unscored; that form's maximum is therefore 144 rather than 150.
+
+Archive scores also retain the contest-era blank-answer rule: 2002--2006
+forms award 2.5 points for a blank, while 2007--2025 forms award 1.5 points.
+The generated policy version is saved with every submission, rather than being
+recomputed from a current UI default.
+
+Build an archive release only after the media verifier succeeds:
+
+```sh
+cd AMC12_Problems/practice-content
+
+PYTHONPATH=. python3 -m amc_content.cli build-archive \
+  --source-root .. \
+  --answer-keys historical-answer-keys.json \
+  --overrides historical-overrides.json \
+  --media-manifest media/historical/media-manifest.json \
+  --release-version archive-YYYY-MM-DD-rN \
+  --public-output-dir generated/historical/public \
+  --private-output-dir generated/historical/private \
+  --private-batch-output generated/historical/private-release.json \
+  --report-output generated/historical/report.json
+```
+
+The generated batch is private input for the dedicated API importer; do not
+put it under the static site root. The public projection has no answer letters
+or solutions.
+
 ## Layout
 
 ```text
 amc_content/             Standard-library parser, validator, and CLI
+historical-*.json        Auditable archive answer catalog and source repairs
+media/historical/        Checked-in verified media manifest (private build input)
+../historical-media/     Same-origin static mirrors used by archive prompts
 forms/2025-amc-12a/      Non-publishable source catalog and answer-key template
 fixtures/synthetic-25/   Fully approved, explicitly synthetic test-only fixture
 schema/                  JSON Schema contracts for public/private/key artifacts

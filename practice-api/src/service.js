@@ -12,14 +12,20 @@ import {
   publicSubmission,
   scoreSubmission
 } from './domain.js';
-import { manifestToStoredForm } from './manifest.js';
+import {
+  ARCHIVE_MANIFEST_SCHEMA,
+  ARCHIVE_RELEASE_FORM_IDS,
+  manifestToStoredForm,
+  PRIVATE_MANIFEST_SCHEMA,
+  validateArchiveReleaseBatch
+} from './manifest.js';
 import { badRequest, conflict, forbidden, notFound, unauthorized } from './errors.js';
 import { newOpaqueToken } from './config.js';
 
 const PRELIMINARY_SLOT = 'PRELIMINARY';
 const FINAL_SLOT = 'FINAL';
-const PRIVATE_MANIFEST_SCHEMA = 'amc-practice-private-form-v1';
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const ARCHIVE_RELEASE_FORM_ID_SET = new Set(ARCHIVE_RELEASE_FORM_IDS);
 
 function asDate(value) {
   return value instanceof Date ? value : new Date(value);
@@ -208,17 +214,74 @@ export class PracticeService {
   }
 
   async importManifest(manifest, { publish = false } = {}) {
-    const form = manifestToStoredForm(manifest);
-    if (form.sourceSchemaVersion !== PRIVATE_MANIFEST_SCHEMA && !this.allowGenericManifestImport) {
+    const [form] = await this.importManifests([manifest], { publish });
+    return form;
+  }
+
+  /**
+   * Standard (private-v1 or explicitly allowed development generic) imports.
+   * Historical archive forms are deliberately excluded: they are a complete,
+   * release-authorized collection and must use importArchiveRelease below.
+   */
+  async importManifests(manifests, { publish = false } = {}) {
+    if (!Array.isArray(manifests) || manifests.length === 0 || manifests.length > 100) {
+      throw badRequest('INVALID_MANIFEST_BATCH', 'A manifest batch must contain 1-100 forms.');
+    }
+    const forms = manifests.map((manifest) => manifestToStoredForm(manifest));
+    if (forms.some((form) => form.sourceSchemaVersion === ARCHIVE_MANIFEST_SCHEMA
+      || ARCHIVE_RELEASE_FORM_ID_SET.has(form.id))) {
+      throw forbidden(
+        'ARCHIVE_RELEASE_REQUIRED',
+        'Historical AMC 12 archive forms must be imported through the complete archive release workflow.'
+      );
+    }
+    const seenRevisions = new Set();
+    for (const form of forms) {
+      const revision = `${form.id}\u0000${form.version}`;
+      if (seenRevisions.has(revision)) {
+        throw badRequest('DUPLICATE_FORM_REVISION', 'A manifest batch cannot contain the same form revision twice.');
+      }
+      seenRevisions.add(revision);
+      this.#assertImportableForm(form, { publish });
+    }
+    return this.store.importForms(forms, { publish, allowTestOnlyPublish: this.allowTestOnlyPublish });
+  }
+
+  /**
+   * The only service-level path for archive-v1. The batch validator verifies
+   * all 48 reserved IDs, one common release version, and shared key/media
+   * provenance before any storage call; the store then imports the complete
+   * collection in one transaction.
+   */
+  async importArchiveRelease(payload, { publish = false } = {}) {
+    if (typeof publish !== 'boolean') {
+      throw badRequest('VALIDATION_ERROR', 'publish must be boolean.');
+    }
+    const manifests = validateArchiveReleaseBatch(payload);
+    const forms = manifests.map((manifest) => manifestToStoredForm(manifest));
+    for (const form of forms) this.#assertArchiveReleaseForm(form, { publish });
+    return this.store.importForms(forms, { publish, allowTestOnlyPublish: false });
+  }
+
+  #assertImportableForm(form, { publish }) {
+    const reviewedSchema = form.sourceSchemaVersion === PRIVATE_MANIFEST_SCHEMA;
+    const archiveSchema = form.sourceSchemaVersion === ARCHIVE_MANIFEST_SCHEMA;
+    if (archiveSchema || ARCHIVE_RELEASE_FORM_ID_SET.has(form.id)) {
+      throw forbidden(
+        'ARCHIVE_RELEASE_REQUIRED',
+        'Historical AMC 12 archive forms must be imported through the complete archive release workflow.'
+      );
+    }
+    if (!reviewedSchema && !this.allowGenericManifestImport) {
       throw forbidden(
         'GENERIC_FORM_IMPORT_FORBIDDEN',
-        'Only reviewed private v1 practice manifests may be imported in this environment.'
+        'Only reviewed private v1 manifests may be imported in this environment.'
       );
     }
     if (form.testOnly && !this.allowTestOnlyImport) {
       throw forbidden('TEST_FORM_IMPORT_FORBIDDEN', 'Synthetic or test-only forms require an explicit development-only import setting.');
     }
-    if (form.sourceSchemaVersion === PRIVATE_MANIFEST_SCHEMA
+    if (reviewedSchema
       && !form.testOnly && form.publicationStatus !== 'approved') {
       throw forbidden('FORM_IMPORT_NOT_APPROVED', 'Private practice content must be approved before it can be imported.');
     }
@@ -228,7 +291,21 @@ export class PracticeService {
     if (publish && !form.publishEligible && !(form.developmentPublishEligible && this.allowTestOnlyPublish)) {
       throw forbidden('FORM_NOT_PUBLISHABLE', 'This manifest is not approved for publication.');
     }
-    return this.store.importForm(form, { publish, allowTestOnlyPublish: this.allowTestOnlyPublish });
+  }
+
+  #assertArchiveReleaseForm(form, { publish }) {
+    if (form.sourceSchemaVersion !== ARCHIVE_MANIFEST_SCHEMA
+      || form.practiceKind !== 'archive'
+      || !ARCHIVE_RELEASE_FORM_ID_SET.has(form.id)
+      || form.testOnly
+      || form.publicationStatus !== 'archive-practice'
+      || !form.publishEligible
+      || form.developmentPublishEligible) {
+      throw forbidden('ARCHIVE_FORM_INVALID', 'Archive practice content must use its validated archive-practice release contract.');
+    }
+    if (publish && !form.publishEligible) {
+      throw forbidden('FORM_NOT_PUBLISHABLE', 'This archive release is not eligible for publication.');
+    }
   }
 
   async listForms({ includeUnpublished = false } = {}) {
@@ -297,12 +374,22 @@ export class PracticeService {
     const form = await this.store.getForm(formId);
     if (!form || !form.published) throw notFound('FORM_NOT_FOUND', 'The requested practice form was not found.');
     const result = await this.store.findOrCreateActiveAttempt({ studentId, form, now: this.now() });
-    const answers = await this.#getAttemptAnswers(result.attempt.id, form);
-    const submissions = await this.#getAttemptSubmissions(result.attempt.id);
-    return {
-      created: result.created,
-      attempt: publicAttempt(result.attempt, answers, submissions, this.now())
-    };
+    // ``findOrCreateActiveAttempt`` deliberately serializes creation only.
+    // Once it returns an existing row, take its attempt lock before replying:
+    // the deadline worker may have been unavailable while the student was
+    // away, so reopening the form itself must reconcile the 75-minute state
+    // and create the one required deadline snapshot.
+    return this.store.withAttemptLock(result.attempt.id, async (tx) => {
+      const attempt = await tx?.getAttempt();
+      assertOwned(attempt, studentId);
+      const pinnedForm = await this.#getAttemptForm(attempt);
+      const now = this.now();
+      const reconciled = await this.#reconcileDeadline(tx, attempt, pinnedForm, now);
+      return {
+        created: result.created,
+        attempt: publicAttempt(reconciled.attempt, await tx.getAnswers(), await tx.listSubmissions(), now)
+      };
+    });
   }
 
   async getAttempt(studentId, attemptId) {
@@ -555,6 +642,8 @@ export class PracticeService {
             promptMarkdown: question.promptMarkdown,
             choices: question.choices,
             correctOption: question.correctOption,
+            acceptedOptions: question.acceptedOptions || (question.correctOption ? [question.correctOption] : []),
+            isScored: question.isScored !== false,
             solutionMarkdown: question.solutionMarkdown
           }))
         }
@@ -643,6 +732,7 @@ export class PracticeService {
       correctCount: score.correctCount,
       incorrectCount: score.incorrectCount,
       blankCount: score.blankCount,
+      unscoredCount: score.unscoredCount,
       createdAt: now
     };
     return tx.createSubmission(submission, score.snapshots);

@@ -2,8 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { PHASES, SUBMISSION_KINDS } from '../src/domain.js';
 import { ApiError } from '../src/errors.js';
+import { normalizeManifest } from '../src/manifest.js';
 import { MemoryStore } from '../src/memory-store.js';
 import { PracticeService } from '../src/service.js';
+import { archiveManifestFixture, archiveReleaseFixture, sealArchiveManifest } from './archive-fixture.js';
 import { fixtureManifest, makeService } from './helpers.js';
 
 const MINUTE = 60_000;
@@ -18,6 +20,31 @@ function scoringPrecondition(attempt) {
     expectedStateRevision: attempt.stateRevision
   };
 }
+
+test('strict archive manifests preserve the historic blank-answer policy by form year', () => {
+  const early = normalizeManifest(archiveManifestFixture({ year: 2004 }));
+  const later = normalizeManifest(archiveManifestFixture({ year: 2007 }));
+  assert.equal(early.scoringPolicy.blankPoints, 2.5);
+  assert.equal(early.scoringPolicy.version, 'amc12-archive-2002-2006-v1');
+  assert.equal(later.scoringPolicy.blankPoints, 1.5);
+  assert.equal(later.scoringPolicy.version, 'amc12-archive-2007-plus-v1');
+
+  const invalid = archiveManifestFixture({ year: 2004 });
+  invalid.scoringPolicy.blank = 1.5;
+  sealArchiveManifest(invalid);
+  assert.throws(
+    () => normalizeManifest(invalid),
+    (error) => error instanceof ApiError && error.code === 'INVALID_MANIFEST' && /2004/.test(error.message)
+  );
+
+  const nonCanonicalId = archiveManifestFixture();
+  nonCanonicalId.id = 'archive-fixture-not-an-amc12-paper';
+  sealArchiveManifest(nonCanonicalId);
+  assert.throws(
+    () => normalizeManifest(nonCanonicalId),
+    (error) => error instanceof ApiError && error.code === 'INVALID_MANIFEST' && /Archive form id/.test(error.message)
+  );
+});
 
 test('checkpoint is immutable, returns an immediate score, and does not disclose solutions before final', async () => {
   const { service, student } = await makeService();
@@ -63,6 +90,23 @@ test('75-minute deadline creates exactly one snapshot only if no earlier checkpo
   const final = await service.deadlineDecision(student.id, first.attempt.id, 'finalize', 'decision-001', scoringPrecondition(atLimit));
   assert.equal(final.attempt.phase, PHASES.FINALIZED);
   assert.deepEqual(final.attempt.submissions.map((submission) => submission.kind), [SUBMISSION_KINDS.DEADLINE, SUBMISSION_KINDS.FINAL]);
+});
+
+test('reopening an existing attempt reconciles a missed 75-minute deadline', async () => {
+  const { service, student, clock } = await makeService();
+  const created = await service.createAttempt(student.id, fixtureManifest.id);
+  clock.advance(75 * MINUTE);
+
+  // This represents a worker outage or a student returning after a closed
+  // browser tab. The create-or-resume endpoint itself must not advertise a
+  // stale TIMED attempt with zero seconds remaining.
+  const resumed = await service.createAttempt(student.id, fixtureManifest.id);
+  assert.equal(resumed.created, false);
+  assert.equal(resumed.attempt.id, created.attempt.id);
+  assert.equal(resumed.attempt.phase, PHASES.LIMIT_NOTICE);
+  assert.equal(resumed.attempt.clockState, 'PAUSED');
+  assert.equal(resumed.attempt.remainingMs, 0);
+  assert.deepEqual(resumed.attempt.submissions.map((submission) => submission.kind), [SUBMISSION_KINDS.DEADLINE]);
 });
 
 test('an earlier checkpoint consumes preliminary slot and deadline still gives a limit notice', async () => {
@@ -194,4 +238,74 @@ test('generic manifests require an explicit development-only service gate', asyn
     'GENERIC_FORM_IMPORT_FORBIDDEN'
   );
   assert.equal((await store.listForms()).length, 0);
+});
+
+test('batch import validates the whole release before memory storage changes', async () => {
+  const store = new MemoryStore();
+  const service = new PracticeService({
+    store,
+    authPepper: 'test-pepper-that-is-long-enough-for-a-safe-local-test-suite',
+    sessionTtlMs: 60 * MINUTE,
+    allowGenericManifestImport: true
+  });
+  const valid = { ...fixtureManifest, id: 'batch-valid' };
+  const invalid = {
+    ...fixtureManifest,
+    id: 'batch-invalid',
+    questions: [{ ...fixtureManifest.questions[0], correctOption: 'Z' }]
+  };
+  await expectApiError(() => service.importManifests([valid, invalid], { publish: true }), 'INVALID_MANIFEST');
+  assert.equal((await store.listForms({ includeUnpublished: true })).length, 0);
+});
+
+test('archive-v1 can only use a complete release import, then retains historical scoring without early answer disclosure', async () => {
+  const store = new MemoryStore();
+  const service = new PracticeService({
+    store,
+    authPepper: 'test-pepper-that-is-long-enough-for-a-safe-local-test-suite',
+    sessionTtlMs: 60 * MINUTE
+  });
+  const singleArchive = archiveManifestFixture();
+  await expectApiError(
+    () => service.importManifest(singleArchive, { publish: true }),
+    'ARCHIVE_RELEASE_REQUIRED'
+  );
+  await expectApiError(
+    () => service.importManifests([fixtureManifest, singleArchive], { publish: true }),
+    'ARCHIVE_RELEASE_REQUIRED'
+  );
+  const partialRelease = archiveReleaseFixture();
+  partialRelease.forms.pop();
+  await expectApiError(
+    () => service.importArchiveRelease(partialRelease, { publish: true }),
+    'INVALID_ARCHIVE_RELEASE'
+  );
+  assert.equal((await store.listForms({ includeUnpublished: true })).length, 0);
+
+  const release = archiveReleaseFixture();
+  const imported = await service.importArchiveRelease(release, { publish: true });
+  assert.equal(imported.length, 48);
+  assert.equal(imported.every((form) => form.published && form.practiceKind === 'archive'), true);
+
+  const unscoredPublicForm = await service.getPublicForm('amc12-2025-a');
+  assert.equal(unscoredPublicForm.practiceKind, 'archive');
+  assert.equal(unscoredPublicForm.questions[24].isScored, false);
+  assert.equal(JSON.stringify(unscoredPublicForm).includes('correctOption'), false);
+  assert.equal(JSON.stringify(unscoredPublicForm).includes('acceptedOptions'), false);
+
+  const student = await service.seedAccessCode({ code: 'archive-student-code', displayName: 'Archive Student' });
+  const created = await service.createAttempt(student.id, 'amc12-2012-b');
+  const saved = await service.putAnswers(student.id, created.attempt.id, {
+    revision: 0,
+    answers: [{ questionNumber: 12, selectedOption: 'E' }]
+  });
+  const finalized = await service.final(student.id, created.attempt.id, 'archive-final-001', scoringPrecondition(saved));
+  const results = await service.getResults(student.id, created.attempt.id);
+  const alternative = results.finalSubmission.answers.find((answer) => answer.questionNumber === 12);
+  assert.equal(finalized.submission.score.correctCount, 1);
+  assert.equal(finalized.submission.score.unscoredCount, 0);
+  assert.equal(alternative.isCorrect, true);
+  assert.deepEqual(alternative.acceptedOptions, ['D', 'E']);
+  const solutions = await service.getSolutions(student.id, created.attempt.id);
+  assert.deepEqual(solutions.form.questions[11].acceptedOptions, ['D', 'E']);
 });

@@ -14,6 +14,7 @@
     "test:unit": "node --test test/domain.test.js test/service.test.js",
     "test:integration": "node --test test/api.test.js test/postgres-smoke.test.js",
     "import-form": "node --env-file-if-exists=.env scripts/import-form.js",
+    "import-archive-release": "node --env-file-if-exists=.env scripts/import-archive-release.js",
     "create-access-code": "node --env-file-if-exists=.env scripts/create-access-code.js"
   },
   "dependencies": {

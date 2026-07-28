@@ -16,6 +16,7 @@ import {
   formatDuration,
   maximumScoreFromSubmission,
   normalizeChoices,
+  normalizeLegacyInlineTeX,
   publicFormPath,
   attemptFormPath,
   formCacheKey,
@@ -54,6 +55,21 @@ test('MathJax accepts AMC dollar delimiters, preserves escaped currency, and ret
   assert.match(config, /processEscapes:\s*true/);
   assert.match(client, /window\.addEventListener\('mathjax-ready'/);
   assert.match(client, /typesetVisiblePracticeMath\(\)/, 'a late MathJax ready event must retry visible TeX');
+});
+
+test('legacy unwrapped TeX commands become isolated MathJax spans without changing authored math', () => {
+  assert.equal(
+    normalizeLegacyInlineTeX('Let \\clubsuit(x)=\\frac{1}{2}; $\\sqrt{3}$ stays authored.'),
+    'Let \\(\\clubsuit\\)(x)=\\(\\frac{1}{2}\\); $\\sqrt{3}$ stays authored.'
+  );
+  assert.equal(
+    normalizeLegacyInlineTeX('The arc \\overarc{ABC} and \\textdollar are historical source notation.'),
+    'The arc \\(\\widehat{ABC}\\) and \\(\\$\\) are historical source notation.'
+  );
+  assert.equal(
+    normalizeLegacyInlineTeX('Use \\frac 18 and \\sqrt3, then pay $20.'),
+    'Use \\(\\frac{1}{8}\\) and \\(\\sqrt{3}\\), then pay \\$20.'
+  );
 });
 
 test('practice deployment keeps scripts and API calls same-origin under CSP', () => {
@@ -185,6 +201,12 @@ test('canonical public form choices and nested submission scores normalize corre
   assert.equal(maximumScoreFromSubmission(submission), 150);
 });
 
+test('result rendering distinguishes a single key from documented alternative accepted answers', () => {
+  const client = readFileSync(new URL('app.mjs', practiceDirectory), 'utf8');
+  assert.match(client, /Accepted answers: \$\{accepted\.join\(' or '\)\}/);
+  assert.match(client, /accepted\.length > 1/);
+});
+
 test('attempt wrapper and durations handle canonical API values', () => {
   assert.equal(extractAttempt({ attempt: { id: 'a1' } }).id, 'a1');
   assert.equal(formatDuration(4_500_000), '1:15:00');
@@ -213,6 +235,15 @@ test('reviewed local image references preserve the direct and portal mount prefi
   assert.equal(
     safeUrl(sourceImage, 'https://kapy.ca/amc12/practice/'),
     'https://kapy.ca/amc12/2025_AMC_12A_Problems/media/problem-05-nested-squares.svg'
+  );
+  const archiveImage = '../historical-media/assets/2002-amc-12a/problem-25-aops-01.png';
+  assert.equal(
+    safeUrl(archiveImage, 'https://amc12.kapy.ca/practice/'),
+    'https://amc12.kapy.ca/historical-media/assets/2002-amc-12a/problem-25-aops-01.png'
+  );
+  assert.equal(
+    safeUrl(archiveImage, 'https://kapy.ca/amc12/practice/'),
+    'https://kapy.ca/amc12/historical-media/assets/2002-amc-12a/problem-25-aops-01.png'
   );
   assert.equal(safeUrl('javascript:alert(1)', 'https://amc12.kapy.ca/practice/'), null);
 });

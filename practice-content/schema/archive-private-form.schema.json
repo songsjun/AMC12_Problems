@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kapy.example/schema/amc-practice-archive-private-form-v1.json",
+  "title": "AMC Historical Archive Practice Private Form v1",
+  "type": "object",
+  "required": ["schemaVersion", "id", "version", "title", "publicationStatus", "isSynthetic", "durationSeconds", "scoringPolicyVersion", "scoringPolicy", "questionBundleHash", "archiveNotice", "questions", "provenance", "contentHash", "manifestHash"],
+  "properties": {
+    "schemaVersion": {"const": "amc-practice-archive-form-v1"},
+    "id": {"type": "string", "minLength": 1},
+    "version": {"type": "string", "minLength": 1},
+    "title": {"type": "string", "minLength": 1},
+    "publicationStatus": {"const": "archive-practice"},
+    "isSynthetic": {"const": false},
+    "durationSeconds": {"const": 4500},
+    "scoringPolicyVersion": {"type": "string", "minLength": 1},
+    "scoringPolicy": {"$ref": "#/$defs/scoringPolicy"},
+    "questionBundleHash": {"$ref": "#/$defs/hash"},
+    "archiveNotice": {"type": "string", "minLength": 1},
+    "questions": {"type": "array", "minItems": 25, "maxItems": 25, "items": {"$ref": "#/$defs/question"}},
+    "provenance": {"$ref": "#/$defs/provenance"},
+    "contentHash": {"$ref": "#/$defs/hash"},
+    "manifestHash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "scoringPolicy": {
+      "type": "object",
+      "required": ["version", "correct", "blank", "incorrect", "questionCount", "scoredQuestionCount", "maxScore"],
+      "properties": {"version": {"type": "string", "minLength": 1}, "correct": {"type": "number", "minimum": 0}, "blank": {"type": "number", "minimum": 0}, "incorrect": {"type": "number", "minimum": 0}, "questionCount": {"const": 25}, "scoredQuestionCount": {"type": "integer", "minimum": 0, "maximum": 25}, "maxScore": {"type": "number", "minimum": 0}},
+      "additionalProperties": false
+    },
+    "sourceRef": {
+      "type": "object",
+      "required": ["path", "sha256"],
+      "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"$ref": "#/$defs/hash"}},
+      "additionalProperties": false
+    },
+    "choices": {
+      "type": "object",
+      "required": ["A", "B", "C", "D", "E"],
+      "properties": {"A": {"type": "string", "minLength": 1}, "B": {"type": "string", "minLength": 1}, "C": {"type": "string", "minLength": 1}, "D": {"type": "string", "minLength": 1}, "E": {"type": "string", "minLength": 1}},
+      "additionalProperties": false
+    },
+    "question": {
+      "type": "object",
+      "required": ["number", "sourceRef", "promptMarkdown", "choices", "correctOption", "acceptedOptions", "isScored", "solutionMarkdown"],
+      "properties": {
+        "number": {"type": "integer", "minimum": 1, "maximum": 25},
+        "sourceRef": {"$ref": "#/$defs/sourceRef"},
+        "promptMarkdown": {"type": "string", "minLength": 1},
+        "choices": {"$ref": "#/$defs/choices"},
+        "correctOption": {"type": ["string", "null"], "enum": ["A", "B", "C", "D", "E", null]},
+        "acceptedOptions": {"type": "array", "uniqueItems": true, "items": {"enum": ["A", "B", "C", "D", "E"]}},
+        "isScored": {"type": "boolean"},
+        "solutionMarkdown": {"type": "string", "minLength": 1}
+      },
+      "allOf": [
+        {"if": {"properties": {"isScored": {"const": true}}}, "then": {"properties": {"correctOption": {"enum": ["A", "B", "C", "D", "E"]}, "acceptedOptions": {"minItems": 1}}}},
+        {"if": {"properties": {"isScored": {"const": false}}}, "then": {"properties": {"correctOption": {"const": null}, "acceptedOptions": {"maxItems": 0}}}}
+      ],
+      "additionalProperties": false
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["releaseAuthorization", "answerKey", "media", "sourceRepairs"],
+      "properties": {
+        "releaseAuthorization": {"type": "object", "required": ["status"], "properties": {"status": {"const": "authorized-archive-practice"}}, "additionalProperties": true},
+        "answerKey": {"type": "object", "required": ["catalogHash"], "properties": {"catalogHash": {"$ref": "#/$defs/hash"}}, "additionalProperties": true},
+        "media": {"type": "object", "required": ["assetIds"], "properties": {"assetIds": {"type": "array", "items": {"type": "string"}}}, "additionalProperties": true},
+        "sourceRepairs": {"type": "array"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

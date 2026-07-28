@@ -62,9 +62,12 @@ export function publicForm(form) {
     title: form.title,
     durationMs: form.durationMs,
     questionCount: form.questions.length,
+    practiceKind: form.practiceKind || 'standard',
+    archiveNotice: form.archiveNotice || null,
     questions: form.questions.map((question) => ({
       number: question.number,
       promptMarkdown: question.promptMarkdown,
+      isScored: question.isScored !== false,
       choices: question.choices.map((choice) => ({
         option: choice.option,
         textMarkdown: choice.textMarkdown
@@ -79,7 +82,12 @@ export function publicFormSummary(form) {
     version: form.version,
     title: form.title,
     durationMs: form.durationMs,
-    questionCount: form.questions.length
+    questionCount: form.questions.length,
+    practiceKind: form.practiceKind || 'standard',
+    archiveNotice: form.archiveNotice || null,
+    scoredQuestionCount: Number.isSafeInteger(form.scoredQuestionCount)
+      ? form.scoredQuestionCount
+      : form.questions.filter((question) => question.isScored !== false).length
   };
 }
 
@@ -122,7 +130,8 @@ export function publicSubmission(submission) {
       answeredCount: submission.answeredCount,
       correctCount: submission.correctCount,
       incorrectCount: submission.incorrectCount,
-      blankCount: submission.blankCount
+      blankCount: submission.blankCount,
+      unscoredCount: submission.unscoredCount || 0
     },
     scoringPolicy: {
       id: submission.scoringPolicy.id,
@@ -140,15 +149,29 @@ export function scoreSubmission({ form, answers, activeElapsedMs }) {
   let correctCount = 0;
   let incorrectCount = 0;
   let blankCount = 0;
+  let unscoredCount = 0;
   const snapshots = form.questions.map((question) => {
     const selectedOption = answerByNumber.get(question.number) ?? null;
+    const isScored = question.isScored !== false;
+    if (!isScored) {
+      unscoredCount += 1;
+      return {
+        questionNumber: question.number,
+        selectedOption,
+        correctOption: null,
+        acceptedOptions: [],
+        isScored: false,
+        isCorrect: null,
+        points: 0
+      };
+    }
     let points;
     let isCorrect;
     if (selectedOption === null) {
       blankCount += 1;
       points = policy.blankPoints;
       isCorrect = null;
-    } else if (selectedOption === question.correctOption) {
+    } else if ((question.acceptedOptions || [question.correctOption]).includes(selectedOption)) {
       answeredCount += 1;
       correctCount += 1;
       points = policy.correctPoints;
@@ -164,6 +187,8 @@ export function scoreSubmission({ form, answers, activeElapsedMs }) {
       questionNumber: question.number,
       selectedOption,
       correctOption: question.correctOption,
+      acceptedOptions: question.acceptedOptions || [question.correctOption],
+      isScored: true,
       isCorrect,
       points: roundPoints(points)
     };
@@ -172,11 +197,12 @@ export function scoreSubmission({ form, answers, activeElapsedMs }) {
     activeElapsedMs,
     scoringPolicy: structuredClone(policy),
     totalPoints: roundPoints(totalPoints),
-    maximumPoints: roundPoints(form.questions.length * policy.correctPoints),
+    maximumPoints: roundPoints(form.questions.filter((question) => question.isScored !== false).length * policy.correctPoints),
     answeredCount,
     correctCount,
     incorrectCount,
     blankCount,
+    unscoredCount,
     snapshots
   };
 }

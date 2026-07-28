@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-labelledby="title desc">
+  <title id="title">Twelve unit circles around a central circle</title>
+  <desc id="desc">A central circle of radius r is surrounded by twelve congruent circles of radius 1, each tangent to its neighbors.</desc>
+  <rect width="320" height="320" fill="#ffffff"/>
+  <circle cx="160" cy="160" r="72" fill="#f8fbff" stroke="#1f3b5b" stroke-width="2.5"/>
+  <g fill="#e8f2ff" stroke="#2563eb" stroke-width="1.8">
+    <circle cx="257" cy="160" r="25"/><circle cx="244" cy="111.5" r="25"/><circle cx="208.5" cy="76" r="25"/>
+    <circle cx="160" cy="63" r="25"/><circle cx="111.5" cy="76" r="25"/><circle cx="76" cy="111.5" r="25"/>
+    <circle cx="63" cy="160" r="25"/><circle cx="76" cy="208.5" r="25"/><circle cx="111.5" cy="244" r="25"/>
+    <circle cx="160" cy="257" r="25"/><circle cx="208.5" cy="244" r="25"/><circle cx="244" cy="208.5" r="25"/>
+  </g>
+  <path d="M160 160 H232 M232 160 H257 M257 160 H282" fill="none" stroke="#172033" stroke-width="1.6"/>
+  <circle cx="160" cy="160" r="3.5" fill="#172033"/><circle cx="257" cy="160" r="3.5" fill="#172033"/>
+  <g font-family="serif" font-size="18" fill="#172033"><text x="192" y="153">r</text><text x="266" y="153">1</text><text x="145" y="154">O</text></g>
+</svg>

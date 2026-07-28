@@ -1,0 +1,1416 @@
+{
+  "schemaVersion": "amc-practice-historical-overrides-v1",
+  "description": "High-confidence archival repairs for source pages whose problem, choices, or first usable solution were damaged during the wiki-to-Markdown conversion. The central historical answer-key catalog remains the scoring authority; correctOption here is a cross-check only.",
+  "overrides": {
+    "2002_AMC_12A_Problems/Problem_14.md": {
+      "promptMarkdown": "For all positive integers $n$, let $f(n)=\\log_{2002} n^2$. Let $N=f(11)+f(13)+f(14)$. Which of the following relations is true?",
+      "choices": {
+        "A": "$N<1$",
+        "B": "$N=1$",
+        "C": "$1<N<2$",
+        "D": "$N=2$",
+        "E": "$N>2$"
+      },
+      "solutionMarkdown": "Since $2002=11\\cdot13\\cdot14$,\n\n$$N=\\log_{2002}(11^2\\cdot13^2\\cdot14^2)=\\log_{2002}(2002^2)=2.$$\n\nTherefore the answer is $\\boxed{\\text{(D)}}$.",
+      "correctOption": "D",
+      "reconstruction": true,
+      "repairReason": "The archived source truncates choices C--E after a literal less-than sign.",
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2002_AMC_12A_Problems/Problem_14.raw.txt"
+        },
+        {
+          "kind": "public-problem-page",
+          "url": "https://artofproblemsolving.com/wiki/index.php/2002_AMC_12A_Problems/Problem_14"
+        }
+      ]
+    },
+    "2002_AMC_12A_Problems/Problem_25.md": {
+      "choices": {
+        "A": "Graph (A)",
+        "B": "Graph (B)",
+        "C": "Graph (C)",
+        "D": "Graph (D)",
+        "E": "Graph (E)"
+      },
+      "solutionMarkdown": "Replacing every nonzero coefficient by their mean preserves the sum of the coefficients. Evaluating at $x=1$ therefore gives $P(1)=Q(1)$. Among the displayed graph pairs, only graph (B) has the two graphs intersect at $x=1$.\n\nTherefore the answer is $\\boxed{\\text{(B)}}$.",
+      "correctOption": "B",
+      "reconstruction": true,
+      "repairReason": "All five answer choices are encoded as labels within the source image rather than as separate text choices. The source image must be retained with the prompt.",
+      "requiredMedia": [
+        {
+          "kind": "answer-choice-figure",
+          "sourceUrl": "https://artofproblemsolving.com/wiki/index.php/File:2002AMC12A25.png",
+          "placement": "prompt"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2002_AMC_12A_Problems/Problem_25.raw.txt"
+        },
+        {
+          "kind": "public-problem-page",
+          "url": "https://artofproblemsolving.com/wiki/index.php/2002_AMC_12A_Problems/Problem_25"
+        }
+      ]
+    },
+    "2003_AMC_12A_Problems/Problem_06.md": {
+      "promptMarkdown": "Define $x\\heartsuit y$ to be $|x-y|$ for all real numbers $x$ and $y$. Which of the following statements is not true?",
+      "choices": {
+        "A": "$x\\heartsuit y=y\\heartsuit x\\text{ for all }x,y$",
+        "B": "$2(x\\heartsuit y)=(2x)\\heartsuit(2y)\\text{ for all }x,y$",
+        "C": "$x\\heartsuit0=x\\text{ for all }x$",
+        "D": "$x\\heartsuit x=0\\text{ for all }x$",
+        "E": "$x\\heartsuit y>0\\text{ if }x\\ne y$"
+      },
+      "correctOption": "C",
+      "repairReason": "The conversion splits the legacy inline-math delimiters across choices, leaving raw TeX and an unmatched delimiter in the timed view.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2003_AMC_12A_Problems/Problem_06.md"
+        }
+      ]
+    },
+    "2003_AMC_12A_Problems/Problem_19.md": {
+      "promptMarkdown": "A parabola with equation $y=ax^2+bx+c$ is reflected about the $x$-axis. The parabola and its reflection are translated horizontally five units in opposite directions to become the graphs of $y=f(x)$ and $y=g(x)$, respectively. Which of the following describes the graph of $y=(f+g)(x)$?",
+      "choices": {
+        "A": "a parabola tangent to the $x$-axis",
+        "B": "a parabola not tangent to the $x$-axis",
+        "C": "a horizontal line",
+        "D": "a non-horizontal line",
+        "E": "the graph of a cubic function"
+      },
+      "correctOption": "D",
+      "repairReason": "The original choices are valid TeX but the converter strips their enclosing math delimiters, exposing TeX commands as literal text.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2003_AMC_12A_Problems/Problem_19.md"
+        }
+      ]
+    },
+    "2003_AMC_12B_Problems/Problem_04.md": {
+      "solutionMarkdown": "The effective width of each pass is $28-4=24$ inches, or $2$ feet. The lawn has area $90\\cdot150=13{,}500$ square feet, so the mowing path is approximately\n\n$$\\frac{13{,}500}{2}=6{,}750\\text{ feet}.$$\n\nAt $5000$ feet per hour, the time is $6750/5000=1.35$ hours. Therefore the answer is $\\boxed{\\text{(C)}}$.",
+      "correctOption": "C",
+      "reconstruction": true,
+      "repairReason": "The archived page contains the complete problem and choices but no usable solution section.",
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2003_AMC_12B_Problems/Problem_04.raw.txt"
+        },
+        {
+          "kind": "central-answer-key-cross-check",
+          "path": "practice-content/historical-answer-keys.json"
+        }
+      ]
+    },
+    "2003_AMC_12B_Problems/Problem_24.md": {
+      "promptMarkdown": "Positive integers $a$, $b$, and $c$ are chosen so that $a<b<c$, and the system of equations\n\n$$2x+y=2003\\qquad\\text{and}\\qquad y=|x-a|+|x-b|+|x-c|$$\n\nhas exactly one solution. What is the minimum value of $c$?",
+      "choices": {
+        "A": "$668$",
+        "B": "$669$",
+        "C": "$1002$",
+        "D": "$2003$",
+        "E": "$2004$"
+      },
+      "solutionMarkdown": "The graph of $|x-a|+|x-b|+|x-c|$ has slopes $-3,-1,1,3$ on its four linear pieces. For the line $y=2003-2x$ to meet it exactly once, the intersection must occur at the corner with $x=a$. At that point,\n\n$$2003-2a=b+c-2a,$$\n\nso $b+c=2003$. Since $b<c$ are positive integers, the least possible $c$ is obtained at $b=1001$ and $c=1002$; choosing $a=1000$ realizes this case. Therefore the answer is $\\boxed{\\text{(C)}}$.",
+      "correctOption": "C",
+      "reconstruction": true,
+      "repairReason": "The conversion leaves the original problem and the following solutions inside an unclosed Asymptote code fence.",
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2003_AMC_12B_Problems/Problem_24.raw.txt"
+        },
+        {
+          "kind": "public-problem-page",
+          "url": "https://artofproblemsolving.com/wiki/index.php/2003_AMC_12B_Problems/Problem_24"
+        }
+      ]
+    },
+    "2004_AMC_12A_Problems/Problem_05.md": {
+      "choices": {
+        "A": "$mb<-1$",
+        "B": "$-1<mb<0$",
+        "C": "$mb=0$",
+        "D": "$0<mb<1$",
+        "E": "$mb>1$"
+      },
+      "solutionMarkdown": "The displayed line has negative slope and a positive $y$-intercept. Reading the plotted values gives a product $mb$ that is negative and has magnitude less than $1$. Hence $-1<mb<0$, so the answer is $\\boxed{\\text{(B)}}$.",
+      "correctOption": "B",
+      "reconstruction": true,
+      "repairReason": "The archived source truncates choices B--E after literal less-than signs. The graph remains part of the question and must be retained.",
+      "requiredMedia": [
+        {
+          "kind": "question-figure",
+          "sourceUrl": "https://artofproblemsolving.com/wiki/index.php/File:2004_AMC_12A_Problem_5.png",
+          "placement": "prompt"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2004_AMC_12A_Problems/Problem_05.raw.txt"
+        },
+        {
+          "kind": "public-problem-page",
+          "url": "https://artofproblemsolving.com/wiki/index.php/2004_AMC_12A_Problems/Problem_5"
+        }
+      ]
+    },
+    "2007_AMC_12A_Problems/Problem_09.md": {
+      "promptMarkdown": "Yan is somewhere between his home and the stadium. To get to the stadium he can walk directly to the stadium, or else he can walk home and then ride his bicycle to the stadium. He rides $7$ times as fast as he walks, and both choices require the same amount of time. What is the ratio of Yan's distance from his home to his distance from the stadium?",
+      "choices": {
+        "A": "$\\dfrac{2}{3}$",
+        "B": "$\\dfrac{3}{4}$",
+        "C": "$\\dfrac{4}{5}$",
+        "D": "$\\dfrac{5}{6}$",
+        "E": "$\\dfrac{6}{7}$"
+      },
+      "solutionMarkdown": "Let $x$ be Yan's distance from home, $y$ his distance from the stadium, and $w$ his walking speed. The direct walk takes $y/w$ time, while walking home and then bicycling takes\n\n$$\\frac{x}{w}+\\frac{x+y}{7w}.$$\n\nEquating the times gives $7y=8x+y$, so $8x=6y$ and $x/y=3/4$. Therefore the answer is $\\boxed{\\text{(B)}}$.",
+      "correctOption": "B",
+      "reconstruction": true,
+      "repairReason": "The source page contains an unrelated Carville/Nikpath question before solutions for this Yan problem and no valid Problem heading or choices.",
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2007_AMC_12A_Problems/Problem_09.raw.txt"
+        },
+        {
+          "kind": "public-problem-page",
+          "url": "https://artofproblemsolving.com/wiki/index.php/2007_AMC_12A_Problems"
+        },
+        {
+          "kind": "licensed-public-practice-page",
+          "url": "https://live.poshenloh.com/past-contests/amc12/2007A"
+        }
+      ]
+    },
+    "2013_AMC_12B_Problems/Problem_15.md": {
+      "promptReplacements": [
+        {
+          "from": "$a_1\\gea_2\\ge \\cdots \\gea_m$",
+          "to": "$a_1\\ge a_2\\ge \\cdots \\ge a_m$"
+        },
+        {
+          "from": "$b_1\\geb_2\\ge \\cdots \\geb_n$",
+          "to": "$b_1\\ge b_2\\ge \\cdots \\ge b_n$"
+        }
+      ],
+      "choices": {
+        "A": "$1$",
+        "B": "$2$",
+        "C": "$3$",
+        "D": "$4$",
+        "E": "$5$"
+      },
+      "solutionMarkdown": "We have $2013=61\\cdot11\\cdot3$. To provide the prime factor $61$ in the numerator with $a_1$ as small as possible, $a_1=61$. Every prime strictly between $b_1$ and $61$ would otherwise remain in the denominator, so the largest possible $b_1$ is the largest prime below $61$, namely $59$. Thus\n\n$$|a_1-b_1|=|61-59|=2,$$\n\nso the answer is $\\boxed{\\text{(B)}}$.",
+      "correctOption": "B",
+      "reconstruction": true,
+      "repairReason": "The archived source includes the full prompt and solution but omits all answer choices.",
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2013_AMC_12B_Problems/Problem_15.raw.txt"
+        },
+        {
+          "kind": "public-problem-page",
+          "url": "https://artofproblemsolving.com/wiki/index.php/2013_AMC_12B_Problems/Problem_15"
+        }
+      ]
+    },
+    "2021_AMC_12B_Problems/Problem_21.md": {
+      "promptMarkdown": "Let $S$ be the sum of all positive real numbers $x$ for which\n\n$$x^{2^{\\sqrt2}}=\\sqrt2^{2^x}.$$\n\nWhich of the following statements is true?",
+      "choices": {
+        "A": "$S<\\sqrt2$",
+        "B": "$S=\\sqrt2$",
+        "C": "$\\sqrt2<S<2$",
+        "D": "$2\\le S<6$",
+        "E": "$S\\ge 6$"
+      },
+      "solutionMarkdown": "Taking base-$2$ logarithms gives\n\n$$2^{\\sqrt2}\\log_2 x=2^{x-1}.$$\n\nOne solution is $x=\\sqrt2$. The left side is logarithmic in shape after a further logarithm, while the right side grows exponentially, so there is at most one additional solution. At $x=2$ the left side exceeds the right side, and at $x=4$ it is smaller; hence the second solution lies in $(2,4)$. Thus\n\n$$2+\\sqrt2<S<4+\\sqrt2,$$\n\nwhich implies $2\\le S<6$. Therefore the answer is $\\boxed{\\text{(D)}}$.",
+      "correctOption": "D",
+      "reconstruction": true,
+      "repairReason": "An unclosed Asymptote fence truncates choices C--E and places solution headings inside the fence.",
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2021_AMC_12B_Problems/Problem_21.raw.txt"
+        },
+        {
+          "kind": "public-problem-page",
+          "url": "https://artofproblemsolving.com/wiki/index.php/2021_AMC_12B_Problems/Problem_21"
+        }
+      ]
+    },
+    "2022_AMC_12B_Problems/Problem_02.md": {
+      "promptMarkdown": "In rhombus $ABCD$, point $P$ lies on segment $\\overline{AD}$ so that $\\overline{BP}\\perp\\overline{AD}$, $AP=3$, and $PD=2$. What is the area of $ABCD$? (Note: The figure is not drawn to scale.)",
+      "choices": {
+        "A": "$3\\sqrt5$",
+        "B": "$10$",
+        "C": "$6\\sqrt5$",
+        "D": "$20$",
+        "E": "$25$"
+      },
+      "solutionMarkdown": "Because $ABCD$ is a rhombus, $AB=AD=AP+PD=5$. In right triangle $ABP$,\n\n$$BP=\\sqrt{5^2-3^2}=4.$$\n\nUsing $AD$ as base and $BP$ as height, the area is $5\\cdot4=20$. Therefore the answer is $\\boxed{\\text{(D)}}$.",
+      "correctOption": "D",
+      "reconstruction": true,
+      "repairReason": "The source begins at a solution heading; its problem statement, choices, and diagram were not preserved in the Markdown conversion.",
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2022_AMC_12B_Problems/Problem_02.raw.txt"
+        },
+        {
+          "kind": "public-problem-page",
+          "url": "https://artofproblemsolving.com/wiki/index.php/2022_AMC_12B_Problems"
+        },
+        {
+          "kind": "licensed-public-problem-pdf",
+          "url": "https://live.poshenloh.com/images/past-contests/pdf/amc10-2022B-exam.pdf"
+        }
+      ]
+    },
+    "2024_AMC_12B_Problems/Problem_02.md": {
+      "choices": {
+        "A": "$-120$",
+        "B": "$0$",
+        "C": "$120$",
+        "D": "$600$",
+        "E": "$720$"
+      },
+      "solutionMarkdown": "Factor $10!$ as $10\\cdot9\\cdot8\\cdot7!=720\\cdot7!$. Since $6!=720$,\n\n$$10!-7!\\cdot6!=720\\cdot7!-720\\cdot7!=0.$$\n\nTherefore the answer is $\\boxed{\\text{(B)}}$.",
+      "correctOption": "B",
+      "reconstruction": true,
+      "repairReason": "The archived source includes the prompt and solutions but omits the multiple-choice options.",
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2024_AMC_12B_Problems/Problem_02.raw.txt"
+        },
+        {
+          "kind": "public-problem-page",
+          "url": "https://artofproblemsolving.com/wiki/index.php/2024_AMC_12B_Problems"
+        }
+      ]
+    },
+    "2002_AMC_12A_Problems/Problem_16.md": {
+      "promptMarkdown": "Tina randomly selects two distinct numbers from the set $\\{1,2,3,4,5\\}$, and Sergio randomly selects a number from the set $\\{1,2,\\ldots,10\\}$. What is the probability that Sergio's number is larger than the sum of the two numbers chosen by Tina?",
+      "correctOption": "A",
+      "reconstruction": true,
+      "repairReason": "The source marks its first written solution as an H3 heading, which the historical H2-only conversion retained inside the timed prompt.",
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2002_AMC_12A_Problems/Problem_16.raw.txt"
+        },
+        {
+          "kind": "public-problem-page",
+          "url": "https://artofproblemsolving.com/wiki/index.php/2002_AMC_12A_Problems/Problem_16"
+        }
+      ]
+    },
+    "2012_AMC_12B_Problems/Problem_12.md": {
+      "solutionMarkdown": "The wording was interpreted differently as to whether the two constant sequences should be included. Counting them gives\n\n$$2\\binom{21}{2}-2\\cdot19=382,$$\n\nwhile excluding the two constant sequences gives $380$. The MAA accepted both $\\text{(D)}\\ 380$ and $\\text{(E)}\\ 382$; this archive likewise awards full credit for either option.",
+      "correctOption": "D",
+      "reconstruction": true,
+      "repairReason": "The first converted solution incorrectly says that an option F was accepted. The official acceptance was limited to D and E, both of which must score as correct.",
+      "evidence": [
+        {
+          "kind": "local-source-solution-note",
+          "path": "2012_AMC_12B_Problems/Problem_12.md"
+        },
+        {
+          "kind": "public-problem-page",
+          "url": "https://artofproblemsolving.com/wiki/index.php/2012_AMC_12B_Problems/Problem_12"
+        }
+      ]
+    },
+    "2014_AMC_12A_Problems/Problem_14.md": {
+      "promptMarkdown": "Let $a<b<c$ be three integers such that $a,b,c$ is an arithmetic progression and $a,c,b$ is a geometric progression. What is the smallest possible value of $c$?",
+      "choices": {
+        "A": "$-2$",
+        "B": "$1$",
+        "C": "$2$",
+        "D": "$4$",
+        "E": "$6$"
+      },
+      "correctOption": "C",
+      "reconstruction": true,
+      "repairReason": "The converted source joins the first solution to the end of the choices with a literal == marker, leaking its answer into the timed prompt.",
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2014_AMC_12A_Problems/Problem_14.raw.txt"
+        },
+        {
+          "kind": "public-problem-page",
+          "url": "https://artofproblemsolving.com/wiki/index.php/2014_AMC_12A_Problems/Problem_14"
+        }
+      ]
+    },
+    "2014_AMC_12B_Problems/Problem_13.md": {
+      "promptMarkdown": "Real numbers $a$ and $b$ are chosen with $1<a<b$ such that no triangle with positive area has side lengths $1$, $a$, and $b$ or $\\frac{1}{b}$, $\\frac{1}{a}$, and $1$. What is the smallest possible value of $b$?",
+      "choices": {
+        "A": "$\\frac{3+\\sqrt3}{2}$",
+        "B": "$\\frac{5}{2}$",
+        "C": "$\\frac{3+\\sqrt5}{2}$",
+        "D": "$\\frac{3+\\sqrt6}{2}$",
+        "E": "$3$"
+      },
+      "correctOption": "C",
+      "reconstruction": true,
+      "repairReason": "The source loses the inequality in the stem and joins Solution 1 to choice E, exposing the answer before submission.",
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2014_AMC_12B_Problems/Problem_13.raw.txt"
+        },
+        {
+          "kind": "public-problem-page",
+          "url": "https://artofproblemsolving.com/wiki/index.php/2014_AMC_12B_Problems/Problem_13"
+        }
+      ]
+    },
+    "2018_AMC_12A_Problems/Problem_06.md": {
+      "promptMarkdown": "For positive integers $m$ and $n$ such that $m+10<n+1$, both the mean and the median of the set $\\{m,m+4,m+10,n+1,n+2,2n\\}$ are equal to $n$. What is $m+n$?",
+      "choices": {
+        "A": "$20$",
+        "B": "$21$",
+        "C": "$22$",
+        "D": "$23$",
+        "E": "$24$"
+      },
+      "correctOption": "B",
+      "reconstruction": true,
+      "repairReason": "The conversion removes the inequality from the stem and joins Solution 1 to choice E, leaking the answer into the timed prompt.",
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2018_AMC_12A_Problems/Problem_06.raw.txt"
+        },
+        {
+          "kind": "public-problem-page",
+          "url": "https://artofproblemsolving.com/wiki/index.php/2018_AMC_12A_Problems/Problem_6"
+        }
+      ]
+    },
+    "2018_AMC_12B_Problems/Problem_16.md": {
+      "solutionMarkdown": "Translating the roots $6$ units to the right preserves all areas, so it is enough to consider the roots of $z^8=81$. They are the vertices of a regular octagon centered at the origin with circumradius $\\sqrt3$. The least-area triangle uses three consecutive vertices. Taking the vertices at angles $\\frac{\\pi}{4}$, $\\frac{\\pi}{2}$, and $\\frac{3\\pi}{4}$ gives base length $\\sqrt6$ and height $\\sqrt3-\\frac{\\sqrt6}{2}$. Hence its area is\n\n$$\\frac12\\cdot\\sqrt6\\left(\\sqrt3-\\frac{\\sqrt6}{2}\\right)=\\frac32\\sqrt2-\\frac32,$$\n\nso the answer is $\\boxed{\\text{(B)}}$.",
+      "correctOption": "B",
+      "reconstruction": true,
+      "repairReason": "The converted first solution starts an unclosed Asymptote fence whose truncated source absorbs the remainder of Solution 1 and later solution prose. The original diagram cannot be safely separated from that damaged block.",
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2018_AMC_12B_Problems/Problem_16.raw.txt"
+        },
+        {
+          "kind": "central-answer-key-cross-check",
+          "path": "practice-content/historical-answer-keys.json"
+        },
+        {
+          "kind": "public-problem-page",
+          "url": "https://artofproblemsolving.com/wiki/index.php/2018_AMC_12B_Problems/Problem_16"
+        }
+      ]
+    },
+    "2020_AMC_12A_Problems/Problem_15.md": {
+      "solutionMarkdown": "Factoring the two polynomials gives\n\n$$z^3-8=(z-2)(z^2+2z+4)$$\n\nand\n\n$$z^3-8z^2-8z+64=(z^2-8)(z-8).$$\n\nTherefore\n\n$$A=\\left\\{2,-1+\\sqrt3i,-1-\\sqrt3i\\right\\},\\qquad B=\\left\\{-2\\sqrt2,2\\sqrt2,8\\right\\}.$$\n\nFor either nonreal point in $A$, its squared distance from a real point $x$ is $(x+1)^2+3$. Thus its squared distances from the three points of $B$ are $12-4\\sqrt2$, $12+4\\sqrt2$, and $84$, respectively. The distances from $2$ to the three points of $B$ are $2+2\\sqrt2$, $2\\sqrt2-2$, and $6$, all smaller than $\\sqrt{84}$. Hence the greatest distance is\n\n$$\\sqrt{84}=2\\sqrt{21},$$\n\nso the answer is $\\boxed{\\text{(D)}}$.",
+      "correctOption": "D",
+      "reconstruction": true,
+      "repairReason": "The first converted solution enters an unclosed and truncated Asymptote block before its distance calculation, so it cannot be safely rendered as a readable solution.",
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2020_AMC_12A_Problems/Problem_15.raw.txt"
+        },
+        {
+          "kind": "central-answer-key-cross-check",
+          "path": "practice-content/historical-answer-keys.json"
+        },
+        {
+          "kind": "public-problem-page",
+          "url": "https://artofproblemsolving.com/wiki/index.php/2020_AMC_12A_Problems/Problem_15"
+        }
+      ]
+    },
+    "2020_AMC_12B_Problems/Problem_15.md": {
+      "solutionMarkdown": "Call a pair of opposite people a diameter. If there are no diameter pairs, the people must be paired with neighbors in one of the two alternating ways. If there is one diameter pair, choose it in $5$ ways; the remaining paths then have forced neighbor pairings. Two or four diameter pairs are impossible. With three diameter pairs, the three selected diameters must be consecutive around the circle, which gives $5$ choices. Finally, all five diameters give one more pairing. Thus the total is\n\n$$2+5+5+1=13,$$\n\nso the answer is $\\boxed{\\text{(C)}}$.",
+      "correctOption": "C",
+      "reconstruction": true,
+      "repairReason": "The Markdown conversion incorrectly labels ordinary Solution 1 prose about five possible diameters as an Asymptote fence, although the raw source contains no diagram at that point.",
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2020_AMC_12B_Problems/Problem_15.raw.txt"
+        },
+        {
+          "kind": "central-answer-key-cross-check",
+          "path": "practice-content/historical-answer-keys.json"
+        },
+        {
+          "kind": "public-problem-page",
+          "url": "https://artofproblemsolving.com/wiki/index.php/2020_AMC_12B_Problems/Problem_15"
+        }
+      ]
+    },
+    "2024_AMC_12B_Problems/Problem_01.md": {
+      "promptMarkdown": "In a long line of people arranged left to right, the $1013$th person from the left is also the $1010$th person from the right. How many people are in the line?",
+      "correctOption": "B",
+      "reconstruction": true,
+      "repairReason": "A modified China-testpaper variant and its solution are H3 sections inside the converted question prompt; they reveal a different answer before submission.",
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2024_AMC_12B_Problems/Problem_01.raw.txt"
+        },
+        {
+          "kind": "public-problem-page",
+          "url": "https://artofproblemsolving.com/wiki/index.php/2024_AMC_12B_Problems/Problem_1"
+        }
+      ]
+    },
+    "2024_AMC_12B_Problems/Problem_03.md": {
+      "promptMarkdown": "For how many integer values of $x$ is $|2x|\\leq7\\pi$?",
+      "correctOption": "E",
+      "reconstruction": true,
+      "repairReason": "A modified China-testpaper variant and its solution are H3 sections inside the converted question prompt; they reveal a different answer before submission.",
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2024_AMC_12B_Problems/Problem_03.raw.txt"
+        },
+        {
+          "kind": "public-problem-page",
+          "url": "https://artofproblemsolving.com/wiki/index.php/2024_AMC_12B_Problems/Problem_3"
+        }
+      ]
+    },
+    "2006_AMC_12A_Problems/Problem_18.md": {
+      "choices": {
+        "A": "$\\{x\\mid x\\ne0\\}$",
+        "B": "$\\{x\\mid x<0\\}$",
+        "C": "$\\{x\\mid x>0\\}$",
+        "D": "$\\{x\\mid x\\ne-1,\\ x\\ne0,\\ x\\ne1\\}$",
+        "E": "$\\{-1,1\\}$"
+      },
+      "solutionMarkdown": "Substituting $1/x$ for $x$ gives\n\n$$f\\left(\\frac1x\\right)+f(x)=\\frac1x.$$\n\nThe left side is unchanged, so any $x$ in the domain must satisfy $x=1/x$, hence $x=\\pm1$. The set $\\{-1,1\\}$ is closed under reciprocation, so it is the largest possible domain. Therefore the answer is $\\boxed{\\text{(E)}}$.",
+      "correctOption": "E",
+      "repairReason": "The converted option row leaves extra dollar delimiters on choices B and D; the first explanation also contains unwrapped TeX fragments.",
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2006_AMC_12A_Problems/Problem_18.raw.txt"
+        }
+      ]
+    },
+    "2007_AMC_12A_Problems/Problem_21.md": {
+      "promptMarkdown": "The sum of the zeros, the product of the zeros, and the sum of the coefficients of the function $f(x)=ax^2+bx+c$ are equal. Their common value must also be which of the following?",
+      "choices": {
+        "A": "the coefficient of $x^2$",
+        "B": "the coefficient of $x$",
+        "C": "the $y$-intercept of the graph of $y=f(x)$",
+        "D": "one of the $x$-intercepts of the graph of $y=f(x)$",
+        "E": "the mean of the $x$-intercepts of the graph of $y=f(x)$"
+      },
+      "solutionMarkdown": "By Vieta's formulas, the sum of the zeros is $-b/a$, their product is $c/a$, and the sum of the coefficients is $a+b+c$. Equality of the first two quantities gives $b=-c$, so their common value is $a+b+c=a$. Thus it is the coefficient of $x^2$, and the answer is $\\boxed{\\text{(A)}}$.",
+      "correctOption": "A",
+      "repairReason": "The converted option row breaks each text-and-math choice across separate TeX spans, and its source solution leaves the same TeX unwrapped.",
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2007_AMC_12A_Problems/Problem_21.raw.txt"
+        }
+      ]
+    },
+    "2009_AMC_12B_Problems/Problem_15.md": {
+      "choices": {
+        "A": "$3(1+r)^x=7$",
+        "B": "$3(1+r/10)^x=7$",
+        "C": "$3(1+2r)^x=7$",
+        "D": "$3(1+\\sqrt r)^x=7$",
+        "E": "$3(1+1/r)^x=7$"
+      },
+      "correctOption": "B",
+      "repairReason": "The converter strips the shared math delimiters from the equation choices.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2009_AMC_12B_Problems/Problem_15.md"
+        }
+      ]
+    },
+    "2009_AMC_12B_Problems/Problem_17.md": {
+      "promptMarkdown": "Each face of a cube is given a single narrow stripe painted from the center of one edge to the center of the opposite edge. The choice of the edge pairing is made at random and independently for each face. What is the probability that there is a continuous stripe encircling the cube?",
+      "choices": {
+        "A": "$\\frac18$",
+        "B": "$\\frac{3}{16}$",
+        "C": "$\\frac14$",
+        "D": "$\\frac38$",
+        "E": "$\\frac12$"
+      },
+      "correctOption": "B",
+      "repairReason": "The source inserts an empty display-math block between option A and the remaining raw TeX options.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2009_AMC_12B_Problems/Problem_17.md"
+        }
+      ]
+    },
+    "2009_AMC_12B_Problems/Problem_18.md": {
+      "promptMarkdown": "Rachel and Robert run on a circular track. Rachel runs counterclockwise and completes a lap every $90$ seconds, and Robert runs clockwise and completes a lap every $80$ seconds. Both start from the same line at the same time. At some random time between $10$ minutes and $11$ minutes after they begin to run, a photographer standing inside the track takes a picture that shows one-fourth of the track, centered on the starting line. What is the probability that both Rachel and Robert are in the picture?",
+      "choices": {
+        "A": "$\\frac1{16}$",
+        "B": "$\\frac18$",
+        "C": "$\\frac3{16}$",
+        "D": "$\\frac14$",
+        "E": "$\\frac5{16}$"
+      },
+      "correctOption": "C",
+      "repairReason": "The source inserts an empty display-math block between option A and the remaining raw TeX options.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2009_AMC_12B_Problems/Problem_18.md"
+        }
+      ]
+    },
+    "2012_AMC_12B_Problems/Problem_06.md": {
+      "choices": {
+        "A": "Her estimate is larger than $x-y$.",
+        "B": "Her estimate is smaller than $x-y$.",
+        "C": "Her estimate equals $x-y$.",
+        "D": "Her estimate equals $y-x$.",
+        "E": "Her estimate is $0$."
+      },
+      "correctOption": "A",
+      "repairReason": "The conversion removes the enclosing math delimiters from text-style choices.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2012_AMC_12B_Problems/Problem_06.md"
+        }
+      ]
+    },
+    "2013_AMC_12A_Problems/Problem_21.md": {
+      "choices": {
+        "A": "$(\\log 2016,\\log 2017)$",
+        "B": "$(\\log 2017,\\log 2018)$",
+        "C": "$(\\log 2018,\\log 2019)$",
+        "D": "$(\\log 2019,\\log 2020)$",
+        "E": "$(\\log 2020,\\log 2021)$"
+      },
+      "correctOption": "A",
+      "repairReason": "The converted interval choices lose their TeX delimiters.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2013_AMC_12A_Problems/Problem_21.md"
+        }
+      ]
+    },
+    "2014_AMC_12A_Problems/Problem_08.md": {
+      "choices": {
+        "A": "$\\textdollar179.95$",
+        "B": "$\\textdollar199.95$",
+        "C": "$\\textdollar219.95$",
+        "D": "$\\textdollar239.95$",
+        "E": "$\\textdollar259.95$"
+      },
+      "correctOption": "C",
+      "repairReason": "The conversion leaves the TeX dollar-sign command outside math delimiters in every choice.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2014_AMC_12A_Problems/Problem_08.md"
+        }
+      ]
+    },
+    "2015_AMC_12A_Problems/Problem_07.md": {
+      "choices": {
+        "A": "The second height is $10\\%$ less than the first.",
+        "B": "The first height is $10\\%$ more than the second.",
+        "C": "The second height is $21\\%$ less than the first.",
+        "D": "The first height is $21\\%$ more than the second.",
+        "E": "The second height is $80\\%$ of the first."
+      },
+      "correctOption": "D",
+      "repairReason": "The legacy option row interleaves text-style TeX and unmatched inline delimiters.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2015_AMC_12A_Problems/Problem_07.md"
+        }
+      ]
+    },
+    "2017_AMC_12B_Problems/Problem_17.md": {
+      "choices": {
+        "A": "The probability of winning Game A is $\\frac{4}{81}$ less than the probability of winning Game B.",
+        "B": "The probability of winning Game A is $\\frac{2}{81}$ less than the probability of winning Game B.",
+        "C": "The probabilities are the same.",
+        "D": "The probability of winning Game A is $\\frac{2}{81}$ greater than the probability of winning Game B.",
+        "E": "The probability of winning Game A is $\\frac{4}{81}$ greater than the probability of winning Game B."
+      },
+      "correctOption": "D",
+      "repairReason": "The source's sentence choices include unwrapped fraction commands.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2017_AMC_12B_Problems/Problem_17.md"
+        }
+      ]
+    },
+    "2018_AMC_12A_Problems/Problem_16.md": {
+      "choices": {
+        "A": "$a=\\frac14$",
+        "B": "$\\frac14<a<\\frac12$",
+        "C": "$a>\\frac14$",
+        "D": "$a=\\frac12$",
+        "E": "$a>\\frac12$"
+      },
+      "correctOption": "E",
+      "repairReason": "The conversion removes the shared math delimiters from the inequality choices.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2018_AMC_12A_Problems/Problem_16.md"
+        }
+      ]
+    },
+    "2019_AMC_12B_Problems/Problem_03.md": {
+      "choices": {
+        "A": "reflection in the $y$-axis",
+        "B": "counterclockwise rotation around the origin by $90^\\circ$",
+        "C": "translation by $3$ units to the right and $5$ units down",
+        "D": "reflection in the $x$-axis",
+        "E": "clockwise rotation about the origin by $180^\\circ$"
+      },
+      "correctOption": "E",
+      "repairReason": "The source's textual choices retain degree TeX outside a math span.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2019_AMC_12B_Problems/Problem_03.md"
+        }
+      ]
+    },
+    "2021_AMC_12A_Problems/Problem_02.md": {
+      "choices": {
+        "A": "It is never true.",
+        "B": "It is true if and only if $ab=0$.",
+        "C": "It is true if and only if $a+b\\ge0$.",
+        "D": "It is true if and only if $ab=0$ and $a+b\\ge0$.",
+        "E": "It is always true."
+      },
+      "correctOption": "D",
+      "repairReason": "The source's prose choices contain unwrapped equality and inequality commands.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2021_AMC_12A_Problems/Problem_02.md"
+        }
+      ]
+    },
+    "2021_AMC_12B_Problems/Problem_16.md": {
+      "promptMarkdown": "Let $g(x)$ be a polynomial with leading coefficient $1$, whose three roots are the reciprocals of the three roots of $f(x)=x^3+ax^2+bx+c$, where $c\\ne0$. What is $g(1)$ in terms of $a$, $b$, and $c$?",
+      "choices": {
+        "A": "$\\frac{1+a+b+c}{c}$",
+        "B": "$1+a+b+c$",
+        "C": "$\\frac{1+a+b+c}{c^2}$",
+        "D": "$\\frac{a+b+c}{c^2}$",
+        "E": "$\\frac{1+a+b+c}{a+b+c}$"
+      },
+      "solutionMarkdown": "The monic polynomial with the reciprocal roots is\n\n$$g(x)=\\frac{x^3}{c}f\\left(\\frac1x\\right)=x^3+\\frac bc x^2+\\frac ac x+\\frac1c.$$\n\nTherefore\n\n$$g(1)=\\frac{1+a+b+c}{c},$$\n\nso the answer is $\\boxed{\\text{(A)}}$.",
+      "correctOption": "A",
+      "repairReason": "The source loses the nonzero condition after $c$, joins the first option to the stem, and corrupts the option-A denominator delimiter.",
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2021_AMC_12B_Problems/Problem_16.raw.txt"
+        },
+        {
+          "kind": "central-answer-key-cross-check",
+          "path": "practice-content/historical-answer-keys.json"
+        }
+      ]
+    },
+    "2022_AMC_12B_Problems/Problem_13.md": {
+      "choices": {
+        "A": "$15\\dfrac18$",
+        "B": "$15\\dfrac38$",
+        "C": "$15\\dfrac12$",
+        "D": "$15\\dfrac58$",
+        "E": "$15\\dfrac78$"
+      },
+      "correctOption": "D",
+      "repairReason": "The converter leaves the mixed-number TeX commands outside math delimiters.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2022_AMC_12B_Problems/Problem_13.md"
+        }
+      ]
+    },
+    "2005_AMC_12B_Problems/Problem_10.md": {
+      "promptMarkdown": "The first term of a sequence is $2005$. Each succeeding term is the sum of the cubes of the digits of the previous term. What is the $2005^{\\text{th}}$ term of the sequence?",
+      "correctOption": "E",
+      "repairReason": "The source closes the ordinal's math span before its closing exponent brace.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2005_AMC_12B_Problems/Problem_10.md"
+        }
+      ]
+    },
+    "2005_AMC_12B_Problems/Problem_22.md": {
+      "promptMarkdown": "A sequence of complex numbers $z_0,z_1,z_2,\\ldots$ is defined by\n\n$$z_{n+1}=\\frac{iz_n}{\\overline{z_n}},$$\n\nwhere $\\overline{z_n}$ is the complex conjugate of $z_n$ and $i^2=-1$. Suppose that $|z_0|=1$ and $z_{2005}=1$. How many possible values are there for $z_0$?",
+      "correctOption": "E",
+      "repairReason": "The converter separates the conjugation command from its argument, producing invalid inline math in the stem.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2005_AMC_12B_Problems/Problem_22.md"
+        }
+      ]
+    },
+    "2008_AMC_12A_Problems/Problem_01.md": {
+      "promptMarkdown": "A bakery owner turns on a doughnut machine at $\\text{8:30 AM}$. At $\\text{11:10 AM}$ the machine has completed one third of the day's job. At what time will the doughnut machine complete the job?",
+      "correctOption": "D",
+      "repairReason": "The legacy small-text formatting splits the AM labels across malformed inline math spans.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2008_AMC_12A_Problems/Problem_01.md"
+        }
+      ]
+    },
+    "2009_AMC_12A_Problems/Problem_24.md": {
+      "promptMarkdown": "The *tower function of twos* is defined recursively as follows: $T(1)=2$ and $T(n+1)=2^{T(n)}$ for $n\\ge1$. Let $A=(T(2009))^{T(2009)}$ and $B=(T(2009))^A$. What is the largest integer $k$ for which\n\n$$\\underbrace{\\log_2\\log_2\\log_2\\cdots\\log_2 B}_{k\\text{ times}}$$\n\nis defined?",
+      "correctOption": "E",
+      "repairReason": "The converted tower notation breaks multiple math delimiters inside the stem and underbrace.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2009_AMC_12A_Problems/Problem_24.md"
+        }
+      ]
+    },
+    "2009_AMC_12A_Problems/Problem_25.md": {
+      "promptMarkdown": "The first two terms of a sequence are $a_1=1$ and $a_2=\\frac1{\\sqrt3}$. For $n\\ge1$,\n\n$$a_{n+2}=\\frac{a_n+a_{n+1}}{1-a_na_{n+1}}.$$\n\nWhat is $|a_{2009}|$?",
+      "correctOption": "A",
+      "repairReason": "The source splits the initial fraction across mismatched inline-math delimiters.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2009_AMC_12A_Problems/Problem_25.md"
+        }
+      ]
+    },
+    "2012_AMC_12A_Problems/Problem_24.md": {
+      "promptMarkdown": "Let $\\{a_k\\}_{k=1}^{2011}$ be the sequence of real numbers defined by $a_1=0.201$, $a_2=(0.2011)^{a_1}$, $a_3=(0.20101)^{a_2}$, $a_4=(0.201011)^{a_3}$, and in general,\n\n$$a_k=\\begin{cases}(0.\\underbrace{20101\\cdots0101}_{k+2\\text{ digits}})^{a_{k-1}} & \\text{if }k\\text{ is odd},\\\\(0.\\underbrace{20101\\cdots01011}_{k+2\\text{ digits}})^{a_{k-1}} & \\text{if }k\\text{ is even}.\\end{cases}$$\n\nRearranging the numbers in $\\{a_k\\}_{k=1}^{2011}$ in decreasing order produces a new sequence $\\{b_k\\}_{k=1}^{2011}$. What is the sum of all integers $k$, $1\\le k\\le2011$, such that $a_k=b_k$?",
+      "correctOption": "C",
+      "repairReason": "A stray dollar sign corrupts the even branch of the piecewise definition and the converted subscript delimiters in the final question.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2012_AMC_12A_Problems/Problem_24.md"
+        }
+      ]
+    },
+    "2017_AMC_12A_Problems/Problem_25.md": {
+      "promptMarkdown": "The vertices $V$ of a centrally symmetric hexagon in the complex plane are given by\n\n$$V=\\left\\{\\sqrt2i,-\\sqrt2i,\\frac1{\\sqrt8}(1+i),\\frac1{\\sqrt8}(-1+i),\\frac1{\\sqrt8}(1-i),\\frac1{\\sqrt8}(-1-i)\\right\\}.$$\n\nFor each $j$, $1\\le j\\le12$, an element $z_j$ is chosen from $V$ at random, independently of the other choices. Let $P=\\prod_{j=1}^{12}z_j$ be the product of the $12$ numbers selected. What is the probability that $P=-1$?",
+      "correctOption": "E",
+      "repairReason": "The product notation is split into separate dollar-delimited fragments in the converted prompt.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2017_AMC_12A_Problems/Problem_25.md"
+        }
+      ]
+    },
+    "2024_AMC_12A_Problems/Problem_23.md": {
+      "promptMarkdown": "What is the value of\n\n$$\\tan^2\\frac{\\pi}{16}\\cdot\\tan^2\\frac{3\\pi}{16}+\\tan^2\\frac{\\pi}{16}\\cdot\\tan^2\\frac{5\\pi}{16}+\\tan^2\\frac{3\\pi}{16}\\cdot\\tan^2\\frac{7\\pi}{16}+\\tan^2\\frac{5\\pi}{16}\\cdot\\tan^2\\frac{7\\pi}{16}?$$",
+      "correctOption": "B",
+      "repairReason": "The source inserts dollar delimiters between every numerator and denominator of the tangent expression.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2024_AMC_12A_Problems/Problem_23.md"
+        }
+      ]
+    },
+    "2025_AMC_12B_Problems/Problem_17.md": {
+      "promptMarkdown": "Each of the $9$ squares in a $3\\times3$ grid is to be colored red, blue, or yellow in such a way that each red square shares an edge with at least one blue square, each blue square shares an edge with at least one yellow square, and each yellow square shares an edge with at least one red square. Colorings that can be obtained from one another by rotations and/or reflections are considered the same. How many different colorings are possible?",
+      "correctOption": "C",
+      "repairReason": "The grid dimensions are split between a literal brace and an inline math span.",
+      "evidence": [
+        {
+          "kind": "local-markdown-source",
+          "path": "2025_AMC_12B_Problems/Problem_17.md"
+        }
+      ]
+    },
+    "2025_AMC_12B_Problems/Problem_10.md": {
+      "promptMarkdown": "The altitude to the hypotenuse of a $30^\\circ$-$60^\\circ$-$90^\\circ$ triangle is divided into two segments of lengths $x<y$ by the median to the shortest side of the triangle. What is the ratio $\\tfrac{x}{x+y}$?",
+      "choices": {
+        "A": "$\\dfrac{3}{7}$",
+        "B": "$\\dfrac{\\sqrt3}{4}$",
+        "C": "$\\dfrac{4}{9}$",
+        "D": "$\\dfrac{5}{11}$",
+        "E": "$\\dfrac{4\\sqrt3}{15}$"
+      },
+      "solutionMarkdown": "Scale the triangle so its hypotenuse has length $4$, with the shorter leg $2$ and the longer leg $2\\sqrt3$. Let the altitude meet the hypotenuse at $D$, and let the median to the shorter leg meet the altitude at $F$. Then the altitude splits the hypotenuse into lengths $1$ and $3$. Mass points (or similar triangles) gives\n\n$$\\frac{x}{y}=\\frac{DF}{FB}=\\frac{3}{4}.$$\n\nTherefore\n\n$$\\frac{x}{x+y}=\\frac{3}{3+4}=\\frac{3}{7},$$\n\nso the answer is $\\boxed{\\text{(A)}}$.",
+      "correctOption": "A",
+      "reconstruction": true,
+      "repairReason": "The source places the entire problem, diagram, and all solutions inside an unclosed Asymptote fence, so the parser cannot recover any usable question fields.",
+      "requiredMedia": [
+        {
+          "kind": "question-diagram",
+          "sourcePath": "2025_AMC_12B_Problems/Problem_10.md",
+          "rawSourcePath": "2025_AMC_12B_Problems/Problem_10.raw.txt",
+          "extractionHint": "Render only the Asymptote statements after the raw Diagram heading and before Solution 1; the converted Markdown starts an unclosed fence before the prose question.",
+          "placement": "prompt"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "local-raw-source",
+          "path": "2025_AMC_12B_Problems/Problem_10.raw.txt"
+        },
+        {
+          "kind": "public-problem-page",
+          "url": "https://artofproblemsolving.com/wiki/index.php/2025_AMC_12B_Problems/Problem_10"
+        },
+        {
+          "kind": "public-problem-pdf",
+          "url": "https://ziml.areteem.org/zimlresources/AMC12/ZIML_Download_2025_AMC_12B.pdf"
+        }
+      ]
+    },
+    "2003_AMC_12A_Problems/Problem_23.md": {
+      "promptMarkdown": "How many perfect squares are divisors of the product $1!\\cdot2!\\cdot3!\\cdot\\cdots\\cdot9!$?",
+      "repairReason": "The historical converter leaves product notation outside inline math delimiters.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2003_AMC_12A_Problems/Problem_23.md"}]
+    },
+    "2003_AMC_12B_Problems/Problem_02.md": {
+      "promptMarkdown": "Al gets the disease algebritis and must take one green pill and one pink pill each day for two weeks. A green pill costs $1$ more than a pink pill, and Al's pills cost a total of $546$ for the two weeks. How much does one green pill cost?",
+      "repairReason": "The historical converter exposes numeric math fragments as raw TeX/plain text.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2003_AMC_12B_Problems/Problem_02.md"}]
+    },
+    "2003_AMC_12B_Problems/Problem_08.md": {
+      "promptMarkdown": "Let $\\clubsuit(x)$ denote the sum of the digits of the positive integer $x$. For example, $\\clubsuit(8)=8$ and $\\clubsuit(123)=1+2+3=6$. For how many two-digit values of $x$ is $\\clubsuit(\\clubsuit(x))=3$?",
+      "repairReason": "The historical converter omits inline math delimiters around the card-suit operation.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2003_AMC_12B_Problems/Problem_08.md"}]
+    },
+    "2005_AMC_12A_Problems/Problem_15.md": {
+      "promptReplacements": [{
+        "from": "Let $\\overline{AB}$ be a diameter of a circle and C be a point on $\\overline{AB}$ with 2 $\\cdot AC = BC.$ Let D and E be points on the circle such that $\\overline{DC}$\\perp $\\overline{AB}$ and $\\overline{DE}$ is a second diameter. What is the ratio of the area of $\\triangle DCE$ to the area of $\\triangle ABD$?",
+        "to": "Let $\\overline{AB}$ be a diameter of a circle and $C$ be a point on $\\overline{AB}$ with $2\\cdot AC=BC$. Let $D$ and $E$ be points on the circle such that $\\overline{DC}\\perp\\overline{AB}$ and $\\overline{DE}$ is a second diameter. What is the ratio of the area of $\\triangle DCE$ to the area of $\\triangle ABD$?"
+      }],
+      "repairReason": "A uniquely scoped prompt repair restores malformed TeX while preserving the separately mirrored diagram.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2005_AMC_12A_Problems/Problem_15.md"}]
+    },
+    "2006_AMC_12B_Problems/Problem_02.md": {
+      "promptMarkdown": "For real numbers $x$ and $y$, define $x\\spadesuit y=(x+y)(x-y)$. What is $3\\spadesuit(4\\spadesuit5)$?",
+      "repairReason": "The historical converter omits inline math delimiters around the card-suit operation.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2006_AMC_12B_Problems/Problem_02.md"}]
+    },
+    "2007_AMC_12A_Problems/Problem_05.md": {
+      "promptMarkdown": "Last year Mr. Jon Q. Public received an inheritance. He paid 20 percent in federal taxes on the inheritance, and paid 10 percent of what he had left in state taxes. He paid a total of 10,500 dollars for both taxes. How many dollars was his inheritance?",
+      "repairReason": "The historical converter leaves percentage and currency source notation in a malformed inline span.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2007_AMC_12A_Problems/Problem_05.md"}]
+    },
+    "2008_AMC_12B_Problems/Problem_07.md": {
+      "promptMarkdown": "For real numbers $a$ and $b$, define $a\\mathbin{\\$}b=(a-b)^2$. What is $(x-y)^2\\mathbin{\\$}(y-x)^2$?",
+      "repairReason": "The historical converter leaves the custom dollar-sign operation outside inline math delimiters.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2008_AMC_12B_Problems/Problem_07.md"}]
+    },
+    "2011_AMC_12A_Problems/Problem_21.md": {
+      "promptMarkdown": "Let $f_1(x)=\\sqrt{1-x}$ and, for integers $n\\ge2$, let $f_n(x)=f_{n-1}(\\sqrt{n^2-x})$. If $N$ is the largest value of $n$ for which the domain of $f_n$ is nonempty, the domain of $f_N$ is $\\{c\\}$. What is $N+c$?",
+      "repairReason": "The historical converter breaks the square-root and domain notation across raw TeX fragments.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2011_AMC_12A_Problems/Problem_21.md"}]
+    },
+    "2012_AMC_12B_Problems/Problem_21.md": {
+      "promptReplacements": [{
+        "from": "Square AXYZ is inscribed in equiangular hexagon ABCDEF with X on $\\overline{BC}, Y$ on $\\overline{DE},$ and Z on $\\overline{EF}.$ Suppose that AB=40, and EF=$41($\\sqrt{3}-1)$.$ What is the side-length of the square?",
+        "to": "Square $AXYZ$ is inscribed in equiangular hexagon $ABCDEF$ with $X$ on $\\overline{BC}$, $Y$ on $\\overline{DE}$, and $Z$ on $\\overline{EF}$. Suppose that $AB=40$ and $EF=41(\\sqrt3-1)$. What is the side length of the square?"
+      }],
+      "repairReason": "A uniquely scoped prompt repair restores malformed TeX while preserving the separately mirrored diagram.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2012_AMC_12B_Problems/Problem_21.md"}]
+    },
+    "2013_AMC_12A_Problems/Problem_01.md": {
+      "promptReplacements": [{
+        "from": "Square  ABCD  has side length  10 . Point  E  is on  $\\overline{BC}$ , and the area of  \\bigtriangleup ABE  is  40 . What is  BE ?",
+        "to": "Square $ABCD$ has side length $10$. Point $E$ is on $\\overline{BC}$, and the area of $\\triangle ABE$ is $40$. What is $BE$?"
+      }],
+      "repairReason": "A uniquely scoped prompt repair restores malformed TeX while preserving the separately mirrored diagram.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2013_AMC_12A_Problems/Problem_01.md"}]
+    },
+    "2013_AMC_12A_Problems/Problem_19.md": {
+      "promptMarkdown": "In $\\triangle ABC$, $AB=86$ and $AC=97$. A circle with center $A$ and radius $AB$ intersects $\\overline{BC}$ at points $B$ and $X$. Moreover, $\\overline{BX}$ and $\\overline{CX}$ have integer lengths. What is $BC$?",
+      "repairReason": "The historical converter leaves triangle and segment notation outside inline math delimiters.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2013_AMC_12A_Problems/Problem_19.md"}]
+    },
+    "2013_AMC_12B_Problems/Problem_19.md": {
+      "promptReplacements": [{
+        "from": "In triangle ABC, AB=13, BC=14, and CA=15. Distinct points D, E, and F lie on segments $\\overline{BC}, \\overline{CA},$ and $\\overline{DE},$ respectively, such that $\\overline{AD}$\\perp$\\overline{BC}, \\overline{DE}$\\perp$\\overline{AC},$ and $\\overline{AF}$\\perp$\\overline{BF}.$ The length of segment $\\overline{DF}$ can be written as $\\frac{m}{n},$ where m and n are relatively prime positive integers. What is m+n?",
+        "to": "In $\\triangle ABC$, $AB=13$, $BC=14$, and $CA=15$. Distinct points $D$, $E$, and $F$ lie on segments $\\overline{BC}$, $\\overline{CA}$, and $\\overline{DE}$, respectively, such that $\\overline{AD}\\perp\\overline{BC}$, $\\overline{DE}\\perp\\overline{AC}$, and $\\overline{AF}\\perp\\overline{BF}$. The length of segment $\\overline{DF}$ can be written as $\\frac{m}{n}$, where $m$ and $n$ are relatively prime positive integers. What is $m+n$?"
+      }],
+      "repairReason": "A uniquely scoped prompt repair restores malformed TeX while preserving the separately mirrored diagram.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2013_AMC_12B_Problems/Problem_19.md"}]
+    },
+    "2014_AMC_12B_Problems/Problem_15.md": {
+      "promptMarkdown": "When $p=\\sum_{k=1}^{6}k\\ln k$, the number $e^p$ is an integer. What is the largest power of $2$ that is a factor of $e^p$?",
+      "repairReason": "The historical converter strips the math delimiters around the summation expression.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2014_AMC_12B_Problems/Problem_15.md"}]
+    },
+    "2014_AMC_12B_Problems/Problem_23.md": {
+      "promptMarkdown": "The number $2017$ is prime. Let $S=\\sum_{k=0}^{62}\\binom{2014}{k}$. What is the remainder when $S$ is divided by $2017$?",
+      "repairReason": "The historical converter strips the math delimiters around the binomial sum.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2014_AMC_12B_Problems/Problem_23.md"}]
+    },
+    "2016_AMC_12B_Problems/Problem_03.md": {
+      "promptMarkdown": "Let $x=-2016$. What is the value of $\\left|\\left|\\lvert x\\rvert-x\\right|-\\lvert x\\rvert\\right|-x$?",
+      "repairReason": "The historical converter splits nested absolute-value delimiters across raw TeX fragments.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2016_AMC_12B_Problems/Problem_03.md"}]
+    },
+    "2016_AMC_12B_Problems/Problem_06.md": {
+      "promptMarkdown": "All three vertices of $\\triangle ABC$ lie on the parabola defined by $y=x^2$, with $A$ at the origin and $\\overline{BC}$ parallel to the $x$-axis. The area of the triangle is $64$. What is the length of $BC$?",
+      "repairReason": "The historical converter leaves triangle and segment notation outside inline math delimiters.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2016_AMC_12B_Problems/Problem_06.md"}]
+    },
+    "2016_AMC_12B_Problems/Problem_24.md": {
+      "promptMarkdown": "There are exactly 77,000 ordered quadruplets $(a,b,c,d)$ such that $\\gcd(a,b,c,d)=77$ and $\\operatorname{lcm}(a,b,c,d)=n$. What is the smallest possible value for $n$?",
+      "repairReason": "The historical converter strips the math delimiters around the gcd/lcm notation.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2016_AMC_12B_Problems/Problem_24.md"}]
+    },
+    "2018_AMC_12A_Problems/Problem_10.md": {
+      "promptMarkdown": "How many ordered pairs of real numbers $(x,y)$ satisfy the following system of equations?\n\n$$\n\\begin{aligned}\nx+3y&=3,\\\\\n\\bigl||x|-|y|\\bigr|&=1.\n\\end{aligned}\n$$",
+      "repairReason": "The historical converter exposes the aligned system as raw TeX rather than a display-math block.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2018_AMC_12A_Problems/Problem_10.md"}]
+    },
+    "2018_AMC_12A_Problems/Problem_19.md": {
+      "promptMarkdown": "Let $A$ be the set of positive integers that have no prime factors other than $2$, $3$, or $5$. The infinite sum $\\frac{1}{1}+\\frac{1}{2}+\\frac{1}{3}+\\frac{1}{4}+\\frac{1}{5}+\\frac{1}{6}+\\frac{1}{8}+\\frac{1}{9}+\\frac{1}{10}+\\frac{1}{12}+\\frac{1}{15}+\\frac{1}{16}+\\frac{1}{18}+\\frac{1}{20}+\\cdots$ of the reciprocals of the elements of $A$ can be expressed as $\\frac{m}{n}$, where $m$ and $n$ are relatively prime positive integers. What is $m+n$?",
+      "repairReason": "The historical converter leaves the reciprocal series outside inline math delimiters.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2018_AMC_12A_Problems/Problem_19.md"}]
+    },
+    "2019_AMC_12A_Problems/Problem_23.md": {
+      "promptMarkdown": "Define binary operations $\\diamondsuit$ and $\\heartsuit$ by\n\n$$a\\diamondsuit b=a^{\\log_7(b)}\\qquad\\text{and}\\qquad a\\heartsuit b=a^{\\frac{1}{\\log_7(b)}}$$\n\nfor all real numbers $a$ and $b$ for which these expressions are defined. The sequence $(a_n)$ is defined recursively by $a_3=3\\heartsuit2$ and $a_n=(n\\heartsuit(n-1))\\diamondsuit a_{n-1}$ for all integers $n\\ge4$. To the nearest integer, what is $\\log_7(a_{2019})$?",
+      "repairReason": "The historical converter breaks custom-operation and logarithm notation across raw TeX fragments.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2019_AMC_12A_Problems/Problem_23.md"}]
+    },
+    "2019_AMC_12B_Problems/Problem_15.md": {
+      "promptReplacements": [
+        {
+          "from": "As shown in the figure, line segment $\\overline{AD}$ is trisected by points B and C so that AB=BC=CD=2. Three semicircles of radius 1, \\overarc{AEB},\\overarc{BFC}, and \\overarc{CGD}, have their diameters on $\\overline{AD},$ lie in the same halfplane determined by line AD, and are tangent to line EG at E,F, and G, respectively. A circle of radius 2 has its center on F.  The area of the region inside the circle but outside the three semicircles, shaded in the figure, can be expressed in the form",
+          "to": "As shown in the figure, line segment $\\overline{AD}$ is trisected by points $B$ and $C$ so that $AB=BC=CD=2$. Three semicircles of radius $1$, with diameters $\\overline{AB}$, $\\overline{BC}$, and $\\overline{CD}$, lie in the same half-plane determined by line $AD$ and are tangent to line $EG$ at $E$, $F$, and $G$, respectively. A circle of radius $2$ has its center at $F$. The area of the region inside the circle but outside the three semicircles, shaded in the figure, can be expressed in the form"
+        },
+        {
+          "from": "$$\\frac{a}{b}\\cdot\\pi-\\sqrt{c}+d,$$\nwhere a,b,c, and d are positive integers and a and b are relatively prime. What is a+b+c+d?",
+          "to": "$$\\frac{a}{b}\\cdot\\pi-\\sqrt{c}+d,$$\n\nwhere $a$, $b$, $c$, and $d$ are positive integers and $a$ and $b$ are relatively prime. What is $a+b+c+d$?"
+        }
+      ],
+      "repairReason": "Uniquely scoped prompt repairs restore malformed TeX while preserving the separately mirrored diagram.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2019_AMC_12B_Problems/Problem_15.md"}]
+    },
+    "2020_AMC_12A_Problems/Problem_22.md": {
+      "promptMarkdown": "Let $(a_n)$ and $(b_n)$ be the sequences of real numbers such that\n\n$$(2+i)^n=a_n+b_ni$$\n\nfor all integers $n\\ge0$, where $i=\\sqrt{-1}$. What is $\\sum_{n=0}^{\\infty}\\frac{a_nb_n}{7^n}$?",
+      "repairReason": "The historical converter breaks sequence and summation notation across raw TeX fragments.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2020_AMC_12A_Problems/Problem_22.md"}]
+    },
+    "2021_AMC_12A_Problems/Problem_17.md": {
+      "promptReplacements": [{
+        "from": "Trapezoid ABCD has $\\overline{AB}$\\parallel$\\overline{CD},BC=CD=43,$ and $\\overline{AD}$\\perp$\\overline{BD}.$ Let O be the intersection of the diagonals $\\overline{AC}$ and $\\overline{BD},$ and let P be the midpoint of $\\overline{BD}.$ Given that OP=11, the length of AD can be written in the form $m\\sqrt{n},$ where m and n are positive integers and n is not divisible by the square of any prime. What is m+n?",
+        "to": "Trapezoid $ABCD$ has $\\overline{AB}\\parallel\\overline{CD}$, $BC=CD=43$, and $\\overline{AD}\\perp\\overline{BD}$. Let $O$ be the intersection of the diagonals $\\overline{AC}$ and $\\overline{BD}$, and let $P$ be the midpoint of $\\overline{BD}$. Given that $OP=11$, the length of $AD$ can be written in the form $m\\sqrt{n}$, where $m$ and $n$ are positive integers and $n$ is not divisible by the square of any prime. What is $m+n$?"
+      }],
+      "repairReason": "A uniquely scoped prompt repair restores malformed TeX while preserving the separately mirrored diagram.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2021_AMC_12A_Problems/Problem_17.md"}]
+    },
+    "2022_AMC_12B_Problems/Problem_06.md": {
+      "promptMarkdown": "Consider the following $100$ sets of $10$ elements each:\n\n$$\n\\begin{aligned}\n&\\{1,2,3,\\ldots,10\\},\\\\\n&\\{11,12,13,\\ldots,20\\},\\\\\n&\\{21,22,23,\\ldots,30\\},\\\\\n&\\vdots\\\\\n&\\{991,992,993,\\ldots,1000\\}.\n\\end{aligned}\n$$\n\nHow many of these sets contain exactly two multiples of $7$?",
+      "repairReason": "The historical converter exposes the aligned set list as raw TeX rather than a display-math block.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2022_AMC_12B_Problems/Problem_06.md"}]
+    },
+    "2025_AMC_12B_Problems/Problem_06.md": {
+      "promptMarkdown": "Emmy says to Max, \"I ordered 36 math club sweatshirts today.\" Max asks, \"How much did each shirt cost?\" Emmy responds, \"I'll give you a hint. The total cost was $\\$\\,\\underline{A}\\,\\underline{B}\\,\\underline{B}.\\underline{B}\\,\\underline{A}$, where $A$ and $B$ are digits and $A\\ne0$.\" After a pause, Max says, \"That was a good price.\" What is $A+B$?",
+      "repairReason": "The historical converter leaves the quoted price's dollar and underline notation outside a coherent math span.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2025_AMC_12B_Problems/Problem_06.md"}]
+    },
+    "2002_AMC_12B_Problems/Problem_04.md": {
+      "promptMarkdown": "Let $n$ be a positive integer such that $\\frac{1}{2}+\\frac{1}{3}+\\frac{1}{7}+\\frac{1}{n}$ is an integer. Which of the following statements is not true?",
+      "choices": {
+        "A": "$2\\mid n$",
+        "B": "$3\\mid n$",
+        "C": "$6\\mid n$",
+        "D": "$7\\mid n$",
+        "E": "$n>84$"
+      },
+      "repairReason": "The converter splits the fourth fraction and every divisibility choice across incompatible inline math spans.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2002_AMC_12B_Problems/Problem_04.md"}]
+    },
+    "2005_AMC_12A_Problems/Problem_24.md": {
+      "promptMarkdown": "Let $P(x)=(x-1)(x-2)(x-3)$. For how many polynomials $Q(x)$ does there exist a polynomial $R(x)$ of degree $3$ such that $P(Q(x))=P(x)\\cdot R(x)$?",
+      "repairReason": "The converter inserts a dollar delimiter into the middle factor of $P(x)$ and leaves the remaining polynomial notation fragmented.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2005_AMC_12A_Problems/Problem_24.md"}]
+    },
+    "2007_AMC_12B_Problems/Problem_24.md": {
+      "promptMarkdown": "How many pairs of positive integers $(a,b)$ are there such that $\\gcd(a,b)=1$ and $\\frac{a}{b}+\\frac{14b}{9a}$ is an integer?",
+      "choices": {
+        "A": "$4$",
+        "B": "$6$",
+        "C": "$9$",
+        "D": "$12$",
+        "E": "$\\text{infinitely many}$"
+      },
+      "repairReason": "The converter drops the closing delimiters from every choice and leaves the prompt's ordered-pair notation fragmented.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2007_AMC_12B_Problems/Problem_24.md"}]
+    },
+    "2003_AMC_12A_Problems/Problem_02.md": {
+      "promptMarkdown": "Members of the Rockham Soccer League buy socks and T-shirts. Socks cost $4$ per pair and each T-shirt costs $5$ more than a pair of socks. Each member needs one pair of socks and a shirt for home games and another pair of socks and a shirt for away games. If the total cost is $2366$, how many members are in the League?",
+      "repairReason": "The source leaves the three dollar amounts in one unclosed inline-math span.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2003_AMC_12A_Problems/Problem_02.md"}]
+    },
+    "2003_AMC_12B_Problems/Problem_07.md": {
+      "promptMarkdown": "Penniless Pete's piggy bank has no pennies in it, but it has $100$ coins, all nickels, dimes, and quarters, whose total value is $8.35$. It does not necessarily contain coins of all three types. What is the difference between the largest and smallest number of dimes that could be in the bank?",
+      "repairReason": "The source opens inline math before the dollar amount and never closes it.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2003_AMC_12B_Problems/Problem_07.md"}]
+    },
+    "2005_AMC_12B_Problems/Problem_11.md": {
+      "promptMarkdown": "An envelope contains eight bills: $2$ ones, $2$ fives, $2$ tens, and $2$ twenties. Two bills are drawn at random without replacement. What is the probability that their sum is $20$ or more?",
+      "repairReason": "The source turns the final currency threshold into an unclosed inline-math span.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2005_AMC_12B_Problems/Problem_11.md"}]
+    },
+    "2013_AMC_12A_Problems/Problem_05.md": {
+      "promptMarkdown": "Tom, Dorothy, and Sammy went on a vacation and agreed to split the costs evenly. During their trip Tom paid $105$, Dorothy paid $125$, and Sammy paid $175$. In order to share the costs equally, Tom gave Sammy $t$ dollars, and Dorothy gave Sammy $d$ dollars. What is $t-d$?",
+      "repairReason": "The source chains three dollar amounts and variables through one unclosed inline-math span.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2013_AMC_12A_Problems/Problem_05.md"}]
+    },
+    "2020_AMC_12B_Problems/Problem_19.md": {
+      "promptMarkdown": "Square $ABCD$ in the coordinate plane has vertices at the points $A(1,1)$, $B(-1,1)$, $C(-1,-1)$, and $D(1,-1)$. Consider the following four transformations:\n\n$\\quad\\bullet\\qquad L$, a rotation of $90^{\\circ}$ counterclockwise around the origin;\n\n$\\quad\\bullet\\qquad R$, a rotation of $90^{\\circ}$ clockwise around the origin;\n\n$\\quad\\bullet\\qquad H$, a reflection across the $x$-axis; and\n\n$\\quad\\bullet\\qquad V$, a reflection across the $y$-axis.\n\nEach of these transformations maps the square onto itself, but the positions of the labeled vertices will change. For example, applying $R$ and then $V$ would send the vertex $A$ at $(1,1)$ to $(-1,-1)$ and would send the vertex $B$ at $(-1,1)$ to itself. How many sequences of $20$ transformations chosen from $\\{L,R,H,V\\}$ will send all of the labeled vertices back to their original positions? (For example, $R,R,V,H$ is one sequence of $4$ transformations that will send the vertices back to their original positions.)",
+      "solutionReplacements": [
+        {
+          "from": "<ol style=\"margin-left: 1.5em;\">\n  <li>",
+          "to": "- "
+        },
+        {
+          "from": "</li><p>\n  <li>The labeled vertices will maintain the consecutive order $ABCD$ in either direction (clockwise or counterclockwise).",
+          "to": "\n\n- The labeled vertices will maintain the consecutive order $ABCD$ in either direction (clockwise or counterclockwise)."
+        },
+        {
+          "from": "</li><p>\n  <li>$L$ and $R$ will retain the direction of the labeled vertices, but $H$ and $V$ will alter the direction of the labeled vertices.",
+          "to": "\n\n- $L$ and $R$ will retain the direction of the labeled vertices, but $H$ and $V$ will alter the direction of the labeled vertices."
+        },
+        {
+          "from": "</li><p>\n</ol>",
+          "to": "\n"
+        }
+      ],
+      "repairReason": "The converter places an extra dollar delimiter after the example image coordinate, corrupting the rest of the timed prompt.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2020_AMC_12B_Problems/Problem_19.md"}]
+    },
+    "2021_AMC_12A_Problems/Problem_01.md": {
+      "promptMarkdown": "What is the value of $2^{1+2+3}-(2^1+2^2+2^3)$?",
+      "repairReason": "The source merges the word 'of' and the exponent expression across incompatible dollar delimiters.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2021_AMC_12A_Problems/Problem_01.md"}]
+    },
+    "2021_AMC_12B_Problems/Problem_20.md": {
+      "promptMarkdown": "Let $Q(z)$ and $R(z)$ be the unique polynomials such that $z^{2021}+1=(z^2+z+1)Q(z)+R(z)$ and the degree of $R$ is less than $2$. What is $R(z)$?",
+      "repairReason": "The source merges 'such that' and both sides of the polynomial identity through incompatible dollar delimiters.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2021_AMC_12B_Problems/Problem_20.md"}]
+    },
+    "2004_AMC_12A_Problems/Problem_23.md": {
+      "promptReplacements": [
+        {"from": "\\leqk", "to": "\\leq k"}
+      ],
+      "repairReason": "An exact prompt repair restores a TeX command boundary that the historical converter merged with its variable.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2004_AMC_12A_Problems/Problem_23.md"}]
+    },
+    "2004_AMC_12A_Problems/Problem_25.md": {
+      "promptReplacements": [
+        {"from": "\\cdotsa", "to": "\\cdots a"}
+      ],
+      "repairReason": "An exact prompt repair restores a TeX command boundary that the historical converter merged with its variable.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2004_AMC_12A_Problems/Problem_25.md"}]
+    },
+    "2004_AMC_12B_Problems/Problem_02.md": {
+      "promptReplacements": [
+        {"from": "\\cdota", "to": "\\cdot a"}
+      ],
+      "repairReason": "An exact prompt repair restores a TeX command boundary that the historical converter merged with its variable.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2004_AMC_12B_Problems/Problem_02.md"}]
+    },
+    "2004_AMC_12B_Problems/Problem_04.md": {
+      "promptReplacements": [
+        {"from": "\\leqx", "to": "\\leq x"}
+      ],
+      "repairReason": "An exact prompt repair restores a TeX command boundary that the historical converter merged with its variable.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2004_AMC_12B_Problems/Problem_04.md"}]
+    },
+    "2006_AMC_12A_Problems/Problem_15.md": {
+      "promptReplacements": [
+        {"from": "\\cosx", "to": "\\cos x"}
+      ],
+      "repairReason": "An exact prompt repair restores a TeX command boundary that the historical converter merged with its variable.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2006_AMC_12A_Problems/Problem_15.md"}]
+    },
+    "2006_AMC_12A_Problems/Problem_23.md": {
+      "promptReplacements": [
+        {"from": "2\\lem\\len-1", "to": "2\\le m\\le n-1"}
+      ],
+      "repairReason": "An exact prompt repair restores the pair of TeX comparison command boundaries merged with adjacent variables.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2006_AMC_12A_Problems/Problem_23.md"}]
+    },
+    "2006_AMC_12B_Problems/Problem_20.md": {
+      "promptReplacements": [
+        {"from": "\\lfloorx", "to": "\\lfloor x"}
+      ],
+      "repairReason": "An exact prompt repair restores a TeX command boundary that the historical converter merged with its variable.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2006_AMC_12B_Problems/Problem_20.md"}]
+    },
+    "2007_AMC_12A_Problems/Problem_17.md": {
+      "promptReplacements": [
+        {"from": "\\sinb", "to": "\\sin b"},
+        {"from": "\\cosb", "to": "\\cos b"}
+      ],
+      "repairReason": "Exact prompt repairs restore the trigonometric command boundaries merged with their variables.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2007_AMC_12A_Problems/Problem_17.md"}]
+    },
+    "2012_AMC_12A_Problems/Problem_21.md": {
+      "promptMarkdown": "Let $a$, $b$, and $c$ be positive integers with $a\\ge b\\ge c$ such that\n\n$a^2-b^2-c^2+ab=2011$ and\n$a^2+3b^2+3c^2-3ab-2ac-2bc=-1997$.\n\nWhat is $a$?",
+      "repairReason": "The prompt's Wiki-only onlyinclude wrapper and merged comparison commands are not student-facing Markdown.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2012_AMC_12A_Problems/Problem_21.md"}]
+    },
+    "2012_AMC_12A_Problems/Problem_23.md": {
+      "promptReplacements": [
+        {"from": "\\ley", "to": "\\le y"}
+      ],
+      "repairReason": "An exact prompt repair restores a TeX command boundary that the historical converter merged with its variable.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2012_AMC_12A_Problems/Problem_23.md"}]
+    },
+    "2012_AMC_12B_Problems/Problem_19.md": {
+      "promptReplacements": [
+        {"from": "\\lei", "to": "\\le i"}
+      ],
+      "repairReason": "An exact prompt repair restores a TeX command boundary that the historical converter merged with its loop variable.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2012_AMC_12B_Problems/Problem_19.md"}]
+    },
+    "2012_AMC_12B_Problems/Problem_23.md": {
+      "promptReplacements": [
+        {"from": "$0\\led\\lec\\leb\\lea\\le 4,$", "to": "$0\\le d\\le c\\le b\\le a\\le 4,$"}
+      ],
+      "repairReason": "An exact prompt repair restores the four TeX comparison command boundaries merged with adjacent variables.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2012_AMC_12B_Problems/Problem_23.md"}]
+    },
+    "2014_AMC_12A_Problems/Problem_16.md": {
+      "promptMarkdown": "The product $(8)(\\dots 8)$, where the second factor has $k$ digits, is an integer whose digits have a sum of $1000$. What is $k$?",
+      "repairReason": "The prompt's Wiki-only onlyinclude wrapper is not student-facing Markdown.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2014_AMC_12A_Problems/Problem_16.md"}]
+    },
+    "2014_AMC_12A_Problems/Problem_21.md": {
+      "promptReplacements": [
+        {"from": "let $\\lfloorx\\rfloor$ denote", "to": "let $\\lfloor x\\rfloor$ denote"},
+        {"from": "f(x)=$\\lfloorx\\rfloor(2014", "to": "f(x)=$\\lfloor x\\rfloor(2014"}
+      ],
+      "repairReason": "Exact prompt repairs restore the floor-function command boundaries merged with their variable.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2014_AMC_12A_Problems/Problem_21.md"}]
+    },
+    "2016_AMC_12B_Problems/Problem_25.md": {
+      "promptReplacements": [
+        {"from": "\\cdotsa", "to": "\\cdots a"}
+      ],
+      "repairReason": "An exact prompt repair restores a TeX command boundary that the historical converter merged with its variable.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2016_AMC_12B_Problems/Problem_25.md"}]
+    },
+    "2017_AMC_12B_Problems/Problem_25.md": {
+      "promptReplacements": [
+        {"from": "\\leqn", "to": "\\leq n"}
+      ],
+      "repairReason": "An exact prompt repair restores a TeX command boundary that the historical converter merged with its variable.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2017_AMC_12B_Problems/Problem_25.md"}]
+    },
+    "2018_AMC_12A_Problems/Problem_22.md": {
+      "promptReplacements": [
+        {"from": "\\sqrtq", "to": "\\sqrt q"}
+      ],
+      "repairReason": "An exact prompt repair restores a TeX command boundary that the historical converter merged with its variable.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2018_AMC_12A_Problems/Problem_22.md"}]
+    },
+    "2019_AMC_12B_Problems/Problem_24.md": {
+      "promptReplacements": [
+        {
+          "from": "$0\\leq$ a $\\leq 1,0\\leqb\\leq 1,$ and $0\\leqc\\leq 1.$",
+          "to": "$0\\leq a\\leq 1$, $0\\leq b\\leq 1$, and $0\\leq c\\leq 1$."
+        }
+      ],
+      "repairReason": "An exact prompt repair restores the two comparison command boundaries merged with their variables.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2019_AMC_12B_Problems/Problem_24.md"}]
+    },
+    "2021_AMC_12A_Problems/Problem_19.md": {
+      "promptReplacements": [
+        {"from": "\\cosx", "to": "\\cos x"},
+        {"from": "\\sinx", "to": "\\sin x"}
+      ],
+      "repairReason": "Exact prompt repairs restore the trigonometric command boundaries merged with their variables.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2021_AMC_12A_Problems/Problem_19.md"}]
+    },
+    "2021_AMC_12A_Problems/Problem_21.md": {
+      "promptReplacements": [
+        {"from": "\\lek", "to": "\\le k"}
+      ],
+      "repairReason": "An exact prompt repair restores a TeX command boundary that the historical converter merged with its variable.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2021_AMC_12A_Problems/Problem_21.md"}]
+    },
+    "2022_AMC_12A_Problems/Problem_25.md": {
+      "promptReplacements": [
+        {"from": "$c_1\\lec_2\\le \\cdots \\lec_{14}$", "to": "$c_1\\le c_2\\le \\cdots \\le c_{14}$"}
+      ],
+      "repairReason": "An exact prompt repair restores the two comparison command boundaries merged with their variables.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2022_AMC_12A_Problems/Problem_25.md"}]
+    },
+    "2022_AMC_12B_Problems/Problem_09.md": {
+      "promptReplacements": [
+        {"from": "\\cdota", "to": "\\cdot a"}
+      ],
+      "repairReason": "An exact prompt repair restores a TeX command boundary that the historical converter merged with its variable.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2022_AMC_12B_Problems/Problem_09.md"}]
+    },
+    "2023_AMC_12A_Problems/Problem_22.md": {
+      "promptReplacements": [
+        {"from": "\\cdotf", "to": "\\cdot f"}
+      ],
+      "repairReason": "An exact prompt repair restores a TeX command boundary that the historical converter merged with its function name.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2023_AMC_12A_Problems/Problem_22.md"}]
+    },
+    "2023_AMC_12A_Problems/Problem_25.md": {
+      "promptReplacements": [
+        {"from": "\\cdotsa", "to": "\\cdots a"}
+      ],
+      "repairReason": "An exact prompt repair restores a TeX command boundary that the historical converter merged with its variable.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2023_AMC_12A_Problems/Problem_25.md"}]
+    },
+    "2024_AMC_12B_Problems/Problem_10.md": {
+      "promptReplacements": [
+        {"from": "with $x\\ley\\lez$", "to": "with $x\\le y\\le z$"}
+      ],
+      "repairReason": "An exact prompt repair restores the two comparison command boundaries merged with their variables.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2024_AMC_12B_Problems/Problem_10.md"}]
+    },
+    "2024_AMC_12B_Problems/Problem_24.md": {
+      "promptReplacements": [
+        {"from": "$a\\leb\\lec\\le 9,$", "to": "$a\\le b\\le c\\le 9,$"}
+      ],
+      "repairReason": "An exact prompt repair restores the two comparison command boundaries merged with their variables.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2024_AMC_12B_Problems/Problem_24.md"}]
+    },
+    "2018_AMC_12A_Problems/Problem_04.md": {
+      "solutionReplacements": [
+        {"from": "<ol style=\"margin-left: 1.5em;\">\n  <li>", "to": "- "},
+        {"from": "</li><p>\n  <li>", "to": "\n\n- "},
+        {"from": "</li><p>\n</ol>", "to": "\n"}
+      ],
+      "repairReason": "Exact post-media solution repairs convert legacy HTML list markup to standard Markdown.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2018_AMC_12A_Problems/Problem_04.md"}]
+    },
+    "2018_AMC_12A_Problems/Problem_07.md": {
+      "solutionReplacements": [
+        {"from": "<ol style=\"margin-left: 1.5em;\">\n  <li>", "to": "- "},
+        {"from": "</li><p>\n  <li>", "to": "\n\n- "},
+        {"from": "</li><p>\n</ol>", "to": "\n"}
+      ],
+      "repairReason": "Exact post-media solution repairs convert legacy HTML list markup to standard Markdown.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2018_AMC_12A_Problems/Problem_07.md"}]
+    },
+    "2022_AMC_12A_Problems/Problem_04.md": {
+      "solutionReplacements": [
+        {"from": "<ol style=\"margin-left: 1.5em;\">\n  <li>", "to": "- "},
+        {"from": "</li><p>\n  <li>", "to": "\n\n- "},
+        {"from": "</li><p>\n</ol>", "to": "\n"}
+      ],
+      "repairReason": "Exact post-media solution repairs convert legacy HTML list markup to standard Markdown.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2022_AMC_12A_Problems/Problem_04.md"}]
+    },
+    "2022_AMC_12A_Problems/Problem_09.md": {
+      "solutionReplacements": [
+        {"from": "<u><b>Remark</b></u>", "to": "**Remark.**"}
+      ],
+      "repairReason": "An exact post-media solution repair converts a legacy HTML heading to standard Markdown.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2022_AMC_12A_Problems/Problem_09.md"}]
+    },
+    "2022_AMC_12A_Problems/Problem_19.md": {
+      "solutionReplacements": [
+        {"from": "<b>", "to": "**"},
+        {"from": "</b>", "to": "**"}
+      ],
+      "repairReason": "Exact post-media solution repairs convert legacy HTML emphasis to standard Markdown.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2022_AMC_12A_Problems/Problem_19.md"}]
+    },
+    "2022_AMC_12B_Problems/Problem_18.md": {
+      "solutionReplacements": [
+        {"from": "<ol style=\"margin-left: 1.5em;\">\n  <li>", "to": "- "},
+        {
+          "from": "</li><p>\nExactly two of the eight adjacent neighboring squares of the center are filled.",
+          "to": "\n\nExactly two of the eight adjacent neighboring squares of the center are filled."
+        },
+        {
+          "from": "<p>\n![Archived diagram](../historical-media/assets/2022-amc-12b/problem-18-solution-asy-01.svg)",
+          "to": "\n\n![Archived diagram](../historical-media/assets/2022-amc-12b/problem-18-solution-asy-01.svg)"
+        },
+        {
+          "from": "In this case, there are $2$ possible initial configurations. All rotations and reflections are considered.<p>\n  <li>",
+          "to": "In this case, there are $2$ possible initial configurations. All rotations and reflections are considered.\n\n- "
+        },
+        {
+          "from": "</li><p>\nExactly three of the eight adjacent neighboring squares of the center are filled.",
+          "to": "\n\nExactly three of the eight adjacent neighboring squares of the center are filled."
+        },
+        {
+          "from": "<p>\n![Archived diagram](../historical-media/assets/2022-amc-12b/problem-18-solution-asy-02.svg)",
+          "to": "\n\n![Archived diagram](../historical-media/assets/2022-amc-12b/problem-18-solution-asy-02.svg)"
+        },
+        {
+          "from": "In this case, there are $4+4+4+8=20$ possible initial configurations. All rotations and reflections are considered.<p>\n</ol>",
+          "to": "In this case, there are $4+4+4+8=20$ possible initial configurations. All rotations and reflections are considered.\n"
+        }
+      ],
+      "repairReason": "Exact post-media solution repairs convert legacy HTML list and paragraph markup to standard Markdown while retaining both diagrams.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2022_AMC_12B_Problems/Problem_18.md"}]
+    },
+    "2022_AMC_12B_Problems/Problem_22.md": {
+      "solutionReplacements": [
+        {"from": "<ol style=\"margin-left: 1.5em;\">\n  <li>", "to": "- "},
+        {
+          "from": "</li><p>\nWe need $x_1+x_2>1$",
+          "to": "\n\nWe need $x_1+x_2>1$"
+        },
+        {
+          "from": "  <li>Amelia takes exactly $3$ steps.</li><p>\n",
+          "to": "- Amelia takes exactly $3$ steps.\n\n"
+        },
+        {"from": "</ol>", "to": "\n"}
+      ],
+      "repairReason": "Exact post-media solution repairs convert legacy HTML list and paragraph markup to standard Markdown while retaining both diagrams.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2022_AMC_12B_Problems/Problem_22.md"}]
+    },
+    "2024_AMC_12A_Problems/Problem_04.md": {
+      "solutionReplacements": [
+        {
+          "from": "<u><b>Remark</b></u>\n\nMemorizing",
+          "to": "**Remark.**\n\nMemorizing"
+        },
+        {
+          "from": "<u><b>Remark</b></u>\n\nNote that $2024$",
+          "to": "**Remark.**\n\nNote that $2024$"
+        }
+      ],
+      "repairReason": "Exact post-media solution repairs convert the two legacy HTML headings to standard Markdown.",
+      "evidence": [{"kind": "local-markdown-source", "path": "2024_AMC_12A_Problems/Problem_04.md"}]
+    }
+  },
+  "unresolved": []
+}

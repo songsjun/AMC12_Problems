@@ -3,7 +3,7 @@
   "formId": "amc12-2025-a",
   "formVersion": "1",
   "answerKeyVersion": "first-solution-pass-2026-07-27",
-  "questionBundleHash": "b9cd74554c6a57374cde2f62cc685e5f7d567eae9287cf44f7bbcb784329b058",
+  "questionBundleHash": "b8a290640f19bfa172ca19dd9fa306242d61079dfe32d174b68fa2667bef14aa",
   "status": "requires-independent-verification",
   "notForScoring": true,
   "derivationMethod": "Each option was read from the current source file's first solution section. This is an AI-assisted candidate record, not an independently approved answer key.",

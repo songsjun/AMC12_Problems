@@ -17,8 +17,16 @@ from .builder import (
     review_data,
     review_markdown,
 )
+from .archive import ArchiveInputs, archive_release_json, build_archive_release, write_archive_release
 from .canonical import canonical_json
-from .validator import validate_import_policy, validate_private_manifest, validate_public_manifest
+from .validator import (
+    ARCHIVE_PRIVATE_MANIFEST_SCHEMA,
+    validate_archive_private_manifest,
+    validate_archive_public_manifest,
+    validate_import_policy,
+    validate_private_manifest,
+    validate_public_manifest,
+)
 
 
 def _write_text_atomic(path: Path, content: str) -> None:
@@ -79,8 +87,14 @@ def _validate(args: argparse.Namespace) -> int:
     if not isinstance(manifest, dict):
         print("manifest must be a JSON object", file=sys.stderr)
         return 2
-    errors = validate_private_manifest(manifest) if args.private else validate_public_manifest(manifest)
-    if args.private:
+    archive_manifest = manifest.get("schemaVersion") == ARCHIVE_PRIVATE_MANIFEST_SCHEMA or manifest.get("publicationStatus") == "archive-practice"
+    errors = (
+        validate_archive_private_manifest(manifest) if args.private and archive_manifest
+        else validate_archive_public_manifest(manifest) if archive_manifest
+        else validate_private_manifest(manifest) if args.private
+        else validate_public_manifest(manifest)
+    )
+    if args.private and not archive_manifest:
         errors.extend(validate_import_policy(manifest, allow_test_only=args.allow_test_only))
     if errors:
         print("manifest validation failed:", file=sys.stderr)
@@ -88,6 +102,30 @@ def _validate(args: argparse.Namespace) -> int:
             print(f"- {error}", file=sys.stderr)
         return 2
     print("manifest validation passed")
+    return 0
+
+
+def _build_archive(args: argparse.Namespace) -> int:
+    public_manifests, private_manifests, report = build_archive_release(
+        ArchiveInputs(
+            source_root=args.source_root,
+            answer_keys_path=args.answer_keys,
+            overrides_path=args.overrides,
+            media_manifest_path=args.media_manifest,
+            release_version=args.release_version,
+        )
+    )
+    for manifest in public_manifests:
+        write_archive_release(args.public_output_dir / f"{manifest['id']}.public.json", manifest)
+    for manifest in private_manifests:
+        write_archive_release(args.private_output_dir / f"{manifest['id']}.private.json", manifest)
+    write_archive_release(args.private_batch_output, archive_release_json(private_manifests))
+    write_archive_release(args.report_output, report)
+    summary = report["summary"]
+    print(
+        f"built archive release {args.release_version}: {summary['formCount']} form(s), "
+        f"{summary['scoredQuestionCount']} scored question(s), {summary['unscoredQuestionCount']} unscored question(s)"
+    )
     return 0
 
 
@@ -118,6 +156,20 @@ def build_parser() -> argparse.ArgumentParser:
     validate.add_argument("--private", action="store_true", help="validate server-side private manifest + import policy")
     validate.add_argument("--allow-test-only", action="store_true")
     validate.set_defaults(handler=_validate)
+
+    archive_build = subcommands.add_parser(
+        "build-archive", help="build the separately authorized historical archive-practice release"
+    )
+    archive_build.add_argument("--source-root", type=Path, required=True)
+    archive_build.add_argument("--answer-keys", type=Path, required=True)
+    archive_build.add_argument("--overrides", type=Path, required=True)
+    archive_build.add_argument("--media-manifest", type=Path, required=True)
+    archive_build.add_argument("--release-version", required=True)
+    archive_build.add_argument("--public-output-dir", type=Path, required=True)
+    archive_build.add_argument("--private-output-dir", type=Path, required=True)
+    archive_build.add_argument("--private-batch-output", type=Path, required=True)
+    archive_build.add_argument("--report-output", type=Path, required=True)
+    archive_build.set_defaults(handler=_build_archive)
     return parser
 
 

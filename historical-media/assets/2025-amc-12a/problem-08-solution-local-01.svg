@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 430" role="img" aria-labelledby="title desc">
+  <title id="title">Scaled construction for AMC 12A Problem 8 Solution 1</title>
+  <desc id="desc">The original cyclic pentagon is scaled by one third. Triangle ABD is highlighted: AB is 3, AD is 8, and BD is 7. Segment AF, shown in red, bisects angle BAD into two 30 degree angles.</desc>
+  <rect width="520" height="430" fill="#ffffff"/>
+  <circle cx="240" cy="205" r="157.617" fill="#f8fbff" stroke="#94a3b8" stroke-width="2"/>
+
+  <!-- This has the same shape as the main construction; the annotations use the
+       one-third scale required by Solution 1. -->
+  <path d="M284.571 53.817 L376.500 126.192 L376.500 283.808 L240 362.617 L82.383 205 Z"
+        fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M376.500 126.192 L82.383 205 L376.500 283.808 M284.571 53.817 L376.500 283.808"
+        fill="none" stroke="#cbd5e1" stroke-width="1.5"/>
+
+  <path d="M284.571 53.817 L376.500 126.192 L240 362.617 Z"
+        fill="#fee4e2" fill-opacity="0.62" stroke="#b42318" stroke-width="3.1" stroke-linejoin="round"/>
+  <path d="M284.571 53.817 L339.273 190.671"
+        fill="none" stroke="#b42318" stroke-width="3.1" stroke-linecap="round"/>
+  <path d="M305.00 69.90 A26 26 0 0 1 294.22 77.96 M294.22 77.96 A26 26 0 0 1 280.86 79.55"
+        fill="none" stroke="#b42318" stroke-width="1.8"/>
+  <g fill="#b42318" font-family="serif" font-size="12" font-weight="700">
+    <text x="303" y="87">30°</text>
+    <text x="267" y="103">30°</text>
+  </g>
+
+  <g fill="#172033">
+    <circle cx="284.571" cy="53.817" r="3.7"/><circle cx="376.500" cy="126.192" r="3.7"/>
+    <circle cx="376.500" cy="283.808" r="3.7"/><circle cx="240" cy="362.617" r="3.7"/>
+    <circle cx="82.383" cy="205" r="3.7"/><circle cx="339.273" cy="190.671" r="3.7"/>
+  </g>
+  <g fill="#172033" font-family="serif" font-size="19">
+    <text x="270" y="45">A</text><text x="385" y="122">B</text><text x="385" y="297">C</text>
+    <text x="232" y="384">D</text><text x="61" y="211">E</text><text x="346" y="187">F</text>
+  </g>
+  <g fill="#b42318" font-family="serif" font-size="18" font-weight="700">
+    <text x="338" y="80">3</text>
+    <text x="275" y="213">8</text>
+    <text x="319" y="253">7</text>
+  </g>
+  <text x="317" y="138" fill="#b42318" font-family="serif" font-size="15" font-weight="700">AF</text>
+</svg>

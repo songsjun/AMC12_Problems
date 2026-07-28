@@ -221,6 +221,7 @@ export function normalizeQuestion(question, index = 0) {
     number,
     promptMarkdown: String(firstDefined(question?.promptMarkdown, question?.prompt, question?.stemMarkdown, question?.text, '')),
     choices: normalizeChoices(question?.choices, question?.options),
+    isScored: question?.isScored !== false,
     media: Array.isArray(question?.media) ? question.media : []
   };
 }
@@ -906,7 +907,13 @@ function renderAttemptHeader() {
   const phase = normalizePhase(state.attempt);
   const clock = normalizeClockState(state.attempt);
   const title = firstDefined(form?.title, state.attempt?.formTitle, state.attempt?.title, 'AMC 12 practice test');
-  const label = firstDefined(form?.paper, form?.label, state.attempt?.formLabel, 'AMC 12 practice');
+  const label = firstDefined(
+    form?.paper,
+    form?.label,
+    form?.practiceKind === 'archive' ? 'AMC 12 archive practice' : undefined,
+    state.attempt?.formLabel,
+    'AMC 12 practice'
+  );
   elements.formLabel.textContent = String(label);
   elements.attemptTitle.textContent = String(title);
   elements.attemptState.textContent = attemptStateText();
@@ -954,12 +961,160 @@ function renderQuestionNavigation() {
   }
 }
 
+// Historical AoPS conversions occasionally lose only the surrounding math
+// delimiters, leaving otherwise valid commands such as \clubsuit,
+// \overline{AB}, or \frac{1}{2} in ordinary prose. Keep authored math spans
+// untouched, but place a narrow whitelist of these orphaned fragments into
+// MathJax inline delimiters. This is presentation recovery only: it neither
+// changes the stored question nor interprets HTML.
+const LEGACY_TEX_COMMANDS = new Set([
+  'angle', 'arctan', 'Bbb', 'bigg', 'bigstar', 'bigtriangleup', 'binom', 'blacksquare', 'boxed',
+  'cdot', 'cdotsof', 'clubsuit', 'cong', 'cos', 'dbinom', 'dfrac', 'diamond', 'diamondsuit',
+  'div', 'doteq', 'dotsc', 'ell', 'equiv', 'fbox', 'frac', 'framebox', 'gcd', 'ge', 'geq', 'geqslant',
+  'heartsuit', 'hdots', 'implies', 'in', 'infty', 'le', 'leq', 'leqslant', 'lfloor', 'log',
+  'lcm', 'Longleftrightarrow', 'Longrightarrow', 'Leftrightarrow', 'lvert', 'mbox', 'mid', 'mod',
+  'odot', 'operatorname', 'overarc', 'overbrace', 'overleftrightarrow', 'overline', 'parallel',
+  'perp', 'phi', 'pi', 'pm', 'prod', 'pmod', 'quad', 'qquad', 'rfloor', 'rm', 'rvert', 'sin',
+  'spadesuit', 'sqrt', 'sum', 'tan', 'textrm', 'text', 'textbf', 'textdollar', 'theta', 'times',
+  'triangle', 'triangles', 'underline', 'underbrace', 'uparrow', 'vdots', 'mathbf', 'mathrm'
+]);
+
+const LEGACY_TEX_RENAMES = new Map([
+  ['Bbb', 'mathbb'],
+  ['bigtriangleup', 'triangle'],
+  ['cdotsof', 'cdots'],
+  ['dotsc', 'cdots'],
+  ['gcd', 'operatorname{gcd}'],
+  ['hdots', 'cdots'],
+  ['lcm', 'operatorname{lcm}'],
+  ['mbox', 'text'],
+  ['overarc', 'widehat'],
+  ['rm', 'mathrm'],
+  ['triangles', 'triangle'],
+  ['textdollar', '$']
+]);
+
+const LEGACY_TEX_BINARY_ARGUMENTS = new Set(['binom', 'dbinom', 'dfrac', 'frac']);
+const LEGACY_TEX_SINGLE_ARGUMENTS = new Set(['sqrt', 'underline']);
+
+function isEscapedCharacter(value, index) {
+  let slashCount = 0;
+  for (let cursor = index - 1; cursor >= 0 && value[cursor] === '\\'; cursor -= 1) slashCount += 1;
+  return slashCount % 2 === 1;
+}
+
+function matchingInlineDelimiter(value, start, delimiter) {
+  for (let index = start; index <= value.length - delimiter.length; index += 1) {
+    if (value.startsWith(delimiter, index) && !isEscapedCharacter(value, index)) {
+      // A lone ``$`` cannot close a display ``$$`` span, and a display marker
+      // cannot silently close an inline span. Treat malformed legacy markup
+      // as ordinary text instead of allowing MathJax to consume a paragraph.
+      if (delimiter === '$' && value.startsWith('$$', index)) continue;
+      if (delimiter === '$$' && !value.startsWith('$$', index)) continue;
+      return index;
+    }
+  }
+  return -1;
+}
+
+function consumeLegacyTexAtom(value, start) {
+  let cursor = start;
+  while (cursor < value.length && /[ \t]/.test(value[cursor])) cursor += 1;
+  if (cursor >= value.length) return null;
+  if (value[cursor] === '{') {
+    let depth = 0;
+    for (let index = cursor; index < value.length; index += 1) {
+      if (value[index] === '{' && !isEscapedCharacter(value, index)) depth += 1;
+      if (value[index] === '}' && !isEscapedCharacter(value, index)) {
+        depth -= 1;
+        if (depth === 0) return { source: value.slice(cursor, index + 1), end: index + 1, grouped: true };
+      }
+    }
+    return null;
+  }
+  if (value[cursor] === '\\') {
+    const command = /^\\[A-Za-z]+/.exec(value.slice(cursor));
+    if (command) return { source: command[0], end: cursor + command[0].length, grouped: false };
+  }
+  if (/[A-Za-z0-9]/.test(value[cursor])) {
+    return { source: value[cursor], end: cursor + 1, grouped: false };
+  }
+  return null;
+}
+
+/**
+ * Recover a small class of unwrapped legacy TeX without touching valid math
+ * spans or ordinary Markdown. Exported for a data-free regression test.
+ */
+export function normalizeLegacyInlineTeX(source) {
+  const value = String(source ?? '');
+  const pieces = [];
+  let cursor = 0;
+  while (cursor < value.length) {
+    if (value[cursor] === '$' && !isEscapedCharacter(value, cursor)) {
+      const delimiter = value.startsWith('$$', cursor) ? '$$' : '$';
+      const closing = matchingInlineDelimiter(value, cursor + delimiter.length, delimiter);
+      if (closing >= 0) {
+        pieces.push(value.slice(cursor, closing + delimiter.length));
+        cursor = closing + delimiter.length;
+        continue;
+      }
+      // Preserve a malformed historical currency/math marker as literal text.
+      // MathJax's escaped-dollar handling then cannot swallow following prose.
+      pieces.push(delimiter === '$$' ? '\\$\\$' : '\\$');
+      cursor += delimiter.length;
+      continue;
+    }
+    if (value.startsWith('\\(', cursor) || value.startsWith('\\[', cursor)) {
+      const closingDelimiter = value[cursor + 1] === '(' ? '\\)' : '\\]';
+      const closing = value.indexOf(closingDelimiter, cursor + 2);
+      if (closing >= 0) {
+        pieces.push(value.slice(cursor, closing + closingDelimiter.length));
+        cursor = closing + closingDelimiter.length;
+        continue;
+      }
+    }
+    if (value[cursor] === '\\' && !isEscapedCharacter(value, cursor)) {
+      const command = /^\\([A-Za-z]+)((?:(?:\s*\{[^{}]*\}|\s*\[[^\[\]]*\]))*)((?:[_^](?:\{[^{}]*\}|[A-Za-z0-9]))*)/.exec(value.slice(cursor));
+      if (command && LEGACY_TEX_COMMANDS.has(command[1])) {
+        const name = LEGACY_TEX_RENAMES.get(command[1]) ?? command[1];
+        let suffix = command[2] + command[3];
+        let end = cursor + command[0].length;
+        const argumentCount = LEGACY_TEX_BINARY_ARGUMENTS.has(command[1]) ? 2
+          : (LEGACY_TEX_SINGLE_ARGUMENTS.has(command[1]) ? 1 : 0);
+        if (!command[2] && argumentCount) {
+          const atoms = [];
+          for (let index = 0; index < argumentCount; index += 1) {
+            const atom = consumeLegacyTexAtom(value, end);
+            if (!atom) break;
+            atoms.push(atom.grouped ? atom.source : `{${atom.source}}`);
+            end = atom.end;
+          }
+          if (atoms.length === argumentCount) suffix += atoms.join('');
+          else end = cursor + command[0].length;
+        }
+        const tex = name === '$' ? '\\$' : '\\' + name + suffix;
+        pieces.push('\\(' + tex + '\\)');
+        cursor = end;
+        continue;
+      }
+    }
+    pieces.push(value[cursor]);
+    cursor += 1;
+  }
+  return pieces.join('');
+}
+
+function appendLegacyAwareText(parent, source) {
+  appendText(parent, normalizeLegacyInlineTeX(source));
+}
+
 function appendInlineMarkdown(parent, source) {
   const value = String(source ?? '');
   const token = /(!?\[[^\]]*\]\([^\s)]+(?:\s+"[^"]*")?\)|`[^`]*`|\*\*[^*]+\*\*|__[^_]+__|\*[^*]+\*|_[^_]+_)/g;
   let cursor = 0;
   for (const match of value.matchAll(token)) {
-    if (match.index > cursor) appendText(parent, value.slice(cursor, match.index));
+    if (match.index > cursor) appendLegacyAwareText(parent, value.slice(cursor, match.index));
     const raw = match[0];
     const image = raw.match(/^!\[([^\]]*)\]\(([^\s)]+)(?:\s+"[^"]*")?\)$/);
     const link = raw.match(/^\[([^\]]*)\]\(([^\s)]+)(?:\s+"[^"]*")?\)$/);
@@ -971,7 +1126,7 @@ function appendInlineMarkdown(parent, source) {
         element.alt = image[1];
         element.loading = 'lazy';
         parent.appendChild(element);
-      } else appendText(parent, raw);
+      } else appendLegacyAwareText(parent, raw);
     } else if (link) {
       const url = safeUrl(link[2]);
       if (url) {
@@ -979,9 +1134,9 @@ function appendInlineMarkdown(parent, source) {
         anchor.href = url;
         anchor.target = '_blank';
         anchor.rel = 'noopener noreferrer';
-        appendText(anchor, link[1]);
+        appendLegacyAwareText(anchor, link[1]);
         parent.appendChild(anchor);
-      } else appendText(parent, raw);
+      } else appendLegacyAwareText(parent, raw);
     } else if (raw.startsWith('`')) {
       const code = document.createElement('code');
       appendText(code, raw.slice(1, -1));
@@ -989,12 +1144,12 @@ function appendInlineMarkdown(parent, source) {
     } else {
       const tag = raw.startsWith('**') || raw.startsWith('__') ? 'strong' : 'em';
       const element = document.createElement(tag);
-      appendText(element, raw.slice(tag === 'strong' ? 2 : 1, tag === 'strong' ? -2 : -1));
+      appendLegacyAwareText(element, raw.slice(tag === 'strong' ? 2 : 1, tag === 'strong' ? -2 : -1));
       parent.appendChild(element);
     }
     cursor = match.index + raw.length;
   }
-  if (cursor < value.length) appendText(parent, value.slice(cursor));
+  if (cursor < value.length) appendLegacyAwareText(parent, value.slice(cursor));
 }
 
 /** A deliberately small, safe Markdown renderer for API-provided prompt/solution text. */
@@ -1129,6 +1284,12 @@ function renderCurrentQuestion({ focus = false } = {}) {
   const legend = document.createElement('legend');
   legend.textContent = 'Choose one answer';
   elements.answerOptions.appendChild(legend);
+  if (!question.isScored) {
+    const notice = document.createElement('p');
+    notice.className = 'archive-question-note';
+    notice.textContent = 'This archived item is not included in the score.';
+    elements.answerOptions.appendChild(notice);
+  }
   const selected = state.answers.get(question.number) || null;
   const enabled = canEditAnswers();
   elements.clearAnswerButton.disabled = !enabled || selected === null;
@@ -1399,14 +1560,20 @@ function renderForms() {
     card.className = 'form-card';
     const label = document.createElement('p');
     label.className = 'eyebrow';
-    label.textContent = String(firstDefined(form.paper, form.label, 'AMC 12'));
+    label.textContent = String(firstDefined(
+      form.paper,
+      form.label,
+      form.practiceKind === 'archive' ? 'AMC 12 archive practice' : undefined,
+      'AMC 12'
+    ));
     const title = document.createElement('h2');
     title.textContent = String(firstDefined(form.title, form.name, form.id, 'Practice form'));
     const meta = document.createElement('p');
     meta.className = 'form-meta';
     const count = finiteNumber(firstDefined(form.questionCount, form.questions?.length), 25);
     const duration = finiteNumber(form.durationMs) || (finiteNumber(firstDefined(form.durationSeconds, form.duration, null)) || 0) * 1000;
-    meta.textContent = `${count} questions${duration ? ` · ${formatDuration(duration)} active time` : ''}`;
+    const scoredCount = finiteNumber(form.scoredQuestionCount, count);
+    meta.textContent = `${count} questions${duration ? ` · ${formatDuration(duration)} active time` : ''}${scoredCount < count ? ` · ${scoredCount} scored` : ''}`;
     const formHistory = historyForForm(form);
     const activeAttempt = activeAttemptForForm(form);
     const history = document.createElement('p');
@@ -1426,7 +1593,14 @@ function renderForms() {
       start.addEventListener('click', () => confirmStartNew(form));
       actions.appendChild(start);
     }
-    card.append(label, title, meta, history, actions);
+    card.append(label, title, meta);
+    if (form.archiveNotice) {
+      const notice = document.createElement('p');
+      notice.className = 'archive-form-note';
+      notice.textContent = String(form.archiveNotice);
+      card.appendChild(notice);
+    }
+    card.append(history, actions);
     const previousResults = formHistory.filter((attempt) => Boolean(attempt.resultsAvailable) || normalizePhase(attempt) === 'FINALIZED');
     if (previousResults.length) {
       const details = document.createElement('details');
@@ -1455,11 +1629,17 @@ function renderForms() {
 }
 
 async function confirmStartNew(form) {
+  const count = finiteNumber(firstDefined(form.questionCount, form.questions?.length), 25);
+  const scoredCount = finiteNumber(form.scoredQuestionCount, count);
+  const archiveDetail = form?.archiveNotice
+    ? String(form.archiveNotice)
+    : (scoredCount < count ? `${count - scoredCount} archived item${count - scoredCount === 1 ? ' is' : 's are'} not scored.` : null);
   openModal({
     title: 'Start a new practice test?',
     paragraphs: [
       `${String(firstDefined(form.title, form.name, 'This form'))} has 25 questions and a 75-minute active timer.`,
-      'Pausing stops active time. You may check one in-progress score, then submit final answers when you are ready.'
+      'Pausing stops active time. You may check one in-progress score, then submit final answers when you are ready.',
+      ...(archiveDetail ? [archiveDetail] : [])
     ],
     actions: [
       { label: 'Cancel', className: 'button button-secondary', close: true },
@@ -1762,11 +1942,13 @@ function renderResults(resultPayload, solutionsPayload) {
   const correct = finiteNumber(firstDefined(finalSubmission?.score?.correctCount, result.correctCount, result.summary?.correctCount, result.counts?.correct));
   const incorrect = finiteNumber(firstDefined(finalSubmission?.score?.incorrectCount, result.incorrectCount, result.summary?.incorrectCount, result.counts?.incorrect));
   const blank = finiteNumber(firstDefined(finalSubmission?.score?.blankCount, result.blankCount, result.unansweredCount, result.summary?.blankCount, result.counts?.blank));
+  const unscored = finiteNumber(firstDefined(finalSubmission?.score?.unscoredCount, result.unscoredCount, result.summary?.unscoredCount, result.counts?.unscored));
   elements.finalScore.textContent = total !== null && total !== undefined ? `${formatScore(score)} / ${formatScore(total)}` : formatScore(score);
   const detailParts = [];
   if (correct !== null) detailParts.push(`${correct} correct`);
   if (incorrect !== null) detailParts.push(`${incorrect} incorrect`);
   if (blank !== null) detailParts.push(`${blank} unanswered`);
+  if (unscored !== null && unscored > 0) detailParts.push(`${unscored} not scored`);
   elements.scoreDetails.textContent = detailParts.join(' · ') || 'Final score recorded by the server.';
   elements.resultsSummary.textContent = `Submitted ${formatDateTime(firstDefined(finalSubmission?.createdAt, finalSubmission?.submittedAt, result.submittedAt, state.attempt?.finalizedAt))}.`;
   renderSubmissionHistory(firstDefined(result.submissions, submissionsFrom(state.attempt)) || []);
@@ -1810,12 +1992,20 @@ function renderResultQuestions(rows) {
     const number = finiteNumber(firstDefined(row.questionNumber, row.number), 0);
     const selected = firstDefined(row.selectedOption, row.answer, row.submittedOption, null);
     const correct = firstDefined(row.correctOption, row.correctAnswer, row.answerKey, null);
+    const accepted = Array.isArray(row.acceptedOptions)
+      ? row.acceptedOptions.filter((option) => OPTIONS.includes(option))
+      : (correct && OPTIONS.includes(correct) ? [correct] : []);
+    const isScored = row.isScored !== false;
     const isCorrect = row.isCorrect === true || String(row.outcome || '').toUpperCase() === 'CORRECT';
     const card = document.createElement('article');
-    card.className = `result-question ${isCorrect ? 'is-correct' : 'is-incorrect'}`;
+    card.className = `result-question ${!isScored ? 'is-unscored' : isCorrect ? 'is-correct' : 'is-incorrect'}`;
     const title = document.createElement('p'); title.textContent = `Question ${number}`;
     const answer = document.createElement('p'); answer.className = 'result-answer'; answer.textContent = `Your answer: ${selected || 'Blank'}`;
-    const expected = document.createElement('p'); expected.className = 'correct-answer'; expected.textContent = `Correct answer: ${correct || '—'}`;
+    const expected = document.createElement('p'); expected.className = 'correct-answer'; expected.textContent = !isScored
+      ? 'Not included in this archive score'
+      : accepted.length > 1
+        ? `Accepted answers: ${accepted.join(' or ')}`
+        : `Correct answer: ${correct || accepted[0] || '—'}`;
     card.append(title, answer, expected);
     elements.resultsQuestions.appendChild(card);
   }

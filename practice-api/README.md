@@ -97,6 +97,28 @@ production, and requires either `AMC12_ALLOW_GENERIC_MANIFEST_IMPORT=true` or
 the one-shot non-production CLI flag `--allow-generic-manifest-import`. It
 must never be used as a shortcut around the reviewed private-v1 release gate.
 
+### Historical archive-practice batch
+
+The separately authorized historical archive uses a strict
+`amc-practice-archive-form-v1` schema: it records that scores are archive
+practice scores, preserves source/key/media provenance, and can mark an
+unmatchable historical item as unscored. It is not accepted by the generic
+adapter. Import the generated private batch atomically:
+
+```sh
+npm run import-archive-release -- \
+  /protected/path/archive-release.private.json --publish
+```
+
+The importer validates every form before opening its one database transaction,
+then imports all forms together. It rejects a partial batch, remote/unknown
+schema, synthetic content, invalid score maximums, changed content hashes, or
+a missing archive authorization record. The client receives the archive notice
+and unscored-item marker, but never a key or solution before final submission.
+For canonical AMC 12 archive ids it also enforces the historical scoring
+boundary: 2002--2006 forms use 6/2.5/0 (correct/blank/incorrect), while
+2007--2025 forms use 6/1.5/0.
+
 ## API contract
 
 Base path: `/api/amc12`. JSON errors use:
