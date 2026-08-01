@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import pg from 'pg';
 import { conflict } from './errors.js';
+import { analysisInputHash } from './learning-review/canonical.js';
 
 const { Pool } = pg;
 
@@ -123,10 +124,143 @@ function mapLearningWorkItem(row) {
     deletionGeneration: row.deletion_generation,
     availableAt: row.available_at,
     leaseOwner: row.lease_owner,
+    leaseToken: row.lease_token,
     leaseExpiresAt: row.lease_expires_at,
     lastErrorCode: row.last_error_code,
+    analysisRunId: row.analysis_run_id,
     createdAt: row.created_at,
     updatedAt: row.updated_at
+  };
+}
+
+function mapAnalysisRun(row) {
+  return row && {
+    id: row.id,
+    learningSubmissionVersionId: row.learning_submission_version_id,
+    contextSetId: row.context_set_id,
+    versionNumber: row.version_number,
+    inputHash: row.input_hash,
+    evidenceHash: row.evidence_hash,
+    deletionGeneration: row.deletion_generation,
+    status: row.status,
+    createdAt: row.created_at,
+    startedAt: row.started_at,
+    completedAt: row.completed_at,
+    lastErrorCode: row.last_error_code
+  };
+}
+
+function mapQuestionAnalysis(row) {
+  return row && {
+    questionNumber: row.question_number,
+    status: row.status,
+    providerInvoked: row.provider_invoked,
+    reasoningVerdict: row.reasoning_verdict,
+    summaryMarkdown: row.summary_markdown,
+    strengths: row.strengths,
+    gaps: row.gaps,
+    suggestions: row.suggestions,
+    solutionComparisons: row.solution_comparisons,
+    confidence: row.confidence === null ? null : number(row.confidence),
+    outcomeCode: row.outcome_code,
+    runMetadata: row.run_metadata,
+    errorClass: row.error_class,
+    retryable: row.retryable,
+    questionInputHash: row.question_input_hash,
+    questionContextHash: row.question_context_hash,
+    createdAt: row.created_at
+  };
+}
+
+function mapLearningReport(row) {
+  return row && {
+    id: row.id,
+    analysisRunId: row.analysis_run_id,
+    learningSubmissionVersionId: row.learning_submission_version_id,
+    status: row.status,
+    generatedAt: row.generated_at,
+    summary: row.summary,
+    reportHash: row.report_hash
+  };
+}
+
+async function loadApprovedContextSet(queryable, id) {
+  const header = await queryable.query('SELECT * FROM amc_practice.approved_context_sets WHERE id = $1', [id]);
+  if (!header.rowCount) return null;
+  const questions = await queryable.query(
+    `SELECT * FROM amc_practice.approved_context_questions
+     WHERE context_set_id = $1 ORDER BY question_number`, [id]
+  );
+  const solutions = await queryable.query(
+    `SELECT * FROM amc_practice.approved_context_solutions
+     WHERE context_set_id = $1 ORDER BY question_number, solution_position`, [id]
+  );
+  const byQuestion = new Map();
+  for (const row of questions.rows) {
+    byQuestion.set(row.question_number, {
+      questionNumber: row.question_number,
+      questionContentHash: row.question_content_hash,
+      promptMarkdown: row.prompt_markdown,
+      choices: row.choices,
+      visualContext: row.visual_context,
+      modelEligibleSolutionCount: number(row.model_eligible_solution_count),
+      solutions: []
+    });
+  }
+  for (const row of solutions.rows) {
+    byQuestion.get(row.question_number)?.solutions.push({
+      solutionPosition: row.solution_position,
+      artifactSolutionId: row.artifact_solution_id,
+      title: row.title,
+      bodyMarkdown: row.body_markdown,
+      bodySha256: row.body_sha256,
+      sourceRef: {
+        path: row.source_path,
+        sha256: row.source_sha256,
+        headingLine: row.source_heading_line,
+        endLine: row.source_end_line
+      },
+      reviewerId: row.reviewer_id,
+      reviewedAt: row.reviewed_at,
+      rightsStatus: row.rights_status,
+      qualityFlags: row.quality_flags,
+      methodTags: row.method_tags,
+      modelEligibility: {
+        eligible: row.model_eligible,
+        reason: row.model_ineligibility_reason
+      },
+      decisionRecordHash: row.decision_record_hash,
+      authorityReceipt: {
+        receiptId: row.authority_receipt_id,
+        authorityId: row.authority_receipt_authority_id,
+        issuedAt: row.authority_receipt_issued_at,
+        status: row.authority_receipt_status
+      }
+    });
+  }
+  const row = header.rows[0];
+  return {
+    id: row.id,
+    schemaVersion: row.schema_version,
+    artifactSetHash: row.artifact_set_hash,
+    archiveWrapperSetHash: row.archive_wrapper_set_hash,
+    candidateSchemaVersion: row.candidate_schema_version,
+    candidateSetHash: row.candidate_set_hash,
+    decisionSetHash: row.decision_set_hash,
+    approvalAuthorityId: row.approval_authority_id,
+    approvalReceiptSetHash: row.approval_receipt_set_hash,
+    formId: row.form_id,
+    formVersion: row.form_version,
+    contextContentHash: row.context_content_hash,
+    releaseBinding: {
+      questionBundleHash: row.release_question_bundle_hash,
+      contentHash: row.release_content_hash,
+      manifestHash: row.release_manifest_hash
+    },
+    active: row.active,
+    importedAt: row.imported_at,
+    supersededAt: row.superseded_at,
+    questions: [...byQuestion.values()]
   };
 }
 
@@ -335,6 +469,432 @@ export class PostgresStore {
       }
       await client.query('COMMIT');
       return stored;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async importApprovedContextSets({ forms, archiveSetHash, authorityId, receiptSetHash, importedAt }) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const imported = [];
+      const lockOrder = forms
+        .map((artifact) => [artifact.formBinding.id, artifact.formBinding.version])
+        .sort(([leftId, leftVersion], [rightId, rightVersion]) => leftId.localeCompare(rightId) || leftVersion.localeCompare(rightVersion));
+      for (const [formId, formVersion] of lockOrder) {
+        await client.query('SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))', [formId, formVersion]);
+      }
+      for (const artifact of forms) {
+        const binding = artifact.formBinding;
+        const form = await client.query(
+          `SELECT question_bundle_hash, content_hash, manifest_hash
+           FROM amc_practice.form_revisions WHERE form_id = $1 AND version = $2 FOR SHARE`,
+          [binding.id, binding.version]
+        );
+        if (!form.rowCount) throw Object.assign(new Error('Approved context form revision is not imported.'), { code: 'FORM_REVISION_NOT_FOUND' });
+        const release = binding.releaseBinding;
+        if (!release || release.questionBundleHash !== form.rows[0].question_bundle_hash
+            || release.contentHash !== form.rows[0].content_hash || release.manifestHash !== form.rows[0].manifest_hash) {
+          throw Object.assign(new Error('Approved context release hashes do not match the immutable form revision.'), { code: 'CONTEXT_RELEASE_MISMATCH' });
+        }
+        const storedQuestions = await client.query(
+          `SELECT question_number, prompt_markdown, choices FROM amc_practice.form_questions
+           WHERE form_id = $1 AND form_version = $2 ORDER BY question_number`, [binding.id, binding.version]
+        );
+        if (storedQuestions.rowCount !== artifact.questions.length) throw Object.assign(new Error('Approved context question count mismatch.'), { code: 'CONTEXT_CONTENT_MISMATCH' });
+        for (const question of artifact.questions) {
+          const stored = storedQuestions.rows.find((row) => row.question_number === question.number);
+          const choices = stored && Object.fromEntries(stored.choices.map((choice) => [choice.option, choice.textMarkdown]));
+          if (!stored || stored.prompt_markdown !== question.promptMarkdown
+              || JSON.stringify(choices) !== JSON.stringify(question.choices)) {
+            throw Object.assign(new Error('Approved context prompt/choices do not match the form revision.'), { code: 'CONTEXT_CONTENT_MISMATCH' });
+          }
+        }
+        const duplicate = await client.query(
+          `SELECT id, archive_wrapper_set_hash FROM amc_practice.approved_context_sets
+           WHERE artifact_set_hash = $1 FOR UPDATE`, [artifact.setHash]
+        );
+        if (duplicate.rowCount) {
+          if (archiveSetHash && duplicate.rows[0].archive_wrapper_set_hash === null) {
+            await client.query(
+              'UPDATE amc_practice.approved_context_sets SET archive_wrapper_set_hash = $2 WHERE id = $1',
+              [duplicate.rows[0].id, archiveSetHash]
+            );
+          } else if (archiveSetHash && duplicate.rows[0].archive_wrapper_set_hash !== archiveSetHash) {
+            throw Object.assign(new Error('Approved context artifact is already bound to a different archive wrapper.'), {
+              code: 'CONTEXT_ARCHIVE_LINEAGE_CONFLICT'
+            });
+          }
+          imported.push(await loadApprovedContextSet(client, duplicate.rows[0].id));
+          continue;
+        }
+        await client.query(
+          `UPDATE amc_practice.approved_context_sets SET active = false, superseded_at = $3
+           WHERE form_id = $1 AND form_version = $2 AND active`, [binding.id, binding.version, importedAt]
+        );
+        const contextSetId = randomUUID();
+        await client.query(
+          `INSERT INTO amc_practice.approved_context_sets
+           (id, schema_version, artifact_set_hash, archive_wrapper_set_hash, candidate_schema_version, candidate_set_hash,
+            decision_set_hash, approval_authority_id, approval_receipt_set_hash, form_id, form_version, context_content_hash,
+            release_question_bundle_hash, release_content_hash, release_manifest_hash, active, imported_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,true,$16)`,
+          [contextSetId, artifact.schemaVersion, artifact.setHash, archiveSetHash, binding.candidateSchemaVersion,
+            binding.candidateSetHash, artifact.reviewDecisionBinding.decisionSetHash, authorityId, receiptSetHash,
+            binding.id, binding.version, binding.contextContentHash,
+            release.questionBundleHash, release.contentHash, release.manifestHash, importedAt]
+        );
+        const readyQuestions = artifact.questions.filter((question) => question.contextReady
+          && question.approvedSolutions.filter((solution) => solution.modelEligibility.eligible).length >= 2);
+        for (const question of readyQuestions) {
+          await client.query(
+            `INSERT INTO amc_practice.approved_context_questions
+             (context_set_id, form_id, form_version, question_number, question_content_hash,
+              prompt_markdown, choices, approved_solution_count, model_eligible_solution_count, visual_context)
+             VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10::jsonb)`,
+            [contextSetId, binding.id, binding.version, question.number, question.questionContentHash,
+              question.promptMarkdown, JSON.stringify(question.choices), question.approvedSolutions.length,
+              question.availability.modelEligibleSolutionCount, JSON.stringify(question.visualContext)]
+          );
+          for (const [index, solution] of question.approvedSolutions.entries()) {
+            await client.query(
+              `INSERT INTO amc_practice.approved_context_solutions
+               (context_set_id, question_number, solution_position, artifact_solution_id, title,
+                body_markdown, body_sha256, source_path, source_sha256, source_heading_line,
+                source_end_line, reviewer_id, reviewed_at, rights_status, quality_flags, method_tags,
+                model_eligible, model_ineligibility_reason, decision_record_hash,
+                authority_receipt_id, authority_receipt_authority_id,
+                authority_receipt_issued_at, authority_receipt_status)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::jsonb,$16::jsonb,
+                 $17,$18,$19,$20,$21,$22,$23)`,
+              [contextSetId, question.number, index + 1, solution.solutionId, solution.title,
+                solution.bodyMarkdown, solution.bodySha256, solution.sourceRef.path, solution.sourceRef.sha256,
+                solution.sourceRef.headingLine, solution.sourceRef.endLine, solution.approval.reviewerId,
+                solution.approval.reviewedAt, solution.approval.rightsStatus,
+                JSON.stringify(solution.approval.qualityFlags), JSON.stringify(solution.approval.methodTags),
+                solution.modelEligibility.eligible, solution.modelEligibility.reason, solution.approval.decisionRecordHash,
+                solution.approval.authorityReceipt.receiptId, solution.approval.authorityReceipt.authorityId,
+                solution.approval.authorityReceipt.issuedAt,
+                solution.approval.authorityReceipt.status]
+            );
+          }
+        }
+        if (readyQuestions.length) {
+          const blocked = await client.query(
+            `SELECT v.id, v.learning_submission_id, v.version_number, v.evidence_hash,
+                    w.id AS work_id, w.deletion_generation
+             FROM amc_practice.learning_submission_versions v
+             JOIN amc_practice.learning_submissions s
+               ON s.id = v.learning_submission_id AND s.current_version = v.version_number
+             JOIN amc_practice.learning_work_items w
+               ON w.learning_submission_version_id = v.id AND w.work_type = 'ANALYZE_SUBMISSION'
+             WHERE v.form_id = $1 AND v.form_version = $2 AND v.context_status = 'CONTEXT_UNAVAILABLE'
+               AND s.lifecycle_status = 'COMMITTED' AND w.status = 'BLOCKED_CONTEXT'
+             FOR UPDATE OF v, w`, [binding.id, binding.version]
+          );
+          for (const row of blocked.rows) {
+            const inputHash = analysisInputHash(row.evidence_hash, artifact.setHash);
+            const runId = randomUUID();
+            await client.query(
+              `UPDATE amc_practice.learning_submission_versions
+               SET context_status = 'CONTEXT_READY', context_set_id = $2 WHERE id = $1`, [row.id, contextSetId]
+            );
+            await client.query(
+              `INSERT INTO amc_practice.learning_analysis_runs
+               (id, learning_submission_version_id, context_set_id, version_number, input_hash,
+                evidence_hash, deletion_generation, status, created_at)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,'QUEUED',$8)`,
+              [runId, row.id, contextSetId, row.version_number, inputHash, row.evidence_hash, row.deletion_generation, importedAt]
+            );
+            await client.query(
+              `UPDATE amc_practice.learning_work_items
+               SET status = 'QUEUED', input_hash = $2, analysis_run_id = $3, available_at = $4,
+                   last_error_code = NULL, updated_at = $4
+               WHERE id = $1`, [row.work_id, inputHash, runId, importedAt]
+            );
+          }
+        }
+        imported.push(await loadApprovedContextSet(client, contextSetId));
+      }
+      await client.query('COMMIT');
+      return imported;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async claimLearningAnalysisWork({ workerId, now, leaseMs }) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const reclaimed = await client.query(
+        `UPDATE amc_practice.learning_work_items
+         SET status = 'QUEUED', lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+             available_at = $1, last_error_code = 'LEASE_EXPIRED', updated_at = $1
+         WHERE status = 'RUNNING' AND lease_expires_at <= $1
+         RETURNING analysis_run_id`, [now]
+      );
+      const reclaimedIds = reclaimed.rows.map((row) => row.analysis_run_id).filter(Boolean);
+      if (reclaimedIds.length) {
+        await client.query(
+          `UPDATE amc_practice.learning_analysis_runs
+           SET status = 'QUEUED', started_at = NULL, last_error_code = 'LEASE_EXPIRED'
+           WHERE id = ANY($1::uuid[])`, [reclaimedIds]
+        );
+      }
+      const leaseToken = randomUUID();
+      const claimed = await client.query(
+        `WITH candidate AS (
+           SELECT w.id
+           FROM amc_practice.learning_work_items w
+           JOIN amc_practice.learning_analysis_runs r ON r.id = w.analysis_run_id
+           JOIN amc_practice.learning_submission_versions v ON v.id = w.learning_submission_version_id
+           JOIN amc_practice.learning_submissions s
+             ON s.id = v.learning_submission_id AND s.current_version = v.version_number
+           JOIN amc_practice.attempts a ON a.id = s.attempt_id AND a.student_id = s.student_id
+           WHERE w.status = 'QUEUED' AND w.available_at <= $1 AND s.lifecycle_status = 'COMMITTED'
+             AND r.status = 'QUEUED'
+             AND a.phase IN ('FINALIZED','RESET') AND v.context_status = 'CONTEXT_READY'
+             AND v.context_set_id = r.context_set_id AND w.input_hash = r.input_hash
+             AND w.deletion_generation = r.deletion_generation
+           ORDER BY w.priority DESC, w.available_at, w.created_at
+           FOR UPDATE OF w SKIP LOCKED LIMIT 1
+         )
+         UPDATE amc_practice.learning_work_items w
+         SET status = 'RUNNING', attempt_count = attempt_count + 1, lease_owner = $2, lease_token = $4,
+             lease_expires_at = $1 + ($3::text || ' milliseconds')::interval, updated_at = $1
+         FROM candidate WHERE w.id = candidate.id RETURNING w.*`, [now, workerId, leaseMs, leaseToken]
+      );
+      if (!claimed.rowCount) {
+        await client.query('COMMIT');
+        return null;
+      }
+      const workItem = mapLearningWorkItem(claimed.rows[0]);
+      const joined = await client.query(
+        `SELECT r.id AS run_id, r.learning_submission_version_id, r.context_set_id AS run_context_set_id,
+                r.version_number AS run_version_number, r.input_hash AS run_input_hash,
+                r.evidence_hash AS run_evidence_hash, r.deletion_generation AS run_deletion_generation,
+                r.created_at AS run_created_at, r.started_at AS run_started_at,
+                v.id AS version_id, v.learning_submission_id, v.version_number,
+                v.form_id, v.form_version, v.context_set_id, v.evidence_hash,
+                s.id AS submission_id, s.student_id, s.attempt_id,
+                s.current_version, s.lifecycle_status, s.form_id AS submission_form_id,
+                s.form_version AS submission_form_version
+         FROM amc_practice.learning_analysis_runs r
+         JOIN amc_practice.learning_submission_versions v ON v.id = r.learning_submission_version_id
+         JOIN amc_practice.learning_submissions s ON s.id = v.learning_submission_id
+         WHERE r.id = $1`, [workItem.analysisRunId]
+      );
+      const row = joined.rows[0];
+      await client.query(
+        `UPDATE amc_practice.learning_analysis_runs
+         SET status = 'RUNNING', started_at = COALESCE(started_at, $2), last_error_code = NULL WHERE id = $1`,
+        [workItem.analysisRunId, now]
+      );
+      const version = {
+        id: row.version_id,
+        learningSubmissionId: row.learning_submission_id,
+        versionNumber: row.version_number,
+        formId: row.form_id,
+        formVersion: row.form_version,
+        contextSetId: row.context_set_id,
+        evidenceHash: row.evidence_hash
+      };
+      const run = {
+        id: row.run_id,
+        learningSubmissionVersionId: row.learning_submission_version_id,
+        contextSetId: row.run_context_set_id,
+        versionNumber: row.run_version_number,
+        inputHash: row.run_input_hash,
+        evidenceHash: row.run_evidence_hash,
+        deletionGeneration: row.run_deletion_generation,
+        status: 'RUNNING',
+        createdAt: row.run_created_at,
+        startedAt: row.run_started_at || now,
+        completedAt: null,
+        lastErrorCode: null
+      };
+      const submission = {
+        id: row.submission_id, studentId: row.student_id, attemptId: row.attempt_id,
+        currentVersion: row.current_version, lifecycleStatus: row.lifecycle_status,
+        formId: row.submission_form_id, formVersion: row.submission_form_version
+      };
+      const responses = await client.query(
+        `SELECT question_number, selected_option, reasoning_text, reasoning_origin
+         FROM amc_practice.learning_question_responses
+         WHERE learning_submission_version_id = $1 ORDER BY question_number`, [version.id]
+      );
+      const formQuestions = await client.query(
+        `SELECT question_number, correct_option FROM amc_practice.form_questions
+         WHERE form_id = $1 AND form_version = $2 ORDER BY question_number`, [version.formId, version.formVersion]
+      );
+      const contextSet = await loadApprovedContextSet(client, version.contextSetId);
+      const official = new Map(formQuestions.rows.map((question) => [question.question_number, question.correct_option]));
+      const contexts = new Map(contextSet.questions.map((question) => [question.questionNumber, question]));
+      await client.query('COMMIT');
+      return {
+        workItem,
+        run,
+        version,
+        submission,
+        questions: responses.rows.map((response) => ({
+          questionNumber: response.question_number,
+          selectedOption: response.selected_option,
+          reasoningText: response.reasoning_text,
+          reasoningOrigin: response.reasoning_origin,
+          officialAnswer: official.get(response.question_number),
+          context: contexts.get(response.question_number) || null
+        }))
+      };
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async heartbeatLearningAnalysisWork({ workItemId, workerId, leaseToken, now, leaseMs }) {
+    const result = await this.pool.query(
+      `UPDATE amc_practice.learning_work_items
+       SET lease_expires_at = $3 + ($4::text || ' milliseconds')::interval, updated_at = $3
+       WHERE id = $1 AND status = 'RUNNING' AND lease_owner = $2 AND lease_token = $5 AND lease_expires_at > $3
+       RETURNING id`, [workItemId, workerId, now, leaseMs, leaseToken]
+    );
+    return result.rowCount === 1;
+  }
+
+  async completeLearningAnalysisWork(input) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const valid = await client.query(
+        `SELECT w.id, v.id AS version_id
+         FROM amc_practice.learning_work_items w
+         JOIN amc_practice.learning_analysis_runs r ON r.id = w.analysis_run_id
+         JOIN amc_practice.learning_submission_versions v ON v.id = w.learning_submission_version_id
+         JOIN amc_practice.learning_submissions s
+           ON s.id = v.learning_submission_id AND s.current_version = $6
+         JOIN amc_practice.attempts a ON a.id = s.attempt_id AND a.student_id = $7
+         WHERE w.id = $1 AND r.id = $2 AND w.status = 'RUNNING' AND w.lease_owner = $3
+           AND w.lease_token = $10
+           AND r.status = 'RUNNING' AND w.learning_submission_version_id = v.id
+           AND w.lease_expires_at > $4 AND w.input_hash = $5 AND r.input_hash = $5
+           AND w.deletion_generation = $8 AND r.deletion_generation = $8
+           AND s.student_id = $7 AND s.lifecycle_status = 'COMMITTED'
+           AND a.phase IN ('FINALIZED','RESET') AND v.context_set_id = $9 AND r.context_set_id = $9
+         FOR UPDATE OF w, r, v, s`,
+        [input.workItemId, input.analysisRunId, input.workerId, input.now, input.expectedInputHash,
+          input.expectedVersionNumber, input.expectedStudentId, input.expectedDeletionGeneration,
+          input.expectedContextSetId, input.expectedLeaseToken]
+      );
+      if (!valid.rowCount) {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      const responseNumbers = await client.query(
+        `SELECT question_number FROM amc_practice.learning_question_responses
+         WHERE learning_submission_version_id = $1 ORDER BY question_number`, [valid.rows[0].version_id]
+      );
+      const outcomeNumbers = input.outcomes.map((outcome) => outcome.questionNumber);
+      if (outcomeNumbers.length !== responseNumbers.rowCount || new Set(outcomeNumbers).size !== outcomeNumbers.length
+          || outcomeNumbers.some((number, index) => number !== responseNumbers.rows[index].question_number)) {
+        throw Object.assign(new Error('Analysis outcomes must cover every response exactly once in question order.'), {
+          code: 'INVALID_ANALYSIS_OUTCOMES'
+        });
+      }
+      for (const outcome of input.outcomes) {
+        await client.query(
+          `INSERT INTO amc_practice.learning_question_analyses
+           (analysis_run_id, question_number, status, provider_invoked, reasoning_verdict,
+            summary_markdown, strengths, gaps, suggestions, solution_comparisons, confidence,
+            outcome_code, run_metadata, error_class, retryable,
+            question_input_hash, question_context_hash, created_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8::jsonb,$9::jsonb,$10::jsonb,$11,$12,$13::jsonb,$14,$15,$16,$17,$18)`,
+          [input.analysisRunId, outcome.questionNumber, outcome.status, outcome.providerInvoked,
+            outcome.reasoningVerdict, outcome.summaryMarkdown, JSON.stringify(outcome.strengths),
+            JSON.stringify(outcome.gaps), JSON.stringify(outcome.suggestions),
+            JSON.stringify(outcome.solutionComparisons), outcome.confidence, outcome.outcomeCode,
+            outcome.runMetadata === null ? null : JSON.stringify(outcome.runMetadata), outcome.errorClass,
+            outcome.retryable, outcome.questionInputHash, outcome.questionContextHash, input.now]
+        );
+      }
+      await client.query(
+        `INSERT INTO amc_practice.learning_reports
+         (id, analysis_run_id, learning_submission_version_id, status, generated_at, summary, report_hash)
+         VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7)`,
+        [randomUUID(), input.analysisRunId, valid.rows[0].version_id, input.report.status,
+          input.report.generatedAt, JSON.stringify(input.report.summary), input.report.reportHash]
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_analysis_runs
+         SET status = $2, completed_at = $3, last_error_code = NULL WHERE id = $1`,
+        [input.analysisRunId, input.report.status, input.now]
+      );
+      const workStatus = input.report.status === 'PARTIAL' ? 'PARTIAL' : input.report.status === 'FAILED' ? 'FAILED' : 'SUCCEEDED';
+      await client.query(
+        `UPDATE amc_practice.learning_work_items
+         SET status = $2, lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+             last_error_code = $3, updated_at = $4 WHERE id = $1`,
+        [input.workItemId, workStatus, input.report.status === 'FAILED' ? 'ANALYSIS_FAILED' : null, input.now]
+      );
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async retryLearningAnalysisWork(input) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const valid = await client.query(
+        `SELECT w.id
+         FROM amc_practice.learning_work_items w
+         JOIN amc_practice.learning_analysis_runs r ON r.id = w.analysis_run_id
+         JOIN amc_practice.learning_submission_versions v ON v.id = w.learning_submission_version_id
+         JOIN amc_practice.learning_submissions s ON s.id = v.learning_submission_id AND s.current_version = $6
+         JOIN amc_practice.attempts a ON a.id = s.attempt_id AND a.student_id = $7
+         WHERE w.id = $1 AND r.id = $2 AND w.status = 'RUNNING' AND w.lease_owner = $3
+           AND w.lease_token = $10
+           AND r.status = 'RUNNING' AND w.lease_expires_at > $4
+           AND w.input_hash = $5 AND r.input_hash = $5
+           AND w.deletion_generation = $8 AND r.deletion_generation = $8
+           AND s.student_id = $7 AND s.lifecycle_status = 'COMMITTED'
+           AND a.phase IN ('FINALIZED','RESET') AND v.context_set_id = $9 AND r.context_set_id = $9
+         FOR UPDATE OF w, r, v, s`,
+        [input.workItemId, input.analysisRunId, input.workerId, input.now, input.expectedInputHash,
+          input.expectedVersionNumber, input.expectedStudentId, input.expectedDeletionGeneration,
+          input.expectedContextSetId, input.expectedLeaseToken]
+      );
+      if (!valid.rowCount) {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      await client.query(
+        `UPDATE amc_practice.learning_work_items
+         SET status = 'QUEUED', available_at = $2, lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+             last_error_code = $3, updated_at = $4 WHERE id = $1`,
+        [input.workItemId, input.availableAt, input.lastErrorCode, input.now]
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_analysis_runs
+         SET status = 'QUEUED', started_at = NULL, last_error_code = $2 WHERE id = $1`,
+        [input.analysisRunId, input.lastErrorCode]
+      );
+      await client.query('COMMIT');
+      return true;
     } catch (error) {
       await client.query('ROLLBACK').catch(() => {});
       throw error;
@@ -660,7 +1220,42 @@ class PostgresAttemptTransaction {
     };
   }
 
-  async createLearningSubmission({ submission, version, responses, workItem }) {
+  async getApprovedContextSetForForm(formId, formVersion) {
+    const result = await this.client.query(
+      `SELECT id FROM amc_practice.approved_context_sets
+       WHERE form_id = $1 AND form_version = $2 AND active
+         AND EXISTS (SELECT 1 FROM amc_practice.approved_context_questions q WHERE q.context_set_id = approved_context_sets.id)
+       LIMIT 1`, [formId, formVersion]
+    );
+    return result.rowCount ? loadApprovedContextSet(this.client, result.rows[0].id) : null;
+  }
+
+  async getLearningReportBundle() {
+    const bundle = await this.getLearningSubmissionBundle();
+    if (!bundle) return null;
+    const runResult = await this.client.query(
+      'SELECT * FROM amc_practice.learning_analysis_runs WHERE learning_submission_version_id = $1',
+      [bundle.version.id]
+    );
+    if (!runResult.rowCount) return { ...bundle, analysisRun: null, analyses: [], report: null };
+    const run = mapAnalysisRun(runResult.rows[0]);
+    const analyses = await this.client.query(
+      'SELECT * FROM amc_practice.learning_question_analyses WHERE analysis_run_id = $1 ORDER BY question_number',
+      [run.id]
+    );
+    const report = await this.client.query(
+      'SELECT * FROM amc_practice.learning_reports WHERE learning_submission_version_id = $1',
+      [bundle.version.id]
+    );
+    return {
+      ...bundle,
+      analysisRun: run,
+      analyses: analyses.rows.map(mapQuestionAnalysis),
+      report: mapLearningReport(report.rows[0])
+    };
+  }
+
+  async createLearningSubmission({ submission, version, responses, workItem, analysisRun = null }) {
     await this.client.query(
       `INSERT INTO amc_practice.learning_submissions
        (id, student_id, attempt_id, official_submission_id, official_submission_kind, form_id, form_version,
@@ -691,16 +1286,28 @@ class PostgresAttemptTransaction {
           response.reasoningOrigin, response.createdAt]
       );
     }
+    if (analysisRun) {
+      await this.client.query(
+        `INSERT INTO amc_practice.learning_analysis_runs
+         (id, learning_submission_version_id, context_set_id, version_number, input_hash,
+          evidence_hash, deletion_generation, status, created_at, started_at, completed_at, last_error_code)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+        [analysisRun.id, analysisRun.learningSubmissionVersionId, analysisRun.contextSetId,
+          analysisRun.versionNumber, analysisRun.inputHash, analysisRun.evidenceHash,
+          analysisRun.deletionGeneration, analysisRun.status, analysisRun.createdAt,
+          analysisRun.startedAt, analysisRun.completedAt, analysisRun.lastErrorCode]
+      );
+    }
     await this.client.query(
       `INSERT INTO amc_practice.learning_work_items
        (id, learning_submission_version_id, work_type, status, priority, attempt_count,
-        input_hash, deletion_generation, available_at, lease_owner, lease_expires_at,
-        last_error_code, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+        input_hash, deletion_generation, available_at, lease_owner, lease_token, lease_expires_at,
+        last_error_code, created_at, updated_at, analysis_run_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
       [workItem.id, workItem.learningSubmissionVersionId, workItem.workType, workItem.status,
         workItem.priority, workItem.attemptCount, workItem.inputHash, workItem.deletionGeneration,
-        workItem.availableAt, workItem.leaseOwner, workItem.leaseExpiresAt, workItem.lastErrorCode,
-        workItem.createdAt, workItem.updatedAt]
+        workItem.availableAt, workItem.leaseOwner, workItem.leaseToken, workItem.leaseExpiresAt, workItem.lastErrorCode,
+        workItem.createdAt, workItem.updatedAt, workItem.analysisRunId || null]
     );
     return this.getLearningSubmissionBundle();
   }

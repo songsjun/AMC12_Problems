@@ -24,3 +24,8 @@ python3 -m amc_content.cli build \
 
 The backend importer must repeat that gate: reject this manifest unless its
 development-only `allowTestOnly` setting is explicitly enabled.
+
+`question-context-review-decisions.empty.json` and
+`solution-approval-receipts.empty.json` form the zero-approval governance pair.
+They exercise the separate approved-context `--allow-test-only` path and are
+not authority or review evidence for real content.

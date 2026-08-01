@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { analysisInputHash } from './learning-review/canonical.js';
 
 const clone = (value) => structuredClone(value);
 const cloneMap = (map) => new Map([...map].map(([key, value]) => [key, clone(value)]));
@@ -25,6 +26,11 @@ export class MemoryStore {
     this.learningVersions = new Map();
     this.learningResponses = new Map();
     this.learningWorkItems = new Map();
+    this.approvedContextSets = new Map();
+    this.activeContextSetByForm = new Map();
+    this.analysisRuns = new Map();
+    this.questionAnalyses = new Map();
+    this.learningReports = new Map();
     this.events = new Map();
     this.idempotency = new Map();
     this.attemptLocks = new Map();
@@ -229,6 +235,266 @@ export class MemoryStore {
       .map((attempt) => attempt.id);
   }
 
+  async importApprovedContextSets({ forms, archiveSetHash, authorityId, receiptSetHash, importedAt }) {
+    return this.#withGlobalLock(async () => {
+      const checkpoint = this.#transactionCheckpoint();
+      try {
+        const imported = [];
+        for (const artifact of forms) {
+          const binding = artifact.formBinding;
+          const storedForm = this.forms.get(formKey(binding.id, binding.version));
+          if (!storedForm) throw Object.assign(new Error('Approved context form revision is not imported.'), { code: 'FORM_REVISION_NOT_FOUND' });
+          const release = binding.releaseBinding;
+          if (!release || release.questionBundleHash !== storedForm.questionBundleHash
+              || release.contentHash !== storedForm.contentHash || release.manifestHash !== storedForm.manifestHash) {
+            throw Object.assign(new Error('Approved context release hashes do not match the immutable form revision.'), { code: 'CONTEXT_RELEASE_MISMATCH' });
+          }
+          if (storedForm.questions.length !== artifact.questions.length) {
+            throw Object.assign(new Error('Approved context question count mismatch.'), { code: 'CONTEXT_CONTENT_MISMATCH' });
+          }
+          for (const question of artifact.questions) {
+            const storedQuestion = storedForm.questions.find((item) => item.number === question.number);
+            if (!storedQuestion) {
+              throw Object.assign(new Error('Approved context question does not exist in the form revision.'), { code: 'CONTEXT_CONTENT_MISMATCH' });
+            }
+            const choices = Object.fromEntries(storedQuestion.choices.map((choice) => [choice.option, choice.textMarkdown]));
+            if (storedQuestion.promptMarkdown !== question.promptMarkdown
+                || JSON.stringify(choices) !== JSON.stringify(question.choices)) {
+              throw Object.assign(new Error('Approved context prompt/choices do not match the form revision.'), { code: 'CONTEXT_CONTENT_MISMATCH' });
+            }
+          }
+          const existing = [...this.approvedContextSets.values()].find((item) => item.artifactSetHash === artifact.setHash);
+          if (existing) {
+            if (archiveSetHash && existing.archiveWrapperSetHash === null) {
+              existing.archiveWrapperSetHash = archiveSetHash;
+            } else if (archiveSetHash && existing.archiveWrapperSetHash !== archiveSetHash) {
+              throw Object.assign(new Error('Approved context artifact is already bound to a different archive wrapper.'), {
+                code: 'CONTEXT_ARCHIVE_LINEAGE_CONFLICT'
+              });
+            }
+            imported.push(clone(existing));
+            continue;
+          }
+          const currentId = this.activeContextSetByForm.get(formKey(binding.id, binding.version));
+          if (currentId) {
+            const current = this.approvedContextSets.get(currentId);
+            current.active = false;
+            current.supersededAt = importedAt;
+          }
+          const contextSet = {
+            id: randomUUID(),
+            schemaVersion: artifact.schemaVersion,
+            artifactSetHash: artifact.setHash,
+            archiveWrapperSetHash: archiveSetHash,
+            candidateSchemaVersion: binding.candidateSchemaVersion,
+            candidateSetHash: binding.candidateSetHash,
+            decisionSetHash: artifact.reviewDecisionBinding.decisionSetHash,
+            approvalAuthorityId: authorityId,
+            approvalReceiptSetHash: receiptSetHash,
+            formId: binding.id,
+            formVersion: binding.version,
+            contextContentHash: binding.contextContentHash,
+            releaseBinding: clone(release),
+            active: true,
+            importedAt,
+            supersededAt: null,
+            questions: artifact.questions.filter((question) => question.contextReady
+                && question.approvedSolutions.filter((solution) => solution.modelEligibility.eligible).length >= 2)
+              .map((question) => ({
+                questionNumber: question.number,
+                questionContentHash: question.questionContentHash,
+                promptMarkdown: question.promptMarkdown,
+                choices: clone(question.choices),
+                visualContext: clone(question.visualContext),
+                modelEligibleSolutionCount: question.availability.modelEligibleSolutionCount,
+                solutions: question.approvedSolutions.map((solution, index) => ({
+                  solutionPosition: index + 1,
+                  artifactSolutionId: solution.solutionId,
+                  title: solution.title,
+                  bodyMarkdown: solution.bodyMarkdown,
+                  bodySha256: solution.bodySha256,
+                  sourceRef: clone(solution.sourceRef),
+                  reviewerId: solution.approval.reviewerId,
+                  reviewedAt: solution.approval.reviewedAt,
+                  rightsStatus: solution.approval.rightsStatus,
+                  qualityFlags: clone(solution.approval.qualityFlags),
+                  methodTags: clone(solution.approval.methodTags),
+                  modelEligibility: clone(solution.modelEligibility),
+                  decisionRecordHash: solution.approval.decisionRecordHash,
+                  authorityReceipt: clone(solution.approval.authorityReceipt)
+                }))
+              }))
+          };
+          this.approvedContextSets.set(contextSet.id, clone(contextSet));
+          this.activeContextSetByForm.set(formKey(binding.id, binding.version), contextSet.id);
+          imported.push(clone(contextSet));
+          if (contextSet.questions.length) this.#repairBlockedForContext(contextSet, importedAt);
+        }
+        return imported;
+      } catch (error) {
+        this.#restoreTransactionCheckpoint(checkpoint);
+        throw error;
+      }
+    });
+  }
+
+  #repairBlockedForContext(contextSet, now) {
+    for (const submission of this.learningSubmissions.values()) {
+      if (submission.formId !== contextSet.formId || submission.formVersion !== contextSet.formVersion
+          || submission.lifecycleStatus !== 'COMMITTED') continue;
+      const version = (this.learningVersions.get(submission.id) || [])
+        .find((item) => item.versionNumber === submission.currentVersion);
+      if (!version || version.contextStatus !== 'CONTEXT_UNAVAILABLE') continue;
+      const workItem = (this.learningWorkItems.get(version.id) || [])
+        .find((item) => item.workType === 'ANALYZE_SUBMISSION' && item.status === 'BLOCKED_CONTEXT');
+      if (!workItem) continue;
+      const inputHash = analysisInputHash(version.evidenceHash, contextSet.artifactSetHash);
+      const run = {
+        id: randomUUID(), learningSubmissionVersionId: version.id, contextSetId: contextSet.id,
+        versionNumber: version.versionNumber, inputHash, evidenceHash: version.evidenceHash,
+        deletionGeneration: workItem.deletionGeneration, status: 'QUEUED', createdAt: now,
+        startedAt: null, completedAt: null, lastErrorCode: null
+      };
+      version.contextStatus = 'CONTEXT_READY';
+      version.contextSetId = contextSet.id;
+      Object.assign(workItem, {
+        status: 'QUEUED', inputHash, analysisRunId: run.id, availableAt: now,
+        leaseOwner: null, leaseToken: null, leaseExpiresAt: null, lastErrorCode: null, updatedAt: now
+      });
+      this.analysisRuns.set(version.id, clone(run));
+    }
+  }
+
+  async claimLearningAnalysisWork({ workerId, now, leaseMs }) {
+    return this.#withGlobalLock(async () => {
+      const nowMs = new Date(now).getTime();
+      for (const items of this.learningWorkItems.values()) {
+        for (const item of items) {
+          if (item.status === 'RUNNING' && new Date(item.leaseExpiresAt).getTime() <= nowMs) {
+            Object.assign(item, { status: 'QUEUED', leaseOwner: null, leaseToken: null, leaseExpiresAt: null, availableAt: now, updatedAt: now });
+            const run = [...this.analysisRuns.values()].find((candidate) => candidate.id === item.analysisRunId);
+            if (run) Object.assign(run, { status: 'QUEUED', startedAt: null, lastErrorCode: 'LEASE_EXPIRED' });
+          }
+        }
+      }
+      const candidates = [...this.learningWorkItems.values()].flat()
+        .filter((item) => item.status === 'QUEUED' && new Date(item.availableAt).getTime() <= nowMs)
+        .sort((left, right) => right.priority - left.priority || new Date(left.createdAt) - new Date(right.createdAt));
+      for (const item of candidates) {
+        const version = [...this.learningVersions.values()].flat().find((candidate) => candidate.id === item.learningSubmissionVersionId);
+        const submission = version && [...this.learningSubmissions.values()].find((candidate) => candidate.id === version.learningSubmissionId);
+        const attempt = submission && this.attempts.get(submission.attemptId);
+        const run = version && this.analysisRuns.get(version.id);
+        const contextSet = version && this.approvedContextSets.get(version.contextSetId);
+        if (!version || !submission || !attempt || !run || !contextSet
+            || submission.currentVersion !== version.versionNumber || submission.lifecycleStatus !== 'COMMITTED'
+            || !['FINALIZED', 'RESET'].includes(attempt.phase) || attempt.studentId !== submission.studentId
+            || submission.formId !== version.formId || submission.formVersion !== version.formVersion
+            || version.contextStatus !== 'CONTEXT_READY' || version.contextSetId !== run.contextSetId
+            || run.learningSubmissionVersionId !== version.id || run.versionNumber !== version.versionNumber
+            || run.evidenceHash !== version.evidenceHash || run.status !== 'QUEUED'
+            || item.learningSubmissionVersionId !== version.id || item.analysisRunId !== run.id
+            || item.inputHash !== run.inputHash || item.deletionGeneration !== run.deletionGeneration) {
+          Object.assign(item, { status: 'CANCELLED', lastErrorCode: 'STALE_WORK', updatedAt: now, leaseOwner: null, leaseToken: null, leaseExpiresAt: null });
+          if (run) Object.assign(run, { status: 'CANCELLED', lastErrorCode: 'STALE_WORK', completedAt: now });
+          continue;
+        }
+        Object.assign(item, {
+          status: 'RUNNING', attemptCount: item.attemptCount + 1, leaseOwner: workerId, leaseToken: randomUUID(),
+          leaseExpiresAt: new Date(nowMs + leaseMs), updatedAt: now
+        });
+        Object.assign(run, { status: 'RUNNING', startedAt: run.startedAt || now, lastErrorCode: null });
+        const responses = this.learningResponses.get(version.id) || [];
+        const form = this.forms.get(formKey(version.formId, version.formVersion));
+        const contexts = new Map(contextSet.questions.map((question) => [question.questionNumber, question]));
+        return clone({
+          workItem: item, run, version, submission,
+          questions: responses.map((response) => {
+            const formQuestion = form.questions.find((question) => question.number === response.questionNumber);
+            return { ...response, officialAnswer: formQuestion.correctOption, context: contexts.get(response.questionNumber) || null };
+          })
+        });
+      }
+      return null;
+    });
+  }
+
+  async heartbeatLearningAnalysisWork({ workItemId, workerId, leaseToken, now, leaseMs }) {
+    return this.#withGlobalLock(async () => {
+      const item = [...this.learningWorkItems.values()].flat().find((candidate) => candidate.id === workItemId);
+      if (!item || item.status !== 'RUNNING' || item.leaseOwner !== workerId || item.leaseToken !== leaseToken
+          || new Date(item.leaseExpiresAt).getTime() <= new Date(now).getTime()) return false;
+      item.leaseExpiresAt = new Date(new Date(now).getTime() + leaseMs);
+      item.updatedAt = now;
+      return true;
+    });
+  }
+
+  async completeLearningAnalysisWork(input) {
+    return this.#withGlobalLock(async () => {
+      const item = [...this.learningWorkItems.values()].flat().find((candidate) => candidate.id === input.workItemId);
+      const run = [...this.analysisRuns.values()].find((candidate) => candidate.id === input.analysisRunId);
+      const version = run && [...this.learningVersions.values()].flat().find((candidate) => candidate.id === run.learningSubmissionVersionId);
+      const submission = version && [...this.learningSubmissions.values()].find((candidate) => candidate.id === version.learningSubmissionId);
+      const attempt = submission && this.attempts.get(submission.attemptId);
+      if (!item || !run || !version || !submission || !attempt || item.status !== 'RUNNING'
+          || item.leaseOwner !== input.workerId || item.leaseToken !== input.expectedLeaseToken
+          || new Date(item.leaseExpiresAt).getTime() <= new Date(input.now).getTime()
+          || item.inputHash !== input.expectedInputHash || item.deletionGeneration !== input.expectedDeletionGeneration
+          || run.inputHash !== input.expectedInputHash || run.id !== item.analysisRunId || run.status !== 'RUNNING'
+          || item.learningSubmissionVersionId !== version.id || run.contextSetId !== version.contextSetId
+          || run.versionNumber !== version.versionNumber || run.evidenceHash !== version.evidenceHash
+          || submission.currentVersion !== input.expectedVersionNumber || submission.studentId !== input.expectedStudentId
+          || submission.lifecycleStatus !== 'COMMITTED' || attempt.studentId !== input.expectedStudentId
+          || !['FINALIZED', 'RESET'].includes(attempt.phase) || version.contextSetId !== input.expectedContextSetId) return false;
+      const responseNumbers = (this.learningResponses.get(version.id) || []).map((response) => response.questionNumber);
+      const outcomeNumbers = input.outcomes.map((outcome) => outcome.questionNumber);
+      if (outcomeNumbers.length !== responseNumbers.length || new Set(outcomeNumbers).size !== outcomeNumbers.length
+          || outcomeNumbers.some((number, index) => number !== responseNumbers[index])) {
+        throw Object.assign(new Error('Analysis outcomes must cover every response exactly once in question order.'), {
+          code: 'INVALID_ANALYSIS_OUTCOMES'
+        });
+      }
+      this.questionAnalyses.set(run.id, clone(input.outcomes));
+      this.learningReports.set(version.id, clone({
+        id: randomUUID(), analysisRunId: run.id, learningSubmissionVersionId: version.id, ...input.report
+      }));
+      Object.assign(run, { status: input.report.status, completedAt: input.now, lastErrorCode: null });
+      Object.assign(item, {
+        status: input.report.status === 'PARTIAL' ? 'PARTIAL' : input.report.status === 'FAILED' ? 'FAILED' : 'SUCCEEDED',
+        leaseOwner: null, leaseToken: null, leaseExpiresAt: null,
+        lastErrorCode: input.report.status === 'FAILED' ? 'ANALYSIS_FAILED' : null,
+        updatedAt: input.now
+      });
+      return true;
+    });
+  }
+
+  async retryLearningAnalysisWork(input) {
+    return this.#withGlobalLock(async () => {
+      const item = [...this.learningWorkItems.values()].flat().find((candidate) => candidate.id === input.workItemId);
+      const run = [...this.analysisRuns.values()].find((candidate) => candidate.id === input.analysisRunId);
+      const version = run && [...this.learningVersions.values()].flat().find((candidate) => candidate.id === run.learningSubmissionVersionId);
+      const submission = version && [...this.learningSubmissions.values()].find((candidate) => candidate.id === version.learningSubmissionId);
+      const attempt = submission && this.attempts.get(submission.attemptId);
+      if (!item || !run || !version || !submission || !attempt || item.status !== 'RUNNING'
+          || item.leaseOwner !== input.workerId || item.leaseToken !== input.expectedLeaseToken
+          || new Date(item.leaseExpiresAt).getTime() <= new Date(input.now).getTime()
+          || item.inputHash !== input.expectedInputHash || item.deletionGeneration !== input.expectedDeletionGeneration
+          || run.inputHash !== input.expectedInputHash || run.id !== item.analysisRunId || run.status !== 'RUNNING'
+          || submission.currentVersion !== input.expectedVersionNumber || submission.studentId !== input.expectedStudentId
+          || submission.lifecycleStatus !== 'COMMITTED' || attempt.studentId !== input.expectedStudentId
+          || !['FINALIZED', 'RESET'].includes(attempt.phase) || version.contextSetId !== input.expectedContextSetId
+          || run.contextSetId !== input.expectedContextSetId) return false;
+      Object.assign(item, {
+        status: 'QUEUED', availableAt: input.availableAt, leaseOwner: null, leaseToken: null, leaseExpiresAt: null,
+        lastErrorCode: input.lastErrorCode, updatedAt: input.now
+      });
+      Object.assign(run, { status: 'QUEUED', startedAt: null, lastErrorCode: input.lastErrorCode });
+      return true;
+    });
+  }
+
   async withAttemptLock(attemptId, work) {
     // Match PostgreSQL's advisory(student, form) -> attempt-row lock order.
     // A single global mutex is sufficient for the deterministic in-memory
@@ -285,6 +551,11 @@ export class MemoryStore {
       learningVersions: cloneMap(this.learningVersions),
       learningResponses: cloneMap(this.learningResponses),
       learningWorkItems: cloneMap(this.learningWorkItems),
+      approvedContextSets: cloneMap(this.approvedContextSets),
+      activeContextSetByForm: cloneMap(this.activeContextSetByForm),
+      analysisRuns: cloneMap(this.analysisRuns),
+      questionAnalyses: cloneMap(this.questionAnalyses),
+      learningReports: cloneMap(this.learningReports),
       events: cloneMap(this.events),
       idempotency: cloneMap(this.idempotency)
     };
@@ -374,15 +645,29 @@ class MemoryAttemptTransaction {
     const versions = this.store.learningVersions.get(submission.id) || [];
     const version = versions.find((candidate) => candidate.versionNumber === submission.currentVersion);
     if (!version) throw new Error(`Learning submission ${submission.id} has no current version.`);
+    const run = this.store.analysisRuns.get(version.id) || null;
     return clone({
       submission,
       version,
       responses: this.store.learningResponses.get(version.id) || [],
-      workItems: this.store.learningWorkItems.get(version.id) || []
+      workItems: this.store.learningWorkItems.get(version.id) || [],
+      analysisRun: run,
+      analyses: run ? this.store.questionAnalyses.get(run.id) || [] : [],
+      report: this.store.learningReports.get(version.id) || null
     });
   }
 
-  async createLearningSubmission({ submission, version, responses, workItem }) {
+  async getApprovedContextSetForForm(formId, formVersion) {
+    const id = this.store.activeContextSetByForm.get(formKey(formId, formVersion));
+    const context = id ? this.store.approvedContextSets.get(id) : null;
+    return context?.questions?.length ? clone(context) : null;
+  }
+
+  async getLearningReportBundle() {
+    return this.getLearningSubmissionBundle();
+  }
+
+  async createLearningSubmission({ submission, version, responses, workItem, analysisRun = null }) {
     if (this.store.learningSubmissions.has(this.attemptId)) {
       const error = new Error('A learning submission already exists for this attempt.');
       error.code = 'LEARNING_SUBMISSION_EXISTS';
@@ -398,6 +683,7 @@ class MemoryAttemptTransaction {
     this.store.learningVersions.set(submission.id, [clone(version)]);
     this.store.learningResponses.set(version.id, clone(responses));
     this.store.learningWorkItems.set(version.id, [clone(workItem)]);
+    if (analysisRun) this.store.analysisRuns.set(version.id, clone(analysisRun));
     return this.getLearningSubmissionBundle();
   }
 

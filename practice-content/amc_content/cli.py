@@ -23,6 +23,11 @@ from .builder import (
 )
 from .archive import ArchiveInputs, archive_release_json, build_archive_release, write_archive_release
 from .canonical import canonical_json
+from .approval import (
+    approved_question_context_set_markdown,
+    compile_approved_question_context_set,
+    load_strict_json,
+)
 from .question_context import (
     archive_question_context_set_markdown,
     build_archive_question_context_set,
@@ -200,6 +205,40 @@ def _build_question_context(args: argparse.Namespace) -> int:
     return 0
 
 
+def _compile_approved_question_context(args: argparse.Namespace) -> int:
+    candidate_path = Path(os.path.abspath(args.candidate_set))
+    decisions_path = Path(os.path.abspath(args.review_decisions))
+    receipts_path = Path(os.path.abspath(args.approval_receipts))
+    private_root = _validate_private_context_root(args.private_output_root, source_root=_AMC_REPOSITORY_ROOT)
+    with _private_context_lock(private_root):
+        json_output, markdown_output = _resolve_private_context_outputs(
+            private_output_root=args.private_output_root,
+            json_output=args.json_output,
+            markdown_output=args.markdown_output,
+            source_root=_AMC_REPOSITORY_ROOT,
+            protected_inputs={candidate_path, decisions_path, receipts_path},
+            replace=args.replace,
+        )
+        candidate_set = load_strict_json(candidate_path, require_protected=True)
+        review_decisions = load_strict_json(decisions_path, require_protected=True)
+        approval_receipts = load_strict_json(receipts_path, require_protected=True)
+        approved = compile_approved_question_context_set(
+            candidate_set,
+            review_decisions,
+            approval_receipts,
+            allow_test_only=args.allow_test_only,
+        )
+        _write_context_output_pair_atomic(
+            json_output,
+            canonical_json(approved),
+            markdown_output,
+            approved_question_context_set_markdown(approved),
+            replace=args.replace,
+        )
+    print(f"compiled explicit human approvals: {json_output} and {markdown_output}")
+    return 0
+
+
 def _is_within(path: Path, root: Path) -> bool:
     try:
         path.relative_to(root)
@@ -220,6 +259,8 @@ def _validate_private_context_root(private_output_root: Path, *, source_root: Pa
     mode = stat.S_IMODE(private_root.stat().st_mode)
     if mode != 0o700:
         raise ContentBuildError([f"private output root permissions must be exactly 0700, found {mode:04o}"])
+    if private_root.stat().st_uid != os.geteuid():
+        raise ContentBuildError(["private output root must be owned by effective uid"])
 
     resolved_source_root = source_root.resolve()
     if _is_within(private_root, resolved_source_root) or _is_within(resolved_source_root, private_root):
@@ -417,6 +458,24 @@ def build_parser() -> argparse.ArgumentParser:
     context.add_argument("--markdown-output", type=Path, required=True)
     context.add_argument("--replace", action="store_true", help="explicitly replace existing regular output files")
     context.set_defaults(handler=_build_question_context)
+
+    approved = subcommands.add_parser(
+        "compile-approved-question-context",
+        help="compile exact human approvals into private AI context; never infers approval",
+    )
+    approved.add_argument("--candidate-set", type=Path, required=True)
+    approved.add_argument("--review-decisions", type=Path, required=True)
+    approved.add_argument("--approval-receipts", type=Path, required=True)
+    approved.add_argument(
+        "--allow-test-only",
+        action="store_true",
+        help="emit the non-importable private-test-only schema for synthetic candidates",
+    )
+    approved.add_argument("--private-output-root", type=Path, required=True)
+    approved.add_argument("--json-output", type=Path, required=True)
+    approved.add_argument("--markdown-output", type=Path, required=True)
+    approved.add_argument("--replace", action="store_true", help="explicitly replace existing regular output files")
+    approved.set_defaults(handler=_compile_approved_question_context)
     return parser
 
 

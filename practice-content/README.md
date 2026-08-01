@@ -204,6 +204,105 @@ before a separate review records explicit approvals. JSON is authoritative;
 the companion Markdown renders all community/source text inside collision-safe
 literal fences so HTML, images, headings, and fake review markers stay inert.
 
+## Explicit human approval for AI context
+
+Candidate extraction never approves content. As of this release, production
+has **0 approved solutions** and therefore **0 context-ready questions**. The
+compiler has no automatic-approval mode: a separately authored
+`amc-question-context-review-decisions-v1` document can select a solution only
+when a separately provisioned approval authority also supplies exactly one
+active receipt for that decision.
+
+Every decision binds the approval policy, candidate schema/set hash, exact form
+id/version, question number, `solutionId`, `bodySha256`, and source
+path/SHA-256. It also records an opaque `reviewerId`, UTC `reviewedAt`,
+`rightsStatus` fixed to `approved-for-ai-use`, explicit `qualityFlags`, and
+`methodTags`. Its `decisionRecordHash` is the canonical hash of that complete
+projection. Unknown, duplicate, quarantined, stale, partially bound, or
+locally rewritten decisions fail the complete build.
+
+The receipt input has schema `amc-solution-approval-receipt-set-v1` and audience
+`private-approval-authority-allowlist`. Each receipt binds the externally
+issued `receiptId`, `authorityId`, exact `decisionRecordHash`, issue time, and
+active/revoked state. A decision is accepted only when the supplied trusted set
+contains exactly one receipt for its hash and that receipt is active; an
+active-plus-revoked pair is rejected rather than interpreted by ordering. The
+compiled root binds `authorityId` and `receiptSetHash`, and every solution
+retains the active receipt identity. Omitting a solution means it is not
+approved.
+
+Compile decisions only into an existing, non-symlink private root with mode
+`0700`:
+
+```sh
+install -d -m 700 /var/tmp/amc-approved-context
+
+python3 -m amc_content.cli compile-approved-question-context \
+  --candidate-set /protected/review/archive-candidates.json \
+  --review-decisions /protected/review/human-decisions.json \
+  --approval-receipts /protected/authority/approval-receipts.json \
+  --private-output-root /var/tmp/amc-approved-context \
+  --json-output /var/tmp/amc-approved-context/approved.json \
+  --markdown-output /var/tmp/amc-approved-context/approved.md
+```
+
+All three compiler inputs are security-sensitive. Each must be a regular file
+owned by the effective uid with no group/world permission bits, in an immediate
+parent directory with the same owner/permission restrictions, and outside this
+repository and public/static roots. The descriptor-safe reader rejects
+symlinks and FIFOs, reads the inode it opened (not a later path replacement),
+and enforces a 64 MiB maximum both from `fstat` and while streaming. The private
+output root likewise must be an existing owner-controlled `0700` directory.
+
+These receipts are an allowlist boundary, not a digital-signature scheme. In a
+real deployment, generate and provision the receipt set under a distinct
+approval-authority/service identity; do not let the content checkout or build
+job author it. The production API importer must independently load its trusted
+receipt allowlist from protected configuration and compare the compiled
+`authorityId`, `receiptSetHash`, receipt identity/status, and decision hash.
+Hash recomputation alone proves integrity, not who authorized the receipt.
+
+For a single-form candidate, the JSON output is
+`amc-approved-question-context-set-v1`. For the production 48-form archive,
+the decisions file explicitly selects one or more exact form revisions and the
+output is `amc-approved-question-context-archive-set-v1`, whose `forms` are
+individually importable single-form approved sets. Each archive form preserves
+the release `questionBundleHash`, `contentHash`, and `manifestHash`; the wrapper
+also binds the exact archive candidate `setHash` and release source hash.
+
+A question is `contextReady: true` only with at least two explicit approvals;
+zero or one produces `status: unavailable` and an exact approved count. A
+prompt/choice containing a Markdown image, raw HTML/SVG image, TeX
+`includegraphics`, fenced Asymptote (` ```asy ` / ` ~~~asy `), `[asy]`,
+`\begin{asy}`, image-extension link/reference target, or AoPS/wiki
+`File:`/`Image:` link is conservatively marked `visualContext.required: true`
+and unavailable to the text-only model.
+An approved solution with such a reference remains auditable but is marked
+`modelEligibility.eligible: false` and does not count toward the two-solution
+threshold. Model-bound text is also checked by UTF-8 byte length, not character
+count: prompt 16,384 bytes; each choice 2,048; solution title 256; solution body
+16,384; and at most eight approved solutions. The schemas annotate these
+enforced limits with `x-maxUtf8Bytes`. Disallowed controls and malformed
+Unicode (including replacement characters and unpaired surrogates) are
+rejected before hashing. These limits match the inference gateway, preventing
+a compiler-approved ready context from failing gateway request validation. The
+artifact copies prompt and A–E choices byte-for-byte but deliberately has no
+`correctOption`, accepted-answer list, or answer-key field. The companion
+Markdown is for private inspection only and renders every supplied Markdown
+string inside a collision-safe literal fence.
+
+The checked-in `fixtures/synthetic-25/question-context-review-decisions.empty.json`
+and `solution-approval-receipts.empty.json` are a deterministic test-only pair
+with zero approvals. Synthetic candidates have no immutable release hashes, so
+compilation fails by default. Tests must opt in with `--allow-test-only`, which
+emits the distinct `amc-approved-question-context-test-set-v1` /
+`private-test-only` contract with a null release binding. The production
+validator/importer rejects that contract; production
+`amc-approved-question-context-set-v1` always requires a non-null release
+binding. These fixtures are not review evidence. Real decisions and receipts
+belong in separately protected storage, not this repository or a public/static
+root.
+
 `review` has no key input and never creates an importable private manifest.
 `build` verifies both artifacts after generation and is idempotent: canonical
 JSON hashes make an equivalent build byte-for-byte stable.

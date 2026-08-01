@@ -15,6 +15,8 @@
     "test:integration": "node --test test/api.test.js test/postgres-smoke.test.js",
     "import-form": "node --env-file-if-exists=.env scripts/import-form.js",
     "import-archive-release": "node --env-file-if-exists=.env scripts/import-archive-release.js",
+    "import-approved-context": "node --env-file-if-exists=.env scripts/import-approved-context.js",
+    "start:learning-worker": "node --env-file-if-exists=.env src/learning-review/worker-main.js",
     "create-access-code": "node --env-file-if-exists=.env scripts/create-access-code.js"
   },
   "dependencies": {

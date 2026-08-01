@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kapy.local/schema/approved-archive-question-context-set.schema.json",
+  "title": "Private selected-form AMC archive AI context",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "audience", "approvalPolicyVersion", "candidateSetBinding", "reviewDecisionBinding", "approvalAuthorityBinding", "summary", "forms", "disclaimer", "setHash"],
+  "properties": {
+    "schemaVersion": {"const": "amc-approved-question-context-archive-set-v1"},
+    "audience": {"const": "private-ai-context-only"},
+    "approvalPolicyVersion": {"const": "amc-explicit-human-solution-approval-v1"},
+    "candidateSetBinding": {
+      "type": "object", "additionalProperties": false, "required": ["schemaVersion", "setHash", "archiveRelease"],
+      "properties": {
+        "schemaVersion": {"const": "amc-question-context-archive-candidate-set-v1"}, "setHash": {"$ref": "#/$defs/sha256"},
+        "archiveRelease": {
+          "type": "object", "additionalProperties": false, "required": ["batchSchemaVersion", "releaseVersion", "sourcePath", "sourceSha256"],
+          "properties": {"batchSchemaVersion": {"const": "amc-practice-archive-release-batch-v1"}, "releaseVersion": {"type": "string", "minLength": 1}, "sourcePath": {"type": "string", "minLength": 1}, "sourceSha256": {"$ref": "#/$defs/sha256"}}
+        }
+      }
+    },
+    "reviewDecisionBinding": {
+      "type": "object", "additionalProperties": false, "required": ["schemaVersion", "decisionSetHash"],
+      "properties": {"schemaVersion": {"const": "amc-question-context-review-decisions-v1"}, "decisionSetHash": {"$ref": "#/$defs/sha256"}}
+    },
+    "approvalAuthorityBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "authorityId", "receiptSetHash"],
+      "properties": {
+        "schemaVersion": {"const": "amc-solution-approval-receipt-set-v1"},
+        "authorityId": {"$ref": "#/$defs/opaqueId"},
+        "receiptSetHash": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "summary": {
+      "type": "object", "additionalProperties": false, "required": ["formCount", "questionCount", "approvedSolutionCount", "contextReadyQuestionCount", "unavailableQuestionCount"],
+      "properties": {"formCount": {"type": "integer", "minimum": 1, "maximum": 48}, "questionCount": {"type": "integer", "minimum": 25, "maximum": 1200}, "approvedSolutionCount": {"type": "integer", "minimum": 0}, "contextReadyQuestionCount": {"type": "integer", "minimum": 0}, "unavailableQuestionCount": {"type": "integer", "minimum": 0}}
+    },
+    "forms": {"type": "array", "minItems": 1, "maxItems": 48, "items": {"$ref": "approved-question-context-set.schema.json"}},
+    "disclaimer": {"type": "string", "minLength": 1}, "setHash": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "opaqueId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/-]{2,127}$"}
+  }
+}

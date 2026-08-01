@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kapy.local/schema/approved-question-context-test-set.schema.json",
+  "title": "Synthetic-only AMC approved question context",
+  "description": "A deliberately non-production-importable contract for synthetic tests.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "audience", "approvalPolicyVersion", "formBinding", "reviewDecisionBinding", "approvalAuthorityBinding", "summary", "questions", "disclaimer", "setHash"],
+  "properties": {
+    "schemaVersion": {"const": "amc-approved-question-context-test-set-v1"},
+    "audience": {"const": "private-test-only"},
+    "approvalPolicyVersion": {"const": "amc-explicit-human-solution-approval-v1"},
+    "formBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "candidateSchemaVersion", "candidateSetHash", "contextContentHash", "releaseBinding"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1},
+        "candidateSchemaVersion": {"enum": ["amc-question-context-candidate-set-v1", "amc-question-context-archive-candidate-set-v1"]},
+        "candidateSetHash": {"$ref": "approved-question-context-set.schema.json#/$defs/sha256"},
+        "contextContentHash": {"$ref": "approved-question-context-set.schema.json#/$defs/sha256"},
+        "releaseBinding": {"type": "null"}
+      }
+    },
+    "reviewDecisionBinding": {"$ref": "approved-question-context-set.schema.json#/$defs/reviewBinding"},
+    "approvalAuthorityBinding": {"$ref": "approved-question-context-set.schema.json#/$defs/authorityBinding"},
+    "summary": {"$ref": "approved-question-context-set.schema.json#/$defs/summary"},
+    "questions": {
+      "type": "array",
+      "minItems": 25,
+      "maxItems": 25,
+      "items": {"$ref": "approved-question-context-set.schema.json#/$defs/question"}
+    },
+    "disclaimer": {"type": "string", "minLength": 1},
+    "setHash": {"$ref": "approved-question-context-set.schema.json#/$defs/sha256"}
+  }
+}

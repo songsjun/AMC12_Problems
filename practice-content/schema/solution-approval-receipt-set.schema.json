@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kapy.local/schema/solution-approval-receipt-set.schema.json",
+  "title": "Protected approval-authority receipt allowlist",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "audience", "authorityId", "receipts", "receiptSetHash"],
+  "properties": {
+    "schemaVersion": {"const": "amc-solution-approval-receipt-set-v1"},
+    "audience": {"const": "private-approval-authority-allowlist"},
+    "authorityId": {"$ref": "#/$defs/opaqueId"},
+    "receipts": {
+      "type": "array", "maxItems": 10000,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["receiptId", "authorityId", "decisionRecordHash", "issuedAt", "status"],
+        "properties": {
+          "receiptId": {"$ref": "#/$defs/opaqueId"},
+          "authorityId": {"$ref": "#/$defs/opaqueId"},
+          "decisionRecordHash": {"$ref": "#/$defs/sha256"},
+          "issuedAt": {"$ref": "#/$defs/utcTimestamp"},
+          "status": {"enum": ["active", "revoked"]}
+        }
+      }
+    },
+    "receiptSetHash": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "opaqueId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/-]{2,127}$"},
+    "utcTimestamp": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]{1,6})?Z$"}
+  }
+}

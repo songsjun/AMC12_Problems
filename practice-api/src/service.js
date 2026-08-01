@@ -22,6 +22,8 @@ import {
 } from './manifest.js';
 import { badRequest, conflict, forbidden, notFound, unauthorized } from './errors.js';
 import { newOpaqueToken } from './config.js';
+import { analysisInputHash } from './learning-review/canonical.js';
+import { publicLearningReport } from './learning-review/report.js';
 
 const PRELIMINARY_SLOT = 'PRELIMINARY';
 const FINAL_SLOT = 'FINAL';
@@ -760,6 +762,27 @@ export class PracticeService {
     });
   }
 
+  async getLearningReport(studentId, attemptId) {
+    ensureAttemptId(attemptId);
+    return this.store.withAttemptLock(attemptId, async (tx) => {
+      const attempt = await tx?.getAttempt();
+      assertOwned(attempt, studentId);
+      const submissions = await tx.listSubmissions();
+      const hasFinal = submissions.some((submission) => submission.kind === SUBMISSION_KINDS.FINAL);
+      if (!hasFinal || ![PHASES.FINALIZED, PHASES.RESET].includes(attempt.phase)) {
+        throw conflict('LEARNING_REPORT_NOT_AVAILABLE', 'Learning report is available after final submission.');
+      }
+      const bundle = await tx.getLearningReportBundle();
+      if (!bundle) {
+        throw conflict('LEARNING_SUBMISSION_REPAIR_PENDING', 'This final is awaiting learning-submission reconciliation.');
+      }
+      return publicLearningReport({
+        ...bundle,
+        workItem: bundle.workItems.find((item) => item.workType === 'ANALYZE_SUBMISSION') || null
+      });
+    });
+  }
+
   /** Maintenance/worker entrypoint. It is deliberately not exposed as HTTP. */
   async reconcileFinalLearningSubmission(attemptId) {
     ensureAttemptId(attemptId);
@@ -973,6 +996,11 @@ export class PracticeService {
       createdAt: now,
       updatedAt: now
     };
+    const approvedContext = await tx.getApprovedContextSetForForm(form.id, form.version);
+    const contextReady = Boolean(approvedContext?.questions?.length);
+    const workInputHash = contextReady
+      ? analysisInputHash(evidenceHash, approvedContext.artifactSetHash)
+      : evidenceHash;
     const version = {
       id: randomUUID(),
       learningSubmissionId: submission.id,
@@ -982,8 +1010,8 @@ export class PracticeService {
       answersRevision: attempt.answersRevision,
       reasoningRevision: attempt.reasoningRevision || 0,
       creationReason,
-      contextStatus: 'CONTEXT_UNAVAILABLE',
-      contextSetId: null,
+      contextStatus: contextReady ? 'CONTEXT_READY' : 'CONTEXT_UNAVAILABLE',
+      contextSetId: contextReady ? approvedContext.id : null,
       evidenceHash,
       createdAt: now
     };
@@ -999,19 +1027,35 @@ export class PracticeService {
       id: randomUUID(),
       learningSubmissionVersionId: version.id,
       workType: 'ANALYZE_SUBMISSION',
-      status: 'BLOCKED_CONTEXT',
+      status: contextReady ? 'QUEUED' : 'BLOCKED_CONTEXT',
       priority: 50,
       attemptCount: 0,
-      inputHash: evidenceHash,
+      inputHash: workInputHash,
       deletionGeneration: 0,
       availableAt: now,
       leaseOwner: null,
+      leaseToken: null,
       leaseExpiresAt: null,
-      lastErrorCode: 'QUESTION_CONTEXT_UNAVAILABLE',
+      lastErrorCode: contextReady ? null : 'QUESTION_CONTEXT_UNAVAILABLE',
       createdAt: now,
       updatedAt: now
     };
-    return tx.createLearningSubmission({ submission, version, responses, workItem });
+    const analysisRun = contextReady ? {
+      id: randomUUID(),
+      learningSubmissionVersionId: version.id,
+      contextSetId: approvedContext.id,
+      versionNumber: version.versionNumber,
+      inputHash: workInputHash,
+      evidenceHash,
+      deletionGeneration: workItem.deletionGeneration,
+      status: 'QUEUED',
+      createdAt: now,
+      startedAt: null,
+      completedAt: null,
+      lastErrorCode: null
+    } : null;
+    if (analysisRun) workItem.analysisRunId = analysisRun.id;
+    return tx.createLearningSubmission({ submission, version, responses, workItem, analysisRun });
   }
 
   async #reasoningEnvelope(tx, attempt) {

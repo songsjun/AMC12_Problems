@@ -9,8 +9,14 @@ import { promisify } from 'node:util';
 import { runMigrations } from '../src/migrate.js';
 import { PostgresStore } from '../src/postgres-store.js';
 import { PracticeService } from '../src/service.js';
+import { ApprovedContextImporter } from '../src/learning-review/artifact.js';
+import { LearningReviewWorker } from '../src/learning-review/worker.js';
 import { archiveReleaseFixture } from './archive-fixture.js';
 import { fixtureManifest } from './helpers.js';
+import {
+  approvedContextArtifact, approvalReceiptsForArtifact, FakeInferenceClient, learningReviewForm,
+  TRUSTED_APPROVAL_AUTHORITIES
+} from './learning-review-fixture.js';
 
 const execFileAsync = promisify(execFile);
 const connectionString = process.env.AMC12_TEST_DATABASE_URL;
@@ -56,7 +62,8 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     '002_pipeline_audit_metadata.sql',
     '003_archive_practice_scoring.sql',
     '004_one_published_form_revision.sql',
-    '005_learning_submission_core.sql'
+    '005_learning_submission_core.sql',
+    '006_approved_context_learning_reports.sql'
   ]);
 
   const learningColumns = await store.pool.query(
@@ -72,18 +79,26 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
          ('learning_question_responses', 'answer_origin'),
          ('learning_question_responses', 'reasoning_origin'),
          ('learning_work_items', 'input_hash'),
-         ('learning_work_items', 'deletion_generation')
+         ('learning_work_items', 'deletion_generation'),
+         ('learning_work_items', 'analysis_run_id'),
+         ('learning_question_analyses', 'run_metadata'),
+         ('learning_question_analyses', 'error_class'),
+         ('learning_question_analyses', 'retryable')
        )
      ORDER BY table_name, column_name`
   );
   assert.deepEqual(learningColumns.rows, [
     { table_name: 'attempts', column_name: 'reasoning_revision', is_nullable: 'NO' },
+    { table_name: 'learning_question_analyses', column_name: 'error_class', is_nullable: 'YES' },
+    { table_name: 'learning_question_analyses', column_name: 'retryable', is_nullable: 'NO' },
+    { table_name: 'learning_question_analyses', column_name: 'run_metadata', is_nullable: 'YES' },
     { table_name: 'learning_question_responses', column_name: 'answer_origin', is_nullable: 'NO' },
     { table_name: 'learning_question_responses', column_name: 'reasoning_origin', is_nullable: 'NO' },
     { table_name: 'learning_submission_versions', column_name: 'context_set_id', is_nullable: 'YES' },
     { table_name: 'learning_submission_versions', column_name: 'context_status', is_nullable: 'NO' },
     { table_name: 'learning_submission_versions', column_name: 'creation_reason', is_nullable: 'NO' },
     { table_name: 'learning_submissions', column_name: 'official_submission_kind', is_nullable: 'NO' },
+    { table_name: 'learning_work_items', column_name: 'analysis_run_id', is_nullable: 'YES' },
     { table_name: 'learning_work_items', column_name: 'deletion_generation', is_nullable: 'NO' },
     { table_name: 'learning_work_items', column_name: 'input_hash', is_nullable: 'NO' }
   ]);
@@ -111,6 +126,25 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
       definition: 'FOREIGN KEY (id, current_version) REFERENCES amc_practice.learning_submission_versions(learning_submission_id, version_number) DEFERRABLE INITIALLY DEFERRED'
     }
   ]);
+  const analysisLineageConstraints = await store.pool.query(
+    `SELECT conname, pg_get_constraintdef(oid) AS definition
+     FROM pg_constraint
+     WHERE connamespace = 'amc_practice'::regnamespace
+       AND conname = ANY($1::text[])
+     ORDER BY conname`, [[
+      'amc_analysis_run_version_lineage_fk',
+      'amc_approved_context_question_set_fk',
+      'amc_learning_report_run_version_fk',
+      'amc_learning_work_run_version_fk'
+    ]]
+  );
+  assert.deepEqual(analysisLineageConstraints.rows.map((row) => row.conname), [
+    'amc_analysis_run_version_lineage_fk',
+    'amc_approved_context_question_set_fk',
+    'amc_learning_report_run_version_fk',
+    'amc_learning_work_run_version_fk'
+  ]);
+  assert.equal(analysisLineageConstraints.rows.every((row) => row.definition.includes('FOREIGN KEY')), true);
 
   const archiveColumns = await store.pool.query(
     `SELECT table_name, column_name, is_nullable
@@ -570,4 +604,134 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     { form_id: batchFormA, published_count: 1 },
     { form_id: batchFormB, published_count: 1 }
   ].sort((left, right) => left.form_id.localeCompare(right.form_id)));
+
+  // The approved-context repair and durable worker path is exercised against
+  // real PostgreSQL. Two pools race for one row; SKIP LOCKED permits exactly
+  // one claim, an expired lease is reclaimed, and the old owner cannot write.
+  const reviewForm = learningReviewForm();
+  await store.importForm(reviewForm, { publish: true, allowTestOnlyPublish: true });
+  const reviewStudent = await service.seedAccessCode({
+    code: `pg-learning-review-${randomUUID()}`,
+    displayName: 'Postgres learning review student'
+  });
+  const reviewAttempt = await service.createAttempt(reviewStudent.id, reviewForm.id);
+  await service.putReasoning(reviewStudent.id, reviewAttempt.attempt.id, 'pg-review-reasoning-1', {
+    revision: 0,
+    notes: [{ questionNumber: 1, reasoningText: 'Subtract the same quantity from both sides.' }]
+  });
+  const reviewCurrent = await service.getAttempt(reviewStudent.id, reviewAttempt.attempt.id);
+  const reviewFinal = await service.final(reviewStudent.id, reviewAttempt.attempt.id, 'pg-review-final-1', {
+    expectedAnswersRevision: reviewCurrent.answersRevision,
+    expectedStateRevision: reviewCurrent.stateRevision
+  });
+  assert.equal(reviewFinal.learningSubmission.analysisStatus, 'BLOCKED_CONTEXT');
+  const officialBeforeAnalysis = await store.pool.query(
+    'SELECT * FROM amc_practice.submissions WHERE id = $1', [reviewFinal.submission.id]
+  );
+
+  const approvedArtifact = approvedContextArtifact(reviewForm, { readyNumbers: [1] });
+  const importedContext = await new ApprovedContextImporter({
+    store, trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
+  }).import(approvedArtifact, approvalReceiptsForArtifact(approvedArtifact));
+  assert.equal(importedContext.length, 1);
+  assert.equal(importedContext[0].questions.length, 1);
+  assert.equal(importedContext[0].approvalAuthorityId, 'approval-authority:fixture');
+  assert.equal(importedContext[0].questions[0].solutions[0].authorityReceipt.status, 'active');
+  assert.equal((await service.getLearningReport(reviewStudent.id, reviewAttempt.attempt.id)).status, 'QUEUED');
+
+  const claimedAt = new Date('2026-08-01T20:00:00.000Z');
+  const claims = await Promise.all([
+    store.claimLearningAnalysisWork({ workerId: 'pg-worker-shared', now: claimedAt, leaseMs: 1_000 }),
+    secondStore.claimLearningAnalysisWork({ workerId: 'pg-worker-shared', now: claimedAt, leaseMs: 1_000 })
+  ]);
+  assert.equal(claims.filter(Boolean).length, 1);
+  const staleClaim = claims.find(Boolean);
+  assert.ok(staleClaim);
+
+  const fakeInference = new FakeInferenceClient();
+  const reclaimAt = new Date(claimedAt.getTime() + 2_000);
+  const reclaimed = await secondStore.claimLearningAnalysisWork({
+    workerId: 'pg-worker-shared', now: reclaimAt, leaseMs: 120_000
+  });
+  assert.ok(reclaimed);
+  assert.notEqual(reclaimed.workItem.leaseToken, staleClaim.workItem.leaseToken);
+  assert.equal(await store.heartbeatLearningAnalysisWork({
+    workItemId: staleClaim.workItem.id, workerId: 'pg-worker-shared',
+    leaseToken: staleClaim.workItem.leaseToken, now: reclaimAt, leaseMs: 120_000
+  }), false);
+  assert.equal(await store.completeLearningAnalysisWork({
+    workItemId: staleClaim.workItem.id,
+    analysisRunId: staleClaim.run.id,
+    workerId: 'pg-worker-shared',
+    expectedLeaseToken: staleClaim.workItem.leaseToken,
+    expectedInputHash: staleClaim.workItem.inputHash,
+    expectedDeletionGeneration: staleClaim.workItem.deletionGeneration,
+    expectedVersionNumber: staleClaim.version.versionNumber,
+    expectedStudentId: staleClaim.submission.studentId,
+    expectedContextSetId: staleClaim.version.contextSetId,
+    outcomes: [], report: {}, now: reclaimAt
+  }), false);
+  assert.equal(await store.retryLearningAnalysisWork({
+    workItemId: staleClaim.workItem.id, analysisRunId: staleClaim.run.id,
+    workerId: 'pg-worker-shared', expectedLeaseToken: staleClaim.workItem.leaseToken,
+    expectedInputHash: staleClaim.workItem.inputHash,
+    expectedDeletionGeneration: staleClaim.workItem.deletionGeneration,
+    expectedVersionNumber: staleClaim.version.versionNumber,
+    expectedStudentId: staleClaim.submission.studentId,
+    expectedContextSetId: staleClaim.version.contextSetId,
+    availableAt: reclaimAt, now: reclaimAt, lastErrorCode: 'STALE_TOKEN_TEST'
+  }), false);
+  assert.equal(await secondStore.heartbeatLearningAnalysisWork({
+    workItemId: reclaimed.workItem.id, workerId: 'pg-worker-shared',
+    leaseToken: reclaimed.workItem.leaseToken, now: reclaimAt, leaseMs: 120_000
+  }), true);
+  assert.equal(await secondStore.retryLearningAnalysisWork({
+    workItemId: reclaimed.workItem.id, analysisRunId: reclaimed.run.id,
+    workerId: 'pg-worker-shared', expectedLeaseToken: reclaimed.workItem.leaseToken,
+    expectedInputHash: reclaimed.workItem.inputHash,
+    expectedDeletionGeneration: reclaimed.workItem.deletionGeneration,
+    expectedVersionNumber: reclaimed.version.versionNumber,
+    expectedStudentId: reclaimed.submission.studentId,
+    expectedContextSetId: reclaimed.version.contextSetId,
+    availableAt: reclaimAt, now: reclaimAt, lastErrorCode: 'NEW_TOKEN_TEST'
+  }), true);
+  const worker = new LearningReviewWorker({
+    store: secondStore,
+    inferenceClient: fakeInference,
+    workerId: 'pg-worker-shared',
+    leaseMs: 1_000,
+    clock: () => reclaimAt
+  });
+  assert.deepEqual(await worker.runOnce(), { processed: true, status: 'PARTIAL', providerCalls: 1 });
+  assert.equal(fakeInference.calls.length, 1);
+  const learningReport = await service.getLearningReport(reviewStudent.id, reviewAttempt.attempt.id);
+  assert.equal(learningReport.status, 'PARTIAL');
+  assert.equal(learningReport.summary.totalQuestions, 25);
+  assert.equal(learningReport.summary.analyzedCount, 1);
+  assert.equal(learningReport.questions.length, 25);
+  assert.equal(JSON.stringify(learningReport).includes('gpt-5.6-terra'), false);
+  assert.equal(JSON.stringify(learningReport).includes('reviewer:fixture'), false);
+  const internalAnalysis = await store.pool.query(
+    `SELECT status, provider_invoked, run_metadata, error_class, retryable
+     FROM amc_practice.learning_question_analyses
+     WHERE analysis_run_id = $1 ORDER BY question_number`, [staleClaim.run.id]
+  );
+  assert.equal(internalAnalysis.rowCount, 25);
+  assert.deepEqual(internalAnalysis.rows[0], {
+    status: 'SUCCEEDED',
+    provider_invoked: true,
+    run_metadata: {
+      provider: 'openai', requestedModel: 'gpt-5.6-terra', responseModel: 'gpt-5.6-terra-2026-07-15',
+      promptVersion: 'amc-question-analysis-prompt-v1', schemaVersion: 'amc-question-analysis-v1',
+      usage: { inputTokens: 800, cachedInputTokens: 120, outputTokens: 200, totalTokens: 1000, reasoningTokens: 50 }
+    },
+    error_class: null,
+    retryable: false
+  });
+  assert.deepEqual((await store.pool.query(
+    'SELECT * FROM amc_practice.submissions WHERE id = $1', [reviewFinal.submission.id]
+  )).rows, officialBeforeAnalysis.rows);
+
+  await service.reset(reviewStudent.id, reviewAttempt.attempt.id, 'pg-review-reset-1');
+  assert.equal((await service.getLearningReport(reviewStudent.id, reviewAttempt.attempt.id)).status, 'PARTIAL');
 });

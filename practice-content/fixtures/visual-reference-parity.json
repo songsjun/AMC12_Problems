@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "amc-visual-reference-parity-v1",
+  "vectors": [
+    {"name": "inline-image", "text": "![diagram](assets/a.png)", "expected": true},
+    {"name": "reference-image", "text": "![diagram][figure-ref]", "expected": true},
+    {"name": "raw-img", "text": "<img src=\"private.png\">", "expected": true},
+    {"name": "raw-picture", "text": "<picture><source srcset=\"x.webp\"></picture>", "expected": true},
+    {"name": "raw-svg", "text": "<svg viewBox=\"0 0 1 1\"></svg>", "expected": true},
+    {"name": "tex-image", "text": "\\includegraphics{figure.pdf}", "expected": true},
+    {"name": "backtick-asy", "text": "```asy\ndraw((0,0)--(1,1));\n```", "expected": true},
+    {"name": "tilde-asy", "text": "~~~asy\ndraw(circle((0,0),1));\n~~~", "expected": true},
+    {"name": "aops-asy", "text": "[asy]draw((0,0)--(1,1));[/asy]", "expected": true},
+    {"name": "tex-asy", "text": "\\begin{asy} draw((0,0)--(1,1)); \\end{asy}", "expected": true},
+    {"name": "markdown-image-target", "text": "[diagram](assets/figure.PNG?revision=2)", "expected": true},
+    {"name": "aops-path-image", "text": "[diagram](https://example.test/wiki/index.php/File:figure.png)", "expected": true},
+    {"name": "aops-query-file", "text": "[diagram](https://example.test/wiki?File:figure.png)", "expected": true},
+    {"name": "aops-query-image", "text": "[diagram](https://example.test/wiki?title=Image:figure.png)", "expected": true},
+    {"name": "raw-wiki-file", "text": "[[File:figure.svg|thumb]]", "expected": true},
+    {"name": "raw-wiki-image", "text": "[[Image:figure.png|center]]", "expected": true},
+    {"name": "reference-definition-image", "text": "[figure]: assets/figure.webp?revision=2", "expected": true},
+    {"name": "reference-definition-aops", "text": "[figure]: https://example.test/wiki/index.php/Image:figure.png", "expected": true},
+    {"name": "factorial-bracket", "text": "n![n+1+(n+2)(n+1)] = 440n!", "expected": false},
+    {"name": "ordinary-link", "text": "[theorem](https://example.test/theorem)", "expected": false},
+    {"name": "image-word-prose", "text": "The image of the function is an interval.", "expected": false},
+    {"name": "midline-pseudo-definition", "text": "Prose before [figure]: assets/figure.png", "expected": false},
+    {"name": "plain-extension", "text": "The filename figure.png is mentioned without a link.", "expected": false}
+  ]
+}

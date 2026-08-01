@@ -252,6 +252,11 @@ export async function buildApp({ service, config, logger = false }) {
     reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
     return { learningSubmission: await service.getLearningSubmission(auth.student.id, request.params.attemptId) };
   });
+  app.get(`${base}/attempts/:attemptId/learning-report`, async (request, reply) => {
+    const auth = await requireAuth(request);
+    reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+    return service.getLearningReport(auth.student.id, request.params.attemptId);
+  });
   app.get(`${base}/attempts/:attemptId/solutions`, async (request) => {
     const auth = await requireAuth(request);
     return service.getSolutions(auth.student.id, request.params.attemptId);

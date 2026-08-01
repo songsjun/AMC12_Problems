@@ -229,6 +229,20 @@ a:hover { color: var(--primary-hover); }
 .score-card .muted { margin: 2px 0 0; }
 .analysis-summary { border-color: #b9cae0; background: #f6f9fd; }
 .analysis-summary .muted { margin: 8px 0 0; }
+.analysis-report-summary { margin-top: 18px; color: #213651; }
+.analysis-report-summary:empty, .analysis-questions:empty { display: none; }
+.analysis-questions { display: grid; gap: 16px; margin-top: 20px; }
+.analysis-question { border: 1px solid #cbd7e6; border-radius: 10px; padding: clamp(16px, 3vw, 22px); background: #fff; }
+.analysis-question-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.analysis-question h3 { margin: 0; color: #213651; font-size: 20px; }
+.analysis-question h4 { margin: 18px 0 7px; color: #314969; font-size: 15px; }
+.analysis-question-status { border-radius: 999px; padding: 3px 9px; background: #e7eef8; color: #314969; font-size: 12px; font-weight: 750; text-transform: capitalize; }
+.analysis-verdict { margin: 12px 0 0; color: #172033; font-weight: 700; }
+.analysis-question-summary p, .analysis-comparison p { margin: 9px 0 0; }
+.analysis-question ul { margin: 7px 0 0; padding-left: 22px; }
+.analysis-comparisons { margin-top: 18px; border-top: 1px solid #d8e0eb; padding-top: 1px; }
+.analysis-comparison { margin-top: 10px; border-left: 3px solid #9fb5d2; padding: 8px 0 8px 13px; }
+.analysis-comparison > p:first-child { color: #425a77; font-size: 13px; font-weight: 700; }
 .content-section { margin-top: 28px; padding: clamp(20px, 4vw, 31px); border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
 .content-section h2 { margin: 0 0 5px; font-size: 23px; letter-spacing: -.02em; }
 .section-heading-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }

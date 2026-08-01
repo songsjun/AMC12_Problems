@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "amc-solution-approval-receipt-set-v1",
+  "audience": "private-approval-authority-allowlist",
+  "authorityId": "authority:synthetic-empty",
+  "receipts": [],
+  "receiptSetHash": "7dcb77daf598beb1f17f19692b3064076bdd60f210442b6e949d05da16ecc2f8"
+}

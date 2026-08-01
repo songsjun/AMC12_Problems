@@ -24,6 +24,8 @@ export const MAX_REASONING_BATCH_TEXT_BYTES = 48_000;
 // future envelope versions. The value is checked against the exact JSON body,
 // including JSON escaping rather than only the source text.
 export const MAX_REASONING_REQUEST_BYTES = 60_000;
+export const LEARNING_REPORT_POLL_MS = 5_000;
+export const MAX_LEARNING_REPORT_POLLS = 12;
 
 export class ApiError extends Error {
   constructor(message, { status = 0, code = 'REQUEST_FAILED', payload = null } = {}) {
@@ -140,6 +142,24 @@ export function resultsEndpointForAttempt(attempt) {
 export function learningSubmissionEndpointForAttempt(attempt) {
   if (!canAccessFinalReview(attempt) || !attempt?.id) return null;
   return `${API_BASE}/attempts/${encodeURIComponent(String(attempt.id))}/learning-submission`;
+}
+
+export function learningReportEndpointForAttempt(attempt) {
+  if (!canAccessFinalReview(attempt) || !attempt?.id) return null;
+  return `${API_BASE}/attempts/${encodeURIComponent(String(attempt.id))}/learning-report`;
+}
+
+export async function fetchLearningReport(api, attempt) {
+  const path = learningReportEndpointForAttempt(attempt);
+  if (!path) {
+    throw new ApiError('Learning reports are available only after final submission.', {
+      status: 409,
+      code: 'FINAL_REVIEW_NOT_AVAILABLE'
+    });
+  }
+  // This endpoint is intentionally read-only: refreshing a report must never
+  // enqueue provider work or mutate the immutable learning submission.
+  return api.get(path);
 }
 
 /**
@@ -427,6 +447,119 @@ export function learningAnalysisDisplayStatus(projection) {
   return contextStatus === 'CONTEXT_UNAVAILABLE' ? contextStatus : (analysisStatus || contextStatus);
 }
 
+const LEARNING_REPORT_STATUSES = new Set([
+  'CONTEXT_UNAVAILABLE', 'QUEUED', 'RUNNING', 'COMPLETE', 'PARTIAL', 'UNASSESSABLE', 'FAILED'
+]);
+const LEARNING_QUESTION_STATUSES = new Set(['SUCCEEDED', 'UNASSESSABLE', 'FAILED']);
+
+function reportString(value, maximumLength = 20_000) {
+  return typeof value === 'string' ? value.slice(0, maximumLength) : '';
+}
+
+function reportStringList(value) {
+  return Array.isArray(value)
+    ? value.slice(0, 25).map((item) => reportString(item, 2_000)).filter(Boolean)
+    : [];
+}
+
+function reportCount(value) {
+  return Number.isSafeInteger(value) && value >= 0 && value <= 100 ? value : 0;
+}
+
+function normalizeLearningReportSummary(value) {
+  if (!isRecord(value)) {
+    return { totalQuestions: 0, analyzedCount: 0, unassessableCount: 0, failedCount: 0 };
+  }
+  const summary = {
+    totalQuestions: reportCount(value.totalQuestions),
+    analyzedCount: reportCount(value.analyzedCount),
+    unassessableCount: reportCount(value.unassessableCount),
+    failedCount: reportCount(value.failedCount)
+  };
+  const classified = summary.analyzedCount + summary.unassessableCount + summary.failedCount;
+  if (classified > summary.totalQuestions) {
+    return { totalQuestions: 0, analyzedCount: 0, unassessableCount: 0, failedCount: 0 };
+  }
+  return summary;
+}
+
+export function normalizeLearningReport(payload) {
+  const unwrapped = unwrapData(payload);
+  const root = isRecord(unwrapped.report) ? unwrapped.report : unwrapped;
+  if (!isRecord(root)) return null;
+  const rawStatus = String(root.status || '').toUpperCase();
+  if (!LEARNING_REPORT_STATUSES.has(rawStatus)) return null;
+  const questions = Array.isArray(root.questions) ? root.questions : [];
+  return {
+    // Identity and pin values are retained only for response validation and
+    // diagnostics. Rendering uses the explicit pedagogical fields below.
+    learningSubmissionId: root.learningSubmissionId == null ? null : String(root.learningSubmissionId),
+    version: Number.isSafeInteger(finiteNumber(root.version)) ? finiteNumber(root.version) : null,
+    status: rawStatus,
+    generatedAt: root.generatedAt || null,
+    summary: normalizeLearningReportSummary(root.summary),
+    pins: isRecord(root.pins) ? root.pins : null,
+    questions: questions.slice(0, 50).map((question) => {
+      const questionNumber = finiteNumber(question?.questionNumber);
+      if (!Number.isSafeInteger(questionNumber) || questionNumber < 1) return null;
+      const questionStatus = String(question?.status || '').toUpperCase();
+      const comparisons = Array.isArray(question?.solutionComparisons) ? question.solutionComparisons : [];
+      return {
+        questionNumber,
+        status: LEARNING_QUESTION_STATUSES.has(questionStatus) ? questionStatus : 'UNASSESSABLE',
+        reasoningVerdict: reportString(question?.reasoningVerdict, 2_000),
+        summaryMarkdown: reportString(question?.summaryMarkdown),
+        strengths: reportStringList(question?.strengths),
+        gaps: reportStringList(question?.gaps),
+        suggestions: reportStringList(question?.suggestions),
+        solutionComparisons: comparisons.slice(0, 25).map((comparison) => ({
+          // solutionId is deliberately omitted: ordinal labels are sufficient
+          // for students and do not expose an internal content identifier.
+          methodTags: reportStringList(comparison?.methodTags),
+          alignment: reportString(comparison?.alignment, 1_000),
+          analysisMarkdown: reportString(comparison?.analysisMarkdown)
+        })),
+        confidence: typeof question?.confidence === 'number'
+          && Number.isFinite(question.confidence)
+          && question.confidence >= 0
+          && question.confidence <= 1
+          ? question.confidence
+          : null
+      };
+    }).filter(Boolean).sort((left, right) => left.questionNumber - right.questionNumber)
+  };
+}
+
+export function learningReportApprovedSolutionCount(report) {
+  return Array.isArray(report?.questions)
+    ? report.questions.reduce((count, question) => count + (question.solutionComparisons?.length || 0), 0)
+    : 0;
+}
+
+export function learningReportShouldPoll(status) {
+  return ['QUEUED', 'RUNNING'].includes(String(status || '').toUpperCase());
+}
+
+export function learningReportStatusMessage(status) {
+  return ({
+    CONTEXT_UNAVAILABLE: 'Learning analysis is unavailable because the reference solutions have not yet been approved. Your objective score is final and unaffected.',
+    QUEUED: 'Your learning analysis is queued. Your objective score is already final.',
+    RUNNING: 'Your learning analysis is in progress. Your objective score is already final.',
+    COMPLETE: 'Your learning analysis is complete.',
+    PARTIAL: 'A partial learning analysis is available. Some questions could not be assessed.',
+    UNASSESSABLE: 'There was not enough written reasoning to assess your approach reliably. Add more detail about what you tried on a future attempt.',
+    FAILED: 'The learning analysis could not be completed. Refresh only checks its current status and does not restart AI processing.'
+  })[String(status || '').toUpperCase()] || 'Checking for your learning analysis…';
+}
+
+export function learningReportContextMatches(context, attemptId, attemptEpoch, resultsVisible = true) {
+  return Boolean(context)
+    && Boolean(attemptId)
+    && context.id === String(attemptId)
+    && context.epoch === attemptEpoch
+    && resultsVisible === true;
+}
+
 export function extractRevision(attempt) {
   return finiteNumber(firstDefined(
     attempt?.answerRevision,
@@ -698,7 +831,12 @@ const state = {
   formCache: new Map(),
   resultPayload: null,
   solutionsPayload: null,
-  learningSubmission: null
+  learningSubmission: null,
+  learningReport: null,
+  learningReportLoadError: null,
+  learningReportPollTimer: null,
+  learningReportPollCount: 0,
+  learningReportRequestInFlight: false
 };
 
 let elements = null;
@@ -726,7 +864,8 @@ function getElements() {
     answerOptions: byId('answer-options'), previousQuestion: byId('previous-question'), clearAnswerButton: byId('clear-answer-button'), nextQuestion: byId('next-question'),
     reasoningInput: byId('reasoning-input'), reasoningSaveStatus: byId('reasoning-save-status'), saveReasoningButton: byId('save-reasoning-button'), reloadReasoningButton: byId('reload-reasoning-button'),
     resultsSummary: byId('results-summary'), finalScore: byId('final-score'), scoreDetails: byId('score-details'),
-    analysisSummary: byId('analysis-summary'), analysisStatus: byId('analysis-status'),
+    analysisSummary: byId('analysis-summary'), analysisStatus: byId('analysis-status'), analysisMeta: byId('analysis-meta'),
+    analysisReportSummary: byId('analysis-report-summary'), analysisQuestions: byId('analysis-questions'), refreshAnalysisButton: byId('refresh-analysis-button'),
     submissionHistory: byId('submission-history'), resultsQuestions: byId('results-questions'), solutionsList: byId('solutions-list'),
     expandSolutions: byId('expand-solutions-button'), resetButton: byId('reset-button'), resultsDashboardButton: byId('results-dashboard-button'),
     modalBackdrop: byId('modal-backdrop'), modal: byId('modal'), modalTitle: byId('modal-title'), modalMessage: byId('modal-message'),
@@ -738,6 +877,7 @@ function showOnly(view) {
   const views = [elements.loadingView, elements.loginView, elements.dashboardView, elements.practiceView, elements.resultsView];
   views.forEach((candidate) => { candidate.hidden = candidate !== view; });
   if (view !== elements.practiceView) stopAttemptSync();
+  if (view !== elements.resultsView) stopLearningReportPolling();
 }
 
 function clearNode(node) {
@@ -837,6 +977,7 @@ function localSignOut({ message = null } = {}) {
 
 function clearAttemptState() {
   stopAttemptSync();
+  stopLearningReportPolling();
   if (state.reasoningDebounceTimer) window.clearTimeout(state.reasoningDebounceTimer);
   // A response or save from a prior attempt must never be applied to a newly
   // opened attempt.  Resetting the queue lets the replacement start promptly;
@@ -868,6 +1009,10 @@ function clearAttemptState() {
   state.resultPayload = null;
   state.solutionsPayload = null;
   state.learningSubmission = null;
+  state.learningReport = null;
+  state.learningReportLoadError = null;
+  state.learningReportPollCount = 0;
+  state.learningReportRequestInFlight = false;
 }
 
 function handleUnauthorized() {
@@ -1079,6 +1224,11 @@ function stopAttemptSync() {
   state.timerInterval = null;
   state.pollInterval = null;
   state.polling = false;
+}
+
+function stopLearningReportPolling() {
+  if (state.learningReportPollTimer) window.clearTimeout(state.learningReportPollTimer);
+  state.learningReportPollTimer = null;
 }
 
 function attemptStateText(attempt = state.attempt) {
@@ -1320,7 +1470,7 @@ function appendLegacyAwareText(parent, source) {
   appendText(parent, normalizeLegacyInlineTeX(source));
 }
 
-function appendInlineMarkdown(parent, source) {
+function appendInlineMarkdown(parent, source, { allowExternalResources = true } = {}) {
   const value = String(source ?? '');
   const token = /(!?\[[^\]]*\]\([^\s)]+(?:\s+"[^"]*")?\)|`[^`]*`|\*\*[^*]+\*\*|__[^_]+__|\*[^*]+\*|_[^_]+_)/g;
   let cursor = 0;
@@ -1330,6 +1480,11 @@ function appendInlineMarkdown(parent, source) {
     const image = raw.match(/^!\[([^\]]*)\]\(([^\s)]+)(?:\s+"[^"]*")?\)$/);
     const link = raw.match(/^\[([^\]]*)\]\(([^\s)]+)(?:\s+"[^"]*")?\)$/);
     if (image) {
+      if (!allowExternalResources) {
+        appendLegacyAwareText(parent, raw);
+        cursor = match.index + raw.length;
+        continue;
+      }
       const url = safeUrl(image[2]);
       if (url) {
         const element = document.createElement('img');
@@ -1339,6 +1494,11 @@ function appendInlineMarkdown(parent, source) {
         parent.appendChild(element);
       } else appendLegacyAwareText(parent, raw);
     } else if (link) {
+      if (!allowExternalResources) {
+        appendLegacyAwareText(parent, raw);
+        cursor = match.index + raw.length;
+        continue;
+      }
       const url = safeUrl(link[2]);
       if (url) {
         const anchor = document.createElement('a');
@@ -1364,7 +1524,7 @@ function appendInlineMarkdown(parent, source) {
 }
 
 /** A deliberately small, safe Markdown renderer for API-provided prompt/solution text. */
-function renderMarkdown(container, markdown) {
+function renderMarkdown(container, markdown, { allowExternalResources = true } = {}) {
   clearNode(container);
   const lines = String(markdown ?? '').replace(/\r\n?/g, '\n').split('\n');
   let index = 0;
@@ -1373,7 +1533,7 @@ function renderMarkdown(container, markdown) {
     const paragraph = document.createElement('p');
     paragraphLines.forEach((line, lineIndex) => {
       if (lineIndex) paragraph.appendChild(document.createElement('br'));
-      appendInlineMarkdown(paragraph, line);
+      appendInlineMarkdown(paragraph, line, { allowExternalResources });
     });
     container.appendChild(paragraph);
   };
@@ -1410,7 +1570,7 @@ function renderMarkdown(container, markdown) {
     if (heading) {
       const level = Math.min(heading[1].length + 2, 6);
       const element = document.createElement(`h${level}`);
-      appendInlineMarkdown(element, heading[2]);
+      appendInlineMarkdown(element, heading[2], { allowExternalResources });
       container.appendChild(element);
       index += 1;
       continue;
@@ -1418,7 +1578,7 @@ function renderMarkdown(container, markdown) {
     const quote = line.match(/^>\s?(.*)$/);
     if (quote) {
       const blockquote = document.createElement('blockquote');
-      appendInlineMarkdown(blockquote, quote[1]);
+      appendInlineMarkdown(blockquote, quote[1], { allowExternalResources });
       container.appendChild(blockquote);
       index += 1;
       continue;
@@ -1431,7 +1591,7 @@ function renderMarkdown(container, markdown) {
         const current = lines[index].match(/^\s*([-*+] |\d+\. )(.*)$/);
         if (!current || /^\s*\d+\. /.test(lines[index]) !== ordered) break;
         const item = document.createElement('li');
-        appendInlineMarkdown(item, current[2]);
+        appendInlineMarkdown(item, current[2], { allowExternalResources });
         list.appendChild(item);
         index += 1;
       }
@@ -2489,18 +2649,179 @@ function renderResults(resultPayload, solutionsPayload) {
 }
 
 function renderLearningAnalysisStatus() {
-  const projection = state.learningSubmission;
-  const status = learningAnalysisDisplayStatus(projection);
-  const messages = {
-    CONTEXT_UNAVAILABLE: 'AI analysis is unavailable because reviewed question context is not ready. Your objective score above is final and unaffected.',
-    BLOCKED_CONTEXT: 'AI analysis is unavailable because reviewed question context is not ready. Your objective score above is final and unaffected.',
-    PENDING: 'Your answer-and-approach analysis is being prepared. Your objective score above is already final.',
-    PROCESSING: 'Your answer-and-approach analysis is in progress. Your objective score above is already final.',
-    COMPLETED: 'Your learning analysis is ready. Detailed per-question feedback will appear here as the report view becomes available.'
-  };
-  const message = messages[status];
-  elements.analysisSummary.hidden = !message;
-  elements.analysisStatus.textContent = message || '';
+  if (!elements?.analysisSummary) return;
+  const projectedStatus = ({
+    BLOCKED_CONTEXT: 'CONTEXT_UNAVAILABLE',
+    PENDING: 'QUEUED',
+    PROCESSING: 'RUNNING',
+    COMPLETED: 'COMPLETE'
+  })[learningAnalysisDisplayStatus(state.learningSubmission)];
+  const report = state.learningReport;
+  const status = report?.status || projectedStatus || '';
+  elements.analysisSummary.hidden = false;
+  elements.analysisStatus.textContent = state.learningReportLoadError
+    ? 'The report status could not be refreshed. Your objective score and answer review above are unaffected.'
+    : learningReportStatusMessage(status);
+  elements.refreshAnalysisButton.disabled = state.learningReportRequestInFlight;
+  elements.refreshAnalysisButton.textContent = state.learningReportRequestInFlight ? 'Refreshing…' : 'Refresh analysis';
+  clearNode(elements.analysisReportSummary);
+  clearNode(elements.analysisQuestions);
+
+  if (!report) {
+    elements.analysisMeta.textContent = '';
+    return;
+  }
+  const approvedCount = learningReportApprovedSolutionCount(report);
+  const meta = [`${approvedCount} approved solution reference${approvedCount === 1 ? '' : 's'} reviewed`];
+  if (report.generatedAt) meta.push(`Generated ${formatDateTime(report.generatedAt)}`);
+  elements.analysisMeta.textContent = meta.join(' · ');
+
+  if (['COMPLETE', 'PARTIAL', 'UNASSESSABLE', 'FAILED'].includes(report.status)) {
+    const summary = report.summary;
+    elements.analysisReportSummary.textContent = [
+      `${summary.analyzedCount} analyzed`,
+      `${summary.unassessableCount} unassessable`,
+      `${summary.failedCount} failed`,
+      `${summary.totalQuestions} total`
+    ].join(' · ');
+  }
+  if (!['COMPLETE', 'PARTIAL', 'UNASSESSABLE'].includes(report.status)) return;
+  for (const question of report.questions) renderLearningReportQuestion(question);
+  typesetMath([elements.analysisReportSummary, elements.analysisQuestions]);
+}
+
+function appendLearningFeedbackList(container, title, items) {
+  if (!items.length) return;
+  const section = document.createElement('section');
+  const heading = document.createElement('h4');
+  heading.textContent = title;
+  const list = document.createElement('ul');
+  for (const item of items) {
+    const row = document.createElement('li');
+    row.textContent = item;
+    list.appendChild(row);
+  }
+  section.append(heading, list);
+  container.appendChild(section);
+}
+
+function renderLearningReportQuestion(question) {
+  const card = document.createElement('article');
+  card.className = 'analysis-question';
+  const heading = document.createElement('div');
+  heading.className = 'analysis-question-heading';
+  const title = document.createElement('h3');
+  title.textContent = `Question ${question.questionNumber}`;
+  const status = document.createElement('span');
+  status.className = 'analysis-question-status';
+  status.textContent = question.status.toLowerCase().replaceAll('_', ' ');
+  heading.append(title, status);
+  card.appendChild(heading);
+
+  if (question.status === 'UNASSESSABLE') {
+    const notice = document.createElement('p');
+    notice.className = 'muted';
+    notice.textContent = 'The submitted reasoning did not contain enough detail for a reliable approach assessment.';
+    card.appendChild(notice);
+  }
+  if (question.reasoningVerdict) {
+    const verdict = document.createElement('p');
+    verdict.className = 'analysis-verdict';
+    verdict.textContent = question.reasoningVerdict;
+    card.appendChild(verdict);
+  }
+  if (question.summaryMarkdown) {
+    const summary = document.createElement('div');
+    summary.className = 'analysis-question-summary';
+    renderMarkdown(summary, question.summaryMarkdown, { allowExternalResources: false });
+    card.appendChild(summary);
+  }
+  appendLearningFeedbackList(card, 'What worked', question.strengths);
+  appendLearningFeedbackList(card, 'Gaps to address', question.gaps);
+  appendLearningFeedbackList(card, 'Suggestions', question.suggestions);
+
+  if (question.solutionComparisons.length) {
+    const comparisons = document.createElement('section');
+    comparisons.className = 'analysis-comparisons';
+    const comparisonsHeading = document.createElement('h4');
+    comparisonsHeading.textContent = `Compared with ${question.solutionComparisons.length} approved solution${question.solutionComparisons.length === 1 ? '' : 's'}`;
+    comparisons.appendChild(comparisonsHeading);
+    question.solutionComparisons.forEach((comparison, index) => {
+      const comparisonCard = document.createElement('div');
+      comparisonCard.className = 'analysis-comparison';
+      const comparisonTitle = document.createElement('p');
+      const details = [
+        `Approved solution ${index + 1}`,
+        comparison.alignment ? `Alignment: ${comparison.alignment}` : '',
+        comparison.methodTags.length ? `Methods: ${comparison.methodTags.join(', ')}` : ''
+      ].filter(Boolean);
+      comparisonTitle.textContent = details.join(' · ');
+      comparisonCard.appendChild(comparisonTitle);
+      if (comparison.analysisMarkdown) {
+        const body = document.createElement('div');
+        renderMarkdown(body, comparison.analysisMarkdown, { allowExternalResources: false });
+        comparisonCard.appendChild(body);
+      }
+      comparisons.appendChild(comparisonCard);
+    });
+    card.appendChild(comparisons);
+  }
+  elements.analysisQuestions.appendChild(card);
+}
+
+function learningReportContext() {
+  if (!canAccessFinalReview(state.attempt) || !state.attempt?.id) return null;
+  return { id: String(state.attempt.id), epoch: state.attemptEpoch };
+}
+
+function isCurrentLearningReportContext(context) {
+  return learningReportContextMatches(
+    context,
+    state.attempt?.id,
+    state.attemptEpoch,
+    Boolean(elements?.resultsView && !elements.resultsView.hidden)
+  );
+}
+
+function scheduleLearningReportPoll(context) {
+  stopLearningReportPolling();
+  if (!isCurrentLearningReportContext(context)
+      || !learningReportShouldPoll(state.learningReport?.status)
+      || state.learningReportPollCount >= MAX_LEARNING_REPORT_POLLS) return;
+  state.learningReportPollCount += 1;
+  state.learningReportPollTimer = window.setTimeout(() => {
+    state.learningReportPollTimer = null;
+    if (isCurrentLearningReportContext(context)) void loadLearningReport({ context, quiet: true });
+  }, LEARNING_REPORT_POLL_MS);
+}
+
+async function loadLearningReport({ context = learningReportContext(), quiet = false } = {}) {
+  if (!context || !isCurrentLearningReportContext(context) || state.learningReportRequestInFlight) return false;
+  state.learningReportRequestInFlight = true;
+  renderLearningAnalysisStatus();
+  try {
+    const response = await fetchLearningReport(api, state.attempt);
+    if (!isCurrentLearningReportContext(context)) return false;
+    const report = normalizeLearningReport(response);
+    if (!report) throw new ApiError('The learning report response was invalid.', { code: 'INVALID_LEARNING_REPORT' });
+    state.learningReport = report;
+    state.learningReportLoadError = null;
+    if (learningReportShouldPoll(report.status)) scheduleLearningReportPoll(context);
+    else stopLearningReportPolling();
+    return true;
+  } catch (error) {
+    if (!isCurrentLearningReportContext(context)) return false;
+    state.learningReportLoadError = error;
+    if (learningReportShouldPoll(state.learningReport?.status)) scheduleLearningReportPoll(context);
+    else stopLearningReportPolling();
+    return false;
+  } finally {
+    if (isCurrentLearningReportContext(context)) {
+      state.learningReportRequestInFlight = false;
+      renderLearningAnalysisStatus();
+      if (!quiet && state.learningReportLoadError) elements.refreshAnalysisButton.focus();
+    }
+  }
 }
 
 function humanSubmissionKind(submission) {
@@ -2584,6 +2905,9 @@ async function showResults() {
     return;
   }
   stopAttemptSync();
+  stopLearningReportPolling();
+  state.learningReportPollCount = 0;
+  state.learningReportLoadError = null;
   showOnly(elements.resultsView);
   elements.finalScore.textContent = 'Loading…';
   elements.scoreDetails.textContent = 'Retrieving your final score and solutions.';
@@ -2599,7 +2923,11 @@ async function showResults() {
     state.learningSubmission = learningAnalysisProjection(learningResponse)
       || learningAnalysisProjection(review.results)
       || state.learningSubmission;
+    // Objective grading is authoritative and renders before the optional AI
+    // report request starts. A report outage can therefore never replace or
+    // delay the student's score, answer review, or approved solutions.
     renderResults(review.results, review.solutions);
+    void loadLearningReport({ quiet: true });
     document.getElementById('main-content').focus();
   } catch (error) {
     elements.finalScore.textContent = 'Unavailable';
@@ -2790,6 +3118,7 @@ function bindEvents() {
   elements.saveReasoningButton.addEventListener('click', () => queueReasoningSave({ immediate: true }));
   elements.reloadReasoningButton.addEventListener('click', reloadReasoningNotes);
   elements.resetButton.addEventListener('click', confirmReset);
+  elements.refreshAnalysisButton.addEventListener('click', () => loadLearningReport());
   elements.expandSolutions.addEventListener('click', expandAllSolutions);
   elements.modalClose.addEventListener('click', () => hideModal());
   elements.modalBackdrop.addEventListener('click', (event) => { if (event.target === elements.modalBackdrop) hideModal(); });

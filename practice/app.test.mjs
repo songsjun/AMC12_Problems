@@ -7,6 +7,8 @@ import test from 'node:test';
 import {
   API_BASE,
   ApiError,
+  LEARNING_REPORT_POLL_MS,
+  MAX_LEARNING_REPORT_POLLS,
   MAX_REASONING_REQUEST_BYTES,
   apiBaseForModuleUrl,
   answerPayload,
@@ -16,14 +18,21 @@ import {
   canAccessFinalReview,
   extractAttempt,
   fetchFinalReview,
+  fetchLearningReport,
   formatDuration,
   maximumScoreFromSubmission,
   learningAnalysisProjection,
   learningAnalysisDisplayStatus,
   learningSubmissionEndpointForAttempt,
+  learningReportEndpointForAttempt,
+  learningReportApprovedSolutionCount,
+  learningReportContextMatches,
+  learningReportShouldPoll,
+  learningReportStatusMessage,
   normalizeChoices,
   normalizeLegacyInlineTeX,
   normalizeReasoningNotes,
+  normalizeLearningReport,
   preserveDirtyReasoningNotes,
   reasoningEnvelopeMatchesAttempt,
   publicFormPath,
@@ -110,8 +119,10 @@ test('pre-final attempts cannot request or expose final review paths', async () 
   assert.equal(canAccessFinalReview(attempt), false);
   assert.equal(solutionEndpointForAttempt(attempt), null);
   assert.equal(learningSubmissionEndpointForAttempt(attempt), null);
+  assert.equal(learningReportEndpointForAttempt(attempt), null);
   await assert.rejects(fetchFinalReview(client, attempt), { code: 'FINAL_REVIEW_NOT_AVAILABLE' });
-  assert.deepEqual(calls, [], 'the client must not make results/solutions calls before final submission');
+  await assert.rejects(fetchLearningReport(client, attempt), { code: 'FINAL_REVIEW_NOT_AVAILABLE' });
+  assert.deepEqual(calls, [], 'the client must not make results/solutions/report calls before final submission');
 });
 
 test('only a finalized attempt requests results and solutions', async () => {
@@ -135,6 +146,9 @@ test('only a finalized attempt requests results and solutions', async () => {
     learningSubmissionEndpointForAttempt(attempt),
     `${API_BASE}/attempts/attempt-42/learning-submission`
   );
+  const report = await fetchLearningReport(client, attempt);
+  assert.equal(report.path, `${API_BASE}/attempts/attempt-42/learning-report`);
+  assert.equal(calls.at(-1), `${API_BASE}/attempts/attempt-42/learning-report`);
 });
 
 test('a reset attempt is reviewable only when the server marks a prior final result available', () => {
@@ -142,6 +156,7 @@ test('a reset attempt is reviewable only when the server marks a prior final res
   assert.equal(solutionEndpointForAttempt({ id: 'reset-blank', phase: 'RESET', resultsAvailable: false }), null);
   assert.equal(canAccessFinalReview({ id: 'reset-final', phase: 'RESET', resultsAvailable: true }), true);
   assert.equal(solutionEndpointForAttempt({ id: 'reset-final', phase: 'RESET', resultsAvailable: true }), `${API_BASE}/attempts/reset-final/solutions`);
+  assert.equal(learningReportEndpointForAttempt({ id: 'reset-final', phase: 'RESET', resultsAvailable: true }), `${API_BASE}/attempts/reset-final/learning-report`);
 });
 
 test('a paused timer cannot edit answers, matching the server state machine', () => {
@@ -287,6 +302,92 @@ test('final learning projections expose analysis state without replacing the obj
   const html = readFileSync(new URL('index.html', practiceDirectory), 'utf8');
   assert.match(html, /id="final-score"/);
   assert.match(html, /id="analysis-summary"[^>]*hidden/);
+});
+
+test('learning reports normalize bare and wrapped response contracts without render-only internals', () => {
+  const payload = {
+    learningSubmissionId: 'internal-learning-id',
+    version: 3,
+    status: 'PARTIAL',
+    generatedAt: '2026-08-01T12:00:00.000Z',
+    summary: { totalQuestions: 1, analyzedCount: 1, unassessableCount: 0, failedCount: 0 },
+    pins: { evidenceHash: 'internal-pin' },
+    provider: 'must-not-render', model: 'must-not-render', prompt: 'must-not-render', error: 'must-not-render',
+    questions: [{
+      questionNumber: 2,
+      status: 'SUCCEEDED',
+      reasoningVerdict: 'Promising setup',
+      summaryMarkdown: 'Use **parity**. <img src=x onerror=alert(1)> [outside](https://evil.example)',
+      strengths: ['Correct invariant'], gaps: ['Missed an edge case'], suggestions: ['Check endpoints'],
+      confidence: 0.75, providerInvoked: true,
+      solutionComparisons: [{
+        solutionId: 'private-solution-id', methodTags: ['parity'], alignment: 'strong',
+        analysisMarkdown: 'The same invariant appears.'
+      }]
+    }]
+  };
+  const wrapped = normalizeLearningReport({ data: { report: payload } });
+  const bare = normalizeLearningReport(payload);
+  assert.deepEqual(wrapped, bare);
+  assert.equal(wrapped.status, 'PARTIAL');
+  assert.equal(wrapped.questions[0].questionNumber, 2);
+  assert.equal(wrapped.questions[0].status, 'SUCCEEDED');
+  assert.deepEqual(wrapped.summary, { totalQuestions: 1, analyzedCount: 1, unassessableCount: 0, failedCount: 0 });
+  assert.equal(wrapped.questions[0].solutionComparisons[0].solutionId, undefined);
+  assert.equal(wrapped.questions[0].providerInvoked, undefined);
+  assert.equal(wrapped.provider, undefined);
+  assert.equal(wrapped.model, undefined);
+  assert.equal(wrapped.prompt, undefined);
+  assert.equal(wrapped.error, undefined);
+  assert.equal(learningReportApprovedSolutionCount(wrapped), 1);
+});
+
+test('learning report statuses distinguish missing context, partial work, weak evidence, and failure', () => {
+  for (const status of ['CONTEXT_UNAVAILABLE', 'QUEUED', 'RUNNING', 'COMPLETE', 'PARTIAL', 'UNASSESSABLE', 'FAILED']) {
+    assert.equal(normalizeLearningReport({ report: { status, questions: [] } }).status, status);
+  }
+  assert.equal(normalizeLearningReport({ report: { status: 'UNKNOWN', questions: [] } }), null);
+  assert.match(learningReportStatusMessage('CONTEXT_UNAVAILABLE'), /reference solutions have not yet been approved/i);
+  assert.match(learningReportStatusMessage('UNASSESSABLE'), /not enough written reasoning/i);
+  assert.match(learningReportStatusMessage('FAILED'), /does not restart AI processing/i);
+  assert.equal(learningReportShouldPoll('QUEUED'), true);
+  assert.equal(learningReportShouldPoll('RUNNING'), true);
+  assert.equal(learningReportShouldPoll('PARTIAL'), false);
+  assert.equal(LEARNING_REPORT_POLL_MS, 5_000);
+  assert.equal(MAX_LEARNING_REPORT_POLLS > 0 && MAX_LEARNING_REPORT_POLLS <= 24, true);
+});
+
+test('report polling rejects stale attempts and stops when the results view is left', () => {
+  const context = { id: 'attempt-1', epoch: 8 };
+  assert.equal(learningReportContextMatches(context, 'attempt-1', 8, true), true);
+  assert.equal(learningReportContextMatches(context, 'attempt-2', 8, true), false);
+  assert.equal(learningReportContextMatches(context, 'attempt-1', 9, true), false);
+  assert.equal(learningReportContextMatches(context, 'attempt-1', 8, false), false);
+  const client = readFileSync(new URL('app.mjs', practiceDirectory), 'utf8');
+  assert.match(client, /state\.learningReportPollCount >= MAX_LEARNING_REPORT_POLLS/);
+  assert.match(client, /view !== elements\.resultsView\) stopLearningReportPolling\(\)/);
+  assert.match(client, /isCurrentLearningReportContext\(context\)[\s\S]*?loadLearningReport/);
+});
+
+test('objective score renders before a read-only report refresh and report Markdown cannot activate links', async () => {
+  const methods = [];
+  const client = {
+    async get(path) {
+      methods.push(['GET', path]);
+      return { report: { status: 'FAILED', questions: [] } };
+    },
+    async post() { methods.push(['POST']); },
+    async put() { methods.push(['PUT']); }
+  };
+  await fetchLearningReport(client, { id: 'final / one', phase: 'FINALIZED' });
+  assert.deepEqual(methods, [['GET', `${API_BASE}/attempts/final%20%2F%20one/learning-report`]]);
+
+  const source = readFileSync(new URL('app.mjs', practiceDirectory), 'utf8');
+  assert.match(source, /renderResults\(review\.results, review\.solutions\);[\s\S]*?loadLearningReport/);
+  assert.match(source, /renderMarkdown\([^;]+allowExternalResources: false/);
+  assert.doesNotMatch(source, /\.innerHTML\s*=/);
+  assert.doesNotMatch(source, /solutionId[^\n]*textContent|provider[^\n]*textContent|model[^\n]*textContent|prompt[^\n]*textContent/i);
+  assert.match(source, /if \(!allowExternalResources\)[\s\S]*?appendLegacyAwareText\(parent, raw\)/);
 });
 
 test('the displayed 75-minute boundary immediately locks timed answers before the next poll', () => {

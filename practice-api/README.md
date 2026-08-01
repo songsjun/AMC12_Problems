@@ -27,7 +27,8 @@ keys and solutions in PostgreSQL until a student has made a final submission.
   into a separate learning-submission snapshot only at final submission.
 - An atomic learning-submission intent on final/deadline-final. Analysis remains
   explicitly `BLOCKED_CONTEXT` until reviewed multi-solution context is loaded;
-  no external provider call can affect official scoring.
+  a leased PostgreSQL worker then produces independent per-question outcomes
+  and a durable report. No external provider call can affect official scoring.
 
 The default scoring policy is supplied by a form revision, never globally
 hard-coded. The synthetic fixture uses legacy AMC practice values: correct = 6,
@@ -125,6 +126,50 @@ For canonical AMC 12 archive ids it also enforces the historical scoring
 boundary: 2002--2006 forms use 6/2.5/0 (correct/blank/incorrect), while
 2007--2025 forms use 6/1.5/0.
 
+### Approved AI context and learning worker
+
+Reviewed AI context has a separate private artifact and import path. The
+importer accepts only the exact single-form/archive approved v1 schemas,
+recomputes canonical decision/content hashes, accepts bounded valid UTF-8
+Markdown/HTML/link/TeX only as quoted model input, requires at least two
+model-eligible human-approved solutions per ready question, and binds
+prompt/choices to the already imported immutable form revision. Questions or
+solutions that reference unavailable visuals remain explicitly unavailable to
+the model. Model output is separately constrained to renderer-safe text:
+
+```sh
+AMC12_APPROVAL_AUTHORITY_IDS=approval-authority:production \
+  npm run import-approved-context -- \
+  /protected/path/approved-context.json \
+  /protected/path/authority-receipts.json
+```
+
+This import is not a public API. It atomically supersedes the active context for
+that exact form revision and repairs matching `BLOCKED_CONTEXT` work. Both
+inputs must be owner-owned mode `0600` regular files inside a real owner-owned
+mode `0700` directory; symlinks, FIFOs, duplicate JSON keys, invalid UTF-8, and
+oversized input are rejected. The external receipt file and deployment
+authority allowlist are part of the operations trust boundary (TCB): canonical
+SHA-256 hashes provide integrity binding, not a cryptographic signature or
+proof of who approved a solution. Protecting their ACL and provenance is
+therefore mandatory.
+
+Start the durable analyzer as a separate process after configuring its
+dedicated loopback Gateway token:
+
+```sh
+npm run start:learning-worker
+```
+
+The worker cannot select a URL, model, tool, or generation control. It uses
+only `POST /v1/analyze-question` on the configured loopback origin, heartbeats
+its lease during provider calls, sends only model-eligible approved solutions,
+rejects stale completion writes, and uses bounded exponential backoff for
+retryable transient/rate-limit failures before persisting a terminal report.
+The paired Gateway must retain its frozen `AMC_INFERENCE_MAX_BODY_BYTES=524288`
+minimum/default; the API performs the same 524,288-byte serialized-request
+preflight, including the worst valid eight-solution escaped payload.
+
 ## API contract
 
 Base path: `/api/amc12`. JSON errors use:
@@ -153,6 +198,7 @@ credentials on every authenticated state-changing request.
 | `POST /attempts/:id/reset` | Preserve old history and return a new `TIMED` attempt |
 | `GET /attempts/:id/results`, `/solutions` | Owner-only after a final submission (also for reset history) |
 | `GET /attempts/:id/learning-submission` | Read-only owner status after final; never performs historical repair while polling |
+| `GET /attempts/:id/learning-report` | Read-only owner report/status after final, including reset history; never enqueues analysis |
 
 The learning-submission status GET is strictly read-only; missing historical
 aggregates are repaired only through the internal maintenance entrypoint. The
@@ -215,7 +261,11 @@ All tables live in the isolated `amc_practice` schema. Important records are:
 - current reasoning notes (student prose is not duplicated into idempotency records);
 - immutable submissions and 25-row answer snapshots for each submission;
 - learning submissions, immutable evidence versions/question responses, and
-  durable `BLOCKED_CONTEXT` analysis work intent;
+  durable `BLOCKED_CONTEXT`/leased analysis work;
+- approved context sets/questions/solutions with release, candidate, decision,
+  reviewer, rights, source, and content-hash lineage;
+- analysis runs, per-question outcomes, allowlisted run metadata, and redacted
+  aggregate learning reports;
 - idempotency records.
 
 Answer keys are only queried by scoring and final-result/solution paths. No
@@ -233,9 +283,11 @@ AMC12_TEST_DATABASE_URL='postgres://…/amc_practice_test' npm run test:integrat
 The PostgreSQL smoke test is intentionally skipped without
 `AMC12_TEST_DATABASE_URL`; when configured it runs migrations twice, imports a
 freshly generated `practice-content` synthetic private artifact, verifies audit
-hash/provenance persistence, and finalizes a 25-question attempt.
+hash/provenance persistence, imports approved context, races two worker pools
+with `SKIP LOCKED`, reclaims an expired lease, rejects the stale writer, and
+verifies a 25-question report without changing the official score.
 
 The API validates content hashes for integrity, not artifact provenance signing:
-private manifests still need protected release storage and a trusted import
-operator. Add signatures/KMS verification if artifacts cross an untrusted
-boundary.
+private manifests and approved-context artifacts still need protected release
+storage and a trusted import operator. Add signatures/KMS verification if
+artifacts cross an untrusted boundary.
