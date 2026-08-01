@@ -190,6 +190,35 @@ export async function buildApp({ service, config, logger = false }) {
     return { form: await service.getPublicFormVersion(request.params.formId, request.params.version) };
   });
 
+  app.get(`${base}/open-reviews`, async (request) => {
+    await requireAuth(request);
+    return { openReviews: await service.listOpenReviews() };
+  });
+  app.get(`${base}/open-reviews/:releaseId`, async (request) => {
+    await requireAuth(request);
+    return { openReview: await service.getOpenReview(request.params.releaseId) };
+  });
+  app.post(`${base}/open-reviews/:releaseId/workspace`, async (request, reply) => {
+    const auth = await requireCsrf(request);
+    const body = request.body === undefined ? {} : bodyObject(request.body);
+    if (Object.keys(body).length) throw badRequest('VALIDATION_ERROR', 'Request body must be empty.');
+    const result = await service.createOpenReviewWorkspace(
+      auth.student.id, request.params.releaseId, idempotencyKey(request)
+    );
+    reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+    return reply.status(result.created ? 201 : 200).send({ workspace: result.workspace });
+  });
+  app.get(`${base}/open-review-workspaces`, async (request, reply) => {
+    const auth = await requireAuth(request);
+    reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+    return { workspaces: await service.listOpenReviewWorkspaces(auth.student.id) };
+  });
+  app.get(`${base}/open-review-workspaces/:attemptId`, async (request, reply) => {
+    const auth = await requireAuth(request);
+    reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+    return { workspace: await service.getOpenReviewWorkspace(auth.student.id, request.params.attemptId) };
+  });
+
   app.post(`${base}/attempts`, async (request, reply) => {
     const auth = await requireCsrf(request);
     const body = bodyObject(request.body);

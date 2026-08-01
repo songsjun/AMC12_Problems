@@ -6,7 +6,8 @@ export const PHASES = Object.freeze({
   LIMIT_NOTICE: 'LIMIT_NOTICE',
   OVERTIME: 'OVERTIME',
   FINALIZED: 'FINALIZED',
-  RESET: 'RESET'
+  RESET: 'RESET',
+  OPEN_REVIEW: 'OPEN_REVIEW'
 });
 export const CLOCK_STATES = Object.freeze({ RUNNING: 'RUNNING', PAUSED: 'PAUSED' });
 export const SUBMISSION_KINDS = Object.freeze({
@@ -97,6 +98,7 @@ export function publicAttempt(attempt, answers, submissions = [], now = new Date
     : elapsedAt(attempt, now);
   return {
     id: attempt.id,
+    attemptMode: attempt.attemptMode || 'TIMED',
     formId: attempt.formId,
     formVersion: attempt.formVersion,
     phase: attempt.phase,

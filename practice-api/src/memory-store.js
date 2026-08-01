@@ -1,26 +1,46 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { providerRetentionNotBefore } from './infrastructure/assemblyai-retention-profile.js';
 import { analysisInputHash, canonicalHash } from './learning-review/canonical.js';
+import { ATTEMPT_MODE, OPEN_REVIEW_STATUS, openReviewReleaseHash } from './open-review/domain.js';
 
 const clone = (value) => structuredClone(value);
 const cloneMap = (map) => new Map([...map].map(([key, value]) => [key, clone(value)]));
 const formKey = (id, version) => `${id}\u0000${version}`;
 const idempotencyKey = (studentId, scope, key) => `${studentId}\u0000${scope}\u0000${key}`;
 
-function validFinalBatchEntitlement(store, batch, learning) {
+function validLearningEntitlement(store, learning, { cleanup = false } = {}) {
+  const attempt = learning && store.attempts.get(learning.attemptId);
+  if (!learning || !attempt
+      || attempt.studentId !== learning.studentId
+      || attempt.formId !== learning.formId || attempt.formVersion !== learning.formVersion
+      || (!cleanup && learning.lifecycleStatus !== 'COMMITTED')) return false;
+  if (learning.sourceType === 'INTERACTIVE_FINAL') {
+    const official = (store.submissions.get(attempt.id) || [])
+      .find((submission) => submission.id === learning.officialSubmissionId);
+    return Boolean(attempt.attemptMode === ATTEMPT_MODE.TIMED
+      && ['FINALIZED', 'RESET'].includes(attempt.phase)
+      && (learning.attemptMode || ATTEMPT_MODE.TIMED) === ATTEMPT_MODE.TIMED
+      && learning.officialSubmissionKind === 'FINAL'
+      && official?.attemptId === attempt.id && official.kind === 'FINAL');
+  }
+  if (learning.sourceType !== 'OPEN_REVIEW' || attempt.attemptMode !== ATTEMPT_MODE.OPEN_REVIEW
+      || attempt.phase !== 'OPEN_REVIEW' || learning.attemptMode !== ATTEMPT_MODE.OPEN_REVIEW
+      || learning.officialSubmissionId !== null || learning.officialSubmissionKind !== null) return false;
+  const release = store.openReviewReleases.get(learning.openReviewReleaseId);
+  return Boolean(release && release.formId === learning.formId && release.formVersion === learning.formVersion
+    && (cleanup || [OPEN_REVIEW_STATUS.ACTIVE, OPEN_REVIEW_STATUS.SUPERSEDED_VALID].includes(release.status)));
+}
+
+function validBatchEntitlement(store, batch, learning, options = {}) {
   const attempt = batch && store.attempts.get(batch.attemptId);
-  const official = attempt && (store.submissions.get(attempt.id) || [])
-    .find((submission) => submission.id === learning?.officialSubmissionId);
-  return Boolean(batch && learning && attempt && official
+  return Boolean(batch && learning && attempt
     && attempt.studentId === batch.studentId
     && attempt.formId === batch.formId && attempt.formVersion === batch.formVersion
-    && ['FINALIZED', 'RESET'].includes(attempt.phase)
     && learning.id === batch.learningSubmissionId
     && learning.studentId === batch.studentId && learning.attemptId === batch.attemptId
     && learning.formId === batch.formId && learning.formVersion === batch.formVersion
-    && learning.lifecycleStatus === 'COMMITTED'
-    && learning.officialSubmissionKind === 'FINAL'
-    && official.attemptId === attempt.id && official.kind === 'FINAL');
+    && learning.sourceType === batch.sourceType
+    && validLearningEntitlement(store, learning, options));
 }
 
 function retryAvailableAt(now, attemptCount, retryAfterSeconds) {
@@ -112,7 +132,7 @@ function validTranscriptionLeaseFence(aggregate, input, now) {
 
 function validTranscriptionFence(store, aggregate, input, now) {
   return validTranscriptionLeaseFence(aggregate, input, now)
-    && validFinalBatchEntitlement(store, aggregate.batch, aggregate.learning)
+    && validBatchEntitlement(store, aggregate.batch, aggregate.learning)
     && aggregate.batch.status === 'PROCESSING' && aggregate.batch.deletionState === 'ACTIVE';
 }
 
@@ -138,6 +158,8 @@ export class MemoryStore {
     this.learningWorkItems = new Map();
     this.approvedContextSets = new Map();
     this.activeContextSetByForm = new Map();
+    this.openReviewReleases = new Map();
+    this.openReviewReleaseEvents = [];
     this.analysisRuns = new Map();
     this.questionAnalyses = new Map();
     this.learningReports = new Map();
@@ -243,6 +265,13 @@ export class MemoryStore {
       throw error;
     }
     const shouldPublish = Boolean(publish && (form.publishEligible || (form.developmentPublishEligible && allowTestOnlyPublish)));
+    if (shouldPublish && [...this.openReviewReleases.values()].some((release) =>
+      (release.formId === form.id && release.formVersion === form.version)
+        || release.questionBundleHash === form.questionBundleHash)) {
+      throw Object.assign(new Error('Open review delivery fence forbids timed publication.'), {
+        code: 'OPEN_REVIEW_DELIVERY_CONFLICT'
+      });
+    }
     if (shouldPublish) {
       // Only one revision is the student-facing current form. Existing
       // attempts stay pinned to their immutable revision and remain readable
@@ -297,8 +326,16 @@ export class MemoryStore {
 
   async findOrCreateActiveAttempt({ studentId, form, now }) {
     return this.#withGlobalLock(async () => {
+      if ([...this.openReviewReleases.values()].some((release) =>
+        (release.formId === form.id && release.formVersion === form.version)
+          || release.questionBundleHash === form.questionBundleHash)) {
+        throw Object.assign(new Error('Open review delivery fence forbids timed attempt.'), {
+          code: 'OPEN_REVIEW_DELIVERY_CONFLICT'
+        });
+      }
       const active = [...this.attempts.values()]
         .filter((attempt) => attempt.studentId === studentId && attempt.formId === form.id
+          && attempt.attemptMode === ATTEMPT_MODE.TIMED
           && attempt.phase !== 'FINALIZED' && attempt.phase !== 'RESET')
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
       if (active) return { attempt: clone(active), created: false };
@@ -331,6 +368,7 @@ export class MemoryStore {
     return {
       id: randomUUID(),
       studentId,
+      attemptMode: ATTEMPT_MODE.TIMED,
       formId: form.id,
       formVersion: form.version,
       durationMs: form.durationMs,
@@ -356,7 +394,7 @@ export class MemoryStore {
 
   async listAttemptsForStudent(studentId) {
     return [...this.attempts.values()]
-      .filter((attempt) => attempt.studentId === studentId)
+      .filter((attempt) => attempt.studentId === studentId && attempt.attemptMode === ATTEMPT_MODE.TIMED)
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .map(clone);
   }
@@ -364,9 +402,284 @@ export class MemoryStore {
   async listDeadlineCandidates(now) {
     const nowMs = new Date(now).getTime();
     return [...this.attempts.values()]
-      .filter((attempt) => attempt.phase === 'TIMED' && attempt.clockState === 'RUNNING' && attempt.clockStartedAt
+      .filter((attempt) => attempt.attemptMode === ATTEMPT_MODE.TIMED
+        && attempt.phase === 'TIMED' && attempt.clockState === 'RUNNING' && attempt.clockStartedAt
         && new Date(attempt.clockStartedAt).getTime() + (attempt.durationMs - attempt.activeElapsedMs) <= nowMs)
       .map((attempt) => attempt.id);
+  }
+
+  async publishOpenReviewRelease({
+    formId, formVersion, contextSetId, authorityId, reasonCode, now, releaseId = randomUUID()
+  }) {
+    return this.#withGlobalLock(async () => {
+      if (typeof authorityId !== 'string' || authorityId.length < 3 || authorityId.length > 128
+          || typeof reasonCode !== 'string' || reasonCode.length < 3 || reasonCode.length > 100) {
+        throw Object.assign(new Error('Open review release authority metadata is invalid.'), {
+          code: 'OPEN_REVIEW_AUTHORITY_INVALID'
+        });
+      }
+      const form = this.forms.get(formKey(formId, formVersion));
+      const context = this.approvedContextSets.get(contextSetId);
+      if (!form) throw Object.assign(new Error('Open review form revision is missing.'), { code: 'FORM_REVISION_NOT_FOUND' });
+      if (!context) throw Object.assign(new Error('Approved context set is missing.'), { code: 'OPEN_REVIEW_CONTEXT_INVALID' });
+      const exact = [...this.openReviewReleases.values()].find((release) =>
+        release.formId === formId && release.formVersion === formVersion);
+      if (exact) {
+        if (exact.contextSetId !== contextSetId) {
+          throw Object.assign(new Error('Exact form revision already has another open review release.'), {
+            code: 'OPEN_REVIEW_RELEASE_EXISTS'
+          });
+        }
+        return clone(exact);
+      }
+      if (form.published || [...this.forms.values()].some((candidate) =>
+        candidate.published && candidate.questionBundleHash === form.questionBundleHash)) {
+        throw Object.assign(new Error('Published timed question bundle cannot enter open review.'), {
+        code: 'OPEN_REVIEW_TIMED_CONFLICT'
+      });
+      }
+      if (!context.active || context.formId !== formId || context.formVersion !== formVersion
+          || context.releaseBinding?.manifestHash !== form.manifestHash
+          || context.releaseBinding?.contentHash !== form.contentHash
+          || context.releaseBinding?.questionBundleHash !== form.questionBundleHash
+          || context.questions.length !== form.questions.length
+          || context.questions.some((question) => question.modelEligibleSolutionCount < 2)) {
+        throw Object.assign(new Error('Approved context is incomplete or stale for open review.'), {
+          code: 'OPEN_REVIEW_CONTEXT_INVALID'
+        });
+      }
+      if ([...this.attempts.values()].some((attempt) => attempt.attemptMode === ATTEMPT_MODE.TIMED
+            && this.forms.get(formKey(attempt.formId, attempt.formVersion))?.questionBundleHash === form.questionBundleHash)) {
+        throw Object.assign(new Error('The question bundle is already bound to another delivery mode.'), {
+          code: 'OPEN_REVIEW_DELIVERY_CONFLICT'
+        });
+      }
+      const release = {
+        id: releaseId,
+        schemaVersion: 'amc-open-review-release-v1',
+        formId,
+        formVersion,
+        contextSetId,
+        releaseHash: openReviewReleaseHash({ form, context }),
+        manifestHash: form.manifestHash,
+        contentHash: form.contentHash,
+        questionBundleHash: form.questionBundleHash,
+        contextArtifactSetHash: context.artifactSetHash,
+        approvalAuthorityId: context.approvalAuthorityId,
+        status: OPEN_REVIEW_STATUS.ACTIVE,
+        transitionAuthorityId: authorityId,
+        transitionReasonCode: reasonCode,
+        publishedAt: now,
+        supersededAt: null,
+        revokedAt: null,
+        stateRevision: 0,
+        createdAt: now,
+        updatedAt: now
+      };
+      if ([...this.openReviewReleases.values()].some((candidate) =>
+        candidate.questionBundleHash === form.questionBundleHash
+          && candidate.status === OPEN_REVIEW_STATUS.ACTIVE)) {
+        throw Object.assign(new Error('The question bundle already has an active open review release.'), {
+          code: 'OPEN_REVIEW_ACTIVE_CONFLICT'
+        });
+      }
+      this.openReviewReleases.set(release.id, release);
+      this.openReviewReleaseEvents.push({
+        releaseId: release.id, eventType: 'PUBLISHED', previousStatus: null,
+        nextStatus: release.status, authorityId, reasonCode, occurredAt: now
+      });
+      return clone(release);
+    });
+  }
+
+  async transitionOpenReviewRelease({ releaseId, nextStatus, authorityId, reasonCode, now }) {
+    return this.#withGlobalLock(async () => {
+      const release = this.openReviewReleases.get(releaseId);
+      if (!release) return null;
+      const allowed = (release.status === OPEN_REVIEW_STATUS.ACTIVE
+          && [OPEN_REVIEW_STATUS.SUPERSEDED_VALID, OPEN_REVIEW_STATUS.REVOKED].includes(nextStatus))
+        || (release.status === OPEN_REVIEW_STATUS.SUPERSEDED_VALID && nextStatus === OPEN_REVIEW_STATUS.REVOKED);
+      if (!allowed) throw Object.assign(new Error('Invalid open review release transition.'), {
+        code: 'OPEN_REVIEW_TRANSITION_INVALID'
+      });
+      if (typeof authorityId !== 'string' || authorityId.length < 3 || authorityId.length > 128
+          || typeof reasonCode !== 'string' || reasonCode.length < 3 || reasonCode.length > 100
+          || new Date(now).getTime() <= new Date(release.updatedAt).getTime()) {
+        throw Object.assign(new Error('Open review transition metadata or timing is invalid.'), {
+          code: 'OPEN_REVIEW_TRANSITION_INVALID'
+        });
+      }
+      const previousStatus = release.status;
+      Object.assign(release, {
+        status: nextStatus,
+        transitionAuthorityId: authorityId,
+        transitionReasonCode: reasonCode,
+        supersededAt: nextStatus === OPEN_REVIEW_STATUS.SUPERSEDED_VALID ? now : release.supersededAt,
+        revokedAt: nextStatus === OPEN_REVIEW_STATUS.REVOKED ? now : null,
+        stateRevision: release.stateRevision + 1,
+        updatedAt: now
+      });
+      this.openReviewReleaseEvents.push({
+        releaseId, eventType: nextStatus === OPEN_REVIEW_STATUS.REVOKED ? 'REVOKED' : 'SUPERSEDED',
+        previousStatus, nextStatus, authorityId, reasonCode, occurredAt: now
+      });
+      if (nextStatus === OPEN_REVIEW_STATUS.REVOKED) this.#cancelRevokedOpenReviewWork(releaseId, now);
+      return clone(release);
+    });
+  }
+
+  #cancelRevokedOpenReviewWork(releaseId, now) {
+    const submissions = [...this.learningSubmissions.values()]
+      .filter((submission) => submission.openReviewReleaseId === releaseId);
+    const submissionIds = new Set(submissions.map((submission) => submission.id));
+    for (const [versionId, items] of this.learningWorkItems) {
+      const version = [...this.learningVersions.values()].flat().find((candidate) => candidate.id === versionId);
+      if (!version || !submissionIds.has(version.learningSubmissionId)) continue;
+      for (const item of items) {
+        if (['QUEUED', 'RUNNING', 'BLOCKED_CONTEXT'].includes(item.status)) Object.assign(item, {
+          status: 'CANCELLED', leaseOwner: null, leaseToken: null, leaseExpiresAt: null,
+          lastErrorCode: 'OPEN_REVIEW_REVOKED', updatedAt: now
+        });
+      }
+      const run = this.analysisRuns.get(versionId);
+      if (run && ['QUEUED', 'RUNNING'].includes(run.status)) Object.assign(run, {
+        status: 'CANCELLED', completedAt: now, lastErrorCode: 'OPEN_REVIEW_REVOKED'
+      });
+    }
+    for (const batch of this.learningBatches.values()) {
+      if (!submissionIds.has(batch.learningSubmissionId) || batch.sourceType !== 'OPEN_REVIEW') continue;
+      if (['PROCESSING', 'NEEDS_CONFIRMATION'].includes(batch.status)) Object.assign(batch, {
+        status: 'FAILED', failureCode: 'OPEN_REVIEW_REVOKED', updatedAt: now
+      });
+      for (const item of this.learningBatchWorkItems.get(batch.id) || []) {
+        if (item.workType === 'BATCH_EXTRACTION' && ['BLOCKED_DEPENDENCY', 'QUEUED', 'RUNNING'].includes(item.status)) {
+          Object.assign(item, { status: 'CANCELLED', leaseOwner: null, leaseToken: null,
+            leaseExpiresAt: null, lastErrorCode: 'OPEN_REVIEW_REVOKED', updatedAt: now });
+          continue;
+        }
+        if (item.workType !== 'TRANSCRIBE_AUDIO') continue;
+        const artifact = (this.learningBatchProviderArtifacts.get(batch.id) || [])
+          .find((candidate) => candidate.assetId === item.assetId);
+        const asset = (this.learningBatchAssets.get(batch.id) || [])
+          .find((candidate) => candidate.id === item.assetId);
+        if (!artifact || !asset) continue;
+        if (artifact.status === 'ACTIVE') artifact.status = 'DELETE_PENDING';
+        if (['UPLOAD_MAY_HAVE_DELIVERED', 'UPLOAD_RESPONSE_PERSISTED'].includes(artifact.status)) {
+          artifact.status = 'PROVIDER_RETENTION_PENDING';
+        }
+        if (['DELETE_PENDING', 'PROVIDER_RETENTION_PENDING'].includes(artifact.status)
+            && asset.status === 'STORED') Object.assign(asset, { status: 'PURGE_PENDING', updatedAt: now });
+        artifact.updatedAt = now;
+        if (['SUBMIT_MAY_HAVE_DELIVERED', 'DELETE_PENDING', 'PROVIDER_RETENTION_PENDING'].includes(artifact.status)) {
+          Object.assign(item, { status: 'QUEUED', availableAt: now, leaseOwner: null, leaseToken: null,
+            leaseExpiresAt: null, lastErrorCode: 'OPEN_REVIEW_REVOKED_CLEANUP', updatedAt: now });
+        } else if (artifact.status === 'INTENT_RECORDED') {
+          Object.assign(item, { status: 'CANCELLED', leaseOwner: null, leaseToken: null,
+            leaseExpiresAt: null, lastErrorCode: 'OPEN_REVIEW_REVOKED', updatedAt: now });
+        }
+      }
+    }
+  }
+
+  async listActiveOpenReviewReleases() {
+    return [...this.openReviewReleases.values()]
+      .filter((release) => release.status === OPEN_REVIEW_STATUS.ACTIVE)
+      .sort((left, right) => left.formId.localeCompare(right.formId))
+      .map(clone);
+  }
+
+  async getOpenReviewRelease(id) {
+    const release = this.openReviewReleases.get(id);
+    return release ? clone(release) : null;
+  }
+
+  async listOpenReviewWorkspaces(studentId) {
+    return [...this.attempts.values()]
+      .filter((attempt) => attempt.studentId === studentId && attempt.attemptMode === ATTEMPT_MODE.OPEN_REVIEW)
+      .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))
+      .map((attempt) => {
+        const learningSubmission = this.learningSubmissions.get(attempt.id);
+        const version = (this.learningVersions.get(learningSubmission.id) || [])
+          .find((candidate) => candidate.versionNumber === learningSubmission.currentVersion);
+        const analysis = (this.learningWorkItems.get(version?.id) || [])
+          .find((item) => item.workType === 'ANALYZE_SUBMISSION');
+        const release = this.openReviewReleases.get(learningSubmission.openReviewReleaseId);
+        return {
+          attempt: clone(attempt),
+          learningSubmission: clone(learningSubmission),
+          releaseStatus: release?.status || null,
+          analysisStatus: version?.creationReason === 'OPEN_REVIEW_ANCHOR'
+            ? 'AWAITING_BATCH' : (analysis?.status || 'BLOCKED_CONTEXT')
+        };
+      });
+  }
+
+  async findOrCreateOpenReviewWorkspace({ studentId, releaseId, idempotencyKey: key, requestHash, now }) {
+    return this.#withGlobalLock(async () => {
+      const release = this.openReviewReleases.get(releaseId);
+      if (!release) return null;
+      const scope = `open-review-release:${releaseId}:workspace`;
+      const storedIdempotency = this.idempotency.get(idempotencyKey(studentId, scope, key));
+      if (storedIdempotency) {
+        if (storedIdempotency.requestHash !== requestHash) {
+          throw Object.assign(new Error('Idempotency key was reused.'), { code: 'IDEMPOTENCY_KEY_REUSED' });
+        }
+        const attempt = this.attempts.get(storedIdempotency.responseBody.attemptId);
+        return { attempt: clone(attempt), learningSubmission: clone(this.learningSubmissions.get(attempt.id)), created: false };
+      }
+      if (release.status !== OPEN_REVIEW_STATUS.ACTIVE) return null;
+      let attempt = [...this.attempts.values()].find((candidate) => candidate.studentId === studentId
+        && candidate.formId === release.formId && candidate.formVersion === release.formVersion
+        && candidate.attemptMode === ATTEMPT_MODE.OPEN_REVIEW);
+      let learningSubmission = attempt && this.learningSubmissions.get(attempt.id);
+      const created = !attempt;
+      if (!attempt) {
+        const form = this.forms.get(formKey(release.formId, release.formVersion));
+        const context = this.approvedContextSets.get(release.contextSetId);
+        attempt = {
+          id: randomUUID(), studentId, attemptMode: ATTEMPT_MODE.OPEN_REVIEW,
+          formId: release.formId, formVersion: release.formVersion, durationMs: form.durationMs,
+          phase: 'OPEN_REVIEW', clockState: 'PAUSED', activeElapsedMs: 0, clockStartedAt: null,
+          answersRevision: 0, reasoningRevision: 0, stateRevision: 0,
+          limitReachedAt: null, finalizedAt: null, resetAt: null, createdAt: now, updatedAt: now
+        };
+        const version = {
+          id: randomUUID(), learningSubmissionId: randomUUID(), versionNumber: 1,
+          formId: release.formId, formVersion: release.formVersion,
+          answersRevision: 0, reasoningRevision: 0, creationReason: 'OPEN_REVIEW_ANCHOR', batchId: null,
+          contextStatus: 'CONTEXT_READY', contextSetId: context.id,
+          evidenceHash: canonicalHash({ schema: 'amc-open-review-anchor-v1', releaseHash: release.releaseHash, studentId }),
+          createdAt: now
+        };
+        learningSubmission = {
+          id: version.learningSubmissionId, studentId, attemptId: attempt.id,
+          officialSubmissionId: null, officialSubmissionKind: null,
+          openReviewReleaseId: release.id, attemptMode: ATTEMPT_MODE.OPEN_REVIEW,
+          formId: release.formId, formVersion: release.formVersion, sourceType: 'OPEN_REVIEW',
+          lifecycleStatus: 'COMMITTED', currentVersion: 1, deletionGeneration: 0,
+          deletedAt: null, createdAt: now, updatedAt: now
+        };
+        this.attempts.set(attempt.id, attempt);
+        this.answers.set(attempt.id, []);
+        this.reasoningNotes.set(attempt.id, []);
+        this.submissions.set(attempt.id, []);
+        this.events.set(attempt.id, []);
+        this.learningSubmissions.set(attempt.id, learningSubmission);
+        this.learningVersions.set(learningSubmission.id, [version]);
+        this.learningResponses.set(version.id, form.questions.map((question) => ({
+          learningSubmissionVersionId: version.id, formId: release.formId, formVersion: release.formVersion,
+          questionNumber: question.number, selectedOption: null, answerOrigin: 'OPEN_REVIEW_BLANK',
+          reasoningText: '', reasoningOrigin: 'NONE', createdAt: now
+        })));
+        this.learningWorkItems.set(version.id, []);
+      }
+      const record = {
+        studentId, scope, key, requestHash, responseStatus: created ? 201 : 200,
+        responseBody: { attemptId: attempt.id }, createdAt: now
+      };
+      this.idempotency.set(idempotencyKey(studentId, scope, key), record);
+      return { attempt: clone(attempt), learningSubmission: clone(learningSubmission), created };
+    });
   }
 
   async importApprovedContextSets({ forms, archiveSetHash, authorityId, receiptSetHash, importedAt }) {
@@ -565,7 +878,7 @@ export class MemoryStore {
           const evidence = this.learningBatchEvidence.get(item.batchId) || [];
           const learning = batch && [...this.learningSubmissions.values()]
             .find((submission) => submission.id === batch.learningSubmissionId);
-          if (!validFinalBatchEntitlement(this, batch, learning)
+          if (!validBatchEntitlement(this, batch, learning)
               || batch.status !== 'PROCESSING' || batch.deletionState !== 'ACTIVE'
               || batch.deletionGeneration !== item.deletionGeneration
               || learning.currentVersion !== batch.baseVersion
@@ -593,8 +906,7 @@ export class MemoryStore {
         const run = version && this.analysisRuns.get(version.id);
         const contextSet = version && this.approvedContextSets.get(version.contextSetId);
         if (!version || !submission || !attempt || !run || !contextSet
-            || submission.lifecycleStatus !== 'COMMITTED'
-            || !['FINALIZED', 'RESET'].includes(attempt.phase) || attempt.studentId !== submission.studentId
+            || !validLearningEntitlement(this, submission)
             || version.contextStatus !== 'CONTEXT_READY' || version.contextSetId !== run.contextSetId
             || run.status !== 'QUEUED' || item.analysisRunId !== run.id
             || item.inputHash !== run.inputHash || item.deletionGeneration !== run.deletionGeneration) {
@@ -659,13 +971,11 @@ export class MemoryStore {
         });
       for (const work of candidates) {
         const aggregate = transcriptionAggregate(this, work.id);
-        const cleanup = [
-          'DELETE_PENDING', 'SUBMIT_MAY_HAVE_DELIVERED', 'DELETION_EVIDENCED',
-          'PROVIDER_RETENTION_PENDING', 'PROVIDER_RETENTION_DELETION_CONFIRMED'
-        ]
-          .includes(aggregate?.artifact?.status)
-          && (aggregate?.batch?.deletionState !== 'ACTIVE' || aggregate?.batch?.status === 'FAILED');
-        if (!aggregate || !validFinalBatchEntitlement(this, aggregate.batch, aggregate.learning)
+        const cleanup = aggregate?.batch?.deletionState !== 'ACTIVE'
+          || aggregate?.batch?.status === 'FAILED'
+          || ['SUBMIT_MAY_HAVE_DELIVERED', 'DELETE_PENDING', 'DELETION_EVIDENCED', 'PROVIDER_RETENTION_PENDING',
+            'PROVIDER_RETENTION_DELETION_CONFIRMED'].includes(aggregate?.artifact?.status);
+        if (!aggregate || !validBatchEntitlement(this, aggregate.batch, aggregate.learning, { cleanup })
             || (!cleanup && (aggregate.batch.status !== 'PROCESSING' || aggregate.batch.deletionState !== 'ACTIVE'))
             || (!cleanup && aggregate.learning.currentVersion !== aggregate.batch.baseVersion)
             || aggregate.batch.deletionGeneration !== work.deletionGeneration
@@ -848,7 +1158,9 @@ export class MemoryStore {
     return this.#withGlobalLock(async () => {
       const value = transcriptionAggregate(this, input.workItemId);
       if (!validTranscriptionLeaseFence(value, input, input.now)
-          || !validFinalBatchEntitlement(this, value.batch, value.learning)) return false;
+          || !validBatchEntitlement(this, value.batch, value.learning, {
+            cleanup: ['DELETE', 'RECONCILE'].includes(input.phase)
+          })) return false;
       let allowed = false;
       if (input.phase === 'DELETE') {
         allowed = value.artifact.status === 'DELETE_PENDING'
@@ -1001,7 +1313,7 @@ export class MemoryStore {
     return this.#withGlobalLock(async () => {
       const value = transcriptionAggregate(this, input.workItemId);
       if (!validTranscriptionLeaseFence(value, input, input.reconciledAt)
-          || !validFinalBatchEntitlement(this, value.batch, value.learning)
+          || !validBatchEntitlement(this, value.batch, value.learning, { cleanup: true })
           || value.artifact.status !== 'SUBMIT_MAY_HAVE_DELIVERED'
           || value.artifact.submitCallId !== input.submitCallId
           || value.artifact.uploadUrlHash !== input.uploadUrlSha256) return false;
@@ -1198,7 +1510,7 @@ export class MemoryStore {
     return this.#withGlobalLock(async () => {
       const value = transcriptionAggregate(this, input.workItemId);
       if (!validTranscriptionLeaseFence(value, input, input.purgedAt)
-          || !validFinalBatchEntitlement(this, value.batch, value.learning)
+          || !validBatchEntitlement(this, value.batch, value.learning, { cleanup: true })
           || value.artifact.status !== 'DELETE_PENDING'
           || value.artifact.externalId !== input.providerTranscriptId
           || value.asset.status !== 'PURGE_PENDING') return false;
@@ -1222,7 +1534,7 @@ export class MemoryStore {
     return this.#withGlobalLock(async () => {
       const value = transcriptionAggregate(this, input.workItemId);
       if (!validTranscriptionLeaseFence(value, input, input.purgedAt)
-          || !validFinalBatchEntitlement(this, value.batch, value.learning)
+          || !validBatchEntitlement(this, value.batch, value.learning, { cleanup: true })
           || !['DELETION_EVIDENCED', 'PROVIDER_RETENTION_PENDING',
             'PROVIDER_RETENTION_DELETION_CONFIRMED'].includes(value.artifact.status)
           || (value.artifact.status === 'DELETION_EVIDENCED'
@@ -1266,7 +1578,7 @@ export class MemoryStore {
     return this.#withGlobalLock(async () => {
       const value = transcriptionAggregate(this, input.workItemId);
       if (!validTranscriptionLeaseFence(value, input, input.evidencedAt)
-          || !validFinalBatchEntitlement(this, value.batch, value.learning)
+          || !validBatchEntitlement(this, value.batch, value.learning, { cleanup: true })
           || value.artifact.status !== 'DELETE_PENDING'
           || value.artifact.externalId !== input.providerTranscriptId
           || value.asset.status !== 'PURGED') return false;
@@ -1307,7 +1619,7 @@ export class MemoryStore {
     return this.#withGlobalLock(async () => {
       const value = transcriptionAggregate(this, input.workItemId);
       if (!validTranscriptionLeaseFence(value, input, input.attemptedAt)
-          || !validFinalBatchEntitlement(this, value.batch, value.learning)
+          || !validBatchEntitlement(this, value.batch, value.learning, { cleanup: true })
           || value.artifact.status !== 'DELETE_PENDING'
           || value.artifact.externalId !== input.providerTranscriptId) return false;
       Object.assign(value.artifact, {
@@ -1866,7 +2178,7 @@ export class MemoryStore {
         && new Date(item.leaseExpiresAt).getTime() > new Date(input.now).getTime()
         && batch.status === 'PROCESSING' && batch.deletionState === 'ACTIVE'
         && learning.currentVersion === batch.baseVersion
-        && validFinalBatchEntitlement(this, batch, learning));
+        && validBatchEntitlement(this, batch, learning));
     });
   }
 
@@ -1913,9 +2225,6 @@ export class MemoryStore {
       const submission = version && [...this.learningSubmissions.values()]
         .find((candidate) => candidate.id === version.learningSubmissionId);
       const attempt = submission && this.attempts.get(submission.attemptId);
-      const official = attempt && (this.submissions.get(attempt.id) || [])
-        .find((candidate) => candidate.id === submission.officialSubmissionId
-          && candidate.kind === 'FINAL');
       const contextSet = version && this.approvedContextSets.get(version.contextSetId);
       const contextQuestion = contextSet?.questions
         .find((candidate) => candidate.questionNumber === input.questionNumber);
@@ -1939,7 +2248,7 @@ export class MemoryStore {
         selectedOption: response.selectedOption,
         reasoningText: response.reasoningText
       });
-      return Boolean(item && run && version && submission && attempt && official && contextSet
+      return Boolean(item && run && version && submission && attempt && contextSet
         && contextQuestion && form && formQuestion && response
         && item.status === 'RUNNING' && item.leaseOwner === input.workerId
         && item.leaseToken === input.leaseToken && item.analysisRunId === run.id
@@ -1953,11 +2262,9 @@ export class MemoryStore {
         && version.evidenceHash === input.evidenceHash && run.evidenceHash === input.evidenceHash
         && submission.studentId === input.expectedStudentId
         && submission.currentVersion === input.expectedSubmissionCurrentVersion
-        && submission.lifecycleStatus === 'COMMITTED' && attempt.studentId === input.expectedStudentId
+        && validLearningEntitlement(this, submission) && attempt.studentId === input.expectedStudentId
         && attempt.formId === version.formId && attempt.formVersion === version.formVersion
         && submission.formId === version.formId && submission.formVersion === version.formVersion
-        && ['FINALIZED', 'RESET'].includes(attempt.phase)
-        && submission.officialSubmissionKind === 'FINAL'
         && version.contextStatus === 'CONTEXT_READY'
         && version.contextSetId === input.expectedContextSetId
         && run.contextSetId === input.expectedContextSetId
@@ -1990,8 +2297,8 @@ export class MemoryStore {
           || item.learningSubmissionVersionId !== version.id || run.contextSetId !== version.contextSetId
           || run.versionNumber !== version.versionNumber || run.evidenceHash !== version.evidenceHash
           || version.versionNumber !== input.expectedVersionNumber || submission.studentId !== input.expectedStudentId
-          || submission.lifecycleStatus !== 'COMMITTED' || attempt.studentId !== input.expectedStudentId
-          || !['FINALIZED', 'RESET'].includes(attempt.phase) || version.contextSetId !== input.expectedContextSetId) return false;
+          || !validLearningEntitlement(this, submission) || attempt.studentId !== input.expectedStudentId
+          || version.contextSetId !== input.expectedContextSetId) return false;
       const responseNumbers = (this.learningResponses.get(version.id) || []).map((response) => response.questionNumber);
       const outcomeNumbers = input.outcomes.map((outcome) => outcome.questionNumber);
       if (outcomeNumbers.length !== responseNumbers.length || new Set(outcomeNumbers).size !== outcomeNumbers.length
@@ -2028,8 +2335,8 @@ export class MemoryStore {
           || item.inputHash !== input.expectedInputHash || item.deletionGeneration !== input.expectedDeletionGeneration
           || run.inputHash !== input.expectedInputHash || run.id !== item.analysisRunId || run.status !== 'RUNNING'
           || version.versionNumber !== input.expectedVersionNumber || submission.studentId !== input.expectedStudentId
-          || submission.lifecycleStatus !== 'COMMITTED' || attempt.studentId !== input.expectedStudentId
-          || !['FINALIZED', 'RESET'].includes(attempt.phase) || version.contextSetId !== input.expectedContextSetId
+          || !validLearningEntitlement(this, submission) || attempt.studentId !== input.expectedStudentId
+          || version.contextSetId !== input.expectedContextSetId
           || run.contextSetId !== input.expectedContextSetId) return false;
       Object.assign(item, {
         status: 'QUEUED', availableAt: input.availableAt, leaseOwner: null, leaseToken: null, leaseExpiresAt: null,
@@ -2098,6 +2405,8 @@ export class MemoryStore {
       learningWorkItems: cloneMap(this.learningWorkItems),
       approvedContextSets: cloneMap(this.approvedContextSets),
       activeContextSetByForm: cloneMap(this.activeContextSetByForm),
+      openReviewReleases: cloneMap(this.openReviewReleases),
+      openReviewReleaseEvents: clone(this.openReviewReleaseEvents),
       analysisRuns: cloneMap(this.analysisRuns),
       questionAnalyses: cloneMap(this.questionAnalyses),
       learningReports: cloneMap(this.learningReports),
@@ -2224,6 +2533,27 @@ class MemoryAttemptTransaction {
     return context?.questions?.length ? clone(context) : null;
   }
 
+  async getApprovedContextSetById(contextSetId) {
+    const context = this.store.approvedContextSets.get(contextSetId);
+    return context?.questions?.length ? clone(context) : null;
+  }
+
+  async getLearningEntitlement({ purpose = 'EXISTING_WORK' } = {}) {
+    const submission = this.store.learningSubmissions.get(this.attemptId);
+    if (!submission) return null;
+    const release = submission.sourceType === 'OPEN_REVIEW'
+      ? this.store.openReviewReleases.get(submission.openReviewReleaseId) : null;
+    const cleanup = purpose === 'CLEANUP';
+    const allowed = ['NEW_BATCH', 'EXISTING_WORK', 'CLEANUP'].includes(purpose)
+      && validLearningEntitlement(this.store, submission, { cleanup })
+      && (submission.sourceType !== 'OPEN_REVIEW'
+        || (cleanup
+          || (purpose === 'NEW_BATCH'
+          ? release?.status === OPEN_REVIEW_STATUS.ACTIVE
+          : [OPEN_REVIEW_STATUS.ACTIVE, OPEN_REVIEW_STATUS.SUPERSEDED_VALID].includes(release?.status))));
+    return clone({ allowed, sourceType: submission.sourceType, release: release || null, submission });
+  }
+
   async getLearningReportBundle() {
     return this.getLearningSubmissionBundle();
   }
@@ -2281,6 +2611,7 @@ class MemoryAttemptTransaction {
   }) {
     const learning = this.store.learningSubmissions.get(this.attemptId);
     if (!learning || batch.attemptId !== this.attemptId || batch.learningSubmissionId !== learning.id
+        || batch.sourceType !== learning.sourceType || !validBatchEntitlement(this.store, batch, learning)
         || assets.length !== reservations.length || assets.some((asset) => asset.batchId !== batch.id)
         || reservations.some((reservation) => reservation.batchId !== batch.id
           || reservation.studentId !== batch.studentId)) {
@@ -2317,9 +2648,11 @@ class MemoryAttemptTransaction {
 
   async beginLearningBatchAssetUpload({ batchId, assetId, uploadIdempotencyKey, now }) {
     const batch = this.store.learningBatches.get(batchId);
+    const learning = batch && this.store.learningSubmissions.get(this.attemptId);
     const assets = this.store.learningBatchAssets.get(batchId) || [];
     const asset = assets.find((candidate) => candidate.id === assetId);
-    if (!batch || batch.attemptId !== this.attemptId || !asset) return null;
+    if (!batch || batch.attemptId !== this.attemptId || !asset
+        || !validBatchEntitlement(this.store, batch, learning)) return null;
     if (batch.deletionState !== 'ACTIVE' || batch.status !== 'DRAFT') {
       const error = new Error('Batch does not accept uploads.');
       error.code = 'BATCH_NOT_UPLOADABLE';
@@ -2354,9 +2687,11 @@ class MemoryAttemptTransaction {
     batchId, assetId, uploadIdempotencyKey, deletionGeneration, stored, normalizedText, now
   }) {
     const batch = this.store.learningBatches.get(batchId);
+    const learning = batch && this.store.learningSubmissions.get(this.attemptId);
     const assets = this.store.learningBatchAssets.get(batchId) || [];
     const asset = assets.find((candidate) => candidate.id === assetId);
     if (!batch || !asset || batch.attemptId !== this.attemptId || batch.deletionState !== 'ACTIVE'
+        || !validBatchEntitlement(this.store, batch, learning)
         || batch.deletionGeneration !== deletionGeneration || asset.status !== 'WRITING'
         || asset.uploadIdempotencyKey !== uploadIdempotencyKey
         || this.store.privateStorageCandidates.get(`OBJECT:${stored.storageKey}`)?.status === 'DELETING') return false;
@@ -2394,8 +2729,10 @@ class MemoryAttemptTransaction {
 
   async submitLearningBatch({ batchId, workItems, now }) {
     const batch = this.store.learningBatches.get(batchId);
+    const learning = batch && this.store.learningSubmissions.get(this.attemptId);
     const assets = this.store.learningBatchAssets.get(batchId) || [];
-    if (!batch || batch.attemptId !== this.attemptId) return null;
+    if (!batch || batch.attemptId !== this.attemptId
+        || !validBatchEntitlement(this.store, batch, learning)) return null;
     if (batch.status !== 'DRAFT' || batch.deletionState !== 'ACTIVE'
         || assets.some((asset) => !['NORMALIZED', 'STORED'].includes(asset.status))) {
       const error = new Error('Every reserved asset must be uploaded before submission.');
@@ -2429,9 +2766,11 @@ class MemoryAttemptTransaction {
 
   async saveLearningBatchMapping({ batchId, mapping, workerFence, now }) {
     const batch = this.store.learningBatches.get(batchId);
+    const learning = batch && this.store.learningSubmissions.get(this.attemptId);
     const work = (this.store.learningBatchWorkItems.get(batchId) || [])
       .find((item) => item.workType === 'BATCH_EXTRACTION');
     if (!batch || batch.attemptId !== this.attemptId || batch.deletionState !== 'ACTIVE'
+        || !validBatchEntitlement(this.store, batch, learning)
         || batch.status !== 'PROCESSING' || mapping.revision !== batch.mappingRevision + 1
         || !work || work.status !== 'RUNNING' || work.leaseOwner !== workerFence?.workerId
         || work.leaseToken !== workerFence?.leaseToken || work.inputHash !== workerFence?.inputHash
@@ -2456,6 +2795,7 @@ class MemoryAttemptTransaction {
     const revisions = this.store.learningBatchMappings.get(batchId) || [];
     const mapping = revisions.find((candidate) => candidate.revision === expectedMappingRevision);
     if (!batch || !learning || !mapping || batch.attemptId !== this.attemptId
+        || !validBatchEntitlement(this.store, batch, learning)
         || batch.learningSubmissionId !== learning.id || learning.currentVersion !== batch.baseVersion
         || learning.lifecycleStatus !== 'COMMITTED' || learning.studentId !== batch.studentId
         || learning.formId !== batch.formId || learning.formVersion !== batch.formVersion

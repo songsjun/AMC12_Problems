@@ -3,6 +3,7 @@ import pg from 'pg';
 import { conflict } from './errors.js';
 import { providerRetentionNotBefore } from './infrastructure/assemblyai-retention-profile.js';
 import { analysisInputHash, canonicalHash } from './learning-review/canonical.js';
+import { ATTEMPT_MODE, OPEN_REVIEW_STATUS, openReviewReleaseHash } from './open-review/domain.js';
 
 const { Pool } = pg;
 
@@ -112,6 +113,7 @@ function mapAttempt(row) {
   return row && {
     id: row.id,
     studentId: row.student_id,
+    attemptMode: row.attempt_mode || ATTEMPT_MODE.TIMED,
     formId: row.form_id,
     formVersion: row.form_version,
     durationMs: number(row.duration_ms),
@@ -157,11 +159,40 @@ function mapLearningSubmission(row) {
     attemptId: row.attempt_id,
     officialSubmissionId: row.official_submission_id,
     officialSubmissionKind: row.official_submission_kind,
+    openReviewReleaseId: row.open_review_release_id || null,
+    attemptMode: row.attempt_mode || ATTEMPT_MODE.TIMED,
     formId: row.form_id,
     formVersion: row.form_version,
     sourceType: row.source_type,
     lifecycleStatus: row.lifecycle_status,
     currentVersion: row.current_version,
+    deletionGeneration: row.deletion_generation ?? 0,
+    deletedAt: row.deleted_at || null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function mapOpenReviewRelease(row) {
+  return row && {
+    id: row.id,
+    schemaVersion: row.schema_version,
+    formId: row.form_id,
+    formVersion: row.form_version,
+    contextSetId: row.context_set_id,
+    releaseHash: row.release_hash,
+    manifestHash: row.manifest_hash,
+    contentHash: row.content_hash,
+    questionBundleHash: row.question_bundle_hash,
+    contextArtifactSetHash: row.context_artifact_set_hash,
+    approvalAuthorityId: row.approval_authority_id,
+    status: row.status,
+    transitionAuthorityId: row.transition_authority_id,
+    transitionReasonCode: row.transition_reason_code,
+    publishedAt: row.published_at,
+    supersededAt: row.superseded_at,
+    revokedAt: row.revoked_at,
+    stateRevision: number(row.state_revision),
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -189,7 +220,7 @@ function mapLearningBatch(row) {
   return row && {
     id: row.id, studentId: row.student_id, attemptId: row.attempt_id,
     learningSubmissionId: row.learning_submission_id, baseVersion: row.base_version,
-    formId: row.form_id, formVersion: row.form_version, status: row.status,
+    formId: row.form_id, formVersion: row.form_version, sourceType: row.source_type || 'INTERACTIVE_FINAL', status: row.status,
     mappingRevision: row.mapping_revision, hasAudio: row.has_audio,
     deletionState: row.deletion_state, deletionGeneration: row.deletion_generation,
     deletedAt: row.deleted_at, submittedAt: row.submitted_at, committedAt: row.committed_at,
@@ -547,16 +578,17 @@ async function lockTranscriptionAggregate(client, input, { activeRequired = true
      JOIN amc_practice.learning_submissions s
        ON s.id = b.learning_submission_id AND s.student_id = b.student_id
       AND s.attempt_id = b.attempt_id AND s.form_id = b.form_id AND s.form_version = b.form_version
+      AND s.source_type = b.source_type
      JOIN amc_practice.attempts t
        ON t.id = b.attempt_id AND t.student_id = b.student_id
       AND t.form_id = b.form_id AND t.form_version = b.form_version
-     JOIN amc_practice.submissions official
-       ON official.id = s.official_submission_id AND official.attempt_id = t.id
-      AND official.kind = 'FINAL' AND s.official_submission_kind = 'FINAL'
+      AND t.attempt_mode = s.attempt_mode
      WHERE w.id = $1 AND w.work_type = 'TRANSCRIBE_AUDIO' AND w.status = 'RUNNING'
        AND w.lease_token = $2 AND w.deletion_generation = $3
        AND b.deletion_generation = $3 AND w.lease_expires_at > $4
-       AND s.lifecycle_status = 'COMMITTED' AND t.phase IN ('FINALIZED','RESET')
+       AND amc_practice.learning_entitlement_allows(
+         s.id, CASE WHEN $5::boolean THEN 'EXISTING_WORK' ELSE 'CLEANUP' END
+       )
        AND ($5::boolean = false OR (b.status = 'PROCESSING' AND b.deletion_state = 'ACTIVE'
          AND s.current_version = b.base_version))
      FOR UPDATE OF w, b, a, p`,
@@ -765,6 +797,16 @@ export class PostgresStore {
       // two overlapping batches therefore cannot deadlock by taking A/B in
       // opposite orders, and two versions of one form cannot both observe a
       // vacant published slot.
+      const publishedBundleHashes = [...new Set(forms
+        .filter((form) => publish
+          && (form.publishEligible || (form.developmentPublishEligible && allowTestOnlyPublish)))
+        .map((form) => form.questionBundleHash))].sort();
+      for (const bundleHash of publishedBundleHashes) {
+        await client.query(
+          "SELECT pg_advisory_xact_lock(hashtext('amc_open_delivery_bundle'), hashtext($1))",
+          [bundleHash]
+        );
+      }
       const formIds = [...new Set(forms.map((form) => form.id))].sort();
       for (const formId of formIds) {
         await client.query(
@@ -984,9 +1026,10 @@ export class PostgresStore {
            JOIN amc_practice.learning_submission_versions v ON v.id = w.learning_submission_version_id
            JOIN amc_practice.learning_submissions s ON s.id = v.learning_submission_id
            JOIN amc_practice.attempts a ON a.id = s.attempt_id AND a.student_id = s.student_id
+             AND a.attempt_mode = s.attempt_mode
            WHERE $2::boolean AND w.status = 'QUEUED' AND w.available_at <= $1
-             AND s.lifecycle_status = 'COMMITTED' AND r.status = 'QUEUED'
-             AND a.phase IN ('FINALIZED','RESET') AND v.context_status = 'CONTEXT_READY'
+             AND amc_practice.learning_entitlement_allows(s.id, 'EXISTING_WORK')
+             AND r.status = 'QUEUED' AND v.context_status = 'CONTEXT_READY'
              AND v.context_set_id = r.context_set_id AND w.input_hash = r.input_hash
              AND w.deletion_generation = r.deletion_generation
            UNION ALL
@@ -994,18 +1037,17 @@ export class PostgresStore {
            FROM amc_practice.learning_batch_work_items w
            JOIN amc_practice.learning_batches b ON b.id = w.batch_id
            JOIN amc_practice.learning_submissions s
-             ON s.id = b.learning_submission_id AND s.student_id = b.student_id
+            ON s.id = b.learning_submission_id AND s.student_id = b.student_id
             AND s.attempt_id = b.attempt_id AND s.form_id = b.form_id AND s.form_version = b.form_version
+            AND s.source_type = b.source_type
            JOIN amc_practice.attempts batch_attempt
              ON batch_attempt.id = b.attempt_id AND batch_attempt.student_id = b.student_id
             AND batch_attempt.form_id = b.form_id AND batch_attempt.form_version = b.form_version
-           JOIN amc_practice.submissions batch_final
-             ON batch_final.id = s.official_submission_id AND batch_final.attempt_id = batch_attempt.id
-            AND batch_final.kind = 'FINAL' AND s.official_submission_kind = 'FINAL'
+            AND batch_attempt.attempt_mode = s.attempt_mode
            WHERE $3::boolean AND w.work_type = 'BATCH_EXTRACTION' AND w.status = 'QUEUED'
              AND w.available_at <= $1 AND b.status = 'PROCESSING' AND b.deletion_state = 'ACTIVE'
-             AND b.deletion_generation = w.deletion_generation AND s.lifecycle_status = 'COMMITTED'
-             AND batch_attempt.phase IN ('FINALIZED','RESET')
+             AND b.deletion_generation = w.deletion_generation
+             AND amc_practice.learning_entitlement_allows(s.id, 'EXISTING_WORK')
              AND s.current_version = b.base_version
              AND (SELECT count(*) FROM amc_practice.learning_batch_work_items running
                   WHERE running.work_type = 'BATCH_EXTRACTION' AND running.status = 'RUNNING') < $4
@@ -1167,17 +1209,20 @@ export class PostgresStore {
          JOIN amc_practice.learning_submissions s
            ON s.id = b.learning_submission_id AND s.student_id = b.student_id
           AND s.attempt_id = b.attempt_id AND s.form_id = b.form_id AND s.form_version = b.form_version
+          AND s.source_type = b.source_type
          JOIN amc_practice.attempts t
            ON t.id = b.attempt_id AND t.student_id = b.student_id
           AND t.form_id = b.form_id AND t.form_version = b.form_version
-         JOIN amc_practice.submissions official
-           ON official.id = s.official_submission_id AND official.attempt_id = t.id
-          AND official.kind = 'FINAL' AND s.official_submission_kind = 'FINAL'
+          AND t.attempt_mode = s.attempt_mode
          LEFT JOIN amc_practice.student_provider_dispatch_state dispatch
            ON dispatch.student_id = b.student_id
          WHERE w.work_type = 'TRANSCRIBE_AUDIO' AND w.status = 'QUEUED' AND w.available_at <= $1
            AND w.deletion_generation = b.deletion_generation
-           AND s.lifecycle_status = 'COMMITTED' AND t.phase IN ('FINALIZED','RESET')
+           AND amc_practice.learning_entitlement_allows(s.id,
+             CASE WHEN b.deletion_state <> 'ACTIVE' OR b.status = 'FAILED'
+                    OR p.status IN ('DELETE_PENDING','DELETION_EVIDENCED',
+                      'PROVIDER_RETENTION_PENDING','PROVIDER_RETENTION_DELETION_CONFIRMED')
+                  THEN 'CLEANUP' ELSE 'EXISTING_WORK' END)
            AND (
              (b.deletion_state = 'ACTIVE' AND s.current_version = b.base_version
                AND ((b.status = 'PROCESSING' AND (
@@ -1190,6 +1235,8 @@ export class PostgresStore {
                    OR (p.status = 'DELETE_PENDING' AND a.status IN ('PURGE_PENDING','PURGED'))))
                  OR (b.status = 'FAILED' AND p.status = 'DELETE_PENDING'
                    AND a.status IN ('PURGE_PENDING','PURGED'))
+                 OR (b.status = 'FAILED' AND p.status = 'SUBMIT_MAY_HAVE_DELIVERED'
+                   AND a.status IN ('STORED','PURGE_PENDING','PURGED'))
                  OR (b.status = 'FAILED' AND p.status = 'DELETION_EVIDENCED'
                    AND a.status = 'PURGE_PENDING')
                  OR (b.status = 'FAILED' AND p.status IN (
@@ -3017,18 +3064,18 @@ export class PostgresStore {
        JOIN amc_practice.learning_submissions s
          ON s.id = b.learning_submission_id AND s.student_id = b.student_id
         AND s.attempt_id = b.attempt_id AND s.form_id = b.form_id AND s.form_version = b.form_version
+        AND s.source_type = b.source_type
        JOIN amc_practice.attempts a
          ON a.id = b.attempt_id AND a.student_id = b.student_id
         AND a.form_id = b.form_id AND a.form_version = b.form_version
-       JOIN amc_practice.submissions official
-         ON official.id = s.official_submission_id AND official.attempt_id = a.id
-        AND official.kind = 'FINAL' AND s.official_submission_kind = 'FINAL'
+        AND a.attempt_mode = s.attempt_mode
        WHERE w.id = $1 AND w.work_type = 'BATCH_EXTRACTION' AND w.status = 'RUNNING'
          AND w.lease_owner = $2 AND w.lease_token = $3 AND w.input_hash = $4
          AND w.deletion_generation = $5 AND b.deletion_generation = $5
          AND w.lease_expires_at > $6 AND b.status = 'PROCESSING'
-         AND b.deletion_state = 'ACTIVE' AND s.lifecycle_status = 'COMMITTED'
-         AND s.current_version = b.base_version AND a.phase IN ('FINALIZED','RESET')`,
+         AND b.deletion_state = 'ACTIVE'
+         AND amc_practice.learning_entitlement_allows(s.id, 'EXISTING_WORK')
+         AND s.current_version = b.base_version`,
       [input.workItemId, input.workerId, input.leaseToken, input.inputHash,
         input.deletionGeneration, input.now]
     );
@@ -3100,9 +3147,7 @@ export class PostgresStore {
          JOIN amc_practice.attempts a
            ON a.id = s.attempt_id AND a.student_id = s.student_id
           AND a.form_id = s.form_id AND a.form_version = s.form_version
-         JOIN amc_practice.submissions official
-           ON official.id = s.official_submission_id AND official.attempt_id = a.id
-          AND official.kind = 'FINAL' AND s.official_submission_kind = 'FINAL'
+          AND a.attempt_mode = s.attempt_mode
          JOIN amc_practice.form_revisions fr ON fr.form_id = v.form_id AND fr.version = v.form_version
          JOIN amc_practice.form_questions fq
            ON fq.form_id = v.form_id AND fq.form_version = v.form_version
@@ -3118,8 +3163,9 @@ export class PostgresStore {
            AND v.version_number = $8 AND r.version_number = $8
            AND v.evidence_hash = $9 AND r.evidence_hash = $9
            AND s.student_id = $10 AND a.student_id = $10
-           AND s.current_version = $11 AND s.lifecycle_status = 'COMMITTED'
-           AND a.phase IN ('FINALIZED','RESET') AND v.context_status = 'CONTEXT_READY'
+           AND s.current_version = $11
+           AND amc_practice.learning_entitlement_allows(s.id, 'EXISTING_WORK')
+           AND v.context_status = 'CONTEXT_READY'
            AND v.context_set_id = $12 AND r.context_set_id = $12 AND r.status = 'RUNNING'
            AND (v.batch_id IS NULL OR (b.deletion_state = 'ACTIVE' AND b.deletion_generation = $6))`,
         [input.workItemId, input.analysisRunId, input.workerId, input.leaseToken,
@@ -3179,14 +3225,16 @@ export class PostgresStore {
          JOIN amc_practice.learning_submission_versions v ON v.id = w.learning_submission_version_id
          JOIN amc_practice.learning_submissions s ON s.id = v.learning_submission_id
          JOIN amc_practice.attempts a ON a.id = s.attempt_id AND a.student_id = $7
+           AND a.attempt_mode = s.attempt_mode
          WHERE w.id = $1 AND r.id = $2 AND w.status = 'RUNNING' AND w.lease_owner = $3
            AND w.lease_token = $10
            AND r.status = 'RUNNING' AND w.learning_submission_version_id = v.id
            AND w.lease_expires_at > $4 AND w.input_hash = $5 AND r.input_hash = $5
            AND w.deletion_generation = $8 AND r.deletion_generation = $8
            AND v.version_number = $6
-           AND s.student_id = $7 AND s.lifecycle_status = 'COMMITTED'
-           AND a.phase IN ('FINALIZED','RESET') AND v.context_set_id = $9 AND r.context_set_id = $9
+           AND s.student_id = $7
+           AND amc_practice.learning_entitlement_allows(s.id, 'EXISTING_WORK')
+           AND v.context_set_id = $9 AND r.context_set_id = $9
          FOR UPDATE OF w, r, v, s`,
         [input.workItemId, input.analysisRunId, input.workerId, input.now, input.expectedInputHash,
           input.expectedVersionNumber, input.expectedStudentId, input.expectedDeletionGeneration,
@@ -3263,14 +3311,16 @@ export class PostgresStore {
          JOIN amc_practice.learning_submission_versions v ON v.id = w.learning_submission_version_id
          JOIN amc_practice.learning_submissions s ON s.id = v.learning_submission_id
          JOIN amc_practice.attempts a ON a.id = s.attempt_id AND a.student_id = $7
+           AND a.attempt_mode = s.attempt_mode
          WHERE w.id = $1 AND r.id = $2 AND w.status = 'RUNNING' AND w.lease_owner = $3
            AND w.lease_token = $10
            AND r.status = 'RUNNING' AND w.lease_expires_at > $4
            AND w.input_hash = $5 AND r.input_hash = $5
            AND w.deletion_generation = $8 AND r.deletion_generation = $8
            AND v.version_number = $6
-           AND s.student_id = $7 AND s.lifecycle_status = 'COMMITTED'
-           AND a.phase IN ('FINALIZED','RESET') AND v.context_set_id = $9 AND r.context_set_id = $9
+           AND s.student_id = $7
+           AND amc_practice.learning_entitlement_allows(s.id, 'EXISTING_WORK')
+           AND v.context_set_id = $9 AND r.context_set_id = $9
          FOR UPDATE OF w, r, v, s`,
         [input.workItemId, input.analysisRunId, input.workerId, input.now, input.expectedInputHash,
           input.expectedVersionNumber, input.expectedStudentId, input.expectedDeletionGeneration,
@@ -3338,7 +3388,8 @@ export class PostgresStore {
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))', [studentId, form.id]);
       const existing = await client.query(
         `SELECT * FROM amc_practice.attempts WHERE student_id = $1 AND form_id = $2
-         AND phase NOT IN ('FINALIZED', 'RESET') ORDER BY created_at DESC LIMIT 1 FOR UPDATE`,
+         AND attempt_mode = 'TIMED' AND phase NOT IN ('FINALIZED', 'RESET')
+         ORDER BY created_at DESC LIMIT 1 FOR UPDATE`,
         [studentId, form.id]
       );
       if (existing.rowCount) {
@@ -3363,7 +3414,8 @@ export class PostgresStore {
 
   async listAttemptsForStudent(studentId) {
     const result = await this.pool.query(
-      'SELECT * FROM amc_practice.attempts WHERE student_id = $1 ORDER BY created_at DESC', [studentId]
+      `SELECT * FROM amc_practice.attempts
+       WHERE student_id = $1 AND attempt_mode = 'TIMED' ORDER BY created_at DESC`, [studentId]
     );
     return result.rows.map(mapAttempt);
   }
@@ -3371,11 +3423,399 @@ export class PostgresStore {
   async listDeadlineCandidates(now) {
     const result = await this.pool.query(
       `SELECT id FROM amc_practice.attempts
-       WHERE phase = 'TIMED' AND clock_state = 'RUNNING' AND clock_started_at IS NOT NULL
+       WHERE attempt_mode = 'TIMED' AND phase = 'TIMED'
+       AND clock_state = 'RUNNING' AND clock_started_at IS NOT NULL
        AND clock_started_at + ((duration_ms - active_elapsed_ms) * interval '1 millisecond') <= $1`,
       [now]
     );
     return result.rows.map((row) => row.id);
+  }
+
+  async publishOpenReviewRelease({
+    formId, formVersion, contextSetId, authorityId, reasonCode, now, releaseId = randomUUID()
+  }) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const form = await getFormUsing(client, formId, formVersion);
+      const context = await loadApprovedContextSet(client, contextSetId);
+      if (!form) throw Object.assign(new Error('Open review form revision is missing.'), { code: 'FORM_REVISION_NOT_FOUND' });
+      if (!context) throw Object.assign(new Error('Approved context set is missing.'), { code: 'OPEN_REVIEW_CONTEXT_INVALID' });
+      const existing = await client.query(
+        'SELECT * FROM amc_practice.open_review_releases WHERE form_id = $1 AND form_version = $2',
+        [formId, formVersion]
+      );
+      if (existing.rowCount) {
+        if (existing.rows[0].context_set_id !== contextSetId) {
+          throw Object.assign(new Error('Exact form revision already has another open review release.'), {
+            code: 'OPEN_REVIEW_RELEASE_EXISTS'
+          });
+        }
+        await client.query('COMMIT');
+        return mapOpenReviewRelease(existing.rows[0]);
+      }
+      const releaseHash = openReviewReleaseHash({ form, context });
+      const inserted = await client.query(
+        `INSERT INTO amc_practice.open_review_releases
+         (id, schema_version, form_id, form_version, context_set_id, release_hash,
+          manifest_hash, content_hash, question_bundle_hash, context_artifact_set_hash,
+          approval_authority_id, status, transition_authority_id, transition_reason_code,
+          published_at, state_revision, created_at, updated_at)
+         VALUES ($1,'amc-open-review-release-v1',$2,$3,$4,$5,$6,$7,$8,$9,$10,'ACTIVE',$11,$12,$13,0,$13,$13)
+         RETURNING *`,
+        [releaseId, formId, formVersion, contextSetId, releaseHash, form.manifestHash,
+          form.contentHash, form.questionBundleHash, context.artifactSetHash,
+          context.approvalAuthorityId, authorityId, reasonCode, now]
+      );
+      await client.query('COMMIT');
+      return mapOpenReviewRelease(inserted.rows[0]);
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      if (error?.code === '23505'
+          && ['amc_one_active_open_review_release_idx', 'amc_one_active_open_review_bundle_idx']
+            .includes(error.constraint)) {
+        throw Object.assign(new Error('The question bundle already has an active open review release.'), {
+          code: 'OPEN_REVIEW_ACTIVE_CONFLICT'
+        });
+      }
+      if (error?.code === '23505'
+          && ['amc_open_review_release_exact_unique', 'open_review_releases_release_hash_key']
+            .includes(error.constraint)) {
+        throw Object.assign(new Error('Exact form revision already has an open review release.'), {
+          code: 'OPEN_REVIEW_RELEASE_EXISTS'
+        });
+      }
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async transitionOpenReviewRelease({ releaseId, nextStatus, authorityId, reasonCode, now }) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const identity = await client.query(
+        `SELECT form_id, form_version, question_bundle_hash
+         FROM amc_practice.open_review_releases WHERE id = $1`, [releaseId]
+      );
+      if (!identity.rowCount) {
+        await client.query('COMMIT');
+        return null;
+      }
+      await client.query(
+        "SELECT pg_advisory_xact_lock(hashtext('amc_open_delivery_bundle'), hashtext($1))",
+        [identity.rows[0].question_bundle_hash]
+      );
+      await client.query(
+        `SELECT 1 FROM amc_practice.form_revisions
+         WHERE form_id = $1 AND version = $2 FOR UPDATE`,
+        [identity.rows[0].form_id, identity.rows[0].form_version]
+      );
+      const release = await client.query(
+        'SELECT * FROM amc_practice.open_review_releases WHERE id = $1 FOR UPDATE', [releaseId]
+      );
+      const current = release.rows[0];
+      const allowed = (current.status === OPEN_REVIEW_STATUS.ACTIVE
+          && [OPEN_REVIEW_STATUS.SUPERSEDED_VALID, OPEN_REVIEW_STATUS.REVOKED].includes(nextStatus))
+        || (current.status === OPEN_REVIEW_STATUS.SUPERSEDED_VALID && nextStatus === OPEN_REVIEW_STATUS.REVOKED);
+      if (!allowed) throw Object.assign(new Error('Invalid open review release transition.'), {
+        code: 'OPEN_REVIEW_TRANSITION_INVALID'
+      });
+      const transitioned = await client.query(
+        `UPDATE amc_practice.open_review_releases
+         SET status = $2, transition_authority_id = $3, transition_reason_code = $4,
+             superseded_at = CASE WHEN $2 = 'SUPERSEDED_VALID' THEN $5 ELSE superseded_at END,
+             revoked_at = CASE WHEN $2 = 'REVOKED' THEN $5 ELSE NULL END,
+             state_revision = state_revision + 1, updated_at = $5
+         WHERE id = $1 RETURNING *`,
+        [releaseId, nextStatus, authorityId, reasonCode, now]
+      );
+      if (nextStatus === OPEN_REVIEW_STATUS.REVOKED) {
+        await client.query(
+          `UPDATE amc_practice.learning_work_items work
+           SET status = 'CANCELLED', lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+               last_error_code = 'OPEN_REVIEW_REVOKED', updated_at = $2
+           FROM amc_practice.learning_submission_versions version
+           JOIN amc_practice.learning_submissions submission
+             ON submission.id = version.learning_submission_id
+           WHERE submission.open_review_release_id = $1
+             AND work.learning_submission_version_id = version.id
+             AND work.status IN ('BLOCKED_CONTEXT','QUEUED','RUNNING')`, [releaseId, now]
+        );
+        await client.query(
+          `UPDATE amc_practice.learning_analysis_runs run
+           SET status = 'CANCELLED', completed_at = $2, last_error_code = 'OPEN_REVIEW_REVOKED'
+           FROM amc_practice.learning_submission_versions version
+           JOIN amc_practice.learning_submissions submission
+             ON submission.id = version.learning_submission_id
+           WHERE submission.open_review_release_id = $1
+             AND run.learning_submission_version_id = version.id
+             AND run.status IN ('QUEUED','RUNNING')`, [releaseId, now]
+        );
+        await client.query(
+          `UPDATE amc_practice.learning_batch_work_items work
+           SET status = 'CANCELLED', lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+               last_error_code = 'OPEN_REVIEW_REVOKED', updated_at = $2
+           FROM amc_practice.learning_batches batch
+           JOIN amc_practice.learning_submissions submission
+             ON submission.id = batch.learning_submission_id
+           WHERE submission.open_review_release_id = $1 AND work.batch_id = batch.id
+             AND work.work_type = 'BATCH_EXTRACTION'
+             AND work.status IN ('BLOCKED_DEPENDENCY','QUEUED','RUNNING')`, [releaseId, now]
+        );
+        await client.query(
+          `UPDATE amc_practice.learning_batches batch
+           SET status = 'FAILED', failure_code = 'OPEN_REVIEW_REVOKED', updated_at = $2
+           FROM amc_practice.learning_submissions submission
+           WHERE submission.id = batch.learning_submission_id
+             AND submission.open_review_release_id = $1
+             AND batch.status IN ('PROCESSING','NEEDS_CONFIRMATION')`, [releaseId, now]
+        );
+        await client.query(
+          `UPDATE amc_practice.learning_batch_provider_artifacts artifact
+           SET status = CASE
+                 WHEN artifact.status = 'ACTIVE' THEN 'DELETE_PENDING'
+                 WHEN artifact.status IN ('UPLOAD_MAY_HAVE_DELIVERED','UPLOAD_RESPONSE_PERSISTED')
+                   THEN 'PROVIDER_RETENTION_PENDING'
+                 ELSE artifact.status END,
+               updated_at = $2
+           FROM amc_practice.learning_batches batch
+           JOIN amc_practice.learning_submissions submission
+             ON submission.id = batch.learning_submission_id
+           WHERE artifact.batch_id = batch.id AND submission.open_review_release_id = $1
+             AND artifact.status IN ('ACTIVE','UPLOAD_MAY_HAVE_DELIVERED','UPLOAD_RESPONSE_PERSISTED')`,
+          [releaseId, now]
+        );
+        await client.query(
+          `UPDATE amc_practice.learning_batch_assets asset
+           SET status = 'PURGE_PENDING', updated_at = $2
+           FROM amc_practice.learning_batch_provider_artifacts artifact
+           JOIN amc_practice.learning_batches batch ON batch.id = artifact.batch_id
+           JOIN amc_practice.learning_submissions submission
+             ON submission.id = batch.learning_submission_id
+           WHERE asset.batch_id = artifact.batch_id AND asset.id = artifact.asset_id
+             AND submission.open_review_release_id = $1 AND asset.status = 'STORED'
+             AND artifact.status IN ('DELETE_PENDING','PROVIDER_RETENTION_PENDING')`, [releaseId, now]
+        );
+        await client.query(
+          `UPDATE amc_practice.learning_batch_work_items work
+           SET status = CASE WHEN artifact.status = 'INTENT_RECORDED' THEN 'CANCELLED' ELSE 'QUEUED' END,
+               available_at = $2, lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+               last_error_code = CASE WHEN artifact.status = 'INTENT_RECORDED'
+                 THEN 'OPEN_REVIEW_REVOKED' ELSE 'OPEN_REVIEW_REVOKED_CLEANUP' END,
+               updated_at = $2
+           FROM amc_practice.learning_batch_provider_artifacts artifact
+           JOIN amc_practice.learning_batches batch ON batch.id = artifact.batch_id
+           JOIN amc_practice.learning_submissions submission
+             ON submission.id = batch.learning_submission_id
+           WHERE work.batch_id = artifact.batch_id AND work.asset_id = artifact.asset_id
+             AND work.work_type = 'TRANSCRIBE_AUDIO' AND submission.open_review_release_id = $1
+             AND artifact.status IN ('INTENT_RECORDED','SUBMIT_MAY_HAVE_DELIVERED',
+               'DELETE_PENDING','PROVIDER_RETENTION_PENDING')`, [releaseId, now]
+        );
+      }
+      await client.query('COMMIT');
+      return mapOpenReviewRelease(transitioned.rows[0]);
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async listActiveOpenReviewReleases() {
+    const result = await this.pool.query(
+      `SELECT * FROM amc_practice.open_review_releases
+       WHERE status = 'ACTIVE' ORDER BY form_id, published_at DESC`
+    );
+    return result.rows.map(mapOpenReviewRelease);
+  }
+
+  async getOpenReviewRelease(id) {
+    const result = await this.pool.query(
+      'SELECT * FROM amc_practice.open_review_releases WHERE id = $1', [id]
+    );
+    return mapOpenReviewRelease(result.rows[0]);
+  }
+
+  async listOpenReviewWorkspaces(studentId) {
+    const result = await this.pool.query(
+      `SELECT to_jsonb(attempt.*) AS attempt, to_jsonb(submission.*) AS submission,
+              release.status AS release_status,
+              CASE WHEN version.creation_reason = 'OPEN_REVIEW_ANCHOR' THEN 'AWAITING_BATCH'
+                ELSE COALESCE(work.status, 'BLOCKED_CONTEXT') END AS analysis_status
+       FROM amc_practice.attempts attempt
+       JOIN amc_practice.learning_submissions submission ON submission.attempt_id = attempt.id
+       JOIN amc_practice.open_review_releases release ON release.id = submission.open_review_release_id
+       JOIN amc_practice.learning_submission_versions version
+         ON version.learning_submission_id = submission.id
+        AND version.version_number = submission.current_version
+       LEFT JOIN amc_practice.learning_work_items work
+         ON work.learning_submission_version_id = version.id
+        AND work.work_type = 'ANALYZE_SUBMISSION'
+       WHERE attempt.student_id = $1 AND attempt.attempt_mode = 'OPEN_REVIEW'
+       ORDER BY attempt.created_at DESC`, [studentId]
+    );
+    return result.rows.map((row) => ({
+      attempt: mapAttempt(row.attempt),
+      learningSubmission: mapLearningSubmission(row.submission),
+      releaseStatus: row.release_status,
+      analysisStatus: row.analysis_status
+    }));
+  }
+
+  async findOrCreateOpenReviewWorkspace({
+    studentId, releaseId, idempotencyKey, requestHash, now
+  }) {
+    const client = await this.pool.connect();
+    const scope = `open-review-release:${releaseId}:workspace`;
+    try {
+      await client.query('BEGIN');
+      const replay = await client.query(
+        `SELECT request_hash, response_body FROM amc_practice.idempotency_records
+         WHERE student_id = $1 AND scope = $2 AND key = $3 FOR UPDATE`,
+        [studentId, scope, idempotencyKey]
+      );
+      if (replay.rowCount) {
+        if (replay.rows[0].request_hash !== requestHash) {
+          throw Object.assign(new Error('Idempotency key was reused.'), { code: 'IDEMPOTENCY_KEY_REUSED' });
+        }
+        const bundle = await client.query(
+          `SELECT to_jsonb(attempt.*) AS attempt, to_jsonb(submission.*) AS submission
+           FROM amc_practice.attempts attempt
+           JOIN amc_practice.learning_submissions submission ON submission.attempt_id = attempt.id
+           WHERE attempt.id = $1 AND attempt.student_id = $2`,
+          [replay.rows[0].response_body.attemptId, studentId]
+        );
+        if (!bundle.rowCount) throw new Error('Open review idempotency record lost its aggregate.');
+        await client.query('COMMIT');
+        return { attempt: mapAttempt(bundle.rows[0].attempt),
+          learningSubmission: mapLearningSubmission(bundle.rows[0].submission), created: false };
+      }
+      const releaseIdentity = await client.query(
+        `SELECT form_id, form_version, question_bundle_hash
+         FROM amc_practice.open_review_releases WHERE id = $1`, [releaseId]
+      );
+      if (!releaseIdentity.rowCount) {
+        await client.query('COMMIT');
+        return null;
+      }
+      await client.query('SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))',
+        [studentId, releaseIdentity.rows[0].form_id]);
+      // A missing idempotency row cannot itself be locked.  Serialize the
+      // student's workspace identity first, then re-read so two concurrent
+      // first requests with the same key both replay the committed aggregate
+      // instead of racing the idempotency primary key.
+      const serializedReplay = await client.query(
+        `SELECT request_hash, response_body FROM amc_practice.idempotency_records
+         WHERE student_id = $1 AND scope = $2 AND key = $3 FOR UPDATE`,
+        [studentId, scope, idempotencyKey]
+      );
+      if (serializedReplay.rowCount) {
+        if (serializedReplay.rows[0].request_hash !== requestHash) {
+          throw Object.assign(new Error('Idempotency key was reused.'), { code: 'IDEMPOTENCY_KEY_REUSED' });
+        }
+        const bundle = await client.query(
+          `SELECT to_jsonb(attempt.*) AS attempt, to_jsonb(submission.*) AS submission
+           FROM amc_practice.attempts attempt
+           JOIN amc_practice.learning_submissions submission ON submission.attempt_id = attempt.id
+           WHERE attempt.id = $1 AND attempt.student_id = $2`,
+          [serializedReplay.rows[0].response_body.attemptId, studentId]
+        );
+        if (!bundle.rowCount) throw new Error('Open review idempotency record lost its aggregate.');
+        await client.query('COMMIT');
+        return { attempt: mapAttempt(bundle.rows[0].attempt),
+          learningSubmission: mapLearningSubmission(bundle.rows[0].submission), created: false };
+      }
+      await client.query(
+        "SELECT pg_advisory_xact_lock(hashtext('amc_open_delivery_bundle'), hashtext($1))",
+        [releaseIdentity.rows[0].question_bundle_hash]
+      );
+      await client.query(
+        `SELECT 1 FROM amc_practice.form_revisions WHERE form_id = $1 AND version = $2 FOR UPDATE`,
+        [releaseIdentity.rows[0].form_id, releaseIdentity.rows[0].form_version]
+      );
+      const releaseResult = await client.query(
+        `SELECT * FROM amc_practice.open_review_releases
+         WHERE id = $1 AND status = 'ACTIVE' FOR UPDATE`, [releaseId]
+      );
+      if (!releaseResult.rowCount) {
+        await client.query('COMMIT');
+        return null;
+      }
+      const release = mapOpenReviewRelease(releaseResult.rows[0]);
+      let aggregate = await client.query(
+        `SELECT to_jsonb(attempt.*) AS attempt, to_jsonb(submission.*) AS submission
+         FROM amc_practice.attempts attempt
+         JOIN amc_practice.learning_submissions submission ON submission.attempt_id = attempt.id
+         WHERE attempt.student_id = $1 AND attempt.form_id = $2 AND attempt.form_version = $3
+           AND attempt.attempt_mode = 'OPEN_REVIEW' FOR UPDATE OF attempt, submission`,
+        [studentId, release.formId, release.formVersion]
+      );
+      const created = !aggregate.rowCount;
+      if (!aggregate.rowCount) {
+        const form = await getFormUsing(client, release.formId, release.formVersion);
+        const attemptId = randomUUID();
+        const submissionId = randomUUID();
+        const versionId = randomUUID();
+        const evidenceHash = canonicalHash({
+          schema: 'amc-open-review-anchor-v1', releaseHash: release.releaseHash, studentId
+        });
+        const attempt = await client.query(
+          `INSERT INTO amc_practice.attempts
+           (id, student_id, form_id, form_version, duration_ms, attempt_mode, phase, clock_state,
+            active_elapsed_ms, clock_started_at, answers_revision, reasoning_revision, state_revision,
+            limit_reached_at, finalized_at, reset_at, created_at, updated_at)
+           VALUES ($1,$2,$3,$4,$5,'OPEN_REVIEW','OPEN_REVIEW','PAUSED',0,NULL,0,0,0,NULL,NULL,NULL,$6,$6)
+           RETURNING *`, [attemptId, studentId, release.formId, release.formVersion, form.durationMs, now]
+        );
+        const submission = await client.query(
+          `INSERT INTO amc_practice.learning_submissions
+           (id, student_id, attempt_id, official_submission_id, official_submission_kind,
+            form_id, form_version, source_type, lifecycle_status, current_version,
+            attempt_mode, open_review_release_id, deletion_generation, deleted_at, created_at, updated_at)
+           VALUES ($1,$2,$3,NULL,NULL,$4,$5,'OPEN_REVIEW','COMMITTED',1,'OPEN_REVIEW',$6,0,NULL,$7,$7)
+           RETURNING *`, [submissionId, studentId, attemptId, release.formId, release.formVersion, release.id, now]
+        );
+        await client.query(
+          `INSERT INTO amc_practice.learning_submission_versions
+           (id, learning_submission_id, version_number, form_id, form_version,
+            answers_revision, reasoning_revision, creation_reason, batch_id,
+            context_status, context_set_id, evidence_hash, created_at)
+           VALUES ($1,$2,1,$3,$4,0,0,'OPEN_REVIEW_ANCHOR',NULL,'CONTEXT_READY',$5,$6,$7)`,
+          [versionId, submissionId, release.formId, release.formVersion, release.contextSetId, evidenceHash, now]
+        );
+        await client.query(
+          `INSERT INTO amc_practice.learning_question_responses
+           (learning_submission_version_id, form_id, form_version, question_number,
+            selected_option, answer_origin, reasoning_text, reasoning_origin, created_at)
+           SELECT $1, form_id, form_version, question_number,
+                  NULL, 'OPEN_REVIEW_BLANK', '', 'NONE', $4
+           FROM amc_practice.form_questions
+           WHERE form_id = $2 AND form_version = $3 ORDER BY question_number`,
+          [versionId, release.formId, release.formVersion, now]
+        );
+        aggregate = { rows: [{ attempt: attempt.rows[0], submission: submission.rows[0] }] };
+      }
+      const attempt = mapAttempt(aggregate.rows[0].attempt);
+      const submission = mapLearningSubmission(aggregate.rows[0].submission);
+      await client.query(
+        `INSERT INTO amc_practice.idempotency_records
+         (student_id, scope, key, request_hash, response_status, response_body, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7)`,
+        [studentId, scope, idempotencyKey, requestHash, created ? 201 : 200,
+          JSON.stringify({ attemptId: attempt.id }), now]
+      );
+      await client.query('COMMIT');
+      return { attempt, learningSubmission: submission, created };
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async withAttemptLock(attemptId, work) {
@@ -3413,8 +3853,9 @@ async function insertAttempt(client, { studentId, form, now }) {
   const id = randomUUID();
   const inserted = await client.query(
     `INSERT INTO amc_practice.attempts
-     (id, student_id, form_id, form_version, duration_ms, phase, clock_state, active_elapsed_ms, clock_started_at, answers_revision, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $5, 'TIMED', 'RUNNING', 0, $6, 0, $6, $6) RETURNING *`,
+     (id, student_id, form_id, form_version, duration_ms, attempt_mode, phase, clock_state,
+      active_elapsed_ms, clock_started_at, answers_revision, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, 'TIMED', 'TIMED', 'RUNNING', 0, $6, 0, $6, $6) RETURNING *`,
     [id, studentId, form.id, form.version, form.durationMs, now]
   );
   for (const question of form.questions) {
@@ -3634,6 +4075,25 @@ class PostgresAttemptTransaction {
     return result.rowCount ? loadApprovedContextSet(this.client, result.rows[0].id) : null;
   }
 
+  async getApprovedContextSetById(contextSetId) {
+    return loadApprovedContextSet(this.client, contextSetId);
+  }
+
+  async getLearningEntitlement({ purpose = 'EXISTING_WORK' } = {}) {
+    const result = await this.client.query(
+      `SELECT submission.*, to_jsonb(release.*) AS release,
+              amc_practice.learning_entitlement_allows(submission.id, $2) AS allowed
+       FROM amc_practice.learning_submissions submission
+       LEFT JOIN amc_practice.open_review_releases release
+         ON release.id = submission.open_review_release_id
+       WHERE submission.attempt_id = $1`, [this.attempt.id, purpose]
+    );
+    if (!result.rowCount) return null;
+    const submission = mapLearningSubmission(result.rows[0]);
+    const release = submission.openReviewReleaseId ? mapOpenReviewRelease(result.rows[0].release) : null;
+    return { allowed: result.rows[0].allowed, sourceType: submission.sourceType, release, submission };
+  }
+
   async getLearningReportBundle() {
     const bundle = await this.getLearningSubmissionBundle();
     if (!bundle) return null;
@@ -3727,6 +4187,16 @@ class PostgresAttemptTransaction {
   async createLearningBatch({
     batch, assets, reservations, studentQuotaBytes, globalQuotaBytes, activeBatchLimit
   }) {
+    const entitled = await this.client.query(
+      `SELECT source_type, amc_practice.learning_entitlement_allows(id, 'NEW_BATCH') AS allowed
+       FROM amc_practice.learning_submissions WHERE id = $1 AND attempt_id = $2 FOR UPDATE`,
+      [batch.learningSubmissionId, this.attempt.id]
+    );
+    if (!entitled.rowCount || !entitled.rows[0].allowed || entitled.rows[0].source_type !== batch.sourceType) {
+      throw Object.assign(new Error('Learning submission cannot create a batch.'), {
+        code: 'LEARNING_ENTITLEMENT_DENIED'
+      });
+    }
     await this.client.query(
       "SELECT pg_advisory_xact_lock(hashtext('amc_batch_quota'), hashtext('global'))"
     );
@@ -3755,12 +4225,12 @@ class PostgresAttemptTransaction {
     }
     await this.client.query(
       `INSERT INTO amc_practice.learning_batches
-       (id, student_id, attempt_id, learning_submission_id, base_version, form_id, form_version,
+       (id, student_id, attempt_id, learning_submission_id, base_version, form_id, form_version, source_type,
         status, mapping_revision, has_audio, deletion_state, deletion_generation, deleted_at,
         submitted_at, committed_at, failure_code, created_at, updated_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)`,
       [batch.id, batch.studentId, batch.attemptId, batch.learningSubmissionId, batch.baseVersion,
-        batch.formId, batch.formVersion, batch.status, batch.mappingRevision, batch.hasAudio,
+        batch.formId, batch.formVersion, batch.sourceType, batch.status, batch.mappingRevision, batch.hasAudio,
         batch.deletionState, batch.deletionGeneration, batch.deletedAt, batch.submittedAt,
         batch.committedAt, batch.failureCode, batch.createdAt, batch.updatedAt]
     );
@@ -3795,7 +4265,10 @@ class PostgresAttemptTransaction {
               b.deletion_state, b.deletion_generation, a.*
        FROM amc_practice.learning_batches b
        JOIN amc_practice.learning_batch_assets a ON a.batch_id = b.id
+       JOIN amc_practice.learning_submissions s
+         ON s.id = b.learning_submission_id AND s.source_type = b.source_type
        WHERE b.id = $1 AND a.id = $2 AND b.attempt_id = $3
+         AND amc_practice.learning_entitlement_allows(s.id, 'EXISTING_WORK')
        FOR UPDATE OF b, a`, [batchId, assetId, this.attempt.id]
     );
     if (!selected.rowCount) return null;
@@ -3833,7 +4306,10 @@ class PostgresAttemptTransaction {
       `SELECT b.status AS batch_status, b.deletion_state, b.deletion_generation, a.*
        FROM amc_practice.learning_batches b
        JOIN amc_practice.learning_batch_assets a ON a.batch_id = b.id
+       JOIN amc_practice.learning_submissions s
+         ON s.id = b.learning_submission_id AND s.source_type = b.source_type
        WHERE b.id = $1 AND a.id = $2 AND b.attempt_id = $3
+         AND amc_practice.learning_entitlement_allows(s.id, 'EXISTING_WORK')
        FOR UPDATE OF b, a`, [batchId, assetId, this.attempt.id]
     );
     if (!locked.rowCount) return false;
@@ -3895,6 +4371,11 @@ class PostgresAttemptTransaction {
   async submitLearningBatch({ batchId, workItems, now }) {
     const bundle = await loadLearningBatchBundleUsing(this.client, this.attempt.id, batchId, { lock: true });
     if (!bundle) return null;
+    const entitlement = await this.client.query(
+      `SELECT amc_practice.learning_entitlement_allows(learning_submission_id, 'EXISTING_WORK') AS allowed
+       FROM amc_practice.learning_batches WHERE id = $1`, [batchId]
+    );
+    if (!entitlement.rows[0]?.allowed) return null;
     if (bundle.batch.status !== 'DRAFT' || bundle.batch.deletionState !== 'ACTIVE'
         || bundle.assets.some((asset) => !['NORMALIZED', 'STORED'].includes(asset.status))) {
       throw Object.assign(new Error('Every reserved asset must be uploaded.'), { code: 'BATCH_NOT_SUBMITTABLE' });
@@ -3939,6 +4420,7 @@ class PostgresAttemptTransaction {
        WHERE id = $1 AND attempt_id = $5 AND deletion_state = 'ACTIVE'
          AND status = 'PROCESSING' AND mapping_revision = $2 - 1
          AND deletion_generation = $9
+         AND amc_practice.learning_entitlement_allows(learning_submission_id, 'EXISTING_WORK')
          AND EXISTS (
            SELECT 1 FROM amc_practice.learning_batch_work_items w
            WHERE w.batch_id = learning_batches.id AND w.work_type = 'BATCH_EXTRACTION'
@@ -3986,11 +4468,14 @@ class PostgresAttemptTransaction {
 
   async commitLearningBatch({ batchId, expectedMappingRevision, aggregate, now }) {
     const locked = await this.client.query(
-      `SELECT b.*, s.current_version, s.lifecycle_status,
+      `SELECT b.*, s.current_version, s.lifecycle_status, s.source_type AS submission_source_type,
+              release.context_set_id AS release_context_set_id,
+              amc_practice.learning_entitlement_allows(s.id, 'EXISTING_WORK') AS entitled,
               s.student_id AS submission_student_id, s.form_id AS submission_form_id,
               s.form_version AS submission_form_version
        FROM amc_practice.learning_batches b
        JOIN amc_practice.learning_submissions s ON s.id = b.learning_submission_id
+       LEFT JOIN amc_practice.open_review_releases release ON release.id = s.open_review_release_id
        WHERE b.id = $1 AND b.attempt_id = $2 FOR UPDATE OF b, s`, [batchId, this.attempt.id]
     );
     if (!locked.rowCount) throw Object.assign(new Error('Batch commit conflict.'), { code: 'BATCH_COMMIT_CONFLICT' });
@@ -3998,7 +4483,9 @@ class PostgresAttemptTransaction {
     if (row.current_version !== row.base_version) {
       throw Object.assign(new Error('Batch base version is stale.'), { code: 'BATCH_BASE_VERSION_STALE' });
     }
-    if (row.lifecycle_status !== 'COMMITTED' || row.student_id !== row.submission_student_id
+    if (!row.entitled || row.source_type !== row.submission_source_type
+        || (row.source_type === 'OPEN_REVIEW' && aggregate.version.contextSetId !== row.release_context_set_id)
+        || row.lifecycle_status !== 'COMMITTED' || row.student_id !== row.submission_student_id
         || row.form_id !== row.submission_form_id || row.form_version !== row.submission_form_version
         || row.deletion_state !== 'ACTIVE' || row.status !== 'NEEDS_CONFIRMATION'
         || row.mapping_revision !== expectedMappingRevision

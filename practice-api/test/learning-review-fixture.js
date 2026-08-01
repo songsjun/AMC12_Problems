@@ -30,10 +30,16 @@ export function learningReviewForm() {
   };
 }
 
-function solution(form, question, index, candidateSchemaVersion, { visual = false } = {}) {
+function solution(form, question, index, candidateSchemaVersion, {
+  visual = false,
+  identityOffset = 0,
+  bodyLabel = ''
+} = {}) {
+  const identity = index + identityOffset;
+  const solutionId = `solution-${String(identity).padStart(3, '0')}`;
   const bodyMarkdown = visual
-    ? `Approved method ${index} needs ![diagram](private.png).\n`
-    : `Approved safe method ${index} for question ${question.number}.\n`;
+    ? `Approved method ${identity}${bodyLabel ? ` ${bodyLabel}` : ''} needs ![diagram](private.png).\n`
+    : `Approved safe method ${identity}${bodyLabel ? ` ${bodyLabel}` : ''} for question ${question.number}.\n`;
   const sourceRef = {
     path: `fixture/Problem_${String(question.number).padStart(2, '0')}.md`,
     sha256: H.source,
@@ -54,7 +60,7 @@ function solution(form, question, index, candidateSchemaVersion, { visual = fals
     formId: form.id,
     formVersion: form.version,
     questionNumber: question.number,
-    solutionId: `solution-00${index}`,
+    solutionId,
     decision: 'approved',
     bodySha256,
     sourceRef: { path: sourceRef.path, sha256: sourceRef.sha256 },
@@ -65,13 +71,13 @@ function solution(form, question, index, candidateSchemaVersion, { visual = fals
     methodTags: approval.methodTags
   });
   const authorityReceipt = {
-    receiptId: `receipt:${form.id}:${question.number}:${index}`,
+    receiptId: `receipt:${form.id}:${question.number}:${identity}`,
     authorityId: APPROVAL_AUTHORITY_ID,
     issuedAt: `2026-08-1${index}T12:00:00Z`,
     status: 'active'
   };
   return {
-    solutionId: `solution-00${index}`, title: `Approved method ${index}`,
+    solutionId, title: `Approved method ${identity}${bodyLabel ? ` ${bodyLabel}` : ''}`,
     bodyMarkdown, bodySha256, sourceRef,
     modelEligibility: {
       eligible: !visual,
@@ -94,7 +100,8 @@ function receiptSet(receipts) {
 
 function buildForm(form, {
   readyNumbers = [1], candidateSchemaVersion = 'amc-question-context-candidate-set-v1',
-  visualQuestionNumbers = [], visualSolutionNumbers = [], extraVisualSolutionNumbers = []
+  visualQuestionNumbers = [], visualSolutionNumbers = [], extraVisualSolutionNumbers = [],
+  solutionIdentityOffset = 0, solutionBodyLabel = ''
 } = {}) {
   const approved = new Set(readyNumbers);
   const visualQuestions = new Set(visualQuestionNumbers);
@@ -108,12 +115,17 @@ function buildForm(form, {
     const choices = Object.fromEntries(question.choices.map((choice) => [choice.option, choice.textMarkdown]));
     const projection = { number: question.number, sourceRef, promptMarkdown: question.promptMarkdown, choices };
     const approvedSolutions = approved.has(question.number)
-      ? [solution(form, question, 1, candidateSchemaVersion), solution(form, question, 2, candidateSchemaVersion, {
-        visual: visualSolutions.has(question.number)
+      ? [solution(form, question, 1, candidateSchemaVersion, {
+        identityOffset: solutionIdentityOffset, bodyLabel: solutionBodyLabel
+      }), solution(form, question, 2, candidateSchemaVersion, {
+        visual: visualSolutions.has(question.number),
+        identityOffset: solutionIdentityOffset, bodyLabel: solutionBodyLabel
       })]
       : [];
     if (approved.has(question.number) && extraVisualSolutions.has(question.number)) {
-      approvedSolutions.push(solution(form, question, 3, candidateSchemaVersion, { visual: true }));
+      approvedSolutions.push(solution(form, question, 3, candidateSchemaVersion, {
+        visual: true, identityOffset: solutionIdentityOffset, bodyLabel: solutionBodyLabel
+      }));
     }
     const questionVisual = visualQuestions.has(question.number) || alreadyVisual;
     const eligibleCount = approvedSolutions.filter((item) => item.modelEligibility.eligible).length;

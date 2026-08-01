@@ -79,6 +79,8 @@ Each stage has its own tests, independent review, reflection, and Git commit.
 - `ADR-003`: extracted community solutions require explicit human approval and rights metadata.
 - `ADR-004`: reports and tutor threads pin immutable context snapshots.
 - `ADR-005`: private uploads use bounded local storage and auditable deletion.
+- `ADR-006`: open review is a separate delivery mode with release-pinned
+  context and revocation-aware worker entitlement.
 
 ## Module direction
 

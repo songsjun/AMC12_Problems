@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { Readable } from 'node:stream';
 import { promisify } from 'node:util';
 import { segmentBatchGatewaySources } from '../src/batch-ingest/domain.js';
+import { BatchExtractionWorker } from '../src/batch-ingest/worker.js';
 import { PrivateUploadStore } from '../src/infrastructure/private-upload-store.js';
 import { runMigrations } from '../src/migrate.js';
 import { PostgresStore } from '../src/postgres-store.js';
@@ -127,7 +128,8 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     '004_one_published_form_revision.sql',
     '005_learning_submission_core.sql',
     '006_approved_context_learning_reports.sql',
-    '007_batch_ingest.sql'
+    '007_batch_ingest.sql',
+    '008_open_review.sql'
   ]);
 
   const batchTables = await store.pool.query(
@@ -178,6 +180,49 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     'student_provider_dispatch_state',
     'student_resource_budget_windows'
   ]);
+  const openReviewSchema = await store.pool.query(
+    `SELECT table_name
+     FROM information_schema.tables
+     WHERE table_schema = 'amc_practice'
+       AND table_name = ANY($1::text[])
+     ORDER BY table_name`, [[
+      'open_review_releases', 'open_review_release_events'
+    ]]
+  );
+  assert.deepEqual(openReviewSchema.rows.map((row) => row.table_name), [
+    'open_review_release_events', 'open_review_releases'
+  ]);
+  const openReviewColumns = await store.pool.query(
+    `SELECT table_name, column_name, is_nullable
+     FROM information_schema.columns
+     WHERE table_schema = 'amc_practice'
+       AND (table_name, column_name) IN (
+         ('attempts', 'attempt_mode'),
+         ('learning_batches', 'source_type'),
+         ('learning_submissions', 'attempt_mode'),
+         ('learning_submissions', 'official_submission_id'),
+         ('learning_submissions', 'open_review_release_id'),
+         ('learning_submissions', 'deletion_generation'),
+         ('learning_submissions', 'deleted_at')
+       )
+     ORDER BY table_name, column_name`
+  );
+  assert.deepEqual(openReviewColumns.rows, [
+    { table_name: 'attempts', column_name: 'attempt_mode', is_nullable: 'NO' },
+    { table_name: 'learning_batches', column_name: 'source_type', is_nullable: 'NO' },
+    { table_name: 'learning_submissions', column_name: 'attempt_mode', is_nullable: 'NO' },
+    { table_name: 'learning_submissions', column_name: 'deleted_at', is_nullable: 'YES' },
+    { table_name: 'learning_submissions', column_name: 'deletion_generation', is_nullable: 'NO' },
+    { table_name: 'learning_submissions', column_name: 'official_submission_id', is_nullable: 'YES' },
+    { table_name: 'learning_submissions', column_name: 'open_review_release_id', is_nullable: 'YES' }
+  ]);
+  const activeOpenBundleIndex = await store.pool.query(
+    `SELECT indexdef FROM pg_indexes
+     WHERE schemaname = 'amc_practice' AND indexname = 'amc_one_active_open_review_bundle_idx'`
+  );
+  assert.equal(activeOpenBundleIndex.rowCount, 1);
+  assert.match(activeOpenBundleIndex.rows[0].indexdef, /question_bundle_hash/);
+  assert.match(activeOpenBundleIndex.rows[0].indexdef, /WHERE \(status = 'ACTIVE'::text\)/);
 
   const orphanTranscriptId = randomUUID();
   const orphanCreatedAt = new Date('2026-08-01T10:00:00.000Z');
@@ -338,7 +383,7 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
      ORDER BY conname`, [[
       'amc_learning_batch_base_version_fk',
       'amc_learning_batch_committed_version_fk',
-      'amc_learning_batch_final_lineage_fk',
+      'amc_learning_batch_source_lineage_fk',
       'amc_learning_batch_result_version_fk',
       'amc_learning_version_batch_lineage_fk'
     ]]
@@ -346,8 +391,8 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
   assert.deepEqual(batchLineageConstraints.rows.map((row) => row.conname), [
     'amc_learning_batch_base_version_fk',
     'amc_learning_batch_committed_version_fk',
-    'amc_learning_batch_final_lineage_fk',
     'amc_learning_batch_result_version_fk',
+    'amc_learning_batch_source_lineage_fk',
     'amc_learning_version_batch_lineage_fk'
   ]);
   assert.equal(batchLineageConstraints.rows.every((row) => row.definition.includes('FOREIGN KEY')), true);
@@ -383,7 +428,7 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     { table_name: 'learning_submission_versions', column_name: 'context_set_id', is_nullable: 'YES' },
     { table_name: 'learning_submission_versions', column_name: 'context_status', is_nullable: 'NO' },
     { table_name: 'learning_submission_versions', column_name: 'creation_reason', is_nullable: 'NO' },
-    { table_name: 'learning_submissions', column_name: 'official_submission_kind', is_nullable: 'NO' },
+    { table_name: 'learning_submissions', column_name: 'official_submission_kind', is_nullable: 'YES' },
     { table_name: 'learning_work_items', column_name: 'analysis_run_id', is_nullable: 'YES' },
     { table_name: 'learning_work_items', column_name: 'deletion_generation', is_nullable: 'NO' },
     { table_name: 'learning_work_items', column_name: 'input_hash', is_nullable: 'NO' }
@@ -394,6 +439,7 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
      WHERE connamespace = 'amc_practice'::regnamespace
        AND conname IN (
          'amc_attempts_id_student_form_unique',
+         'amc_attempts_mode_lineage_unique',
          'amc_learning_submission_current_version_fk'
        )
      ORDER BY conname`
@@ -404,6 +450,12 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
       condeferrable: false,
       condeferred: false,
       definition: 'UNIQUE (id, student_id, form_id, form_version)'
+    },
+    {
+      conname: 'amc_attempts_mode_lineage_unique',
+      condeferrable: false,
+      condeferred: false,
+      definition: 'UNIQUE (id, student_id, form_id, form_version, attempt_mode)'
     },
     {
       conname: 'amc_learning_submission_current_version_fk',
@@ -1473,6 +1525,491 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
   const fairCounts = [...new Set(fairClaimStudents)].map((studentId) =>
     fairClaimStudents.filter((candidate) => candidate === studentId).length).sort();
   assert.deepEqual(fairCounts, [1, 2]);
+
+  const openCandidate = async (label, questionBundleHash = null) => {
+    const form = {
+      ...learningReviewForm(),
+      id: `pg-open-${label}-${randomUUID()}`,
+      version: 'open-v1',
+      title: `Postgres open review ${label}`,
+      contentHash: createHash('sha256').update(`open-content:${label}:${randomUUID()}`).digest('hex'),
+      questionBundleHash: questionBundleHash
+        || createHash('sha256').update(`open-bundle:${label}:${randomUUID()}`).digest('hex'),
+      manifestHash: createHash('sha256').update(`open-manifest:${label}:${randomUUID()}`).digest('hex')
+    };
+    form.sourceManifestHash = form.manifestHash;
+    await store.importForm(form, { publish: false, allowTestOnlyPublish: true });
+    const artifact = approvedContextArtifact(form, {
+      readyNumbers: Array.from({ length: 25 }, (_, index) => index + 1)
+    });
+    const [context] = await new ApprovedContextImporter({
+      store, trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
+    }).import(artifact, approvalReceiptsForArtifact(artifact));
+    return { form, context };
+  };
+
+  // OPEN_REVIEW v1 is created atomically by two independent API processes.
+  // It contains no official/timer/work rows, and a missing idempotency row is
+  // re-read after the no-row advisory lock so both same-key calls succeed.
+  const open = await openCandidate('workspace');
+  const openRelease = await store.publishOpenReviewRelease({
+    releaseId: randomUUID(), formId: open.form.id, formVersion: open.form.version,
+    contextSetId: open.context.id, authorityId: 'operator:postgres-open-review',
+    reasonCode: 'POSTGRES_OPEN_RELEASE', now: new Date('2026-08-20T12:00:00.000Z')
+  });
+  const openStudent = await service.seedAccessCode({
+    code: `pg-open-student-${randomUUID()}`, displayName: 'Postgres open review student'
+  });
+  const officialBeforeOpen = await store.pool.query(
+    `SELECT (SELECT count(*)::integer FROM amc_practice.submissions) AS submissions,
+            (SELECT count(*)::integer FROM amc_practice.submission_answers) AS answers`
+  );
+  const workspaceRace = await Promise.all([
+    service.createOpenReviewWorkspace(openStudent.id, openRelease.id, 'postgres-open-workspace-race'),
+    secondService.createOpenReviewWorkspace(openStudent.id, openRelease.id, 'postgres-open-workspace-race')
+  ]);
+  assert.equal(workspaceRace.filter((result) => result.created).length, 1);
+  assert.equal(new Set(workspaceRace.map((result) => result.workspace.id)).size, 1);
+  const openAttemptId = workspaceRace[0].workspace.id;
+  const openRows = await store.pool.query(
+    `SELECT a.attempt_mode, a.phase, a.clock_state, a.active_elapsed_ms,
+            ls.source_type, ls.official_submission_id, ls.official_submission_kind,
+            ls.open_review_release_id, lsv.creation_reason, lsv.context_set_id,
+            (SELECT count(*)::integer FROM amc_practice.learning_question_responses r
+              WHERE r.learning_submission_version_id = lsv.id) AS response_count,
+            (SELECT count(*)::integer FROM amc_practice.learning_question_responses r
+              WHERE r.learning_submission_version_id = lsv.id
+                AND r.answer_origin = 'OPEN_REVIEW_BLANK' AND r.selected_option IS NULL
+                AND r.reasoning_origin = 'NONE' AND r.reasoning_text = '') AS blank_count,
+            (SELECT count(*)::integer FROM amc_practice.learning_work_items w
+              WHERE w.learning_submission_version_id = lsv.id) AS work_count,
+            (SELECT count(*)::integer FROM amc_practice.timer_events e
+              WHERE e.attempt_id = a.id) AS timer_count
+     FROM amc_practice.attempts a
+     JOIN amc_practice.learning_submissions ls ON ls.attempt_id = a.id
+     JOIN amc_practice.learning_submission_versions lsv
+       ON lsv.learning_submission_id = ls.id AND lsv.version_number = 1
+     WHERE a.id = $1`, [openAttemptId]
+  );
+  assert.deepEqual(openRows.rows[0], {
+    attempt_mode: 'OPEN_REVIEW', phase: 'OPEN_REVIEW', clock_state: 'PAUSED', active_elapsed_ms: '0',
+    source_type: 'OPEN_REVIEW', official_submission_id: null, official_submission_kind: null,
+    open_review_release_id: openRelease.id, creation_reason: 'OPEN_REVIEW_ANCHOR',
+    context_set_id: open.context.id, response_count: 25, blank_count: 25, work_count: 0, timer_count: 0
+  });
+  const officialAfterOpen = await store.pool.query(
+    `SELECT (SELECT count(*)::integer FROM amc_practice.submissions) AS submissions,
+            (SELECT count(*)::integer FROM amc_practice.submission_answers) AS answers`
+  );
+  assert.deepEqual(officialAfterOpen.rows, officialBeforeOpen.rows);
+  await assert.rejects(
+    () => store.pool.query(
+      `INSERT INTO amc_practice.timer_events(attempt_id, event_type, occurred_at, metadata)
+       VALUES ($1, 'ILLEGAL_OPEN_TIMER', now(), '{}'::jsonb)`, [openAttemptId]
+    ),
+    (error) => error.code === 'P0001' && /cannot have .*official.*timer records/.test(error.message)
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `INSERT INTO amc_practice.submissions
+       (id, attempt_id, kind, slot, trigger, active_elapsed_ms, scoring_policy,
+        total_points, maximum_points, answered_count, correct_count, incorrect_count,
+        blank_count, unscored_count, created_at)
+       VALUES ($1,$2,'FINAL','FINAL','ILLEGAL_OPEN_FINAL',0,'{}'::jsonb,
+               0,0,0,0,0,0,0,now())`, [randomUUID(), openAttemptId]
+    ),
+    (error) => error.code === 'P0001' && /cannot have .*official.*timer records/.test(error.message)
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `INSERT INTO amc_practice.attempt_answers
+       (attempt_id, question_number, selected_option, updated_at)
+       VALUES ($1,1,'A',now())`, [openAttemptId]
+    ),
+    (error) => error.code === 'P0001' && /cannot have timed answer/.test(error.message)
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      "UPDATE amc_practice.attempts SET attempt_mode = 'TIMED' WHERE id = $1", [openAttemptId]
+    ),
+    (error) => error.code === 'P0001' && /identity is immutable/.test(error.message)
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `INSERT INTO amc_practice.open_review_releases
+       (id, schema_version, form_id, form_version, context_set_id, release_hash,
+        manifest_hash, content_hash, question_bundle_hash, context_artifact_set_hash,
+        approval_authority_id, status, transition_authority_id, transition_reason_code,
+        published_at, superseded_at, state_revision, created_at, updated_at)
+       VALUES ($1, 'amc-open-review-release-v1', $2, $3, $4, $5, $6, $7, $8, $9,
+               $10, 'SUPERSEDED_VALID', 'operator:postgres-open-review', 'ILLEGAL_INITIAL_STATE',
+               $11, $11, 1, $11, $11)`,
+      [randomUUID(), open.form.id, open.form.version, open.context.id,
+        createHash('sha256').update(randomUUID()).digest('hex'), open.form.manifestHash,
+        open.form.contentHash, open.form.questionBundleHash, open.context.artifactSetHash,
+        open.context.approvalAuthorityId, new Date('2026-08-20T12:00:01.000Z')]
+    ),
+    (error) => error.code === 'P0001' && /canonical ACTIVE state/.test(error.message)
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.form_revisions SET title = title || ' mutated'
+       WHERE form_id = $1 AND version = $2`, [open.form.id, open.form.version]
+    ),
+    (error) => error.code === 'P0001' && /form revision is immutable/.test(error.message)
+  );
+
+  // Child immutability must guard the OLD lineage as well as NEW. Otherwise
+  // an UPDATE could move a released solution into a compatible unreleased
+  // context while leaving the release's stored bundle hash unchanged.
+  const moveTarget = await openCandidate('move-target', open.form.questionBundleHash);
+  const pinnedSolutionsBeforeMove = await store.pool.query(
+    `SELECT count(*)::integer AS count,
+            string_agg(solution_position::text || ':' || body_sha256, ',' ORDER BY solution_position) AS digest
+     FROM amc_practice.approved_context_solutions
+     WHERE context_set_id = $1 AND question_number = 1`, [open.context.id]
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.approved_context_solutions
+       SET context_set_id = $1, solution_position = 3,
+           artifact_solution_id = $2, authority_receipt_id = $3
+       WHERE context_set_id = $4 AND question_number = 1 AND solution_position = 1`,
+      [moveTarget.context.id, `moved-solution-${randomUUID()}`, `moved-receipt-${randomUUID()}`,
+        open.context.id]
+    ),
+    (error) => error.code === 'P0001' && /context content is immutable/.test(error.message)
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.form_questions
+       SET form_id = $1, form_version = $2
+       WHERE form_id = $3 AND form_version = $4 AND question_number = 1`,
+      [moveTarget.form.id, moveTarget.form.version, open.form.id, open.form.version]
+    ),
+    (error) => error.code === 'P0001' && /form questions are immutable/.test(error.message)
+  );
+  const pinnedSolutionsAfterMove = await store.pool.query(
+    `SELECT count(*)::integer AS count,
+            string_agg(solution_position::text || ':' || body_sha256, ',' ORDER BY solution_position) AS digest
+     FROM amc_practice.approved_context_solutions
+     WHERE context_set_id = $1 AND question_number = 1`, [open.context.id]
+  );
+  assert.deepEqual(pinnedSolutionsAfterMove.rows, pinnedSolutionsBeforeMove.rows);
+  assert.equal((await store.getOpenReviewRelease(openRelease.id)).questionBundleHash,
+    openRelease.questionBundleHash);
+
+  const originalOpenSolutionIds = open.context.questions[0].solutions
+    .filter((solution) => solution.modelEligibility.eligible)
+    .map((solution) => solution.artifactSolutionId);
+  const newerOpenArtifact = approvedContextArtifact(open.form, {
+    readyNumbers: Array.from({ length: 25 }, (_, index) => index + 1),
+    solutionIdentityOffset: 100,
+    solutionBodyLabel: 'newer-active-context'
+  });
+  const [newerOpenContext] = await new ApprovedContextImporter({
+    store, trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
+  }).import(newerOpenArtifact, approvalReceiptsForArtifact(newerOpenArtifact));
+  const newerOpenSolutionIds = newerOpenContext.questions[0].solutions
+    .filter((solution) => solution.modelEligibility.eligible)
+    .map((solution) => solution.artifactSolutionId);
+  assert.notDeepEqual(newerOpenSolutionIds, originalOpenSolutionIds);
+  assert.deepEqual(newerOpenSolutionIds, ['solution-101', 'solution-102']);
+  const activeOpenContext = await store.pool.query(
+    `SELECT id FROM amc_practice.approved_context_sets
+     WHERE form_id = $1 AND form_version = $2 AND active`, [open.form.id, open.form.version]
+  );
+  assert.deepEqual(activeOpenContext.rows, [{ id: newerOpenContext.id }]);
+  assert.equal((await store.getOpenReviewRelease(openRelease.id)).contextSetId, open.context.id,
+    'the release retains its original context id after a newer context becomes active');
+
+  const createOpenTextBatch = async (label, text) => {
+    const declaredBytes = Buffer.byteLength(text);
+    const created = await service.createLearningBatch(
+      openStudent.id, openAttemptId, `${label}-create-${randomUUID()}`,
+      { files: [{ displayName: `${label}.md`, kind: 'TEXT', contentType: 'text/markdown', declaredBytes }] }
+    );
+    await service.uploadLearningBatchAsset(
+      openStudent.id, openAttemptId, created.batch.id, created.batch.assets[0].id,
+      `${label}-upload-${randomUUID()}`, Readable.from([text]), declaredBytes
+    );
+    await service.submitLearningBatch(
+      openStudent.id, openAttemptId, created.batch.id, `${label}-submit-${randomUUID()}`
+    );
+    return created.batch.id;
+  };
+  const openFirstBatchId = await createOpenTextBatch(
+    'pg-open-first', 'Question 1: A. I subtracted the same quantity from both sides.'
+  );
+  const openSecondBatchId = await createOpenTextBatch(
+    'pg-open-second', 'Question 2: B. I compared the possible cases.'
+  );
+  const openWorkAt = new Date('2026-08-20T12:00:01.000Z');
+  const openFirstClaim = await store.claimNextAiWork({
+    workerId: 'pg-open-first-extractor', now: openWorkAt, leaseMs: 120_000,
+    acceptedKinds: ['BATCH_EXTRACTION']
+  });
+  assert.equal(openFirstClaim.kind, 'BATCH_EXTRACTION');
+  assert.ok([openFirstBatchId, openSecondBatchId].includes(openFirstClaim.job.batch.id));
+  const openClaimedBatchId = openFirstClaim.job.batch.id;
+  const openRemainingBatchId = openClaimedBatchId === openFirstBatchId
+    ? openSecondBatchId : openFirstBatchId;
+
+  const successor = await openCandidate('successor', open.form.questionBundleHash);
+  await assert.rejects(
+    () => store.publishOpenReviewRelease({
+      releaseId: randomUUID(), formId: successor.form.id, formVersion: successor.form.version,
+      contextSetId: successor.context.id, authorityId: 'operator:postgres-open-review',
+      reasonCode: 'PREMATURE_SUCCESSOR', now: new Date('2026-08-20T12:00:01.500Z')
+    }),
+    (error) => error.code === 'OPEN_REVIEW_ACTIVE_CONFLICT'
+  );
+
+  await store.transitionOpenReviewRelease({
+    releaseId: openRelease.id, nextStatus: 'SUPERSEDED_VALID',
+    authorityId: 'operator:postgres-open-review', reasonCode: 'POSTGRES_SUCCESSOR_READY',
+    now: new Date('2026-08-20T12:00:02.000Z')
+  });
+  const supersededWorkspace = await service.getOpenReviewWorkspace(openStudent.id, openAttemptId);
+  assert.equal(supersededWorkspace.releaseStatus, 'SUPERSEDED_VALID');
+  assert.equal(supersededWorkspace.protectedAccessStatus, 'AVAILABLE_FOR_EXISTING_WORK');
+
+  // Work claimed while ACTIVE remains valid under SUPERSEDED_VALID. Claim the
+  // sibling before committing v2 so both leases still match base version 1.
+  const openPrepared = await service.prepareLearningBatchDecomposition(
+    openStudent.id, openAttemptId, openClaimedBatchId
+  );
+  const openDecomposed = await service.recordLearningBatchDecomposition(
+    openStudent.id, openAttemptId, openClaimedBatchId, {
+      masterPlanHash: openPrepared.plan.masterPlanHash,
+      outputs: batchGatewayOutputs(openPrepared.plan),
+      runMetadata: batchGatewayRunMetadata(openPrepared.plan),
+      workerFence: {
+        workerId: openFirstClaim.job.workItem.leaseOwner,
+        leaseToken: openFirstClaim.job.workItem.leaseToken,
+        inputHash: openFirstClaim.job.workItem.inputHash,
+        deletionGeneration: openFirstClaim.job.workItem.deletionGeneration
+      }
+    }
+  );
+  const openSecondClaim = await secondStore.claimNextAiWork({
+    workerId: 'pg-open-second-extractor', now: openWorkAt, leaseMs: 120_000,
+    acceptedKinds: ['BATCH_EXTRACTION']
+  });
+  assert.equal(openSecondClaim.job.batch.id, openRemainingBatchId);
+  const mappedOpenItem = openDecomposed.batch.mapping.items.find((item) => !item.unmapped);
+  const openCommitted = await service.confirmLearningBatch(
+    openStudent.id, openAttemptId, openClaimedBatchId, `pg-open-confirm-${randomUUID()}`, {
+      mappingRevision: openDecomposed.batch.mapping.revision,
+      responses: [{
+        questionNumber: 1, selectedOption: 'A', reasoningText: mappedOpenItem.evidenceText,
+        sourceItemIds: [mappedOpenItem.id]
+      }],
+      discardedItemIds: openDecomposed.batch.mapping.items
+        .filter((item) => item.unmapped).map((item) => item.id)
+    }
+  );
+  assert.equal(openCommitted.batch.status, 'COMMITTED');
+  assert.equal(openCommitted.batch.result.scoringScope, 'MAPPED_QUESTIONS_ONLY');
+  assert.equal(openCommitted.batch.result.items.length, 1);
+  assert.equal((await service.getLearningSubmission(openStudent.id, openAttemptId)).version, 2);
+  assert.equal((await store.pool.query(
+    `SELECT context_set_id FROM amc_practice.learning_submission_versions
+     WHERE learning_submission_id = $1 AND version_number = 2`,
+    [openCommitted.batch.learningSubmissionId]
+  )).rows[0].context_set_id, open.context.id,
+  'OPEN_REVIEW v2 pins release.contextSetId instead of the newer active context');
+  const openInference = new FakeInferenceClient();
+  const openAnalysisWorker = new LearningReviewWorker({
+    store: secondStore, inferenceClient: openInference,
+    workerId: 'pg-open-analysis-worker', leaseMs: 120_000,
+    clock: () => new Date('2026-08-20T12:00:02.100Z')
+  });
+  assert.deepEqual(await openAnalysisWorker.runOnce(),
+    { processed: true, status: 'COMPLETE', providerCalls: 1 });
+  assert.equal(openInference.calls.length, 1);
+  assert.equal(openInference.calls[0].question.solutions.length, 2);
+  assert.deepEqual(openInference.calls[0].question.solutions.map((solution) => solution.solution_id),
+    originalOpenSolutionIds);
+  assert.notDeepEqual(openInference.calls[0].question.solutions.map((solution) => solution.solution_id),
+    newerOpenSolutionIds, 'analysis cannot drift to the newer active context for the same form');
+  assert.equal((await service.getLearningReport(openStudent.id, openAttemptId)).status, 'COMPLETE');
+  const listedOpenWorkspace = (await service.listOpenReviewWorkspaces(openStudent.id))
+    .find((workspace) => workspace.id === openAttemptId);
+  assert.equal(listedOpenWorkspace.analysisStatus, 'SUCCEEDED');
+
+  const successorRelease = await store.publishOpenReviewRelease({
+    releaseId: randomUUID(), formId: successor.form.id, formVersion: successor.form.version,
+    contextSetId: successor.context.id, authorityId: 'operator:postgres-open-review',
+    reasonCode: 'POSTGRES_SUCCESSOR_RELEASE', now: new Date('2026-08-20T12:00:03.000Z')
+  });
+  assert.equal(successorRelease.questionBundleHash, openRelease.questionBundleHash,
+    'a successor may pin a new exact form/context revision for the same question bundle');
+  await store.transitionOpenReviewRelease({
+    releaseId: openRelease.id, nextStatus: 'REVOKED',
+    authorityId: 'operator:postgres-open-review', reasonCode: 'POSTGRES_CONTENT_REVOCATION',
+    now: new Date('2026-08-20T12:00:03.500Z')
+  });
+  await assert.rejects(
+    () => service.getLearningReport(openStudent.id, openAttemptId),
+    (error) => error.code === 'OPEN_REVIEW_REVOKED'
+  );
+  const revokedOpenWorkspace = await service.getOpenReviewWorkspace(openStudent.id, openAttemptId);
+  assert.equal(revokedOpenWorkspace.releaseStatus, 'REVOKED');
+  assert.equal(revokedOpenWorkspace.protectedAccessStatus, 'PROTECTED_RESULTS_WITHHELD');
+  assert.equal(revokedOpenWorkspace.analysisStatus, 'SUCCEEDED');
+  assert.equal(await secondStore.authorizeBatchExtractionProviderCall({
+    workItemId: openSecondClaim.job.workItem.id,
+    workerId: openSecondClaim.job.workItem.leaseOwner,
+    leaseToken: openSecondClaim.job.workItem.leaseToken,
+    inputHash: openSecondClaim.job.workItem.inputHash,
+    deletionGeneration: openSecondClaim.job.workItem.deletionGeneration,
+    now: new Date('2026-08-20T12:00:03.600Z')
+  }), false);
+  const revokedGateway = {
+    calls: [],
+    async decomposeChunk(...args) {
+      this.calls.push(args);
+      throw new Error('provider must not run without post-revoke authorization');
+    }
+  };
+  const revokedExtractionWorker = new BatchExtractionWorker({
+    store: secondStore, service: secondService, gatewayClient: revokedGateway,
+    workerId: 'pg-open-second-extractor', leaseMs: 120_000,
+    clock: () => new Date('2026-08-20T12:00:03.600Z')
+  });
+  assert.deepEqual(await revokedExtractionWorker.processClaimed(openSecondClaim.job),
+    { processed: false, staleWrite: true });
+  assert.equal(revokedGateway.calls.length, 0,
+    'a claim cancelled by committed revoke cannot begin a new provider authorization');
+  const revokedOpenBatch = await service.getLearningBatch(
+    openStudent.id, openAttemptId, openClaimedBatchId
+  );
+  assert.equal(revokedOpenBatch.batch.result, null);
+  assert.equal(revokedOpenBatch.batch.resultWithheldReason, 'OPEN_REVIEW_REVOKED');
+  assert.ok(revokedOpenBatch.batch.confirmation);
+  assert.equal(/correctOption|acceptedOptions|isCorrect|"points"/.test(JSON.stringify(revokedOpenBatch)), false);
+  const pgOpenEntitlements = await store.withAttemptLock(openAttemptId, async (tx) => ({
+    existing: await tx.getLearningEntitlement({ purpose: 'EXISTING_WORK' }),
+    cleanup: await tx.getLearningEntitlement({ purpose: 'CLEANUP' })
+  }));
+  assert.equal(pgOpenEntitlements.existing.allowed, false);
+  assert.equal(pgOpenEntitlements.cleanup.allowed, true);
+  const deletedOpenBatch = await service.deleteLearningBatch(
+    openStudent.id, openAttemptId, openClaimedBatchId, `pg-open-delete-${randomUUID()}`
+  );
+  assert.equal(deletedOpenBatch.batch.result, null);
+  assert.equal(/correctOption|acceptedOptions|isCorrect|"points"/.test(JSON.stringify(deletedOpenBatch)), false);
+  const officialAfterOpenLifecycle = await store.pool.query(
+    `SELECT (SELECT count(*)::integer FROM amc_practice.submissions) AS submissions,
+            (SELECT count(*)::integer FROM amc_practice.submission_answers) AS answers`
+  );
+  assert.deepEqual(officialAfterOpenLifecycle.rows, officialBeforeOpen.rows,
+    'OPEN_REVIEW v1/v2, report, revocation, and cleanup never touch official tables');
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.open_review_release_events SET reason_code = 'MUTATED'
+       WHERE release_id = $1 AND event_type = 'PUBLISHED'`, [openRelease.id]
+    ),
+    (error) => error.code === 'P0001' && /append-only/.test(error.message)
+  );
+
+  // The database is the final arbiter for release-vs-release races across
+  // distinct form IDs that nevertheless contain the same question bundle.
+  const activeReleaseRaceBundle = createHash('sha256')
+    .update(`active-release-race:${randomUUID()}`).digest('hex');
+  const activeReleaseLeft = await openCandidate('active-race-left', activeReleaseRaceBundle);
+  const activeReleaseRight = await openCandidate('active-race-right', activeReleaseRaceBundle);
+  const activeReleaseRace = await Promise.allSettled([
+    store.publishOpenReviewRelease({
+      releaseId: randomUUID(), formId: activeReleaseLeft.form.id,
+      formVersion: activeReleaseLeft.form.version, contextSetId: activeReleaseLeft.context.id,
+      authorityId: 'operator:postgres-open-review', reasonCode: 'ACTIVE_RELEASE_RACE_LEFT',
+      now: new Date('2026-08-20T12:00:03.700Z')
+    }),
+    secondStore.publishOpenReviewRelease({
+      releaseId: randomUUID(), formId: activeReleaseRight.form.id,
+      formVersion: activeReleaseRight.form.version, contextSetId: activeReleaseRight.context.id,
+      authorityId: 'operator:postgres-open-review', reasonCode: 'ACTIVE_RELEASE_RACE_RIGHT',
+      now: new Date('2026-08-20T12:00:03.700Z')
+    })
+  ]);
+  assert.equal(activeReleaseRace.filter((result) => result.status === 'fulfilled').length, 1);
+  const rejectedActiveRelease = activeReleaseRace.find((result) => result.status === 'rejected');
+  assert.equal(rejectedActiveRelease.reason.code, 'OPEN_REVIEW_ACTIVE_CONFLICT');
+  assert.equal((await store.pool.query(
+    `SELECT count(*)::integer AS count FROM amc_practice.open_review_releases
+     WHERE question_bundle_hash = $1 AND status = 'ACTIVE'`, [activeReleaseRaceBundle]
+  )).rows[0].count, 1);
+
+  // Every delivery-mode race locks the bundle before a form row. Across two
+  // pools exactly one side commits, including clones with different form IDs.
+  const attemptRaceBundle = createHash('sha256').update(`attempt-race:${randomUUID()}`).digest('hex');
+  const attemptOpen = await openCandidate('attempt-race-open', attemptRaceBundle);
+  const attemptTimedForm = {
+    ...learningReviewForm(), id: `pg-open-attempt-race-timed-${randomUUID()}`, version: 'timed-v1',
+    contentHash: createHash('sha256').update(randomUUID()).digest('hex'),
+    questionBundleHash: attemptRaceBundle,
+    manifestHash: createHash('sha256').update(randomUUID()).digest('hex')
+  };
+  attemptTimedForm.sourceManifestHash = attemptTimedForm.manifestHash;
+  await store.importForm(attemptTimedForm, { publish: false, allowTestOnlyPublish: true });
+  const attemptDeliveryRace = await Promise.allSettled([
+    store.publishOpenReviewRelease({
+      releaseId: randomUUID(), formId: attemptOpen.form.id, formVersion: attemptOpen.form.version,
+      contextSetId: attemptOpen.context.id, authorityId: 'operator:postgres-open-review',
+      reasonCode: 'ATTEMPT_RACE_RELEASE', now: new Date('2026-08-20T12:00:04.000Z')
+    }),
+    secondStore.pool.query(
+      `INSERT INTO amc_practice.attempts
+       (id, student_id, form_id, form_version, duration_ms, attempt_mode, phase, clock_state,
+        active_elapsed_ms, clock_started_at, answers_revision, reasoning_revision, state_revision,
+        created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,'TIMED','TIMED','RUNNING',0,$6,0,0,0,$6,$6)`,
+      [randomUUID(), openStudent.id, attemptTimedForm.id, attemptTimedForm.version,
+        attemptTimedForm.durationMs, new Date('2026-08-20T12:00:04.000Z')]
+    )
+  ]);
+  assert.equal(attemptDeliveryRace.filter((result) => result.status === 'fulfilled').length, 1);
+  const attemptFenceCount = await store.pool.query(
+    `SELECT
+       (SELECT count(*)::integer FROM amc_practice.open_review_releases
+          WHERE question_bundle_hash = $1) +
+       (SELECT count(*)::integer FROM amc_practice.attempts a
+          JOIN amc_practice.form_revisions f ON f.form_id = a.form_id AND f.version = a.form_version
+          WHERE a.attempt_mode = 'TIMED' AND f.question_bundle_hash = $1) AS count`,
+    [attemptRaceBundle]
+  );
+  assert.equal(attemptFenceCount.rows[0].count, 1);
+
+  const publishRaceBundle = createHash('sha256').update(`publish-race:${randomUUID()}`).digest('hex');
+  const publishOpen = await openCandidate('publish-race-open', publishRaceBundle);
+  const publishTimedForm = {
+    ...learningReviewForm(), id: `pg-open-publish-race-timed-${randomUUID()}`, version: 'timed-v1',
+    contentHash: createHash('sha256').update(randomUUID()).digest('hex'),
+    questionBundleHash: publishRaceBundle,
+    manifestHash: createHash('sha256').update(randomUUID()).digest('hex')
+  };
+  publishTimedForm.sourceManifestHash = publishTimedForm.manifestHash;
+  await store.importForm(publishTimedForm, { publish: false, allowTestOnlyPublish: true });
+  const publicationDeliveryRace = await Promise.allSettled([
+    store.publishOpenReviewRelease({
+      releaseId: randomUUID(), formId: publishOpen.form.id, formVersion: publishOpen.form.version,
+      contextSetId: publishOpen.context.id, authorityId: 'operator:postgres-open-review',
+      reasonCode: 'PUBLICATION_RACE_RELEASE', now: new Date('2026-08-20T12:00:05.000Z')
+    }),
+    secondStore.importForm(publishTimedForm, { publish: true, allowTestOnlyPublish: true })
+  ]);
+  assert.equal(publicationDeliveryRace.filter((result) => result.status === 'fulfilled').length, 1);
+  const publicationFenceCount = await store.pool.query(
+    `SELECT
+       (SELECT count(*)::integer FROM amc_practice.open_review_releases
+          WHERE question_bundle_hash = $1) +
+       (SELECT count(*)::integer FROM amc_practice.form_revisions
+          WHERE published = true AND question_bundle_hash = $1) AS count`,
+    [publishRaceBundle]
+  );
+  assert.equal(publicationFenceCount.rows[0].count, 1);
 
   await service.reset(reviewStudent.id, reviewAttempt.attempt.id, 'pg-review-reset-1');
   assert.equal((await service.getLearningReport(reviewStudent.id, reviewAttempt.attempt.id)).status, 'COMPLETE');

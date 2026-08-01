@@ -25,6 +25,12 @@ import { newOpaqueToken } from './config.js';
 import { analysisInputHash } from './learning-review/canonical.js';
 import { publicLearningReport } from './learning-review/report.js';
 import { BatchPracticeService } from './batch-ingest/service.js';
+import {
+  ATTEMPT_MODE,
+  OPEN_REVIEW_STATUS,
+  publicOpenReviewRelease,
+  publicOpenReviewWorkspace
+} from './open-review/domain.js';
 
 const PRELIMINARY_SLOT = 'PRELIMINARY';
 const FINAL_SLOT = 'FINAL';
@@ -63,6 +69,13 @@ function ensureString(value, name, { min = 1, max = 512 } = {}) {
 function ensureAttemptId(value) {
   if (typeof value !== 'string' || !UUID_PATTERN.test(value)) {
     throw badRequest('INVALID_ATTEMPT_ID', 'attemptId must be a UUID.');
+  }
+  return value;
+}
+
+function ensureUuid(value, name) {
+  if (typeof value !== 'string' || !UUID_PATTERN.test(value)) {
+    throw badRequest('VALIDATION_ERROR', `${name} must be a UUID.`);
   }
   return value;
 }
@@ -167,6 +180,15 @@ function assertExpectedSubmissionRevisions(attempt, input) {
 function assertOwned(attempt, studentId) {
   if (!attempt) throw notFound('ATTEMPT_NOT_FOUND', 'The practice attempt was not found.');
   if (attempt.studentId !== studentId) throw notFound('ATTEMPT_NOT_FOUND', 'The practice attempt was not found.');
+}
+
+function assertTimedAttempt(attempt) {
+  if (attempt.attemptMode === ATTEMPT_MODE.OPEN_REVIEW || attempt.phase === PHASES.OPEN_REVIEW) {
+    throw conflict(
+      'OPEN_REVIEW_OPERATION_NOT_ALLOWED',
+      'This timed-practice operation is not available in an open review workspace.'
+    );
+  }
 }
 
 function userStudent(student) {
@@ -427,11 +449,100 @@ export class PracticeService {
     return publicForm(form);
   }
 
+  async listOpenReviews() {
+    const releases = await this.store.listActiveOpenReviewReleases();
+    const result = [];
+    for (const release of releases) {
+      const form = await this.store.getForm(release.formId, release.formVersion);
+      if (form) result.push(publicOpenReviewRelease(release, form));
+    }
+    return result;
+  }
+
+  async getOpenReview(releaseId) {
+    ensureUuid(releaseId, 'releaseId');
+    const release = await this.store.getOpenReviewRelease(releaseId);
+    if (!release || release.status !== OPEN_REVIEW_STATUS.ACTIVE) {
+      throw notFound('OPEN_REVIEW_NOT_FOUND', 'The requested open review was not found.');
+    }
+    const form = await this.store.getForm(release.formId, release.formVersion);
+    if (!form) throw new Error('Open review release lost its pinned form.');
+    return publicOpenReviewRelease(release, form, { includeForm: true });
+  }
+
+  async createOpenReviewWorkspace(studentId, releaseId, idempotencyKey) {
+    ensureUuid(releaseId, 'releaseId');
+    const key = normalizeIdempotencyKey(idempotencyKey);
+    const hash = requestHash('create-open-review-workspace', { releaseId });
+    let result;
+    try {
+      result = await this.store.findOrCreateOpenReviewWorkspace({
+        studentId, releaseId, idempotencyKey: key, requestHash: hash, now: this.now()
+      });
+    } catch (error) {
+      if (error?.code === 'IDEMPOTENCY_KEY_REUSED') {
+        throw conflict('IDEMPOTENCY_KEY_REUSED', 'Idempotency key was reused with a different request.');
+      }
+      throw error;
+    }
+    if (!result) throw notFound('OPEN_REVIEW_NOT_FOUND', 'The requested open review was not found.');
+    if (!result.created) {
+      return {
+        created: false,
+        workspace: await this.getOpenReviewWorkspace(studentId, result.attempt.id)
+      };
+    }
+    const form = await this.store.getForm(result.attempt.formId, result.attempt.formVersion);
+    if (!form) throw new Error('Open review workspace lost its pinned form.');
+    const release = await this.store.getOpenReviewRelease(result.learningSubmission.openReviewReleaseId);
+    if (!release) throw new Error('Open review workspace lost its pinned release.');
+    return {
+      created: result.created,
+      workspace: publicOpenReviewWorkspace(result.attempt, result.learningSubmission, form, {
+        releaseStatus: release.status,
+        analysisStatus: 'AWAITING_BATCH'
+      })
+    };
+  }
+
+  async listOpenReviewWorkspaces(studentId) {
+    const records = await this.store.listOpenReviewWorkspaces(studentId);
+    return records.map(({ attempt, learningSubmission, releaseStatus, analysisStatus }) =>
+      publicOpenReviewWorkspace(attempt, learningSubmission, null, { releaseStatus, analysisStatus }));
+  }
+
+  async getOpenReviewWorkspace(studentId, attemptId) {
+    ensureAttemptId(attemptId);
+    return this.store.withAttemptLock(attemptId, async (tx) => {
+      const attempt = await tx?.getAttempt();
+      assertOwned(attempt, studentId);
+      if (attempt.attemptMode !== ATTEMPT_MODE.OPEN_REVIEW) {
+        throw notFound('OPEN_REVIEW_WORKSPACE_NOT_FOUND', 'The open review workspace was not found.');
+      }
+      const bundle = await tx.getLearningSubmissionBundle();
+      if (!bundle || bundle.submission.sourceType !== 'OPEN_REVIEW') {
+        throw new Error('Open review workspace lost its learning anchor.');
+      }
+      const form = await this.store.getForm(attempt.formId, attempt.formVersion);
+      if (!form) throw new Error('Open review workspace lost its pinned form.');
+      const entitlement = await tx.getLearningEntitlement({ purpose: 'CLEANUP' });
+      if (!entitlement?.release) throw new Error('Open review workspace lost its pinned release.');
+      const analysis = bundle.workItems.find((item) => item.workType === 'ANALYZE_SUBMISSION');
+      const analysisStatus = bundle.version.creationReason === 'OPEN_REVIEW_ANCHOR'
+        ? 'AWAITING_BATCH' : (analysis?.status || 'BLOCKED_CONTEXT');
+      return publicOpenReviewWorkspace(attempt, bundle.submission, form, {
+        releaseStatus: entitlement.release.status,
+        analysisStatus
+      });
+    });
+  }
+
   async getAttemptPublicForm(studentId, attemptId) {
     ensureAttemptId(attemptId);
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwned(attempt, studentId);
+      assertTimedAttempt(attempt);
       // An attempt pins the exact revision even when a later revision is now
       // published or this old revision is no longer listed publicly.
       return publicForm(await this.#getAttemptForm(attempt));
@@ -482,6 +593,7 @@ export class PracticeService {
     return this.store.withAttemptLock(result.attempt.id, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwned(attempt, studentId);
+      assertTimedAttempt(attempt);
       const pinnedForm = await this.#getAttemptForm(attempt);
       const now = this.now();
       const reconciled = await this.#reconcileDeadline(tx, attempt, pinnedForm, now);
@@ -497,6 +609,7 @@ export class PracticeService {
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwned(attempt, studentId);
+      assertTimedAttempt(attempt);
       const form = await this.#getAttemptForm(attempt);
       const reconciled = await this.#reconcileDeadline(tx, attempt, form, this.now());
       const answers = await tx.getAnswers();
@@ -519,6 +632,7 @@ export class PracticeService {
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwned(attempt, studentId);
+      assertTimedAttempt(attempt);
       const form = await this.#getAttemptForm(attempt);
       const reconciled = await this.#reconcileDeadline(tx, attempt, form, this.now());
       assertMutableAnswerPhase(reconciled.attempt);
@@ -559,6 +673,7 @@ export class PracticeService {
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwned(attempt, studentId);
+      assertTimedAttempt(attempt);
       const form = await this.#getAttemptForm(attempt);
       const reconciled = await this.#reconcileDeadline(tx, attempt, form, this.now());
       return this.#reasoningEnvelope(tx, reconciled.attempt);
@@ -761,6 +876,7 @@ export class PracticeService {
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwned(attempt, studentId);
+      assertTimedAttempt(attempt);
       const form = await this.#getAttemptForm(attempt);
       const reconciled = await this.#reconcileDeadline(tx, attempt, form, this.now());
       const submissions = await tx.listSubmissions();
@@ -789,6 +905,13 @@ export class PracticeService {
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwned(attempt, studentId);
+      if (attempt.attemptMode === ATTEMPT_MODE.OPEN_REVIEW) {
+        const learning = await tx.getLearningSubmissionBundle();
+        if (!learning || learning.submission.sourceType !== 'OPEN_REVIEW') {
+          throw conflict('LEARNING_SUBMISSION_NOT_AVAILABLE', 'The open review learning anchor is unavailable.');
+        }
+        return this.#publicLearningSubmission(learning);
+      }
       const submissions = await tx.listSubmissions();
       const finalSubmission = submissions.find((submission) => submission.kind === SUBMISSION_KINDS.FINAL);
       if (!finalSubmission || ![PHASES.FINALIZED, PHASES.RESET].includes(attempt.phase)) {
@@ -810,6 +933,20 @@ export class PracticeService {
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwned(attempt, studentId);
+      if (attempt.attemptMode === ATTEMPT_MODE.OPEN_REVIEW) {
+        const entitlement = await tx.getLearningEntitlement({ purpose: 'EXISTING_WORK' });
+        if (!entitlement?.allowed) {
+          throw conflict('OPEN_REVIEW_REVOKED', 'Protected open review analysis is no longer available.');
+        }
+        const bundle = await tx.getLearningReportBundle();
+        if (!bundle || bundle.version.creationReason === 'OPEN_REVIEW_ANCHOR') {
+          throw conflict('LEARNING_REPORT_AWAITING_BATCH', 'Submit and confirm a batch before requesting a report.');
+        }
+        return publicLearningReport({
+          ...bundle,
+          workItem: bundle.workItems.find((item) => item.workType === 'ANALYZE_SUBMISSION') || null
+        });
+      }
       const submissions = await tx.listSubmissions();
       const hasFinal = submissions.some((submission) => submission.kind === SUBMISSION_KINDS.FINAL);
       if (!hasFinal || ![PHASES.FINALIZED, PHASES.RESET].includes(attempt.phase)) {
@@ -832,6 +969,9 @@ export class PracticeService {
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       if (!attempt) return { processed: false, created: false, reason: 'ATTEMPT_NOT_FOUND' };
+      if (attempt.attemptMode !== ATTEMPT_MODE.TIMED) {
+        return { processed: false, created: false, reason: 'NOT_TIMED_ATTEMPT' };
+      }
       const submissions = await tx.listSubmissions();
       const finalSubmission = submissions.find((submission) => submission.kind === SUBMISSION_KINDS.FINAL);
       if (!finalSubmission || ![PHASES.FINALIZED, PHASES.RESET].includes(attempt.phase)) {
@@ -859,6 +999,7 @@ export class PracticeService {
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwned(attempt, studentId);
+      assertTimedAttempt(attempt);
       const form = await this.#getAttemptForm(attempt);
       const reconciled = await this.#reconcileDeadline(tx, attempt, form, this.now());
       const submissions = await tx.listSubmissions();
@@ -929,7 +1070,8 @@ export class PracticeService {
     ensureAttemptId(attemptId);
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
-      if (!attempt || attempt.phase !== PHASES.TIMED) return { processed: false };
+      if (!attempt || attempt.attemptMode !== ATTEMPT_MODE.TIMED
+          || attempt.phase !== PHASES.TIMED) return { processed: false };
       const form = await this.#getAttemptForm(attempt);
       const result = await this.#reconcileDeadline(tx, attempt, form, this.now());
       return { processed: result.triggered };
@@ -1071,11 +1213,15 @@ export class PracticeService {
       attemptId: attempt.id,
       officialSubmissionId: officialSubmission.id,
       officialSubmissionKind: 'FINAL',
+      openReviewReleaseId: null,
+      attemptMode: ATTEMPT_MODE.TIMED,
       formId: form.id,
       formVersion: form.version,
       sourceType: 'INTERACTIVE_FINAL',
       lifecycleStatus: 'COMMITTED',
       currentVersion: 1,
+      deletionGeneration: 0,
+      deletedAt: null,
       createdAt: now,
       updatedAt: now
     };
@@ -1164,7 +1310,8 @@ export class PracticeService {
       status: bundle.version.contextStatus,
       officialSubmissionId: bundle.submission.officialSubmissionId,
       evidenceHash: bundle.version.evidenceHash,
-      analysisStatus: analysis?.status || 'BLOCKED_CONTEXT'
+      analysisStatus: bundle.version.creationReason === 'OPEN_REVIEW_ANCHOR'
+        ? 'AWAITING_BATCH' : (analysis?.status || 'BLOCKED_CONTEXT')
     };
   }
 
@@ -1176,6 +1323,7 @@ export class PracticeService {
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwned(attempt, studentId);
+      assertTimedAttempt(attempt);
       const existing = await tx.getIdempotency(studentId, scope, key);
       if (existing) {
         if (existing.requestHash !== hash) {

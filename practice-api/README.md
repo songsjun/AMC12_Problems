@@ -29,6 +29,10 @@ keys and solutions in PostgreSQL until a student has made a final submission.
   explicitly `BLOCKED_CONTEXT` until reviewed multi-solution context is loaded;
   a leased PostgreSQL worker then produces independent per-question outcomes
   and a durable report. No external provider call can affect official scoring.
+- Operator-published, untimed `OPEN_REVIEW` workspaces for separately released
+  unpublished form revisions. Their blank v1 anchor has no timer, mutable
+  answers, official submission, or AI work; a confirmed batch creates v2 and
+  enters the same immutable report pipeline as an interactive final.
 
 The default scoring policy is supplied by a form revision, never globally
 hard-coded. The synthetic fixture uses legacy AMC practice values: correct = 6,
@@ -154,6 +158,50 @@ SHA-256 hashes provide integrity binding, not a cryptographic signature or
 proof of who approved a solution. Protecting their ACL and provenance is
 therefore mandatory.
 
+After an unpublished form has complete approved context for every question,
+an authenticated operator may publish it to the separate open-review catalog:
+
+```sh
+AMC12_OPEN_REVIEW_OPERATOR_ID='operator:curriculum-release' \
+  npm run manage-open-review -- publish \
+  <form-id> <form-version> <approved-context-set-uuid> <reason-code>
+
+AMC12_OPEN_REVIEW_OPERATOR_ID='operator:curriculum-release' \
+  npm run manage-open-review -- supersede <release-uuid> <reason-code>
+
+AMC12_OPEN_REVIEW_OPERATOR_ID='operator:security-response' \
+  npm run manage-open-review -- revoke <release-uuid> <reason-code>
+```
+
+This is intentionally an operator/store command, not a public administration
+route. Publication permanently binds the exact form revision, question-bundle
+hash, approved context set/hash, approval authority, and release hash. A form
+revision or any clone with the same question bundle can be delivered either as
+timed practice or open review, never both; PostgreSQL advisory locks and row
+triggers enforce this during concurrent publication/attempt creation. A
+partial unique index additionally permits at most one `ACTIVE` open-review
+release for a question-bundle hash, including releases under distinct form IDs.
+
+`ACTIVE` permits new workspaces and new batches. `SUPERSEDED_VALID` permits
+existing workspaces, batch completion, reports, and their pinned context, but
+not new workspaces or batches. `REVOKED` blocks protected analysis immediately,
+cancels leased inference, and preserves only exact-lineage provider/local
+cleanup authority. Owner-submitted/confirmed evidence remains visible, while
+deterministic result fields and reports are withheld. Revocation guarantees
+that no new provider authorization begins after the revoke commits and that no
+later completion is accepted. A call authorized before that commit may already
+be in flight and may still reach the provider; cancellation is best-effort, so
+the completion fence—not a physical zero-call claim—is the security boundary.
+Deleting transient upload/provider data is not deletion of
+the student's immutable learning submission or report; those need a separate
+product retention/deletion policy.
+
+The operator CLI intentionally keeps successor publication as two auditable
+steps: supersede the predecessor, then publish the successor. Between them the
+active catalog is fail-closed and may temporarily contain no release for that
+bundle. Operators must audit both append-only events; the system does not invent
+a successor link when the second command fails.
+
 Start the durable analyzer as a separate process after configuring its
 dedicated loopback Gateway token, independent `AMC12_AUTH_PEPPER`, absolute
 `AMC12_PRIVATE_UPLOAD_ROOT` outside the source/static tree, and provider secret:
@@ -251,6 +299,9 @@ credentials on every authenticated state-changing request.
 | `GET /auth/me`, `POST /auth/logout` | Restore/end session |
 | `GET /forms`, `GET /forms/:formId` | Authenticated published catalog/content, redacted |
 | `GET /forms/:formId/versions/:version` | Authenticated published pinned revision |
+| `GET /open-reviews`, `GET /open-reviews/:releaseId` | Active open-review catalog and prompt/choice-only exact revision |
+| `POST /open-reviews/:releaseId/workspace` | CSRF + `Idempotency-Key`; atomically create/replay one blank v1 workspace |
+| `GET /open-review-workspaces`, `GET /open-review-workspaces/:attemptId` | Owner-only open-review history/detail |
 | `POST /attempts`, `GET /attempts`, `GET /attempts/:id` | Start/recover/list attempts |
 | `GET /attempts/:id/form` | Owner-only, exact revision used by this attempt |
 | `PUT /attempts/:id/answers` | Save selected A–E/null answers with optional optimistic `revision` |
@@ -322,6 +373,7 @@ All tables live in the isolated `amc_practice` schema. Important records are:
 - form revisions/questions and pipeline audit hashes/provenance;
 - students, hashed access-code lookup values, and revocable sessions;
 - attempts/current answers/timer events;
+- immutable open-review releases and append-only lifecycle events;
 - current reasoning notes (student prose is not duplicated into idempotency records);
 - immutable submissions and 25-row answer snapshots for each submission;
 - learning submissions, immutable evidence versions/question responses, and
@@ -349,7 +401,10 @@ The PostgreSQL smoke test is intentionally skipped without
 freshly generated `practice-content` synthetic private artifact, verifies audit
 hash/provenance persistence, imports approved context, races two worker pools
 with `SKIP LOCKED`, reclaims an expired lease, rejects the stale writer, and
-verifies a 25-question report without changing the official score.
+verifies a 25-question report without changing the official score. It also
+checks open-review database invariants, official-table isolation, concurrent
+same-key workspace creation, and two-pool release-vs-timed/published delivery
+fences for cloned question bundles.
 
 The API validates content hashes for integrity, not artifact provenance signing:
 private manifests and approved-context artifacts still need protected release

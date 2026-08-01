@@ -59,6 +59,19 @@ function assertOwner(attempt, studentId) {
   }
 }
 
+async function requireLearningEntitlement(tx, purpose) {
+  const entitlement = await tx.getLearningEntitlement({ purpose });
+  if (!entitlement?.allowed) {
+    throw conflict(
+      entitlement?.sourceType === 'OPEN_REVIEW' ? 'OPEN_REVIEW_NOT_ACTIVE' : 'BATCH_REQUIRES_FINAL',
+      entitlement?.sourceType === 'OPEN_REVIEW'
+        ? 'This open review release no longer permits that learning operation.'
+        : 'Batch evidence can be added only to an owned finalized learning submission.'
+    );
+  }
+  return entitlement;
+}
+
 function storeConflict(error) {
   if (error instanceof ApiError) return error;
   const messages = {
@@ -68,6 +81,7 @@ function storeConflict(error) {
     IDEMPOTENCY_KEY_REUSED: 'This idempotency key was already used for another upload.',
     UPLOAD_IN_PROGRESS: 'This asset upload is already in progress.',
     BATCH_NOT_SUBMITTABLE: 'Every reserved asset must be uploaded before submitting the batch.',
+    LEARNING_ENTITLEMENT_DENIED: 'This learning source no longer permits that operation.',
     BATCH_BASE_VERSION_STALE: 'Learning evidence changed after this batch began. Start a new batch.',
     BATCH_COMMIT_CONFLICT: 'The batch changed before it could be committed.'
   };
@@ -89,8 +103,16 @@ function publicAsset(asset) {
   };
 }
 
-function publicBundle(bundle) {
-  return publicBatchProjection(bundle);
+function publicBundle(bundle, options) {
+  return publicBatchProjection(bundle, options);
+}
+
+async function batchReadProjectionPolicy(tx) {
+  const entitlement = await tx.getLearningEntitlement({ purpose: 'CLEANUP' });
+  return {
+    redactProtectedResult: entitlement?.sourceType === 'OPEN_REVIEW'
+      && entitlement.release?.status === 'REVOKED'
+  };
 }
 
 function idempotencyRecord({ studentId, scope, key, requestHash, batchId, now }) {
@@ -157,18 +179,22 @@ export class BatchPracticeService {
         if (existing.requestHash !== requestHash) throw conflict('IDEMPOTENCY_KEY_REUSED', 'Idempotency key was reused.');
         const replay = await tx.getLearningBatchBundle(existing.responseBody.batchId);
         if (!replay) throw new Error('A durable batch idempotency record lost its aggregate.');
-        return { batch: publicBundle(replay), created: false };
+        // Replay observability survives supersession/revocation, but it must
+        // use the same read projection as GET/list so an old create key cannot
+        // bypass protected-result withdrawal.
+        return {
+          batch: publicBundle(replay, await batchReadProjectionPolicy(tx)),
+          created: false
+        };
       }
+      const entitlement = await requireLearningEntitlement(tx, 'NEW_BATCH');
       const learning = await tx.getLearningSubmissionBundle();
-      if (!learning || learning.submission.lifecycleStatus !== 'COMMITTED'
-          || !['FINALIZED', 'RESET'].includes(attempt.phase)) {
-        throw conflict('BATCH_REQUIRES_FINAL', 'Batch evidence can be added only to an owned finalized learning submission.');
-      }
       const now = this.now();
       const batch = {
         id: randomUUID(), studentId, attemptId, learningSubmissionId: learning.submission.id,
         baseVersion: learning.submission.currentVersion, formId: learning.submission.formId,
-        formVersion: learning.submission.formVersion, status: BATCH_STATUS.DRAFT, mappingRevision: 0,
+        formVersion: learning.submission.formVersion, sourceType: entitlement.sourceType,
+        status: BATCH_STATUS.DRAFT, mappingRevision: 0,
         hasAudio: normalized.hasAudio, deletionState: BATCH_DELETION_STATE.ACTIVE,
         deletionGeneration: 0, deletedAt: null, submittedAt: null, committedAt: null,
         failureCode: null,
@@ -205,7 +231,8 @@ export class BatchPracticeService {
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwner(attempt, studentId);
-      return { batches: (await tx.listLearningBatchBundles()).map(publicBundle) };
+      const policy = await batchReadProjectionPolicy(tx);
+      return { batches: (await tx.listLearningBatchBundles()).map((bundle) => publicBundle(bundle, policy)) };
     });
   }
 
@@ -217,7 +244,7 @@ export class BatchPracticeService {
       assertOwner(attempt, studentId);
       const bundle = await tx.getLearningBatchBundle(batchId);
       if (!bundle) throw notFound('BATCH_NOT_FOUND', 'The learning batch was not found.');
-      return { batch: publicBundle(bundle) };
+      return { batch: publicBundle(bundle, await batchReadProjectionPolicy(tx)) };
     });
   }
 
@@ -234,6 +261,7 @@ export class BatchPracticeService {
       prepared = await this.store.withAttemptLock(attemptId, async (tx) => {
         const attempt = await tx?.getAttempt();
         assertOwner(attempt, studentId);
+        await requireLearningEntitlement(tx, 'EXISTING_WORK');
         const value = await tx.beginLearningBatchAssetUpload({
           batchId, assetId, uploadIdempotencyKey: key, now: this.now()
         });
@@ -328,6 +356,7 @@ export class BatchPracticeService {
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwner(attempt, studentId);
+      await requireLearningEntitlement(tx, 'EXISTING_WORK');
       const existing = await tx.getIdempotency(studentId, scope, key);
       if (existing) {
         if (existing.requestHash !== requestHash) throw conflict('IDEMPOTENCY_KEY_REUSED', 'Idempotency key was reused.');
@@ -412,6 +441,7 @@ export class BatchPracticeService {
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwner(attempt, studentId);
+      await requireLearningEntitlement(tx, 'EXISTING_WORK');
       const bundle = await tx.getLearningBatchBundle(batchId);
       if (!bundle) throw notFound('BATCH_NOT_FOUND', 'The learning batch was not found.');
       if (bundle.batch.status !== BATCH_STATUS.PROCESSING || bundle.batch.deletionState !== BATCH_DELETION_STATE.ACTIVE
@@ -444,6 +474,7 @@ export class BatchPracticeService {
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwner(attempt, studentId);
+      await requireLearningEntitlement(tx, 'EXISTING_WORK');
       let bundle = await tx.getLearningBatchBundle(batchId);
       if (!bundle) throw notFound('BATCH_NOT_FOUND', 'The learning batch was not found.');
       const existing = bundle.mapping;
@@ -502,6 +533,7 @@ export class BatchPracticeService {
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwner(attempt, studentId);
+      await requireLearningEntitlement(tx, 'EXISTING_WORK');
       const replay = await tx.getIdempotency(studentId, scope, key);
       if (replay) {
         if (replay.requestHash !== requestHash) throw conflict('IDEMPOTENCY_KEY_REUSED', 'Idempotency key was reused.');
@@ -532,7 +564,10 @@ export class BatchPracticeService {
     const learning = await tx.getLearningSubmissionBundle();
     const form = knownForm || await this.store.getForm(bundle.batch.formId, bundle.batch.formVersion);
     if (!learning || !form) throw new Error('Pinned batch learning context is missing.');
-    const approvedContext = await tx.getApprovedContextSetForForm(bundle.batch.formId, bundle.batch.formVersion);
+    const entitlement = await requireLearningEntitlement(tx, 'EXISTING_WORK');
+    const approvedContext = entitlement.sourceType === 'OPEN_REVIEW'
+      ? await tx.getApprovedContextSetById(entitlement.release.contextSetId)
+      : await tx.getApprovedContextSetForForm(bundle.batch.formId, bundle.batch.formVersion);
     const aggregate = createBatchLearningAggregate({
       batch: bundle.batch,
       currentVersion: learning.version,

@@ -865,7 +865,7 @@ export function createBatchLearningAggregate({
   };
 }
 
-export function publicBatchProjection(bundle) {
+export function publicBatchProjection(bundle, { redactProtectedResult = false } = {}) {
   const deleted = bundle.batch.deletedAt !== null;
   return {
     id: bundle.batch.id,
@@ -875,6 +875,7 @@ export function publicBatchProjection(bundle) {
     committedVersion: bundle.batch.committedVersionNumber,
     formId: bundle.batch.formId,
     formVersion: bundle.batch.formVersion,
+    sourceType: bundle.batch.sourceType || 'INTERACTIVE_FINAL',
     status: bundle.batch.status,
     failureCode: bundle.batch.failureCode,
     mappingRevision: bundle.batch.mappingRevision,
@@ -924,7 +925,7 @@ export function publicBatchProjection(bundle) {
         sourceEvidenceHash: response.sourceEvidenceHash
       }))
     },
-    result: !bundle.result ? null : {
+    result: redactProtectedResult || !bundle.result ? null : {
       scoringScope: bundle.result.scoringScope,
       scoringPolicy: bundle.result.scoringPolicy,
       totalPoints: bundle.result.totalPoints,
@@ -937,6 +938,9 @@ export function publicBatchProjection(bundle) {
       unscoredCount: bundle.result.unscoredCount,
       createdAt: bundle.result.createdAt,
       items: bundle.result.items
-    }
+    },
+    ...(redactProtectedResult && bundle.result
+      ? { resultWithheldReason: 'OPEN_REVIEW_REVOKED' }
+      : {})
   };
 }
