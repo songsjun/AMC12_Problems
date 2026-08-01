@@ -314,12 +314,18 @@ credentials on every authenticated state-changing request.
 | `GET /attempts/:id/results`, `/solutions` | Owner-only after a final submission (also for reset history) |
 | `GET /attempts/:id/learning-submission` | Read-only owner status after final; never performs historical repair while polling |
 | `GET /attempts/:id/learning-report` | Read-only owner report/status after final, including reset history; never enqueues analysis |
+| `GET /learning-history` | Bounded owner-only keyset page across timed, batch, and open-review lineages, including every immutable version summary |
+| `GET /learning-history/:submissionId` | Exact owner-only lineage detail; deleted records return only minimal tombstone metadata |
+| `GET /learning-history/:submissionId/versions/:versionNumber/questions/:questionNumber` | Exact-version prompt, choices, own evidence, deterministic result, and analysis subject to release/deletion policy |
+| `GET /learning-history/:submissionId/versions/:versionNumber/report` | Exact immutable report; blank anchors are unavailable and revoked/deleted protected content fails closed |
 
 The learning-submission status GET is strictly read-only; missing historical
 aggregates are repaired only through the internal maintenance entrypoint. The
 reasoning-notes GET intentionally retains the existing attempt read-and-
 reconcile semantics: crossing the server deadline during that read records the
 same deadline transition as `GET /attempts/:id`, then returns `editable=false`.
+Learning-history GETs are pure projections: they neither repair/enqueue state
+nor call a provider, and all success/error responses are explicitly `no-store`.
 
 `reasoning-notes` PUT, `pause`, `resume`, `checkpoint`, `final`, `deadline-decision`, and `reset`
 require an `Idempotency-Key` (8–128 opaque characters). Replaying the same key

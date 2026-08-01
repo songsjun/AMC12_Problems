@@ -614,6 +614,95 @@ export class MemoryStore {
       });
   }
 
+  async listLearningHistoryRecords(studentId, { limit, cursor = null }) {
+    const records = [];
+    for (const submission of this.learningSubmissions.values()) {
+      if (submission.studentId !== studentId) continue;
+      const attempt = this.attempts.get(submission.attemptId);
+      const form = this.forms.get(formKey(submission.formId, submission.formVersion));
+      if (!attempt || !form) continue;
+      const versions = [...(this.learningVersions.get(submission.id) || [])]
+        .sort((left, right) => left.versionNumber - right.versionNumber);
+      const currentVersion = versions.find((item) => item.versionNumber === submission.currentVersion);
+      if (!currentVersion) continue;
+      const workItem = (this.learningWorkItems.get(currentVersion.id) || [])
+        .find((item) => item.workType === 'ANALYZE_SUBMISSION') || null;
+      const report = this.learningReports.get(currentVersion.id) || null;
+      const release = submission.openReviewReleaseId
+        ? this.openReviewReleases.get(submission.openReviewReleaseId) || null : null;
+      const versionRecords = versions.map((version) => {
+        const batch = version.batchId ? this.learningBatches.get(version.batchId) || null : null;
+        const batchResult = version.batchId ? this.learningBatchResults.get(version.batchId) || null : null;
+        const officialItems = !version.batchId && version.versionNumber === 1 && submission.officialSubmissionId
+          ? this.submissionAnswers.get(submission.officialSubmissionId) || [] : [];
+        return {
+          version: clone(version),
+          responses: clone(this.learningResponses.get(version.id) || []),
+          workItems: clone(this.learningWorkItems.get(version.id) || []),
+          resultItems: clone(batchResult?.items || officialItems),
+          report: clone(this.learningReports.get(version.id) || null),
+          batch: clone(batch)
+        };
+      });
+      const activityCandidates = [submission.updatedAt, ...versions.map((item) => item.createdAt)];
+      for (const version of versions) {
+        activityCandidates.push(...(this.learningWorkItems.get(version.id) || []).map((item) => item.updatedAt));
+        const candidateReport = this.learningReports.get(version.id);
+        if (candidateReport) activityCandidates.push(candidateReport.generatedAt);
+        const batch = version.batchId ? this.learningBatches.get(version.batchId) : null;
+        if (batch) activityCandidates.push(batch.updatedAt);
+      }
+      const activityAt = activityCandidates.filter(Boolean)
+        .sort((left, right) => new Date(right) - new Date(left))[0];
+      records.push({ submission: clone(submission), attempt: clone(attempt),
+        form: { id: form.id, version: form.version, title: form.title },
+        release: clone(release), currentVersion: clone(currentVersion),
+        workItem: clone(workItem), report: clone(report), activityAt,
+        paginationAt: submission.updatedAt, versions: versionRecords });
+    }
+    records.sort((left, right) => {
+      const time = new Date(right.paginationAt) - new Date(left.paginationAt);
+      return time || right.submission.id.localeCompare(left.submission.id);
+    });
+    const filtered = cursor ? records.filter((item) => {
+      const time = new Date(item.paginationAt).getTime();
+      const cursorTime = new Date(cursor.updatedAt).getTime();
+      return time < cursorTime || (time === cursorTime && item.submission.id < cursor.submissionId);
+    }) : records;
+    return filtered.slice(0, limit + 1);
+  }
+
+  async getLearningHistoryRecord(studentId, submissionId) {
+    const submission = [...this.learningSubmissions.values()]
+      .find((item) => item.id === submissionId && item.studentId === studentId);
+    if (!submission) return null;
+    const attempt = this.attempts.get(submission.attemptId);
+    const form = this.forms.get(formKey(submission.formId, submission.formVersion));
+    if (!attempt || !form) return null;
+    const release = submission.openReviewReleaseId
+      ? this.openReviewReleases.get(submission.openReviewReleaseId) || null : null;
+    const versions = [...(this.learningVersions.get(submission.id) || [])]
+      .sort((left, right) => left.versionNumber - right.versionNumber)
+      .map((version) => {
+        const analysisRun = this.analysisRuns.get(version.id) || null;
+        const batchResult = version.batchId ? this.learningBatchResults.get(version.batchId) || null : null;
+        const officialItems = !version.batchId && version.versionNumber === 1 && submission.officialSubmissionId
+          ? this.submissionAnswers.get(submission.officialSubmissionId) || [] : [];
+        return {
+          version: clone(version),
+          responses: clone(this.learningResponses.get(version.id) || []),
+          workItems: clone(this.learningWorkItems.get(version.id) || []),
+          analysisRun: clone(analysisRun),
+          analyses: clone(analysisRun ? this.questionAnalyses.get(analysisRun.id) || [] : []),
+          resultItems: clone(batchResult?.items || officialItems),
+          report: clone(this.learningReports.get(version.id) || null),
+          batch: clone(version.batchId ? this.learningBatches.get(version.batchId) || null : null)
+        };
+      });
+    return { submission: clone(submission), attempt: clone(attempt), form: clone(form),
+      release: clone(release), versions };
+  }
+
   async findOrCreateOpenReviewWorkspace({ studentId, releaseId, idempotencyKey: key, requestHash, now }) {
     return this.#withGlobalLock(async () => {
       const release = this.openReviewReleases.get(releaseId);

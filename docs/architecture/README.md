@@ -81,6 +81,8 @@ Each stage has its own tests, independent review, reflection, and Git commit.
 - `ADR-005`: private uploads use bounded local storage and auditable deletion.
 - `ADR-006`: open review is a separate delivery mode with release-pinned
   context and revocation-aware worker entitlement.
+- `ADR-007`: timed, batch, and open-review records share one owner-scoped,
+  exact-version, revocation/deletion-aware learning-history read model.
 
 ## Module direction
 

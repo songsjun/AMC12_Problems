@@ -186,6 +186,73 @@ test('open review API creates an idempotent blank v1 workspace without timed or 
       && response.answerOrigin === 'OPEN_REVIEW_BLANK' && response.reasoningOrigin === 'NONE'));
   assert.deepEqual(context.store.learningWorkItems.get(versions[0].id), []);
 
+  const unauthenticatedHistory = await app.inject({
+    method: 'GET', url: '/api/amc12/learning-history'
+  });
+  assert.equal(unauthenticatedHistory.statusCode, 401);
+  assert.equal(unauthenticatedHistory.headers['cache-control'], 'no-store');
+  assert.equal(unauthenticatedHistory.headers.pragma, 'no-cache');
+  const historyList = await app.inject({
+    method: 'GET', url: '/api/amc12/learning-history?limit=1', headers: { cookie }
+  });
+  assert.equal(historyList.statusCode, 200);
+  assert.equal(historyList.headers['cache-control'], 'no-store');
+  assert.equal(historyList.json().items[0].submissionId, learning.id);
+  assert.equal(historyList.json().items[0].latestAnalysisStatus, 'AWAITING_BATCH');
+  const historyDetail = await app.inject({
+    method: 'GET', url: `/api/amc12/learning-history/${learning.id}`, headers: { cookie }
+  });
+  assert.equal(historyDetail.statusCode, 200);
+  assert.equal(historyDetail.headers['cache-control'], 'no-store');
+  assert.deepEqual(historyDetail.json().versions.map((version) => version.versionNumber), [1]);
+  const anchorReport = await app.inject({
+    method: 'GET', url: `/api/amc12/learning-history/${learning.id}/versions/1/report`, headers: { cookie }
+  });
+  assert.equal(anchorReport.statusCode, 409);
+  assert.equal(anchorReport.headers['cache-control'], 'no-store');
+  assert.equal(anchorReport.json().error.code, 'LEARNING_HISTORY_REPORT_UNAVAILABLE');
+  const nonCanonicalPath = await app.inject({
+    method: 'GET',
+    url: `/api/amc12/learning-history/${learning.id}/versions/01/questions/1`,
+    headers: { cookie }
+  });
+  assert.equal(nonCanonicalPath.statusCode, 400);
+  assert.equal(nonCanonicalPath.headers['cache-control'], 'no-store');
+  const uppercaseSubmissionPath = await app.inject({
+    method: 'GET', url: `/api/amc12/learning-history/${learning.id.toUpperCase()}`,
+    headers: { cookie }
+  });
+  assert.equal(uppercaseSubmissionPath.statusCode, 400);
+  assert.equal(uppercaseSubmissionPath.headers['cache-control'], 'no-store');
+  const uppercaseCursor = Buffer.from(JSON.stringify({
+    v: 1,
+    updatedAt: new Date(learning.updatedAt).toISOString(),
+    submissionId: learning.id.toUpperCase()
+  })).toString('base64url');
+  const uppercaseCursorResponse = await app.inject({
+    method: 'GET',
+    url: `/api/amc12/learning-history?limit=1&cursor=${encodeURIComponent(uppercaseCursor)}`,
+    headers: { cookie }
+  });
+  assert.equal(uppercaseCursorResponse.statusCode, 400);
+  assert.equal(uppercaseCursorResponse.json().error.code, 'INVALID_LEARNING_HISTORY_CURSOR');
+  assert.equal(uppercaseCursorResponse.headers['cache-control'], 'no-store');
+
+  const otherStudent = await context.service.seedAccessCode({
+    code: 'open-review-history-bola-code', displayName: 'Open Review BOLA Other'
+  });
+  const otherLogin = await app.inject({
+    method: 'POST', url: '/api/amc12/auth/login', payload: { accessCode: 'open-review-history-bola-code' }
+  });
+  assert.ok(otherStudent.id);
+  const bola = await app.inject({
+    method: 'GET', url: `/api/amc12/learning-history/${learning.id}`,
+    headers: { cookie: cookies(otherLogin) }
+  });
+  assert.equal(bola.statusCode, 404);
+  assert.equal(bola.headers['cache-control'], 'no-store');
+  assert.equal(bola.json().error.code, 'LEARNING_HISTORY_NOT_FOUND');
+
   const timedCalls = [
     () => context.service.getAttempt(context.student.id, attemptId),
     () => context.service.getAttemptPublicForm(context.student.id, attemptId),
@@ -327,6 +394,20 @@ test('open review batch v2 survives supersede, is mapped-only, and analyzes agai
   const listedCompletedWorkspace = (await context.service.listOpenReviewWorkspaces(context.student.id))
     .find((candidate) => candidate.id === attemptId);
   assert.equal(listedCompletedWorkspace.analysisStatus, 'SUCCEEDED');
+  const supersededLearning = context.store.learningSubmissions.get(attemptId);
+  const supersededQuestion = await context.service.getLearningHistoryQuestion(
+    context.student.id, supersededLearning.id, '2', '1'
+  );
+  assert.equal(supersededQuestion.releaseStatus, 'SUPERSEDED_VALID');
+  assert.equal(supersededQuestion.protectedAccessStatus, 'AVAILABLE_FOR_EXISTING_WORK');
+  assert.equal(supersededQuestion.protected.result.isCorrect, true);
+  assert.equal(supersededQuestion.protected.result.points, 6);
+  assert.equal(supersededQuestion.protected.analysis.status, 'SUCCEEDED');
+  const supersededReport = await context.service.getLearningHistoryReport(
+    context.student.id, supersededLearning.id, '2'
+  );
+  assert.equal(supersededReport.status, 'COMPLETE');
+  assert.equal(supersededReport.questions[0].solutionComparisons.length, 2);
 
   await context.store.transitionOpenReviewRelease({
     releaseId: context.release.id, nextStatus: OPEN_REVIEW_STATUS.REVOKED,
@@ -342,6 +423,33 @@ test('open review batch v2 survives supersede, is mapped-only, and analyzes agai
   assert.equal(revokedWorkspace.releaseStatus, 'REVOKED');
   assert.equal(revokedWorkspace.protectedAccessStatus, 'PROTECTED_RESULTS_WITHHELD');
   assert.equal(revokedWorkspace.analysisStatus, 'SUCCEEDED');
+  const learning = context.store.learningSubmissions.get(attemptId);
+  const history = await context.service.getLearningHistory(context.student.id, learning.id);
+  assert.deepEqual(history.versions.map((version) => version.versionNumber), [1, 2]);
+  assert.equal(history.versions[0].reportStatus, 'WITHHELD');
+  assert.equal(history.versions[1].analysisStatus, 'WITHHELD');
+  assert.equal(history.versions[1].reportStatus, 'WITHHELD');
+  const revokedQuestion = await context.service.getLearningHistoryQuestion(
+    context.student.id, learning.id, '2', '1'
+  );
+  assert.equal(revokedQuestion.question.promptMarkdown, context.form.questions[0].promptMarkdown);
+  assert.equal(revokedQuestion.response.answerOrigin, 'BATCH_CONFIRMED');
+  assert.ok(revokedQuestion.response.reasoningText.length > 0,
+    'the owner-confirmed evidence remains readable after revocation');
+  assert.equal(revokedQuestion.protected, null);
+  assert.equal(revokedQuestion.protectedWithheldReason, 'OPEN_REVIEW_REVOKED');
+  assert.equal(/officialAnswer|acceptedOptions|isCorrect|"points"|solutionComparisons/.test(
+    JSON.stringify(revokedQuestion)
+  ), false);
+  await assert.rejects(
+    () => context.service.getLearningHistoryReport(context.student.id, learning.id, '2'),
+    (error) => error instanceof ApiError && error.statusCode === 409 && error.code === 'OPEN_REVIEW_REVOKED'
+  );
+  await assert.rejects(
+    () => context.service.getLearningHistoryReport(context.student.id, learning.id, '1'),
+    (error) => error instanceof ApiError && error.statusCode === 409
+      && error.code === 'LEARNING_HISTORY_REPORT_UNAVAILABLE'
+  );
   assert.equal(await context.store.authorizeBatchExtractionProviderCall({
     workItemId: secondClaim.job.workItem.id,
     workerId: secondClaim.job.workItem.leaseOwner,
@@ -411,6 +519,53 @@ test('open review batch v2 survives supersede, is mapped-only, and analyzes agai
   assert.equal(deleted.batch.result, null);
   assert.equal(/correctOption|acceptedOptions|isCorrect|"points"/.test(JSON.stringify(deleted)), false,
     'cleanup responses cannot re-expose protected scoring fields');
+
+  Object.assign(context.store.learningSubmissions.get(attemptId), {
+    lifecycleStatus: 'DELETED', deletedAt: new Date(NOW.getTime() + 3_000),
+    updatedAt: new Date(NOW.getTime() + 3_000)
+  });
+  const tombstone = await context.service.getLearningHistory(context.student.id, learning.id);
+  assert.equal(tombstone.protectedAccessStatus, 'RECORD_DELETED');
+  assert.equal(tombstone.title, null);
+  assert.ok(tombstone.versions.every((version) => version.analysisStatus === 'TOMBSTONED'
+    && version.reportStatus === 'TOMBSTONED' && version.resultStatus === 'TOMBSTONED'));
+  assert.equal(/"(?:questionNumbers|responseCount|mappedQuestionCount|batchLineage|officialAnswer|reasoningText|analysis)":/.test(
+    JSON.stringify(tombstone.versions)
+  ), false, 'a deleted history detail is minimal non-content audit metadata');
+  const tombstoneList = await context.service.listLearningHistory(context.student.id, { limit: '1' });
+  assert.equal(tombstoneList.items[0].title, null);
+  assert.equal(tombstoneList.items[0].protectedAccessStatus, 'RECORD_DELETED');
+  await assert.rejects(
+    () => context.service.getLearningHistoryQuestion(context.student.id, learning.id, '2', '1'),
+    (error) => error instanceof ApiError && error.statusCode === 409 && error.code === 'LEARNING_HISTORY_DELETED'
+  );
+  await assert.rejects(
+    () => context.service.getLearningHistoryReport(context.student.id, learning.id, '2'),
+    (error) => error instanceof ApiError && error.statusCode === 409 && error.code === 'LEARNING_HISTORY_DELETED'
+  );
+});
+
+test('the 241st learning-history GET is rate-limited but remains no-store', async (t) => {
+  const context = await openReviewFixture(t);
+  context.service.batchRequestLimitPerMinute = 1_000;
+  const workspace = await createWorkspace(context, 'rate-limit-history-workspace');
+  const learning = context.store.learningSubmissions.get(workspace.workspace.id);
+  const app = await buildApp({ service: context.service, config: APP_CONFIG, logger: false });
+  t.after(async () => { await app.close(); });
+  const session = await context.service.login('open-review-student-code');
+  const cookie = `${APP_CONFIG.cookieName}=${app.signCookie(session.sessionToken)}`;
+  const historyRequest = () => app.inject({
+    method: 'GET', url: `/api/amc12/learning-history/${learning.id}`,
+    remoteAddress: '127.0.0.1', headers: { cookie }
+  });
+  for (let index = 0; index < 240; index += 1) {
+    assert.equal((await historyRequest()).statusCode, 200);
+  }
+  const limited = await historyRequest();
+  assert.equal(limited.statusCode, 429);
+  assert.equal(limited.json().error.code, 'RATE_LIMITED');
+  assert.equal(limited.headers['cache-control'], 'no-store');
+  assert.equal(limited.headers.pragma, 'no-cache');
 });
 
 test('a provider call authorized before revoke may run but its protected completion is fenced', async (t) => {

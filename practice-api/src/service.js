@@ -35,6 +35,7 @@ import {
 const PRELIMINARY_SLOT = 'PRELIMINARY';
 const FINAL_SLOT = 'FINAL';
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const CANONICAL_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const ARCHIVE_RELEASE_FORM_ID_SET = new Set(ARCHIVE_RELEASE_FORM_IDS);
 const MAX_REASONING_NOTE_BYTES = 8_000;
 const MAX_REASONING_REQUEST_BYTES = 48_000;
@@ -74,8 +75,8 @@ function ensureAttemptId(value) {
 }
 
 function ensureUuid(value, name) {
-  if (typeof value !== 'string' || !UUID_PATTERN.test(value)) {
-    throw badRequest('VALIDATION_ERROR', `${name} must be a UUID.`);
+  if (typeof value !== 'string' || !CANONICAL_UUID_PATTERN.test(value)) {
+    throw badRequest('VALIDATION_ERROR', `${name} must be a canonical lowercase UUID.`);
   }
   return value;
 }
@@ -85,6 +86,151 @@ function assertOnlyKeys(value, allowed, name) {
   if (unknown.length) {
     throw badRequest('VALIDATION_ERROR', `${name} contains unsupported fields: ${unknown.join(', ')}.`);
   }
+}
+
+function parseLearningHistoryQuery(query = {}) {
+  if (!query || typeof query !== 'object' || Array.isArray(query)) {
+    throw badRequest('VALIDATION_ERROR', 'Learning history query must be an object.');
+  }
+  assertOnlyKeys(query, new Set(['limit', 'cursor']), 'Learning history query');
+  const rawLimit = query.limit === undefined ? '20' : query.limit;
+  if (typeof rawLimit !== 'string' || !/^[1-9][0-9]?$/.test(rawLimit)) {
+    throw badRequest('VALIDATION_ERROR', 'limit must be an integer string between 1 and 50.');
+  }
+  const limit = Number(rawLimit);
+  if (limit > 50) throw badRequest('VALIDATION_ERROR', 'limit must be between 1 and 50.');
+  if (query.cursor === undefined) return { limit, cursor: null };
+  if (typeof query.cursor !== 'string' || query.cursor.length < 8 || query.cursor.length > 512
+      || !/^[A-Za-z0-9_-]+$/.test(query.cursor)) {
+    throw badRequest('INVALID_LEARNING_HISTORY_CURSOR', 'Learning history cursor is invalid.');
+  }
+  try {
+    const decoded = JSON.parse(Buffer.from(query.cursor, 'base64url').toString('utf8'));
+    if (!decoded || typeof decoded !== 'object' || Array.isArray(decoded)
+        || Object.keys(decoded).sort().join(',') !== 'submissionId,updatedAt,v'
+        || decoded.v !== 1 || typeof decoded.updatedAt !== 'string'
+        || new Date(decoded.updatedAt).toISOString() !== decoded.updatedAt
+        || typeof decoded.submissionId !== 'string' || !CANONICAL_UUID_PATTERN.test(decoded.submissionId)) {
+      throw new Error('invalid');
+    }
+    const canonical = Buffer.from(JSON.stringify({
+      v: 1, updatedAt: decoded.updatedAt, submissionId: decoded.submissionId
+    })).toString('base64url');
+    if (canonical !== query.cursor) throw new Error('non-canonical');
+    return { limit, cursor: decoded };
+  } catch {
+    throw badRequest('INVALID_LEARNING_HISTORY_CURSOR', 'Learning history cursor is invalid.');
+  }
+}
+
+function learningHistoryCursor(record) {
+  return Buffer.from(JSON.stringify({
+    v: 1,
+    updatedAt: new Date(record.paginationAt).toISOString(),
+    submissionId: record.submission.id
+  })).toString('base64url');
+}
+
+function learningProtectedAccess(submission, release) {
+  if (submission.lifecycleStatus === 'DELETED') {
+    return {
+      allowed: false, deleted: true,
+      releaseStatus: submission.sourceType === 'OPEN_REVIEW' ? release?.status || null : null,
+      protectedAccessStatus: 'RECORD_DELETED'
+    };
+  }
+  if (submission.sourceType !== 'OPEN_REVIEW') {
+    return { allowed: true, deleted: false, releaseStatus: null, protectedAccessStatus: 'AVAILABLE' };
+  }
+  const releaseStatus = release?.status || null;
+  if (releaseStatus === OPEN_REVIEW_STATUS.ACTIVE) {
+    return { allowed: true, deleted: false, releaseStatus, protectedAccessStatus: 'AVAILABLE' };
+  }
+  if (releaseStatus === OPEN_REVIEW_STATUS.SUPERSEDED_VALID) {
+    return { allowed: true, deleted: false, releaseStatus, protectedAccessStatus: 'AVAILABLE_FOR_EXISTING_WORK' };
+  }
+  return {
+    allowed: false, deleted: false, releaseStatus,
+    protectedAccessStatus: 'PROTECTED_RESULTS_WITHHELD'
+  };
+}
+
+function learningAnalysisStatus(versionRecord, access) {
+  if (access.deleted) return 'TOMBSTONED';
+  if (!access.allowed) return 'WITHHELD';
+  if (versionRecord.version.creationReason === 'OPEN_REVIEW_ANCHOR') return 'AWAITING_BATCH';
+  return versionRecord.workItems.find((item) => item.workType === 'ANALYZE_SUBMISSION')?.status
+    || (versionRecord.version.contextStatus === 'CONTEXT_READY' ? 'QUEUED' : 'BLOCKED_CONTEXT');
+}
+
+function publicQuestionAnalysis(analysis) {
+  if (!analysis) return null;
+  return {
+    status: analysis.status,
+    reasoningVerdict: analysis.reasoningVerdict,
+    summaryMarkdown: analysis.summaryMarkdown,
+    strengths: analysis.strengths,
+    gaps: analysis.gaps,
+    suggestions: analysis.suggestions,
+    solutionComparisons: analysis.solutionComparisons.map(({ methodTags, alignment, analysisMarkdown }) => ({
+      methodTags, alignment, analysisMarkdown
+    })),
+    confidence: analysis.confidence
+  };
+}
+
+function versionActivityAt(record) {
+  return [record.version.createdAt, record.batch?.updatedAt, record.report?.generatedAt,
+    ...record.workItems.map((item) => item.updatedAt)].filter(Boolean)
+    .sort((left, right) => new Date(right) - new Date(left))[0];
+}
+
+function publicLearningVersionSummary(item, access) {
+  if (access.deleted) {
+    return {
+      versionNumber: item.version.versionNumber,
+      creationReason: item.version.creationReason,
+      analysisStatus: 'TOMBSTONED',
+      resultStatus: 'TOMBSTONED',
+      reportStatus: 'TOMBSTONED',
+      createdAt: item.version.createdAt,
+      lastActivityAt: item.version.createdAt
+    };
+  }
+  const responseCount = item.responseCount ?? item.responses.length;
+  const questionNumbers = item.questionNumbers ?? item.responses.map((response) => response.questionNumber);
+  const hasResult = item.hasResult ?? item.resultItems.length > 0;
+  return {
+    versionNumber: item.version.versionNumber,
+    creationReason: item.version.creationReason,
+    contextStatus: item.version.contextStatus,
+    responseCount,
+    mappedQuestionCount: item.version.creationReason === 'BATCH_COMMIT'
+      ? responseCount : (item.version.creationReason === 'OPEN_REVIEW_ANCHOR' ? 0 : null),
+    questionNumbers,
+    batchLineage: item.batch ? {
+      batchId: item.batch.id,
+      sourceType: item.batch.sourceType,
+      status: item.batch.status,
+      committedAt: item.batch.committedAt
+    } : null,
+    analysisStatus: learningAnalysisStatus(item, access),
+    resultStatus: access.allowed ? (hasResult ? 'AVAILABLE' : 'UNAVAILABLE') : 'WITHHELD',
+    reportStatus: access.allowed ? (item.report?.status || null) : 'WITHHELD',
+    createdAt: item.version.createdAt,
+    lastActivityAt: access.allowed ? versionActivityAt(item) : item.version.createdAt
+  };
+}
+
+function canonicalPositiveInteger(value, name, maximum = 1_000_000) {
+  if (typeof value !== 'string' || !/^[1-9][0-9]*$/.test(value)) {
+    throw badRequest('VALIDATION_ERROR', `${name} must be a canonical positive integer.`);
+  }
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed > maximum) {
+    throw badRequest('VALIDATION_ERROR', `${name} is outside the supported range.`);
+  }
+  return parsed;
 }
 
 function normalizeReasoningUpdate(input) {
@@ -534,6 +680,144 @@ export class PracticeService {
         releaseStatus: entitlement.release.status,
         analysisStatus
       });
+    });
+  }
+
+  async listLearningHistory(studentId, query = {}) {
+    const { limit, cursor } = parseLearningHistoryQuery(query);
+    const records = await this.store.listLearningHistoryRecords(studentId, { limit, cursor });
+    const page = records.slice(0, limit);
+    return {
+      items: page.map((record) => {
+        const access = learningProtectedAccess(record.submission, record.release);
+        const versions = record.versions.map((item) => publicLearningVersionSummary(item, access));
+        const current = record.versions.find((item) =>
+          item.version.versionNumber === record.submission.currentVersion);
+        return {
+          submissionId: record.submission.id,
+          attemptId: record.submission.attemptId,
+          title: access.deleted ? null : record.form.title,
+          sourceType: record.submission.sourceType,
+          formId: access.deleted ? null : record.submission.formId,
+          formVersion: access.deleted ? null : record.submission.formVersion,
+          currentVersion: record.submission.currentVersion,
+          lifecycleStatus: record.submission.lifecycleStatus,
+          releaseStatus: access.releaseStatus,
+          protectedAccessStatus: access.protectedAccessStatus,
+          latestAnalysisStatus: learningAnalysisStatus(current, access),
+          latestReportStatus: access.deleted ? 'TOMBSTONED'
+            : (access.allowed ? (current.report?.status || null) : 'WITHHELD'),
+          lastActivityAt: access.allowed ? record.activityAt : record.submission.updatedAt,
+          versions
+        };
+      }),
+      nextCursor: records.length > limit ? learningHistoryCursor(page[page.length - 1]) : null
+    };
+  }
+
+  async getLearningHistory(studentId, submissionId) {
+    ensureUuid(submissionId, 'submissionId');
+    const record = await this.store.getLearningHistoryRecord(studentId, submissionId);
+    if (!record) throw notFound('LEARNING_HISTORY_NOT_FOUND', 'The learning history record was not found.');
+    const access = learningProtectedAccess(record.submission, record.release);
+    return {
+      submissionId: record.submission.id,
+      attemptId: record.submission.attemptId,
+      title: access.deleted ? null : record.form.title,
+      sourceType: record.submission.sourceType,
+      formId: access.deleted ? null : record.submission.formId,
+      formVersion: access.deleted ? null : record.submission.formVersion,
+      currentVersion: record.submission.currentVersion,
+      lifecycleStatus: record.submission.lifecycleStatus,
+      releaseStatus: access.releaseStatus,
+      protectedAccessStatus: access.protectedAccessStatus,
+      createdAt: record.submission.createdAt,
+      updatedAt: record.submission.updatedAt,
+      versions: record.versions.map((item) => publicLearningVersionSummary(item, access))
+    };
+  }
+
+  async getLearningHistoryQuestion(studentId, submissionId, versionNumberInput, questionNumberInput) {
+    ensureUuid(submissionId, 'submissionId');
+    const versionNumber = canonicalPositiveInteger(versionNumberInput, 'versionNumber');
+    const questionNumber = canonicalPositiveInteger(questionNumberInput, 'questionNumber', 100);
+    const record = await this.store.getLearningHistoryRecord(studentId, submissionId);
+    if (!record) throw notFound('LEARNING_HISTORY_NOT_FOUND', 'The learning history record was not found.');
+    const access = learningProtectedAccess(record.submission, record.release);
+    if (access.deleted) {
+      throw conflict('LEARNING_HISTORY_DELETED', 'The learning history record has been deleted.');
+    }
+    const versionRecord = record.versions.find((item) => item.version.versionNumber === versionNumber);
+    const response = versionRecord?.responses.find((item) => item.questionNumber === questionNumber);
+    const question = record.form.questions.find((item) => item.number === questionNumber);
+    if (!versionRecord || !response || !question) {
+      throw notFound('LEARNING_HISTORY_QUESTION_NOT_FOUND', 'The learning history question was not found.');
+    }
+    const analysis = versionRecord.analyses.find((item) => item.questionNumber === questionNumber) || null;
+    const result = versionRecord.resultItems.find((item) => item.questionNumber === questionNumber) || null;
+    return {
+      submissionId: record.submission.id,
+      versionNumber,
+      formId: versionRecord.version.formId,
+      formVersion: versionRecord.version.formVersion,
+      title: record.form.title,
+      question: {
+        questionNumber,
+        promptMarkdown: question.promptMarkdown,
+        choices: question.choices.map(({ option, textMarkdown }) => ({ option, textMarkdown }))
+      },
+      response: {
+        selectedOption: response.selectedOption,
+        reasoningText: response.reasoningText,
+        answerOrigin: response.answerOrigin,
+        reasoningOrigin: response.reasoningOrigin,
+        createdAt: response.createdAt
+      },
+      releaseStatus: access.releaseStatus,
+      protectedAccessStatus: access.protectedAccessStatus,
+      protected: access.allowed ? {
+        officialAnswer: question.correctOption,
+        acceptedOptions: question.acceptedOptions || (question.correctOption ? [question.correctOption] : []),
+        isScored: question.isScored !== false,
+        result: result ? {
+          selectedOption: result.selectedOption,
+          correctOption: result.correctOption,
+          acceptedOptions: result.acceptedOptions,
+          isScored: result.isScored,
+          isCorrect: result.isCorrect,
+          points: result.points
+        } : null,
+        analysis: publicQuestionAnalysis(analysis)
+      } : null,
+      protectedWithheldReason: access.allowed ? null : 'OPEN_REVIEW_REVOKED'
+    };
+  }
+
+  async getLearningHistoryReport(studentId, submissionId, versionNumberInput) {
+    ensureUuid(submissionId, 'submissionId');
+    const versionNumber = canonicalPositiveInteger(versionNumberInput, 'versionNumber');
+    const record = await this.store.getLearningHistoryRecord(studentId, submissionId);
+    if (!record) throw notFound('LEARNING_HISTORY_NOT_FOUND', 'The learning history record was not found.');
+    const access = learningProtectedAccess(record.submission, record.release);
+    if (access.deleted) {
+      throw conflict('LEARNING_HISTORY_DELETED', 'The learning history record has been deleted.');
+    }
+    const versionRecord = record.versions.find((item) => item.version.versionNumber === versionNumber);
+    if (!versionRecord) throw notFound('LEARNING_HISTORY_VERSION_NOT_FOUND', 'The learning history version was not found.');
+    if (versionRecord.version.creationReason === 'OPEN_REVIEW_ANCHOR') {
+      throw conflict('LEARNING_HISTORY_REPORT_UNAVAILABLE', 'The blank open review anchor has no report.');
+    }
+    if (!access.allowed) {
+      throw conflict('OPEN_REVIEW_REVOKED',
+        'Protected open review analysis is no longer available.');
+    }
+    return publicLearningReport({
+      submission: record.submission,
+      version: versionRecord.version,
+      responses: versionRecord.responses,
+      analyses: versionRecord.analyses,
+      report: versionRecord.report,
+      workItem: versionRecord.workItems.find((item) => item.workType === 'ANALYZE_SUBMISSION') || null
     });
   }
 

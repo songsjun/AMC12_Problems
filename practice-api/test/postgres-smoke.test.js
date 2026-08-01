@@ -129,7 +129,8 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     '005_learning_submission_core.sql',
     '006_approved_context_learning_reports.sql',
     '007_batch_ingest.sql',
-    '008_open_review.sql'
+    '008_open_review.sql',
+    '009_learning_history_read_model.sql'
   ]);
 
   const batchTables = await store.pool.query(
@@ -223,6 +224,22 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
   assert.equal(activeOpenBundleIndex.rowCount, 1);
   assert.match(activeOpenBundleIndex.rows[0].indexdef, /question_bundle_hash/);
   assert.match(activeOpenBundleIndex.rows[0].indexdef, /WHERE \(status = 'ACTIVE'::text\)/);
+  const learningHistoryPageIndex = await store.pool.query(
+    `SELECT indexdef FROM pg_indexes
+     WHERE schemaname = 'amc_practice'
+       AND indexname = 'amc_learning_submissions_history_page_idx'`
+  );
+  assert.equal(learningHistoryPageIndex.rowCount, 1);
+  assert.match(learningHistoryPageIndex.rows[0].indexdef,
+    /\(student_id, updated_at DESC, id DESC\)/);
+  const learningHistoryBatchActivityIndex = await store.pool.query(
+    `SELECT indexdef FROM pg_indexes
+     WHERE schemaname = 'amc_practice'
+       AND indexname = 'amc_learning_batches_submission_activity_idx'`
+  );
+  assert.equal(learningHistoryBatchActivityIndex.rowCount, 1);
+  assert.match(learningHistoryBatchActivityIndex.rows[0].indexdef,
+    /\(learning_submission_id, updated_at DESC\)/);
 
   const orphanTranscriptId = randomUUID();
   const orphanCreatedAt = new Date('2026-08-01T10:00:00.000Z');
@@ -1304,6 +1321,55 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
   assert.equal(batchLearningReport.status, 'COMPLETE');
   assert.equal(batchLearningReport.summary.analyzedCount, 1);
   assert.equal(batchLearningReport.questions[0].questionNumber, 1);
+  const historyStateSql = `SELECT
+      (SELECT count(*)::integer FROM amc_practice.learning_submissions) AS submissions,
+      (SELECT count(*)::integer FROM amc_practice.learning_submission_versions) AS versions,
+      (SELECT count(*)::integer FROM amc_practice.learning_work_items) AS work_items,
+      (SELECT count(*)::integer FROM amc_practice.learning_reports) AS reports,
+      (SELECT count(*)::integer FROM amc_practice.learning_analysis_runs) AS runs`;
+  const historyStateBefore = await store.pool.query(historyStateSql);
+  const providerCallsBeforePgHistoryReads = fakeInference.calls.length;
+  const pgHistory = await service.getLearningHistory(
+    reviewStudent.id, reviewFinal.learningSubmission.id
+  );
+  assert.equal(pgHistory.formVersion, reviewForm.version);
+  assert.deepEqual(pgHistory.versions.map((version) => version.versionNumber), [1, 2]);
+  assert.equal(pgHistory.versions[0].reportStatus, 'PARTIAL');
+  assert.equal(pgHistory.versions[1].reportStatus, 'COMPLETE');
+  assert.equal(pgHistory.versions[1].resultStatus, 'AVAILABLE');
+  const pgHistoryList = await service.listLearningHistory(reviewStudent.id, { limit: '20' });
+  assert.deepEqual(pgHistoryList.items[0].versions.map((version) => version.versionNumber), [1, 2]);
+  const pgHistoryV1Report = await service.getLearningHistoryReport(
+    reviewStudent.id, reviewFinal.learningSubmission.id, '1'
+  );
+  const pgHistoryV2Report = await service.getLearningHistoryReport(
+    reviewStudent.id, reviewFinal.learningSubmission.id, '2'
+  );
+  assert.equal(pgHistoryV1Report.status, 'PARTIAL');
+  assert.equal(pgHistoryV2Report.status, 'COMPLETE');
+  const pgHistoryQuestion = await service.getLearningHistoryQuestion(
+    reviewStudent.id, reviewFinal.learningSubmission.id, '2', '1'
+  );
+  assert.equal(pgHistoryQuestion.response.answerOrigin, 'BATCH_CONFIRMED');
+  assert.deepEqual(pgHistoryQuestion.protected.result, {
+    selectedOption: 'A', correctOption: 'A', acceptedOptions: ['A'],
+    isScored: true, isCorrect: true, points: 6
+  });
+  assert.equal(pgHistoryQuestion.protected.analysis.status, 'SUCCEEDED');
+  for (const crossStudentRead of [
+    () => service.getLearningHistory(student.id, reviewFinal.learningSubmission.id),
+    () => service.getLearningHistoryQuestion(student.id, reviewFinal.learningSubmission.id, '2', '1'),
+    () => service.getLearningHistoryReport(student.id, reviewFinal.learningSubmission.id, '2')
+  ]) {
+    await assert.rejects(
+      crossStudentRead,
+      (error) => error.statusCode === 404 && error.code === 'LEARNING_HISTORY_NOT_FOUND'
+    );
+  }
+  assert.deepEqual((await store.pool.query(historyStateSql)).rows, historyStateBefore.rows,
+    'PostgreSQL history reads do not enqueue work or mutate durable learning state');
+  assert.equal(fakeInference.calls.length, providerCallsBeforePgHistoryReads,
+    'PostgreSQL history reads make zero provider calls');
   assert.deepEqual((await store.pool.query(
     'SELECT * FROM amc_practice.submissions WHERE id = $1', [reviewFinal.submission.id]
   )).rows, officialBeforeAnalysis.rows,
@@ -1845,11 +1911,77 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
   });
   assert.equal(successorRelease.questionBundleHash, openRelease.questionBundleHash,
     'a successor may pin a new exact form/context revision for the same question bundle');
-  await store.transitionOpenReviewRelease({
-    releaseId: openRelease.id, nextStatus: 'REVOKED',
-    authorityId: 'operator:postgres-open-review', reasonCode: 'POSTGRES_CONTENT_REVOCATION',
-    now: new Date('2026-08-20T12:00:03.500Z')
-  });
+  const supersededPgQuestion = await service.getLearningHistoryQuestion(
+    openStudent.id, openCommitted.batch.learningSubmissionId, '2', '1'
+  );
+  assert.equal(supersededPgQuestion.releaseStatus, 'SUPERSEDED_VALID');
+  assert.equal(supersededPgQuestion.protectedAccessStatus, 'AVAILABLE_FOR_EXISTING_WORK');
+  assert.equal(supersededPgQuestion.protected.result.isCorrect, true);
+  assert.equal(supersededPgQuestion.protected.analysis.status, 'SUCCEEDED');
+  const supersededPgReport = await service.getLearningHistoryReport(
+    openStudent.id, openCommitted.batch.learningSubmissionId, '2'
+  );
+  assert.equal(supersededPgReport.status, 'COMPLETE');
+
+  // Force three history reads to establish a REPEATABLE READ snapshot from
+  // their release-owning header query, then block on the subsequent form read.
+  // pg_stat_activity observes the real relation lock; no production test hook
+  // is involved. Revocation commits while all three readers are blocked.
+  const historyFormBlocker = await store.pool.connect();
+  let snapshotDetailPromise;
+  let snapshotQuestionPromise;
+  let snapshotReportPromise;
+  try {
+    await historyFormBlocker.query('BEGIN');
+    await historyFormBlocker.query('LOCK TABLE amc_practice.form_questions IN ACCESS EXCLUSIVE MODE');
+    snapshotDetailPromise = service.getLearningHistory(
+      openStudent.id, openCommitted.batch.learningSubmissionId
+    );
+    snapshotQuestionPromise = service.getLearningHistoryQuestion(
+      openStudent.id, openCommitted.batch.learningSubmissionId, '2', '1'
+    );
+    snapshotReportPromise = service.getLearningHistoryReport(
+      openStudent.id, openCommitted.batch.learningSubmissionId, '2'
+    );
+    let blockedReaders = 0;
+    for (let attempt = 0; attempt < 100 && blockedReaders < 3; attempt += 1) {
+      const waiting = await secondStore.pool.query(
+        `SELECT count(*)::integer AS count
+         FROM pg_stat_activity
+         WHERE datname = current_database()
+           AND pid <> pg_backend_pid()
+           AND wait_event_type = 'Lock'
+           AND query ILIKE '%form_questions%'`
+      );
+      blockedReaders = waiting.rows[0].count;
+      if (blockedReaders < 3) await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+    assert.equal(blockedReaders, 3,
+      'detail, question, and report all establish their snapshot before blocking on form content');
+    await store.transitionOpenReviewRelease({
+      releaseId: openRelease.id, nextStatus: 'REVOKED',
+      authorityId: 'operator:postgres-open-review', reasonCode: 'POSTGRES_CONTENT_REVOCATION',
+      now: new Date('2026-08-20T12:00:03.500Z')
+    });
+    await historyFormBlocker.query('COMMIT');
+  } catch (error) {
+    await historyFormBlocker.query('ROLLBACK').catch(() => {});
+    await Promise.allSettled([
+      snapshotDetailPromise, snapshotQuestionPromise, snapshotReportPromise
+    ].filter(Boolean));
+    throw error;
+  } finally {
+    historyFormBlocker.release();
+  }
+  const [snapshotDetail, snapshotQuestion, snapshotReport] = await Promise.all([
+    snapshotDetailPromise, snapshotQuestionPromise, snapshotReportPromise
+  ]);
+  assert.equal(snapshotDetail.releaseStatus, 'SUPERSEDED_VALID');
+  assert.equal(snapshotDetail.protectedAccessStatus, 'AVAILABLE_FOR_EXISTING_WORK');
+  assert.equal(snapshotDetail.versions[1].reportStatus, 'COMPLETE');
+  assert.equal(snapshotQuestion.protected.result.isCorrect, true);
+  assert.equal(snapshotQuestion.protected.analysis.status, 'SUCCEEDED');
+  assert.equal(snapshotReport.status, 'COMPLETE');
   await assert.rejects(
     () => service.getLearningReport(openStudent.id, openAttemptId),
     (error) => error.code === 'OPEN_REVIEW_REVOKED'
@@ -1858,6 +1990,26 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
   assert.equal(revokedOpenWorkspace.releaseStatus, 'REVOKED');
   assert.equal(revokedOpenWorkspace.protectedAccessStatus, 'PROTECTED_RESULTS_WITHHELD');
   assert.equal(revokedOpenWorkspace.analysisStatus, 'SUCCEEDED');
+  const revokedPgHistory = await service.getLearningHistory(
+    openStudent.id, openCommitted.batch.learningSubmissionId
+  );
+  assert.deepEqual(revokedPgHistory.versions.map((version) => version.versionNumber), [1, 2]);
+  assert.equal(revokedPgHistory.versions[1].analysisStatus, 'WITHHELD');
+  assert.equal(revokedPgHistory.versions[1].reportStatus, 'WITHHELD');
+  const revokedPgQuestion = await service.getLearningHistoryQuestion(
+    openStudent.id, openCommitted.batch.learningSubmissionId, '2', '1'
+  );
+  assert.equal(revokedPgQuestion.response.answerOrigin, 'BATCH_CONFIRMED');
+  assert.equal(revokedPgQuestion.protected, null);
+  assert.equal(/officialAnswer|acceptedOptions|isCorrect|"points"|solutionComparisons/.test(
+    JSON.stringify(revokedPgQuestion)
+  ), false);
+  await assert.rejects(
+    () => service.getLearningHistoryReport(
+      openStudent.id, openCommitted.batch.learningSubmissionId, '2'
+    ),
+    (error) => error.code === 'OPEN_REVIEW_REVOKED'
+  );
   assert.equal(await secondStore.authorizeBatchExtractionProviderCall({
     workItemId: openSecondClaim.job.workItem.id,
     workerId: openSecondClaim.job.workItem.leaseOwner,
@@ -1906,6 +2058,44 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
   );
   assert.deepEqual(officialAfterOpenLifecycle.rows, officialBeforeOpen.rows,
     'OPEN_REVIEW v1/v2, report, revocation, and cleanup never touch official tables');
+  const learningDeletedAt = new Date('2026-08-20T12:00:03.650Z');
+  await store.pool.query(
+    `UPDATE amc_practice.learning_submissions
+     SET lifecycle_status = 'DELETED', deleted_at = $2,
+         deletion_generation = deletion_generation + 1, updated_at = $2
+     WHERE id = $1`,
+    [openCommitted.batch.learningSubmissionId, learningDeletedAt]
+  );
+  const pgTombstone = await service.getLearningHistory(
+    openStudent.id, openCommitted.batch.learningSubmissionId
+  );
+  assert.equal(pgTombstone.lifecycleStatus, 'DELETED');
+  assert.equal(pgTombstone.title, null);
+  assert.equal(pgTombstone.formId, null);
+  assert.equal(pgTombstone.formVersion, null);
+  assert.equal(pgTombstone.protectedAccessStatus, 'RECORD_DELETED');
+  assert.ok(pgTombstone.versions.every((version) => version.analysisStatus === 'TOMBSTONED'
+    && version.resultStatus === 'TOMBSTONED' && version.reportStatus === 'TOMBSTONED'));
+  assert.equal(/"(?:questionNumbers|responseCount|mappedQuestionCount|batchLineage|officialAnswer|reasoningText|analysis)":/.test(
+    JSON.stringify(pgTombstone.versions)
+  ), false);
+  const pgTombstoneList = await service.listLearningHistory(openStudent.id, { limit: '20' });
+  const listedPgTombstone = pgTombstoneList.items.find((item) =>
+    item.submissionId === openCommitted.batch.learningSubmissionId);
+  assert.equal(listedPgTombstone.title, null);
+  assert.equal(listedPgTombstone.protectedAccessStatus, 'RECORD_DELETED');
+  await assert.rejects(
+    () => service.getLearningHistoryQuestion(
+      openStudent.id, openCommitted.batch.learningSubmissionId, '2', '1'
+    ),
+    (error) => error.code === 'LEARNING_HISTORY_DELETED'
+  );
+  await assert.rejects(
+    () => service.getLearningHistoryReport(
+      openStudent.id, openCommitted.batch.learningSubmissionId, '2'
+    ),
+    (error) => error.code === 'LEARNING_HISTORY_DELETED'
+  );
   await assert.rejects(
     () => store.pool.query(
       `UPDATE amc_practice.open_review_release_events SET reason_code = 'MUTATED'
@@ -2010,6 +2200,66 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     [publishRaceBundle]
   );
   assert.equal(publicationFenceCount.rows[0].count, 1);
+
+  const secondHistoryAttempt = await service.createAttempt(reviewStudent.id, reviewForm.id);
+  const secondHistoryFinal = await service.final(
+    reviewStudent.id, secondHistoryAttempt.attempt.id, `pg-history-second-final-${randomUUID()}`, {
+      expectedAnswersRevision: secondHistoryAttempt.attempt.answersRevision,
+      expectedStateRevision: secondHistoryAttempt.attempt.stateRevision
+    }
+  );
+  const sameHistoryUpdatedAt = new Date('2026-08-21T12:00:00.000Z');
+  await store.pool.query(
+    `UPDATE amc_practice.learning_submissions
+     SET updated_at = $1
+     WHERE id = ANY($2::uuid[])`,
+    [sameHistoryUpdatedAt, [reviewFinal.learningSubmission.id, secondHistoryFinal.learningSubmission.id]]
+  );
+  const historyPageStateBefore = await store.pool.query(historyStateSql);
+  const firstHistoryPage = await service.listLearningHistory(reviewStudent.id, { limit: '1' });
+  const secondHistoryPage = await service.listLearningHistory(reviewStudent.id, {
+    limit: '1', cursor: firstHistoryPage.nextCursor
+  });
+  assert.equal(firstHistoryPage.items.length, 1);
+  assert.equal(secondHistoryPage.items.length, 1);
+  assert.equal(secondHistoryPage.nextCursor, null);
+  assert.deepEqual(
+    [firstHistoryPage.items[0].submissionId, secondHistoryPage.items[0].submissionId],
+    [reviewFinal.learningSubmission.id, secondHistoryFinal.learningSubmission.id]
+      .sort((left, right) => right.localeCompare(left)),
+    'same-timestamp PostgreSQL pages use UUID as the stable, gap-free tie-breaker'
+  );
+  assert.deepEqual((await store.pool.query(historyStateSql)).rows, historyPageStateBefore.rows);
+
+  const explainClient = await store.pool.connect();
+  try {
+    await explainClient.query('BEGIN');
+    await explainClient.query('SET LOCAL enable_seqscan = off');
+    const explain = await explainClient.query(
+      `EXPLAIN (FORMAT JSON)
+       SELECT id, updated_at
+       FROM amc_practice.learning_submissions
+       WHERE student_id = $1 AND (updated_at, id) < ($2::timestamptz, $3::uuid)
+       ORDER BY updated_at DESC, id DESC LIMIT 2`,
+      [reviewStudent.id, sameHistoryUpdatedAt, firstHistoryPage.items[0].submissionId]
+    );
+    assert.match(JSON.stringify(explain.rows[0]['QUERY PLAN']),
+      /amc_learning_submissions_history_page_idx/,
+      'the bounded keyset query is backed by the student/updated_at/id index');
+    const batchActivityExplain = await explainClient.query(
+      `EXPLAIN (FORMAT JSON)
+       SELECT max(updated_at)
+       FROM amc_practice.learning_batches
+       WHERE learning_submission_id = $1`,
+      [reviewFinal.learningSubmission.id]
+    );
+    assert.match(JSON.stringify(batchActivityExplain.rows[0]['QUERY PLAN']),
+      /amc_learning_batches_submission_activity_idx/,
+      'lastActivityAt uses the submission-scoped batch activity index');
+  } finally {
+    await explainClient.query('ROLLBACK').catch(() => {});
+    explainClient.release();
+  }
 
   await service.reset(reviewStudent.id, reviewAttempt.attempt.id, 'pg-review-reset-1');
   assert.equal((await service.getLearningReport(reviewStudent.id, reviewAttempt.attempt.id)).status, 'COMPLETE');

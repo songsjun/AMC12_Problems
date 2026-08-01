@@ -1214,7 +1214,7 @@ test('overlapping dispatcher ticks serialize slow claims and never exceed local 
   await dispatcher.drain();
 });
 
-test('queued interactive v1 and later batch v2 both finish immutable reports', async (t) => {
+test('current v3 preserves exact interactive v1 and batch v2/v3 questions and reports', async (t) => {
   const context = await fixture(t);
   const artifact = approvedContextArtifact(context.form);
   await new ApprovedContextImporter({
@@ -1268,4 +1268,175 @@ test('queued interactive v1 and later batch v2 both finish immutable reports', a
   assert.equal(context.store.learningReports.has(versions[0].id), true);
   assert.equal(context.store.learningReports.has(versions[1].id), true);
   assert.equal(context.store.learningReports.size, 2);
+
+  const v3Text = 'Question 1: B because I used a deliberately different method.';
+  const v3Created = await context.service.createLearningBatch(
+    context.student.id, context.attemptId, 'create-three-version-batch',
+    { files: [{ displayName: 'v3.txt', kind: 'TEXT', contentType: 'text/plain', declaredBytes: Buffer.byteLength(v3Text) }] }
+  );
+  await context.service.uploadLearningBatchAsset(
+    context.student.id, context.attemptId, v3Created.batch.id, v3Created.batch.assets[0].id,
+    'upload-three-version-batch', Readable.from([v3Text]), Buffer.byteLength(v3Text)
+  );
+  await context.service.submitLearningBatch(
+    context.student.id, context.attemptId, v3Created.batch.id, 'submit-three-version-batch'
+  );
+  const v3WorkerId = 'three-version-batch-worker';
+  const v3BatchWorker = new BatchExtractionWorker({
+    store: context.store, service: context.service, workerId: v3WorkerId,
+    gatewayClient: {
+      async decomposeChunk(request, { plan }) {
+        return {
+          decomposition: gatewayOutputs(plan, { answer: 'B' })
+            .find((output) => output.chunkId === request.chunkId),
+          runMetadata: gatewayRunMetadata()
+        };
+      }
+    },
+    clock: () => new Date('2026-08-01T12:00:03.000Z')
+  });
+  await new AiWorkDispatcher({
+    store: context.store, interactiveWorker: null, batchWorker: v3BatchWorker,
+    workerId: v3WorkerId, clock: () => new Date('2026-08-01T12:00:03.000Z')
+  }).runOnce();
+  const v3Mapped = await context.service.getLearningBatch(
+    context.student.id, context.attemptId, v3Created.batch.id
+  );
+  await confirmExtractedBatch(context, v3Mapped.batch, 'confirm-three-version-batch');
+  assert.equal(submission.currentVersion, 3);
+  assert.equal(versions.length, 3);
+  assert.equal((await interactiveWorker.runOnce()).processed, true);
+  assert.equal(context.store.learningReports.has(versions[2].id), true);
+  assert.equal(context.store.learningReports.size, 3);
+
+  const providerCallsBeforeHistoryReads = inferenceClient.calls.length;
+  const historyDetail = await context.service.getLearningHistory(context.student.id, submission.id);
+  assert.equal(historyDetail.sourceType, 'INTERACTIVE_FINAL');
+  assert.equal(historyDetail.formVersion, context.form.version);
+  assert.equal(historyDetail.currentVersion, 3);
+  assert.deepEqual(historyDetail.versions.map((version) => version.versionNumber), [1, 2, 3]);
+  assert.equal(historyDetail.versions[1].creationReason, 'BATCH_COMMIT');
+  assert.equal(historyDetail.versions[1].mappedQuestionCount, 1);
+  assert.equal(historyDetail.versions[1].batchLineage.batchId, created.batch.id);
+  assert.equal(historyDetail.versions[2].batchLineage.batchId, v3Created.batch.id);
+  assert.deepEqual(historyDetail.versions.map((version) => version.reportStatus),
+    ['UNASSESSABLE', 'COMPLETE', 'COMPLETE']);
+  const historySummary = await context.service.listLearningHistory(context.student.id, { limit: '20' });
+  assert.equal(historySummary.items[0].currentVersion, 3);
+  assert.deepEqual(historySummary.items[0].versions.map((version) => version.versionNumber), [1, 2, 3],
+    'the list projects every immutable version summary, not only current state');
+
+  const historicalV1 = await context.service.getLearningHistoryReport(context.student.id, submission.id, '1');
+  const historicalV2 = await context.service.getLearningHistoryReport(context.student.id, submission.id, '2');
+  const historicalV3 = await context.service.getLearningHistoryReport(context.student.id, submission.id, '3');
+  assert.equal(historicalV1.version, 1);
+  assert.equal(historicalV1.summary.totalQuestions, 25);
+  assert.equal(historicalV2.version, 2);
+  assert.equal(historicalV2.summary.totalQuestions, 1);
+  assert.equal(historicalV3.version, 3);
+  assert.equal(historicalV3.summary.totalQuestions, 1);
+  assert.notEqual(historicalV1.status, historicalV2.status);
+  const questionV1 = await context.service.getLearningHistoryQuestion(
+    context.student.id, submission.id, '1', '1'
+  );
+  const questionV2 = await context.service.getLearningHistoryQuestion(
+    context.student.id, submission.id, '2', '1'
+  );
+  const questionV3 = await context.service.getLearningHistoryQuestion(
+    context.student.id, submission.id, '3', '1'
+  );
+  assert.ok([questionV1, questionV2, questionV3]
+    .every((question) => question.formVersion === context.form.version),
+  'every historical question retains the literal pinned formVersion string');
+  assert.equal(questionV2.question.promptMarkdown, context.form.questions[0].promptMarkdown);
+  assert.equal(questionV1.response.answerOrigin, 'OFFICIAL_FINAL');
+  assert.equal(questionV1.protected.result.selectedOption, null);
+  assert.equal(questionV1.protected.result.isCorrect, null);
+  assert.equal(questionV1.protected.result.points, 1.5);
+  assert.equal(questionV1.protected.analysis.status, 'UNASSESSABLE');
+  assert.equal(questionV2.response.answerOrigin, 'BATCH_CONFIRMED');
+  assert.equal(questionV2.protected.officialAnswer, context.form.questions[0].correctOption);
+  assert.deepEqual(questionV2.protected.result, {
+    selectedOption: 'A',
+    correctOption: context.form.questions[0].correctOption,
+    acceptedOptions: context.form.questions[0].acceptedOptions,
+    isScored: true,
+    isCorrect: true,
+    points: 6
+  });
+  assert.equal(questionV2.protected.analysis.status, 'SUCCEEDED');
+  assert.equal(questionV3.response.answerOrigin, 'BATCH_CONFIRMED');
+  assert.match(questionV3.response.reasoningText, /deliberately different method/);
+  assert.deepEqual(questionV3.protected.result, {
+    selectedOption: 'B',
+    correctOption: context.form.questions[0].correctOption,
+    acceptedOptions: context.form.questions[0].acceptedOptions,
+    isScored: true,
+    isCorrect: false,
+    points: 0
+  });
+  assert.equal(questionV3.protected.analysis.status, 'SUCCEEDED');
+
+  const secondAttempt = await context.service.createAttempt(context.student.id, context.form.id);
+  await context.service.final(context.student.id, secondAttempt.attempt.id, 'history-second-final', {
+    expectedAnswersRevision: 0, expectedStateRevision: 0
+  });
+  const readStateBefore = {
+    submissions: structuredClone(context.store.learningSubmissions),
+    versions: structuredClone(context.store.learningVersions),
+    workItems: structuredClone(context.store.learningWorkItems),
+    reports: structuredClone(context.store.learningReports)
+  };
+  const firstPage = await context.service.listLearningHistory(context.student.id, { limit: '1' });
+  assert.equal(firstPage.items.length, 1);
+  assert.ok(firstPage.nextCursor);
+  const secondPage = await context.service.listLearningHistory(context.student.id, {
+    limit: '1', cursor: firstPage.nextCursor
+  });
+  assert.equal(secondPage.items.length, 1);
+  assert.notEqual(secondPage.items[0].submissionId, firstPage.items[0].submissionId);
+  assert.equal(secondPage.nextCursor, null);
+  assert.equal(
+    new Date(context.store.learningSubmissions.get(context.attemptId).updatedAt).getTime(),
+    new Date(context.store.learningSubmissions.get(secondAttempt.attempt.id).updatedAt).getTime(),
+    'same-timestamp submissions prove the UUID tie-breaker is complete and non-duplicating'
+  );
+  assert.deepEqual({
+    submissions: context.store.learningSubmissions,
+    versions: context.store.learningVersions,
+    workItems: context.store.learningWorkItems,
+    reports: context.store.learningReports
+  }, readStateBefore, 'history reads never enqueue or mutate learning state');
+  await assert.rejects(
+    () => context.service.listLearningHistory(context.student.id, { limit: '1', cursor: 'not-a-cursor' }),
+    (error) => error.code === 'INVALID_LEARNING_HISTORY_CURSOR'
+  );
+  await assert.rejects(
+    () => context.service.listLearningHistory(context.student.id, {
+      limit: '1', cursor: `${firstPage.nextCursor}=`
+    }),
+    (error) => error.code === 'INVALID_LEARNING_HISTORY_CURSOR',
+    'non-canonical padded base64url is rejected'
+  );
+  await assert.rejects(
+    () => context.service.getLearningHistoryQuestion(context.student.id, submission.id, '01', '1'),
+    (error) => error.statusCode === 400 && error.code === 'VALIDATION_ERROR'
+  );
+  const other = await context.service.seedAccessCode({
+    code: 'history-bola-other-code', displayName: 'History Other'
+  });
+  await assert.rejects(
+    () => context.service.getLearningHistory(other.id, submission.id),
+    (error) => error.statusCode === 404 && error.code === 'LEARNING_HISTORY_NOT_FOUND'
+  );
+  await assert.rejects(
+    () => context.service.getLearningHistoryQuestion(other.id, submission.id, '2', '1'),
+    (error) => error.statusCode === 404 && error.code === 'LEARNING_HISTORY_NOT_FOUND'
+  );
+  await assert.rejects(
+    () => context.service.getLearningHistoryReport(other.id, submission.id, '2'),
+    (error) => error.statusCode === 404 && error.code === 'LEARNING_HISTORY_NOT_FOUND'
+  );
+  assert.equal(inferenceClient.calls.length, providerCallsBeforeHistoryReads,
+    'all learning-history GET projections make zero provider calls');
 });

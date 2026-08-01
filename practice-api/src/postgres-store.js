@@ -3666,6 +3666,271 @@ export class PostgresStore {
     }));
   }
 
+  async listLearningHistoryRecords(studentId, { limit, cursor = null }) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY');
+      const result = await client.query(
+      `WITH page AS MATERIALIZED (
+         SELECT * FROM amc_practice.learning_submissions
+         WHERE student_id = $1
+           AND ($2::timestamptz IS NULL OR (updated_at, id) < ($2::timestamptz, $3::uuid))
+         ORDER BY updated_at DESC, id DESC
+         LIMIT $4
+       )
+       SELECT submission.*, to_jsonb(attempt.*) AS attempt, form.title,
+              to_jsonb(release.*) AS release, to_jsonb(current_version.*) AS current_version_record,
+              to_jsonb(current_work.*) AS work_item_record, to_jsonb(current_report.*) AS report_record,
+              submission.updated_at AS pagination_at,
+              GREATEST(
+                submission.updated_at,
+                COALESCE((SELECT max(v.created_at) FROM amc_practice.learning_submission_versions v
+                  WHERE v.learning_submission_id = submission.id), submission.updated_at),
+                COALESCE((SELECT max(w.updated_at) FROM amc_practice.learning_work_items w
+                  JOIN amc_practice.learning_submission_versions v
+                    ON v.id = w.learning_submission_version_id
+                  WHERE v.learning_submission_id = submission.id), submission.updated_at),
+                COALESCE((SELECT max(r.generated_at) FROM amc_practice.learning_reports r
+                  JOIN amc_practice.learning_submission_versions v
+                    ON v.id = r.learning_submission_version_id
+                  WHERE v.learning_submission_id = submission.id), submission.updated_at),
+                COALESCE((SELECT max(batch.updated_at) FROM amc_practice.learning_batches batch
+                  WHERE batch.learning_submission_id = submission.id), submission.updated_at)
+              ) AS activity_at
+       FROM page submission
+       JOIN amc_practice.attempts attempt
+         ON attempt.id = submission.attempt_id AND attempt.student_id = submission.student_id
+       JOIN amc_practice.form_revisions form
+         ON form.form_id = submission.form_id AND form.version = submission.form_version
+       JOIN amc_practice.learning_submission_versions current_version
+         ON current_version.learning_submission_id = submission.id
+        AND current_version.version_number = submission.current_version
+       LEFT JOIN amc_practice.learning_work_items current_work
+         ON current_work.learning_submission_version_id = current_version.id
+        AND current_work.work_type = 'ANALYZE_SUBMISSION'
+       LEFT JOIN amc_practice.learning_reports current_report
+         ON current_report.learning_submission_version_id = current_version.id
+       LEFT JOIN amc_practice.open_review_releases release
+         ON release.id = submission.open_review_release_id
+       ORDER BY submission.updated_at DESC, submission.id DESC`,
+      [studentId, cursor?.updatedAt || null, cursor?.submissionId || null, limit + 1]
+    );
+      if (!result.rowCount) {
+        await client.query('COMMIT');
+        return [];
+      }
+      const summaries = await client.query(
+      `SELECT version.*, to_jsonb(work.*) AS work_item, to_jsonb(report.*) AS report,
+              to_jsonb(batch.*) AS batch,
+              (SELECT count(*)::integer
+                 FROM amc_practice.learning_question_responses response
+                WHERE response.learning_submission_version_id = version.id) AS response_count,
+              COALESCE((SELECT array_agg(response.question_number ORDER BY response.question_number)
+                 FROM amc_practice.learning_question_responses response
+                WHERE response.learning_submission_version_id = version.id), ARRAY[]::smallint[]) AS question_numbers,
+              CASE
+                WHEN version.batch_id IS NOT NULL THEN EXISTS (
+                  SELECT 1 FROM amc_practice.learning_batch_results batch_result
+                   WHERE batch_result.learning_submission_version_id = version.id)
+                WHEN version.version_number = 1 AND submission.official_submission_id IS NOT NULL THEN EXISTS (
+                  SELECT 1 FROM amc_practice.submission_answers answer
+                   WHERE answer.submission_id = submission.official_submission_id)
+                ELSE false
+              END AS has_result
+       FROM amc_practice.learning_submission_versions version
+       JOIN amc_practice.learning_submissions submission
+         ON submission.id = version.learning_submission_id
+       LEFT JOIN amc_practice.learning_work_items work
+         ON work.learning_submission_version_id = version.id
+        AND work.work_type = 'ANALYZE_SUBMISSION'
+       LEFT JOIN amc_practice.learning_reports report
+         ON report.learning_submission_version_id = version.id
+       LEFT JOIN amc_practice.learning_batches batch ON batch.id = version.batch_id
+       WHERE version.learning_submission_id = ANY($1::uuid[])
+       ORDER BY version.learning_submission_id, version.version_number`,
+      [result.rows.map((row) => row.id)]
+    );
+      const versionsBySubmission = new Map();
+      for (const row of summaries.rows) {
+        const values = versionsBySubmission.get(row.learning_submission_id) || [];
+        values.push({
+          version: mapLearningVersion(row),
+          responses: [], responseCount: row.response_count, questionNumbers: row.question_numbers,
+          workItems: row.work_item ? [mapLearningWorkItem(row.work_item)] : [],
+          resultItems: [], hasResult: row.has_result,
+          report: mapLearningReport(row.report), batch: mapLearningBatch(row.batch)
+        });
+        versionsBySubmission.set(row.learning_submission_id, values);
+      }
+      const records = result.rows.map((row) => ({
+        submission: mapLearningSubmission(row),
+        attempt: mapAttempt(row.attempt),
+        form: { id: row.form_id, version: row.form_version, title: row.title },
+        release: mapOpenReviewRelease(row.release),
+        currentVersion: mapLearningVersion(row.current_version_record),
+        workItem: mapLearningWorkItem(row.work_item_record),
+        report: mapLearningReport(row.report_record),
+        activityAt: row.activity_at,
+        paginationAt: row.pagination_at,
+        versions: versionsBySubmission.get(row.id) || []
+      }));
+      await client.query('COMMIT');
+      return records;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async getLearningHistoryRecord(studentId, submissionId) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY');
+      const header = await client.query(
+      `SELECT submission.*, to_jsonb(attempt.*) AS attempt, to_jsonb(release.*) AS release
+       FROM amc_practice.learning_submissions submission
+       JOIN amc_practice.attempts attempt
+         ON attempt.id = submission.attempt_id AND attempt.student_id = submission.student_id
+       LEFT JOIN amc_practice.open_review_releases release
+         ON release.id = submission.open_review_release_id
+       WHERE submission.student_id = $1 AND submission.id = $2`, [studentId, submissionId]
+    );
+      if (!header.rowCount) {
+        await client.query('COMMIT');
+        return null;
+      }
+      const submission = mapLearningSubmission(header.rows[0]);
+      // A pg Client executes one statement at a time. Keep the snapshot reads
+      // explicit and sequential rather than implying cross-connection
+      // parallelism inside this transaction.
+      const form = await getFormUsing(client, submission.formId, submission.formVersion);
+      const versionRows = await client.query(
+        `SELECT * FROM amc_practice.learning_submission_versions
+         WHERE learning_submission_id = $1 ORDER BY version_number`, [submission.id]);
+      const responseRows = await client.query(
+        `SELECT response.* FROM amc_practice.learning_question_responses response
+         JOIN amc_practice.learning_submission_versions version
+           ON version.id = response.learning_submission_version_id
+         WHERE version.learning_submission_id = $1 ORDER BY version.version_number, response.question_number`,
+        [submission.id]);
+      const workRows = await client.query(
+        `SELECT work.* FROM amc_practice.learning_work_items work
+         JOIN amc_practice.learning_submission_versions version
+           ON version.id = work.learning_submission_version_id
+         WHERE version.learning_submission_id = $1 ORDER BY version.version_number, work.created_at`,
+        [submission.id]);
+      const runRows = await client.query(
+        `SELECT run.* FROM amc_practice.learning_analysis_runs run
+         JOIN amc_practice.learning_submission_versions version
+           ON version.id = run.learning_submission_version_id
+         WHERE version.learning_submission_id = $1`, [submission.id]);
+      const analysisRows = await client.query(
+        `SELECT analysis.*, run.learning_submission_version_id
+         FROM amc_practice.learning_question_analyses analysis
+         JOIN amc_practice.learning_analysis_runs run ON run.id = analysis.analysis_run_id
+         JOIN amc_practice.learning_submission_versions version
+           ON version.id = run.learning_submission_version_id
+         WHERE version.learning_submission_id = $1 ORDER BY analysis.question_number`, [submission.id]);
+      const reportRows = await client.query(
+        `SELECT report.* FROM amc_practice.learning_reports report
+         JOIN amc_practice.learning_submission_versions version
+           ON version.id = report.learning_submission_version_id
+         WHERE version.learning_submission_id = $1`, [submission.id]);
+      const batchRows = await client.query(
+        'SELECT * FROM amc_practice.learning_batches WHERE learning_submission_id = $1', [submission.id]);
+      const officialResultRows = await client.query(
+        `SELECT question_number, selected_option, correct_option, accepted_options,
+                is_scored, is_correct, points
+         FROM amc_practice.submission_answers
+         WHERE submission_id = $1 ORDER BY question_number`, [submission.officialSubmissionId]);
+      const batchResultRows = await client.query(
+        `SELECT result.learning_submission_version_id, item.*
+         FROM amc_practice.learning_batch_results result
+         JOIN amc_practice.learning_batch_result_items item ON item.batch_result_id = result.id
+         JOIN amc_practice.learning_submission_versions version
+           ON version.id = result.learning_submission_version_id
+         WHERE version.learning_submission_id = $1
+         ORDER BY version.version_number, item.question_number`, [submission.id]);
+      if (!form) throw new Error('Learning history submission lost its pinned form revision.');
+      const responsesByVersion = new Map();
+    for (const row of responseRows.rows) {
+      const values = responsesByVersion.get(row.learning_submission_version_id) || [];
+      values.push({
+        learningSubmissionVersionId: row.learning_submission_version_id,
+        formId: row.form_id, formVersion: row.form_version,
+        questionNumber: row.question_number, selectedOption: row.selected_option,
+        reasoningText: row.reasoning_text, answerOrigin: row.answer_origin,
+        reasoningOrigin: row.reasoning_origin, createdAt: row.created_at
+      });
+      responsesByVersion.set(row.learning_submission_version_id, values);
+    }
+    const workByVersion = new Map();
+    for (const row of workRows.rows) {
+      const values = workByVersion.get(row.learning_submission_version_id) || [];
+      values.push(mapLearningWorkItem(row));
+      workByVersion.set(row.learning_submission_version_id, values);
+    }
+    const runByVersion = new Map(runRows.rows.map((row) =>
+      [row.learning_submission_version_id, mapAnalysisRun(row)]));
+    const analysesByVersion = new Map();
+    for (const row of analysisRows.rows) {
+      const values = analysesByVersion.get(row.learning_submission_version_id) || [];
+      values.push(mapQuestionAnalysis(row));
+      analysesByVersion.set(row.learning_submission_version_id, values);
+    }
+    const reportByVersion = new Map(reportRows.rows.map((row) =>
+      [row.learning_submission_version_id, mapLearningReport(row)]));
+    const batchById = new Map(batchRows.rows.map((row) => [row.id, mapLearningBatch(row)]));
+    const mapResultItem = (row) => ({
+      questionNumber: row.question_number,
+      selectedOption: row.selected_option,
+      correctOption: row.correct_option,
+      acceptedOptions: Array.isArray(row.accepted_options) && row.accepted_options.length
+        ? row.accepted_options : (row.correct_option ? [row.correct_option] : []),
+      isScored: row.is_scored !== false,
+      isCorrect: row.is_correct,
+      points: number(row.points)
+    });
+    const officialResultItems = officialResultRows.rows.map(mapResultItem);
+    const batchResultsByVersion = new Map();
+    for (const row of batchResultRows.rows) {
+      const values = batchResultsByVersion.get(row.learning_submission_version_id) || [];
+      values.push(mapResultItem(row));
+      batchResultsByVersion.set(row.learning_submission_version_id, values);
+    }
+      const record = {
+        submission,
+        attempt: mapAttempt(header.rows[0].attempt),
+        release: mapOpenReviewRelease(header.rows[0].release),
+        form,
+        versions: versionRows.rows.map((row) => {
+          const version = mapLearningVersion(row);
+          return {
+            version,
+            responses: responsesByVersion.get(version.id) || [],
+            workItems: workByVersion.get(version.id) || [],
+            analysisRun: runByVersion.get(version.id) || null,
+            analyses: analysesByVersion.get(version.id) || [],
+            resultItems: version.batchId
+              ? batchResultsByVersion.get(version.id) || []
+              : (version.versionNumber === 1 ? officialResultItems : []),
+            report: reportByVersion.get(version.id) || null,
+            batch: version.batchId ? batchById.get(version.batchId) || null : null
+          };
+        })
+      };
+      await client.query('COMMIT');
+      return record;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
   async findOrCreateOpenReviewWorkspace({
     studentId, releaseId, idempotencyKey, requestHash, now
   }) {

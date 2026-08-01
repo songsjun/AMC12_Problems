@@ -48,6 +48,18 @@ export async function buildApp({ service, config, logger = false }) {
   });
   const reasoningWriteWindows = new Map();
   const reasoningWritesPerMinute = config.reasoningWritesPerMinute || 30;
+  const learningHistoryPrefix = `${config.basePath}/learning-history`;
+
+  // Global onRequest hooks (notably the IP limiter) can terminate a request
+  // before a route handler runs. Apply the private-history cache policy at
+  // serialization time as well, so every status code follows the same rule.
+  app.addHook('onSend', async (request, reply, payload) => {
+    const path = request.raw.url?.split('?', 1)[0] || '';
+    if (path === learningHistoryPrefix || path.startsWith(`${learningHistoryPrefix}/`)) {
+      reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+    }
+    return payload;
+  });
 
   function enforceReasoningWriteRate(studentId) {
     const now = Date.now();
@@ -217,6 +229,33 @@ export async function buildApp({ service, config, logger = false }) {
     const auth = await requireAuth(request);
     reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
     return { workspace: await service.getOpenReviewWorkspace(auth.student.id, request.params.attemptId) };
+  });
+
+  app.get(`${base}/learning-history`, async (request, reply) => {
+    reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+    const auth = await requireAuth(request);
+    return service.listLearningHistory(auth.student.id, request.query || {});
+  });
+  app.get(`${base}/learning-history/:submissionId`, async (request, reply) => {
+    reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+    const auth = await requireAuth(request);
+    return service.getLearningHistory(auth.student.id, request.params.submissionId);
+  });
+  app.get(`${base}/learning-history/:submissionId/versions/:versionNumber/questions/:questionNumber`,
+    async (request, reply) => {
+      reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+      const auth = await requireAuth(request);
+      return service.getLearningHistoryQuestion(
+        auth.student.id, request.params.submissionId,
+        request.params.versionNumber, request.params.questionNumber
+      );
+    });
+  app.get(`${base}/learning-history/:submissionId/versions/:versionNumber/report`, async (request, reply) => {
+    reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+    const auth = await requireAuth(request);
+    return service.getLearningHistoryReport(
+      auth.student.id, request.params.submissionId, request.params.versionNumber
+    );
   });
 
   app.post(`${base}/attempts`, async (request, reply) => {
