@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kapy.local/schema/question-context-candidates.schema.json",
+  "title": "AMC private question-context candidates",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "classificationPolicyVersion", "audience", "question", "solutions", "disclaimer", "contextHash"],
+  "properties": {
+    "schemaVersion": {"const": "amc-question-context-candidates-v1"},
+    "classificationPolicyVersion": {"const": "amc-written-solution-title-review-v1"},
+    "audience": {"const": "private-review-only"},
+    "question": {"$ref": "#/$defs/question"},
+    "solutions": {"type": "array", "items": {"$ref": "#/$defs/solution"}},
+    "releaseBinding": {"$ref": "#/$defs/releaseBinding"},
+    "disclaimer": {"type": "string", "minLength": 1},
+    "contextHash": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "issue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "severity"],
+      "properties": {
+        "code": {"type": "string", "minLength": 1},
+        "message": {"type": "string", "minLength": 1},
+        "severity": {"enum": ["error", "warning", "info"]},
+        "line": {"type": "integer", "minimum": 1}
+      }
+    },
+    "question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["number", "sourceRef", "promptMarkdown", "choices", "sourceReviewIssues"],
+      "properties": {
+        "number": {"type": "integer", "minimum": 1, "maximum": 25},
+        "sourceRef": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256"],
+          "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"$ref": "#/$defs/sha256"}}
+        },
+        "promptMarkdown": {"type": "string", "minLength": 1},
+        "choices": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["A", "B", "C", "D", "E"],
+          "properties": {
+            "A": {"type": "string", "minLength": 1}, "B": {"type": "string", "minLength": 1},
+            "C": {"type": "string", "minLength": 1}, "D": {"type": "string", "minLength": 1},
+            "E": {"type": "string", "minLength": 1}
+          }
+        },
+        "sourceReviewIssues": {"type": "array", "items": {"$ref": "#/$defs/issue"}}
+      }
+    },
+    "excludedRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["headingLine", "endLine", "kind"],
+      "properties": {
+        "headingLine": {"type": "integer", "minimum": 1},
+        "endLine": {"type": "integer", "minimum": 1},
+        "kind": {"const": "excluded-heading"}
+      }
+    },
+    "solution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["solutionId", "sourceOrder", "title", "headingLevel", "bodyMarkdown", "bodySha256", "reviewStatus", "quarantineReasons", "excludedSourceRanges", "sourceRef"],
+      "properties": {
+        "solutionId": {"type": "string", "pattern": "^solution-[0-9]{3}$"},
+        "sourceOrder": {"type": "integer", "minimum": 1},
+        "title": {"type": "string", "minLength": 1},
+        "headingLevel": {"enum": [2, 3, 4]},
+        "bodyMarkdown": {"type": "string"},
+        "bodySha256": {"$ref": "#/$defs/sha256"},
+        "reviewStatus": {"enum": ["candidate", "quarantined"]},
+        "quarantineReasons": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "excludedSourceRanges": {"type": "array", "items": {"$ref": "#/$defs/excludedRange"}},
+        "sourceRef": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256", "headingLine", "endLine"],
+          "properties": {
+            "path": {"type": "string", "minLength": 1}, "sha256": {"$ref": "#/$defs/sha256"},
+            "headingLine": {"type": "integer", "minimum": 1}, "endLine": {"type": "integer", "minimum": 1}
+          }
+        }
+      }
+    },
+    "releaseBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["formId", "formVersion", "questionBundleHash", "contentHash", "manifestHash"],
+      "properties": {
+        "formId": {"type": "string", "minLength": 1}, "formVersion": {"type": "string", "minLength": 1},
+        "questionBundleHash": {"$ref": "#/$defs/sha256"}, "contentHash": {"$ref": "#/$defs/sha256"},
+        "manifestHash": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

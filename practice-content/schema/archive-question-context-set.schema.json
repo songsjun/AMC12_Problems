@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kapy.local/schema/archive-question-context-set.schema.json",
+  "title": "AMC private released-archive question-context inventory",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "classificationPolicyVersion", "audience", "archiveRelease", "summary", "forms", "disclaimer", "setHash"],
+  "properties": {
+    "schemaVersion": {"const": "amc-question-context-archive-candidate-set-v1"},
+    "classificationPolicyVersion": {"const": "amc-written-solution-title-review-v1"},
+    "audience": {"const": "private-review-only"},
+    "archiveRelease": {
+      "type": "object", "additionalProperties": false,
+      "required": ["batchSchemaVersion", "releaseVersion", "sourcePath", "sourceSha256"],
+      "properties": {
+        "batchSchemaVersion": {"const": "amc-practice-archive-release-batch-v1"},
+        "releaseVersion": {"type": "string", "minLength": 1}, "sourcePath": {"type": "string", "minLength": 1},
+        "sourceSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "summary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["formCount", "questionCount", "candidateSolutionCount", "quarantinedSolutionCount", "approvedSolutionCount", "parserErrorCount", "parserWarningCount"],
+      "properties": {
+        "formCount": {"const": 48}, "questionCount": {"const": 1200},
+        "candidateSolutionCount": {"type": "integer", "minimum": 0}, "quarantinedSolutionCount": {"type": "integer", "minimum": 0},
+        "approvedSolutionCount": {"const": 0}, "parserErrorCount": {"type": "integer", "minimum": 0},
+        "parserWarningCount": {"type": "integer", "minimum": 0}
+      }
+    },
+    "forms": {
+      "type": "array", "minItems": 48, "maxItems": 48,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["form", "summary", "questions"],
+        "properties": {
+          "form": {
+            "type": "object", "additionalProperties": false,
+            "required": ["id", "version", "title", "questionBundleHash", "contentHash", "manifestHash"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1}, "title": {"type": "string", "minLength": 1},
+              "questionBundleHash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "contentHash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "manifestHash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+            }
+          },
+          "summary": {"$ref": "question-context-set.schema.json#/$defs/summary"},
+          "questions": {"type": "array", "minItems": 25, "maxItems": 25, "items": {"$ref": "question-context-candidates.schema.json"}}
+        }
+      }
+    },
+    "disclaimer": {"type": "string", "minLength": 1},
+    "setHash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

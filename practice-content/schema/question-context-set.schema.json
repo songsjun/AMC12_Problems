@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kapy.local/schema/question-context-set.schema.json",
+  "title": "AMC private source-form question-context candidate set",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "classificationPolicyVersion", "audience", "form", "summary", "questions", "disclaimer", "setHash"],
+  "properties": {
+    "schemaVersion": {"const": "amc-question-context-candidate-set-v1"},
+    "classificationPolicyVersion": {"const": "amc-written-solution-title-review-v1"},
+    "audience": {"const": "private-review-only"},
+    "form": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "version", "title", "sourceFormPath"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1}, "sourceFormPath": {"type": "string", "minLength": 1}
+      }
+    },
+    "summary": {"$ref": "#/$defs/summary"},
+    "questions": {
+      "type": "array",
+      "minItems": 25,
+      "maxItems": 25,
+      "items": {"$ref": "question-context-candidates.schema.json"}
+    },
+    "disclaimer": {"type": "string", "minLength": 1},
+    "setHash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "$defs": {
+    "summary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["questionCount", "candidateSolutionCount", "quarantinedSolutionCount", "approvedSolutionCount", "parserErrorCount", "parserWarningCount"],
+      "properties": {
+        "questionCount": {"type": "integer", "minimum": 0}, "candidateSolutionCount": {"type": "integer", "minimum": 0},
+        "quarantinedSolutionCount": {"type": "integer", "minimum": 0}, "approvedSolutionCount": {"const": 0},
+        "parserErrorCount": {"type": "integer", "minimum": 0}, "parserWarningCount": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

@@ -9,7 +9,15 @@ The pipeline produces two different artifacts:
 | Artifact | Contains | Safe audience |
 | --- | --- | --- |
 | `public-form.json` | prompts, choices, and public content hash | authenticated exam client before final submission |
-| `private-form.json` | the exact backend-import contract, including source references, `correctOption`, and the reviewed first-solution `solutionMarkdown` | server-side importer only; never static-host or send before final submission |
+| `private-form.json` | the exact backend-import contract, including source references, `correctOption`, and the currently released first-solution `solutionMarkdown` | server-side importer only; never static-host or send before final submission |
+
+An additional, isolated `build-question-context` command produces private
+**review artifacts** containing all structurally identified written solution
+candidates. It does not change either manifest above, and its output has no
+`approved` state. Obvious title warnings such as `cheese`, `fakesolve`,
+`does not actually work`, and `worst` are quarantined automatically; every
+other solution remains only a candidate until a human reviewer approves it in
+a later content-governance step.
 
 The private artifact has the compatibility fields expected by the AMC backend:
 
@@ -167,6 +175,34 @@ python3 -m amc_content.cli build \
 
 python3 -m unittest discover -s tests -v
 ```
+
+Build a single-question candidate context under a dedicated private root. The
+root must already exist, have mode `0700`, be disjoint from the source tree,
+and must not be a symlink:
+
+```sh
+install -d -m 700 /var/tmp/amc-private-context
+
+python3 -m amc_content.cli build-question-context \
+  --source-file ../2025_AMC_12A_Problems/Problem_01.md \
+  --question-number 1 \
+  --source-root .. \
+  --private-output-root /var/tmp/amc-private-context \
+  --json-output /var/tmp/amc-private-context/amc-q1-context.json \
+  --markdown-output /var/tmp/amc-private-context/amc-q1-context.md
+```
+
+Use `--form forms/2025-amc-12a/source-form.json` instead of
+`--source-file/--question-number` to build a complete form candidate set. The
+command refuses source-tree/public-like output roots, group/world permission
+bits, symlinks, and existing outputs. Replacing both outputs requires an
+explicit `--replace`. To create a reproducible inventory bound to all 48 exact
+published archive revisions (including released prompt overrides and mirrored
+media), use `--archive-private-release generated/historical/private-release.json`.
+These artifacts must remain private and cannot be used as student AI context
+before a separate review records explicit approvals. JSON is authoritative;
+the companion Markdown renders all community/source text inside collision-safe
+literal fences so HTML, images, headings, and fake review markers stay inert.
 
 `review` has no key input and never creates an importable private manifest.
 `build` verifies both artifacts after generation and is idempotent: canonical
