@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 const clone = (value) => structuredClone(value);
+const cloneMap = (map) => new Map([...map].map(([key, value]) => [key, clone(value)]));
 const formKey = (id, version) => `${id}\u0000${version}`;
 const idempotencyKey = (studentId, scope, key) => `${studentId}\u0000${scope}\u0000${key}`;
 
@@ -17,8 +18,13 @@ export class MemoryStore {
     this.forms = new Map();
     this.attempts = new Map();
     this.answers = new Map();
+    this.reasoningNotes = new Map();
     this.submissions = new Map();
     this.submissionAnswers = new Map();
+    this.learningSubmissions = new Map();
+    this.learningVersions = new Map();
+    this.learningResponses = new Map();
+    this.learningWorkItems = new Map();
     this.events = new Map();
     this.idempotency = new Map();
     this.attemptLocks = new Map();
@@ -159,6 +165,7 @@ export class MemoryStore {
       const attempt = this.#newAttempt({ studentId, form, now });
       this.attempts.set(attempt.id, clone(attempt));
       this.answers.set(attempt.id, form.questions.map((question) => ({ questionNumber: question.number, selectedOption: null })));
+      this.reasoningNotes.set(attempt.id, []);
       this.submissions.set(attempt.id, []);
       this.events.set(attempt.id, [{ type: 'START', occurredAt: now }]);
       return { attempt: clone(attempt), created: true };
@@ -174,6 +181,7 @@ export class MemoryStore {
     const attempt = this.#newAttempt({ studentId, form, now });
     this.attempts.set(attempt.id, clone(attempt));
     this.answers.set(attempt.id, form.questions.map((question) => ({ questionNumber: question.number, selectedOption: null })));
+    this.reasoningNotes.set(attempt.id, []);
     this.submissions.set(attempt.id, []);
     this.events.set(attempt.id, [{ type: 'START', occurredAt: now, metadata: { reset: true } }]);
     return clone(attempt);
@@ -191,6 +199,7 @@ export class MemoryStore {
       activeElapsedMs: 0,
       clockStartedAt: now,
       answersRevision: 0,
+      reasoningRevision: 0,
       stateRevision: 0,
       limitReachedAt: null,
       finalizedAt: null,
@@ -236,7 +245,17 @@ export class MemoryStore {
     await previous;
     try {
       if (!this.attempts.has(attemptId)) return work(null);
-      return await work(new MemoryAttemptTransaction(this, attemptId));
+      // Work on the live maps while the global mutex prevents observers, then
+      // restore a full transaction checkpoint on failure. This gives the
+      // deterministic adapter PostgreSQL-equivalent all-or-nothing behavior,
+      // including failures after official scoring but before learning intent.
+      const checkpoint = this.#transactionCheckpoint();
+      try {
+        return await work(new MemoryAttemptTransaction(this, attemptId));
+      } catch (error) {
+        this.#restoreTransactionCheckpoint(checkpoint);
+        throw error;
+      }
     } finally {
       release();
       if (this.attemptLocks.get(attemptId) === queued) this.attemptLocks.delete(attemptId);
@@ -253,6 +272,26 @@ export class MemoryStore {
     } finally {
       release();
     }
+  }
+
+  #transactionCheckpoint() {
+    return {
+      attempts: cloneMap(this.attempts),
+      answers: cloneMap(this.answers),
+      reasoningNotes: cloneMap(this.reasoningNotes),
+      submissions: cloneMap(this.submissions),
+      submissionAnswers: cloneMap(this.submissionAnswers),
+      learningSubmissions: cloneMap(this.learningSubmissions),
+      learningVersions: cloneMap(this.learningVersions),
+      learningResponses: cloneMap(this.learningResponses),
+      learningWorkItems: cloneMap(this.learningWorkItems),
+      events: cloneMap(this.events),
+      idempotency: cloneMap(this.idempotency)
+    };
+  }
+
+  #restoreTransactionCheckpoint(checkpoint) {
+    for (const [name, value] of Object.entries(checkpoint)) this[name] = value;
   }
 }
 
@@ -281,6 +320,29 @@ class MemoryAttemptTransaction {
     return clone(answers);
   }
 
+  async getReasoningNotes() {
+    return clone(this.store.reasoningNotes.get(this.attemptId) || []);
+  }
+
+  async saveReasoningNotes(updates, updatedAt) {
+    const byNumber = new Map((this.store.reasoningNotes.get(this.attemptId) || [])
+      .map((note) => [note.questionNumber, note]));
+    for (const update of updates) {
+      if (update.reasoningText === '') {
+        byNumber.delete(update.questionNumber);
+      } else {
+        byNumber.set(update.questionNumber, {
+          questionNumber: update.questionNumber,
+          reasoningText: update.reasoningText,
+          updatedAt
+        });
+      }
+    }
+    const notes = [...byNumber.values()].sort((left, right) => left.questionNumber - right.questionNumber);
+    this.store.reasoningNotes.set(this.attemptId, clone(notes));
+    return clone(notes);
+  }
+
   async listSubmissions() {
     return clone(this.store.submissions.get(this.attemptId) || []);
   }
@@ -304,6 +366,39 @@ class MemoryAttemptTransaction {
 
   async getSubmissionAnswers(submissionId) {
     return clone(this.store.submissionAnswers.get(submissionId) || []);
+  }
+
+  async getLearningSubmissionBundle() {
+    const submission = this.store.learningSubmissions.get(this.attemptId);
+    if (!submission) return null;
+    const versions = this.store.learningVersions.get(submission.id) || [];
+    const version = versions.find((candidate) => candidate.versionNumber === submission.currentVersion);
+    if (!version) throw new Error(`Learning submission ${submission.id} has no current version.`);
+    return clone({
+      submission,
+      version,
+      responses: this.store.learningResponses.get(version.id) || [],
+      workItems: this.store.learningWorkItems.get(version.id) || []
+    });
+  }
+
+  async createLearningSubmission({ submission, version, responses, workItem }) {
+    if (this.store.learningSubmissions.has(this.attemptId)) {
+      const error = new Error('A learning submission already exists for this attempt.');
+      error.code = 'LEARNING_SUBMISSION_EXISTS';
+      throw error;
+    }
+    if (submission.attemptId !== this.attemptId
+      || version.learningSubmissionId !== submission.id
+      || responses.some((response) => response.learningSubmissionVersionId !== version.id)
+      || workItem.learningSubmissionVersionId !== version.id) {
+      throw new Error('Invalid learning submission aggregate.');
+    }
+    this.store.learningSubmissions.set(this.attemptId, clone(submission));
+    this.store.learningVersions.set(submission.id, [clone(version)]);
+    this.store.learningResponses.set(version.id, clone(responses));
+    this.store.learningWorkItems.set(version.id, [clone(workItem)]);
+    return this.getLearningSubmissionBundle();
   }
 
   async addTimerEvent(event) {

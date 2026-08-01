@@ -5,6 +5,7 @@ import {
   SUBMISSION_KINDS,
   assertMutableAnswerPhase,
   assertSelectedOption,
+  canEditAnswers,
   elapsedAt,
   publicAttempt,
   publicForm,
@@ -26,6 +27,8 @@ const PRELIMINARY_SLOT = 'PRELIMINARY';
 const FINAL_SLOT = 'FINAL';
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ARCHIVE_RELEASE_FORM_ID_SET = new Set(ARCHIVE_RELEASE_FORM_IDS);
+const MAX_REASONING_NOTE_BYTES = 8_000;
+const MAX_REASONING_REQUEST_BYTES = 48_000;
 
 function asDate(value) {
   return value instanceof Date ? value : new Date(value);
@@ -59,6 +62,58 @@ function ensureAttemptId(value) {
     throw badRequest('INVALID_ATTEMPT_ID', 'attemptId must be a UUID.');
   }
   return value;
+}
+
+function assertOnlyKeys(value, allowed, name) {
+  const unknown = Object.keys(value).filter((key) => !allowed.has(key));
+  if (unknown.length) {
+    throw badRequest('VALIDATION_ERROR', `${name} contains unsupported fields: ${unknown.join(', ')}.`);
+  }
+}
+
+function normalizeReasoningUpdate(input) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    throw badRequest('VALIDATION_ERROR', 'Request body must be an object.');
+  }
+  assertOnlyKeys(input, new Set(['revision', 'notes']), 'Request body');
+  if (!Number.isSafeInteger(input.revision) || input.revision < 0) {
+    throw badRequest('VALIDATION_ERROR', 'revision must be a non-negative integer.');
+  }
+  if (!Array.isArray(input.notes) || input.notes.length === 0 || input.notes.length > 100) {
+    throw badRequest('VALIDATION_ERROR', 'notes must contain 1-100 partial reasoning updates.');
+  }
+  const seen = new Set();
+  let totalBytes = 0;
+  const notes = input.notes.map((note) => {
+    if (!note || typeof note !== 'object' || Array.isArray(note)) {
+      throw badRequest('VALIDATION_ERROR', 'Each reasoning note must be an object.');
+    }
+    assertOnlyKeys(note, new Set(['questionNumber', 'reasoningText']), 'Reasoning note');
+    if (!Number.isSafeInteger(note.questionNumber)) {
+      throw badRequest('VALIDATION_ERROR', 'Each reasoning note must name an integer questionNumber.');
+    }
+    if (seen.has(note.questionNumber)) {
+      throw badRequest('VALIDATION_ERROR', 'Each question may appear only once per reasoning request.');
+    }
+    seen.add(note.questionNumber);
+    if (note.reasoningText !== null && typeof note.reasoningText !== 'string') {
+      throw badRequest('VALIDATION_ERROR', 'reasoningText must be a string or null.');
+    }
+    if (typeof note.reasoningText === 'string' && note.reasoningText.includes('\u0000')) {
+      throw badRequest('VALIDATION_ERROR', 'reasoningText cannot contain NUL characters.');
+    }
+    const reasoningText = note.reasoningText === null || note.reasoningText.trim() === '' ? '' : note.reasoningText;
+    const byteLength = Buffer.byteLength(reasoningText, 'utf8');
+    if (byteLength > MAX_REASONING_NOTE_BYTES) {
+      throw badRequest('VALIDATION_ERROR', `Each reasoningText is limited to ${MAX_REASONING_NOTE_BYTES} UTF-8 bytes.`);
+    }
+    totalBytes += byteLength;
+    return { questionNumber: note.questionNumber, reasoningText };
+  });
+  if (totalBytes > MAX_REASONING_REQUEST_BYTES) {
+    throw badRequest('VALIDATION_ERROR', `A reasoning update is limited to ${MAX_REASONING_REQUEST_BYTES} UTF-8 bytes.`);
+  }
+  return { revision: input.revision, notes };
 }
 
 function markAttemptChanged(attempt, now) {
@@ -454,6 +509,68 @@ export class PracticeService {
     });
   }
 
+  async getReasoning(studentId, attemptId) {
+    ensureAttemptId(attemptId);
+    return this.store.withAttemptLock(attemptId, async (tx) => {
+      const attempt = await tx?.getAttempt();
+      assertOwned(attempt, studentId);
+      const form = await this.#getAttemptForm(attempt);
+      const reconciled = await this.#reconcileDeadline(tx, attempt, form, this.now());
+      return this.#reasoningEnvelope(tx, reconciled.attempt);
+    });
+  }
+
+  async putReasoning(studentId, attemptId, idempotencyKey, input) {
+    const normalized = normalizeReasoningUpdate(input);
+    return this.#idempotentAttemptMutation(
+      studentId,
+      attemptId,
+      'put-reasoning',
+      idempotencyKey,
+      normalized,
+      async (tx, attempt, form, now) => {
+        const reconciled = await this.#reconcileDeadline(tx, attempt, form, now);
+        assertMutableAnswerPhase(reconciled.attempt);
+        const currentRevision = reconciled.attempt.reasoningRevision || 0;
+        if (normalized.revision !== currentRevision) {
+          throw conflict('REASONING_REVISION_CONFLICT', 'Reasoning changed in another tab. Reload before saving.', {
+            currentRevision
+          });
+        }
+        const validNumbers = new Set(form.questions.map((question) => question.number));
+        if (normalized.notes.some((note) => !validNumbers.has(note.questionNumber))) {
+          throw badRequest('VALIDATION_ERROR', 'Each reasoning note must name a question in this form.');
+        }
+        await tx.saveReasoningNotes(normalized.notes, now);
+        reconciled.attempt.reasoningRevision = currentRevision + 1;
+        markAttemptChanged(reconciled.attempt, now);
+        await tx.saveAttempt(reconciled.attempt);
+        await tx.addTimerEvent({
+          type: 'REASONING_SAVE',
+          occurredAt: now,
+          metadata: {
+            revision: reconciled.attempt.reasoningRevision,
+            questionNumbers: normalized.notes.map((note) => note.questionNumber)
+          }
+        });
+        return this.#reasoningEnvelope(tx, reconciled.attempt);
+      },
+      {
+        // Idempotency records are long-lived control metadata. Student prose
+        // remains only in the reasoning table and is reconstructed under the
+        // owner-scoped attempt lock on replay.
+        responseForStorage: (response) => ({
+          attemptId: response.attemptId,
+          reasoningRevision: response.reasoningRevision,
+          stateRevision: response.stateRevision,
+          editable: response.editable,
+          responseKind: 'CURRENT_REASONING_ENVELOPE'
+        }),
+        replay: (tx, currentAttempt) => this.#reasoningEnvelope(tx, currentAttempt)
+      }
+    );
+  }
+
   async pause(studentId, attemptId, idempotencyKey) {
     return this.#idempotentAttemptMutation(studentId, attemptId, 'pause', idempotencyKey, {}, async (tx, attempt, form, now) => {
       const reconciled = await this.#reconcileDeadline(tx, attempt, form, now);
@@ -529,10 +646,11 @@ export class PracticeService {
         throw conflict('INVALID_STATE', 'This attempt cannot be finalized.');
       }
       assertExpectedSubmissionRevisions(reconciled.attempt, input);
-      const submission = await this.#finalize(tx, reconciled.attempt, form, now, 'STUDENT_FINAL');
+      const finalized = await this.#finalize(tx, reconciled.attempt, form, now, 'STUDENT_FINAL');
       return {
         attempt: publicAttempt(reconciled.attempt, await tx.getAnswers(), await tx.listSubmissions(), now),
-        submission: publicSubmission(submission)
+        submission: publicSubmission(finalized.submission),
+        learningSubmission: this.#publicLearningSubmission(finalized.learning)
       };
     });
   }
@@ -549,10 +667,11 @@ export class PracticeService {
       }
       assertExpectedSubmissionRevisions(reconciled.attempt, requestInput);
       if (decision === 'finalize') {
-        const submission = await this.#finalize(tx, reconciled.attempt, form, now, 'DEADLINE_FINAL');
+        const finalized = await this.#finalize(tx, reconciled.attempt, form, now, 'DEADLINE_FINAL');
         return {
           attempt: publicAttempt(reconciled.attempt, await tx.getAnswers(), await tx.listSubmissions(), now),
-          submission: publicSubmission(submission)
+          submission: publicSubmission(finalized.submission),
+          learningSubmission: this.#publicLearningSubmission(finalized.learning)
         };
       }
       reconciled.attempt.phase = PHASES.OVERTIME;
@@ -617,6 +736,55 @@ export class PracticeService {
         finalSubmission,
         submissions: detailed
       };
+    });
+  }
+
+  async getLearningSubmission(studentId, attemptId) {
+    ensureAttemptId(attemptId);
+    return this.store.withAttemptLock(attemptId, async (tx) => {
+      const attempt = await tx?.getAttempt();
+      assertOwned(attempt, studentId);
+      const submissions = await tx.listSubmissions();
+      const finalSubmission = submissions.find((submission) => submission.kind === SUBMISSION_KINDS.FINAL);
+      if (!finalSubmission || ![PHASES.FINALIZED, PHASES.RESET].includes(attempt.phase)) {
+        throw conflict('LEARNING_SUBMISSION_NOT_AVAILABLE', 'Learning analysis is available after final submission.');
+      }
+      const learning = await tx.getLearningSubmissionBundle();
+      if (!learning) {
+        throw conflict(
+          'LEARNING_SUBMISSION_REPAIR_PENDING',
+          'This historical final is awaiting learning-submission reconciliation.'
+        );
+      }
+      return this.#publicLearningSubmission(learning);
+    });
+  }
+
+  /** Maintenance/worker entrypoint. It is deliberately not exposed as HTTP. */
+  async reconcileFinalLearningSubmission(attemptId) {
+    ensureAttemptId(attemptId);
+    return this.store.withAttemptLock(attemptId, async (tx) => {
+      const attempt = await tx?.getAttempt();
+      if (!attempt) return { processed: false, created: false, reason: 'ATTEMPT_NOT_FOUND' };
+      const submissions = await tx.listSubmissions();
+      const finalSubmission = submissions.find((submission) => submission.kind === SUBMISSION_KINDS.FINAL);
+      if (!finalSubmission || ![PHASES.FINALIZED, PHASES.RESET].includes(attempt.phase)) {
+        return { processed: false, created: false, reason: 'FINAL_NOT_AVAILABLE' };
+      }
+      const existing = await tx.getLearningSubmissionBundle();
+      if (existing) {
+        return { processed: true, created: false, learningSubmission: this.#publicLearningSubmission(existing) };
+      }
+      const form = await this.#getAttemptForm(attempt);
+      const learning = await this.#createLearningSubmission(
+        tx, attempt, form, finalSubmission, this.now(), 'BACKFILL'
+      );
+      await tx.addTimerEvent({
+        type: 'LEARNING_SUBMISSION_BACKFILL',
+        occurredAt: this.now(),
+        metadata: { learningSubmissionId: learning.submission.id, version: learning.version.versionNumber }
+      });
+      return { processed: true, created: true, learningSubmission: this.#publicLearningSubmission(learning) };
     });
   }
 
@@ -753,11 +921,127 @@ export class PracticeService {
     markAttemptChanged(attempt, now);
     await tx.saveAttempt(attempt);
     const submission = await this.#createSubmission(tx, attempt, form, SUBMISSION_KINDS.FINAL, FINAL_SLOT, trigger, now);
-    await tx.addTimerEvent({ type: 'FINAL', occurredAt: now, metadata: { submissionId: submission.id, trigger } });
-    return submission;
+    const learning = await this.#createLearningSubmission(tx, attempt, form, submission, now, 'FINAL_COMMIT');
+    await tx.addTimerEvent({
+      type: 'FINAL',
+      occurredAt: now,
+      metadata: {
+        submissionId: submission.id,
+        learningSubmissionId: learning.submission.id,
+        trigger
+      }
+    });
+    return { submission, learning };
   }
 
-  async #idempotentAttemptMutation(studentId, attemptId, action, idempotencyKey, body, work) {
+  async #createLearningSubmission(tx, attempt, form, officialSubmission, now, creationReason) {
+    const existing = await tx.getLearningSubmissionBundle();
+    if (existing) return existing;
+    const officialAnswers = await tx.getSubmissionAnswers(officialSubmission.id);
+    const officialByNumber = new Map(officialAnswers.map((answer) => [answer.questionNumber, answer.selectedOption]));
+    const reasoningByNumber = new Map((await tx.getReasoningNotes())
+      .map((note) => [note.questionNumber, note.reasoningText]));
+    const evidence = form.questions.map((question) => ({
+      questionNumber: question.number,
+      selectedOption: officialByNumber.get(question.number) ?? null,
+      reasoningText: reasoningByNumber.get(question.number) || '',
+      reasoningOrigin: reasoningByNumber.has(question.number) ? 'DURING_ATTEMPT' : 'NONE'
+    }));
+    if (officialAnswers.length !== form.questions.length) {
+      throw new Error(`Final submission ${officialSubmission.id} does not snapshot every form question.`);
+    }
+    const evidenceHash = createHash('sha256').update(stableJson({
+      sourceKind: 'INTERACTIVE_FINAL',
+      formId: form.id,
+      formVersion: form.version,
+      officialSubmissionId: officialSubmission.id,
+      answersRevision: attempt.answersRevision,
+      reasoningRevision: attempt.reasoningRevision || 0,
+      responses: evidence
+    })).digest('hex');
+    const submission = {
+      id: randomUUID(),
+      studentId: attempt.studentId,
+      attemptId: attempt.id,
+      officialSubmissionId: officialSubmission.id,
+      officialSubmissionKind: 'FINAL',
+      formId: form.id,
+      formVersion: form.version,
+      sourceType: 'INTERACTIVE_FINAL',
+      lifecycleStatus: 'COMMITTED',
+      currentVersion: 1,
+      createdAt: now,
+      updatedAt: now
+    };
+    const version = {
+      id: randomUUID(),
+      learningSubmissionId: submission.id,
+      versionNumber: 1,
+      formId: form.id,
+      formVersion: form.version,
+      answersRevision: attempt.answersRevision,
+      reasoningRevision: attempt.reasoningRevision || 0,
+      creationReason,
+      contextStatus: 'CONTEXT_UNAVAILABLE',
+      contextSetId: null,
+      evidenceHash,
+      createdAt: now
+    };
+    const responses = evidence.map((response) => ({
+      learningSubmissionVersionId: version.id,
+      formId: form.id,
+      formVersion: form.version,
+      ...response,
+      answerOrigin: 'OFFICIAL_FINAL',
+      createdAt: now
+    }));
+    const workItem = {
+      id: randomUUID(),
+      learningSubmissionVersionId: version.id,
+      workType: 'ANALYZE_SUBMISSION',
+      status: 'BLOCKED_CONTEXT',
+      priority: 50,
+      attemptCount: 0,
+      inputHash: evidenceHash,
+      deletionGeneration: 0,
+      availableAt: now,
+      leaseOwner: null,
+      leaseExpiresAt: null,
+      lastErrorCode: 'QUESTION_CONTEXT_UNAVAILABLE',
+      createdAt: now,
+      updatedAt: now
+    };
+    return tx.createLearningSubmission({ submission, version, responses, workItem });
+  }
+
+  async #reasoningEnvelope(tx, attempt) {
+    return {
+      attemptId: attempt.id,
+      reasoningRevision: attempt.reasoningRevision || 0,
+      stateRevision: attempt.stateRevision || 0,
+      editable: canEditAnswers(attempt),
+      notes: (await tx.getReasoningNotes()).map(({ questionNumber, reasoningText, updatedAt }) => ({
+        questionNumber,
+        reasoningText,
+        updatedAt
+      }))
+    };
+  }
+
+  #publicLearningSubmission(bundle) {
+    const analysis = bundle.workItems.find((item) => item.workType === 'ANALYZE_SUBMISSION');
+    return {
+      id: bundle.submission.id,
+      sourceKind: bundle.submission.sourceType,
+      version: bundle.version.versionNumber,
+      status: bundle.version.contextStatus,
+      officialSubmissionId: bundle.submission.officialSubmissionId,
+      evidenceHash: bundle.version.evidenceHash,
+      analysisStatus: analysis?.status || 'BLOCKED_CONTEXT'
+    };
+  }
+
+  async #idempotentAttemptMutation(studentId, attemptId, action, idempotencyKey, body, work, options = {}) {
     ensureAttemptId(attemptId);
     const key = normalizeIdempotencyKey(idempotencyKey);
     const scope = `attempt:${attemptId}:${action}`;
@@ -770,7 +1054,7 @@ export class PracticeService {
         if (existing.requestHash !== hash) {
           throw conflict('IDEMPOTENCY_KEY_REUSED', 'This Idempotency-Key was already used for a different request.');
         }
-        return existing.responseBody;
+        return options.replay ? options.replay(tx, attempt, existing.responseBody) : existing.responseBody;
       }
       const form = await this.#getAttemptForm(attempt);
       const responseBody = await work(tx, attempt, form, this.now());
@@ -780,14 +1064,14 @@ export class PracticeService {
         key,
         requestHash: hash,
         responseStatus: 200,
-        responseBody,
+        responseBody: options.responseForStorage ? options.responseForStorage(responseBody) : responseBody,
         createdAt: this.now()
       };
       const stored = await tx.putIdempotency(record);
       if (stored.requestHash !== hash) {
         throw conflict('IDEMPOTENCY_KEY_REUSED', 'This Idempotency-Key was already used for a different request.');
       }
-      return stored.responseBody;
+      return options.responseForStorage ? responseBody : stored.responseBody;
     });
   }
 }

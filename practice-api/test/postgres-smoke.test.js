@@ -38,9 +38,11 @@ async function generatedSyntheticPrivate() {
 
 test('PostgreSQL migration rerun plus private/archive import and publication-concurrency smoke test', { skip: !connectionString }, async (t) => {
   const store = new PostgresStore({ connectionString, max: 12 });
+  const secondStore = new PostgresStore({ connectionString, max: 4 });
   const built = await generatedSyntheticPrivate();
   t.after(async () => {
     await rm(built.directory, { recursive: true, force: true });
+    await secondStore.close();
     await store.close();
   });
 
@@ -53,7 +55,61 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     '001_initial.sql',
     '002_pipeline_audit_metadata.sql',
     '003_archive_practice_scoring.sql',
-    '004_one_published_form_revision.sql'
+    '004_one_published_form_revision.sql',
+    '005_learning_submission_core.sql'
+  ]);
+
+  const learningColumns = await store.pool.query(
+    `SELECT table_name, column_name, is_nullable
+     FROM information_schema.columns
+     WHERE table_schema = 'amc_practice'
+       AND (table_name, column_name) IN (
+         ('attempts', 'reasoning_revision'),
+         ('learning_submissions', 'official_submission_kind'),
+         ('learning_submission_versions', 'creation_reason'),
+         ('learning_submission_versions', 'context_status'),
+         ('learning_submission_versions', 'context_set_id'),
+         ('learning_question_responses', 'answer_origin'),
+         ('learning_question_responses', 'reasoning_origin'),
+         ('learning_work_items', 'input_hash'),
+         ('learning_work_items', 'deletion_generation')
+       )
+     ORDER BY table_name, column_name`
+  );
+  assert.deepEqual(learningColumns.rows, [
+    { table_name: 'attempts', column_name: 'reasoning_revision', is_nullable: 'NO' },
+    { table_name: 'learning_question_responses', column_name: 'answer_origin', is_nullable: 'NO' },
+    { table_name: 'learning_question_responses', column_name: 'reasoning_origin', is_nullable: 'NO' },
+    { table_name: 'learning_submission_versions', column_name: 'context_set_id', is_nullable: 'YES' },
+    { table_name: 'learning_submission_versions', column_name: 'context_status', is_nullable: 'NO' },
+    { table_name: 'learning_submission_versions', column_name: 'creation_reason', is_nullable: 'NO' },
+    { table_name: 'learning_submissions', column_name: 'official_submission_kind', is_nullable: 'NO' },
+    { table_name: 'learning_work_items', column_name: 'deletion_generation', is_nullable: 'NO' },
+    { table_name: 'learning_work_items', column_name: 'input_hash', is_nullable: 'NO' }
+  ]);
+  const learningConstraints = await store.pool.query(
+    `SELECT conname, condeferrable, condeferred, pg_get_constraintdef(oid) AS definition
+     FROM pg_constraint
+     WHERE connamespace = 'amc_practice'::regnamespace
+       AND conname IN (
+         'amc_attempts_id_student_form_unique',
+         'amc_learning_submission_current_version_fk'
+       )
+     ORDER BY conname`
+  );
+  assert.deepEqual(learningConstraints.rows, [
+    {
+      conname: 'amc_attempts_id_student_form_unique',
+      condeferrable: false,
+      condeferred: false,
+      definition: 'UNIQUE (id, student_id, form_id, form_version)'
+    },
+    {
+      conname: 'amc_learning_submission_current_version_fk',
+      condeferrable: true,
+      condeferred: true,
+      definition: 'FOREIGN KEY (id, current_version) REFERENCES amc_practice.learning_submission_versions(learning_submission_id, version_number) DEFERRABLE INITIALLY DEFERRED'
+    }
   ]);
 
   const archiveColumns = await store.pool.query(
@@ -91,6 +147,13 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
 
   const service = new PracticeService({
     store,
+    authPepper: 'postgres-test-pepper-that-is-long-enough-for-safe-hmac-tests',
+    sessionTtlMs: 60 * 60 * 1000,
+    allowTestOnlyImport: true,
+    allowTestOnlyPublish: true
+  });
+  const secondService = new PracticeService({
+    store: secondStore,
     authPepper: 'postgres-test-pepper-that-is-long-enough-for-safe-hmac-tests',
     sessionTtlMs: 60 * 60 * 1000,
     allowTestOnlyImport: true,
@@ -179,13 +242,243 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     displayName: 'Postgres smoke student'
   });
   const attempt = await service.createAttempt(student.id, built.manifest.id);
+  const reasoning = await service.putReasoning(student.id, attempt.attempt.id, 'postgres-reasoning-001', {
+    revision: 0,
+    notes: [
+      { questionNumber: 1, reasoningText: 'PostgreSQL reasoning snapshot' },
+      { questionNumber: 2, reasoningText: null }
+    ]
+  });
+  assert.equal(reasoning.reasoningRevision, 1);
+  const reasoningIdempotency = await store.pool.query(
+    `SELECT response_body FROM amc_practice.idempotency_records
+     WHERE student_id = $1 AND scope = $2 AND key = $3`,
+    [student.id, `attempt:${attempt.attempt.id}:put-reasoning`, 'postgres-reasoning-001']
+  );
+  assert.equal(reasoningIdempotency.rowCount, 1);
+  assert.equal(JSON.stringify(reasoningIdempotency.rows[0].response_body).includes('PostgreSQL reasoning snapshot'), false);
+  assert.equal(reasoningIdempotency.rows[0].response_body.responseKind, 'CURRENT_REASONING_ENVELOPE');
+  const currentAttempt = await service.getAttempt(student.id, attempt.attempt.id);
   const final = await service.final(student.id, attempt.attempt.id, 'postgres-final-0001', {
-    expectedAnswersRevision: attempt.attempt.answersRevision,
-    expectedStateRevision: attempt.attempt.stateRevision
+    expectedAnswersRevision: currentAttempt.answersRevision,
+    expectedStateRevision: currentAttempt.stateRevision
   });
   assert.equal(final.attempt.phase, 'FINALIZED');
+  assert.equal(final.learningSubmission.analysisStatus, 'BLOCKED_CONTEXT');
   const results = await service.getResults(student.id, attempt.attempt.id);
   assert.equal(results.finalSubmission.answers.length, 25);
+  const learningRows = await store.pool.query(
+    `SELECT ls.official_submission_id, ls.official_submission_kind,
+            lsv.creation_reason, lsv.context_status, lsv.evidence_hash,
+            count(lqr.*)::integer AS response_count,
+            count(lqr.*) FILTER (WHERE lqr.reasoning_origin = 'DURING_ATTEMPT')::integer AS reasoning_count,
+            min(lwi.status) AS analysis_status,
+            min(lwi.input_hash) AS input_hash
+     FROM amc_practice.learning_submissions ls
+     JOIN amc_practice.learning_submission_versions lsv
+       ON lsv.learning_submission_id = ls.id AND lsv.version_number = ls.current_version
+     JOIN amc_practice.learning_question_responses lqr
+       ON lqr.learning_submission_version_id = lsv.id
+     JOIN amc_practice.learning_work_items lwi
+       ON lwi.learning_submission_version_id = lsv.id
+     WHERE ls.attempt_id = $1
+     GROUP BY ls.official_submission_id, ls.official_submission_kind,
+              lsv.creation_reason, lsv.context_status, lsv.evidence_hash`,
+    [attempt.attempt.id]
+  );
+  assert.deepEqual(learningRows.rows[0], {
+    official_submission_id: final.submission.id,
+    official_submission_kind: 'FINAL',
+    creation_reason: 'FINAL_COMMIT',
+    context_status: 'CONTEXT_UNAVAILABLE',
+    evidence_hash: final.learningSubmission.evidenceHash,
+    response_count: 25,
+    reasoning_count: 1,
+    analysis_status: 'BLOCKED_CONTEXT',
+    input_hash: final.learningSubmission.evidenceHash
+  });
+
+  // The deferred parent->current-version FK is checked at COMMIT, not merely
+  // by application convention.
+  const currentVersionClient = await store.pool.connect();
+  try {
+    await currentVersionClient.query('BEGIN');
+    await currentVersionClient.query(
+      'UPDATE amc_practice.learning_submissions SET current_version = 2 WHERE attempt_id = $1',
+      [attempt.attempt.id]
+    );
+    await assert.rejects(
+      () => currentVersionClient.query('COMMIT'),
+      (error) => error.code === '23503'
+        && error.constraint === 'amc_learning_submission_current_version_fk'
+    );
+  } finally {
+    await currentVersionClient.query('ROLLBACK').catch(() => {});
+    currentVersionClient.release();
+  }
+
+  // Force a failure after both the official and learning rows have been
+  // written. PostgresStore must roll back the complete unit of work.
+  const rollbackStudent = await service.seedAccessCode({
+    code: `pg-rollback-${randomUUID()}`,
+    displayName: 'Postgres rollback student'
+  });
+  const rollbackAttempt = await service.createAttempt(rollbackStudent.id, built.manifest.id);
+  const originalWithAttemptLock = store.withAttemptLock.bind(store);
+  store.withAttemptLock = (attemptId, work) => originalWithAttemptLock(attemptId, async (tx) => {
+    if (tx) {
+      const originalCreate = tx.createLearningSubmission.bind(tx);
+      tx.createLearningSubmission = async (aggregate) => {
+        await originalCreate(aggregate);
+        throw new Error('postgres-injected-after-learning-write');
+      };
+    }
+    return work(tx);
+  });
+  await assert.rejects(
+    () => service.final(rollbackStudent.id, rollbackAttempt.attempt.id, 'postgres-rollback-final', {
+      expectedAnswersRevision: 0,
+      expectedStateRevision: 0
+    }),
+    /postgres-injected-after-learning-write/
+  );
+  store.withAttemptLock = originalWithAttemptLock;
+  const rolledBack = await store.pool.query(
+    `SELECT a.phase,
+            (SELECT count(*)::integer FROM amc_practice.submissions s WHERE s.attempt_id = a.id) AS official_count,
+            (SELECT count(*)::integer FROM amc_practice.learning_submissions ls WHERE ls.attempt_id = a.id) AS learning_count
+     FROM amc_practice.attempts a WHERE a.id = $1`,
+    [rollbackAttempt.attempt.id]
+  );
+  assert.deepEqual(rolledBack.rows[0], { phase: 'TIMED', official_count: 0, learning_count: 0 });
+
+  // Preliminary score paths must never create a learning aggregate.
+  const checkpointStudent = await service.seedAccessCode({
+    code: `pg-checkpoint-${randomUUID()}`,
+    displayName: 'Postgres checkpoint student'
+  });
+  const checkpointAttempt = await service.createAttempt(checkpointStudent.id, built.manifest.id);
+  await service.checkpoint(checkpointStudent.id, checkpointAttempt.attempt.id, 'postgres-checkpoint-1', {
+    expectedAnswersRevision: 0,
+    expectedStateRevision: 0
+  });
+  const checkpointParity = await store.pool.query(
+    `SELECT count(*) FILTER (WHERE s.kind = 'CHECKPOINT')::integer AS preliminary_count,
+            (SELECT count(*)::integer FROM amc_practice.learning_submissions ls WHERE ls.attempt_id = $1) AS learning_count
+     FROM amc_practice.submissions s WHERE s.attempt_id = $1`,
+    [checkpointAttempt.attempt.id]
+  );
+  assert.deepEqual(checkpointParity.rows[0], { preliminary_count: 1, learning_count: 0 });
+
+  const deadlineStudent = await service.seedAccessCode({
+    code: `pg-deadline-${randomUUID()}`,
+    displayName: 'Postgres deadline student'
+  });
+  const deadlineAttempt = await service.createAttempt(deadlineStudent.id, built.manifest.id);
+  await store.pool.query(
+    `UPDATE amc_practice.attempts SET clock_started_at = now() - interval '76 minutes'
+     WHERE id = $1`,
+    [deadlineAttempt.attempt.id]
+  );
+  assert.equal((await service.processDueAttempt(deadlineAttempt.attempt.id)).processed, true);
+  const deadlineParity = await store.pool.query(
+    `SELECT count(*) FILTER (WHERE s.kind = 'DEADLINE')::integer AS preliminary_count,
+            (SELECT count(*)::integer FROM amc_practice.learning_submissions ls WHERE ls.attempt_id = $1) AS learning_count
+     FROM amc_practice.submissions s WHERE s.attempt_id = $1`,
+    [deadlineAttempt.attempt.id]
+  );
+  assert.deepEqual(deadlineParity.rows[0], { preliminary_count: 1, learning_count: 0 });
+
+  // Simulate a pre-feature historical FINAL by allowing the official final
+  // transaction to commit while replacing only the new aggregate writer.
+  const historicStudent = await service.seedAccessCode({
+    code: `pg-historic-${randomUUID()}`,
+    displayName: 'Postgres historical student'
+  });
+  const historicAttempt = await service.createAttempt(historicStudent.id, built.manifest.id);
+  const historicWithAttemptLock = store.withAttemptLock.bind(store);
+  store.withAttemptLock = (attemptId, work) => historicWithAttemptLock(attemptId, async (tx) => {
+    if (tx) {
+      tx.createLearningSubmission = async (aggregate) => ({
+        submission: aggregate.submission,
+        version: aggregate.version,
+        responses: aggregate.responses,
+        workItems: [aggregate.workItem]
+      });
+    }
+    return work(tx);
+  });
+  const historicFinal = await service.final(historicStudent.id, historicAttempt.attempt.id, 'historic-final-pg', {
+    expectedAnswersRevision: 0,
+    expectedStateRevision: 0
+  });
+  store.withAttemptLock = historicWithAttemptLock;
+  assert.equal((await store.pool.query(
+    'SELECT count(*)::integer AS count FROM amc_practice.learning_submissions WHERE attempt_id = $1',
+    [historicAttempt.attempt.id]
+  )).rows[0].count, 0);
+  const historicOfficialBefore = await store.pool.query(
+    'SELECT * FROM amc_practice.submissions WHERE id = $1',
+    [historicFinal.submission.id]
+  );
+  const historicAnswersBefore = await store.pool.query(
+    'SELECT * FROM amc_practice.submission_answers WHERE submission_id = $1 ORDER BY question_number',
+    [historicFinal.submission.id]
+  );
+  const repaired = await service.reconcileFinalLearningSubmission(historicAttempt.attempt.id);
+  const repairedAgain = await secondService.reconcileFinalLearningSubmission(historicAttempt.attempt.id);
+  assert.equal(repaired.created, true);
+  assert.equal(repairedAgain.created, false);
+  assert.deepEqual(repairedAgain.learningSubmission, repaired.learningSubmission);
+  assert.deepEqual((await store.pool.query(
+    'SELECT * FROM amc_practice.submissions WHERE id = $1', [historicFinal.submission.id]
+  )).rows, historicOfficialBefore.rows);
+  assert.deepEqual((await store.pool.query(
+    'SELECT * FROM amc_practice.submission_answers WHERE submission_id = $1 ORDER BY question_number',
+    [historicFinal.submission.id]
+  )).rows, historicAnswersBefore.rows);
+
+  // Independent store pools model separate API processes contending on the
+  // same attempt row. Different idempotency keys cannot create two finals.
+  const raceStudent = await service.seedAccessCode({
+    code: `pg-final-race-${randomUUID()}`,
+    displayName: 'Postgres final race student'
+  });
+  const raceAttempt = await service.createAttempt(raceStudent.id, built.manifest.id);
+  const racedFinals = await Promise.allSettled([
+    service.final(raceStudent.id, raceAttempt.attempt.id, 'pg-final-race-left', {
+      expectedAnswersRevision: 0,
+      expectedStateRevision: 0
+    }),
+    secondService.final(raceStudent.id, raceAttempt.attempt.id, 'pg-final-race-right', {
+      expectedAnswersRevision: 0,
+      expectedStateRevision: 0
+    })
+  ]);
+  assert.equal(racedFinals.filter((result) => result.status === 'fulfilled').length, 1);
+  const rejectedRace = racedFinals.find((result) => result.status === 'rejected');
+  assert.equal(rejectedRace?.reason?.code, 'INVALID_STATE');
+  const raceCounts = await store.pool.query(
+    `SELECT
+       (SELECT count(*)::integer FROM amc_practice.submissions s WHERE s.attempt_id = $1 AND s.kind = 'FINAL') AS final_count,
+       (SELECT count(*)::integer FROM amc_practice.learning_submissions ls WHERE ls.attempt_id = $1) AS learning_count,
+       (SELECT count(*)::integer FROM amc_practice.learning_submission_versions lsv
+          JOIN amc_practice.learning_submissions ls ON ls.id = lsv.learning_submission_id WHERE ls.attempt_id = $1) AS version_count,
+       (SELECT count(*)::integer FROM amc_practice.learning_question_responses lqr
+          JOIN amc_practice.learning_submission_versions lsv ON lsv.id = lqr.learning_submission_version_id
+          JOIN amc_practice.learning_submissions ls ON ls.id = lsv.learning_submission_id WHERE ls.attempt_id = $1) AS response_count,
+       (SELECT count(*)::integer FROM amc_practice.learning_work_items lwi
+          JOIN amc_practice.learning_submission_versions lsv ON lsv.id = lwi.learning_submission_version_id
+          JOIN amc_practice.learning_submissions ls ON ls.id = lsv.learning_submission_id WHERE ls.attempt_id = $1) AS work_count`,
+    [raceAttempt.attempt.id]
+  );
+  assert.deepEqual(raceCounts.rows[0], {
+    final_count: 1,
+    learning_count: 1,
+    version_count: 1,
+    response_count: 25,
+    work_count: 1
+  });
 
   // Two application processes publishing different versions of the same form
   // must serialize, not leave two rows published. The partial unique index is
@@ -210,6 +503,47 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
   );
   assert.equal(concurrentPublished.rowCount, 1);
   assert.ok(['race-v1', 'race-v2'].includes(concurrentPublished.rows[0].version));
+
+  // Both revisions exist, so the simple form FK would accept either one. The
+  // four-column attempt FK must reject attaching a learning submission to the
+  // revision that this attempt did not actually start with.
+  const pinnedStudent = await service.seedAccessCode({
+    code: `pg-pinned-negative-${randomUUID()}`,
+    displayName: 'Postgres pinned-form negative student'
+  });
+  const pinnedAttempt = await service.createAttempt(pinnedStudent.id, concurrentFormId);
+  const wrongPinnedVersion = pinnedAttempt.attempt.formVersion === 'race-v1' ? 'race-v2' : 'race-v1';
+  const wrongFormClient = await store.pool.connect();
+  try {
+    await wrongFormClient.query('BEGIN');
+    const fakeFinalId = randomUUID();
+    await wrongFormClient.query(
+      `INSERT INTO amc_practice.submissions
+       (id, attempt_id, kind, slot, trigger, active_elapsed_ms, scoring_policy,
+        total_points, maximum_points, answered_count, correct_count, incorrect_count,
+        blank_count, unscored_count, created_at)
+       VALUES ($1, $2, 'FINAL', 'FINAL', 'NEGATIVE_FK_TEST', 0, $3::jsonb,
+               4.5, 18, 0, 0, 0, 3, 0, now())`,
+      [fakeFinalId, pinnedAttempt.attempt.id, JSON.stringify({
+        id: 'amc-legacy', version: '1', correctPoints: 6, blankPoints: 1.5, incorrectPoints: 0
+      })]
+    );
+    await assert.rejects(
+      () => wrongFormClient.query(
+        `INSERT INTO amc_practice.learning_submissions
+         (id, student_id, attempt_id, official_submission_id, official_submission_kind,
+          form_id, form_version, source_type, lifecycle_status, current_version, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, 'FINAL', $5, $6,
+                 'INTERACTIVE_FINAL', 'COMMITTED', 1, now(), now())`,
+        [randomUUID(), pinnedStudent.id, pinnedAttempt.attempt.id, fakeFinalId, concurrentFormId, wrongPinnedVersion]
+      ),
+      (error) => error.code === '23503'
+        && error.constraint === 'amc_learning_submission_attempt_form_fk'
+    );
+  } finally {
+    await wrongFormClient.query('ROLLBACK').catch(() => {});
+    wrongFormClient.release();
+  }
 
   // Overlapping batches intentionally list the same form IDs in opposite
   // orders. importForms must acquire its advisory publication locks in sorted

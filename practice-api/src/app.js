@@ -45,6 +45,26 @@ export async function buildApp({ service, config, logger = false }) {
     bodyLimit: config.bodyLimit,
     trustProxy: config.trustedProxy || false
   });
+  const reasoningWriteWindows = new Map();
+  const reasoningWritesPerMinute = config.reasoningWritesPerMinute || 30;
+
+  function enforceReasoningWriteRate(studentId) {
+    const now = Date.now();
+    let window = reasoningWriteWindows.get(studentId);
+    if (!window || now - window.startedAt >= 60_000) {
+      window = { startedAt: now, count: 0 };
+    }
+    if (window.count >= reasoningWritesPerMinute) {
+      throw new ApiError(429, 'REASONING_RATE_LIMITED', 'Too many reasoning updates. Please try again later.');
+    }
+    window.count += 1;
+    reasoningWriteWindows.set(studentId, window);
+    if (reasoningWriteWindows.size > 10_000) {
+      for (const [candidateId, candidate] of reasoningWriteWindows) {
+        if (now - candidate.startedAt >= 60_000) reasoningWriteWindows.delete(candidateId);
+      }
+    }
+  }
 
   await app.register(cookie, { secret: config.sessionSecret, hook: 'onRequest' });
   await app.register(helmet, {
@@ -72,6 +92,11 @@ export async function buildApp({ service, config, logger = false }) {
     if (!apiError && error.statusCode === 429) {
       return reply.status(429).send({
         error: { code: 'RATE_LIMITED', message: 'Too many requests. Please try again later.' }
+      });
+    }
+    if (!apiError && error.statusCode === 413) {
+      return reply.status(413).send({
+        error: { code: 'PAYLOAD_TOO_LARGE', message: 'The request body is too large.' }
       });
     }
     if (!apiError) request.log.error({ err: error }, 'Unhandled AMC practice API error');
@@ -176,6 +201,22 @@ export async function buildApp({ service, config, logger = false }) {
     const auth = await requireCsrf(request);
     return { attempt: await service.putAnswers(auth.student.id, request.params.attemptId, bodyObject(request.body)) };
   });
+  app.get(`${base}/attempts/:attemptId/reasoning-notes`, async (request, reply) => {
+    const auth = await requireAuth(request);
+    reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+    return service.getReasoning(auth.student.id, request.params.attemptId);
+  });
+  app.put(`${base}/attempts/:attemptId/reasoning-notes`, async (request, reply) => {
+    const auth = await requireCsrf(request);
+    enforceReasoningWriteRate(auth.student.id);
+    reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+    return service.putReasoning(
+      auth.student.id,
+      request.params.attemptId,
+      idempotencyKey(request),
+      bodyObject(request.body)
+    );
+  });
   app.post(`${base}/attempts/:attemptId/pause`, async (request) => {
     const auth = await requireCsrf(request);
     return service.pause(auth.student.id, request.params.attemptId, idempotencyKey(request));
@@ -205,6 +246,11 @@ export async function buildApp({ service, config, logger = false }) {
   app.get(`${base}/attempts/:attemptId/results`, async (request) => {
     const auth = await requireAuth(request);
     return service.getResults(auth.student.id, request.params.attemptId);
+  });
+  app.get(`${base}/attempts/:attemptId/learning-submission`, async (request, reply) => {
+    const auth = await requireAuth(request);
+    reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+    return { learningSubmission: await service.getLearningSubmission(auth.student.id, request.params.attemptId) };
   });
   app.get(`${base}/attempts/:attemptId/solutions`, async (request) => {
     const auth = await requireAuth(request);

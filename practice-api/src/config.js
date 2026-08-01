@@ -47,6 +47,9 @@ export function loadConfig(env = process.env) {
     corsOrigin: env.AMC12_CORS_ORIGIN || null,
     deadlinePollMs: positiveInteger(env.AMC12_DEADLINE_POLL_MS, 5_000, 'AMC12_DEADLINE_POLL_MS'),
     bodyLimit: positiveInteger(env.AMC12_BODY_LIMIT, 64 * 1024, 'AMC12_BODY_LIMIT'),
+    reasoningWritesPerMinute: positiveInteger(
+      env.AMC12_REASONING_WRITES_PER_MINUTE, 30, 'AMC12_REASONING_WRITES_PER_MINUTE'
+    ),
     developmentAccessCode: production ? null : env.AMC12_DEV_ACCESS_CODE || null,
     developmentStudentName: env.AMC12_DEV_STUDENT_NAME || 'Local student',
     allowTestOnlyImport: !production && bool(env.AMC12_ALLOW_TEST_ONLY_IMPORT, false),

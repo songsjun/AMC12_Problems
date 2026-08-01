@@ -7,6 +7,9 @@ test('loopback proxy is the safe default for the loopback-only listener and can 
   assert.equal(loadConfig(base).trustedProxy, 'loopback');
   assert.equal(loadConfig({ ...base, AMC12_TRUST_PROXY: 'false' }).trustedProxy, false);
   assert.equal(loadConfig({ ...base, AMC12_TRUST_PROXY: '10.0.0.0/8' }).trustedProxy, '10.0.0.0/8');
+  assert.equal(loadConfig(base).reasoningWritesPerMinute, 30);
+  assert.equal(loadConfig({ ...base, AMC12_REASONING_WRITES_PER_MINUTE: '12' }).reasoningWritesPerMinute, 12);
+  assert.throws(() => loadConfig({ ...base, AMC12_REASONING_WRITES_PER_MINUTE: '0' }), /positive integer/);
 });
 
 test('test-only import and publish flags are independent and production disables both', () => {

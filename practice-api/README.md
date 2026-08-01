@@ -22,6 +22,12 @@ keys and solutions in PostgreSQL until a student has made a final submission.
   remains readable to its owner after it has a `FINAL` submission.
 - Version-pinned attempt content: an attempt always retrieves the form revision
   it started with, even after a newer form revision is published.
+- Partial per-question reasoning notes with optimistic revision checks. Notes
+  follow the same running timed/overtime edit rules as answers and are frozen
+  into a separate learning-submission snapshot only at final submission.
+- An atomic learning-submission intent on final/deadline-final. Analysis remains
+  explicitly `BLOCKED_CONTEXT` until reviewed multi-solution context is loaded;
+  no external provider call can affect official scoring.
 
 The default scoring policy is supplied by a form revision, never globally
 hard-coded. The synthetic fixture uses legacy AMC practice values: correct = 6,
@@ -139,17 +145,27 @@ credentials on every authenticated state-changing request.
 | `POST /attempts`, `GET /attempts`, `GET /attempts/:id` | Start/recover/list attempts |
 | `GET /attempts/:id/form` | Owner-only, exact revision used by this attempt |
 | `PUT /attempts/:id/answers` | Save selected A–E/null answers with optional optimistic `revision` |
+| `GET`, `PUT /attempts/:id/reasoning-notes` | Read/save owner-only partial reasoning notes; PUT requires CSRF, `Idempotency-Key`, and reasoning `revision` |
 | `POST /attempts/:id/pause`, `/resume` | Pause/resume active timer |
 | `POST /attempts/:id/checkpoint` | One immediate preliminary score; body includes current expected revisions |
 | `POST /attempts/:id/final` | Manual final submission before/after overtime; body includes current expected revisions |
 | `POST /attempts/:id/deadline-decision` | `{ "decision": "continue" \| "finalize", "expectedAnswersRevision", "expectedStateRevision" }` at 75 minutes |
 | `POST /attempts/:id/reset` | Preserve old history and return a new `TIMED` attempt |
 | `GET /attempts/:id/results`, `/solutions` | Owner-only after a final submission (also for reset history) |
+| `GET /attempts/:id/learning-submission` | Read-only owner status after final; never performs historical repair while polling |
 
-`pause`, `resume`, `checkpoint`, `final`, `deadline-decision`, and `reset`
+The learning-submission status GET is strictly read-only; missing historical
+aggregates are repaired only through the internal maintenance entrypoint. The
+reasoning-notes GET intentionally retains the existing attempt read-and-
+reconcile semantics: crossing the server deadline during that read records the
+same deadline transition as `GET /attempts/:id`, then returns `editable=false`.
+
+`reasoning-notes` PUT, `pause`, `resume`, `checkpoint`, `final`, `deadline-decision`, and `reset`
 require an `Idempotency-Key` (8–128 opaque characters). Replaying the same key
-and request returns its original response; reusing it with different input is a
-409 conflict.
+and request does not repeat its mutation; reusing it with different input is a
+409 conflict. Reasoning-note replays rebuild the current owner-scoped envelope
+so student prose is not copied into the generic idempotency ledger. Other
+mutations return their stored original response.
 
 Every score-producing request (`checkpoint`, `final`, and either deadline
 decision) must include the exact non-negative `expectedAnswersRevision` and
@@ -159,7 +175,7 @@ another tab's unseen answer sheet.
 
 An attempt response has `phase` (`TIMED`, `LIMIT_NOTICE`, `OVERTIME`,
 `FINALIZED`, `RESET`), `clockState` (`RUNNING`, `PAUSED`), server-derived
-`activeElapsedMs`/`remainingMs`, `answersRevision`, monotonic `stateRevision`,
+`activeElapsedMs`/`remainingMs`, `answersRevision`, `reasoningRevision`, monotonic `stateRevision`,
 redacted answer selections, and public submission summaries. Clients use
 `stateRevision` to discard a delayed response that predates a saved answer,
 deadline decision, reset, or final submission. `resultsAvailable` is true only
@@ -196,7 +212,10 @@ All tables live in the isolated `amc_practice` schema. Important records are:
 - form revisions/questions and pipeline audit hashes/provenance;
 - students, hashed access-code lookup values, and revocable sessions;
 - attempts/current answers/timer events;
+- current reasoning notes (student prose is not duplicated into idempotency records);
 - immutable submissions and 25-row answer snapshots for each submission;
+- learning submissions, immutable evidence versions/question responses, and
+  durable `BLOCKED_CONTEXT` analysis work intent;
 - idempotency records.
 
 Answer keys are only queried by scoring and final-result/solution paths. No

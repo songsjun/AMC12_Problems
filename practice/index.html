@@ -115,6 +115,20 @@
             </fieldset>
             <p id="answer-help" class="muted">Selecting an answer saves it automatically.</p>
           </form>
+          <section class="reasoning-editor" aria-labelledby="reasoning-label">
+            <div class="reasoning-heading">
+              <label id="reasoning-label" for="reasoning-input">Your approach <span class="muted">(optional)</span></label>
+              <p id="reasoning-save-status" class="reasoning-save-status" role="status" aria-live="polite"></p>
+            </div>
+            <textarea id="reasoning-input" rows="5" maxlength="8000" aria-describedby="reasoning-help" placeholder="Describe what you tried, why you chose this answer, or where you got stuck."></textarea>
+            <div class="reasoning-actions">
+              <p id="reasoning-help" class="muted">Your notes are saved with this question and used only for post-submission feedback.</p>
+              <div class="reasoning-action-buttons">
+                <button id="reload-reasoning-button" class="button button-secondary" type="button" hidden>Reload saved notes</button>
+                <button id="save-reasoning-button" class="button button-secondary" type="button">Save approach</button>
+              </div>
+            </div>
+          </section>
           <div class="question-controls">
             <button id="previous-question" class="button button-secondary" type="button">Previous</button>
             <button id="clear-answer-button" class="button button-secondary" type="button">Clear answer</button>
@@ -141,6 +155,11 @@
         <p class="score-label">Final score</p>
         <p id="final-score" class="final-score">—</p>
         <p id="score-details" class="muted"></p>
+      </section>
+
+      <section id="analysis-summary" class="content-section analysis-summary" aria-labelledby="analysis-summary-title" hidden>
+        <h2 id="analysis-summary-title">AI learning analysis</h2>
+        <p id="analysis-status" class="muted" role="status" aria-live="polite"></p>
       </section>
 
       <section id="submission-history-section" class="content-section" aria-labelledby="submission-history-title">

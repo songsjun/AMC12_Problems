@@ -18,6 +18,12 @@ export function apiBaseForModuleUrl(moduleUrl, { browser = true } = {}) {
 export const API_BASE = apiBaseForModuleUrl(import.meta.url, { browser: typeof window !== 'undefined' });
 export const DEFAULT_DURATION_MS = 75 * 60 * 1000;
 export const OPTIONS = ['A', 'B', 'C', 'D', 'E'];
+export const MAX_REASONING_NOTE_BYTES = 8_000;
+export const MAX_REASONING_BATCH_TEXT_BYTES = 48_000;
+// Leave headroom below a 64 KiB reverse-proxy body limit for headers added by
+// future envelope versions. The value is checked against the exact JSON body,
+// including JSON escaping rather than only the source text.
+export const MAX_REASONING_REQUEST_BYTES = 60_000;
 
 export class ApiError extends Error {
   constructor(message, { status = 0, code = 'REQUEST_FAILED', payload = null } = {}) {
@@ -129,6 +135,11 @@ export function solutionEndpointForAttempt(attempt) {
 export function resultsEndpointForAttempt(attempt) {
   if (!canAccessFinalReview(attempt) || !attempt?.id) return null;
   return `${API_BASE}/attempts/${encodeURIComponent(String(attempt.id))}/results`;
+}
+
+export function learningSubmissionEndpointForAttempt(attempt) {
+  if (!canAccessFinalReview(attempt) || !attempt?.id) return null;
+  return `${API_BASE}/attempts/${encodeURIComponent(String(attempt.id))}/learning-submission`;
 }
 
 /**
@@ -269,6 +280,151 @@ export function answerPayload(answerMap) {
         : null
     }))
     .sort((left, right) => left.questionNumber - right.questionNumber);
+}
+
+export function reasoningNotesPath(attemptId) {
+  return `${API_BASE}/attempts/${encodeURIComponent(String(attemptId))}/reasoning-notes`;
+}
+
+export function reasoningNotesPayload(reasoningMap) {
+  return [...reasoningMap.entries()]
+    .map(([questionNumber, reasoningText]) => ({
+      questionNumber: Number(questionNumber),
+      reasoningText: typeof reasoningText === 'string' && reasoningText.trim() ? reasoningText : null
+    }))
+    .filter((note) => Number.isSafeInteger(note.questionNumber) && note.questionNumber > 0)
+    .sort((left, right) => left.questionNumber - right.questionNumber);
+}
+
+export function normalizeReasoningNotes(payload) {
+  const unwrapped = unwrapData(payload);
+  // The route contract is `{ reasoning: envelope }`; accepting the historical
+  // bare envelope keeps rolling deployments compatible in either direction.
+  const root = isRecord(unwrapped.reasoning) ? unwrapped.reasoning : unwrapped;
+  const source = Array.isArray(root.notes) ? root.notes : [];
+  const notes = new Map();
+  for (const note of source) {
+    const questionNumber = finiteNumber(firstDefined(note?.questionNumber, note?.number));
+    if (!Number.isSafeInteger(questionNumber) || questionNumber < 1) continue;
+    notes.set(questionNumber, note?.reasoningText === null || note?.reasoningText === undefined
+      ? ''
+      : String(note.reasoningText));
+  }
+  const reasoningRevision = finiteNumber(root.reasoningRevision);
+  const stateRevision = finiteNumber(root.stateRevision);
+  return {
+    attemptId: root.attemptId === null || root.attemptId === undefined ? null : String(root.attemptId),
+    reasoningRevision: Number.isSafeInteger(reasoningRevision) && reasoningRevision >= 0 ? reasoningRevision : null,
+    stateRevision: Number.isSafeInteger(stateRevision) && stateRevision >= 0 ? stateRevision : null,
+    editable: root.editable === true,
+    notes
+  };
+}
+
+export function preserveDirtyReasoningNotes(serverNotes, localNotes, dirtyQuestionNumbers) {
+  const merged = new Map(serverNotes);
+  for (const questionNumber of dirtyQuestionNumbers) {
+    if (localNotes.has(questionNumber)) merged.set(questionNumber, localNotes.get(questionNumber));
+  }
+  return merged;
+}
+
+export function reasoningEnvelopeMatchesAttempt(envelope, attemptId) {
+  return Boolean(attemptId)
+    && Boolean(envelope?.attemptId)
+    && String(envelope.attemptId) === String(attemptId);
+}
+
+function utf8ByteLength(value) {
+  return new TextEncoder().encode(String(value)).byteLength;
+}
+
+export function reasoningRequestBodyBytes(revision, reasoningMap) {
+  return utf8ByteLength(JSON.stringify({ revision, notes: reasoningNotesPayload(reasoningMap) }));
+}
+
+export function reasoningSaveBatches(reasoningMap, dirtyQuestionNumbers, revision, {
+  maxNoteBytes = MAX_REASONING_NOTE_BYTES,
+  maxTextBytes = MAX_REASONING_BATCH_TEXT_BYTES,
+  maxBodyBytes = MAX_REASONING_REQUEST_BYTES
+} = {}) {
+  if (!Number.isSafeInteger(revision) || revision < 0) {
+    throw new ApiError('The reasoning version is unavailable. Refresh before saving.', {
+      code: 'REASONING_REVISION_MISSING'
+    });
+  }
+  const encoder = new TextEncoder();
+  const batches = [];
+  let batch = new Map();
+  let batchBytes = 0;
+  const sortedNumbers = [...dirtyQuestionNumbers].sort((left, right) => Number(left) - Number(right));
+  for (const questionNumber of sortedNumbers) {
+    const text = String(reasoningMap.get(questionNumber) ?? '');
+    const textBytes = encoder.encode(text).byteLength;
+    if (textBytes > maxNoteBytes) {
+      throw new ApiError(`Question ${questionNumber}'s approach is too long to save.`, {
+        code: 'REASONING_NOTE_TOO_LARGE',
+        payload: { questionNumber: Number(questionNumber), actualBytes: textBytes, maxBytes: maxNoteBytes }
+      });
+    }
+    const candidate = new Map(batch);
+    candidate.set(questionNumber, text);
+    const exceedsBatch = batch.size > 0 && (
+      batchBytes + textBytes > maxTextBytes
+      || reasoningRequestBodyBytes(revision, candidate) > maxBodyBytes
+    );
+    if (exceedsBatch) {
+      batches.push(batch);
+      batch = new Map();
+      batchBytes = 0;
+    }
+    batch.set(questionNumber, text);
+    batchBytes += textBytes;
+    if (batchBytes > maxTextBytes || reasoningRequestBodyBytes(revision, batch) > maxBodyBytes) {
+      throw new ApiError(`Question ${questionNumber}'s approach cannot fit in a safe save request.`, {
+        code: 'REASONING_REQUEST_TOO_LARGE',
+        payload: { questionNumber: Number(questionNumber), maxBodyBytes, maxTextBytes }
+      });
+    }
+  }
+  if (batch.size) batches.push(batch);
+  return batches;
+}
+
+export function isReasoningRevisionConflict(error) {
+  return error instanceof ApiError && error.code === 'REASONING_REVISION_CONFLICT';
+}
+
+export function reasoningCapabilityNeedsReload(previousAttempt, nextAttempt) {
+  if (!sameAttemptId(previousAttempt, nextAttempt)) return false;
+  return !attemptAllowsReasoningEdits(previousAttempt) && attemptAllowsReasoningEdits(nextAttempt);
+}
+
+export function attemptSwitchNeedsReasoningFlush(currentAttemptId, nextAttemptId, dirtyCount, pendingCount = 0) {
+  if (!currentAttemptId || String(currentAttemptId) === String(nextAttemptId || '')) return false;
+  return Number(dirtyCount) > 0 || Number(pendingCount) > 0;
+}
+
+export function learningAnalysisProjection(payload) {
+  const root = unwrapData(payload);
+  const projection = firstDefined(
+    root.learningSubmission,
+    root.result?.learningSubmission,
+    root.results?.learningSubmission,
+    root.finalSubmission?.learningSubmission,
+    null
+  );
+  if (!isRecord(projection)) return null;
+  const analysisStatus = String(firstDefined(projection.analysisStatus, projection.analysis?.status, '')).toUpperCase();
+  const status = String(firstDefined(projection.status, '')).toUpperCase();
+  if (!analysisStatus && !status) return null;
+  return { analysisStatus, status };
+}
+
+export function learningAnalysisDisplayStatus(projection) {
+  const contextStatus = String(firstDefined(projection?.status, '')).toUpperCase();
+  const analysisStatus = String(firstDefined(projection?.analysisStatus, '')).toUpperCase();
+  return contextStatus === 'CONTEXT_UNAVAILABLE' ? contextStatus : (analysisStatus || contextStatus);
 }
 
 export function extractRevision(attempt) {
@@ -513,6 +669,17 @@ const state = {
   answers: new Map(),
   dirtyAnswers: new Set(),
   answerRevision: null,
+  reasoningNotes: new Map(),
+  dirtyReasoning: new Set(),
+  reasoningRevision: null,
+  reasoningEditable: false,
+  reasoningLoaded: false,
+  reasoningSaveQueue: Promise.resolve(),
+  reasoningDebounceTimer: null,
+  reasoningSaveRequested: false,
+  pendingReasoningSaveCount: 0,
+  lastReasoningSaveError: null,
+  reasoningLoadError: null,
   attemptEpoch: 0,
   currentQuestionIndex: 0,
   saveQueue: Promise.resolve(),
@@ -530,7 +697,8 @@ const state = {
   lastFocused: null,
   formCache: new Map(),
   resultPayload: null,
-  solutionsPayload: null
+  solutionsPayload: null,
+  learningSubmission: null
 };
 
 let elements = null;
@@ -556,7 +724,9 @@ function getElements() {
     questionNav: byId('question-nav'), answeredCount: byId('answered-count'), questionPosition: byId('question-position'),
     questionSaveIndicator: byId('question-save-indicator'), questionContent: byId('question-content'), answerForm: byId('answer-form'),
     answerOptions: byId('answer-options'), previousQuestion: byId('previous-question'), clearAnswerButton: byId('clear-answer-button'), nextQuestion: byId('next-question'),
+    reasoningInput: byId('reasoning-input'), reasoningSaveStatus: byId('reasoning-save-status'), saveReasoningButton: byId('save-reasoning-button'), reloadReasoningButton: byId('reload-reasoning-button'),
     resultsSummary: byId('results-summary'), finalScore: byId('final-score'), scoreDetails: byId('score-details'),
+    analysisSummary: byId('analysis-summary'), analysisStatus: byId('analysis-status'),
     submissionHistory: byId('submission-history'), resultsQuestions: byId('results-questions'), solutionsList: byId('solutions-list'),
     expandSolutions: byId('expand-solutions-button'), resetButton: byId('reset-button'), resultsDashboardButton: byId('results-dashboard-button'),
     modalBackdrop: byId('modal-backdrop'), modal: byId('modal'), modalTitle: byId('modal-title'), modalMessage: byId('modal-message'),
@@ -667,6 +837,7 @@ function localSignOut({ message = null } = {}) {
 
 function clearAttemptState() {
   stopAttemptSync();
+  if (state.reasoningDebounceTimer) window.clearTimeout(state.reasoningDebounceTimer);
   // A response or save from a prior attempt must never be applied to a newly
   // opened attempt.  Resetting the queue lets the replacement start promptly;
   // the old closures retain their epoch and become harmless no-ops.
@@ -677,6 +848,17 @@ function clearAttemptState() {
   state.answers = new Map();
   state.dirtyAnswers = new Set();
   state.answerRevision = null;
+  state.reasoningNotes = new Map();
+  state.dirtyReasoning = new Set();
+  state.reasoningRevision = null;
+  state.reasoningEditable = false;
+  state.reasoningLoaded = false;
+  state.reasoningSaveQueue = Promise.resolve();
+  state.reasoningDebounceTimer = null;
+  state.reasoningSaveRequested = false;
+  state.pendingReasoningSaveCount = 0;
+  state.lastReasoningSaveError = null;
+  state.reasoningLoadError = null;
   state.currentQuestionIndex = 0;
   state.pendingSaveCount = 0;
   state.lastSaveError = null;
@@ -685,6 +867,7 @@ function clearAttemptState() {
   state.localDeadlineLocked = false;
   state.resultPayload = null;
   state.solutionsPayload = null;
+  state.learningSubmission = null;
 }
 
 function handleUnauthorized() {
@@ -719,6 +902,10 @@ export function attemptAllowsAnswerEdits(attempt) {
   return ['TIMED', 'OVERTIME'].includes(normalizePhase(attempt)) && normalizeClockState(attempt) === 'RUNNING';
 }
 
+export function attemptAllowsReasoningEdits(attempt) {
+  return attemptAllowsAnswerEdits(attempt);
+}
+
 /**
  * The server remains authoritative, but the browser must stop accepting a
  * click as soon as its server-synchronized display clock reaches 75 minutes.
@@ -739,6 +926,10 @@ function canEditAnswers(attempt = state.attempt) {
   if (!attemptAllowsAnswerEdits(attempt)) return false;
   const elapsed = sameAttemptId(attempt, state.attempt) ? currentElapsedMs() : elapsedMsFromAttempt(attempt);
   return !timedLimitLocallyReached(attempt, elapsed);
+}
+
+function canEditReasoning(attempt = state.attempt) {
+  return state.reasoningLoaded && state.reasoningEditable && canEditAnswers(attempt);
 }
 
 function attemptContext() {
@@ -932,14 +1123,34 @@ function renderAttemptHeader() {
 }
 
 function renderSaveStatus() {
-  const hasError = Boolean(state.lastSaveError);
-  const saving = state.pendingSaveCount > 0;
-  const text = hasError ? 'Answers not saved — try again before submitting' : saving ? 'Saving answers…' : 'All changes saved';
+  const hasError = Boolean(state.lastSaveError || state.lastReasoningSaveError);
+  const saving = state.pendingSaveCount > 0 || state.pendingReasoningSaveCount > 0;
+  const text = hasError ? 'Changes not saved — retry before submitting' : saving ? 'Saving changes…' : 'All changes saved';
   [elements.saveStatus, elements.questionSaveIndicator].forEach((node) => {
     node.textContent = node === elements.questionSaveIndicator && !saving && !hasError ? '' : text;
     node.classList.toggle('is-saving', saving);
     node.classList.toggle('is-error', hasError);
   });
+  renderReasoningSaveStatus();
+}
+
+function renderReasoningSaveStatus() {
+  if (!elements?.reasoningSaveStatus) return;
+  const saving = state.pendingReasoningSaveCount > 0;
+  const hasError = Boolean(state.lastReasoningSaveError);
+  elements.reasoningSaveStatus.textContent = state.reasoningLoadError
+    ? 'Notes unavailable'
+    : hasError
+      ? 'Not saved'
+      : saving
+        ? 'Saving…'
+        : state.dirtyReasoning.size > 0
+          ? 'Unsaved changes'
+          : '';
+  elements.reasoningSaveStatus.classList.toggle('is-saving', saving);
+  elements.reasoningSaveStatus.classList.toggle('is-error', hasError || Boolean(state.reasoningLoadError));
+  elements.reloadReasoningButton.hidden = !state.reasoningLoadError;
+  elements.reloadReasoningButton.disabled = saving;
 }
 
 function renderQuestionNavigation() {
@@ -1265,6 +1476,7 @@ function typesetVisiblePracticeMath() {
 
 function goToQuestion(index, { focus = false } = {}) {
   if (index < 0 || index >= state.questions.length) return;
+  if (index !== state.currentQuestionIndex) queueReasoningSave({ immediate: true });
   state.currentQuestionIndex = index;
   renderQuestionNavigation();
   renderCurrentQuestion({ focus });
@@ -1276,6 +1488,9 @@ function renderCurrentQuestion({ focus = false } = {}) {
     elements.questionPosition.textContent = 'Question unavailable';
     clearNode(elements.questionContent);
     clearNode(elements.answerOptions);
+    elements.reasoningInput.value = '';
+    elements.reasoningInput.disabled = true;
+    elements.saveReasoningButton.disabled = true;
     return;
   }
   elements.questionPosition.textContent = `Question ${question.number} of ${state.questions.length}`;
@@ -1320,12 +1535,31 @@ function renderCurrentQuestion({ focus = false } = {}) {
   elements.previousQuestion.disabled = state.currentQuestionIndex === 0;
   elements.nextQuestion.disabled = state.currentQuestionIndex >= state.questions.length - 1;
   elements.nextQuestion.textContent = state.currentQuestionIndex >= state.questions.length - 1 ? 'Last question' : 'Next';
+  const reasoningEnabled = canEditReasoning();
+  const reasoningText = state.reasoningNotes.get(question.number) || '';
+  if (elements.reasoningInput.value !== reasoningText) elements.reasoningInput.value = reasoningText;
+  elements.reasoningInput.disabled = !reasoningEnabled;
+  elements.reasoningInput.setAttribute('aria-label', `Your optional approach for question ${question.number}`);
+  elements.saveReasoningButton.disabled = !reasoningEnabled
+    || !state.dirtyReasoning.has(question.number)
+    || state.pendingReasoningSaveCount > 0;
   renderSaveStatus();
   typesetMath([elements.questionContent, elements.answerOptions]);
   if (focus) {
     elements.questionContent.tabIndex = -1;
     elements.questionContent.focus();
   }
+}
+
+function updateCurrentReasoning(value) {
+  const question = state.questions[state.currentQuestionIndex];
+  if (!question || !canEditReasoning()) return;
+  state.reasoningNotes.set(question.number, String(value));
+  state.dirtyReasoning.add(question.number);
+  state.lastReasoningSaveError = null;
+  elements.saveReasoningButton.disabled = false;
+  renderSaveStatus();
+  queueReasoningSave();
 }
 
 function updateQuestionAnswer(questionNumber, option) {
@@ -1400,6 +1634,155 @@ function queueAnswerSave() {
     });
 }
 
+function mergeReasoningEnvelope(payload, { preserveLocal = true } = {}) {
+  const envelope = normalizeReasoningNotes(payload);
+  if (!reasoningEnvelopeMatchesAttempt(envelope, state.attempt?.id)) return false;
+  const localNotes = state.reasoningNotes;
+  state.reasoningNotes = preserveLocal
+    ? preserveDirtyReasoningNotes(envelope.notes, localNotes, state.dirtyReasoning)
+    : new Map(envelope.notes);
+  if (envelope.reasoningRevision !== null) state.reasoningRevision = envelope.reasoningRevision;
+  state.reasoningEditable = envelope.editable;
+  state.reasoningLoaded = envelope.reasoningRevision !== null;
+  const currentStateRevision = stateRevisionFromAttempt(state.attempt);
+  if (envelope.stateRevision !== null
+      && (currentStateRevision === null || envelope.stateRevision >= currentStateRevision)) {
+    state.attempt = { ...state.attempt, stateRevision: envelope.stateRevision };
+  }
+  return true;
+}
+
+async function loadReasoningNotes({ preserveLocal = true, quiet = false } = {}) {
+  const context = attemptContext();
+  if (!context) return false;
+  try {
+    const response = await api.get(reasoningNotesPath(context.id));
+    if (!isCurrentAttemptContext(context)) return false;
+    if (!mergeReasoningEnvelope(response, { preserveLocal })) {
+      throw new ApiError('The reasoning notes belong to a different attempt.', { code: 'REASONING_ATTEMPT_MISMATCH' });
+    }
+    state.lastReasoningSaveError = null;
+    state.reasoningLoadError = null;
+    return true;
+  } catch (error) {
+    if (!isCurrentAttemptContext(context)) return false;
+    state.reasoningLoaded = false;
+    state.reasoningEditable = false;
+    state.reasoningLoadError = error;
+    if (!quiet) handleError(error, 'Could not load your saved approaches.');
+    return false;
+  }
+}
+
+async function reloadReasoningNotes() {
+  const loaded = await loadReasoningNotes({ preserveLocal: true });
+  if (loaded) {
+    renderCurrentQuestion();
+    showStatus('Saved approaches reloaded.');
+  } else {
+    renderSaveStatus();
+  }
+  return loaded;
+}
+
+function queueReasoningSave({ immediate = false } = {}) {
+  if (state.reasoningDebounceTimer) {
+    window.clearTimeout(state.reasoningDebounceTimer);
+    state.reasoningDebounceTimer = null;
+  }
+  if (!state.dirtyReasoning.size || !state.reasoningLoaded || !state.reasoningEditable) return state.reasoningSaveQueue;
+  if (state.pendingReasoningSaveCount > 0) {
+    state.reasoningSaveRequested = true;
+    renderSaveStatus();
+    return state.reasoningSaveQueue;
+  }
+  if (!immediate) {
+    state.reasoningDebounceTimer = window.setTimeout(() => {
+      state.reasoningDebounceTimer = null;
+      enqueueReasoningSave();
+    }, 700);
+    return state.reasoningSaveQueue;
+  }
+  return enqueueReasoningSave();
+}
+
+function enqueueReasoningSave() {
+  const context = attemptContext();
+  if (!context || !state.dirtyReasoning.size || !state.reasoningLoaded || !state.reasoningEditable) return state.reasoningSaveQueue;
+  if (state.pendingReasoningSaveCount > 0) {
+    state.reasoningSaveRequested = true;
+    return state.reasoningSaveQueue;
+  }
+  let batches;
+  try {
+    batches = reasoningSaveBatches(state.reasoningNotes, state.dirtyReasoning, state.reasoningRevision);
+  } catch (error) {
+    state.lastReasoningSaveError = error;
+    renderSaveStatus();
+    handleError(error, 'Your approach could not be saved. Your text is still in this browser.');
+    return state.reasoningSaveQueue;
+  }
+  state.reasoningSaveRequested = false;
+  state.pendingReasoningSaveCount += 1;
+  renderSaveStatus();
+  state.reasoningSaveQueue = state.reasoningSaveQueue
+    .catch(() => undefined)
+    .then(async () => {
+      if (!isCurrentAttemptContext(context)) return;
+      try {
+        for (let snapshot of batches) {
+          let response;
+          for (let attemptNumber = 0; attemptNumber < 2; attemptNumber += 1) {
+            try {
+              const requestBody = {
+                revision: state.reasoningRevision,
+                notes: reasoningNotesPayload(snapshot)
+              };
+              if (reasoningRequestBodyBytes(requestBody.revision, snapshot) > MAX_REASONING_REQUEST_BYTES) {
+                throw new ApiError('The approach save request is too large.', { code: 'REASONING_REQUEST_TOO_LARGE' });
+              }
+              response = await api.put(reasoningNotesPath(context.id), requestBody);
+              break;
+            } catch (error) {
+              const conflict = isReasoningRevisionConflict(error);
+              if (!conflict || attemptNumber > 0) throw error;
+              const refreshed = await api.get(reasoningNotesPath(context.id));
+              if (!isCurrentAttemptContext(context)) return;
+              if (!mergeReasoningEnvelope(refreshed, { preserveLocal: true })) {
+                throw new ApiError('The reasoning notes belong to a different attempt.', {
+                  code: 'REASONING_ATTEMPT_MISMATCH'
+                });
+              }
+              snapshot = new Map([...snapshot.keys()].map((questionNumber) => [
+                questionNumber,
+                state.reasoningNotes.get(questionNumber) || ''
+              ]));
+            }
+          }
+          if (!isCurrentAttemptContext(context) || !response) return;
+          if (!mergeReasoningEnvelope(response, { preserveLocal: true })) return;
+          for (const [questionNumber, sentText] of snapshot) {
+            if (state.reasoningNotes.get(questionNumber) === sentText) state.dirtyReasoning.delete(questionNumber);
+          }
+        }
+        state.lastReasoningSaveError = null;
+      } catch (error) {
+        if (!isCurrentAttemptContext(context)) return;
+        state.lastReasoningSaveError = error;
+        handleError(error, 'Your approach could not be saved. Your text is still in this browser.');
+      } finally {
+        if (!isCurrentAttemptContext(context)) return;
+        state.pendingReasoningSaveCount = Math.max(0, state.pendingReasoningSaveCount - 1);
+        renderSaveStatus();
+        if (!elements.practiceView.hidden) renderCurrentQuestion();
+        if (state.reasoningSaveRequested && !state.lastReasoningSaveError && state.dirtyReasoning.size) {
+          queueReasoningSave();
+        }
+      }
+    });
+  return state.reasoningSaveQueue;
+}
+
 async function reconcileAfterRevisionConflict(context = attemptContext()) {
   if (!context) return;
   try {
@@ -1457,6 +1840,114 @@ async function flushAnswerSaves() {
   }
 }
 
+async function flushReasoningSaves() {
+  if (state.reasoningDebounceTimer) {
+    window.clearTimeout(state.reasoningDebounceTimer);
+    state.reasoningDebounceTimer = null;
+  }
+  // A student can continue typing while one request is in flight. Drain the
+  // coalesced follow-up snapshot as well; do not mistake the first request's
+  // completion for a fully persisted editor.
+  for (let pass = 0; pass < 3 && state.dirtyReasoning.size && !state.lastReasoningSaveError; pass += 1) {
+    if (state.reasoningDebounceTimer) {
+      window.clearTimeout(state.reasoningDebounceTimer);
+      state.reasoningDebounceTimer = null;
+    }
+    enqueueReasoningSave();
+    await state.reasoningSaveQueue;
+  }
+  if (state.dirtyReasoning.size || (state.lastReasoningSaveError && state.reasoningLoaded)) {
+    throw new ApiError('Your approach notes are not fully saved. Retry the save before submitting.', {
+      code: 'REASONING_SAVE_FAILED', payload: state.lastReasoningSaveError
+    });
+  }
+}
+
+async function flushPracticeEdits() {
+  await flushAnswerSaves();
+  await flushReasoningSaves();
+}
+
+function discardLocalReasoningDraft() {
+  if (state.reasoningDebounceTimer) window.clearTimeout(state.reasoningDebounceTimer);
+  state.reasoningDebounceTimer = null;
+  state.reasoningSaveRequested = false;
+  state.dirtyReasoning.clear();
+  state.lastReasoningSaveError = null;
+  renderSaveStatus();
+}
+
+async function reloadReasoningDiscardingLocal() {
+  discardLocalReasoningDraft();
+  const loaded = await loadReasoningNotes({ preserveLocal: false });
+  if (loaded && !elements.practiceView.hidden) renderCurrentQuestion();
+  return loaded;
+}
+
+function reopenLimitNoticeIfNeeded() {
+  if (normalizePhase(state.attempt) === 'LIMIT_NOTICE') openLimitNotice();
+}
+
+function offerUnsavedReasoningRecovery({ actionLabel, onDiscard }) {
+  openModal({
+    type: 'reasoning-recovery',
+    title: 'Approach notes are not saved',
+    paragraphs: [
+      'Your selected answers are separate, but one or more local approach notes could not be saved.',
+      'Keep them in this browser and retry, reload the server copy, or explicitly discard the local notes to continue.'
+    ],
+    dismissible: false,
+    actions: [
+      {
+        label: 'Keep local notes', className: 'button button-secondary', handler: () => {
+          hideModal({ force: true });
+          reopenLimitNoticeIfNeeded();
+        }
+      },
+      {
+        label: 'Reload saved notes', className: 'button button-secondary', handler: async () => {
+          hideModal({ force: true });
+          await reloadReasoningDiscardingLocal();
+          reopenLimitNoticeIfNeeded();
+        }
+      },
+      {
+        label: `Discard notes and ${actionLabel}`,
+        className: 'button button-danger',
+        handler: async () => {
+          discardLocalReasoningDraft();
+          hideModal({ force: true });
+          await onDiscard();
+        }
+      }
+    ]
+  });
+}
+
+async function flushBeforeAttemptSwitch(nextAttemptId, onDiscard) {
+  const switchesAttempt = Boolean(state.attempt?.id)
+    && String(state.attempt.id) !== String(nextAttemptId || '');
+  const needsReasoningFlush = attemptSwitchNeedsReasoningFlush(
+    state.attempt?.id,
+    nextAttemptId,
+    state.dirtyReasoning.size,
+    state.pendingReasoningSaveCount
+  );
+  const needsAnswerFlush = switchesAttempt && (state.dirtyAnswers.size > 0 || state.pendingSaveCount > 0);
+  if (!needsReasoningFlush && !needsAnswerFlush) return true;
+  try {
+    await flushPracticeEdits();
+    return true;
+  } catch (error) {
+    if (error instanceof ApiError && error.code === 'REASONING_SAVE_FAILED') {
+      offerUnsavedReasoningRecovery({ actionLabel: 'switch tests', onDiscard });
+      return false;
+    }
+    handleError(error, 'Could not save changes before switching tests.');
+    return false;
+  }
+}
+
 function submissionRequestPayload(body = {}) {
   const precondition = submissionPrecondition(state.attempt);
   if (!precondition) {
@@ -1489,7 +1980,11 @@ async function refreshAttempt({ quiet = false, urgent = false } = {}) {
     const response = await api.get(`${API_BASE}/attempts/${encodeURIComponent(context.id)}`);
     if (!isCurrentAttemptContext(context)) return;
     const priorPhase = normalizePhase(state.attempt);
+    const previousAttempt = state.attempt;
     const attempt = mergeAttempt(response, { preferLocalAnswers: true });
+    if (reasoningCapabilityNeedsReload(previousAttempt, attempt)) {
+      await loadReasoningNotes({ preserveLocal: true, quiet: true });
+    }
     if (canAccessFinalReview(attempt)) {
       await showResults();
       return;
@@ -1660,7 +2155,15 @@ async function startAttempt(form) {
   }
 }
 
-async function resumeAttempt(attemptId, historySummary = null) {
+async function resumeAttempt(attemptId, historySummary = null, { skipSwitchFlush = false } = {}) {
+  if (!skipSwitchFlush) {
+    const canSwitch = await flushBeforeAttemptSwitch(attemptId, () => resumeAttempt(
+      attemptId,
+      historySummary,
+      { skipSwitchFlush: true }
+    ));
+    if (!canSwitch) return;
+  }
   try {
     const response = await api.get(`${API_BASE}/attempts/${encodeURIComponent(String(attemptId))}`);
     if (historySummary?.resultsAvailable === true && isRecord(response?.attempt)) {
@@ -1672,7 +2175,16 @@ async function resumeAttempt(attemptId, historySummary = null) {
   }
 }
 
-async function openAttempt(payload, knownForm = null) {
+async function openAttempt(payload, knownForm = null, { skipSwitchFlush = false } = {}) {
+  const targetAttempt = extractAttempt(payload);
+  if (!skipSwitchFlush) {
+    const canSwitch = await flushBeforeAttemptSwitch(targetAttempt?.id, () => openAttempt(
+      payload,
+      knownForm,
+      { skipSwitchFlush: true }
+    ));
+    if (!canSwitch) return null;
+  }
   clearAttemptState();
   if (knownForm?.id) state.formCache.set(formCacheKey(knownForm.id, knownForm.version), knownForm);
   const attempt = mergeAttempt(payload, { preferLocalAnswers: false });
@@ -1686,6 +2198,7 @@ async function openAttempt(payload, knownForm = null) {
   }
   await ensureQuestions(payload);
   if (!state.questions.length) throw new ApiError('This practice form contains no accessible questions.', { code: 'FORM_EMPTY' });
+  await loadReasoningNotes({ preserveLocal: false });
   const firstUnanswered = state.questions.findIndex((question) => !state.answers.get(question.number));
   state.currentQuestionIndex = firstUnanswered >= 0 ? firstUnanswered : 0;
   showOnly(elements.practiceView);
@@ -1699,7 +2212,7 @@ async function openAttempt(payload, knownForm = null) {
 
 async function pauseAttempt() {
   try {
-    await flushAnswerSaves();
+    await flushPracticeEdits();
     setButtonBusy(elements.pauseButton, true, 'Pausing…');
     const response = await api.post(`${API_BASE}/attempts/${encodeURIComponent(String(state.attempt.id))}/pause`);
     mergeAttempt(response, { preferLocalAnswers: true });
@@ -1716,8 +2229,12 @@ async function pauseAttempt() {
 async function resumeTimer() {
   try {
     setButtonBusy(elements.resumeButton, true, 'Resuming…');
+    const previousAttempt = state.attempt;
     const response = await api.post(`${API_BASE}/attempts/${encodeURIComponent(String(state.attempt.id))}/resume`);
-    mergeAttempt(response, { preferLocalAnswers: true });
+    const resumedAttempt = mergeAttempt(response, { preferLocalAnswers: true });
+    if (reasoningCapabilityNeedsReload(previousAttempt, resumedAttempt)) {
+      await loadReasoningNotes({ preserveLocal: true, quiet: true });
+    }
     renderAttemptHeader();
     renderCurrentQuestion();
     showStatus('Timer resumed.');
@@ -1766,7 +2283,7 @@ function confirmCheckpoint() {
 
 async function submitCheckpoint() {
   try {
-    await flushAnswerSaves();
+    await flushPracticeEdits();
     const response = await api.post(
       `${API_BASE}/attempts/${encodeURIComponent(String(state.attempt.id))}/checkpoint`,
       submissionRequestPayload()
@@ -1804,13 +2321,15 @@ function confirmFinalSubmission() {
   });
 }
 
-async function finalizeAttempt() {
+async function finalizeAttempt({ skipReasoningFlush = false } = {}) {
   try {
     await flushAnswerSaves();
+    if (!skipReasoningFlush) await flushReasoningSaves();
     const id = encodeURIComponent(String(state.attempt.id));
     const response = normalizePhase(state.attempt) === 'LIMIT_NOTICE'
       ? await api.post(`${API_BASE}/attempts/${id}/deadline-decision`, submissionRequestPayload({ decision: 'finalize' }))
       : await api.post(`${API_BASE}/attempts/${id}/final`, submissionRequestPayload());
+    state.learningSubmission = learningAnalysisProjection(response) || state.learningSubmission;
     hideModal({ force: true });
     mergeAttempt(response, { preferLocalAnswers: false });
     if (!canAccessFinalReview(state.attempt)) {
@@ -1819,6 +2338,13 @@ async function finalizeAttempt() {
     }
     await showResults();
   } catch (error) {
+    if (error instanceof ApiError && error.code === 'REASONING_SAVE_FAILED') {
+      offerUnsavedReasoningRecovery({
+        actionLabel: 'submit final answers',
+        onDiscard: () => finalizeAttempt({ skipReasoningFlush: true })
+      });
+      return;
+    }
     await handleAttemptMutationError(error, 'Could not submit final answers.');
   }
 }
@@ -1848,11 +2374,15 @@ function openLimitNotice() {
 async function continueAfterLimit() {
   try {
     const id = encodeURIComponent(String(state.attempt.id));
+    const previousAttempt = state.attempt;
     const response = await api.post(
       `${API_BASE}/attempts/${id}/deadline-decision`,
       submissionRequestPayload({ decision: 'continue' })
     );
-    mergeAttempt(response, { preferLocalAnswers: true });
+    const overtimeAttempt = mergeAttempt(response, { preferLocalAnswers: true });
+    if (reasoningCapabilityNeedsReload(previousAttempt, overtimeAttempt)) {
+      await loadReasoningNotes({ preserveLocal: true, quiet: true });
+    }
     hideModal({ force: true });
     renderAttemptHeader();
     renderCurrentQuestion();
@@ -1936,6 +2466,7 @@ function normalizeSolutionRows(payload) {
 
 function renderResults(resultPayload, solutionsPayload) {
   const result = normalizedResult(resultPayload);
+  state.learningSubmission = learningAnalysisProjection(resultPayload) || state.learningSubmission;
   const finalSubmission = firstDefined(result.finalSubmission, result.submission, null);
   const score = firstDefined(scoreFromSubmission(finalSubmission), result.score, result.totalScore, result.points, null);
   const total = firstDefined(maximumScoreFromSubmission(finalSubmission), result.maxScore, result.maximumScore, result.totalPossible, null);
@@ -1954,6 +2485,22 @@ function renderResults(resultPayload, solutionsPayload) {
   renderSubmissionHistory(firstDefined(result.submissions, submissionsFrom(state.attempt)) || []);
   renderResultQuestions(resultQuestionRows(finalSubmission || result));
   renderSolutions(normalizeSolutionRows(solutionsPayload));
+  renderLearningAnalysisStatus();
+}
+
+function renderLearningAnalysisStatus() {
+  const projection = state.learningSubmission;
+  const status = learningAnalysisDisplayStatus(projection);
+  const messages = {
+    CONTEXT_UNAVAILABLE: 'AI analysis is unavailable because reviewed question context is not ready. Your objective score above is final and unaffected.',
+    BLOCKED_CONTEXT: 'AI analysis is unavailable because reviewed question context is not ready. Your objective score above is final and unaffected.',
+    PENDING: 'Your answer-and-approach analysis is being prepared. Your objective score above is already final.',
+    PROCESSING: 'Your answer-and-approach analysis is in progress. Your objective score above is already final.',
+    COMPLETED: 'Your learning analysis is ready. Detailed per-question feedback will appear here as the report view becomes available.'
+  };
+  const message = messages[status];
+  elements.analysisSummary.hidden = !message;
+  elements.analysisStatus.textContent = message || '';
 }
 
 function humanSubmissionKind(submission) {
@@ -2041,11 +2588,17 @@ async function showResults() {
   elements.finalScore.textContent = 'Loading…';
   elements.scoreDetails.textContent = 'Retrieving your final score and solutions.';
   clearNode(elements.submissionHistory); clearNode(elements.resultsQuestions); clearNode(elements.solutionsList);
+  renderLearningAnalysisStatus();
   try {
     // The exported fetchFinalReview guards this request; do not bypass it.
-    const review = await fetchFinalReview(api, state.attempt);
+    const learningPath = learningSubmissionEndpointForAttempt(state.attempt);
+    const learningRequest = learningPath ? api.get(learningPath).catch(() => null) : Promise.resolve(null);
+    const [review, learningResponse] = await Promise.all([fetchFinalReview(api, state.attempt), learningRequest]);
     state.resultPayload = review.results;
     state.solutionsPayload = review.solutions;
+    state.learningSubmission = learningAnalysisProjection(learningResponse)
+      || learningAnalysisProjection(review.results)
+      || state.learningSubmission;
     renderResults(review.results, review.solutions);
     document.getElementById('main-content').focus();
   } catch (error) {
@@ -2103,10 +2656,11 @@ async function recoverUncertainReset(oldAttempt) {
   return false;
 }
 
-async function resetAttempt() {
+async function resetAttempt({ skipReasoningFlush = false } = {}) {
   const oldAttempt = state.attempt;
   try {
     await flushAnswerSaves();
+    if (!skipReasoningFlush) await flushReasoningSaves();
     const path = `${API_BASE}/attempts/${encodeURIComponent(String(oldAttempt.id))}/reset`;
     // Reuse one key for the network retry. If the first request committed but
     // its response vanished, the second request returns the original atomic
@@ -2146,11 +2700,22 @@ async function resetAttempt() {
     await showDashboard();
     showStatus('The prior attempt was reset. Start a new attempt when you are ready.');
   } catch (error) {
+    if (error instanceof ApiError && error.code === 'REASONING_SAVE_FAILED') {
+      offerUnsavedReasoningRecovery({
+        actionLabel: 'reset the attempt',
+        onDiscard: () => resetAttempt({ skipReasoningFlush: true })
+      });
+      return;
+    }
     handleError(error, 'Could not reset this attempt.');
   }
 }
 
-async function showDashboard() {
+async function showDashboard({ skipSwitchFlush = false } = {}) {
+  if (!skipSwitchFlush && !elements.practiceView.hidden) {
+    const canSwitch = await flushBeforeAttemptSwitch(null, () => showDashboard({ skipSwitchFlush: true }));
+    if (!canSwitch) return;
+  }
   hideModal({ force: true });
   stopAttemptSync();
   showOnly(elements.dashboardView);
@@ -2199,8 +2764,8 @@ function bindEvents() {
       setButtonBusy(elements.loginSubmit, false);
     }
   });
-  elements.dashboardButton.addEventListener('click', showDashboard);
-  elements.resultsDashboardButton.addEventListener('click', showDashboard);
+  elements.dashboardButton.addEventListener('click', () => showDashboard());
+  elements.resultsDashboardButton.addEventListener('click', () => showDashboard());
   elements.logoutButton.addEventListener('click', logout);
   elements.refreshForms.addEventListener('click', () => loadForms());
   elements.pauseButton.addEventListener('click', pauseAttempt);
@@ -2220,6 +2785,10 @@ function bindEvents() {
     const question = state.questions[state.currentQuestionIndex];
     if (question) updateQuestionAnswer(question.number, input.value);
   });
+  elements.reasoningInput.addEventListener('input', (event) => updateCurrentReasoning(event.target.value));
+  elements.reasoningInput.addEventListener('blur', () => queueReasoningSave({ immediate: true }));
+  elements.saveReasoningButton.addEventListener('click', () => queueReasoningSave({ immediate: true }));
+  elements.reloadReasoningButton.addEventListener('click', reloadReasoningNotes);
   elements.resetButton.addEventListener('click', confirmReset);
   elements.expandSolutions.addEventListener('click', expandAllSolutions);
   elements.modalClose.addEventListener('click', () => hideModal());

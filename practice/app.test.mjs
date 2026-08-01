@@ -6,17 +6,26 @@ import test from 'node:test';
 
 import {
   API_BASE,
+  ApiError,
+  MAX_REASONING_REQUEST_BYTES,
   apiBaseForModuleUrl,
   answerPayload,
   attemptAllowsAnswerEdits,
+  attemptAllowsReasoningEdits,
   attemptCanBeReset,
   canAccessFinalReview,
   extractAttempt,
   fetchFinalReview,
   formatDuration,
   maximumScoreFromSubmission,
+  learningAnalysisProjection,
+  learningAnalysisDisplayStatus,
+  learningSubmissionEndpointForAttempt,
   normalizeChoices,
   normalizeLegacyInlineTeX,
+  normalizeReasoningNotes,
+  preserveDirtyReasoningNotes,
+  reasoningEnvelopeMatchesAttempt,
   publicFormPath,
   attemptFormPath,
   formCacheKey,
@@ -26,6 +35,13 @@ import {
   sameAttemptId,
   scoreFromSubmission,
   resetReplacementFromHistory,
+  reasoningNotesPath,
+  reasoningNotesPayload,
+  reasoningRequestBodyBytes,
+  reasoningSaveBatches,
+  reasoningCapabilityNeedsReload,
+  attemptSwitchNeedsReasoningFlush,
+  isReasoningRevisionConflict,
   saveResponseNeedsReconciliation,
   shouldMergeAttemptUpdate,
   solutionEndpointForAttempt,
@@ -93,6 +109,7 @@ test('pre-final attempts cannot request or expose final review paths', async () 
 
   assert.equal(canAccessFinalReview(attempt), false);
   assert.equal(solutionEndpointForAttempt(attempt), null);
+  assert.equal(learningSubmissionEndpointForAttempt(attempt), null);
   await assert.rejects(fetchFinalReview(client, attempt), { code: 'FINAL_REVIEW_NOT_AVAILABLE' });
   assert.deepEqual(calls, [], 'the client must not make results/solutions calls before final submission');
 });
@@ -114,6 +131,10 @@ test('only a finalized attempt requests results and solutions', async () => {
   ]);
   assert.equal(review.results.path, calls[0]);
   assert.equal(review.solutions.path, calls[1]);
+  assert.equal(
+    learningSubmissionEndpointForAttempt(attempt),
+    `${API_BASE}/attempts/attempt-42/learning-submission`
+  );
 });
 
 test('a reset attempt is reviewable only when the server marks a prior final result available', () => {
@@ -129,6 +150,143 @@ test('a paused timer cannot edit answers, matching the server state machine', ()
   assert.equal(attemptAllowsAnswerEdits({ phase: 'TIMED', clockState: 'PAUSED' }), false);
   assert.equal(attemptAllowsAnswerEdits({ phase: 'LIMIT_NOTICE', clockState: 'PAUSED' }), false);
   assert.equal(attemptAllowsAnswerEdits({ phase: 'FINALIZED', clockState: 'PAUSED' }), false);
+});
+
+test('reasoning notes share the answer-edit state machine and accept an explicit blank', () => {
+  assert.equal(attemptAllowsReasoningEdits({ phase: 'TIMED', clockState: 'RUNNING' }), true);
+  assert.equal(attemptAllowsReasoningEdits({ phase: 'OVERTIME', clockState: 'RUNNING' }), true);
+  assert.equal(attemptAllowsReasoningEdits({ phase: 'TIMED', clockState: 'PAUSED' }), false);
+  assert.equal(attemptAllowsReasoningEdits({ phase: 'FINALIZED', clockState: 'PAUSED' }), false);
+  assert.equal(reasoningNotesPath('attempt / one'), `${API_BASE}/attempts/attempt%20%2F%20one/reasoning-notes`);
+  assert.deepEqual(reasoningNotesPayload(new Map([[3, '  '], [1, 'Try parity.']])), [
+    { questionNumber: 1, reasoningText: 'Try parity.' },
+    { questionNumber: 3, reasoningText: null }
+  ]);
+});
+
+test('reasoning envelopes accept the API wrapper and bare rolling-deploy response', () => {
+  const apiEnvelope = {
+    attemptId: 'attempt-1', reasoningRevision: 4, stateRevision: 9, editable: true,
+    notes: [{ questionNumber: 1, reasoningText: 'Server note' }, { questionNumber: 2, reasoningText: null }]
+  };
+  const envelope = normalizeReasoningNotes({ data: { reasoning: apiEnvelope } });
+  assert.equal(envelope.attemptId, 'attempt-1');
+  assert.equal(envelope.reasoningRevision, 4);
+  assert.equal(envelope.stateRevision, 9);
+  assert.equal(envelope.editable, true);
+  assert.deepEqual([...envelope.notes], [[1, 'Server note'], [2, '']]);
+  assert.deepEqual(normalizeReasoningNotes(apiEnvelope), envelope);
+  assert.equal(reasoningEnvelopeMatchesAttempt(envelope, 'attempt-1'), true);
+  assert.equal(reasoningEnvelopeMatchesAttempt(envelope, 'attempt-2'), false);
+  assert.equal(reasoningEnvelopeMatchesAttempt(normalizeReasoningNotes({ reasoningRevision: 1 }), 'attempt-1'), false);
+  assert.deepEqual([...preserveDirtyReasoningNotes(
+    envelope.notes,
+    new Map([[1, 'Unsaved local text'], [3, 'New local text']]),
+    new Set([1, 3])
+  )], [[1, 'Unsaved local text'], [2, ''], [3, 'New local text']]);
+});
+
+test('large dirty reasoning sets split by text and the exact JSON UTF-8 request body', () => {
+  const text = 'x'.repeat(8_000);
+  const notes = new Map(Array.from({ length: 7 }, (_, index) => [index + 1, text]));
+  const batches = reasoningSaveBatches(notes, new Set(notes.keys()), 4);
+  assert.deepEqual(batches.map((batch) => batch.size), [6, 1]);
+  assert.deepEqual(reasoningNotesPayload(batches[1]), [{ questionNumber: 7, reasoningText: text }]);
+  assert.equal(batches.every((batch) => reasoningRequestBodyBytes(4, batch) <= MAX_REASONING_REQUEST_BYTES), true);
+
+  const escaped = '\\\"\u0000\n\t'.repeat(1_600);
+  assert.equal(new TextEncoder().encode(escaped).byteLength, 8_000);
+  const escapedNotes = new Map(Array.from({ length: 4 }, (_, index) => [index + 1, escaped]));
+  const escapedBatches = reasoningSaveBatches(escapedNotes, new Set(escapedNotes.keys()), 99);
+  assert.equal(escapedBatches.length > 1, true, 'JSON escaping, not just raw text size, must split requests');
+  assert.equal(escapedBatches.every((batch) => reasoningRequestBodyBytes(99, batch) <= MAX_REASONING_REQUEST_BYTES), true);
+
+  const plusOne = new Map(Array.from({ length: 6 }, (_, index) => [index + 1, text]));
+  plusOne.set(7, '+');
+  assert.deepEqual(reasoningSaveBatches(plusOne, new Set(plusOne.keys()), 4).map((batch) => batch.size), [6, 1]);
+});
+
+test('each reasoning note is strictly limited to 8000 UTF-8 bytes for CJK and emoji', () => {
+  const cjkAtLimit = '思'.repeat(2_666) + 'ab';
+  const emojiAtLimit = '🧠'.repeat(2_000);
+  assert.equal(new TextEncoder().encode(cjkAtLimit).byteLength, 8_000);
+  assert.equal(new TextEncoder().encode(emojiAtLimit).byteLength, 8_000);
+  assert.equal(reasoningSaveBatches(new Map([[1, cjkAtLimit]]), new Set([1]), 0).length, 1);
+  assert.equal(reasoningSaveBatches(new Map([[1, emojiAtLimit]]), new Set([1]), 0).length, 1);
+  assert.throws(
+    () => reasoningSaveBatches(new Map([[1, `${cjkAtLimit}+`]]), new Set([1]), 0),
+    (error) => error instanceof ApiError && error.code === 'REASONING_NOTE_TOO_LARGE'
+  );
+  assert.throws(
+    () => reasoningSaveBatches(new Map([[1, `${emojiAtLimit}+`]]), new Set([1]), 0),
+    (error) => error instanceof ApiError && error.code === 'REASONING_NOTE_TOO_LARGE'
+  );
+  assert.throws(
+    () => reasoningSaveBatches(new Map([[1, 'x']]), new Set([1]), null),
+    (error) => error instanceof ApiError && error.code === 'REASONING_REVISION_MISSING'
+  );
+});
+
+test('reasoning saves are serialized, retry stale revisions, and flush before final scoring', () => {
+  const client = readFileSync(new URL('app.mjs', practiceDirectory), 'utf8');
+  assert.match(client, /state\.reasoningSaveQueue = state\.reasoningSaveQueue/);
+  assert.equal(isReasoningRevisionConflict(new ApiError('stale', {
+    status: 409, code: 'REASONING_REVISION_CONFLICT'
+  })), true);
+  assert.equal(isReasoningRevisionConflict(new ApiError('other conflict', {
+    status: 409, code: 'ATTEMPT_STATE_CONFLICT'
+  })), false, 'an unrelated HTTP 409 must never trigger a reasoning retry');
+  assert.doesNotMatch(client, /REASONING_REVISION_CONFLICT[^\n]*\|\|[^\n]*status === 409/);
+  assert.match(client, /async function finalizeAttempt\([^)]*\)[\s\S]*?await flushAnswerSaves\(\)[\s\S]*?await flushReasoningSaves\(\)[\s\S]*?submissionRequestPayload/);
+  assert.match(client, /state\.attempt = \{ \.\.\.state\.attempt, stateRevision: envelope\.stateRevision \}/);
+  assert.doesNotMatch(client, /\.innerHTML\s*=/, 'student reasoning must never be injected as raw HTML');
+});
+
+test('reasoning capability reloads after pause/resume and limit/overtime transitions', () => {
+  assert.equal(reasoningCapabilityNeedsReload(
+    { id: 'a', phase: 'TIMED', clockState: 'PAUSED' },
+    { id: 'a', phase: 'TIMED', clockState: 'RUNNING' }
+  ), true);
+  assert.equal(reasoningCapabilityNeedsReload(
+    { id: 'a', phase: 'LIMIT_NOTICE', clockState: 'PAUSED' },
+    { id: 'a', phase: 'OVERTIME', clockState: 'RUNNING' }
+  ), true);
+  assert.equal(reasoningCapabilityNeedsReload(
+    { id: 'a', phase: 'TIMED', clockState: 'RUNNING' },
+    { id: 'a', phase: 'TIMED', clockState: 'RUNNING' }
+  ), false);
+  const client = readFileSync(new URL('app.mjs', practiceDirectory), 'utf8');
+  assert.match(client, /async function resumeTimer\(\)[\s\S]*?reasoningCapabilityNeedsReload[\s\S]*?loadReasoningNotes/);
+  assert.match(client, /async function continueAfterLimit\(\)[\s\S]*?reasoningCapabilityNeedsReload[\s\S]*?loadReasoningNotes/);
+});
+
+test('attempt switches flush local approaches before clear and expose explicit recovery', () => {
+  assert.equal(attemptSwitchNeedsReasoningFlush('a', 'b', 1, 0), true);
+  assert.equal(attemptSwitchNeedsReasoningFlush('a', 'b', 0, 1), true);
+  assert.equal(attemptSwitchNeedsReasoningFlush('a', 'a', 1, 1), false);
+  const client = readFileSync(new URL('app.mjs', practiceDirectory), 'utf8');
+  assert.match(client, /async function resumeAttempt[\s\S]*?flushBeforeAttemptSwitch[\s\S]*?api\.get[\s\S]*?openAttempt/);
+  assert.match(client, /async function openAttempt[\s\S]*?flushBeforeAttemptSwitch[\s\S]*?clearAttemptState/);
+  assert.match(client, /function offerUnsavedReasoningRecovery[\s\S]*?Reload saved notes[\s\S]*?Discard notes and/);
+  assert.match(client, /async function finalizeAttempt[\s\S]*?offerUnsavedReasoningRecovery/);
+  assert.match(client, /async function resetAttempt[\s\S]*?offerUnsavedReasoningRecovery/);
+  assert.match(client, /reasoningSaveRequested/);
+  const html = readFileSync(new URL('index.html', practiceDirectory), 'utf8');
+  assert.match(html, /id="reload-reasoning-button"[^>]*hidden/);
+});
+
+test('final learning projections expose analysis state without replacing the objective score', () => {
+  assert.deepEqual(learningAnalysisProjection({ learningSubmission: {
+    id: 'learning-1', status: 'COMMITTED', analysisStatus: 'PENDING', ignored: '<b>unsafe</b>'
+  } }), { status: 'COMMITTED', analysisStatus: 'PENDING' });
+  assert.equal(learningAnalysisDisplayStatus({
+    status: 'CONTEXT_UNAVAILABLE', analysisStatus: 'BLOCKED_CONTEXT'
+  }), 'CONTEXT_UNAVAILABLE');
+  assert.equal(learningAnalysisDisplayStatus({ status: 'READY', analysisStatus: 'PENDING' }), 'PENDING');
+  assert.equal(learningAnalysisProjection({ result: {} }), null);
+  const html = readFileSync(new URL('index.html', practiceDirectory), 'utf8');
+  assert.match(html, /id="final-score"/);
+  assert.match(html, /id="analysis-summary"[^>]*hidden/);
 });
 
 test('the displayed 75-minute boundary immediately locks timed answers before the next poll', () => {

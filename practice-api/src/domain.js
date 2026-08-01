@@ -105,6 +105,7 @@ export function publicAttempt(attempt, answers, submissions = [], now = new Date
     activeElapsedMs: currentElapsedMs,
     remainingMs: Math.max(0, attempt.durationMs - currentElapsedMs),
     answersRevision: attempt.answersRevision,
+    reasoningRevision: Number.isSafeInteger(attempt.reasoningRevision) ? attempt.reasoningRevision : 0,
     stateRevision: Number.isSafeInteger(attempt.stateRevision) ? attempt.stateRevision : 0,
     answers: [...answers]
       .sort((a, b) => a.questionNumber - b.questionNumber)

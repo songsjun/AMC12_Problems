@@ -89,7 +89,8 @@ export async function makeApp(options = {}) {
     cookiePath: '/api/amc12',
     secureCookies: false,
     trustedProxy: 'loopback',
-    corsOrigin: null
+    corsOrigin: null,
+    reasoningWritesPerMinute: options.reasoningWritesPerMinute
   };
   const app = await buildApp({ service: context.service, config, logger: false });
   return { ...context, app, config };

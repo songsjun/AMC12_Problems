@@ -47,6 +47,7 @@ function mapAttempt(row) {
     activeElapsedMs: number(row.active_elapsed_ms),
     clockStartedAt: row.clock_started_at,
     answersRevision: row.answers_revision,
+    reasoningRevision: row.reasoning_revision ?? 0,
     stateRevision: number(row.state_revision ?? 0),
     limitReachedAt: row.limit_reached_at,
     finalizedAt: row.finalized_at,
@@ -73,6 +74,59 @@ function mapSubmission(row) {
     blankCount: row.blank_count,
     unscoredCount: row.unscored_count ?? 0,
     createdAt: row.created_at
+  };
+}
+
+function mapLearningSubmission(row) {
+  return row && {
+    id: row.id,
+    studentId: row.student_id,
+    attemptId: row.attempt_id,
+    officialSubmissionId: row.official_submission_id,
+    officialSubmissionKind: row.official_submission_kind,
+    formId: row.form_id,
+    formVersion: row.form_version,
+    sourceType: row.source_type,
+    lifecycleStatus: row.lifecycle_status,
+    currentVersion: row.current_version,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function mapLearningVersion(row) {
+  return row && {
+    id: row.id,
+    learningSubmissionId: row.learning_submission_id,
+    versionNumber: row.version_number,
+    formId: row.form_id,
+    formVersion: row.form_version,
+    answersRevision: row.answers_revision,
+    reasoningRevision: row.reasoning_revision,
+    creationReason: row.creation_reason,
+    contextStatus: row.context_status,
+    contextSetId: row.context_set_id,
+    evidenceHash: row.evidence_hash,
+    createdAt: row.created_at
+  };
+}
+
+function mapLearningWorkItem(row) {
+  return row && {
+    id: row.id,
+    learningSubmissionVersionId: row.learning_submission_version_id,
+    workType: row.work_type,
+    status: row.status,
+    priority: row.priority,
+    attemptCount: row.attempt_count,
+    inputHash: row.input_hash,
+    deletionGeneration: row.deletion_generation,
+    availableAt: row.available_at,
+    leaseOwner: row.lease_owner,
+    leaseExpiresAt: row.lease_expires_at,
+    lastErrorCode: row.last_error_code,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
   };
 }
 
@@ -432,10 +486,12 @@ class PostgresAttemptTransaction {
     const result = await this.client.query(
       `UPDATE amc_practice.attempts
        SET phase = $2, clock_state = $3, active_elapsed_ms = $4, clock_started_at = $5,
-           answers_revision = $6, state_revision = $7, limit_reached_at = $8, finalized_at = $9, reset_at = $10, updated_at = $11
+           answers_revision = $6, reasoning_revision = $7, state_revision = $8, limit_reached_at = $9,
+           finalized_at = $10, reset_at = $11, updated_at = $12
        WHERE id = $1 RETURNING *`,
       [attempt.id, attempt.phase, attempt.clockState, attempt.activeElapsedMs, attempt.clockStartedAt,
-        attempt.answersRevision, attempt.stateRevision, attempt.limitReachedAt, attempt.finalizedAt, attempt.resetAt, attempt.updatedAt]
+        attempt.answersRevision, attempt.reasoningRevision || 0, attempt.stateRevision, attempt.limitReachedAt,
+        attempt.finalizedAt, attempt.resetAt, attempt.updatedAt]
     );
     this.attempt = mapAttempt(result.rows[0]);
     return clone(this.attempt);
@@ -458,6 +514,42 @@ class PostgresAttemptTransaction {
       );
     }
     return answers;
+  }
+
+  async getReasoningNotes() {
+    const result = await this.client.query(
+      `SELECT question_number, reasoning_text, updated_at
+       FROM amc_practice.attempt_reasoning_notes
+       WHERE attempt_id = $1 ORDER BY question_number`,
+      [this.attempt.id]
+    );
+    return result.rows.map((row) => ({
+      questionNumber: row.question_number,
+      reasoningText: row.reasoning_text,
+      updatedAt: row.updated_at
+    }));
+  }
+
+  async saveReasoningNotes(updates, updatedAt) {
+    for (const update of updates) {
+      if (update.reasoningText === '') {
+        await this.client.query(
+          `DELETE FROM amc_practice.attempt_reasoning_notes
+           WHERE attempt_id = $1 AND question_number = $2`,
+          [this.attempt.id, update.questionNumber]
+        );
+      } else {
+        await this.client.query(
+          `INSERT INTO amc_practice.attempt_reasoning_notes
+           (attempt_id, question_number, reasoning_text, updated_at)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (attempt_id, question_number) DO UPDATE
+           SET reasoning_text = EXCLUDED.reasoning_text, updated_at = EXCLUDED.updated_at`,
+          [this.attempt.id, update.questionNumber, update.reasoningText, updatedAt]
+        );
+      }
+    }
+    return this.getReasoningNotes();
   }
 
   async listSubmissions() {
@@ -520,6 +612,97 @@ class PostgresAttemptTransaction {
       isCorrect: row.is_correct,
       points: number(row.points)
     }));
+  }
+
+  async getLearningSubmissionBundle() {
+    const parent = await this.client.query(
+      'SELECT * FROM amc_practice.learning_submissions WHERE attempt_id = $1',
+      [this.attempt.id]
+    );
+    if (!parent.rowCount) return null;
+    const submission = mapLearningSubmission(parent.rows[0]);
+    const versionResult = await this.client.query(
+      `SELECT * FROM amc_practice.learning_submission_versions
+       WHERE learning_submission_id = $1 AND version_number = $2`,
+      [submission.id, submission.currentVersion]
+    );
+    if (!versionResult.rowCount) throw new Error(`Learning submission ${submission.id} has no current version.`);
+    const version = mapLearningVersion(versionResult.rows[0]);
+    const [responseResult, workResult] = await Promise.all([
+      this.client.query(
+        `SELECT learning_submission_version_id, form_id, form_version, question_number,
+                selected_option, answer_origin, reasoning_text, reasoning_origin, created_at
+         FROM amc_practice.learning_question_responses
+         WHERE learning_submission_version_id = $1 ORDER BY question_number`,
+        [version.id]
+      ),
+      this.client.query(
+        `SELECT * FROM amc_practice.learning_work_items
+         WHERE learning_submission_version_id = $1 ORDER BY created_at, id`,
+        [version.id]
+      )
+    ]);
+    return {
+      submission,
+      version,
+      responses: responseResult.rows.map((row) => ({
+        learningSubmissionVersionId: row.learning_submission_version_id,
+        formId: row.form_id,
+        formVersion: row.form_version,
+        questionNumber: row.question_number,
+        selectedOption: row.selected_option,
+        reasoningText: row.reasoning_text,
+        answerOrigin: row.answer_origin,
+        reasoningOrigin: row.reasoning_origin,
+        createdAt: row.created_at
+      })),
+      workItems: workResult.rows.map(mapLearningWorkItem)
+    };
+  }
+
+  async createLearningSubmission({ submission, version, responses, workItem }) {
+    await this.client.query(
+      `INSERT INTO amc_practice.learning_submissions
+       (id, student_id, attempt_id, official_submission_id, official_submission_kind, form_id, form_version,
+        source_type, lifecycle_status, current_version, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      [submission.id, submission.studentId, submission.attemptId, submission.officialSubmissionId,
+        submission.officialSubmissionKind || 'FINAL', submission.formId, submission.formVersion,
+        submission.sourceType, submission.lifecycleStatus,
+        submission.currentVersion, submission.createdAt, submission.updatedAt]
+    );
+    await this.client.query(
+      `INSERT INTO amc_practice.learning_submission_versions
+       (id, learning_submission_id, version_number, form_id, form_version,
+        answers_revision, reasoning_revision, creation_reason, context_status, context_set_id, evidence_hash, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      [version.id, version.learningSubmissionId, version.versionNumber, version.formId, version.formVersion,
+        version.answersRevision, version.reasoningRevision, version.creationReason, version.contextStatus,
+        version.contextSetId, version.evidenceHash, version.createdAt]
+    );
+    for (const response of responses) {
+      await this.client.query(
+        `INSERT INTO amc_practice.learning_question_responses
+         (learning_submission_version_id, form_id, form_version, question_number,
+          selected_option, answer_origin, reasoning_text, reasoning_origin, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [response.learningSubmissionVersionId, response.formId, response.formVersion,
+          response.questionNumber, response.selectedOption, response.answerOrigin, response.reasoningText,
+          response.reasoningOrigin, response.createdAt]
+      );
+    }
+    await this.client.query(
+      `INSERT INTO amc_practice.learning_work_items
+       (id, learning_submission_version_id, work_type, status, priority, attempt_count,
+        input_hash, deletion_generation, available_at, lease_owner, lease_expires_at,
+        last_error_code, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+      [workItem.id, workItem.learningSubmissionVersionId, workItem.workType, workItem.status,
+        workItem.priority, workItem.attemptCount, workItem.inputHash, workItem.deletionGeneration,
+        workItem.availableAt, workItem.leaseOwner, workItem.leaseExpiresAt, workItem.lastErrorCode,
+        workItem.createdAt, workItem.updatedAt]
+    );
+    return this.getLearningSubmissionBundle();
   }
 
   async addTimerEvent(event) {
