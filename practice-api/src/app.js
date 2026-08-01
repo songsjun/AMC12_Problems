@@ -4,6 +4,7 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { ApiError, badRequest, toErrorPayload, unauthorized } from './errors.js';
+import { MAX_AUDIO_FILE_BYTES } from './batch-ingest/domain.js';
 
 function cookieOptions(config) {
   return {
@@ -82,10 +83,16 @@ export async function buildApp({ service, config, logger = false }) {
     await app.register(cors, {
       origin: config.corsOrigin,
       credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'OPTIONS'],
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'X-CSRF-Token', 'Idempotency-Key']
     });
   }
+
+  // The upload route consumes this stream directly into private storage. JSON
+  // routes retain Fastify's small global body limit and ordinary parser.
+  app.addContentTypeParser('application/octet-stream', (request, payload, done) => {
+    done(null, payload);
+  });
 
   app.setErrorHandler((error, request, reply) => {
     const apiError = error instanceof ApiError ? error : null;
@@ -101,6 +108,9 @@ export async function buildApp({ service, config, logger = false }) {
     }
     if (!apiError) request.log.error({ err: error }, 'Unhandled AMC practice API error');
     const statusCode = apiError?.statusCode || 500;
+    if (statusCode === 429 && Number.isSafeInteger(apiError?.details?.retryAfterSeconds)) {
+      reply.header('Retry-After', String(apiError.details.retryAfterSeconds));
+    }
     return reply.status(statusCode).send(toErrorPayload(apiError || error));
   });
 
@@ -109,6 +119,7 @@ export async function buildApp({ service, config, logger = false }) {
     const sessionId = readSignedCookie(request, config.cookieName);
     if (!sessionId) throw unauthorized();
     const authenticated = await service.authenticateSession(sessionId);
+    await service.consumeStudentRequestBudget(authenticated.student.id);
     request.auth = { ...authenticated, sessionToken: sessionId };
     return request.auth;
   }
@@ -260,6 +271,59 @@ export async function buildApp({ service, config, logger = false }) {
   app.get(`${base}/attempts/:attemptId/solutions`, async (request) => {
     const auth = await requireAuth(request);
     return service.getSolutions(auth.student.id, request.params.attemptId);
+  });
+  app.post(`${base}/attempts/:attemptId/learning-batches`, async (request, reply) => {
+    const auth = await requireCsrf(request);
+    const result = await service.createLearningBatch(
+      auth.student.id, request.params.attemptId, idempotencyKey(request), bodyObject(request.body)
+    );
+    reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+    return reply.status(result.created ? 201 : 200).send(result);
+  });
+  app.get(`${base}/attempts/:attemptId/learning-batches`, async (request, reply) => {
+    const auth = await requireAuth(request);
+    reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+    return service.listLearningBatches(auth.student.id, request.params.attemptId);
+  });
+  app.get(`${base}/attempts/:attemptId/learning-batches/:batchId`, async (request, reply) => {
+    const auth = await requireAuth(request);
+    reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+    return service.getLearningBatch(auth.student.id, request.params.attemptId, request.params.batchId);
+  });
+  app.put(`${base}/attempts/:attemptId/learning-batches/:batchId/assets/:assetId/body`, {
+    bodyLimit: MAX_AUDIO_FILE_BYTES
+  }, async (request, reply) => {
+    const auth = await requireCsrf(request);
+    if (request.headers['content-type'] !== 'application/octet-stream') {
+      throw badRequest('UNSUPPORTED_UPLOAD_ENVELOPE', 'Batch asset bodies use application/octet-stream.');
+    }
+    reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+    return service.uploadLearningBatchAsset(
+      auth.student.id, request.params.attemptId, request.params.batchId, request.params.assetId,
+      idempotencyKey(request), request.body, Number(request.headers['content-length'])
+    );
+  });
+  app.post(`${base}/attempts/:attemptId/learning-batches/:batchId/submit`, async (request, reply) => {
+    const auth = await requireCsrf(request);
+    reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+    return service.submitLearningBatch(
+      auth.student.id, request.params.attemptId, request.params.batchId, idempotencyKey(request)
+    );
+  });
+  app.post(`${base}/attempts/:attemptId/learning-batches/:batchId/confirm`, async (request, reply) => {
+    const auth = await requireCsrf(request);
+    reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+    return service.confirmLearningBatch(
+      auth.student.id, request.params.attemptId, request.params.batchId,
+      idempotencyKey(request), bodyObject(request.body)
+    );
+  });
+  app.delete(`${base}/attempts/:attemptId/learning-batches/:batchId`, async (request, reply) => {
+    const auth = await requireCsrf(request);
+    reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+    return service.deleteLearningBatch(
+      auth.student.id, request.params.attemptId, request.params.batchId, idempotencyKey(request)
+    );
   });
 
   return app;

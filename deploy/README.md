@@ -32,10 +32,17 @@ the site. Apply them manually to the matching host-level config files:
   `/opt/homebrew/etc/nginx/servers/amc12.conf`.
 - `cloudflared/amc12-ingress.yml` is the ingress rule added before the final
   fallback rule in `~/.cloudflared/config.yml`.
-- `launchd/com.kapy.education.amc12-practice-api.plist` is a non-secret
-  system-service template. Install it only after creating the protected
-  `/etc/kapy/amc12-practice.env` described in
+- `launchd/com.kapy.education.amc12-practice-api.plist` and
+  `launchd/com.kapy.education.amc12-learning-worker.plist` are separate,
+  non-secret system-service templates. Install them only after creating the
+  distinct protected API and worker env files described in
   [`launchd/README.md`](launchd/README.md).
+
+The background worker is intentionally fail-closed for prerecorded audio. Its
+protected environment must contain the operator-verified AssemblyAI retention
+profile, policy delay, and explicit processing slack documented in that
+runbook. Do not infer these values from an API key or treat a retention-window
+timer as provider deletion evidence.
 
 ## Practice UI and API
 

@@ -70,6 +70,16 @@ function requestFor(job, question, eligibleSolutions) {
   return request;
 }
 
+function solutionAuthorization(solution) {
+  return {
+    artifactSolutionId: solution.artifactSolutionId,
+    bodySha256: solution.bodySha256,
+    sourceSha256: solution.sourceRef.sha256,
+    decisionRecordHash: solution.decisionRecordHash,
+    authorityReceiptId: solution.authorityReceipt.receiptId
+  };
+}
+
 function successfulOutcome(question, request, analysis, runMetadata, eligibleSolutions) {
   const methods = new Map(eligibleSolutions.map((solution) => [solution.artifactSolutionId, solution.methodTags]));
   return {
@@ -140,9 +150,12 @@ export class LearningReviewWorker {
     this.heartbeatMs = Math.max(250, Math.min(10_000, Math.floor(leaseMs / 3)));
   }
 
-  async #analyzeWithHeartbeat(workItemId, leaseToken, request) {
+  async #analyzeWithHeartbeat(job, question, eligibleSolutions, request, shutdownSignal) {
     const requestController = new AbortController();
     const heartbeatController = new AbortController();
+    const abortForShutdown = () => requestController.abort(shutdownSignal?.reason);
+    if (shutdownSignal?.aborted) abortForShutdown();
+    else shutdownSignal?.addEventListener('abort', abortForShutdown, { once: true });
     let leaseLost = false;
     const heartbeatLoop = (async () => {
       while (!heartbeatController.signal.aborted) {
@@ -154,9 +167,9 @@ export class LearningReviewWorker {
         let heartbeat = false;
         try {
           heartbeat = await this.store.heartbeatLearningAnalysisWork({
-            workItemId,
+            workItemId: job.workItem.id,
             workerId: this.workerId,
-            leaseToken,
+            leaseToken: job.workItem.leaseToken,
             now: this.clock(),
             leaseMs: this.leaseMs
           });
@@ -173,12 +186,47 @@ export class LearningReviewWorker {
     let analysis;
     let inferenceError;
     try {
+      const authorized = await this.store.authorizeLearningAnalysisProviderCall({
+        workItemId: job.workItem.id,
+        analysisRunId: job.run.id,
+        workerId: this.workerId,
+        leaseToken: job.workItem.leaseToken,
+        inputHash: job.workItem.inputHash,
+        deletionGeneration: job.workItem.deletionGeneration,
+        versionId: job.version.id,
+        versionNumber: job.version.versionNumber,
+        evidenceHash: job.version.evidenceHash,
+        expectedStudentId: job.submission.studentId,
+        expectedSubmissionCurrentVersion: job.submission.currentVersion,
+        expectedContextSetId: job.version.contextSetId,
+        questionNumber: question.questionNumber,
+        questionResponseHash: canonicalHash({
+          questionNumber: question.questionNumber,
+          selectedOption: question.selectedOption,
+          reasoningText: question.reasoningText
+        }),
+        questionContextHash: question.context.questionContentHash,
+        officialAnswer: question.officialAnswer,
+        eligibleSolutions: eligibleSolutions.map(solutionAuthorization),
+        now: this.clock()
+      });
+      if (!authorized) {
+        leaseLost = true;
+        requestController.abort();
+        throw Object.assign(new Error('Learning analysis authorization was lost.'), { code: 'LEASE_LOST' });
+      }
       analysis = await this.inferenceClient.analyze(request, { signal: requestController.signal });
     } catch (error) {
       inferenceError = error;
     } finally {
+      shutdownSignal?.removeEventListener('abort', abortForShutdown);
       heartbeatController.abort();
       await heartbeatLoop;
+    }
+    if (shutdownSignal?.aborted) {
+      throw Object.assign(new Error('Learning analysis stopped for worker shutdown.'), {
+        code: 'WORKER_SHUTDOWN'
+      });
     }
     if (leaseLost) throw Object.assign(new Error('Learning analysis lease was lost.'), { code: 'LEASE_LOST' });
     if (inferenceError) throw inferenceError;
@@ -192,8 +240,13 @@ export class LearningReviewWorker {
       leaseMs: this.leaseMs
     });
     if (!job) return { processed: false };
+    return this.processClaimed(job);
+  }
+
+  async processClaimed(job, { signal } = {}) {
     const outcomes = [];
     for (const question of job.questions) {
+      if (signal?.aborted) return { processed: false, shuttingDown: true };
       const heartbeat = await this.store.heartbeatLearningAnalysisWork({
         workItemId: job.workItem.id,
         workerId: this.workerId,
@@ -225,13 +278,19 @@ export class LearningReviewWorker {
       }
       const request = requestFor(job, question, eligibleSolutions);
       try {
-        const result = await this.#analyzeWithHeartbeat(job.workItem.id, job.workItem.leaseToken, request);
+        const result = await this.#analyzeWithHeartbeat(
+          job, question, eligibleSolutions, request, signal
+        );
         outcomes.push(successfulOutcome(question, request, result.analysis, result.runMetadata, eligibleSolutions));
       } catch (error) {
+        if (error?.code === 'WORKER_SHUTDOWN' || signal?.aborted) {
+          return { processed: false, shuttingDown: true };
+        }
         if (error?.code === 'LEASE_LOST') return { processed: false, staleLease: true };
         outcomes.push(failedOutcome(question, request, error));
       }
     }
+    if (signal?.aborted) return { processed: false, shuttingDown: true };
     const now = this.clock();
     const retryable = outcomes.find((outcome) => outcome.status === 'FAILED' && outcome.retryable);
     if (retryable && job.workItem.attemptCount < this.maxAttempts) {

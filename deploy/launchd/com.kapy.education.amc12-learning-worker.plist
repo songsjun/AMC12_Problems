@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.kapy.education.amc12-learning-worker</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/ss/.nvm/versions/node/v24.14.0/bin/node</string>
+    <string>--env-file=/etc/kapy/amc12-learning-worker.env</string>
+    <string>/Users/ss/Workspaces/education/AMC12_Problems/practice-api/src/learning-review/worker-main.js</string>
+  </array>
+
+  <!-- Only non-secret process behavior belongs here. Inference credentials,
+       the AssemblyAI key, DB URL, and peppers stay in the protected worker
+       env file and must never be copied into this plist. -->
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>NODE_ENV</key>
+    <string>production</string>
+    <key>PATH</key>
+    <string>/Users/ss/.nvm/versions/node/v24.14.0/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+  </dict>
+
+  <key>UserName</key>
+  <string>ss</string>
+  <key>WorkingDirectory</key>
+  <string>/Users/ss/Workspaces/education/AMC12_Problems/practice-api</string>
+
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <!-- Bound crash-loop retry frequency; provider/DB failures should not spin. -->
+  <key>ThrottleInterval</key>
+  <integer>30</integer>
+  <!-- Bound shutdown time. worker-main propagates SIGTERM through one abort
+       signal to AssemblyAI, provider cleanup, and active Gateway requests;
+       launchd remains the final bound and durable leases recover hard kills. -->
+  <key>ExitTimeOut</key>
+  <integer>240</integer>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <!-- Decimal 63 is octal 077. Pre-create log files as 0600 as well. -->
+  <key>Umask</key>
+  <integer>63</integer>
+
+  <key>StandardOutPath</key>
+  <string>/var/log/kapy/amc12-learning-worker.stdout.log</string>
+  <key>StandardErrorPath</key>
+  <string>/var/log/kapy/amc12-learning-worker.stderr.log</string>
+</dict>
+</plist>

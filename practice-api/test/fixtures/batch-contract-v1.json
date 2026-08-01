@@ -1,0 +1,754 @@
+{
+  "fixtureVersion": "amc-batch-contract-fixture-v1",
+  "request": {
+    "schema": "amc-batch-decomposition-request-v1",
+    "task": "batch_decomposition_v1",
+    "correlationId": "batch-contract-fixture-001",
+    "inputHash": "6cb26dd6adcdebe649cc8827c5d847eac7ddfef0d1285b30f5c53bede401abae",
+    "planHash": "b1cfcafcb8bf14762eed98a3220b929e7be805c68cd5a887fe13b8668ae4baf5",
+    "chunkId": "chunk-fixture-001",
+    "safetyId": "amc-math-safe-v1",
+    "questionCatalog": [
+      {
+        "questionNumber": 1,
+        "questionId": "fixture-q-01",
+        "promptExcerpt": "Prompt 1",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-1"
+          },
+          {
+            "label": "B",
+            "text": "B-1"
+          },
+          {
+            "label": "C",
+            "text": "C-1"
+          },
+          {
+            "label": "D",
+            "text": "D-1"
+          },
+          {
+            "label": "E",
+            "text": "E-1"
+          }
+        ]
+      },
+      {
+        "questionNumber": 2,
+        "questionId": "fixture-q-02",
+        "promptExcerpt": "Prompt 2",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-2"
+          },
+          {
+            "label": "B",
+            "text": "B-2"
+          },
+          {
+            "label": "C",
+            "text": "C-2"
+          },
+          {
+            "label": "D",
+            "text": "D-2"
+          },
+          {
+            "label": "E",
+            "text": "E-2"
+          }
+        ]
+      },
+      {
+        "questionNumber": 3,
+        "questionId": "fixture-q-03",
+        "promptExcerpt": "Prompt 3",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-3"
+          },
+          {
+            "label": "B",
+            "text": "B-3"
+          },
+          {
+            "label": "C",
+            "text": "C-3"
+          },
+          {
+            "label": "D",
+            "text": "D-3"
+          },
+          {
+            "label": "E",
+            "text": "E-3"
+          }
+        ]
+      },
+      {
+        "questionNumber": 4,
+        "questionId": "fixture-q-04",
+        "promptExcerpt": "Prompt 4",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-4"
+          },
+          {
+            "label": "B",
+            "text": "B-4"
+          },
+          {
+            "label": "C",
+            "text": "C-4"
+          },
+          {
+            "label": "D",
+            "text": "D-4"
+          },
+          {
+            "label": "E",
+            "text": "E-4"
+          }
+        ]
+      },
+      {
+        "questionNumber": 5,
+        "questionId": "fixture-q-05",
+        "promptExcerpt": "Prompt 5",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-5"
+          },
+          {
+            "label": "B",
+            "text": "B-5"
+          },
+          {
+            "label": "C",
+            "text": "C-5"
+          },
+          {
+            "label": "D",
+            "text": "D-5"
+          },
+          {
+            "label": "E",
+            "text": "E-5"
+          }
+        ]
+      },
+      {
+        "questionNumber": 6,
+        "questionId": "fixture-q-06",
+        "promptExcerpt": "Prompt 6",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-6"
+          },
+          {
+            "label": "B",
+            "text": "B-6"
+          },
+          {
+            "label": "C",
+            "text": "C-6"
+          },
+          {
+            "label": "D",
+            "text": "D-6"
+          },
+          {
+            "label": "E",
+            "text": "E-6"
+          }
+        ]
+      },
+      {
+        "questionNumber": 7,
+        "questionId": "fixture-q-07",
+        "promptExcerpt": "Prompt 7",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-7"
+          },
+          {
+            "label": "B",
+            "text": "B-7"
+          },
+          {
+            "label": "C",
+            "text": "C-7"
+          },
+          {
+            "label": "D",
+            "text": "D-7"
+          },
+          {
+            "label": "E",
+            "text": "E-7"
+          }
+        ]
+      },
+      {
+        "questionNumber": 8,
+        "questionId": "fixture-q-08",
+        "promptExcerpt": "Prompt 8",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-8"
+          },
+          {
+            "label": "B",
+            "text": "B-8"
+          },
+          {
+            "label": "C",
+            "text": "C-8"
+          },
+          {
+            "label": "D",
+            "text": "D-8"
+          },
+          {
+            "label": "E",
+            "text": "E-8"
+          }
+        ]
+      },
+      {
+        "questionNumber": 9,
+        "questionId": "fixture-q-09",
+        "promptExcerpt": "Prompt 9",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-9"
+          },
+          {
+            "label": "B",
+            "text": "B-9"
+          },
+          {
+            "label": "C",
+            "text": "C-9"
+          },
+          {
+            "label": "D",
+            "text": "D-9"
+          },
+          {
+            "label": "E",
+            "text": "E-9"
+          }
+        ]
+      },
+      {
+        "questionNumber": 10,
+        "questionId": "fixture-q-10",
+        "promptExcerpt": "Prompt 10",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-10"
+          },
+          {
+            "label": "B",
+            "text": "B-10"
+          },
+          {
+            "label": "C",
+            "text": "C-10"
+          },
+          {
+            "label": "D",
+            "text": "D-10"
+          },
+          {
+            "label": "E",
+            "text": "E-10"
+          }
+        ]
+      },
+      {
+        "questionNumber": 11,
+        "questionId": "fixture-q-11",
+        "promptExcerpt": "Prompt 11",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-11"
+          },
+          {
+            "label": "B",
+            "text": "B-11"
+          },
+          {
+            "label": "C",
+            "text": "C-11"
+          },
+          {
+            "label": "D",
+            "text": "D-11"
+          },
+          {
+            "label": "E",
+            "text": "E-11"
+          }
+        ]
+      },
+      {
+        "questionNumber": 12,
+        "questionId": "fixture-q-12",
+        "promptExcerpt": "Prompt 12",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-12"
+          },
+          {
+            "label": "B",
+            "text": "B-12"
+          },
+          {
+            "label": "C",
+            "text": "C-12"
+          },
+          {
+            "label": "D",
+            "text": "D-12"
+          },
+          {
+            "label": "E",
+            "text": "E-12"
+          }
+        ]
+      },
+      {
+        "questionNumber": 13,
+        "questionId": "fixture-q-13",
+        "promptExcerpt": "Prompt 13",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-13"
+          },
+          {
+            "label": "B",
+            "text": "B-13"
+          },
+          {
+            "label": "C",
+            "text": "C-13"
+          },
+          {
+            "label": "D",
+            "text": "D-13"
+          },
+          {
+            "label": "E",
+            "text": "E-13"
+          }
+        ]
+      },
+      {
+        "questionNumber": 14,
+        "questionId": "fixture-q-14",
+        "promptExcerpt": "Prompt 14",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-14"
+          },
+          {
+            "label": "B",
+            "text": "B-14"
+          },
+          {
+            "label": "C",
+            "text": "C-14"
+          },
+          {
+            "label": "D",
+            "text": "D-14"
+          },
+          {
+            "label": "E",
+            "text": "E-14"
+          }
+        ]
+      },
+      {
+        "questionNumber": 15,
+        "questionId": "fixture-q-15",
+        "promptExcerpt": "Prompt 15",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-15"
+          },
+          {
+            "label": "B",
+            "text": "B-15"
+          },
+          {
+            "label": "C",
+            "text": "C-15"
+          },
+          {
+            "label": "D",
+            "text": "D-15"
+          },
+          {
+            "label": "E",
+            "text": "E-15"
+          }
+        ]
+      },
+      {
+        "questionNumber": 16,
+        "questionId": "fixture-q-16",
+        "promptExcerpt": "Prompt 16",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-16"
+          },
+          {
+            "label": "B",
+            "text": "B-16"
+          },
+          {
+            "label": "C",
+            "text": "C-16"
+          },
+          {
+            "label": "D",
+            "text": "D-16"
+          },
+          {
+            "label": "E",
+            "text": "E-16"
+          }
+        ]
+      },
+      {
+        "questionNumber": 17,
+        "questionId": "fixture-q-17",
+        "promptExcerpt": "Prompt 17",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-17"
+          },
+          {
+            "label": "B",
+            "text": "B-17"
+          },
+          {
+            "label": "C",
+            "text": "C-17"
+          },
+          {
+            "label": "D",
+            "text": "D-17"
+          },
+          {
+            "label": "E",
+            "text": "E-17"
+          }
+        ]
+      },
+      {
+        "questionNumber": 18,
+        "questionId": "fixture-q-18",
+        "promptExcerpt": "Prompt 18",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-18"
+          },
+          {
+            "label": "B",
+            "text": "B-18"
+          },
+          {
+            "label": "C",
+            "text": "C-18"
+          },
+          {
+            "label": "D",
+            "text": "D-18"
+          },
+          {
+            "label": "E",
+            "text": "E-18"
+          }
+        ]
+      },
+      {
+        "questionNumber": 19,
+        "questionId": "fixture-q-19",
+        "promptExcerpt": "Prompt 19",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-19"
+          },
+          {
+            "label": "B",
+            "text": "B-19"
+          },
+          {
+            "label": "C",
+            "text": "C-19"
+          },
+          {
+            "label": "D",
+            "text": "D-19"
+          },
+          {
+            "label": "E",
+            "text": "E-19"
+          }
+        ]
+      },
+      {
+        "questionNumber": 20,
+        "questionId": "fixture-q-20",
+        "promptExcerpt": "Prompt 20",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-20"
+          },
+          {
+            "label": "B",
+            "text": "B-20"
+          },
+          {
+            "label": "C",
+            "text": "C-20"
+          },
+          {
+            "label": "D",
+            "text": "D-20"
+          },
+          {
+            "label": "E",
+            "text": "E-20"
+          }
+        ]
+      },
+      {
+        "questionNumber": 21,
+        "questionId": "fixture-q-21",
+        "promptExcerpt": "Prompt 21",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-21"
+          },
+          {
+            "label": "B",
+            "text": "B-21"
+          },
+          {
+            "label": "C",
+            "text": "C-21"
+          },
+          {
+            "label": "D",
+            "text": "D-21"
+          },
+          {
+            "label": "E",
+            "text": "E-21"
+          }
+        ]
+      },
+      {
+        "questionNumber": 22,
+        "questionId": "fixture-q-22",
+        "promptExcerpt": "Prompt 22",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-22"
+          },
+          {
+            "label": "B",
+            "text": "B-22"
+          },
+          {
+            "label": "C",
+            "text": "C-22"
+          },
+          {
+            "label": "D",
+            "text": "D-22"
+          },
+          {
+            "label": "E",
+            "text": "E-22"
+          }
+        ]
+      },
+      {
+        "questionNumber": 23,
+        "questionId": "fixture-q-23",
+        "promptExcerpt": "Prompt 23",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-23"
+          },
+          {
+            "label": "B",
+            "text": "B-23"
+          },
+          {
+            "label": "C",
+            "text": "C-23"
+          },
+          {
+            "label": "D",
+            "text": "D-23"
+          },
+          {
+            "label": "E",
+            "text": "E-23"
+          }
+        ]
+      },
+      {
+        "questionNumber": 24,
+        "questionId": "fixture-q-24",
+        "promptExcerpt": "Prompt 24",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-24"
+          },
+          {
+            "label": "B",
+            "text": "B-24"
+          },
+          {
+            "label": "C",
+            "text": "C-24"
+          },
+          {
+            "label": "D",
+            "text": "D-24"
+          },
+          {
+            "label": "E",
+            "text": "E-24"
+          }
+        ]
+      },
+      {
+        "questionNumber": 25,
+        "questionId": "fixture-q-25",
+        "promptExcerpt": "Prompt 25",
+        "choiceExcerpts": [
+          {
+            "label": "A",
+            "text": "A-25"
+          },
+          {
+            "label": "B",
+            "text": "B-25"
+          },
+          {
+            "label": "C",
+            "text": "C-25"
+          },
+          {
+            "label": "D",
+            "text": "D-25"
+          },
+          {
+            "label": "E",
+            "text": "E-25"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "assetId": "asset-text-001",
+        "kind": "text",
+        "sourceConfidence": null,
+        "content": "Question 1 answer C because one plus two equals three."
+      }
+    ]
+  },
+  "modelOutput": {
+    "schema": "amc-batch-decomposition-model-v1",
+    "correlationId": "batch-contract-fixture-001",
+    "inputHash": "6cb26dd6adcdebe649cc8827c5d847eac7ddfef0d1285b30f5c53bede401abae",
+    "planHash": "b1cfcafcb8bf14762eed98a3220b929e7be805c68cd5a887fe13b8668ae4baf5",
+    "chunkId": "chunk-fixture-001",
+    "items": [
+      {
+        "candidateQuestionNumbers": [
+          1
+        ],
+        "proposedQuestionNumber": 1,
+        "answer": "C",
+        "reasoningSummary": "One plus two equals three.",
+        "confidence": 0.97,
+        "ambiguity": "NONE",
+        "segmentIds": [
+          "seg-01-001-c4d67ab98ca9af95"
+        ]
+      }
+    ],
+    "unmappedSegmentIds": []
+  },
+  "expectedOutput": {
+    "schema": "amc-batch-decomposition-v1",
+    "correlationId": "batch-contract-fixture-001",
+    "inputHash": "6cb26dd6adcdebe649cc8827c5d847eac7ddfef0d1285b30f5c53bede401abae",
+    "planHash": "b1cfcafcb8bf14762eed98a3220b929e7be805c68cd5a887fe13b8668ae4baf5",
+    "chunkId": "chunk-fixture-001",
+    "items": [
+      {
+        "itemKey": "item-6d2df0e638b66f0e479eb9f786fed1d1",
+        "candidateQuestionNumbers": [
+          1
+        ],
+        "proposedQuestionNumber": 1,
+        "answer": "C",
+        "reasoningSummary": "One plus two equals three.",
+        "confidence": 0.97,
+        "ambiguity": "NONE",
+        "spans": [
+          {
+            "segmentId": "seg-01-001-c4d67ab98ca9af95",
+            "assetId": "asset-text-001",
+            "startByte": 0,
+            "endByte": 54,
+            "sha256": "c4d67ab98ca9af95667c0e07b4e612fc81d28fefbac746ef45fa355880a2a45b"
+          }
+        ],
+        "conflictFlags": [
+          "MODEL_DERIVED_REQUIRES_CONFIRMATION"
+        ],
+        "requiresConfirmation": true
+      }
+    ],
+    "unmappedSpans": []
+  }
+}

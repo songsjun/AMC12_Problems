@@ -4,14 +4,32 @@ import { startDeadlineWorker } from './deadline-worker.js';
 import { runMigrations } from './migrate.js';
 import { PostgresStore } from './postgres-store.js';
 import { PracticeService } from './service.js';
+import { PrivateUploadStore } from './infrastructure/private-upload-store.js';
+import { dirname, resolve } from 'node:path';
 
 const config = loadConfig();
 if (!config.databaseUrl) throw new Error('AMC12_DATABASE_URL is required.');
 
 const store = new PostgresStore({ connectionString: config.databaseUrl });
 await runMigrations(store.pool);
+const privateUploadStore = config.privateUploadRoot ? new PrivateUploadStore({
+  root: config.privateUploadRoot,
+  forbiddenRoots: [resolve(process.cwd()), dirname(resolve(process.cwd()))],
+  minimumFreeBytes: config.privateMinimumFreeBytes
+}) : null;
+await privateUploadStore?.init();
 const service = new PracticeService({
   store,
+  privateUploadStore,
+  batchStudentQuotaBytes: config.batchStudentQuotaBytes,
+  batchGlobalQuotaBytes: config.batchGlobalQuotaBytes,
+  batchActiveLimit: config.batchActiveLimit,
+  batchRequestLimitPerMinute: config.studentRequestsPerMinute,
+  batchUploadByteBudget: config.batchUploadBytesPerHour,
+  batchProviderWorkBudget: config.batchProviderWorkPerDay,
+  batchProviderAudioByteBudget: config.batchProviderAudioBytesPerDay,
+  batchGlobalProviderWorkBudget: config.batchGlobalProviderWorkPerDay,
+  batchGlobalProviderAudioByteBudget: config.batchGlobalProviderAudioBytesPerDay,
   authPepper: config.authPepper,
   sessionTtlMs: config.sessionTtlMs,
   allowTestOnlyImport: config.allowTestOnlyImport,

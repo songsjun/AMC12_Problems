@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { buildApp } from '../src/app.js';
+import { PracticeService } from '../src/service.js';
 import { cookiesFromResponse, fixtureManifest, makeApp } from './helpers.js';
 
 async function login(app) {
@@ -199,6 +201,36 @@ test('loopback proxy uses nginx-provided client IP for login rate-limit isolatio
   assert.equal(limited.statusCode, 429);
   assert.equal(limited.json().error.code, 'RATE_LIMITED');
   assert.equal((await invalidLogin('198.51.100.11')).statusCode, 401);
+});
+
+test('authenticated student request budget follows identity across IPs and returns Retry-After', async (t) => {
+  const { app, service, store, clock, config } = await makeApp();
+  t.after(() => app.close());
+  const session = await login(app);
+  service.batchRequestLimitPerMinute = 1;
+  const secondService = new PracticeService({
+    store,
+    authPepper: 'test-pepper-that-is-long-enough-for-a-safe-local-test-suite',
+    sessionTtlMs: 12 * 60 * 60 * 1000,
+    batchRequestLimitPerMinute: 1,
+    clock: clock.now
+  });
+  const secondApp = await buildApp({ service: secondService, config, logger: false });
+  t.after(() => secondApp.close());
+
+  const first = await app.inject(requestWithSession(session, {
+    method: 'GET', url: '/api/amc12/forms',
+    remoteAddress: '127.0.0.1', headers: { 'x-forwarded-for': '198.51.100.20' }
+  }));
+  assert.equal(first.statusCode, 200);
+  const second = await secondApp.inject(requestWithSession(session, {
+    method: 'GET', url: '/api/amc12/forms',
+    remoteAddress: '127.0.0.1', headers: { 'x-forwarded-for': '198.51.100.21' }
+  }));
+  assert.equal(second.statusCode, 429);
+  assert.equal(second.json().error.code, 'STUDENT_REQUEST_RATE_LIMITED');
+  assert.match(second.headers['retry-after'], /^\d+$/);
+  assert.ok(Number(second.headers['retry-after']) >= 1);
 });
 
 test('invalid attempt identifiers are rejected before a storage adapter can leak database errors', async (t) => {

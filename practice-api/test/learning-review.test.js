@@ -302,6 +302,44 @@ test('retryable provider failures use bounded backoff and persist no terminal re
   assert.equal((await context.service.getLearningReport(context.student.id, attemptId)).status, 'PARTIAL');
 });
 
+test('shutdown aborts an in-flight learning Gateway call without persisting a stale outcome', async () => {
+  const context = await setup();
+  await importArtifact(context, approvedContextArtifact(context.form, { readyNumbers: [1] }));
+  const { attemptId } = await finalizedWithReasoning(context, [{
+    questionNumber: 1, reasoningText: 'This analysis is intentionally slow.'
+  }]);
+  const workerId = 'shutdown-learning-worker';
+  const claimed = await context.store.claimLearningAnalysisWork({
+    workerId, now: context.clock.now(), leaseMs: 120_000
+  });
+  let enteredResolve;
+  const entered = new Promise((resolve) => { enteredResolve = resolve; });
+  const client = {
+    async analyze(_request, { signal }) {
+      enteredResolve();
+      return new Promise((resolve, reject) => {
+        signal.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), {
+          code: 'GATEWAY_ABORTED', retryable: true, errorClass: 'transient'
+        })), { once: true });
+      });
+    }
+  };
+  const controller = new AbortController();
+  const worker = new LearningReviewWorker({
+    store: context.store, inferenceClient: client, workerId, clock: context.clock.now
+  });
+  const processing = worker.processClaimed(claimed, { signal: controller.signal });
+  await entered;
+  controller.abort();
+  assert.deepEqual(await processing, { processed: false, shuttingDown: true });
+  assert.equal(context.store.learningReports.size, 0);
+  assert.equal(context.store.questionAnalyses.size, 0);
+  const version = context.store.learningVersions
+    .get(context.store.learningSubmissions.get(attemptId).id)[0];
+  assert.equal(context.store.learningWorkItems.get(version.id)[0].status, 'RUNNING',
+    'shutdown leaves the lease recoverable instead of writing terminal or retry state');
+});
+
 test('retryable failures become terminal after the configured maximum attempt count', async () => {
   const context = await setup();
   await importArtifact(context, approvedContextArtifact(context.form, { readyNumbers: [1] }));
@@ -348,6 +386,34 @@ test('blocked finals make zero provider calls and approved import internally rep
   assert.equal((await context.service.getLearningReport(context.student.id, attemptId)).status, 'QUEUED');
   assert.equal((await worker.runOnce()).processed, true);
   assert.equal(client.calls.length, 1);
+});
+
+test('per-question provider authorization rejects post-claim lineage and solution-eligibility changes', async () => {
+  for (const scenario of ['current-version', 'attempt-phase', 'solution-eligibility']) {
+    const context = await setup();
+    await importArtifact(context, approvedContextArtifact(context.form, { readyNumbers: [1] }));
+    const { attemptId } = await finalizedWithReasoning(context, [
+      { questionNumber: 1, reasoningText: 'Authorization must use the durable approved context.' }
+    ]);
+    const workerId = `reauthorize-${scenario}`;
+    const claimed = await context.store.claimLearningAnalysisWork({
+      workerId, now: context.clock.now(), leaseMs: 120_000
+    });
+    if (scenario === 'current-version') {
+      context.store.learningSubmissions.get(attemptId).currentVersion += 1;
+    } else if (scenario === 'attempt-phase') {
+      context.store.attempts.get(attemptId).phase = 'ACTIVE';
+    } else {
+      const contextSet = context.store.approvedContextSets.get(claimed.version.contextSetId);
+      contextSet.questions[0].solutions[0].modelEligibility.eligible = false;
+    }
+    const client = new FakeInferenceClient();
+    const result = await new LearningReviewWorker({
+      store: context.store, inferenceClient: client, workerId, clock: context.clock.now
+    }).processClaimed(claimed);
+    assert.deepEqual(result, { processed: false, staleLease: true }, scenario);
+    assert.equal(client.calls.length, 0, scenario);
+  }
 });
 
 test('blank reasoning is deterministic UNASSESSABLE while rich student markup remains valid input', async () => {

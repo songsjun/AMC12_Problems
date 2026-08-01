@@ -39,6 +39,12 @@
   <true/>
   <key>ThrottleInterval</key>
   <integer>10</integer>
+  <!-- Give Fastify and PostgreSQL connections time to close after SIGTERM
+       before launchd escalates termination. -->
+  <key>ExitTimeOut</key>
+  <integer>30</integer>
+  <key>ProcessType</key>
+  <string>Interactive</string>
   <key>Umask</key>
   <integer>63</integer>
 

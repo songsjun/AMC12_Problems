@@ -34,7 +34,7 @@ These are invariants, not model-quality targets:
 - 100% of tested pre-final report/context/chat paths deny access.
 - 100% of official scores match the existing deterministic scoring behavior with AI enabled, disabled, failed, or timed out.
 - 100% of report and tutor paths record reproducible evidence/context/schema versions plus `provider_invoked`; invoked paths also record prompt/model/provider versions, while deterministic or unassessable paths explicitly record `provider_invoked=false`.
-- No low-confidence batch mapping is silently treated as confirmed.
+- No AI-derived batch mapping, proposed answer, or evidence grouping is treated as confirmed solely from model confidence; every such item requires an explicit student confirmation event.
 - No provider key, token, raw error, answer key, or alternate solution appears in a pre-final/browser configuration response.
 - The previously disclosed AssemblyAI credential is confirmed revoked; a replacement belongs to a dedicated AMC provider project and secret scans prove it is absent from Git, logs, fixtures, and browser responses.
 - Production-equivalent prompt-injection tests prove that model execution cannot read a canary inherited secret or same-host secret file; the existing agentic CLI path is not eligible until this passes.
@@ -45,8 +45,9 @@ These are invariants, not model-quality targets:
 - Model output uses a restricted Markdown/MathJax profile with no raw HTML, external media, active links, style/HTML/URL TeX macros, or unreviewed solution content.
 - Dependency audit has no unaccepted High/Critical findings.
 - Upload limits pass independently through direct workspace nginx, portal nginx, Fastify, batch, and per-student quota layers while ordinary JSON stays at 64 KiB.
+- Per-student request, accepted-byte, and provider-work budgets remain effective across different client IPs and multiple API/store instances; fair claims prevent one student from monopolizing transcription.
 - Global byte quota, disk high-watermark, and minimum-free-space tests reject new work safely; orphan/partial/reservation reconciliation and cleanup-backlog/disk alerts are verified.
-- Delete/retry/crash tests prove tombstones prevent stale worker results from restoring data.
+- Delete/retry/crash tests prove tombstones prevent stale worker results from restoring data, and process death at every provider request/response persistence boundary cannot produce a false deletion-complete claim.
 
 ## Model-quality evaluation
 

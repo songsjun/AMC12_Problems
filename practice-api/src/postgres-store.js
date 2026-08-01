@@ -1,7 +1,8 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import pg from 'pg';
 import { conflict } from './errors.js';
-import { analysisInputHash } from './learning-review/canonical.js';
+import { providerRetentionNotBefore } from './infrastructure/assemblyai-retention-profile.js';
+import { analysisInputHash, canonicalHash } from './learning-review/canonical.js';
 
 const { Pool } = pg;
 
@@ -9,6 +10,77 @@ const clone = (value) => structuredClone(value);
 
 function number(value) {
   return typeof value === 'number' ? value : Number(value);
+}
+
+function transcriptionRetryAt(now, attemptCount, retryAfterSeconds) {
+  const seconds = Number.isSafeInteger(retryAfterSeconds)
+    ? Math.min(3_600, Math.max(1, retryAfterSeconds))
+    : Math.min(300, 2 ** Math.min(8, Math.max(0, attemptCount - 1)));
+  return new Date(new Date(now).getTime() + seconds * 1_000);
+}
+
+function transcriptionCleanupInputHash(batchId, assetId, deletionGeneration) {
+  return createHash('sha256')
+    .update(`amc-transcription-cleanup-v1\u0000${batchId}\u0000${assetId}\u0000${deletionGeneration}`)
+    .digest('hex');
+}
+
+async function consumeStudentBudgetUsing(queryable, {
+  studentId, budgetKind, units, limit, windowMs, now
+}) {
+  const nowMs = new Date(now).getTime();
+  const windowStartedAtMs = Math.floor(nowMs / windowMs) * windowMs;
+  const retryAfterSeconds = Math.max(1,
+    Math.ceil((windowStartedAtMs + windowMs - nowMs) / 1_000));
+  if (!Number.isSafeInteger(units) || units < 1 || !Number.isSafeInteger(limit)
+      || limit < units || !Number.isSafeInteger(windowMs) || windowMs < 1_000) {
+    return { allowed: false, retryAfterSeconds };
+  }
+  const consumed = await queryable.query(
+    `INSERT INTO amc_practice.student_resource_budget_windows
+     (student_id, budget_kind, window_started_at, window_ms, used_units, updated_at)
+     VALUES ($1,$2,$3,$4,$5,$6)
+     ON CONFLICT (student_id, budget_kind, window_started_at) DO UPDATE
+       SET used_units = student_resource_budget_windows.used_units + EXCLUDED.used_units,
+           updated_at = EXCLUDED.updated_at
+       WHERE student_resource_budget_windows.window_ms = EXCLUDED.window_ms
+         AND student_resource_budget_windows.used_units + EXCLUDED.used_units <= $7
+     RETURNING used_units`,
+    [studentId, budgetKind, new Date(windowStartedAtMs), windowMs, units, now, limit]
+  );
+  if (!consumed.rowCount || number(consumed.rows[0].used_units) > limit) {
+    return { allowed: false, retryAfterSeconds };
+  }
+  return { allowed: true, retryAfterSeconds: 0, usedUnits: number(consumed.rows[0].used_units) };
+}
+
+async function consumeGlobalBudgetUsing(queryable, {
+  budgetKind, units, limit, windowMs, now
+}) {
+  const nowMs = new Date(now).getTime();
+  const windowStartedAtMs = Math.floor(nowMs / windowMs) * windowMs;
+  const retryAfterSeconds = Math.max(1,
+    Math.ceil((windowStartedAtMs + windowMs - nowMs) / 1_000));
+  if (!Number.isSafeInteger(units) || units < 1 || !Number.isSafeInteger(limit)
+      || limit < units || !Number.isSafeInteger(windowMs) || windowMs < 1_000) {
+    return { allowed: false, retryAfterSeconds };
+  }
+  const consumed = await queryable.query(
+    `INSERT INTO amc_practice.global_resource_budget_windows
+     (budget_kind, window_started_at, window_ms, used_units, updated_at)
+     VALUES ($1,$2,$3,$4,$5)
+     ON CONFLICT (budget_kind, window_started_at) DO UPDATE
+       SET used_units = global_resource_budget_windows.used_units + EXCLUDED.used_units,
+           updated_at = EXCLUDED.updated_at
+       WHERE global_resource_budget_windows.window_ms = EXCLUDED.window_ms
+         AND global_resource_budget_windows.used_units + EXCLUDED.used_units <= $6
+     RETURNING used_units`,
+    [budgetKind, new Date(windowStartedAtMs), windowMs, units, now, limit]
+  );
+  if (!consumed.rowCount || number(consumed.rows[0].used_units) > limit) {
+    return { allowed: false, retryAfterSeconds };
+  }
+  return { allowed: true, retryAfterSeconds: 0, usedUnits: number(consumed.rows[0].used_units) };
 }
 
 function mapStudent(row) {
@@ -105,11 +177,205 @@ function mapLearningVersion(row) {
     answersRevision: row.answers_revision,
     reasoningRevision: row.reasoning_revision,
     creationReason: row.creation_reason,
+    batchId: row.batch_id || null,
     contextStatus: row.context_status,
     contextSetId: row.context_set_id,
     evidenceHash: row.evidence_hash,
     createdAt: row.created_at
   };
+}
+
+function mapLearningBatch(row) {
+  return row && {
+    id: row.id, studentId: row.student_id, attemptId: row.attempt_id,
+    learningSubmissionId: row.learning_submission_id, baseVersion: row.base_version,
+    formId: row.form_id, formVersion: row.form_version, status: row.status,
+    mappingRevision: row.mapping_revision, hasAudio: row.has_audio,
+    deletionState: row.deletion_state, deletionGeneration: row.deletion_generation,
+    deletedAt: row.deleted_at, submittedAt: row.submitted_at, committedAt: row.committed_at,
+    failureCode: row.failure_code,
+    committedVersionId: row.committed_version_id, committedVersionNumber: row.committed_version_number,
+    createdAt: row.created_at, updatedAt: row.updated_at
+  };
+}
+
+function mapLearningBatchAsset(row) {
+  return row && {
+    id: row.id, batchId: row.batch_id, position: row.position,
+    displayName: row.display_name, kind: row.kind, contentType: row.content_type,
+    declaredBytes: number(row.declared_bytes), observedBytes: row.observed_bytes === null ? null : number(row.observed_bytes),
+    sha256: row.sha256, storageKey: row.storage_key, status: row.status,
+    uploadAttemptCount: row.upload_attempt_count, uploadIdempotencyKey: row.upload_idempotency_key,
+    writingStartedAt: row.writing_started_at, storedAt: row.stored_at,
+    normalizedAt: row.normalized_at, purgedAt: row.purged_at,
+    lastErrorCode: row.last_error_code, createdAt: row.created_at, updatedAt: row.updated_at
+  };
+}
+
+function mapLearningBatchEvidence(row) {
+  return row && {
+    assetId: row.asset_id, batchId: row.batch_id, position: row.position,
+    sourceKind: row.source_kind, normalizedText: row.normalized_text,
+    normalizedSha256: row.normalized_sha256, durationMs: row.duration_ms,
+    transcriptConfidence: row.transcript_confidence === null ? null : number(row.transcript_confidence),
+    createdAt: row.created_at, purgedAt: row.purged_at
+  };
+}
+
+function mapLearningBatchWorkItem(row) {
+  return row && {
+    id: row.id, batchId: row.batch_id, assetId: row.asset_id, workType: row.work_type,
+    status: row.status, priority: row.priority, attemptCount: row.attempt_count,
+    inputHash: row.input_hash, deletionGeneration: row.deletion_generation,
+    availableAt: row.available_at, leaseOwner: row.lease_owner, leaseToken: row.lease_token,
+    leaseExpiresAt: row.lease_expires_at, lastErrorCode: row.last_error_code,
+    createdAt: row.created_at, updatedAt: row.updated_at
+  };
+}
+
+function mapProviderOrphanCleanupJob(row) {
+  return row && {
+    id: row.id, orphanAuditId: row.orphan_audit_id, batchId: row.batch_id,
+    cleanupKind: row.cleanup_kind, provider: row.provider, externalId: row.external_id,
+    deletionGeneration: row.deletion_generation, status: row.status,
+    attemptCount: row.attempt_count, availableAt: row.available_at,
+    leaseOwner: row.lease_owner, leaseToken: row.lease_token,
+    leaseExpiresAt: row.lease_expires_at, lastErrorCode: row.last_error_code,
+    createdAt: row.created_at, updatedAt: row.updated_at
+  };
+}
+
+function mapLearningBatchMappingItem(row) {
+  return row && {
+    id: row.id, batchId: row.batch_id, mappingRevision: row.mapping_revision,
+    itemPosition: row.item_position, itemKey: row.item_key,
+    candidateQuestionNumbers: row.candidate_question_numbers,
+    proposedQuestionNumber: row.proposed_question_number, selectedOption: row.selected_option,
+    reasoningSummary: row.reasoning_summary, evidenceText: row.evidence_text,
+    confidence: number(row.confidence), ambiguity: row.ambiguity, sourceSpans: row.source_spans,
+    gatewayConflictFlags: row.gateway_conflict_flags, requiresConfirmation: row.requires_confirmation,
+    confirmationReasons: row.confirmation_reasons, unmapped: row.unmapped,
+    purgedAt: row.purged_at, createdAt: row.created_at
+  };
+}
+
+async function loadLearningBatchBundleUsing(queryable, attemptId, batchId = undefined, { lock = false } = {}) {
+  const values = batchId === undefined ? [attemptId] : [attemptId, batchId];
+  const batches = await queryable.query(
+    `SELECT * FROM amc_practice.learning_batches
+     WHERE attempt_id = $1 ${batchId === undefined ? '' : 'AND id = $2'}
+     ORDER BY created_at DESC, id ${lock ? 'FOR UPDATE' : ''}`,
+    values
+  );
+  const bundles = [];
+  for (const row of batches.rows) {
+    const batch = mapLearningBatch(row);
+    // `queryable` can be a transaction-scoped pg Client. pg no longer
+    // supports overlapping queries on one Client, so keep these reads
+    // explicitly sequential (the Pool call path remains correct too).
+    const assets = await queryable.query(
+      'SELECT * FROM amc_practice.learning_batch_assets WHERE batch_id = $1 ORDER BY position', [batch.id]
+    );
+    const evidence = await queryable.query(
+        `SELECT e.*, a.position FROM amc_practice.learning_batch_evidence e
+         JOIN amc_practice.learning_batch_assets a ON a.batch_id = e.batch_id AND a.id = e.asset_id
+         WHERE e.batch_id = $1 ORDER BY a.position`, [batch.id]
+    );
+    const mappingHeader = batch.mappingRevision > 0
+      ? await queryable.query(
+          `SELECT * FROM amc_practice.learning_batch_mapping_revisions
+           WHERE batch_id = $1 AND revision = $2`, [batch.id, batch.mappingRevision])
+      : { rowCount: 0, rows: [] };
+    const work = await queryable.query(
+      'SELECT * FROM amc_practice.learning_batch_work_items WHERE batch_id = $1 ORDER BY created_at, id', [batch.id]
+    );
+    const resultHeader = await queryable.query(
+      'SELECT * FROM amc_practice.learning_batch_results WHERE batch_id = $1', [batch.id]
+    );
+    const provider = await queryable.query(
+      'SELECT * FROM amc_practice.learning_batch_provider_artifacts WHERE batch_id = $1 ORDER BY created_at, id', [batch.id]
+    );
+    const confirmationHeader = await queryable.query(
+        `SELECT * FROM amc_practice.learning_batch_confirmation_revisions
+         WHERE batch_id = $1 AND mapping_revision = $2`, [batch.id, batch.mappingRevision]
+    );
+    let mapping = null;
+    if (mappingHeader.rowCount) {
+      const header = mappingHeader.rows[0];
+      const items = await queryable.query(
+        `SELECT * FROM amc_practice.learning_batch_mapping_items
+         WHERE batch_id = $1 AND mapping_revision = $2 ORDER BY item_position`,
+        [batch.id, batch.mappingRevision]
+      );
+      mapping = {
+        batchId: header.batch_id, revision: header.revision, schemaVersion: header.schema_version,
+        evidenceSetHash: header.evidence_set_hash, masterPlanHash: header.master_plan_hash,
+        chunkInputHashes: header.chunk_input_hashes, gatewayRunMetadata: header.gateway_run_metadata,
+        extractionHash: header.extraction_hash,
+        status: header.status, createdAt: header.created_at, confirmedAt: header.confirmed_at,
+        items: items.rows.map(mapLearningBatchMappingItem)
+      };
+    }
+    let result = null;
+    if (resultHeader.rowCount) {
+      const header = resultHeader.rows[0];
+      const items = await queryable.query(
+        `SELECT * FROM amc_practice.learning_batch_result_items
+         WHERE batch_result_id = $1 ORDER BY question_number`, [header.id]
+      );
+      result = {
+        id: header.id, batchId: header.batch_id,
+        learningSubmissionVersionId: header.learning_submission_version_id,
+        scoringScope: header.scoring_scope, scoringPolicy: header.scoring_policy,
+        totalPoints: number(header.total_points), maximumPoints: number(header.maximum_points),
+        mappedQuestionCount: header.mapped_question_count, answeredCount: header.answered_count,
+        correctCount: header.correct_count, incorrectCount: header.incorrect_count,
+        blankCount: header.blank_count, unscoredCount: header.unscored_count,
+        createdAt: header.created_at,
+        items: items.rows.map((item) => ({
+          questionNumber: item.question_number, selectedOption: item.selected_option,
+          correctOption: item.correct_option, acceptedOptions: item.accepted_options,
+          isScored: item.is_scored, isCorrect: item.is_correct, points: number(item.points)
+        }))
+      };
+    }
+    let confirmation = null;
+    if (confirmationHeader.rowCount) {
+      const header = confirmationHeader.rows[0];
+      const responses = await queryable.query(
+        `SELECT * FROM amc_practice.learning_batch_confirmation_responses
+         WHERE batch_id = $1 AND mapping_revision = $2 ORDER BY question_number`,
+        [batch.id, batch.mappingRevision]
+      );
+      confirmation = {
+        batchId: header.batch_id, mappingRevision: header.mapping_revision,
+        learningSubmissionVersionId: header.learning_submission_version_id,
+        sourceEvidenceHash: header.source_evidence_hash, confirmedAt: header.confirmed_at,
+        responses: responses.rows.map((response) => ({
+          questionNumber: response.question_number, selectedOption: response.selected_option,
+          confirmedReasoningText: response.confirmed_reasoning_text,
+          confirmedReasoningHash: response.confirmed_reasoning_hash,
+          reasoningOrigin: response.reasoning_origin,
+          sourceItemIds: response.canonical_source_item_ids,
+          sourceDescriptors: response.source_descriptors,
+          sourceEvidenceText: response.reconstructed_source_text,
+          sourceSpanHash: response.source_span_hash,
+          sourceEvidenceHash: response.source_evidence_hash
+        }))
+      };
+    }
+    bundles.push({
+      batch,
+      assets: assets.rows.map(mapLearningBatchAsset),
+      evidence: evidence.rows.map(mapLearningBatchEvidence),
+      mapping,
+      workItems: work.rows.map(mapLearningBatchWorkItem),
+      result,
+      confirmation,
+      providerArtifacts: provider.rows
+    });
+  }
+  return batchId === undefined ? bundles : (bundles[0] || null);
 }
 
 function mapLearningWorkItem(row) {
@@ -264,6 +530,41 @@ async function loadApprovedContextSet(queryable, id) {
   };
 }
 
+async function lockTranscriptionAggregate(client, input, { activeRequired = true } = {}) {
+  const result = await client.query(
+    `SELECT w.*, b.student_id, b.status AS batch_status, b.deletion_state, b.deletion_generation AS batch_generation,
+            a.status AS asset_status, a.storage_key, a.position AS asset_position,
+            p.id AS artifact_id, p.status AS artifact_status, p.external_id,
+            p.submitted_at AS provider_submitted_at, p.delete_attempt_count,
+            p.upload_call_id, p.upload_call_started_at, p.upload_url_hash,
+            p.submit_call_id, p.submit_call_started_at, p.provider_retention_not_before,
+            p.reconciliation_attempt_count, p.poll_attempt_count, p.poll_started_at
+     FROM amc_practice.learning_batch_work_items w
+     JOIN amc_practice.learning_batches b ON b.id = w.batch_id
+     JOIN amc_practice.learning_batch_assets a ON a.batch_id = b.id AND a.id = w.asset_id
+     JOIN amc_practice.learning_batch_provider_artifacts p
+       ON p.batch_id = b.id AND p.asset_id = a.id AND p.provider = 'assemblyai'
+     JOIN amc_practice.learning_submissions s
+       ON s.id = b.learning_submission_id AND s.student_id = b.student_id
+      AND s.attempt_id = b.attempt_id AND s.form_id = b.form_id AND s.form_version = b.form_version
+     JOIN amc_practice.attempts t
+       ON t.id = b.attempt_id AND t.student_id = b.student_id
+      AND t.form_id = b.form_id AND t.form_version = b.form_version
+     JOIN amc_practice.submissions official
+       ON official.id = s.official_submission_id AND official.attempt_id = t.id
+      AND official.kind = 'FINAL' AND s.official_submission_kind = 'FINAL'
+     WHERE w.id = $1 AND w.work_type = 'TRANSCRIBE_AUDIO' AND w.status = 'RUNNING'
+       AND w.lease_token = $2 AND w.deletion_generation = $3
+       AND b.deletion_generation = $3 AND w.lease_expires_at > $4
+       AND s.lifecycle_status = 'COMMITTED' AND t.phase IN ('FINALIZED','RESET')
+       AND ($5::boolean = false OR (b.status = 'PROCESSING' AND b.deletion_state = 'ACTIVE'
+         AND s.current_version = b.base_version))
+     FOR UPDATE OF w, b, a, p`,
+    [input.workItemId, input.leaseToken, input.deletionGeneration, input.now, activeRequired]
+  );
+  return result.rows[0] || null;
+}
+
 function mapFormHeader(row) {
   return row && {
     id: row.form_id,
@@ -387,6 +688,14 @@ export class PostgresStore {
 
   async close() {
     await this.pool.end();
+  }
+
+  async consumeStudentResourceBudget(input) {
+    return consumeStudentBudgetUsing(this.pool, input);
+  }
+
+  async consumeGlobalResourceBudget(input) {
+    return consumeGlobalBudgetUsing(this.pool, input);
   }
 
   async addStudent({ id = randomUUID(), displayName, createdAt }) {
@@ -588,8 +897,7 @@ export class PostgresStore {
             `SELECT v.id, v.learning_submission_id, v.version_number, v.evidence_hash,
                     w.id AS work_id, w.deletion_generation
              FROM amc_practice.learning_submission_versions v
-             JOIN amc_practice.learning_submissions s
-               ON s.id = v.learning_submission_id AND s.current_version = v.version_number
+             JOIN amc_practice.learning_submissions s ON s.id = v.learning_submission_id
              JOIN amc_practice.learning_work_items w
                ON w.learning_submission_version_id = v.id AND w.work_type = 'ANALYZE_SUBMISSION'
              WHERE v.form_id = $1 AND v.form_version = $2 AND v.context_status = 'CONTEXT_UNAVAILABLE'
@@ -631,51 +939,134 @@ export class PostgresStore {
   }
 
   async claimLearningAnalysisWork({ workerId, now, leaseMs }) {
+    const claimed = await this.claimNextAiWork({
+      workerId, now, leaseMs, acceptedKinds: ['INTERACTIVE_ANALYSIS']
+    });
+    return claimed?.job || null;
+  }
+
+  async claimNextAiWork({
+    workerId, now, leaseMs, acceptedKinds = ['INTERACTIVE_ANALYSIS', 'BATCH_EXTRACTION'], maxBatchConcurrent = 1
+  }) {
+    const accepted = new Set(acceptedKinds);
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      const reclaimed = await client.query(
+      // Every Gateway-consuming worker claims through this short global
+      // dispatcher lock. Processing happens after COMMIT, so the lock only
+      // serializes fair priority selection, not provider latency.
+      await client.query("SELECT pg_advisory_xact_lock(hashtext('amc_ai_dispatcher'), 0)");
+      const reclaimedInteractive = await client.query(
         `UPDATE amc_practice.learning_work_items
          SET status = 'QUEUED', lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
              available_at = $1, last_error_code = 'LEASE_EXPIRED', updated_at = $1
-         WHERE status = 'RUNNING' AND lease_expires_at <= $1
-         RETURNING analysis_run_id`, [now]
+         WHERE status = 'RUNNING' AND lease_expires_at <= $1 RETURNING analysis_run_id`, [now]
       );
-      const reclaimedIds = reclaimed.rows.map((row) => row.analysis_run_id).filter(Boolean);
-      if (reclaimedIds.length) {
+      const reclaimedRunIds = reclaimedInteractive.rows.map((row) => row.analysis_run_id).filter(Boolean);
+      if (reclaimedRunIds.length) {
         await client.query(
           `UPDATE amc_practice.learning_analysis_runs
            SET status = 'QUEUED', started_at = NULL, last_error_code = 'LEASE_EXPIRED'
-           WHERE id = ANY($1::uuid[])`, [reclaimedIds]
+           WHERE id = ANY($1::uuid[])`, [reclaimedRunIds]
         );
       }
-      const leaseToken = randomUUID();
-      const claimed = await client.query(
-        `WITH candidate AS (
-           SELECT w.id
+      await client.query(
+        `UPDATE amc_practice.learning_batch_work_items
+         SET status = 'QUEUED', lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+             available_at = $1, last_error_code = 'LEASE_EXPIRED', updated_at = $1
+         WHERE work_type = 'BATCH_EXTRACTION' AND status = 'RUNNING' AND lease_expires_at <= $1`, [now]
+      );
+      const selected = await client.query(
+        `SELECT * FROM (
+           SELECT 'INTERACTIVE_ANALYSIS'::text AS kind, w.id, w.priority, w.available_at, w.created_at
            FROM amc_practice.learning_work_items w
            JOIN amc_practice.learning_analysis_runs r ON r.id = w.analysis_run_id
            JOIN amc_practice.learning_submission_versions v ON v.id = w.learning_submission_version_id
-           JOIN amc_practice.learning_submissions s
-             ON s.id = v.learning_submission_id AND s.current_version = v.version_number
+           JOIN amc_practice.learning_submissions s ON s.id = v.learning_submission_id
            JOIN amc_practice.attempts a ON a.id = s.attempt_id AND a.student_id = s.student_id
-           WHERE w.status = 'QUEUED' AND w.available_at <= $1 AND s.lifecycle_status = 'COMMITTED'
-             AND r.status = 'QUEUED'
+           WHERE $2::boolean AND w.status = 'QUEUED' AND w.available_at <= $1
+             AND s.lifecycle_status = 'COMMITTED' AND r.status = 'QUEUED'
              AND a.phase IN ('FINALIZED','RESET') AND v.context_status = 'CONTEXT_READY'
              AND v.context_set_id = r.context_set_id AND w.input_hash = r.input_hash
              AND w.deletion_generation = r.deletion_generation
-           ORDER BY w.priority DESC, w.available_at, w.created_at
-           FOR UPDATE OF w SKIP LOCKED LIMIT 1
-         )
-         UPDATE amc_practice.learning_work_items w
-         SET status = 'RUNNING', attempt_count = attempt_count + 1, lease_owner = $2, lease_token = $4,
-             lease_expires_at = $1 + ($3::text || ' milliseconds')::interval, updated_at = $1
-         FROM candidate WHERE w.id = candidate.id RETURNING w.*`, [now, workerId, leaseMs, leaseToken]
+           UNION ALL
+           SELECT 'BATCH_EXTRACTION'::text AS kind, w.id, w.priority, w.available_at, w.created_at
+           FROM amc_practice.learning_batch_work_items w
+           JOIN amc_practice.learning_batches b ON b.id = w.batch_id
+           JOIN amc_practice.learning_submissions s
+             ON s.id = b.learning_submission_id AND s.student_id = b.student_id
+            AND s.attempt_id = b.attempt_id AND s.form_id = b.form_id AND s.form_version = b.form_version
+           JOIN amc_practice.attempts batch_attempt
+             ON batch_attempt.id = b.attempt_id AND batch_attempt.student_id = b.student_id
+            AND batch_attempt.form_id = b.form_id AND batch_attempt.form_version = b.form_version
+           JOIN amc_practice.submissions batch_final
+             ON batch_final.id = s.official_submission_id AND batch_final.attempt_id = batch_attempt.id
+            AND batch_final.kind = 'FINAL' AND s.official_submission_kind = 'FINAL'
+           WHERE $3::boolean AND w.work_type = 'BATCH_EXTRACTION' AND w.status = 'QUEUED'
+             AND w.available_at <= $1 AND b.status = 'PROCESSING' AND b.deletion_state = 'ACTIVE'
+             AND b.deletion_generation = w.deletion_generation AND s.lifecycle_status = 'COMMITTED'
+             AND batch_attempt.phase IN ('FINALIZED','RESET')
+             AND s.current_version = b.base_version
+             AND (SELECT count(*) FROM amc_practice.learning_batch_work_items running
+                  WHERE running.work_type = 'BATCH_EXTRACTION' AND running.status = 'RUNNING') < $4
+             AND (SELECT count(*) FROM amc_practice.learning_batch_assets a WHERE a.batch_id = b.id)
+               = (SELECT count(*) FROM amc_practice.learning_batch_evidence e
+                  WHERE e.batch_id = b.id AND e.normalized_text IS NOT NULL)
+         ) candidates
+         ORDER BY priority DESC, available_at, created_at, id LIMIT 1`,
+        [now, accepted.has('INTERACTIVE_ANALYSIS'), accepted.has('BATCH_EXTRACTION'), maxBatchConcurrent]
       );
-      if (!claimed.rowCount) {
+      if (!selected.rowCount) {
         await client.query('COMMIT');
         return null;
       }
+      const candidate = selected.rows[0];
+      const leaseToken = randomUUID();
+      if (candidate.kind === 'BATCH_EXTRACTION') {
+        const claimed = await client.query(
+          `UPDATE amc_practice.learning_batch_work_items
+           SET status = 'RUNNING', attempt_count = attempt_count + 1, lease_owner = $2,
+               lease_token = $3, lease_expires_at = $1::timestamptz + ($4::text || ' milliseconds')::interval,
+               updated_at = $1
+           WHERE id = $5 AND status = 'QUEUED' RETURNING *`,
+          [now, workerId, leaseToken, leaseMs, candidate.id]
+        );
+        if (!claimed.rowCount) throw new Error('Unified dispatcher lost its serialized batch candidate.');
+        const workItem = mapLearningBatchWorkItem(claimed.rows[0]);
+        const batchRow = await client.query(
+          `SELECT b.* FROM amc_practice.learning_batches b
+           WHERE b.id = $1 FOR SHARE`, [workItem.batchId]
+        );
+        const batch = mapLearningBatch(batchRow.rows[0]);
+        const assets = await client.query(
+          'SELECT * FROM amc_practice.learning_batch_assets WHERE batch_id = $1 ORDER BY position', [batch.id]
+        );
+        const evidence = await client.query(
+          `SELECT e.*, a.position FROM amc_practice.learning_batch_evidence e
+           JOIN amc_practice.learning_batch_assets a ON a.batch_id = e.batch_id AND a.id = e.asset_id
+           WHERE e.batch_id = $1 ORDER BY a.position`, [batch.id]
+        );
+        await client.query('COMMIT');
+        return {
+          kind: 'BATCH_EXTRACTION',
+          job: {
+            workItem, batch,
+            assets: assets.rows.map(mapLearningBatchAsset),
+            evidence: evidence.rows.map(mapLearningBatchEvidence),
+            studentId: batch.studentId,
+            attemptId: batch.attemptId
+          }
+        };
+      }
+      const claimed = await client.query(
+        `UPDATE amc_practice.learning_work_items
+         SET status = 'RUNNING', attempt_count = attempt_count + 1, lease_owner = $2,
+             lease_token = $3, lease_expires_at = $1::timestamptz + ($4::text || ' milliseconds')::interval,
+             updated_at = $1
+         WHERE id = $5 AND status = 'QUEUED' RETURNING *`,
+        [now, workerId, leaseToken, leaseMs, candidate.id]
+      );
+      if (!claimed.rowCount) throw new Error('Unified dispatcher lost its serialized interactive candidate.');
       const workItem = mapLearningWorkItem(claimed.rows[0]);
       const joined = await client.query(
         `SELECT r.id AS run_id, r.learning_submission_version_id, r.context_set_id AS run_context_set_id,
@@ -699,27 +1090,17 @@ export class PostgresStore {
         [workItem.analysisRunId, now]
       );
       const version = {
-        id: row.version_id,
-        learningSubmissionId: row.learning_submission_id,
-        versionNumber: row.version_number,
-        formId: row.form_id,
-        formVersion: row.form_version,
-        contextSetId: row.context_set_id,
-        evidenceHash: row.evidence_hash
+        id: row.version_id, learningSubmissionId: row.learning_submission_id,
+        versionNumber: row.version_number, formId: row.form_id, formVersion: row.form_version,
+        contextSetId: row.context_set_id, evidenceHash: row.evidence_hash
       };
       const run = {
-        id: row.run_id,
-        learningSubmissionVersionId: row.learning_submission_version_id,
-        contextSetId: row.run_context_set_id,
-        versionNumber: row.run_version_number,
-        inputHash: row.run_input_hash,
-        evidenceHash: row.run_evidence_hash,
-        deletionGeneration: row.run_deletion_generation,
-        status: 'RUNNING',
-        createdAt: row.run_created_at,
-        startedAt: row.run_started_at || now,
-        completedAt: null,
-        lastErrorCode: null
+        id: row.run_id, learningSubmissionVersionId: row.learning_submission_version_id,
+        contextSetId: row.run_context_set_id, versionNumber: row.run_version_number,
+        inputHash: row.run_input_hash, evidenceHash: row.run_evidence_hash,
+        deletionGeneration: row.run_deletion_generation, status: 'RUNNING',
+        createdAt: row.run_created_at, startedAt: row.run_started_at || now,
+        completedAt: null, lastErrorCode: null
       };
       const submission = {
         id: row.submission_id, studentId: row.student_id, attemptId: row.attempt_id,
@@ -727,32 +1108,1965 @@ export class PostgresStore {
         formId: row.submission_form_id, formVersion: row.submission_form_version
       };
       const responses = await client.query(
-        `SELECT question_number, selected_option, reasoning_text, reasoning_origin
-         FROM amc_practice.learning_question_responses
-         WHERE learning_submission_version_id = $1 ORDER BY question_number`, [version.id]
+          `SELECT question_number, selected_option, reasoning_text, reasoning_origin
+           FROM amc_practice.learning_question_responses
+           WHERE learning_submission_version_id = $1 ORDER BY question_number`, [version.id]
       );
       const formQuestions = await client.query(
-        `SELECT question_number, correct_option FROM amc_practice.form_questions
-         WHERE form_id = $1 AND form_version = $2 ORDER BY question_number`, [version.formId, version.formVersion]
+          `SELECT question_number, correct_option FROM amc_practice.form_questions
+           WHERE form_id = $1 AND form_version = $2 ORDER BY question_number`, [version.formId, version.formVersion]
       );
       const contextSet = await loadApprovedContextSet(client, version.contextSetId);
       const official = new Map(formQuestions.rows.map((question) => [question.question_number, question.correct_option]));
       const contexts = new Map(contextSet.questions.map((question) => [question.questionNumber, question]));
       await client.query('COMMIT');
       return {
-        workItem,
-        run,
-        version,
-        submission,
-        questions: responses.rows.map((response) => ({
-          questionNumber: response.question_number,
-          selectedOption: response.selected_option,
-          reasoningText: response.reasoning_text,
-          reasoningOrigin: response.reasoning_origin,
-          officialAnswer: official.get(response.question_number),
-          context: contexts.get(response.question_number) || null
-        }))
+        kind: 'INTERACTIVE_ANALYSIS',
+        job: {
+          workItem, run, version, submission,
+          questions: responses.rows.map((response) => ({
+            questionNumber: response.question_number, selectedOption: response.selected_option,
+            reasoningText: response.reasoning_text, reasoningOrigin: response.reasoning_origin,
+            officialAnswer: official.get(response.question_number),
+            context: contexts.get(response.question_number) || null
+          }))
+        }
       };
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async claimNextTranscriptionWork({ workerId, now, leaseMs }) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query("SELECT pg_advisory_xact_lock(hashtext('amc_transcription_dispatcher'), 0)");
+      await client.query(
+        `UPDATE amc_practice.learning_batch_work_items
+         SET status = 'QUEUED', lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+             available_at = $1, last_error_code = 'LEASE_EXPIRED', updated_at = $1
+         WHERE work_type = 'TRANSCRIBE_AUDIO' AND status = 'RUNNING' AND lease_expires_at <= $1`,
+        [now]
+      );
+      const selected = await client.query(
+        `SELECT w.id, w.attempt_count, w.created_at AS work_created_at,
+                b.student_id, p.status AS artifact_status, p.external_id, p.submitted_at,
+                p.upload_call_id, p.upload_url_hash, p.provider_retention_not_before,
+                p.submit_call_id, p.submit_call_started_at, p.reconciliation_attempt_count,
+                p.poll_attempt_count, p.poll_started_at,
+                a.id AS asset_id, a.status AS asset_status, a.storage_key
+         FROM amc_practice.learning_batch_work_items w
+         JOIN amc_practice.learning_batches b ON b.id = w.batch_id
+         JOIN amc_practice.learning_batch_assets a ON a.batch_id = b.id AND a.id = w.asset_id
+         JOIN amc_practice.learning_batch_provider_artifacts p
+           ON p.batch_id = b.id AND p.asset_id = a.id AND p.provider = 'assemblyai'
+         JOIN amc_practice.learning_submissions s
+           ON s.id = b.learning_submission_id AND s.student_id = b.student_id
+          AND s.attempt_id = b.attempt_id AND s.form_id = b.form_id AND s.form_version = b.form_version
+         JOIN amc_practice.attempts t
+           ON t.id = b.attempt_id AND t.student_id = b.student_id
+          AND t.form_id = b.form_id AND t.form_version = b.form_version
+         JOIN amc_practice.submissions official
+           ON official.id = s.official_submission_id AND official.attempt_id = t.id
+          AND official.kind = 'FINAL' AND s.official_submission_kind = 'FINAL'
+         LEFT JOIN amc_practice.student_provider_dispatch_state dispatch
+           ON dispatch.student_id = b.student_id
+         WHERE w.work_type = 'TRANSCRIBE_AUDIO' AND w.status = 'QUEUED' AND w.available_at <= $1
+           AND w.deletion_generation = b.deletion_generation
+           AND s.lifecycle_status = 'COMMITTED' AND t.phase IN ('FINALIZED','RESET')
+           AND (
+             (b.deletion_state = 'ACTIVE' AND s.current_version = b.base_version
+               AND ((b.status = 'PROCESSING' AND (
+                   (p.status = 'INTENT_RECORDED' AND a.status = 'STORED' AND a.storage_key IS NOT NULL)
+                   OR (p.status IN ('UPLOAD_MAY_HAVE_DELIVERED','UPLOAD_RESPONSE_PERSISTED')
+                     AND a.status = 'STORED')
+                   OR (p.status = 'SUBMIT_MAY_HAVE_DELIVERED'
+                     AND a.status IN ('STORED','PURGE_PENDING','PURGED'))
+                   OR (p.status = 'ACTIVE' AND a.status = 'STORED')
+                   OR (p.status = 'DELETE_PENDING' AND a.status IN ('PURGE_PENDING','PURGED'))))
+                 OR (b.status = 'FAILED' AND p.status = 'DELETE_PENDING'
+                   AND a.status IN ('PURGE_PENDING','PURGED'))
+                 OR (b.status = 'FAILED' AND p.status = 'DELETION_EVIDENCED'
+                   AND a.status = 'PURGE_PENDING')
+                 OR (b.status = 'FAILED' AND p.status IN (
+                   'PROVIDER_RETENTION_PENDING','PROVIDER_RETENTION_DELETION_CONFIRMED'
+                 )
+                   AND a.status = 'PURGE_PENDING')))
+             OR (b.deletion_state IN (
+                 'DELETE_REQUESTED','LOCAL_PURGED','PROVIDER_DELETE_PENDING','PROVIDER_RETENTION_PENDING'
+               )
+               AND ((p.status = 'DELETE_PENDING' AND a.status IN ('PURGE_PENDING','PURGED'))
+                 OR (p.status = 'SUBMIT_MAY_HAVE_DELIVERED'
+                   AND a.status IN ('STORED','PURGE_PENDING','PURGED'))
+                 OR (p.status IN ('DELETION_EVIDENCED','PROVIDER_RETENTION_PENDING',
+                       'PROVIDER_RETENTION_DELETION_CONFIRMED')
+                   AND a.status = 'PURGE_PENDING')))
+           )
+         ORDER BY w.priority DESC, COALESCE(dispatch.transcription_claim_count, 0),
+                  w.available_at, w.created_at, w.id
+         FOR UPDATE OF w, b, a, p SKIP LOCKED LIMIT 1`, [now]
+      );
+      if (!selected.rowCount) {
+        await client.query('COMMIT');
+        return null;
+      }
+      const row = selected.rows[0];
+      const leaseToken = randomUUID();
+      const claimed = await client.query(
+        `UPDATE amc_practice.learning_batch_work_items
+         SET status = 'RUNNING', attempt_count = attempt_count + 1, lease_owner = $2,
+             lease_token = $3, lease_expires_at = $1::timestamptz + ($4::text || ' milliseconds')::interval,
+             updated_at = $1
+         WHERE id = $5 AND status = 'QUEUED' RETURNING deletion_generation`,
+        [now, workerId, leaseToken, leaseMs, row.id]
+      );
+      await client.query(
+        `INSERT INTO amc_practice.student_provider_dispatch_state
+         (student_id, transcription_claim_count, updated_at)
+         VALUES ($1,1,$2)
+         ON CONFLICT (student_id) DO UPDATE
+           SET transcription_claim_count = student_provider_dispatch_state.transcription_claim_count + 1,
+               updated_at = EXCLUDED.updated_at`,
+        [row.student_id, now]
+      );
+      await client.query('COMMIT');
+      const phase = row.artifact_status === 'INTENT_RECORDED'
+        ? 'upload'
+        : ['UPLOAD_MAY_HAVE_DELIVERED','UPLOAD_RESPONSE_PERSISTED'].includes(row.artifact_status)
+          ? 'await_upload_retention'
+          : row.artifact_status === 'SUBMIT_MAY_HAVE_DELIVERED'
+            ? 'reconcile' : row.artifact_status === 'ACTIVE' ? 'poll'
+              : ['DELETION_EVIDENCED','PROVIDER_RETENTION_PENDING',
+                'PROVIDER_RETENTION_DELETION_CONFIRMED'].includes(row.artifact_status)
+                ? 'purge_resolved_orphan' : 'delete';
+      return {
+        phase,
+        workItemId: row.id,
+        attemptCount: number(row.attempt_count) + 1,
+        workCreatedAt: row.work_created_at,
+        leaseToken,
+        deletionGeneration: claimed.rows[0].deletion_generation,
+        assetId: row.asset_id,
+        assetStorageKey: row.storage_key,
+        localPurgePending: row.asset_status === 'PURGE_PENDING',
+        providerTranscriptId: row.external_id,
+        providerTranscriptPersistedAt: row.submitted_at ? new Date(row.submitted_at).toISOString() : null,
+        uploadCallId: row.upload_call_id,
+        uploadUrlSha256: row.upload_url_hash,
+        providerRetentionNotBefore: row.provider_retention_not_before,
+        submitCallId: row.submit_call_id,
+        submitCallStartedAt: row.submit_call_started_at,
+        reconciliationAttemptCount: row.reconciliation_attempt_count,
+        pollAttemptCount: row.poll_attempt_count,
+        pollStartedAt: row.poll_started_at
+      };
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async authorizeTranscriptionProviderCall(input) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const row = await lockTranscriptionAggregate(client, input, {
+        activeRequired: !['DELETE', 'RECONCILE'].includes(input.phase)
+      });
+      let allowed = false;
+      if (row && input.phase === 'UPLOAD') {
+        allowed = row.artifact_status === 'UPLOAD_MAY_HAVE_DELIVERED'
+          && row.upload_call_id === input.uploadCallId
+          && row.asset_status === 'STORED' && typeof row.storage_key === 'string';
+      } else if (row && input.phase === 'SUBMIT') {
+        allowed = row.artifact_status === 'SUBMIT_MAY_HAVE_DELIVERED'
+          && row.upload_call_id === input.uploadCallId
+          && row.submit_call_id === input.submitCallId
+          && row.upload_url_hash === input.uploadUrlSha256;
+      } else if (row && input.phase === 'RECONCILE') {
+        allowed = row.artifact_status === 'SUBMIT_MAY_HAVE_DELIVERED'
+          && row.submit_call_id === input.submitCallId
+          && row.upload_url_hash === input.uploadUrlSha256;
+      } else if (row && input.phase === 'POLL') {
+        allowed = row.artifact_status === 'ACTIVE' && row.external_id === input.providerTranscriptId;
+      } else if (row && input.phase === 'DELETE') {
+        allowed = row.artifact_status === 'DELETE_PENDING' && row.external_id === input.providerTranscriptId
+          && (row.deletion_state === 'ACTIVE'
+            ? ['PROCESSING', 'FAILED'].includes(row.batch_status)
+            : ['DELETE_REQUESTED', 'LOCAL_PURGED', 'PROVIDER_DELETE_PENDING',
+              'PROVIDER_RETENTION_PENDING'].includes(row.deletion_state));
+      }
+      if (allowed && input.providerBudget) {
+        await client.query('SAVEPOINT provider_budget');
+        const student = Number.isSafeInteger(input.providerBudget.studentLimit)
+          ? await consumeStudentBudgetUsing(client, {
+            studentId: row.student_id, budgetKind: 'PROVIDER_WORK', units: 1,
+            limit: input.providerBudget.studentLimit, windowMs: input.providerBudget.windowMs, now: input.now
+          }) : { allowed: true, retryAfterSeconds: 0 };
+        const global = await consumeGlobalBudgetUsing(client, {
+          budgetKind: input.providerBudget.budgetKind || 'PROVIDER_WORK', units: 1,
+          limit: input.providerBudget.globalLimit, windowMs: input.providerBudget.windowMs, now: input.now
+        });
+        if (!student.allowed || !global.allowed) {
+          await client.query('ROLLBACK TO SAVEPOINT provider_budget');
+          const retryAfterSeconds = Math.max(student.retryAfterSeconds || 1, global.retryAfterSeconds || 1);
+          await client.query(
+            `UPDATE amc_practice.learning_batch_work_items
+             SET status = 'QUEUED', available_at = $2::timestamptz
+                   + ($3::text || ' seconds')::interval,
+                 lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+                 last_error_code = 'PROVIDER_BUDGET_EXHAUSTED', updated_at = $2
+             WHERE id = $1`, [input.workItemId, input.now, retryAfterSeconds]
+          );
+          allowed = false;
+        } else {
+          await client.query('RELEASE SAVEPOINT provider_budget');
+        }
+      }
+      if (allowed && input.phase === 'POLL') {
+        await client.query(
+          `UPDATE amc_practice.learning_batch_provider_artifacts
+           SET poll_attempt_count = poll_attempt_count + 1,
+               poll_started_at = COALESCE(poll_started_at, $2), updated_at = $2
+           WHERE id = $1`, [row.artifact_id, input.now]
+        );
+      }
+      await client.query('COMMIT');
+      return allowed;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async beginTranscriptionUploadCall(input) {
+    const expectedNotBefore = providerRetentionNotBefore(
+      new Date(input.startedAt), input.retentionProfile
+    );
+    if (expectedNotBefore.getTime() !== new Date(input.providerRetentionNotBefore).getTime()) {
+      throw new Error('AssemblyAI provider retention not-before does not match the verified profile.');
+    }
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const row = await lockTranscriptionAggregate(client, { ...input, now: input.startedAt });
+      if (!row || row.artifact_status !== 'INTENT_RECORDED' || row.external_id !== null
+          || row.asset_status !== 'STORED' || typeof row.storage_key !== 'string') {
+        await client.query('ROLLBACK');
+        return null;
+      }
+      const callId = randomUUID();
+      await client.query(
+        `UPDATE amc_practice.learning_batch_provider_artifacts
+         SET status = 'UPLOAD_MAY_HAVE_DELIVERED', upload_call_id = $2,
+             upload_call_started_at = $3, provider_retention_not_before = $4,
+             retention_profile = $5, retention_policy_delay_ms = $6,
+             upload_request_max_duration_ms = $7, retention_processing_slack_ms = $8,
+             retention_window_elapsed_at = NULL, updated_at = $3
+         WHERE id = $1`,
+        [row.artifact_id, callId, input.startedAt, input.providerRetentionNotBefore,
+          input.retentionProfile.name, input.retentionProfile.policyDelayMs,
+          input.retentionProfile.uploadRequestMaxDurationMs,
+          input.retentionProfile.processingSlackMs]
+      );
+      const auditId = randomUUID();
+      await client.query(
+        `INSERT INTO amc_practice.learning_batch_provider_orphan_audit
+         (id, source_audit_id, event, provider, batch_id, asset_id, work_item_id,
+          deletion_generation, provider_call_id, external_id, upload_url_hash, error_code,
+          retention_not_before, evidence_code, created_at, evidenced_at)
+         VALUES ($1,NULL,'PROVIDER_RETENTION_PENDING','assemblyai',$2,$3,$4,$5,$6,
+           NULL,NULL,NULL,$7,NULL,$8,NULL)`,
+        [auditId, row.batch_id, row.asset_id, input.workItemId, input.deletionGeneration,
+          callId, input.providerRetentionNotBefore, input.startedAt]
+      );
+      await client.query(
+        `INSERT INTO amc_practice.learning_batch_provider_orphan_cleanup_jobs
+         (id, orphan_audit_id, batch_id, cleanup_kind, provider, external_id, status,
+          attempt_count, available_at, lease_owner, lease_token, lease_expires_at,
+          last_error_code, created_at, updated_at)
+         VALUES ($1,$2,$3,'OBSERVE_RETENTION_WINDOW','assemblyai',NULL,'QUEUED',0,$4,
+           NULL,NULL,NULL,NULL,$5,$5)`,
+        [randomUUID(), auditId, row.batch_id, input.providerRetentionNotBefore, input.startedAt]
+      );
+      await client.query('COMMIT');
+      return { callId };
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally { client.release(); }
+  }
+
+  async recordTranscriptionUploadResponse(input) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const row = await lockTranscriptionAggregate(client, { ...input, now: input.returnedAt });
+      if (!row || row.artifact_status !== 'UPLOAD_MAY_HAVE_DELIVERED'
+          || row.upload_call_id !== input.uploadCallId) {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      await client.query(
+        `UPDATE amc_practice.learning_batch_provider_artifacts
+         SET status = 'UPLOAD_RESPONSE_PERSISTED', upload_url_hash = $2, updated_at = $3
+         WHERE id = $1`, [row.artifact_id, input.uploadUrlSha256, input.returnedAt]
+      );
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally { client.release(); }
+  }
+
+  async beginTranscriptionSubmitCall(input) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const row = await lockTranscriptionAggregate(client, { ...input, now: input.startedAt });
+      if (!row || row.artifact_status !== 'UPLOAD_RESPONSE_PERSISTED'
+          || row.upload_call_id !== input.uploadCallId
+          || row.upload_url_hash !== input.uploadUrlSha256) {
+        await client.query('ROLLBACK');
+        return null;
+      }
+      const callId = randomUUID();
+      await client.query(
+        `UPDATE amc_practice.learning_batch_provider_artifacts
+         SET status = 'SUBMIT_MAY_HAVE_DELIVERED', submit_call_id = $2,
+             submit_call_started_at = $3, updated_at = $3 WHERE id = $1`,
+        [row.artifact_id, callId, input.startedAt]
+      );
+      await client.query('COMMIT');
+      return { callId };
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally { client.release(); }
+  }
+
+  async deferAmbiguousUploadUntilRetention(input) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const row = await lockTranscriptionAggregate(client, input, { activeRequired: false });
+      if (!row || !['UPLOAD_MAY_HAVE_DELIVERED','UPLOAD_RESPONSE_PERSISTED'].includes(row.artifact_status)
+          || row.upload_call_id !== input.uploadCallId) {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      await client.query(
+        `UPDATE amc_practice.learning_batch_provider_artifacts
+         SET status = 'PROVIDER_RETENTION_PENDING', updated_at = $2 WHERE id = $1`,
+        [row.artifact_id, input.now]
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_batch_assets
+         SET status = CASE WHEN status = 'STORED' THEN 'PURGE_PENDING' ELSE status END,
+             updated_at = $2 WHERE id = $1`, [row.asset_id, input.now]
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_batch_work_items
+         SET status = CASE WHEN EXISTS (
+               SELECT 1 FROM amc_practice.learning_batch_assets a
+               WHERE a.id = $3 AND a.status = 'PURGE_PENDING'
+             ) THEN 'QUEUED' ELSE 'FAILED' END,
+             available_at = $2, lease_owner = NULL, lease_token = NULL,
+             lease_expires_at = NULL, last_error_code = 'UPLOAD_CALL_OUTCOME_AMBIGUOUS', updated_at = $2
+         WHERE id = $1`, [input.workItemId, input.now, row.asset_id]
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_batches
+         SET status = 'FAILED', failure_code = 'UPLOAD_CALL_OUTCOME_AMBIGUOUS', updated_at = $2
+         WHERE id = $1 AND status = 'PROCESSING'`, [row.batch_id, input.now]
+      );
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally { client.release(); }
+  }
+
+  async markAmbiguousSubmitForReconciliation(input) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const row = await lockTranscriptionAggregate(client, input, { activeRequired: false });
+      if (!row || row.artifact_status !== 'SUBMIT_MAY_HAVE_DELIVERED'
+          || row.submit_call_id !== input.submitCallId) {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      await client.query(
+        `UPDATE amc_practice.learning_batch_work_items
+         SET status = 'QUEUED', available_at = $2, lease_owner = NULL, lease_token = NULL,
+             lease_expires_at = NULL, last_error_code = $3, updated_at = $4 WHERE id = $1`,
+        [input.workItemId, transcriptionRetryAt(input.now, row.attempt_count, input.retryAfterSeconds),
+          input.errorCode || 'SUBMIT_CALL_OUTCOME_AMBIGUOUS', input.now]
+      );
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally { client.release(); }
+  }
+
+  async recordAmbiguousSubmitReconciliation(input) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const row = await lockTranscriptionAggregate(client,
+        { ...input, now: input.reconciledAt }, { activeRequired: false });
+      if (!row || row.artifact_status !== 'SUBMIT_MAY_HAVE_DELIVERED'
+          || row.submit_call_id !== input.submitCallId
+          || row.upload_url_hash !== input.uploadUrlSha256) {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      const transcriptIds = [...new Set(input.providerTranscriptIds || [])].sort();
+      await client.query(
+        `UPDATE amc_practice.learning_batch_provider_artifacts
+         SET reconciliation_attempt_count = reconciliation_attempt_count + 1,
+             last_reconciliation_at = $2, updated_at = $2 WHERE id = $1`,
+        [row.artifact_id, input.reconciledAt]
+      );
+      const queueOrphanTranscript = async (externalId, errorCode) => {
+        const auditId = randomUUID();
+        const inserted = await client.query(
+          `INSERT INTO amc_practice.learning_batch_provider_orphan_audit
+           (id, source_audit_id, event, provider, batch_id, asset_id, work_item_id,
+            deletion_generation, provider_call_id, external_id, upload_url_hash, error_code,
+            retention_not_before, evidence_code, created_at, evidenced_at)
+           VALUES ($1,NULL,'ORPHAN_TRANSCRIPT_DELETE_PENDING','assemblyai',$2,$3,$4,$5,$6,$7,
+             NULL,$8,NULL,NULL,$9,NULL)
+           ON CONFLICT DO NOTHING RETURNING id`,
+          [auditId, row.batch_id, row.asset_id, input.workItemId, input.deletionGeneration,
+            input.submitCallId, externalId, errorCode, input.reconciledAt]
+        );
+        let orphanAuditId = inserted.rows[0]?.id;
+        if (!orphanAuditId) {
+          const existing = await client.query(
+            `SELECT id FROM amc_practice.learning_batch_provider_orphan_audit
+             WHERE provider = 'assemblyai' AND event = 'ORPHAN_TRANSCRIPT_DELETE_PENDING'
+               AND external_id = $1`, [externalId]
+          );
+          orphanAuditId = existing.rows[0]?.id;
+        }
+        if (orphanAuditId) await client.query(
+          `INSERT INTO amc_practice.learning_batch_provider_orphan_cleanup_jobs
+           (id, orphan_audit_id, batch_id, cleanup_kind, provider, external_id, status,
+            attempt_count, available_at, lease_owner, lease_token, lease_expires_at,
+            last_error_code, created_at, updated_at)
+           VALUES ($1,$2,$3,'DELETE_TRANSCRIPT','assemblyai',$4,'QUEUED',0,$5,
+             NULL,NULL,NULL,$6,$5,$5)
+           ON CONFLICT (orphan_audit_id) DO NOTHING`,
+          [randomUUID(), orphanAuditId, row.batch_id, externalId, input.reconciledAt, errorCode]
+        );
+      };
+      if (input.scanComplete !== true) {
+        for (const externalId of transcriptIds) {
+          await queueOrphanTranscript(externalId, 'RECONCILIATION_SCAN_INCOMPLETE');
+        }
+        await client.query(
+          `UPDATE amc_practice.learning_batch_provider_artifacts
+           SET status = 'RECONCILE_BLOCKED_MANUAL', updated_at = $2 WHERE id = $1`,
+          [row.artifact_id, input.reconciledAt]
+        );
+        await client.query(
+          `UPDATE amc_practice.learning_batch_work_items
+           SET status = 'FAILED', lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+               last_error_code = 'RECONCILIATION_SCAN_INCOMPLETE', updated_at = $2 WHERE id = $1`,
+          [input.workItemId, input.reconciledAt]
+        );
+        await client.query(
+          `UPDATE amc_practice.learning_batches
+           SET status = 'FAILED', failure_code = 'RECONCILIATION_SCAN_INCOMPLETE', updated_at = $2
+           WHERE id = $1`, [row.batch_id, input.reconciledAt]
+        );
+        await client.query('COMMIT');
+        return true;
+      }
+      if (!transcriptIds.length) {
+        const manual = new Date(input.reconciledAt).getTime()
+          >= new Date(row.submit_call_started_at).getTime() + input.manualAfterMs;
+        if (manual) {
+          await client.query(
+            `UPDATE amc_practice.learning_batch_provider_artifacts
+             SET status = 'RECONCILE_BLOCKED_MANUAL', updated_at = $2 WHERE id = $1`,
+            [row.artifact_id, input.reconciledAt]
+          );
+          await client.query(
+            `UPDATE amc_practice.learning_batch_work_items
+             SET status = 'FAILED', lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+                 last_error_code = 'SUBMIT_RECONCILIATION_BLOCKED_MANUAL', updated_at = $2 WHERE id = $1`,
+            [input.workItemId, input.reconciledAt]
+          );
+          await client.query(
+            `UPDATE amc_practice.learning_batches
+             SET status = 'FAILED', failure_code = 'SUBMIT_RECONCILIATION_BLOCKED_MANUAL', updated_at = $2
+             WHERE id = $1`, [row.batch_id, input.reconciledAt]
+          );
+        } else {
+          await client.query(
+            `UPDATE amc_practice.learning_batch_work_items
+             SET status = 'QUEUED', available_at = $2, lease_owner = NULL, lease_token = NULL,
+                 lease_expires_at = NULL, last_error_code = 'SUBMIT_RECONCILIATION_PENDING', updated_at = $3
+             WHERE id = $1`,
+            [input.workItemId, transcriptionRetryAt(input.reconciledAt, row.attempt_count), input.reconciledAt]
+          );
+        }
+        await client.query('COMMIT');
+        return true;
+      }
+      const [primaryId, ...extraIds] = transcriptIds;
+      await client.query(
+        `UPDATE amc_practice.learning_batch_provider_artifacts
+         SET external_id = $2, submitted_at = submit_call_started_at, status = 'DELETE_PENDING',
+             provider_retention_not_before = NULL, retention_profile = NULL,
+             retention_policy_delay_ms = NULL, upload_request_max_duration_ms = NULL,
+             retention_processing_slack_ms = NULL, retention_window_elapsed_at = NULL,
+             updated_at = $3 WHERE id = $1`,
+        [row.artifact_id, primaryId, input.reconciledAt]
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_batch_assets
+         SET status = CASE WHEN status = 'STORED' THEN 'PURGE_PENDING' ELSE status END,
+             updated_at = $2 WHERE id = $1`, [row.asset_id, input.reconciledAt]
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_batch_work_items
+         SET status = 'QUEUED', available_at = $2, lease_owner = NULL, lease_token = NULL,
+             lease_expires_at = NULL, last_error_code = 'AMBIGUOUS_SUBMIT_MATCH_DELETE_REQUIRED',
+             updated_at = $2 WHERE id = $1`, [input.workItemId, input.reconciledAt]
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_batches
+         SET status = 'FAILED', failure_code = 'AMBIGUOUS_SUBMIT_RECONCILED_FOR_DELETE', updated_at = $2
+         WHERE id = $1`, [row.batch_id, input.reconciledAt]
+      );
+      const uploadSource = await client.query(
+        `SELECT pending.id, pending.retention_not_before,
+                COALESCE((SELECT elapsed.id
+                  FROM amc_practice.learning_batch_provider_orphan_audit elapsed
+                  WHERE elapsed.source_audit_id = pending.id
+                    AND elapsed.event = 'PROVIDER_RETENTION_WINDOW_ELAPSED'), pending.id)
+                  AS binding_source_id
+         FROM amc_practice.learning_batch_provider_orphan_audit pending
+         WHERE pending.provider = 'assemblyai' AND pending.event = 'PROVIDER_RETENTION_PENDING'
+           AND pending.provider_call_id = $1`, [row.upload_call_id]
+      );
+      if (uploadSource.rowCount) {
+        await client.query(
+          `INSERT INTO amc_practice.learning_batch_provider_orphan_audit
+           (id, source_audit_id, event, provider, batch_id, asset_id, work_item_id,
+            deletion_generation, provider_call_id, external_id, upload_url_hash, error_code,
+            retention_not_before, evidence_code, created_at, evidenced_at)
+           VALUES ($1,$2,'UPLOAD_CALL_BOUND_TO_TRANSCRIPT','assemblyai',$3,$4,$5,$6,$7,$8,$9,
+             NULL,$10,'provider-transcript-bound-for-delete',$11,$11)`,
+          [randomUUID(), uploadSource.rows[0].binding_source_id, row.batch_id, row.asset_id, input.workItemId,
+            input.deletionGeneration, row.upload_call_id, primaryId, input.uploadUrlSha256,
+            uploadSource.rows[0].retention_not_before, input.reconciledAt]
+        );
+        await client.query(
+          `UPDATE amc_practice.learning_batch_provider_orphan_cleanup_jobs
+           SET status = 'SUPERSEDED', lease_owner = NULL, lease_token = NULL,
+               lease_expires_at = NULL, last_error_code = NULL, updated_at = $2
+           WHERE orphan_audit_id = $1
+             AND status IN ('QUEUED','RUNNING','MANUAL_VERIFICATION_REQUIRED')`,
+          [uploadSource.rows[0].id, input.reconciledAt]
+        );
+      }
+      for (const externalId of extraIds) {
+        await queueOrphanTranscript(externalId, 'AMBIGUOUS_SUBMIT_MULTIPLE_MATCHES');
+      }
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally { client.release(); }
+  }
+
+  async recordSubmitted(input) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const row = await lockTranscriptionAggregate(client, { ...input, now: input.submittedAt });
+      if (!row || row.artifact_status !== 'SUBMIT_MAY_HAVE_DELIVERED'
+          || row.submit_call_id !== input.submitCallId
+          || row.upload_url_hash !== input.uploadUrlSha256 || row.external_id !== null) {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      await client.query(
+        `UPDATE amc_practice.learning_batch_provider_artifacts
+         SET external_id = $2, upload_url_hash = $3, submitted_at = $4,
+             status = 'ACTIVE', provider_retention_not_before = NULL,
+             retention_profile = NULL, retention_policy_delay_ms = NULL,
+             upload_request_max_duration_ms = NULL, retention_processing_slack_ms = NULL,
+             retention_window_elapsed_at = NULL,
+             poll_attempt_count = 0, poll_started_at = $4, updated_at = $4 WHERE id = $1`,
+        [row.artifact_id, input.providerTranscriptId, input.uploadUrlSha256, input.submittedAt]
+      );
+      const source = await client.query(
+        `SELECT pending.id, pending.retention_not_before,
+                COALESCE((SELECT elapsed.id
+                  FROM amc_practice.learning_batch_provider_orphan_audit elapsed
+                  WHERE elapsed.source_audit_id = pending.id
+                    AND elapsed.event = 'PROVIDER_RETENTION_WINDOW_ELAPSED'), pending.id)
+                  AS binding_source_id
+         FROM amc_practice.learning_batch_provider_orphan_audit pending
+         WHERE pending.provider = 'assemblyai' AND pending.event = 'PROVIDER_RETENTION_PENDING'
+           AND pending.provider_call_id = $1`, [row.upload_call_id]
+      );
+      if (source.rowCount) {
+        await client.query(
+          `INSERT INTO amc_practice.learning_batch_provider_orphan_audit
+           (id, source_audit_id, event, provider, batch_id, asset_id, work_item_id,
+            deletion_generation, provider_call_id, external_id, upload_url_hash, error_code,
+            retention_not_before, evidence_code, created_at, evidenced_at)
+           VALUES ($1,$2,'UPLOAD_CALL_BOUND_TO_TRANSCRIPT','assemblyai',$3,$4,$5,$6,$7,$8,$9,
+             NULL,$10,'provider-transcript-bound-for-delete',$11,$11)`,
+          [randomUUID(), source.rows[0].binding_source_id, row.batch_id, row.asset_id, input.workItemId,
+            input.deletionGeneration, row.upload_call_id, input.providerTranscriptId,
+            input.uploadUrlSha256, source.rows[0].retention_not_before, input.submittedAt]
+        );
+        await client.query(
+          `UPDATE amc_practice.learning_batch_provider_orphan_cleanup_jobs
+           SET status = 'SUPERSEDED', lease_owner = NULL, lease_token = NULL,
+               lease_expires_at = NULL, last_error_code = NULL, updated_at = $2
+           WHERE orphan_audit_id = $1
+             AND status IN ('QUEUED','RUNNING','MANUAL_VERIFICATION_REQUIRED')`,
+          [source.rows[0].id, input.submittedAt]
+        );
+      }
+      await client.query(
+        `UPDATE amc_practice.learning_batch_work_items
+         SET status = 'QUEUED', available_at = $2, lease_owner = NULL, lease_token = NULL,
+             lease_expires_at = NULL, last_error_code = NULL, updated_at = $2 WHERE id = $1`,
+        [input.workItemId, input.submittedAt]
+      );
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async recordSubmissionFailure(input) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const row = await lockTranscriptionAggregate(client, { ...input, now: input.failedAt });
+      if (!row || row.artifact_status !== 'INTENT_RECORDED') {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      if (input.orphanDisposition === 'PROVIDER_RETENTION_PENDING') {
+        const auditId = randomUUID();
+        const inserted = await client.query(
+          `INSERT INTO amc_practice.learning_batch_provider_orphan_audit
+           (id, event, provider, batch_id, asset_id, work_item_id, deletion_generation,
+            external_id, upload_url_hash, error_code, retention_not_before,
+            evidence_code, created_at, evidenced_at)
+           VALUES ($1,'PROVIDER_RETENTION_PENDING','assemblyai',$2,$3,$4,$5,NULL,$6,$7,$8,NULL,$9,NULL)
+           ON CONFLICT DO NOTHING RETURNING id`,
+          [auditId, row.batch_id, row.asset_id, input.workItemId, input.deletionGeneration,
+            input.uploadUrlSha256, input.errorCode, input.providerRetentionNotBefore, input.failedAt]
+        );
+        let orphanAuditId = inserted.rows[0]?.id;
+        if (!orphanAuditId) {
+          const existing = await client.query(
+            `SELECT id FROM amc_practice.learning_batch_provider_orphan_audit
+             WHERE provider = 'assemblyai' AND event = 'PROVIDER_RETENTION_PENDING'
+               AND upload_url_hash = $1`, [input.uploadUrlSha256]
+          );
+          orphanAuditId = existing.rows[0]?.id;
+        }
+        if (!orphanAuditId) throw new Error('Provider orphan audit idempotency resolution failed.');
+        await client.query(
+          `INSERT INTO amc_practice.learning_batch_provider_orphan_cleanup_jobs
+           (id, orphan_audit_id, batch_id, cleanup_kind, provider, external_id, status,
+            attempt_count, available_at, lease_owner, lease_token, lease_expires_at,
+            last_error_code, created_at, updated_at)
+           VALUES ($1,$2,$3,'OBSERVE_RETENTION_WINDOW','assemblyai',NULL,'QUEUED',0,$4,
+             NULL,NULL,NULL,$5,$6,$6)
+           ON CONFLICT (orphan_audit_id) DO NOTHING`,
+          [randomUUID(), orphanAuditId, row.batch_id, input.providerRetentionNotBefore,
+            input.errorCode, input.failedAt]
+        );
+      }
+      const retry = input.retryable === true;
+      const availableAt = transcriptionRetryAt(input.failedAt, row.attempt_count, input.retryAfterSeconds);
+      await client.query(
+        `UPDATE amc_practice.learning_batch_work_items
+         SET status = $2, available_at = $3, lease_owner = NULL, lease_token = NULL,
+             lease_expires_at = NULL, last_error_code = $4, updated_at = $5 WHERE id = $1`,
+        [input.workItemId, retry ? 'QUEUED' : 'FAILED', availableAt, input.errorCode, input.failedAt]
+      );
+      if (!retry) {
+        await client.query(
+          `UPDATE amc_practice.learning_batches
+           SET status = 'FAILED', failure_code = $2, updated_at = $3 WHERE id = $1`,
+          [row.batch_id, input.errorCode, input.failedAt]
+        );
+      }
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async recordPollPending(input) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const row = await lockTranscriptionAggregate(client, { ...input, now: input.polledAt });
+      if (!row || row.artifact_status !== 'ACTIVE' || row.external_id !== input.providerTranscriptId) {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      const availableAt = transcriptionRetryAt(input.polledAt, row.attempt_count);
+      await client.query(
+        `UPDATE amc_practice.learning_batch_work_items
+         SET status = 'QUEUED', available_at = $2, lease_owner = NULL, lease_token = NULL,
+             lease_expires_at = NULL, last_error_code = NULL, updated_at = $3 WHERE id = $1`,
+        [input.workItemId, availableAt, input.polledAt]
+      );
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async persistNormalizedTranscriptAndScheduleDeletion(input) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const row = await lockTranscriptionAggregate(client, { ...input, now: input.completedAt });
+      if (!row || row.artifact_status !== 'ACTIVE' || row.external_id !== input.providerTranscriptId
+          || row.asset_status !== 'STORED') {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      await client.query(
+        `INSERT INTO amc_practice.learning_batch_evidence
+         (asset_id, batch_id, source_kind, normalized_text, normalized_sha256,
+          duration_ms, transcript_confidence, created_at, purged_at)
+         VALUES ($1,$2,'AUDIO_TRANSCRIPT',$3,$4,$5,$6,$7,NULL)`,
+        [row.asset_id, row.batch_id, input.transcriptText, input.transcriptSha256,
+          Math.max(1, Math.round(input.audioDurationSeconds * 1_000)), input.confidence, input.completedAt]
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_batch_assets
+         SET status = 'PURGE_PENDING', normalized_at = $2, updated_at = $2 WHERE id = $1`,
+        [row.asset_id, input.completedAt]
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_batch_provider_artifacts
+         SET status = 'DELETE_PENDING', updated_at = $2 WHERE id = $1`,
+        [row.artifact_id, input.completedAt]
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_batch_work_items
+         SET status = 'QUEUED', available_at = $2, lease_owner = NULL, lease_token = NULL,
+             lease_expires_at = NULL, last_error_code = NULL, updated_at = $2 WHERE id = $1`,
+        [input.workItemId, input.completedAt]
+      );
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async failTranscriptionAndScheduleDeletion(input) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const row = await lockTranscriptionAggregate(client, { ...input, now: input.failedAt });
+      if (!row || row.artifact_status !== 'ACTIVE' || row.external_id !== input.providerTranscriptId) {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      await client.query(
+        `UPDATE amc_practice.learning_batch_assets
+         SET status = 'PURGE_PENDING', updated_at = $2 WHERE id = $1 AND status = 'STORED'`,
+        [row.asset_id, input.failedAt]
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_batch_provider_artifacts
+         SET status = 'DELETE_PENDING', updated_at = $2 WHERE id = $1`,
+        [row.artifact_id, input.failedAt]
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_batch_work_items
+         SET status = 'QUEUED', available_at = $2, lease_owner = NULL, lease_token = NULL,
+             lease_expires_at = NULL, last_error_code = $3, updated_at = $2 WHERE id = $1`,
+        [input.workItemId, input.failedAt, input.errorCode]
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_batches
+         SET status = 'FAILED', failure_code = $2, updated_at = $3 WHERE id = $1`,
+        [row.batch_id, input.errorCode, input.failedAt]
+      );
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async recordPollFailure(input) {
+    if (input.scheduleDeletion) return this.failTranscriptionAndScheduleDeletion(input);
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const row = await lockTranscriptionAggregate(client, { ...input, now: input.failedAt });
+      if (!row || row.artifact_status !== 'ACTIVE' || row.external_id !== input.providerTranscriptId) {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      await client.query(
+        `UPDATE amc_practice.learning_batch_work_items
+         SET status = 'QUEUED', available_at = $2, lease_owner = NULL, lease_token = NULL,
+             lease_expires_at = NULL, last_error_code = $3, updated_at = $4 WHERE id = $1`,
+        [input.workItemId, transcriptionRetryAt(input.failedAt, row.attempt_count, input.retryAfterSeconds),
+          input.errorCode, input.failedAt]
+      );
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async recordLocalAudioPurged(input) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const row = await lockTranscriptionAggregate(client, { ...input, now: input.purgedAt }, { activeRequired: false });
+      if (!row || row.artifact_status !== 'DELETE_PENDING'
+          || row.external_id !== input.providerTranscriptId || row.asset_status !== 'PURGE_PENDING') {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      await client.query(
+        `UPDATE amc_practice.learning_batch_assets
+         SET storage_key = NULL, status = 'PURGED', purged_at = $2, updated_at = $2 WHERE id = $1`,
+        [row.asset_id, input.purgedAt]
+      );
+      if (input.localObjectFound === false) {
+        await client.query(
+          `INSERT INTO amc_practice.learning_batch_provider_orphan_audit
+           (id, event, provider, batch_id, asset_id, work_item_id, deletion_generation,
+            external_id, upload_url_hash, error_code, retention_not_before,
+            evidence_code, created_at, evidenced_at)
+           VALUES ($1,'LOCAL_AUDIO_ALREADY_ABSENT','local',$2,$3,$4,$5,NULL,NULL,NULL,NULL,
+             'idempotent-local-purge-replay',$6,$6)`,
+          [randomUUID(), row.batch_id, row.asset_id, input.workItemId,
+            input.deletionGeneration, input.purgedAt]
+        );
+      }
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async recordResolvedOrphanLocalAudioPurged(input) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const row = await lockTranscriptionAggregate(
+        client, { ...input, now: input.purgedAt }, { activeRequired: false }
+      );
+      if (!row || !['DELETION_EVIDENCED','PROVIDER_RETENTION_PENDING',
+        'PROVIDER_RETENTION_DELETION_CONFIRMED'].includes(row.artifact_status)
+          || (row.artifact_status === 'DELETION_EVIDENCED'
+            ? row.external_id !== input.providerTranscriptId
+            : input.providerTranscriptId !== null || row.external_id !== null)
+          || row.asset_status !== 'PURGE_PENDING') {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      await client.query(
+        `UPDATE amc_practice.learning_batch_assets
+         SET storage_key = NULL, status = 'PURGED', purged_at = $2, updated_at = $2 WHERE id = $1`,
+        [row.asset_id, input.purgedAt]
+      );
+      if (input.localObjectFound === false) {
+        await client.query(
+          `INSERT INTO amc_practice.learning_batch_provider_orphan_audit
+           (id, event, provider, batch_id, asset_id, work_item_id, deletion_generation,
+            external_id, upload_url_hash, error_code, retention_not_before,
+            evidence_code, created_at, evidenced_at)
+           VALUES ($1,'LOCAL_AUDIO_ALREADY_ABSENT','local',$2,$3,$4,$5,NULL,NULL,NULL,NULL,
+             'idempotent-local-purge-replay',$6,$6)`,
+          [randomUUID(), row.batch_id, row.asset_id, input.workItemId,
+            input.deletionGeneration, input.purgedAt]
+        );
+      }
+      await client.query(
+        `UPDATE amc_practice.learning_batch_work_items
+         SET status = 'FAILED', lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+             last_error_code = $3, updated_at = $2
+         WHERE id = $1`, [input.workItemId, input.purgedAt,
+          row.artifact_status === 'DELETION_EVIDENCED'
+            ? 'AMBIGUOUS_SUBMIT_PROVIDER_DELETED' : 'UPLOAD_CALL_OUTCOME_AMBIGUOUS']
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_batches b
+         SET deletion_state = 'COMPLETE', updated_at = $2
+         WHERE b.id = $1 AND b.deletion_state IN ('PROVIDER_DELETE_PENDING','PROVIDER_RETENTION_PENDING')
+           AND NOT EXISTS (
+             SELECT 1 FROM amc_practice.learning_batch_assets a
+             WHERE a.batch_id = b.id AND a.status NOT IN ('PURGED','REJECTED')
+           )
+           AND NOT EXISTS (
+             SELECT 1 FROM amc_practice.learning_batch_provider_artifacts p
+             WHERE p.batch_id = b.id
+               AND p.status NOT IN ('DELETION_EVIDENCED','PROVIDER_RETENTION_DELETION_CONFIRMED')
+           )
+           AND NOT EXISTS (
+             SELECT 1 FROM amc_practice.learning_batch_provider_orphan_cleanup_jobs pending
+             WHERE pending.batch_id = b.id AND pending.status NOT IN ('SUCCEEDED','SUPERSEDED')
+           )`, [row.batch_id, input.purgedAt]
+      );
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async recordDeletionEvidence(input) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const row = await lockTranscriptionAggregate(client, { ...input, now: input.evidencedAt }, { activeRequired: false });
+      if (!row || row.artifact_status !== 'DELETE_PENDING'
+          || row.external_id !== input.providerTranscriptId || row.asset_status !== 'PURGED') {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      await client.query(
+        `UPDATE amc_practice.learning_batch_provider_artifacts
+         SET status = 'DELETION_EVIDENCED', deletion_evidence_code = $2,
+             deletion_evidenced_at = $3, last_delete_error_code = NULL, updated_at = $3
+         WHERE id = $1`, [row.artifact_id, input.evidenceType, input.evidencedAt]
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_batch_work_items
+         SET status = 'SUCCEEDED', lease_owner = NULL, lease_token = NULL,
+             lease_expires_at = NULL, last_error_code = NULL, updated_at = $2 WHERE id = $1`,
+        [input.workItemId, input.evidencedAt]
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_batch_work_items extraction
+         SET status = 'QUEUED', available_at = $2, updated_at = $2
+         WHERE extraction.batch_id = $1 AND extraction.work_type = 'BATCH_EXTRACTION'
+           AND extraction.status = 'BLOCKED_DEPENDENCY'
+           AND NOT EXISTS (
+             SELECT 1 FROM amc_practice.learning_batch_work_items audio
+             WHERE audio.batch_id = extraction.batch_id AND audio.work_type = 'TRANSCRIBE_AUDIO'
+               AND audio.status <> 'SUCCEEDED'
+           )`, [row.batch_id, input.evidencedAt]
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_batches b
+         SET deletion_state = 'COMPLETE', updated_at = $2
+         WHERE b.id = $1 AND b.deletion_state IN ('PROVIDER_DELETE_PENDING','PROVIDER_RETENTION_PENDING')
+           AND NOT EXISTS (
+             SELECT 1 FROM amc_practice.learning_batch_provider_artifacts p
+             WHERE p.batch_id = b.id
+               AND p.status NOT IN ('DELETION_EVIDENCED','PROVIDER_RETENTION_DELETION_CONFIRMED')
+           )
+           AND NOT EXISTS (
+             SELECT 1 FROM amc_practice.learning_batch_provider_orphan_cleanup_jobs j
+             WHERE j.batch_id = b.id AND j.status NOT IN ('SUCCEEDED','SUPERSEDED')
+           )`, [row.batch_id, input.evidencedAt]
+      );
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async recordDeletionRetry(input) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const row = await lockTranscriptionAggregate(client, { ...input, now: input.attemptedAt }, { activeRequired: false });
+      if (!row || row.artifact_status !== 'DELETE_PENDING'
+          || row.external_id !== input.providerTranscriptId) {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      const availableAt = transcriptionRetryAt(input.attemptedAt, row.attempt_count, input.retryAfterSeconds);
+      await client.query(
+        `UPDATE amc_practice.learning_batch_provider_artifacts
+         SET delete_attempt_count = delete_attempt_count + 1, last_delete_attempt_at = $2,
+             last_delete_error_code = $3, next_delete_attempt_at = $4, updated_at = $2 WHERE id = $1`,
+        [row.artifact_id, input.attemptedAt, input.errorCode, availableAt]
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_batch_work_items
+         SET status = 'QUEUED', available_at = $2, lease_owner = NULL, lease_token = NULL,
+             lease_expires_at = NULL, last_error_code = $3, updated_at = $4 WHERE id = $1`,
+        [input.workItemId, availableAt, input.errorCode, input.attemptedAt]
+      );
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async recordProviderOrphanAudit(event) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const uploadHash = event.uploadUrlSha256 || null;
+      const externalId = event.providerTranscriptId || null;
+      const createdAt = event.createdAt || event.attemptedAt || event.detectedAt
+        || event.evidencedAt || new Date();
+      let batchId = event.batchId || null;
+      let assetId = event.assetId || null;
+      if (event.workItemId) {
+        const aggregate = await client.query(
+          `SELECT batch_id, asset_id FROM amc_practice.learning_batch_work_items WHERE id = $1`,
+          [event.workItemId]
+        );
+        batchId ||= aggregate.rows[0]?.batch_id || null;
+        assetId ||= aggregate.rows[0]?.asset_id || null;
+      }
+      const evidenceCode = event.event.endsWith('EVIDENCED')
+        ? (event.evidenceType || event.evidenceCode || null)
+        : event.event === 'LOCAL_AUDIO_ALREADY_ABSENT'
+          ? 'idempotent-local-purge-replay' : null;
+      const auditId = randomUUID();
+      const inserted = await client.query(
+        `INSERT INTO amc_practice.learning_batch_provider_orphan_audit
+         (id, source_audit_id, event, provider, batch_id, asset_id, work_item_id,
+          deletion_generation, provider_call_id, external_id, upload_url_hash, error_code,
+          retention_not_before, evidence_code, created_at, evidenced_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+         ON CONFLICT DO NOTHING RETURNING id, batch_id, asset_id, deletion_generation,
+           provider_call_id, external_id, upload_url_hash, retention_not_before, created_at`,
+        [auditId, event.sourceAuditId || null, event.event, event.provider, batchId, assetId,
+          event.workItemId || null, event.deletionGeneration, event.providerCallId || null, externalId, uploadHash,
+          event.errorCode || null, event.providerRetentionNotBefore || null, evidenceCode,
+          createdAt, event.evidencedAt || null]
+      );
+      let audit = inserted.rows[0];
+      const pending = ['PROVIDER_RETENTION_PENDING', 'ORPHAN_TRANSCRIPT_DELETE_PENDING']
+        .includes(event.event);
+      if (!audit && pending) {
+        const existing = await client.query(
+          `SELECT id, batch_id, asset_id, deletion_generation, provider_call_id, external_id, upload_url_hash,
+                  retention_not_before, created_at
+           FROM amc_practice.learning_batch_provider_orphan_audit
+           WHERE provider = $1 AND event = $2
+             AND (($3::text IS NOT NULL AND external_id = $3)
+               OR ($4::char(64) IS NOT NULL AND upload_url_hash = $4)
+               OR ($5::uuid IS NOT NULL AND provider_call_id = $5))`,
+          [event.provider, event.event, externalId, uploadHash, event.providerCallId || null]
+        );
+        audit = existing.rows[0];
+      }
+      if (!audit) {
+        await client.query('COMMIT');
+        return true;
+      }
+      if (event.event === 'ORPHAN_TRANSCRIPT_DELETION_EVIDENCED' && event.providerCallId) {
+        const resolved = await client.query(
+          `UPDATE amc_practice.learning_batch_provider_artifacts
+           SET external_id = $2, submitted_at = submit_call_started_at,
+               status = 'DELETION_EVIDENCED', provider_retention_not_before = NULL,
+               retention_profile = NULL, retention_policy_delay_ms = NULL,
+               upload_request_max_duration_ms = NULL, retention_processing_slack_ms = NULL,
+               retention_window_elapsed_at = NULL,
+               deletion_evidence_code = $3, deletion_evidenced_at = $4, updated_at = $4
+           WHERE submit_call_id = $1 AND status = 'SUBMIT_MAY_HAVE_DELIVERED'
+           RETURNING batch_id, asset_id, upload_call_id, upload_url_hash`,
+          [event.providerCallId, externalId, evidenceCode, event.evidencedAt || createdAt]
+        );
+        if (resolved.rowCount) {
+          const uploadSource = await client.query(
+            `SELECT pending.id, pending.retention_not_before,
+                    COALESCE((SELECT elapsed.id
+                      FROM amc_practice.learning_batch_provider_orphan_audit elapsed
+                      WHERE elapsed.source_audit_id = pending.id
+                        AND elapsed.event = 'PROVIDER_RETENTION_WINDOW_ELAPSED'), pending.id)
+                      AS binding_source_id
+             FROM amc_practice.learning_batch_provider_orphan_audit pending
+             WHERE pending.provider = 'assemblyai' AND pending.event = 'PROVIDER_RETENTION_PENDING'
+               AND pending.provider_call_id = $1`, [resolved.rows[0].upload_call_id]
+          );
+          if (uploadSource.rowCount) {
+            await client.query(
+              `INSERT INTO amc_practice.learning_batch_provider_orphan_audit
+               (id, source_audit_id, event, provider, batch_id, asset_id, work_item_id,
+                deletion_generation, provider_call_id, external_id, upload_url_hash, error_code,
+                retention_not_before, evidence_code, created_at, evidenced_at)
+               VALUES ($1,$2,'UPLOAD_CALL_BOUND_TO_TRANSCRIPT','assemblyai',$3,$4,$5,$6,$7,$8,$9,
+                 NULL,$10,'provider-transcript-bound-for-delete',$11,$11)
+               ON CONFLICT DO NOTHING`,
+              [randomUUID(), uploadSource.rows[0].binding_source_id, resolved.rows[0].batch_id,
+                resolved.rows[0].asset_id, event.workItemId || null, event.deletionGeneration,
+                resolved.rows[0].upload_call_id, externalId, resolved.rows[0].upload_url_hash,
+                uploadSource.rows[0].retention_not_before, event.evidencedAt || createdAt]
+            );
+            await client.query(
+              `UPDATE amc_practice.learning_batch_provider_orphan_cleanup_jobs
+               SET status = 'SUPERSEDED', lease_owner = NULL, lease_token = NULL,
+                   lease_expires_at = NULL, last_error_code = NULL, updated_at = $2
+               WHERE orphan_audit_id = $1
+                 AND status IN ('QUEUED','RUNNING','MANUAL_VERIFICATION_REQUIRED')`,
+              [uploadSource.rows[0].id, event.evidencedAt || createdAt]
+            );
+          }
+          await client.query(
+            `UPDATE amc_practice.learning_batch_assets
+             SET status = CASE WHEN status = 'STORED' THEN 'PURGE_PENDING' ELSE status END,
+                 updated_at = $2 WHERE id = $1`,
+            [resolved.rows[0].asset_id, event.evidencedAt || createdAt]
+          );
+          if (event.workItemId) await client.query(
+            `UPDATE amc_practice.learning_batch_work_items
+             SET status = CASE WHEN EXISTS (
+                   SELECT 1 FROM amc_practice.learning_batch_assets a
+                   WHERE a.id = $3 AND a.status = 'PURGE_PENDING'
+                 ) THEN 'QUEUED' ELSE 'FAILED' END,
+                 available_at = $2,
+                 lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+                 last_error_code = 'AMBIGUOUS_SUBMIT_PROVIDER_DELETED', updated_at = $2
+             WHERE id = $1`, [event.workItemId, event.evidencedAt || createdAt, resolved.rows[0].asset_id]
+          );
+          await client.query(
+            `UPDATE amc_practice.learning_batches
+             SET status = 'FAILED', failure_code = 'AMBIGUOUS_SUBMIT_PROVIDER_DELETED', updated_at = $2
+             WHERE id = $1 AND status = 'PROCESSING'`,
+            [resolved.rows[0].batch_id, event.evidencedAt || createdAt]
+          );
+        }
+      }
+      if (pending) {
+        const cleanupKind = event.event === 'PROVIDER_RETENTION_PENDING'
+          ? 'OBSERVE_RETENTION_WINDOW' : 'DELETE_TRANSCRIPT';
+        await client.query(
+          `INSERT INTO amc_practice.learning_batch_provider_orphan_cleanup_jobs
+           (id, orphan_audit_id, batch_id, cleanup_kind, provider, external_id, status,
+            attempt_count, available_at, lease_owner, lease_token, lease_expires_at,
+            last_error_code, created_at, updated_at)
+           VALUES ($1,$2,$3,$4,'assemblyai',$5,'QUEUED',0,$6,NULL,NULL,NULL,$7,$8,$8)
+           ON CONFLICT (orphan_audit_id) DO NOTHING`,
+          [randomUUID(), audit.id, audit.batch_id, cleanupKind, audit.external_id,
+            cleanupKind === 'OBSERVE_RETENTION_WINDOW' ? audit.retention_not_before : audit.created_at,
+            event.errorCode || null, audit.created_at]
+        );
+        if (audit.batch_id) {
+          await client.query(
+            `UPDATE amc_practice.learning_batches
+             SET deletion_state = CASE WHEN $4 = 'PROVIDER_RETENTION_PENDING'
+                    THEN 'PROVIDER_RETENTION_PENDING' ELSE 'PROVIDER_DELETE_PENDING' END,
+                 updated_at = $2
+             WHERE id = $1 AND deletion_state IN ('LOCAL_PURGED','COMPLETE')
+               AND EXISTS (
+                 SELECT 1 FROM amc_practice.learning_batch_provider_orphan_cleanup_jobs pending
+                 WHERE pending.orphan_audit_id = $3 AND pending.status NOT IN ('SUCCEEDED','SUPERSEDED')
+               )`,
+            [audit.batch_id, createdAt, audit.id, event.event]
+          );
+        }
+      }
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async claimNextProviderOrphanCleanup({ workerId, now, leaseMs }) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(
+        `UPDATE amc_practice.learning_batch_provider_orphan_cleanup_jobs
+         SET status = 'QUEUED', available_at = $1, lease_owner = NULL, lease_token = NULL,
+             lease_expires_at = NULL, last_error_code = 'LEASE_EXPIRED', updated_at = $1
+         WHERE status = 'RUNNING' AND lease_expires_at <= $1`, [now]
+      );
+      const selected = await client.query(
+        `SELECT j.*, a.deletion_generation
+         FROM amc_practice.learning_batch_provider_orphan_cleanup_jobs j
+         JOIN amc_practice.learning_batch_provider_orphan_audit a ON a.id = j.orphan_audit_id
+         WHERE j.status = 'QUEUED' AND j.available_at <= $1
+         ORDER BY j.available_at, j.created_at, j.id
+         FOR UPDATE OF j SKIP LOCKED LIMIT 1`, [now]
+      );
+      if (!selected.rowCount) {
+        await client.query('COMMIT');
+        return null;
+      }
+      const leaseToken = randomUUID();
+      const leaseExpiresAt = new Date(new Date(now).getTime() + leaseMs);
+      const updated = await client.query(
+        `UPDATE amc_practice.learning_batch_provider_orphan_cleanup_jobs
+         SET status = 'RUNNING', attempt_count = attempt_count + 1, lease_owner = $2,
+             lease_token = $3, lease_expires_at = $4, updated_at = $5
+         WHERE id = $1 RETURNING *`,
+        [selected.rows[0].id, workerId, leaseToken, leaseExpiresAt, now]
+      );
+      await client.query('COMMIT');
+      return mapProviderOrphanCleanupJob({
+        ...updated.rows[0], deletion_generation: selected.rows[0].deletion_generation
+      });
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async authorizeProviderOrphanCall({ jobId, leaseToken, externalId, now, providerBudget }) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const authorized = await client.query(
+        `SELECT j.*, b.student_id
+         FROM amc_practice.learning_batch_provider_orphan_cleanup_jobs j
+         LEFT JOIN amc_practice.learning_batches b ON b.id = j.batch_id
+         WHERE j.id = $1 AND j.cleanup_kind = 'DELETE_TRANSCRIPT' AND j.status = 'RUNNING'
+           AND j.lease_token = $2 AND j.external_id = $3 AND j.lease_expires_at > $4
+         FOR UPDATE OF j`,
+        [jobId, leaseToken, externalId, now]
+      );
+      const row = authorized.rows[0];
+      if (!row || !providerBudget) {
+        await client.query('COMMIT');
+        return Boolean(row);
+      }
+      await client.query('SAVEPOINT provider_orphan_budget');
+      const student = row.student_id && Number.isSafeInteger(providerBudget.studentLimit)
+        ? await consumeStudentBudgetUsing(client, {
+          studentId: row.student_id, budgetKind: 'PROVIDER_WORK', units: 1,
+          limit: providerBudget.studentLimit, windowMs: providerBudget.windowMs, now
+        }) : { allowed: true, retryAfterSeconds: 0 };
+      const global = await consumeGlobalBudgetUsing(client, {
+        budgetKind: providerBudget.budgetKind || 'PROVIDER_WORK', units: 1,
+        limit: providerBudget.globalLimit, windowMs: providerBudget.windowMs, now
+      });
+      if (!student.allowed || !global.allowed) {
+        await client.query('ROLLBACK TO SAVEPOINT provider_orphan_budget');
+        const retryAfterSeconds = Math.max(student.retryAfterSeconds || 1, global.retryAfterSeconds || 1);
+        await client.query(
+          `UPDATE amc_practice.learning_batch_provider_orphan_cleanup_jobs
+           SET status = 'QUEUED', available_at = $2::timestamptz
+                 + ($3::text || ' seconds')::interval,
+               lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+               last_error_code = 'PROVIDER_BUDGET_EXHAUSTED', updated_at = $2
+           WHERE id = $1`, [jobId, now, retryAfterSeconds]
+        );
+        await client.query('COMMIT');
+        return false;
+      }
+      await client.query('RELEASE SAVEPOINT provider_orphan_budget');
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async completeProviderOrphanCleanup({ jobId, leaseToken, evidenceType, now }) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const locked = await client.query(
+        `SELECT j.*, a.event AS source_event, a.batch_id AS source_batch_id,
+                a.asset_id, a.work_item_id, a.deletion_generation, a.external_id AS source_external_id,
+                a.upload_url_hash, a.retention_not_before, a.provider_call_id
+         FROM amc_practice.learning_batch_provider_orphan_cleanup_jobs j
+         JOIN amc_practice.learning_batch_provider_orphan_audit a ON a.id = j.orphan_audit_id
+         WHERE j.id = $1 FOR UPDATE OF j`, [jobId]
+      );
+      const row = locked.rows[0];
+      if (!row || row.status !== 'RUNNING' || row.lease_token !== leaseToken
+          || new Date(row.lease_expires_at).getTime() <= new Date(now).getTime()) {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      const isRetentionWindow = row.cleanup_kind === 'OBSERVE_RETENTION_WINDOW';
+      const validEvidence = isRetentionWindow
+        ? evidenceType === 'provider-retention-window-elapsed'
+          && new Date(row.available_at).getTime() <= new Date(now).getTime()
+        : ['provider-delete-response', 'provider-already-absent'].includes(evidenceType);
+      if (!validEvidence) {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      await client.query(
+        `INSERT INTO amc_practice.learning_batch_provider_orphan_audit
+         (id, source_audit_id, event, provider, batch_id, asset_id, work_item_id,
+          deletion_generation, provider_call_id, external_id, upload_url_hash, error_code,
+          retention_not_before, evidence_code, created_at, evidenced_at)
+         VALUES ($1,$2,$3,'assemblyai',$4,$5,$6,$7,$8,$9,$10,NULL,$11,$12,$13,$13)`,
+        [randomUUID(), row.orphan_audit_id,
+          isRetentionWindow ? 'PROVIDER_RETENTION_WINDOW_ELAPSED'
+            : 'ORPHAN_TRANSCRIPT_DELETION_EVIDENCED',
+          row.source_batch_id, row.asset_id, row.work_item_id, row.deletion_generation,
+          row.provider_call_id, row.source_external_id, row.upload_url_hash,
+          row.retention_not_before, evidenceType, now]
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_batch_provider_orphan_cleanup_jobs
+         SET status = $3, lease_owner = NULL, lease_token = NULL,
+             lease_expires_at = NULL, last_error_code = NULL, updated_at = $2
+         WHERE id = $1`, [jobId, now,
+          isRetentionWindow ? 'MANUAL_VERIFICATION_REQUIRED' : 'SUCCEEDED']
+      );
+      if (!isRetentionWindow && row.provider_call_id && row.work_item_id) {
+        const resolved = await client.query(
+          `UPDATE amc_practice.learning_batch_provider_artifacts p
+           SET external_id = $2, submitted_at = submit_call_started_at,
+               status = 'DELETION_EVIDENCED', provider_retention_not_before = NULL,
+               retention_profile = NULL, retention_policy_delay_ms = NULL,
+               upload_request_max_duration_ms = NULL, retention_processing_slack_ms = NULL,
+               retention_window_elapsed_at = NULL,
+               deletion_evidence_code = $3, deletion_evidenced_at = $4, updated_at = $4
+           FROM amc_practice.learning_batch_work_items w
+           WHERE p.batch_id = w.batch_id AND p.asset_id = w.asset_id
+             AND w.id = $1 AND p.submit_call_id = $5
+             AND p.status = 'SUBMIT_MAY_HAVE_DELIVERED'
+           RETURNING p.batch_id, p.asset_id, p.upload_call_id, p.upload_url_hash`,
+          [row.work_item_id, row.source_external_id, evidenceType, now, row.provider_call_id]
+        );
+        if (resolved.rowCount) {
+          const uploadSource = await client.query(
+            `SELECT pending.id, pending.retention_not_before,
+                    COALESCE((SELECT elapsed.id
+                      FROM amc_practice.learning_batch_provider_orphan_audit elapsed
+                      WHERE elapsed.source_audit_id = pending.id
+                        AND elapsed.event = 'PROVIDER_RETENTION_WINDOW_ELAPSED'), pending.id)
+                      AS binding_source_id
+             FROM amc_practice.learning_batch_provider_orphan_audit pending
+             WHERE pending.provider = 'assemblyai' AND pending.event = 'PROVIDER_RETENTION_PENDING'
+               AND pending.provider_call_id = $1`, [resolved.rows[0].upload_call_id]
+          );
+          if (uploadSource.rowCount) {
+            await client.query(
+              `INSERT INTO amc_practice.learning_batch_provider_orphan_audit
+               (id, source_audit_id, event, provider, batch_id, asset_id, work_item_id,
+                deletion_generation, provider_call_id, external_id, upload_url_hash, error_code,
+                retention_not_before, evidence_code, created_at, evidenced_at)
+               VALUES ($1,$2,'UPLOAD_CALL_BOUND_TO_TRANSCRIPT','assemblyai',$3,$4,$5,$6,$7,$8,$9,
+                 NULL,$10,'provider-transcript-bound-for-delete',$11,$11)
+               ON CONFLICT DO NOTHING`,
+              [randomUUID(), uploadSource.rows[0].binding_source_id, resolved.rows[0].batch_id,
+                resolved.rows[0].asset_id, row.work_item_id, row.deletion_generation,
+                resolved.rows[0].upload_call_id, row.source_external_id,
+                resolved.rows[0].upload_url_hash, uploadSource.rows[0].retention_not_before, now]
+            );
+            await client.query(
+              `UPDATE amc_practice.learning_batch_provider_orphan_cleanup_jobs
+               SET status = 'SUPERSEDED', lease_owner = NULL, lease_token = NULL,
+                   lease_expires_at = NULL, last_error_code = NULL, updated_at = $2
+               WHERE orphan_audit_id = $1
+                 AND status IN ('QUEUED','RUNNING','MANUAL_VERIFICATION_REQUIRED')`,
+              [uploadSource.rows[0].id, now]
+            );
+          }
+          await client.query(
+            `UPDATE amc_practice.learning_batch_assets
+             SET status = CASE WHEN status = 'STORED' THEN 'PURGE_PENDING' ELSE status END,
+                 updated_at = $2 WHERE id = $1`,
+            [resolved.rows[0].asset_id, now]
+          );
+          await client.query(
+            `UPDATE amc_practice.learning_batch_work_items
+             SET status = CASE WHEN EXISTS (
+                   SELECT 1 FROM amc_practice.learning_batch_assets a
+                   WHERE a.id = $3 AND a.status = 'PURGE_PENDING'
+                 ) THEN 'QUEUED' ELSE 'FAILED' END,
+                 available_at = $2,
+                 lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+                 last_error_code = 'AMBIGUOUS_SUBMIT_PROVIDER_DELETED', updated_at = $2
+             WHERE id = $1`, [row.work_item_id, now, resolved.rows[0].asset_id]
+          );
+          await client.query(
+            `UPDATE amc_practice.learning_batches
+             SET status = 'FAILED', failure_code = 'AMBIGUOUS_SUBMIT_PROVIDER_DELETED', updated_at = $2
+             WHERE id = $1 AND status = 'PROCESSING'`,
+            [resolved.rows[0].batch_id, now]
+          );
+        }
+      }
+      if (row.source_batch_id) {
+        await client.query(
+          `UPDATE amc_practice.learning_batches b
+           SET deletion_state = 'COMPLETE', updated_at = $2
+           WHERE b.id = $1 AND b.deletion_state IN (
+             'PROVIDER_DELETE_PENDING','PROVIDER_RETENTION_PENDING'
+           )
+             AND NOT EXISTS (
+               SELECT 1 FROM amc_practice.learning_batch_assets a
+               WHERE a.batch_id = b.id AND a.status NOT IN ('PURGED','REJECTED')
+             )
+             AND NOT EXISTS (
+               SELECT 1 FROM amc_practice.learning_batch_provider_artifacts p
+               WHERE p.batch_id = b.id
+                 AND p.status NOT IN ('DELETION_EVIDENCED','PROVIDER_RETENTION_DELETION_CONFIRMED')
+             )
+             AND NOT EXISTS (
+               SELECT 1 FROM amc_practice.learning_batch_provider_orphan_cleanup_jobs pending
+               WHERE pending.batch_id = b.id AND pending.status NOT IN ('SUCCEEDED','SUPERSEDED')
+             )`, [row.source_batch_id, now]
+        );
+      }
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async confirmProviderRetentionDeletion({
+    jobId, verificationAuthority, verificationReferenceHash, now
+  }) {
+    if (typeof verificationAuthority !== 'string'
+        || verificationAuthority.length < 3 || verificationAuthority.length > 200
+        || typeof verificationReferenceHash !== 'string'
+        || !/^[0-9a-f]{64}$/.test(verificationReferenceHash)) return false;
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const locked = await client.query(
+        `SELECT j.*, pending.batch_id AS source_batch_id, pending.asset_id,
+                pending.work_item_id, pending.deletion_generation,
+                pending.provider_call_id, pending.upload_url_hash,
+                pending.retention_not_before, elapsed.id AS elapsed_audit_id,
+                elapsed.evidenced_at AS retention_window_elapsed_at
+         FROM amc_practice.learning_batch_provider_orphan_cleanup_jobs j
+         JOIN amc_practice.learning_batch_provider_orphan_audit pending
+           ON pending.id = j.orphan_audit_id AND pending.event = 'PROVIDER_RETENTION_PENDING'
+         JOIN amc_practice.learning_batch_provider_orphan_audit elapsed
+           ON elapsed.source_audit_id = pending.id
+          AND elapsed.event = 'PROVIDER_RETENTION_WINDOW_ELAPSED'
+         WHERE j.id = $1 AND j.cleanup_kind = 'OBSERVE_RETENTION_WINDOW'
+           AND j.status = 'MANUAL_VERIFICATION_REQUIRED'
+         FOR UPDATE OF j`, [jobId]
+      );
+      if (!locked.rowCount) {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      const row = locked.rows[0];
+      if (row.work_item_id) {
+        const aggregate = await client.query(
+          `SELECT p.status AS artifact_status, p.upload_call_id AS artifact_upload_call_id
+           FROM amc_practice.learning_batch_work_items w
+           JOIN amc_practice.learning_batch_provider_artifacts p
+             ON p.batch_id = w.batch_id AND p.asset_id = w.asset_id
+           WHERE w.id = $1 FOR UPDATE OF w, p`, [row.work_item_id]
+        );
+        if (!aggregate.rowCount
+            || aggregate.rows[0].artifact_status !== 'PROVIDER_RETENTION_PENDING'
+            || aggregate.rows[0].artifact_upload_call_id !== row.provider_call_id) {
+          await client.query('ROLLBACK');
+          return false;
+        }
+      }
+      await client.query(
+        `INSERT INTO amc_practice.learning_batch_provider_orphan_audit
+         (id, source_audit_id, event, provider, batch_id, asset_id, work_item_id,
+          deletion_generation, provider_call_id, external_id, upload_url_hash, error_code,
+          retention_not_before, evidence_code, verification_authority,
+          verification_reference_hash, created_at, evidenced_at)
+         VALUES ($1,$2,'PROVIDER_RETENTION_DELETION_CONFIRMED','assemblyai',$3,$4,$5,$6,$7,
+           NULL,$8,NULL,$9,'independent-provider-deletion-confirmation',$10,$11,$12,$12)`,
+        [randomUUID(), row.elapsed_audit_id, row.source_batch_id, row.asset_id,
+          row.work_item_id, row.deletion_generation, row.provider_call_id,
+          row.upload_url_hash, row.retention_not_before, verificationAuthority,
+          verificationReferenceHash, now]
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_batch_provider_orphan_cleanup_jobs
+         SET status = 'SUCCEEDED', last_error_code = NULL, updated_at = $2 WHERE id = $1`,
+        [jobId, now]
+      );
+      if (row.work_item_id && row.provider_call_id) {
+        await client.query(
+          `UPDATE amc_practice.learning_batch_provider_artifacts p
+           SET status = 'PROVIDER_RETENTION_DELETION_CONFIRMED',
+               retention_verification_code = 'independent-provider-deletion-confirmation',
+               retention_window_elapsed_at = $5,
+               retention_verified_at = $3, updated_at = $3
+           FROM amc_practice.learning_batch_work_items w
+           WHERE p.batch_id = w.batch_id AND p.asset_id = w.asset_id
+             AND w.id = $1 AND w.deletion_generation = $2
+             AND p.upload_call_id = $4 AND p.status = 'PROVIDER_RETENTION_PENDING'`,
+          [row.work_item_id, row.deletion_generation, now, row.provider_call_id,
+            row.retention_window_elapsed_at]
+        );
+      }
+      if (row.source_batch_id) {
+        await client.query(
+          `UPDATE amc_practice.learning_batches b
+           SET deletion_state = 'COMPLETE', updated_at = $2
+           WHERE b.id = $1 AND b.deletion_state = 'PROVIDER_RETENTION_PENDING'
+             AND NOT EXISTS (
+               SELECT 1 FROM amc_practice.learning_batch_assets a
+               WHERE a.batch_id = b.id AND a.status NOT IN ('PURGED','REJECTED')
+             )
+             AND NOT EXISTS (
+               SELECT 1 FROM amc_practice.learning_batch_provider_artifacts p
+               WHERE p.batch_id = b.id
+                 AND p.status NOT IN ('DELETION_EVIDENCED','PROVIDER_RETENTION_DELETION_CONFIRMED')
+             )
+             AND NOT EXISTS (
+               SELECT 1 FROM amc_practice.learning_batch_provider_orphan_cleanup_jobs pending
+               WHERE pending.batch_id = b.id AND pending.status NOT IN ('SUCCEEDED','SUPERSEDED')
+             )`, [row.source_batch_id, now]
+        );
+      }
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async failProviderOrphanCleanup({ jobId, leaseToken, errorCode, retryAfterSeconds, now }) {
+    const availableAt = transcriptionRetryAt(now, 1, retryAfterSeconds);
+    const failed = await this.pool.query(
+      `UPDATE amc_practice.learning_batch_provider_orphan_cleanup_jobs
+       SET status = 'QUEUED', available_at = CASE
+             WHEN $4::integer IS NULL THEN $3::timestamptz + LEAST(300, power(2, LEAST(8, GREATEST(0, attempt_count - 1)))) * interval '1 second'
+             ELSE $5::timestamptz END,
+           lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+           last_error_code = $6, updated_at = $3::timestamptz
+       WHERE id = $1 AND status = 'RUNNING' AND lease_token = $2 AND lease_expires_at > $3::timestamptz`,
+      [jobId, leaseToken, now, Number.isSafeInteger(retryAfterSeconds) ? retryAfterSeconds : null,
+        availableAt, errorCode]
+    );
+    return failed.rowCount === 1;
+  }
+
+  async observePrivateStorageInventory({ objects, partials, now, graceMs, inventoryComplete = true }) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const referencedRows = await client.query(
+        `SELECT storage_key FROM amc_practice.learning_batch_assets WHERE storage_key IS NOT NULL`
+      );
+      const referenced = new Set(referencedRows.rows.map((row) => row.storage_key));
+      const observed = [
+        ...objects.map((value) => ({ kind: 'OBJECT', identity: value.storageKey, ...value })),
+        ...partials.map((value) => ({ kind: 'PARTIAL', identity: value.name, ...value }))
+      ];
+      const seen = [];
+      const deletable = [];
+      for (const item of observed) {
+        seen.push([item.kind, item.identity]);
+        if (item.kind === 'OBJECT' && referenced.has(item.identity)) {
+          await client.query(
+            `DELETE FROM amc_practice.private_storage_reconciliation_candidates
+             WHERE storage_kind = $1 AND storage_identity = $2 AND status = 'OBSERVED'`,
+            [item.kind, item.identity]
+          );
+          continue;
+        }
+        const existing = await client.query(
+          `SELECT * FROM amc_practice.private_storage_reconciliation_candidates
+           WHERE storage_kind = $1 AND storage_identity = $2 FOR UPDATE`, [item.kind, item.identity]
+        );
+        const row = existing.rows[0];
+        if (!row || number(row.observed_size) !== item.size || number(row.observed_mtime_ms) !== item.mtimeMs
+            || row.status === 'DELETED') {
+          await client.query(
+            `INSERT INTO amc_practice.private_storage_reconciliation_candidates
+             (storage_kind, storage_identity, observed_size, observed_mtime_ms, first_seen_at,
+              last_seen_at, observation_count, status, deletion_token, deletion_authorized_at, deleted_at)
+             VALUES ($1,$2,$3,$4,$5,$5,1,'OBSERVED',NULL,NULL,NULL)
+             ON CONFLICT (storage_kind, storage_identity) DO UPDATE
+             SET observed_size = EXCLUDED.observed_size, observed_mtime_ms = EXCLUDED.observed_mtime_ms,
+                 first_seen_at = EXCLUDED.first_seen_at, last_seen_at = EXCLUDED.last_seen_at,
+                 observation_count = 1, status = 'OBSERVED', deletion_token = NULL,
+                 deletion_authorized_at = NULL, deleted_at = NULL`,
+            [item.kind, item.identity, item.size, item.mtimeMs, now]
+          );
+          continue;
+        }
+        if (row.status === 'DELETING') {
+          if (new Date(now).getTime() - new Date(row.deletion_authorized_at).getTime() >= graceMs) {
+            await client.query(
+              `UPDATE amc_practice.private_storage_reconciliation_candidates
+               SET status = 'OBSERVED', deletion_token = NULL, deletion_authorized_at = NULL,
+                   last_seen_at = $3, observation_count = observation_count + 1
+               WHERE storage_kind = $1 AND storage_identity = $2`, [item.kind, item.identity, now]
+            );
+            deletable.push({ kind: item.kind,
+              ...(item.kind === 'OBJECT' ? { storageKey: item.identity } : { name: item.identity }),
+              size: item.size, mtimeMs: item.mtimeMs });
+          }
+          continue;
+        }
+        if (row.status !== 'OBSERVED') continue;
+        const updated = await client.query(
+          `UPDATE amc_practice.private_storage_reconciliation_candidates
+           SET last_seen_at = $3, observation_count = observation_count + 1
+           WHERE storage_kind = $1 AND storage_identity = $2 RETURNING *`,
+          [item.kind, item.identity, now]
+        );
+        const candidate = updated.rows[0];
+        if (candidate.observation_count >= 2
+            && new Date(now).getTime() - new Date(candidate.first_seen_at).getTime() >= graceMs) {
+          deletable.push({ kind: item.kind,
+            ...(item.kind === 'OBJECT' ? { storageKey: item.identity } : { name: item.identity }),
+            size: item.size, mtimeMs: item.mtimeMs });
+        }
+      }
+      if (inventoryComplete) {
+        const seenKeys = new Set(seen.map(([kind, identity]) => `${kind}:${identity}`));
+        const unresolved = await client.query(
+          `SELECT * FROM amc_practice.private_storage_reconciliation_candidates
+           WHERE status IN ('OBSERVED','DELETING') FOR UPDATE`
+        );
+        for (const candidate of unresolved.rows) {
+          if (seenKeys.has(`${candidate.storage_kind}:${candidate.storage_identity}`)) continue;
+          if (candidate.status === 'OBSERVED') {
+            await client.query(
+              `DELETE FROM amc_practice.private_storage_reconciliation_candidates
+               WHERE storage_kind = $1 AND storage_identity = $2`,
+              [candidate.storage_kind, candidate.storage_identity]
+            );
+          } else {
+            await client.query(
+              `UPDATE amc_practice.private_storage_reconciliation_candidates
+               SET status = 'DELETED', deleted_at = $3
+               WHERE storage_kind = $1 AND storage_identity = $2`,
+              [candidate.storage_kind, candidate.storage_identity, now]
+            );
+            await client.query(
+              `INSERT INTO amc_practice.private_storage_reconciliation_events
+               (id, storage_kind, storage_identity, event, observed_size, observed_mtime_ms, occurred_at)
+               VALUES ($1,$2,$3,'ORPHAN_DELETED',$4,$5,$6)`,
+              [randomUUID(), candidate.storage_kind, candidate.storage_identity,
+                candidate.observed_size, candidate.observed_mtime_ms, now]
+            );
+          }
+        }
+      }
+      const candidateCount = await client.query(
+        `SELECT count(*)::integer AS count FROM amc_practice.private_storage_reconciliation_candidates
+         WHERE status <> 'DELETED'`
+      );
+      await client.query('COMMIT');
+      return { deletable, referencedCount: referenced.size, candidateCount: candidateCount.rows[0].count };
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async authorizePrivateStorageDeletion({ kind, storageKey, name, size, mtimeMs, now }) {
+    const identity = kind === 'OBJECT' ? storageKey : name;
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(
+        "SELECT pg_advisory_xact_lock(hashtext('amc_private_storage'), hashtext($1))", [identity]
+      );
+      if (kind === 'OBJECT') {
+        const referenced = await client.query(
+          `SELECT 1 FROM amc_practice.learning_batch_assets WHERE storage_key = $1 LIMIT 1`, [identity]
+        );
+        if (referenced.rowCount) {
+          await client.query('ROLLBACK');
+          return null;
+        }
+      }
+      const deletionToken = randomUUID();
+      const updated = await client.query(
+        `UPDATE amc_practice.private_storage_reconciliation_candidates
+         SET status = 'DELETING', deletion_token = $5, deletion_authorized_at = $6
+         WHERE storage_kind = $1 AND storage_identity = $2 AND status = 'OBSERVED'
+           AND observed_size = $3 AND observed_mtime_ms = $4 RETURNING storage_identity`,
+        [kind, identity, size, mtimeMs, deletionToken, now]
+      );
+      await client.query('COMMIT');
+      return updated.rowCount ? deletionToken : null;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async recordPrivateStorageDeletion({ kind, identity, size, mtimeMs, deletionToken, deleted, deletedAt }) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const updated = await client.query(
+        `UPDATE amc_practice.private_storage_reconciliation_candidates
+         SET status = $6, deleted_at = CASE WHEN $7::boolean THEN $8::timestamptz ELSE NULL END,
+             deletion_token = CASE WHEN $7::boolean THEN deletion_token ELSE NULL END,
+             deletion_authorized_at = CASE WHEN $7::boolean THEN deletion_authorized_at ELSE NULL END
+         WHERE storage_kind = $1 AND storage_identity = $2 AND observed_size = $3
+           AND observed_mtime_ms = $4 AND status = 'DELETING' AND deletion_token = $5
+         RETURNING storage_identity`,
+        [kind, identity, size, mtimeMs, deletionToken, deleted ? 'DELETED' : 'OBSERVED', deleted, deletedAt]
+      );
+      if (!updated.rowCount) {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      await client.query(
+        `INSERT INTO amc_practice.private_storage_reconciliation_events
+         (id, storage_kind, storage_identity, event, observed_size, observed_mtime_ms, occurred_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+        [randomUUID(), kind, identity, deleted ? 'ORPHAN_DELETED' : 'DELETE_TARGET_CHANGED',
+          size, mtimeMs, deletedAt]
+      );
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async expireLearningBatchReservations({ now, writingTtlMs, draftTtlMs, limit }) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query("SELECT pg_advisory_xact_lock(hashtext('amc_batch_reconciler'), 0)");
+      const reset = await client.query(
+        `UPDATE amc_practice.learning_batch_assets a
+         SET status = 'RESERVED', writing_started_at = NULL, upload_idempotency_key = NULL,
+             last_error_code = 'WRITING_LEASE_EXPIRED', updated_at = $1
+         FROM amc_practice.learning_batches b
+         WHERE a.batch_id = b.id AND b.status = 'DRAFT' AND b.deletion_state = 'ACTIVE'
+           AND a.status = 'WRITING'
+           AND a.writing_started_at <= $1::timestamptz - ($2::text || ' milliseconds')::interval`, [now, writingTtlMs]
+      );
+      const expired = await client.query(
+        `SELECT id, deletion_generation FROM amc_practice.learning_batches
+         WHERE status = 'DRAFT' AND deletion_state = 'ACTIVE'
+           AND created_at <= $1::timestamptz - ($2::text || ' milliseconds')::interval
+         ORDER BY created_at, id FOR UPDATE SKIP LOCKED LIMIT $3`, [now, draftTtlMs, limit]
+      );
+      const purges = [];
+      for (const batch of expired.rows) {
+        const generation = batch.deletion_generation + 1;
+        const assets = await client.query(
+          `SELECT storage_key FROM amc_practice.learning_batch_assets
+           WHERE batch_id = $1 AND storage_key IS NOT NULL`, [batch.id]
+        );
+        await client.query(
+          `UPDATE amc_practice.learning_batches
+           SET deletion_state = 'DELETE_REQUESTED', deletion_generation = $2,
+               deleted_at = $3, updated_at = $3 WHERE id = $1`, [batch.id, generation, now]
+        );
+        await client.query(
+          `UPDATE amc_practice.learning_batch_assets
+           SET status = CASE WHEN storage_key IS NULL THEN 'REJECTED' ELSE 'PURGE_PENDING' END,
+               writing_started_at = NULL, upload_idempotency_key = NULL,
+               last_error_code = CASE WHEN storage_key IS NULL THEN 'DRAFT_RESERVATION_EXPIRED' ELSE last_error_code END,
+               purged_at = CASE WHEN storage_key IS NULL THEN $2 ELSE purged_at END, updated_at = $2
+           WHERE batch_id = $1`, [batch.id, now]
+        );
+        await client.query(
+          `UPDATE amc_practice.learning_batch_quota_reservations
+           SET status = 'RELEASED', released_at = $2
+           WHERE batch_id = $1 AND status <> 'RELEASED'`, [batch.id, now]
+        );
+        purges.push({ batchId: batch.id, deletionGeneration: generation,
+          storageKeys: assets.rows.map((row) => row.storage_key) });
+      }
+      await client.query('COMMIT');
+      return { writingResetCount: reset.rowCount, purges };
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async completeExpiredLearningBatchPurge({ batchId, deletionGeneration, now }) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const locked = await client.query(
+        `SELECT id FROM amc_practice.learning_batches
+         WHERE id = $1 AND status = 'DRAFT' AND deletion_state = 'DELETE_REQUESTED'
+           AND deletion_generation = $2 FOR UPDATE`, [batchId, deletionGeneration]
+      );
+      if (!locked.rowCount) {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      await client.query(
+        `UPDATE amc_practice.learning_batch_assets
+         SET storage_key = NULL, status = CASE WHEN observed_bytes IS NULL THEN 'REJECTED' ELSE 'PURGED' END,
+             purged_at = $2, updated_at = $2 WHERE batch_id = $1`, [batchId, now]
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_batch_evidence
+         SET normalized_text = NULL, purged_at = $2 WHERE batch_id = $1`, [batchId, now]
+      );
+      await client.query(
+        `UPDATE amc_practice.learning_batches
+         SET deletion_state = 'COMPLETE', updated_at = $2 WHERE id = $1`, [batchId, now]
+      );
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async heartbeatBatchExtractionWork({ workItemId, workerId, leaseToken, now, leaseMs }) {
+    const result = await this.pool.query(
+      `UPDATE amc_practice.learning_batch_work_items w
+       SET lease_expires_at = $4::timestamptz + ($5::text || ' milliseconds')::interval, updated_at = $4
+       FROM amc_practice.learning_batches b
+       WHERE w.batch_id = b.id AND w.id = $1 AND w.work_type = 'BATCH_EXTRACTION'
+         AND w.status = 'RUNNING' AND w.lease_owner = $2 AND w.lease_token = $3
+         AND w.lease_expires_at > $4 AND w.deletion_generation = b.deletion_generation
+         AND b.status = 'PROCESSING' AND b.deletion_state = 'ACTIVE'
+       RETURNING w.id`, [workItemId, workerId, leaseToken, now, leaseMs]
+    );
+    return result.rowCount === 1;
+  }
+
+  async authorizeBatchExtractionProviderCall(input) {
+    const authorized = await this.pool.query(
+      `SELECT 1
+       FROM amc_practice.learning_batch_work_items w
+       JOIN amc_practice.learning_batches b ON b.id = w.batch_id
+       JOIN amc_practice.learning_submissions s
+         ON s.id = b.learning_submission_id AND s.student_id = b.student_id
+        AND s.attempt_id = b.attempt_id AND s.form_id = b.form_id AND s.form_version = b.form_version
+       JOIN amc_practice.attempts a
+         ON a.id = b.attempt_id AND a.student_id = b.student_id
+        AND a.form_id = b.form_id AND a.form_version = b.form_version
+       JOIN amc_practice.submissions official
+         ON official.id = s.official_submission_id AND official.attempt_id = a.id
+        AND official.kind = 'FINAL' AND s.official_submission_kind = 'FINAL'
+       WHERE w.id = $1 AND w.work_type = 'BATCH_EXTRACTION' AND w.status = 'RUNNING'
+         AND w.lease_owner = $2 AND w.lease_token = $3 AND w.input_hash = $4
+         AND w.deletion_generation = $5 AND b.deletion_generation = $5
+         AND w.lease_expires_at > $6 AND b.status = 'PROCESSING'
+         AND b.deletion_state = 'ACTIVE' AND s.lifecycle_status = 'COMMITTED'
+         AND s.current_version = b.base_version AND a.phase IN ('FINALIZED','RESET')`,
+      [input.workItemId, input.workerId, input.leaseToken, input.inputHash,
+        input.deletionGeneration, input.now]
+    );
+    return authorized.rowCount === 1;
+  }
+
+  async failBatchExtractionWork(input) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const failed = await client.query(
+        `UPDATE amc_practice.learning_batch_work_items w
+         SET status = $8, available_at = $9, lease_owner = NULL, lease_token = NULL,
+             lease_expires_at = NULL, last_error_code = $7, updated_at = $4
+         FROM amc_practice.learning_batches b
+         WHERE w.batch_id = b.id AND w.id = $1 AND w.work_type = 'BATCH_EXTRACTION'
+           AND w.status = 'RUNNING' AND w.lease_owner = $2 AND w.lease_token = $3
+           AND w.lease_expires_at > $4 AND w.input_hash = $5
+           AND w.deletion_generation = $6 AND b.deletion_generation = $6
+           AND b.status = 'PROCESSING' AND b.deletion_state = 'ACTIVE'
+         RETURNING w.batch_id`,
+        [input.workItemId, input.workerId, input.expectedLeaseToken, input.now,
+          input.expectedInputHash, input.expectedDeletionGeneration, input.errorCode,
+          input.retry ? 'QUEUED' : 'FAILED', input.availableAt]
+      );
+      if (!failed.rowCount) {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      if (!input.retry) {
+        await client.query(
+          `UPDATE amc_practice.learning_batches
+           SET status = 'FAILED', failure_code = $2, updated_at = $3 WHERE id = $1`,
+          [failed.rows[0].batch_id, input.errorCode, input.now]
+        );
+      }
+      await client.query('COMMIT');
+      return true;
     } catch (error) {
       await client.query('ROLLBACK').catch(() => {});
       throw error;
@@ -764,11 +3078,94 @@ export class PostgresStore {
   async heartbeatLearningAnalysisWork({ workItemId, workerId, leaseToken, now, leaseMs }) {
     const result = await this.pool.query(
       `UPDATE amc_practice.learning_work_items
-       SET lease_expires_at = $3 + ($4::text || ' milliseconds')::interval, updated_at = $3
+       SET lease_expires_at = $3::timestamptz + ($4::text || ' milliseconds')::interval, updated_at = $3
        WHERE id = $1 AND status = 'RUNNING' AND lease_owner = $2 AND lease_token = $5 AND lease_expires_at > $3
        RETURNING id`, [workItemId, workerId, now, leaseMs, leaseToken]
     );
     return result.rowCount === 1;
+  }
+
+  async authorizeLearningAnalysisProviderCall(input) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
+      const core = await client.query(
+        `SELECT v.form_id, v.form_version, v.context_status, v.context_set_id,
+                s.current_version, q.selected_option, q.reasoning_text,
+                fq.correct_option, fr.question_bundle_hash, fr.content_hash, fr.manifest_hash
+         FROM amc_practice.learning_work_items w
+         JOIN amc_practice.learning_analysis_runs r ON r.id = w.analysis_run_id
+         JOIN amc_practice.learning_submission_versions v ON v.id = w.learning_submission_version_id
+         JOIN amc_practice.learning_submissions s ON s.id = v.learning_submission_id
+         JOIN amc_practice.attempts a
+           ON a.id = s.attempt_id AND a.student_id = s.student_id
+          AND a.form_id = s.form_id AND a.form_version = s.form_version
+         JOIN amc_practice.submissions official
+           ON official.id = s.official_submission_id AND official.attempt_id = a.id
+          AND official.kind = 'FINAL' AND s.official_submission_kind = 'FINAL'
+         JOIN amc_practice.form_revisions fr ON fr.form_id = v.form_id AND fr.version = v.form_version
+         JOIN amc_practice.form_questions fq
+           ON fq.form_id = v.form_id AND fq.form_version = v.form_version
+          AND fq.question_number = $14
+         JOIN amc_practice.learning_question_responses q
+           ON q.learning_submission_version_id = v.id AND q.question_number = $14
+         LEFT JOIN amc_practice.learning_batches b ON b.id = v.batch_id
+         WHERE w.id = $1 AND r.id = $2 AND w.status = 'RUNNING' AND w.lease_owner = $3
+           AND w.lease_token = $4 AND w.lease_expires_at > $13
+           AND w.input_hash = $5 AND r.input_hash = $5
+           AND w.deletion_generation = $6 AND r.deletion_generation = $6
+           AND w.learning_submission_version_id = $7 AND v.id = $7
+           AND v.version_number = $8 AND r.version_number = $8
+           AND v.evidence_hash = $9 AND r.evidence_hash = $9
+           AND s.student_id = $10 AND a.student_id = $10
+           AND s.current_version = $11 AND s.lifecycle_status = 'COMMITTED'
+           AND a.phase IN ('FINALIZED','RESET') AND v.context_status = 'CONTEXT_READY'
+           AND v.context_set_id = $12 AND r.context_set_id = $12 AND r.status = 'RUNNING'
+           AND (v.batch_id IS NULL OR (b.deletion_state = 'ACTIVE' AND b.deletion_generation = $6))`,
+        [input.workItemId, input.analysisRunId, input.workerId, input.leaseToken,
+          input.inputHash, input.deletionGeneration, input.versionId, input.versionNumber,
+          input.evidenceHash, input.expectedStudentId, input.expectedSubmissionCurrentVersion,
+          input.expectedContextSetId, input.now, input.questionNumber]
+      );
+      const row = core.rows[0];
+      if (!row || row.correct_option !== input.officialAnswer) {
+        await client.query('ROLLBACK');
+        return false;
+      }
+      const responseHash = canonicalHash({
+        questionNumber: input.questionNumber,
+        selectedOption: row.selected_option,
+        reasoningText: row.reasoning_text
+      });
+      const contextSet = await loadApprovedContextSet(client, input.expectedContextSetId);
+      const question = contextSet?.questions
+        .find((candidate) => candidate.questionNumber === input.questionNumber);
+      const liveEligible = (question?.solutions || [])
+        .filter((solution) => solution.modelEligibility?.eligible === true
+          && solution.authorityReceipt?.status === 'active')
+        .map((solution) => ({
+          artifactSolutionId: solution.artifactSolutionId,
+          bodySha256: solution.bodySha256,
+          sourceSha256: solution.sourceRef.sha256,
+          decisionRecordHash: solution.decisionRecordHash,
+          authorityReceiptId: solution.authorityReceipt.receiptId
+        }));
+      const authorized = Boolean(contextSet && question
+        && contextSet.formId === row.form_id && contextSet.formVersion === row.form_version
+        && contextSet.releaseBinding?.questionBundleHash === row.question_bundle_hash
+        && contextSet.releaseBinding?.contentHash === row.content_hash
+        && contextSet.releaseBinding?.manifestHash === row.manifest_hash
+        && question.questionContentHash === input.questionContextHash
+        && responseHash === input.questionResponseHash && liveEligible.length >= 2
+        && JSON.stringify(liveEligible) === JSON.stringify(input.eligibleSolutions));
+      await client.query('COMMIT');
+      return authorized;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async completeLearningAnalysisWork(input) {
@@ -780,14 +3177,14 @@ export class PostgresStore {
          FROM amc_practice.learning_work_items w
          JOIN amc_practice.learning_analysis_runs r ON r.id = w.analysis_run_id
          JOIN amc_practice.learning_submission_versions v ON v.id = w.learning_submission_version_id
-         JOIN amc_practice.learning_submissions s
-           ON s.id = v.learning_submission_id AND s.current_version = $6
+         JOIN amc_practice.learning_submissions s ON s.id = v.learning_submission_id
          JOIN amc_practice.attempts a ON a.id = s.attempt_id AND a.student_id = $7
          WHERE w.id = $1 AND r.id = $2 AND w.status = 'RUNNING' AND w.lease_owner = $3
            AND w.lease_token = $10
            AND r.status = 'RUNNING' AND w.learning_submission_version_id = v.id
            AND w.lease_expires_at > $4 AND w.input_hash = $5 AND r.input_hash = $5
            AND w.deletion_generation = $8 AND r.deletion_generation = $8
+           AND v.version_number = $6
            AND s.student_id = $7 AND s.lifecycle_status = 'COMMITTED'
            AND a.phase IN ('FINALIZED','RESET') AND v.context_set_id = $9 AND r.context_set_id = $9
          FOR UPDATE OF w, r, v, s`,
@@ -864,13 +3261,14 @@ export class PostgresStore {
          FROM amc_practice.learning_work_items w
          JOIN amc_practice.learning_analysis_runs r ON r.id = w.analysis_run_id
          JOIN amc_practice.learning_submission_versions v ON v.id = w.learning_submission_version_id
-         JOIN amc_practice.learning_submissions s ON s.id = v.learning_submission_id AND s.current_version = $6
+         JOIN amc_practice.learning_submissions s ON s.id = v.learning_submission_id
          JOIN amc_practice.attempts a ON a.id = s.attempt_id AND a.student_id = $7
          WHERE w.id = $1 AND r.id = $2 AND w.status = 'RUNNING' AND w.lease_owner = $3
            AND w.lease_token = $10
            AND r.status = 'RUNNING' AND w.lease_expires_at > $4
            AND w.input_hash = $5 AND r.input_hash = $5
            AND w.deletion_generation = $8 AND r.deletion_generation = $8
+           AND v.version_number = $6
            AND s.student_id = $7 AND s.lifecycle_status = 'COMMITTED'
            AND a.phase IN ('FINALIZED','RESET') AND v.context_set_id = $9 AND r.context_set_id = $9
          FOR UPDATE OF w, r, v, s`,
@@ -1038,6 +3436,14 @@ class PostgresAttemptTransaction {
     this.attempt = attempt;
   }
 
+  async consumeStudentResourceBudget(input) {
+    return consumeStudentBudgetUsing(this.client, input);
+  }
+
+  async consumeGlobalResourceBudget(input) {
+    return consumeGlobalBudgetUsing(this.client, input);
+  }
+
   async getAttempt() {
     return clone(this.attempt);
   }
@@ -1188,20 +3594,18 @@ class PostgresAttemptTransaction {
     );
     if (!versionResult.rowCount) throw new Error(`Learning submission ${submission.id} has no current version.`);
     const version = mapLearningVersion(versionResult.rows[0]);
-    const [responseResult, workResult] = await Promise.all([
-      this.client.query(
+    const responseResult = await this.client.query(
         `SELECT learning_submission_version_id, form_id, form_version, question_number,
                 selected_option, answer_origin, reasoning_text, reasoning_origin, created_at
          FROM amc_practice.learning_question_responses
          WHERE learning_submission_version_id = $1 ORDER BY question_number`,
         [version.id]
-      ),
-      this.client.query(
+    );
+    const workResult = await this.client.query(
         `SELECT * FROM amc_practice.learning_work_items
          WHERE learning_submission_version_id = $1 ORDER BY created_at, id`,
         [version.id]
-      )
-    ]);
+    );
     return {
       submission,
       version,
@@ -1310,6 +3714,528 @@ class PostgresAttemptTransaction {
         workItem.createdAt, workItem.updatedAt, workItem.analysisRunId || null]
     );
     return this.getLearningSubmissionBundle();
+  }
+
+  async getLearningBatchBundle(batchId) {
+    return loadLearningBatchBundleUsing(this.client, this.attempt.id, batchId);
+  }
+
+  async listLearningBatchBundles() {
+    return loadLearningBatchBundleUsing(this.client, this.attempt.id);
+  }
+
+  async createLearningBatch({
+    batch, assets, reservations, studentQuotaBytes, globalQuotaBytes, activeBatchLimit
+  }) {
+    await this.client.query(
+      "SELECT pg_advisory_xact_lock(hashtext('amc_batch_quota'), hashtext('global'))"
+    );
+    await this.client.query(
+      "SELECT pg_advisory_xact_lock(hashtext('amc_batch_quota_student'), hashtext($1))",
+      [batch.studentId]
+    );
+    const quota = await this.client.query(
+      `SELECT COALESCE(sum(reserved_bytes), 0) AS global_bytes,
+              COALESCE(sum(reserved_bytes) FILTER (WHERE student_id = $1), 0) AS student_bytes
+       FROM amc_practice.learning_batch_quota_reservations
+       WHERE status IN ('RESERVED', 'CONSUMED')`, [batch.studentId]
+    );
+    const requestedBytes = reservations.reduce((sum, reservation) => sum + reservation.reservedBytes, 0);
+    const active = await this.client.query(
+      `SELECT count(*)::integer AS count FROM amc_practice.learning_batches
+       WHERE student_id = $1 AND deletion_state = 'ACTIVE' AND status NOT IN ('COMMITTED', 'FAILED')`,
+      [batch.studentId]
+    );
+    if (active.rows[0].count >= activeBatchLimit) {
+      throw Object.assign(new Error('Student active batch limit exceeded.'), { code: 'BATCH_ACTIVE_LIMIT' });
+    }
+    if (number(quota.rows[0].student_bytes) + requestedBytes > studentQuotaBytes
+        || number(quota.rows[0].global_bytes) + requestedBytes > globalQuotaBytes) {
+      throw Object.assign(new Error('Persistent private upload quota exceeded.'), { code: 'BATCH_QUOTA_EXCEEDED' });
+    }
+    await this.client.query(
+      `INSERT INTO amc_practice.learning_batches
+       (id, student_id, attempt_id, learning_submission_id, base_version, form_id, form_version,
+        status, mapping_revision, has_audio, deletion_state, deletion_generation, deleted_at,
+        submitted_at, committed_at, failure_code, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`,
+      [batch.id, batch.studentId, batch.attemptId, batch.learningSubmissionId, batch.baseVersion,
+        batch.formId, batch.formVersion, batch.status, batch.mappingRevision, batch.hasAudio,
+        batch.deletionState, batch.deletionGeneration, batch.deletedAt, batch.submittedAt,
+        batch.committedAt, batch.failureCode, batch.createdAt, batch.updatedAt]
+    );
+    for (const asset of assets) {
+      await this.client.query(
+        `INSERT INTO amc_practice.learning_batch_assets
+         (id, batch_id, position, display_name, kind, content_type, declared_bytes, observed_bytes,
+          sha256, storage_key, status, upload_attempt_count, upload_idempotency_key,
+          writing_started_at, stored_at, normalized_at, purged_at, last_error_code, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)`,
+        [asset.id, asset.batchId, asset.position, asset.displayName, asset.kind, asset.contentType,
+          asset.declaredBytes, asset.observedBytes, asset.sha256, asset.storageKey, asset.status,
+          asset.uploadAttemptCount, asset.uploadIdempotencyKey, asset.writingStartedAt, asset.storedAt,
+          asset.normalizedAt, asset.purgedAt, asset.lastErrorCode, asset.createdAt, asset.updatedAt]
+      );
+    }
+    for (const reservation of reservations) {
+      await this.client.query(
+        `INSERT INTO amc_practice.learning_batch_quota_reservations
+         (asset_id, batch_id, student_id, reserved_bytes, status, created_at, consumed_at, released_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [reservation.assetId, reservation.batchId, reservation.studentId, reservation.reservedBytes,
+          reservation.status, reservation.createdAt, reservation.consumedAt, reservation.releasedAt]
+      );
+    }
+    return this.getLearningBatchBundle(batch.id);
+  }
+
+  async beginLearningBatchAssetUpload({ batchId, assetId, uploadIdempotencyKey, now }) {
+    const selected = await this.client.query(
+      `SELECT b.id AS batch_record_id, b.attempt_id, b.status AS batch_status,
+              b.deletion_state, b.deletion_generation, a.*
+       FROM amc_practice.learning_batches b
+       JOIN amc_practice.learning_batch_assets a ON a.batch_id = b.id
+       WHERE b.id = $1 AND a.id = $2 AND b.attempt_id = $3
+       FOR UPDATE OF b, a`, [batchId, assetId, this.attempt.id]
+    );
+    if (!selected.rowCount) return null;
+    const row = selected.rows[0];
+    const asset = mapLearningBatchAsset(row);
+    if (row.deletion_state !== 'ACTIVE' || row.batch_status !== 'DRAFT') {
+      throw Object.assign(new Error('Batch does not accept uploads.'), { code: 'BATCH_NOT_UPLOADABLE' });
+    }
+    if (asset.uploadIdempotencyKey && asset.uploadIdempotencyKey !== uploadIdempotencyKey) {
+      throw Object.assign(new Error('Asset upload idempotency key was reused.'), { code: 'IDEMPOTENCY_KEY_REUSED' });
+    }
+    if (['STORED', 'NORMALIZED'].includes(asset.status)) {
+      return { replay: true, asset, deletionGeneration: row.deletion_generation };
+    }
+    if (asset.status === 'WRITING') {
+      throw Object.assign(new Error('Asset upload is already in progress.'), { code: 'UPLOAD_IN_PROGRESS' });
+    }
+    if (asset.status !== 'RESERVED') {
+      throw Object.assign(new Error('Asset upload cannot be retried.'), { code: 'BATCH_NOT_UPLOADABLE' });
+    }
+    const updated = await this.client.query(
+      `UPDATE amc_practice.learning_batch_assets
+       SET status = 'WRITING', upload_idempotency_key = $3,
+           upload_attempt_count = upload_attempt_count + 1, writing_started_at = $4,
+           last_error_code = NULL, updated_at = $4
+       WHERE batch_id = $1 AND id = $2 RETURNING *`, [batchId, assetId, uploadIdempotencyKey, now]
+    );
+    return { replay: false, asset: mapLearningBatchAsset(updated.rows[0]), deletionGeneration: row.deletion_generation };
+  }
+
+  async completeLearningBatchAssetUpload({
+    batchId, assetId, uploadIdempotencyKey, deletionGeneration, stored, normalizedText, now
+  }) {
+    const locked = await this.client.query(
+      `SELECT b.status AS batch_status, b.deletion_state, b.deletion_generation, a.*
+       FROM amc_practice.learning_batches b
+       JOIN amc_practice.learning_batch_assets a ON a.batch_id = b.id
+       WHERE b.id = $1 AND a.id = $2 AND b.attempt_id = $3
+       FOR UPDATE OF b, a`, [batchId, assetId, this.attempt.id]
+    );
+    if (!locked.rowCount) return false;
+    const row = locked.rows[0];
+    if (row.deletion_state !== 'ACTIVE' || row.deletion_generation !== deletionGeneration
+        || row.status !== 'WRITING' || row.upload_idempotency_key !== uploadIdempotencyKey) return false;
+    await this.client.query(
+      "SELECT pg_advisory_xact_lock(hashtext('amc_private_storage'), hashtext($1))",
+      [stored.storageKey]
+    );
+    const deleting = await this.client.query(
+      `SELECT 1 FROM amc_practice.private_storage_reconciliation_candidates
+       WHERE storage_kind = 'OBJECT' AND storage_identity = $1 AND status = 'DELETING'`,
+      [stored.storageKey]
+    );
+    if (deleting.rowCount) return false;
+    const status = row.kind === 'TEXT' ? 'NORMALIZED' : 'STORED';
+    const updated = await this.client.query(
+      `UPDATE amc_practice.learning_batch_assets
+       SET observed_bytes = $3, sha256 = $4, storage_key = $5, status = $6,
+           writing_started_at = NULL, stored_at = $7::timestamptz,
+           normalized_at = CASE WHEN kind = 'TEXT' THEN $7::timestamptz ELSE NULL END,
+           updated_at = $7::timestamptz
+       WHERE batch_id = $1 AND id = $2 RETURNING *`,
+      [batchId, assetId, stored.observedBytes, stored.sha256, stored.storageKey, status, now]
+    );
+    await this.client.query(
+      `UPDATE amc_practice.learning_batch_quota_reservations
+       SET status = 'CONSUMED', consumed_at = $2
+       WHERE asset_id = $1 AND status = 'RESERVED'`, [assetId, now]
+    );
+    if (row.kind === 'TEXT') {
+      await this.client.query(
+        `INSERT INTO amc_practice.learning_batch_evidence
+         (asset_id, batch_id, source_kind, normalized_text, normalized_sha256,
+          duration_ms, transcript_confidence, created_at, purged_at)
+         VALUES ($1,$2,'TEXT_UPLOAD',$3,$4,NULL,NULL,$5,NULL)`,
+        [assetId, batchId, normalizedText, stored.sha256, now]
+      );
+    }
+    await this.client.query('UPDATE amc_practice.learning_batches SET updated_at = $2 WHERE id = $1', [batchId, now]);
+    return mapLearningBatchAsset(updated.rows[0]);
+  }
+
+  async failLearningBatchAssetUpload({ batchId, assetId, uploadIdempotencyKey, errorCode, now }) {
+    const result = await this.client.query(
+      `UPDATE amc_practice.learning_batch_assets a
+       SET status = 'RESERVED', writing_started_at = NULL, upload_idempotency_key = NULL,
+           last_error_code = $4, updated_at = $5
+       FROM amc_practice.learning_batches b
+       WHERE a.batch_id = b.id AND b.id = $1 AND a.id = $2 AND b.attempt_id = $3
+         AND a.status = 'WRITING' AND a.upload_idempotency_key = $6
+       RETURNING a.id`,
+      [batchId, assetId, this.attempt.id, errorCode, now, uploadIdempotencyKey]
+    );
+    return Boolean(result.rowCount);
+  }
+
+  async submitLearningBatch({ batchId, workItems, now }) {
+    const bundle = await loadLearningBatchBundleUsing(this.client, this.attempt.id, batchId, { lock: true });
+    if (!bundle) return null;
+    if (bundle.batch.status !== 'DRAFT' || bundle.batch.deletionState !== 'ACTIVE'
+        || bundle.assets.some((asset) => !['NORMALIZED', 'STORED'].includes(asset.status))) {
+      throw Object.assign(new Error('Every reserved asset must be uploaded.'), { code: 'BATCH_NOT_SUBMITTABLE' });
+    }
+    await this.client.query(
+      `UPDATE amc_practice.learning_batches
+       SET status = 'PROCESSING', submitted_at = $2, updated_at = $2 WHERE id = $1`, [batchId, now]
+    );
+    for (const item of workItems) {
+      await this.client.query(
+        `INSERT INTO amc_practice.learning_batch_work_items
+         (id, batch_id, asset_id, work_type, status, priority, attempt_count, input_hash,
+          deletion_generation, available_at, lease_owner, lease_token, lease_expires_at,
+          last_error_code, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
+        [item.id, item.batchId, item.assetId, item.workType, item.status, item.priority,
+          item.attemptCount, item.inputHash, item.deletionGeneration, item.availableAt,
+          item.leaseOwner, item.leaseToken, item.leaseExpiresAt, item.lastErrorCode,
+          item.createdAt, item.updatedAt]
+      );
+    }
+    for (const asset of bundle.assets.filter((candidate) => candidate.kind === 'AUDIO')) {
+      await this.client.query(
+        `INSERT INTO amc_practice.learning_batch_provider_artifacts
+         (id, batch_id, asset_id, provider, artifact_type, external_id, upload_url_hash,
+          submitted_at, status, deletion_evidence_code, delete_attempt_count,
+          last_delete_attempt_at, last_delete_error_code, next_delete_attempt_at,
+          provider_retention_not_before, retention_verification_code, retention_verified_at,
+          created_at, updated_at, deletion_evidenced_at)
+         VALUES ($1,$2,$3,'assemblyai','TRANSCRIPT',NULL,NULL,NULL,'INTENT_RECORDED',
+           NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,$4,$4,NULL)`,
+        [randomUUID(), batchId, asset.id, now]
+      );
+    }
+    return this.getLearningBatchBundle(batchId);
+  }
+
+  async saveLearningBatchMapping({ batchId, mapping, workerFence, now }) {
+    const updated = await this.client.query(
+      `UPDATE amc_practice.learning_batches
+       SET mapping_revision = $2, status = $3, updated_at = $4
+       WHERE id = $1 AND attempt_id = $5 AND deletion_state = 'ACTIVE'
+         AND status = 'PROCESSING' AND mapping_revision = $2 - 1
+         AND deletion_generation = $9
+         AND EXISTS (
+           SELECT 1 FROM amc_practice.learning_batch_work_items w
+           WHERE w.batch_id = learning_batches.id AND w.work_type = 'BATCH_EXTRACTION'
+             AND w.status = 'RUNNING' AND w.lease_owner = $6 AND w.lease_token = $7
+             AND w.input_hash = $8 AND w.deletion_generation = $9
+             AND w.lease_expires_at > $4
+         )
+       RETURNING id`, [batchId, mapping.revision, mapping.status, now, this.attempt.id,
+        workerFence?.workerId, workerFence?.leaseToken, workerFence?.inputHash, workerFence?.deletionGeneration]
+    );
+    if (!updated.rowCount) return false;
+    await this.client.query(
+      `INSERT INTO amc_practice.learning_batch_mapping_revisions
+       (batch_id, revision, schema_version, evidence_set_hash, master_plan_hash,
+        chunk_input_hashes, gateway_run_metadata, extraction_hash, status, created_at, confirmed_at)
+       VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb,$8,$9,$10,$11)`,
+      [batchId, mapping.revision, mapping.schemaVersion, mapping.evidenceSetHash,
+        mapping.masterPlanHash, JSON.stringify(mapping.chunkInputHashes), JSON.stringify(mapping.gatewayRunMetadata),
+        mapping.extractionHash, mapping.status, mapping.createdAt, mapping.confirmedAt]
+    );
+    for (const item of mapping.items) {
+      await this.client.query(
+        `INSERT INTO amc_practice.learning_batch_mapping_items
+         (id, batch_id, mapping_revision, item_position, item_key, candidate_question_numbers,
+          proposed_question_number, selected_option, reasoning_summary, evidence_text, confidence,
+          ambiguity, source_spans, gateway_conflict_flags, requires_confirmation,
+          confirmation_reasons, unmapped, purged_at, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7,$8,$9,$10,$11,$12,$13::jsonb,$14::jsonb,$15,$16::jsonb,$17,NULL,$18)`,
+        [item.id, batchId, mapping.revision, item.itemPosition, item.itemKey,
+          JSON.stringify(item.candidateQuestionNumbers), item.proposedQuestionNumber, item.selectedOption,
+          item.reasoningSummary, item.evidenceText, item.confidence, item.ambiguity,
+          JSON.stringify(item.sourceSpans), JSON.stringify(item.gatewayConflictFlags),
+          item.requiresConfirmation, JSON.stringify(item.confirmationReasons), item.unmapped, item.createdAt]
+      );
+    }
+    await this.client.query(
+      `UPDATE amc_practice.learning_batch_work_items
+       SET status = 'SUCCEEDED', lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL, updated_at = $2
+       WHERE batch_id = $1 AND work_type = 'BATCH_EXTRACTION'
+         AND lease_owner = $3 AND lease_token = $4`,
+      [batchId, now, workerFence?.workerId, workerFence?.leaseToken]
+    );
+    return true;
+  }
+
+  async commitLearningBatch({ batchId, expectedMappingRevision, aggregate, now }) {
+    const locked = await this.client.query(
+      `SELECT b.*, s.current_version, s.lifecycle_status,
+              s.student_id AS submission_student_id, s.form_id AS submission_form_id,
+              s.form_version AS submission_form_version
+       FROM amc_practice.learning_batches b
+       JOIN amc_practice.learning_submissions s ON s.id = b.learning_submission_id
+       WHERE b.id = $1 AND b.attempt_id = $2 FOR UPDATE OF b, s`, [batchId, this.attempt.id]
+    );
+    if (!locked.rowCount) throw Object.assign(new Error('Batch commit conflict.'), { code: 'BATCH_COMMIT_CONFLICT' });
+    const row = locked.rows[0];
+    if (row.current_version !== row.base_version) {
+      throw Object.assign(new Error('Batch base version is stale.'), { code: 'BATCH_BASE_VERSION_STALE' });
+    }
+    if (row.lifecycle_status !== 'COMMITTED' || row.student_id !== row.submission_student_id
+        || row.form_id !== row.submission_form_id || row.form_version !== row.submission_form_version
+        || row.deletion_state !== 'ACTIVE' || row.status !== 'NEEDS_CONFIRMATION'
+        || row.mapping_revision !== expectedMappingRevision
+        || aggregate.version.learningSubmissionId !== row.learning_submission_id
+        || aggregate.version.batchId !== batchId
+        || aggregate.version.versionNumber !== row.current_version + 1
+        || aggregate.version.formId !== row.form_id || aggregate.version.formVersion !== row.form_version
+        || aggregate.responses.some((response) => response.learningSubmissionVersionId !== aggregate.version.id
+          || response.formId !== row.form_id || response.formVersion !== row.form_version)
+        || aggregate.confirmation?.batchId !== batchId
+        || aggregate.confirmation?.mappingRevision !== expectedMappingRevision
+        || aggregate.confirmation?.learningSubmissionVersionId !== aggregate.version.id
+        || aggregate.result.batchId !== batchId
+        || aggregate.result.learningSubmissionVersionId !== aggregate.version.id) {
+      throw Object.assign(new Error('Batch commit conflict.'), { code: 'BATCH_COMMIT_CONFLICT' });
+    }
+    await this.client.query(
+      `INSERT INTO amc_practice.learning_submission_versions
+       (id, learning_submission_id, version_number, form_id, form_version, answers_revision,
+        reasoning_revision, creation_reason, context_status, context_set_id, evidence_hash, created_at, batch_id)
+       VALUES ($1,$2,$3,$4,$5,NULL,NULL,$6,$7,$8,$9,$10,$11)`,
+      [aggregate.version.id, aggregate.version.learningSubmissionId, aggregate.version.versionNumber,
+        aggregate.version.formId, aggregate.version.formVersion, aggregate.version.creationReason,
+        aggregate.version.contextStatus, aggregate.version.contextSetId, aggregate.version.evidenceHash,
+        aggregate.version.createdAt, batchId]
+    );
+    for (const response of aggregate.responses) {
+      await this.client.query(
+        `INSERT INTO amc_practice.learning_question_responses
+         (learning_submission_version_id, form_id, form_version, question_number,
+          selected_option, answer_origin, reasoning_text, reasoning_origin, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [response.learningSubmissionVersionId, response.formId, response.formVersion,
+          response.questionNumber, response.selectedOption, response.answerOrigin,
+          response.reasoningText, response.reasoningOrigin, response.createdAt]
+      );
+    }
+    const confirmation = aggregate.confirmation;
+    await this.client.query(
+      `INSERT INTO amc_practice.learning_batch_confirmation_revisions
+       (batch_id, mapping_revision, learning_submission_version_id, source_evidence_hash, confirmed_at)
+       VALUES ($1,$2,$3,$4,$5)`,
+      [confirmation.batchId, confirmation.mappingRevision,
+        confirmation.learningSubmissionVersionId, confirmation.sourceEvidenceHash,
+        confirmation.confirmedAt]
+    );
+    for (const response of confirmation.responses) {
+      await this.client.query(
+        `INSERT INTO amc_practice.learning_batch_confirmation_responses
+         (batch_id, mapping_revision, question_number, selected_option,
+          confirmed_reasoning_text, confirmed_reasoning_hash, reasoning_origin,
+          canonical_source_item_ids, source_descriptors, reconstructed_source_text,
+          source_span_hash, source_evidence_hash)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9::jsonb,$10,$11,$12)`,
+        [confirmation.batchId, confirmation.mappingRevision, response.questionNumber,
+          response.selectedOption, response.confirmedReasoningText, response.confirmedReasoningHash,
+          response.reasoningOrigin, JSON.stringify(response.sourceItemIds),
+          JSON.stringify(response.sourceDescriptors), response.sourceEvidenceText,
+          response.sourceSpanHash, response.sourceEvidenceHash]
+      );
+    }
+    if (aggregate.analysisRun) {
+      const run = aggregate.analysisRun;
+      await this.client.query(
+        `INSERT INTO amc_practice.learning_analysis_runs
+         (id, learning_submission_version_id, context_set_id, version_number, input_hash,
+          evidence_hash, deletion_generation, status, created_at, started_at, completed_at, last_error_code)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+        [run.id, run.learningSubmissionVersionId, run.contextSetId, run.versionNumber,
+          run.inputHash, run.evidenceHash, run.deletionGeneration, run.status, run.createdAt,
+          run.startedAt, run.completedAt, run.lastErrorCode]
+      );
+    }
+    const work = aggregate.workItem;
+    await this.client.query(
+      `INSERT INTO amc_practice.learning_work_items
+       (id, learning_submission_version_id, work_type, status, priority, attempt_count,
+        input_hash, deletion_generation, available_at, lease_owner, lease_token, lease_expires_at,
+        last_error_code, created_at, updated_at, analysis_run_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
+      [work.id, work.learningSubmissionVersionId, work.workType, work.status, work.priority,
+        work.attemptCount, work.inputHash, work.deletionGeneration, work.availableAt,
+        work.leaseOwner, work.leaseToken, work.leaseExpiresAt, work.lastErrorCode,
+        work.createdAt, work.updatedAt, work.analysisRunId || null]
+    );
+    const result = aggregate.result;
+    await this.client.query(
+      `INSERT INTO amc_practice.learning_batch_results
+       (id, batch_id, learning_submission_version_id, scoring_scope, scoring_policy,
+        total_points, maximum_points, mapped_question_count, answered_count, correct_count,
+        incorrect_count, blank_count, unscored_count, created_at)
+       VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+      [result.id, batchId, result.learningSubmissionVersionId, result.scoringScope,
+        JSON.stringify(result.scoringPolicy), result.totalPoints, result.maximumPoints,
+        result.mappedQuestionCount, result.answeredCount, result.correctCount,
+        result.incorrectCount, result.blankCount, result.unscoredCount, result.createdAt]
+    );
+    for (const item of result.items) {
+      await this.client.query(
+        `INSERT INTO amc_practice.learning_batch_result_items
+         (batch_result_id, question_number, selected_option, correct_option, accepted_options,
+          is_scored, is_correct, points)
+         VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8)`,
+        [result.id, item.questionNumber, item.selectedOption, item.correctOption,
+          JSON.stringify(item.acceptedOptions), item.isScored, item.isCorrect, item.points]
+      );
+    }
+    await this.client.query(
+      `UPDATE amc_practice.learning_submissions
+       SET current_version = $2, updated_at = $3 WHERE id = $1`,
+      [row.learning_submission_id, aggregate.version.versionNumber, now]
+    );
+    await this.client.query(
+      `UPDATE amc_practice.learning_batch_mapping_revisions
+       SET status = 'COMMITTED', confirmed_at = $3
+       WHERE batch_id = $1 AND revision = $2`, [batchId, expectedMappingRevision, now]
+    );
+    await this.client.query(
+      `UPDATE amc_practice.learning_batches
+       SET status = 'COMMITTED', committed_version_id = $2, committed_version_number = $3,
+           committed_at = $4, updated_at = $4 WHERE id = $1`,
+      [batchId, aggregate.version.id, aggregate.version.versionNumber, now]
+    );
+    await this.client.query(
+      `UPDATE amc_practice.learning_batch_work_items
+       SET status = 'CANCELLED', lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL, updated_at = $2
+       WHERE batch_id = $1 AND status NOT IN ('SUCCEEDED', 'FAILED', 'CANCELLED')`, [batchId, now]
+    );
+    return this.getLearningBatchBundle(batchId);
+  }
+
+  async requestLearningBatchDeletion({ batchId, now }) {
+    const bundle = await loadLearningBatchBundleUsing(this.client, this.attempt.id, batchId, { lock: true });
+    if (!bundle) return null;
+    if (bundle.batch.deletionState === 'ACTIVE') {
+      const deletionGeneration = bundle.batch.deletionGeneration + 1;
+      await this.client.query(
+        `UPDATE amc_practice.learning_batches
+         SET deletion_state = 'DELETE_REQUESTED', deletion_generation = deletion_generation + 1,
+             deleted_at = $2, updated_at = $2 WHERE id = $1`, [batchId, now]
+      );
+      for (const item of bundle.workItems) {
+        const provider = item.workType === 'TRANSCRIBE_AUDIO'
+          ? bundle.providerArtifacts.find((candidate) => candidate.asset_id === item.assetId) : null;
+        if (provider?.external_id && provider.status !== 'DELETION_EVIDENCED') {
+          await this.client.query(
+            `UPDATE amc_practice.learning_batch_provider_artifacts
+             SET status = 'DELETE_PENDING', updated_at = $2 WHERE id = $1`, [provider.id, now]
+          );
+          await this.client.query(
+            `UPDATE amc_practice.learning_batch_work_items
+             SET status = 'QUEUED', input_hash = $2, deletion_generation = $3, available_at = $4,
+                 lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+                 last_error_code = 'USER_DELETION_REQUESTED', updated_at = $4 WHERE id = $1`,
+            [item.id, transcriptionCleanupInputHash(batchId, item.assetId, deletionGeneration),
+              deletionGeneration, now]
+          );
+        } else if (provider?.status === 'SUBMIT_MAY_HAVE_DELIVERED') {
+          await this.client.query(
+            `UPDATE amc_practice.learning_batch_work_items
+             SET status = 'QUEUED', input_hash = $2, deletion_generation = $3, available_at = $4,
+                 lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+                 last_error_code = 'USER_DELETION_RECONCILIATION_REQUIRED', updated_at = $4
+             WHERE id = $1`,
+            [item.id, transcriptionCleanupInputHash(batchId, item.assetId, deletionGeneration),
+              deletionGeneration, now]
+          );
+        } else if (!['SUCCEEDED', 'FAILED', 'CANCELLED'].includes(item.status)) {
+          if (provider?.status === 'INTENT_RECORDED') {
+            await this.client.query(
+              `DELETE FROM amc_practice.learning_batch_provider_artifacts
+               WHERE id = $1 AND external_id IS NULL AND status = 'INTENT_RECORDED'`, [provider.id]
+            );
+          }
+          await this.client.query(
+            `UPDATE amc_practice.learning_batch_work_items
+             SET status = 'CANCELLED', lease_owner = NULL, lease_token = NULL,
+                 lease_expires_at = NULL, updated_at = $2 WHERE id = $1`, [item.id, now]
+          );
+        }
+      }
+    }
+    return this.getLearningBatchBundle(batchId);
+  }
+
+  async completeLearningBatchLocalPurge({ batchId, expectedDeletionGeneration, now }) {
+    const locked = await this.client.query(
+      `SELECT id FROM amc_practice.learning_batches
+       WHERE id = $1 AND attempt_id = $2 AND deletion_state <> 'ACTIVE'
+         AND deletion_generation = $3 FOR UPDATE`,
+      [batchId, this.attempt.id, expectedDeletionGeneration]
+    );
+    if (!locked.rowCount) return false;
+    await this.client.query(
+      `UPDATE amc_practice.learning_batch_assets
+       SET storage_key = NULL,
+           status = CASE WHEN observed_bytes IS NULL THEN 'REJECTED' ELSE 'PURGED' END,
+           writing_started_at = NULL, purged_at = $2, updated_at = $2
+       WHERE batch_id = $1`, [batchId, now]
+    );
+    await this.client.query(
+      `UPDATE amc_practice.learning_batch_quota_reservations
+       SET status = 'RELEASED', released_at = $2
+       WHERE batch_id = $1 AND status <> 'RELEASED'`, [batchId, now]
+    );
+    await this.client.query(
+      `UPDATE amc_practice.learning_batch_evidence
+       SET normalized_text = NULL, purged_at = $2 WHERE batch_id = $1`, [batchId, now]
+    );
+    await this.client.query(
+      `UPDATE amc_practice.learning_batch_mapping_items
+       SET evidence_text = NULL, reasoning_summary = NULL, purged_at = $2 WHERE batch_id = $1`, [batchId, now]
+    );
+    const provider = await this.client.query(
+      `SELECT EXISTS (
+         SELECT 1 FROM amc_practice.learning_batch_provider_artifacts
+         WHERE batch_id = $1 AND status NOT IN ('DELETION_EVIDENCED', 'PROVIDER_RETENTION_DELETION_CONFIRMED')
+       ) OR EXISTS (
+         SELECT 1 FROM amc_practice.learning_batch_provider_orphan_cleanup_jobs
+         WHERE batch_id = $1 AND status NOT IN ('SUCCEEDED','SUPERSEDED')
+       ) AS pending,
+       EXISTS (
+         SELECT 1 FROM amc_practice.learning_batch_provider_artifacts
+         WHERE batch_id = $1 AND status = 'PROVIDER_RETENTION_PENDING'
+       ) OR EXISTS (
+         SELECT 1 FROM amc_practice.learning_batch_provider_orphan_cleanup_jobs
+         WHERE batch_id = $1 AND cleanup_kind = 'OBSERVE_RETENTION_WINDOW'
+           AND status NOT IN ('SUCCEEDED','SUPERSEDED')
+       ) AS retention_pending`, [batchId]
+    );
+    await this.client.query(
+      `UPDATE amc_practice.learning_batches
+       SET deletion_state = $2, updated_at = $3 WHERE id = $1`,
+      [batchId, provider.rows[0].retention_pending ? 'PROVIDER_RETENTION_PENDING'
+        : provider.rows[0].pending ? 'PROVIDER_DELETE_PENDING' : 'COMPLETE', now]
+    );
+    return true;
   }
 
   async addTimerEvent(event) {

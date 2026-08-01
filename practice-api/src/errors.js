@@ -17,6 +17,8 @@ export const forbidden = (code = 'FORBIDDEN', message = 'You are not allowed to 
 export const notFound = (code = 'NOT_FOUND', message = 'The requested resource was not found.') =>
   new ApiError(404, code, message);
 export const conflict = (code, message, details) => new ApiError(409, code, message, details);
+export const tooManyRequests = (code, message, retryAfterSeconds) =>
+  new ApiError(429, code, message, { retryAfterSeconds });
 
 export function toErrorPayload(error) {
   const known = error instanceof ApiError;

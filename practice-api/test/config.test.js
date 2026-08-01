@@ -8,8 +8,21 @@ test('loopback proxy is the safe default for the loopback-only listener and can 
   assert.equal(loadConfig({ ...base, AMC12_TRUST_PROXY: 'false' }).trustedProxy, false);
   assert.equal(loadConfig({ ...base, AMC12_TRUST_PROXY: '10.0.0.0/8' }).trustedProxy, '10.0.0.0/8');
   assert.equal(loadConfig(base).reasoningWritesPerMinute, 30);
+  assert.equal(loadConfig(base).studentRequestsPerMinute, 120);
+  assert.equal(loadConfig(base).batchUploadBytesPerHour, 250 * 1024 * 1024);
+  assert.equal(loadConfig(base).batchProviderWorkPerDay, 30);
+  assert.equal(loadConfig(base).batchProviderAudioBytesPerDay, 250 * 1024 * 1024);
+  assert.equal(loadConfig(base).batchGlobalProviderWorkPerDay, 1_000);
+  assert.equal(loadConfig(base).batchGlobalProviderAudioBytesPerDay, 10 * 1024 * 1024 * 1024);
   assert.equal(loadConfig({ ...base, AMC12_REASONING_WRITES_PER_MINUTE: '12' }).reasoningWritesPerMinute, 12);
+  assert.equal(loadConfig({ ...base, AMC12_STUDENT_REQUESTS_PER_MINUTE: '7' }).studentRequestsPerMinute, 7);
+  assert.equal(loadConfig({ ...base, AMC12_BATCH_UPLOAD_BYTES_PER_HOUR: '1234' }).batchUploadBytesPerHour, 1234);
+  assert.equal(loadConfig({ ...base, AMC12_BATCH_PROVIDER_WORK_PER_DAY: '9' }).batchProviderWorkPerDay, 9);
+  assert.equal(loadConfig({ ...base, AMC12_BATCH_PROVIDER_AUDIO_BYTES_PER_DAY: '5678' }).batchProviderAudioBytesPerDay, 5678);
+  assert.equal(loadConfig({ ...base, AMC12_BATCH_GLOBAL_PROVIDER_WORK_PER_DAY: '44' }).batchGlobalProviderWorkPerDay, 44);
+  assert.equal(loadConfig({ ...base, AMC12_BATCH_GLOBAL_PROVIDER_AUDIO_BYTES_PER_DAY: '9876' }).batchGlobalProviderAudioBytesPerDay, 9876);
   assert.throws(() => loadConfig({ ...base, AMC12_REASONING_WRITES_PER_MINUTE: '0' }), /positive integer/);
+  assert.throws(() => loadConfig({ ...base, AMC12_STUDENT_REQUESTS_PER_MINUTE: '0' }), /positive integer/);
 });
 
 test('test-only import and publish flags are independent and production disables both', () => {
@@ -20,6 +33,7 @@ test('test-only import and publish flags are independent and production disables
   const production = loadConfig({
     ...base,
     NODE_ENV: 'production',
+    AMC12_PRIVATE_UPLOAD_ROOT: '/var/lib/amc12-private',
     AMC12_ALLOW_TEST_ONLY_IMPORT: 'true',
     AMC12_ALLOW_TEST_ONLY_PUBLISH: 'true'
   });
@@ -27,5 +41,9 @@ test('test-only import and publish flags are independent and production disables
   assert.equal(production.allowTestOnlyPublish, false);
   assert.equal(loadConfig(base).allowGenericManifestImport, false);
   assert.equal(loadConfig({ ...base, AMC12_ALLOW_GENERIC_MANIFEST_IMPORT: 'true' }).allowGenericManifestImport, true);
-  assert.equal(loadConfig({ ...base, NODE_ENV: 'production', AMC12_ALLOW_GENERIC_MANIFEST_IMPORT: 'true' }).allowGenericManifestImport, false);
+  assert.equal(loadConfig({
+    ...base, NODE_ENV: 'production', AMC12_PRIVATE_UPLOAD_ROOT: '/var/lib/amc12-private',
+    AMC12_ALLOW_GENERIC_MANIFEST_IMPORT: 'true'
+  }).allowGenericManifestImport, false);
+  assert.throws(() => loadConfig({ ...base, NODE_ENV: 'production' }), /AMC12_PRIVATE_UPLOAD_ROOT/);
 });

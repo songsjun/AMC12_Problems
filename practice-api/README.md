@@ -155,20 +155,84 @@ proof of who approved a solution. Protecting their ACL and provenance is
 therefore mandatory.
 
 Start the durable analyzer as a separate process after configuring its
-dedicated loopback Gateway token:
+dedicated loopback Gateway token, independent `AMC12_AUTH_PEPPER`, absolute
+`AMC12_PRIVATE_UPLOAD_ROOT` outside the source/static tree, and provider secret:
 
 ```sh
 npm run start:learning-worker
 ```
 
-The worker cannot select a URL, model, tool, or generation control. It uses
-only `POST /v1/analyze-question` on the configured loopback origin, heartbeats
+The worker cannot select a URL, model, tool, or generation control. Its unified
+AI dispatcher uses only `POST /v1/analyze-question` and
+`POST /v1/decompose-batch` on the configured loopback origin, reserves at least
+one concurrency slot for interactive analysis, heartbeats
 its lease during provider calls, sends only model-eligible approved solutions,
 rejects stale completion writes, and uses bounded exponential backoff for
 retryable transient/rate-limit failures before persisting a terminal report.
 The paired Gateway must retain its frozen `AMC_INFERENCE_MAX_BODY_BYTES=524288`
 minimum/default; the API performs the same 524,288-byte serialized-request
 preflight, including the worst valid eight-solution escaped payload.
+
+`COMPLETE` is scoped to every question in one immutable learning-submission
+version, not to every question on the source form. A confirmed batch therefore
+can be `COMPLETE` after all of its mapped questions are analyzed while its score
+continues to declare `scoringScope=MAPPED_QUESTIONS_ONLY` and an explicit
+`mappedQuestionCount`; clients must not label that state as whole-form review.
+
+### Prerecorded audio transcription adapter
+
+Batch audio is transcribed by a server-side AssemblyAI prerecorded adapter; the
+browser never receives the provider credential. Supply the credential through
+the dedicated worker's secret injection as `AMC12_ASSEMBLYAI_API_KEY` and keep it out
+of source, `.env.example`, database rows, job payloads, logs, and audit events.
+The key disclosed during design is compromised by disclosure and must be revoked
+and replaced before any deployment or live test. The adapter fixes the provider
+origin to `https://api.assemblyai.com`, rejects redirects, accepts at most 25
+MiB per audio asset, uses language detection with the fixed prerecorded speech
+model fallback list, and allows at most one hour of provider-reported audio.
+Text files do not pass through this adapter.
+
+Submission is intentionally split across durable worker leases. Before upload
+and transcript creation, the worker commits separate `MAY_HAVE_DELIVERED` call
+barriers. It never blindly repeats an ambiguous call. A known transcript ID is
+committed before a later invocation may poll it; polling has independent
+business attempt/age limits, while provider and local deletion retries remain
+durable and are not capped by that business limit. A completed transcript is
+validated, bounded to 256 KiB, normalized into private durable evidence, and
+scheduled for an explicit provider DELETE. Provider IDs are operational cleanup
+identifiers only and must not be exposed to the student.
+
+AssemblyAI upload URLs are not persisted: only their SHA-256 is retained for
+exact reconciliation. Every deployment explicitly attests one retention
+profile (`CONFIGURED_TTL`, `BAA_DEFAULT`, or `NO_TTL_OR_BAA`), its policy delay,
+and a separate processing-lag slack. The durable not-before is the pre-call
+barrier plus the full upload timeout, policy delay, and slack; missing or
+inconsistent production configuration prevents worker startup. An ambiguous
+transcript submission pages the fixed
+provider list API over the bounded UTC-day window, compares the exact upload
+URL hash, and schedules every match for deletion; an incomplete scan or a
+90-day unresolved result remains visibly manual-blocked rather than being
+declared absent. If a known transcript cannot be bound, its exact ID is first
+persisted in the independent orphan cleanup queue—there is no unfenced
+best-effort DELETE. Provider DELETE calls use a separate global emergency
+`PROVIDER_CLEANUP` budget and never consume or wait on a student's business
+provider quota. An ambiguous upload immediately schedules durable local-audio
+purge; it never waits for the upstream retention window. When that conservative
+window elapses, the system records only `PROVIDER_RETENTION_WINDOW_ELAPSED` and
+leaves the artifact and batch `PROVIDER_RETENTION_PENDING`. `COMPLETE` requires
+a later independent operator/provider confirmation with an audited reference
+hash. A window timer is an account-policy attestation, never physical-deletion
+evidence.
+
+Provider deletion is data minimization, not proof that no upstream retention or
+logging exists. AssemblyAI documents that asynchronous retention varies by
+account configuration and that AWS TTL processing after expiry can lag from
+hours to days; see its [data retention documentation](https://www.assemblyai.com/docs/data-retention-and-model-training).
+Production remains blocked on independent confirmation of the AssemblyAI
+account's retention, regional processing, training, subprocessors, DPA, and
+deletion behavior. The application must keep its own immutable student
+submission/report retention policy separate from transient provider cleanup and
+must expose product-level deletion/export rules explicitly.
 
 ## API contract
 

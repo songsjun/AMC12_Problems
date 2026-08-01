@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import { resolve } from 'node:path';
 
 const LOCAL_DEVELOPMENT_SECRET = 'development-only-amc12-practice-secret-change-before-deploy';
 
@@ -29,6 +30,11 @@ export function loadConfig(env = process.env) {
   const authPepper = env.AMC12_AUTH_PEPPER || sessionSecret;
   if (authPepper.length < 32) throw new Error('AMC12_AUTH_PEPPER must contain at least 32 characters.');
   const sessionHours = positiveInteger(env.AMC12_SESSION_HOURS, 12, 'AMC12_SESSION_HOURS');
+  const privateUploadRoot = env.AMC12_PRIVATE_UPLOAD_ROOT
+    ? resolve(env.AMC12_PRIVATE_UPLOAD_ROOT) : null;
+  if (production && !privateUploadRoot) {
+    throw new Error('AMC12_PRIVATE_UPLOAD_ROOT is required in production.');
+  }
   return {
     host: env.AMC12_HOST || '127.0.0.1',
     port: positiveInteger(env.AMC12_PORT, 8090, 'AMC12_PORT'),
@@ -49,6 +55,39 @@ export function loadConfig(env = process.env) {
     bodyLimit: positiveInteger(env.AMC12_BODY_LIMIT, 64 * 1024, 'AMC12_BODY_LIMIT'),
     reasoningWritesPerMinute: positiveInteger(
       env.AMC12_REASONING_WRITES_PER_MINUTE, 30, 'AMC12_REASONING_WRITES_PER_MINUTE'
+    ),
+    studentRequestsPerMinute: positiveInteger(
+      env.AMC12_STUDENT_REQUESTS_PER_MINUTE, 120, 'AMC12_STUDENT_REQUESTS_PER_MINUTE'
+    ),
+    privateUploadRoot,
+    privateMinimumFreeBytes: positiveInteger(
+      env.AMC12_PRIVATE_MINIMUM_FREE_BYTES, 512 * 1024 * 1024, 'AMC12_PRIVATE_MINIMUM_FREE_BYTES'
+    ),
+    batchStudentQuotaBytes: positiveInteger(
+      env.AMC12_BATCH_STUDENT_QUOTA_BYTES, 250 * 1024 * 1024, 'AMC12_BATCH_STUDENT_QUOTA_BYTES'
+    ),
+    batchGlobalQuotaBytes: positiveInteger(
+      env.AMC12_BATCH_GLOBAL_QUOTA_BYTES, 10 * 1024 * 1024 * 1024, 'AMC12_BATCH_GLOBAL_QUOTA_BYTES'
+    ),
+    batchActiveLimit: positiveInteger(env.AMC12_BATCH_ACTIVE_LIMIT, 3, 'AMC12_BATCH_ACTIVE_LIMIT'),
+    batchUploadBytesPerHour: positiveInteger(
+      env.AMC12_BATCH_UPLOAD_BYTES_PER_HOUR, 250 * 1024 * 1024,
+      'AMC12_BATCH_UPLOAD_BYTES_PER_HOUR'
+    ),
+    batchProviderWorkPerDay: positiveInteger(
+      env.AMC12_BATCH_PROVIDER_WORK_PER_DAY, 30, 'AMC12_BATCH_PROVIDER_WORK_PER_DAY'
+    ),
+    batchProviderAudioBytesPerDay: positiveInteger(
+      env.AMC12_BATCH_PROVIDER_AUDIO_BYTES_PER_DAY, 250 * 1024 * 1024,
+      'AMC12_BATCH_PROVIDER_AUDIO_BYTES_PER_DAY'
+    ),
+    batchGlobalProviderWorkPerDay: positiveInteger(
+      env.AMC12_BATCH_GLOBAL_PROVIDER_WORK_PER_DAY, 1_000,
+      'AMC12_BATCH_GLOBAL_PROVIDER_WORK_PER_DAY'
+    ),
+    batchGlobalProviderAudioBytesPerDay: positiveInteger(
+      env.AMC12_BATCH_GLOBAL_PROVIDER_AUDIO_BYTES_PER_DAY, 10 * 1024 * 1024 * 1024,
+      'AMC12_BATCH_GLOBAL_PROVIDER_AUDIO_BYTES_PER_DAY'
     ),
     developmentAccessCode: production ? null : env.AMC12_DEV_ACCESS_CODE || null,
     developmentStudentName: env.AMC12_DEV_STUDENT_NAME || 'Local student',

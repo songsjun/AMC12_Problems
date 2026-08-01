@@ -45,6 +45,12 @@ as mathematics, because `$3.5$` is a common AMC answer choice.
   `resultsAvailable` by the server because it contains an immutable final
   submission. See the tested `fetchFinalReview` gate in `app.mjs`.
 
+Batch text/audio evidence follows a separate private workflow. A lost provider
+upload response causes immediate local-audio purge. The browser must continue
+to display `PROVIDER_RETENTION_PENDING` after the configured upstream retention
+window elapses; elapsed time is not deletion proof. Only an independently
+audited provider/operator confirmation may make that deletion `COMPLETE`.
+
 ## Local verification
 
 ```sh

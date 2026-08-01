@@ -20,10 +20,11 @@ import {
   PRIVATE_MANIFEST_SCHEMA,
   validateArchiveReleaseBatch
 } from './manifest.js';
-import { badRequest, conflict, forbidden, notFound, unauthorized } from './errors.js';
+import { badRequest, conflict, forbidden, notFound, tooManyRequests, unauthorized } from './errors.js';
 import { newOpaqueToken } from './config.js';
 import { analysisInputHash } from './learning-review/canonical.js';
 import { publicLearningReport } from './learning-review/report.js';
+import { BatchPracticeService } from './batch-ingest/service.js';
 
 const PRELIMINARY_SLOT = 'PRELIMINARY';
 const FINAL_SLOT = 'FINAL';
@@ -180,6 +181,16 @@ export class PracticeService {
     allowTestOnlyImport = false,
     allowTestOnlyPublish = false,
     allowGenericManifestImport = false,
+    privateUploadStore = null,
+    batchStudentQuotaBytes,
+    batchGlobalQuotaBytes,
+    batchActiveLimit,
+    batchRequestLimitPerMinute = 120,
+    batchUploadByteBudget,
+    batchProviderWorkBudget,
+    batchProviderAudioByteBudget,
+    batchGlobalProviderWorkBudget,
+    batchGlobalProviderAudioByteBudget,
     clock = () => new Date()
   }) {
     this.store = store;
@@ -189,6 +200,38 @@ export class PracticeService {
     this.allowTestOnlyPublish = allowTestOnlyImport && allowTestOnlyPublish;
     this.allowGenericManifestImport = allowGenericManifestImport;
     this.clock = clock;
+    this.batchRequestLimitPerMinute = batchRequestLimitPerMinute;
+    this.batchPractice = new BatchPracticeService({
+      store,
+      privateUploadStore,
+      clock,
+      ...(batchStudentQuotaBytes === undefined ? {} : { studentQuotaBytes: batchStudentQuotaBytes }),
+      ...(batchGlobalQuotaBytes === undefined ? {} : { globalQuotaBytes: batchGlobalQuotaBytes }),
+      ...(batchActiveLimit === undefined ? {} : { activeBatchLimit: batchActiveLimit }),
+      ...(batchUploadByteBudget === undefined ? {} : { uploadByteBudget: batchUploadByteBudget }),
+      ...(batchProviderWorkBudget === undefined ? {} : { providerWorkBudget: batchProviderWorkBudget }),
+      ...(batchProviderAudioByteBudget === undefined ? {} : { providerAudioByteBudget: batchProviderAudioByteBudget }),
+      ...(batchGlobalProviderWorkBudget === undefined
+        ? {} : { globalProviderWorkBudget: batchGlobalProviderWorkBudget }),
+      ...(batchGlobalProviderAudioByteBudget === undefined
+        ? {} : { globalProviderAudioByteBudget: batchGlobalProviderAudioByteBudget })
+    });
+  }
+
+  async consumeStudentRequestBudget(studentId) {
+    const result = await this.store.consumeStudentResourceBudget({
+      studentId,
+      budgetKind: 'AUTHENTICATED_REQUEST',
+      units: 1,
+      limit: this.batchRequestLimitPerMinute,
+      windowMs: 60_000,
+      now: this.now()
+    });
+    if (!result.allowed) {
+      throw tooManyRequests('STUDENT_REQUEST_RATE_LIMITED',
+        'Too many authenticated requests. Please try again later.', result.retryAfterSeconds);
+    }
+    return result;
   }
 
   now() {
@@ -840,6 +883,46 @@ export class PracticeService {
         }
       };
     });
+  }
+
+  async createLearningBatch(studentId, attemptId, idempotencyKey, input) {
+    return this.batchPractice.create(studentId, attemptId, idempotencyKey, input);
+  }
+
+  async listLearningBatches(studentId, attemptId) {
+    return this.batchPractice.list(studentId, attemptId);
+  }
+
+  async getLearningBatch(studentId, attemptId, batchId) {
+    return this.batchPractice.get(studentId, attemptId, batchId);
+  }
+
+  async uploadLearningBatchAsset(studentId, attemptId, batchId, assetId, idempotencyKey, stream, contentLength) {
+    return this.batchPractice.upload(
+      studentId, attemptId, batchId, assetId, idempotencyKey, stream, contentLength
+    );
+  }
+
+  async submitLearningBatch(studentId, attemptId, batchId, idempotencyKey) {
+    return this.batchPractice.submit(studentId, attemptId, batchId, idempotencyKey);
+  }
+
+  /** Worker/test seam. Provider adapters submit only frozen Gateway output through this method. */
+  async prepareLearningBatchDecomposition(studentId, attemptId, batchId) {
+    return this.batchPractice.prepareDecomposition(studentId, attemptId, batchId);
+  }
+
+  /** Worker/test seam; intentionally not exposed as an HTTP endpoint. */
+  async recordLearningBatchDecomposition(studentId, attemptId, batchId, input) {
+    return this.batchPractice.recordDecomposition(studentId, attemptId, batchId, input);
+  }
+
+  async confirmLearningBatch(studentId, attemptId, batchId, idempotencyKey, input) {
+    return this.batchPractice.confirm(studentId, attemptId, batchId, idempotencyKey, input);
+  }
+
+  async deleteLearningBatch(studentId, attemptId, batchId, idempotencyKey) {
+    return this.batchPractice.delete(studentId, attemptId, batchId, idempotencyKey);
   }
 
   async processDueAttempt(attemptId) {

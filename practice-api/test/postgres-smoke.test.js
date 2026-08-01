@@ -3,9 +3,12 @@ import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { Readable } from 'node:stream';
 import { promisify } from 'node:util';
+import { segmentBatchGatewaySources } from '../src/batch-ingest/domain.js';
+import { PrivateUploadStore } from '../src/infrastructure/private-upload-store.js';
 import { runMigrations } from '../src/migrate.js';
 import { PostgresStore } from '../src/postgres-store.js';
 import { PracticeService } from '../src/service.js';
@@ -21,6 +24,12 @@ import {
 const execFileAsync = promisify(execFile);
 const connectionString = process.env.AMC12_TEST_DATABASE_URL;
 const contentRoot = fileURLToPath(new URL('../../practice-content/', import.meta.url));
+const RETENTION_PROFILE = Object.freeze({
+  name: 'CONFIGURED_TTL', policyDelayMs: 72 * 60 * 60 * 1_000,
+  uploadRequestMaxDurationMs: 120_000, processingSlackMs: 72 * 60 * 60 * 1_000
+});
+const RETENTION_OFFSET_MS = RETENTION_PROFILE.policyDelayMs
+  + RETENTION_PROFILE.uploadRequestMaxDurationMs + RETENTION_PROFILE.processingSlackMs;
 
 async function generatedSyntheticPrivate() {
   const directory = await mkdtemp(`${tmpdir()}/amc-pg-content-`);
@@ -42,10 +51,64 @@ async function generatedSyntheticPrivate() {
   }
 }
 
+function batchGatewayOutputs(plan) {
+  let itemPosition = 0;
+  return plan.chunks.map((chunk) => ({
+    schema: 'amc-batch-decomposition-v1',
+    correlationId: plan.correlationId,
+    inputHash: chunk.inputHash,
+    planHash: chunk.planHash,
+    chunkId: chunk.chunkId,
+    items: segmentBatchGatewaySources(chunk.sources).map((segment) => ({
+      itemKey: `pg-batch-item-${++itemPosition}`,
+      candidateQuestionNumbers: [1],
+      proposedQuestionNumber: 1,
+      answer: 'A',
+      reasoningSummary: 'The student subtracts the same quantity from both sides.',
+      confidence: 0.97,
+      ambiguity: 'NONE',
+      spans: [{
+        segmentId: segment.segmentId,
+        assetId: segment.assetId,
+        startByte: segment.startByte,
+        endByte: segment.endByte,
+        sha256: segment.sha256
+      }],
+      conflictFlags: [],
+      requiresConfirmation: false
+    })),
+    unmappedSpans: []
+  }));
+}
+
+function batchGatewayRunMetadata(plan) {
+  return plan.chunks.map((chunk) => ({
+    chunkId: chunk.chunkId,
+    inputHash: chunk.inputHash,
+    provider: 'openai',
+    requestedModel: 'gpt-5.6-terra',
+    responseModel: 'gpt-5.6-terra-2026-07-15',
+    promptVersion: 'amc-batch-decomposition-prompt-v1',
+    schemaVersion: 'amc-batch-decomposition-v1',
+    usage: {
+      inputTokens: 800,
+      cachedInputTokens: 100,
+      outputTokens: 200,
+      totalTokens: 1000,
+      reasoningTokens: 50
+    }
+  }));
+}
+
 test('PostgreSQL migration rerun plus private/archive import and publication-concurrency smoke test', { skip: !connectionString }, async (t) => {
   const store = new PostgresStore({ connectionString, max: 12 });
   const secondStore = new PostgresStore({ connectionString, max: 4 });
   const built = await generatedSyntheticPrivate();
+  const privateUploadStore = new PrivateUploadStore({
+    root: `${built.directory}/private-uploads`,
+    highWatermarkPercent: 100
+  });
+  await privateUploadStore.init();
   t.after(async () => {
     await rm(built.directory, { recursive: true, force: true });
     await secondStore.close();
@@ -63,8 +126,231 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     '003_archive_practice_scoring.sql',
     '004_one_published_form_revision.sql',
     '005_learning_submission_core.sql',
-    '006_approved_context_learning_reports.sql'
+    '006_approved_context_learning_reports.sql',
+    '007_batch_ingest.sql'
   ]);
+
+  const batchTables = await store.pool.query(
+    `SELECT table_name
+     FROM information_schema.tables
+     WHERE table_schema = 'amc_practice'
+       AND table_name = ANY($1::text[])
+     ORDER BY table_name`, [[
+      'learning_batch_assets',
+      'learning_batch_confirmation_responses',
+      'learning_batch_confirmation_revisions',
+      'learning_batch_evidence',
+      'learning_batch_mapping_items',
+      'learning_batch_mapping_revisions',
+      'learning_batch_provider_artifacts',
+      'learning_batch_provider_orphan_audit',
+      'learning_batch_provider_orphan_cleanup_jobs',
+      'learning_batch_quota_reservations',
+      'learning_batch_result_items',
+      'learning_batch_results',
+      'learning_batch_work_items',
+      'learning_batches',
+      'global_resource_budget_windows',
+      'private_storage_reconciliation_candidates',
+      'private_storage_reconciliation_events',
+      'student_resource_budget_windows',
+      'student_provider_dispatch_state'
+    ]]
+  );
+  assert.deepEqual(batchTables.rows.map((row) => row.table_name), [
+    'global_resource_budget_windows',
+    'learning_batch_assets',
+    'learning_batch_confirmation_responses',
+    'learning_batch_confirmation_revisions',
+    'learning_batch_evidence',
+    'learning_batch_mapping_items',
+    'learning_batch_mapping_revisions',
+    'learning_batch_provider_artifacts',
+    'learning_batch_provider_orphan_audit',
+    'learning_batch_provider_orphan_cleanup_jobs',
+    'learning_batch_quota_reservations',
+    'learning_batch_result_items',
+    'learning_batch_results',
+    'learning_batch_work_items',
+    'learning_batches',
+    'private_storage_reconciliation_candidates',
+    'private_storage_reconciliation_events',
+    'student_provider_dispatch_state',
+    'student_resource_budget_windows'
+  ]);
+
+  const orphanTranscriptId = randomUUID();
+  const orphanCreatedAt = new Date('2026-08-01T10:00:00.000Z');
+  const orphanNow = new Date('2026-08-01T10:00:01.000Z');
+  const orphanEvent = {
+    event: 'ORPHAN_TRANSCRIPT_DELETE_PENDING', provider: 'assemblyai',
+    providerTranscriptId: orphanTranscriptId, deletionGeneration: 0,
+    errorCode: 'ASSEMBLYAI_UNAVAILABLE', attemptedAt: orphanCreatedAt
+  };
+  await store.recordProviderOrphanAudit(orphanEvent);
+  await store.recordProviderOrphanAudit(orphanEvent);
+  const orphanJob = await store.claimNextProviderOrphanCleanup({
+    workerId: 'postgres-provider-orphan-worker', now: orphanNow, leaseMs: 120_000
+  });
+  assert.equal(orphanJob.externalId, orphanTranscriptId);
+  assert.equal(orphanJob.attemptCount, 1);
+  assert.equal(await store.authorizeProviderOrphanCall({
+    jobId: orphanJob.id, leaseToken: orphanJob.leaseToken,
+    externalId: orphanTranscriptId, now: orphanNow
+  }), true);
+  assert.equal(await store.completeProviderOrphanCleanup({
+    jobId: orphanJob.id, leaseToken: orphanJob.leaseToken,
+    evidenceType: 'provider-already-absent',
+    now: new Date('2026-08-01T10:00:02.000Z')
+  }), true);
+  const orphanAudit = await store.pool.query(
+    `SELECT id, event, source_audit_id, external_id, evidence_code, evidenced_at
+     FROM amc_practice.learning_batch_provider_orphan_audit
+     WHERE external_id = $1 ORDER BY created_at, event`, [orphanTranscriptId]
+  );
+  assert.equal(orphanAudit.rowCount, 2, 'duplicate pending writes must share one durable cleanup job');
+  const orphanPending = orphanAudit.rows.find((row) => row.event === 'ORPHAN_TRANSCRIPT_DELETE_PENDING');
+  const orphanEvidence = orphanAudit.rows.find((row) => row.event === 'ORPHAN_TRANSCRIPT_DELETION_EVIDENCED');
+  assert.equal(orphanPending.evidenced_at, null, 'append-only pending evidence remains unchanged');
+  assert.equal(orphanEvidence.source_audit_id, orphanPending.id);
+  assert.equal(orphanEvidence.evidence_code, 'provider-already-absent');
+
+  const uploadOrphanHash = 'b'.repeat(64);
+  const uploadDeadline = new Date('2026-08-03T10:00:00.000Z');
+  await store.recordProviderOrphanAudit({
+    event: 'PROVIDER_RETENTION_PENDING', provider: 'assemblyai',
+    uploadUrlSha256: uploadOrphanHash, deletionGeneration: 0,
+    errorCode: 'ASSEMBLYAI_UNAVAILABLE', providerRetentionNotBefore: uploadDeadline,
+    detectedAt: orphanCreatedAt
+  });
+  assert.equal(await store.claimNextProviderOrphanCleanup({
+    workerId: 'postgres-provider-orphan-worker',
+    now: new Date(uploadDeadline.getTime() - 1), leaseMs: 120_000
+  }), null);
+  const uploadOrphanJob = await store.claimNextProviderOrphanCleanup({
+    workerId: 'postgres-provider-orphan-worker', now: uploadDeadline, leaseMs: 120_000
+  });
+  assert.equal(uploadOrphanJob.cleanupKind, 'OBSERVE_RETENTION_WINDOW');
+  assert.equal(await store.authorizeProviderOrphanCall({
+    jobId: uploadOrphanJob.id, leaseToken: uploadOrphanJob.leaseToken,
+    externalId: orphanTranscriptId, now: uploadDeadline
+  }), false, 'retention-window observation must never authorize a provider DELETE');
+  assert.equal(await store.completeProviderOrphanCleanup({
+    jobId: uploadOrphanJob.id, leaseToken: uploadOrphanJob.leaseToken,
+    evidenceType: 'provider-delete-response', now: uploadDeadline
+  }), false, 'retention-window completion rejects a physical-delete claim');
+  assert.equal(await store.completeProviderOrphanCleanup({
+    jobId: uploadOrphanJob.id, leaseToken: uploadOrphanJob.leaseToken,
+    evidenceType: 'provider-retention-window-elapsed', now: uploadDeadline
+  }), true);
+  const uploadEvidence = await store.pool.query(
+    `SELECT event, evidence_code FROM amc_practice.learning_batch_provider_orphan_audit
+     WHERE source_audit_id = $1`, [uploadOrphanJob.orphanAuditId]
+  );
+  assert.deepEqual(uploadEvidence.rows, [{
+    event: 'PROVIDER_RETENTION_WINDOW_ELAPSED',
+    evidence_code: 'provider-retention-window-elapsed'
+  }]);
+  const manualJob = await store.pool.query(
+    `SELECT status FROM amc_practice.learning_batch_provider_orphan_cleanup_jobs WHERE id = $1`,
+    [uploadOrphanJob.id]
+  );
+  assert.equal(manualJob.rows[0].status, 'MANUAL_VERIFICATION_REQUIRED');
+  assert.equal(await store.confirmProviderRetentionDeletion({
+    jobId: uploadOrphanJob.id,
+    verificationAuthority: 'assemblyai-support-ticket-operator',
+    verificationReferenceHash: 'c'.repeat(64),
+    now: new Date(uploadDeadline.getTime() + 1)
+  }), true);
+  const confirmedRetention = await store.pool.query(
+    `SELECT event, evidence_code, verification_authority
+     FROM amc_practice.learning_batch_provider_orphan_audit
+     WHERE event = 'PROVIDER_RETENTION_DELETION_CONFIRMED'
+       AND verification_reference_hash = $1`, ['c'.repeat(64)]
+  );
+  assert.deepEqual(confirmedRetention.rows, [{
+    event: 'PROVIDER_RETENTION_DELETION_CONFIRMED',
+    evidence_code: 'independent-provider-deletion-confirmation',
+    verification_authority: 'assemblyai-support-ticket-operator'
+  }]);
+
+  const batchColumns = await store.pool.query(
+    `SELECT table_name, column_name, is_nullable, data_type
+     FROM information_schema.columns
+     WHERE table_schema = 'amc_practice'
+       AND (table_name, column_name) IN (
+         ('learning_batches', 'failure_code'),
+         ('learning_batches', 'committed_version_id'),
+         ('learning_batches', 'committed_version_number'),
+         ('learning_batch_mapping_revisions', 'gateway_run_metadata'),
+         ('learning_batch_mapping_items', 'unmapped'),
+         ('learning_batch_mapping_items', 'purged_at'),
+         ('learning_submission_versions', 'batch_id'),
+         ('learning_submission_versions', 'answers_revision'),
+         ('learning_submission_versions', 'reasoning_revision')
+       )
+     ORDER BY table_name, column_name`
+  );
+  assert.deepEqual(batchColumns.rows, [
+    {
+      table_name: 'learning_batch_mapping_items', column_name: 'purged_at',
+      is_nullable: 'YES', data_type: 'timestamp with time zone'
+    },
+    {
+      table_name: 'learning_batch_mapping_items', column_name: 'unmapped',
+      is_nullable: 'NO', data_type: 'boolean'
+    },
+    {
+      table_name: 'learning_batch_mapping_revisions', column_name: 'gateway_run_metadata',
+      is_nullable: 'NO', data_type: 'jsonb'
+    },
+    {
+      table_name: 'learning_batches', column_name: 'committed_version_id',
+      is_nullable: 'YES', data_type: 'uuid'
+    },
+    {
+      table_name: 'learning_batches', column_name: 'committed_version_number',
+      is_nullable: 'YES', data_type: 'integer'
+    },
+    {
+      table_name: 'learning_batches', column_name: 'failure_code',
+      is_nullable: 'YES', data_type: 'text'
+    },
+    {
+      table_name: 'learning_submission_versions', column_name: 'answers_revision',
+      is_nullable: 'YES', data_type: 'integer'
+    },
+    {
+      table_name: 'learning_submission_versions', column_name: 'batch_id',
+      is_nullable: 'YES', data_type: 'uuid'
+    },
+    {
+      table_name: 'learning_submission_versions', column_name: 'reasoning_revision',
+      is_nullable: 'YES', data_type: 'integer'
+    }
+  ]);
+
+  const batchLineageConstraints = await store.pool.query(
+    `SELECT conname, pg_get_constraintdef(oid) AS definition
+     FROM pg_constraint
+     WHERE connamespace = 'amc_practice'::regnamespace
+       AND conname = ANY($1::text[])
+     ORDER BY conname`, [[
+      'amc_learning_batch_base_version_fk',
+      'amc_learning_batch_committed_version_fk',
+      'amc_learning_batch_final_lineage_fk',
+      'amc_learning_batch_result_version_fk',
+      'amc_learning_version_batch_lineage_fk'
+    ]]
+  );
+  assert.deepEqual(batchLineageConstraints.rows.map((row) => row.conname), [
+    'amc_learning_batch_base_version_fk',
+    'amc_learning_batch_committed_version_fk',
+    'amc_learning_batch_final_lineage_fk',
+    'amc_learning_batch_result_version_fk',
+    'amc_learning_version_batch_lineage_fk'
+  ]);
+  assert.equal(batchLineageConstraints.rows.every((row) => row.definition.includes('FOREIGN KEY')), true);
 
   const learningColumns = await store.pool.query(
     `SELECT table_name, column_name, is_nullable
@@ -180,14 +466,14 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
   assert.match(publishedIndex.rows[0].indexdef, /WHERE \(published = true\)/);
 
   const service = new PracticeService({
-    store,
+    store, privateUploadStore,
     authPepper: 'postgres-test-pepper-that-is-long-enough-for-safe-hmac-tests',
     sessionTtlMs: 60 * 60 * 1000,
     allowTestOnlyImport: true,
     allowTestOnlyPublish: true
   });
   const secondService = new PracticeService({
-    store: secondStore,
+    store: secondStore, privateUploadStore,
     authPepper: 'postgres-test-pepper-that-is-long-enough-for-safe-hmac-tests',
     sessionTtlMs: 60 * 60 * 1000,
     allowTestOnlyImport: true,
@@ -275,6 +561,29 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     code: `pg-smoke-${randomUUID()}`,
     displayName: 'Postgres smoke student'
   });
+  const budgetAt = new Date('2026-08-01T09:00:30.000Z');
+  const studentBudgetRace = await Promise.all([
+    store.consumeStudentResourceBudget({
+      studentId: student.id, budgetKind: 'AUTHENTICATED_REQUEST', units: 1,
+      limit: 1, windowMs: 60_000, now: budgetAt
+    }),
+    secondStore.consumeStudentResourceBudget({
+      studentId: student.id, budgetKind: 'AUTHENTICATED_REQUEST', units: 1,
+      limit: 1, windowMs: 60_000, now: budgetAt
+    })
+  ]);
+  assert.equal(studentBudgetRace.filter((result) => result.allowed).length, 1,
+    'independent PostgreSQL pools share one atomic per-student window');
+  const globalBudgetRace = await Promise.all([
+    store.consumeGlobalResourceBudget({
+      budgetKind: 'PROVIDER_WORK', units: 1, limit: 1, windowMs: 60_000, now: budgetAt
+    }),
+    secondStore.consumeGlobalResourceBudget({
+      budgetKind: 'PROVIDER_WORK', units: 1, limit: 1, windowMs: 60_000, now: budgetAt
+    })
+  ]);
+  assert.equal(globalBudgetRace.filter((result) => result.allowed).length, 1,
+    'independent PostgreSQL pools share one atomic global provider window');
   const attempt = await service.createAttempt(student.id, built.manifest.id);
   const reasoning = await service.putReasoning(student.id, attempt.attempt.id, 'postgres-reasoning-001', {
     revision: 0,
@@ -628,6 +937,10 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
   const officialBeforeAnalysis = await store.pool.query(
     'SELECT * FROM amc_practice.submissions WHERE id = $1', [reviewFinal.submission.id]
   );
+  const officialAnswersBeforeAnalysis = await store.pool.query(
+    `SELECT * FROM amc_practice.submission_answers
+     WHERE submission_id = $1 ORDER BY question_number`, [reviewFinal.submission.id]
+  );
 
   const approvedArtifact = approvedContextArtifact(reviewForm, { readyNumbers: [1] });
   const importedContext = await new ApprovedContextImporter({
@@ -639,7 +952,17 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
   assert.equal(importedContext[0].questions[0].solutions[0].authorityReceipt.status, 'active');
   assert.equal((await service.getLearningReport(reviewStudent.id, reviewAttempt.attempt.id)).status, 'QUEUED');
 
-  const claimedAt = new Date('2026-08-01T20:00:00.000Z');
+  const persistedReady = await store.pool.query(
+    `SELECT max(available_at) AS available_at
+     FROM amc_practice.learning_work_items
+     WHERE learning_submission_version_id IN (
+       SELECT id FROM amc_practice.learning_submission_versions
+       WHERE learning_submission_id = $1
+     ) AND status = 'QUEUED'`,
+    [reviewFinal.learningSubmission.id]
+  );
+  assert.ok(persistedReady.rows[0].available_at);
+  const claimedAt = new Date(new Date(persistedReady.rows[0].available_at).getTime() + 1);
   const claims = await Promise.all([
     store.claimLearningAnalysisWork({ workerId: 'pg-worker-shared', now: claimedAt, leaseMs: 1_000 }),
     secondStore.claimLearningAnalysisWork({ workerId: 'pg-worker-shared', now: claimedAt, leaseMs: 1_000 })
@@ -732,6 +1055,425 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     'SELECT * FROM amc_practice.submissions WHERE id = $1', [reviewFinal.submission.id]
   )).rows, officialBeforeAnalysis.rows);
 
+  // The FINAL-only text-batch path is exercised against the real PostgreSQL
+  // transaction adapter and private filesystem store. The model seam below
+  // supplies the frozen Gateway contract; lease lineage is still claimed and
+  // enforced by PostgreSQL before the mapping can create immutable version 2.
+  const batchText = 'Question 1: A. I subtract the same quantity from both sides, so the equality is preserved.';
+  const batchCreated = await service.createLearningBatch(
+    reviewStudent.id,
+    reviewAttempt.attempt.id,
+    `pg-batch-create-${randomUUID()}`,
+    {
+      files: [{
+        displayName: 'student-work.md',
+        kind: 'TEXT',
+        contentType: 'text/markdown',
+        declaredBytes: Buffer.byteLength(batchText)
+      }]
+    }
+  );
+  assert.equal(batchCreated.created, true);
+  assert.equal(batchCreated.batch.status, 'DRAFT');
+  assert.equal(batchCreated.batch.baseVersion, 1);
+  assert.equal('storageKey' in batchCreated.batch.assets[0], false);
+  await assert.rejects(
+    () => service.getLearningBatch(
+      checkpointStudent.id, reviewAttempt.attempt.id, batchCreated.batch.id
+    ),
+    (error) => error.code === 'ATTEMPT_NOT_FOUND'
+  );
+
+  const batchUploaded = await service.uploadLearningBatchAsset(
+    reviewStudent.id,
+    reviewAttempt.attempt.id,
+    batchCreated.batch.id,
+    batchCreated.batch.assets[0].id,
+    `pg-batch-upload-${randomUUID()}`,
+    Readable.from([batchText]),
+    Buffer.byteLength(batchText)
+  );
+  assert.equal(batchUploaded.asset.status, 'NORMALIZED');
+  assert.equal(batchUploaded.asset.observedBytes, Buffer.byteLength(batchText));
+
+  const batchSubmitted = await service.submitLearningBatch(
+    reviewStudent.id,
+    reviewAttempt.attempt.id,
+    batchCreated.batch.id,
+    `pg-batch-submit-${randomUUID()}`
+  );
+  assert.equal(batchSubmitted.batch.status, 'PROCESSING');
+
+  const batchClaimAt = new Date(Date.now() + 1_000);
+  const batchClaim = await store.claimNextAiWork({
+    workerId: 'pg-batch-worker',
+    now: batchClaimAt,
+    leaseMs: 120_000,
+    acceptedKinds: ['BATCH_EXTRACTION']
+  });
+  assert.equal(batchClaim?.kind, 'BATCH_EXTRACTION');
+  assert.equal(batchClaim.job.batch.id, batchCreated.batch.id);
+  const batchPlan = await service.prepareLearningBatchDecomposition(
+    reviewStudent.id, reviewAttempt.attempt.id, batchCreated.batch.id
+  );
+  const batchRecorded = await service.recordLearningBatchDecomposition(
+    reviewStudent.id,
+    reviewAttempt.attempt.id,
+    batchCreated.batch.id,
+    {
+      masterPlanHash: batchPlan.plan.masterPlanHash,
+      outputs: batchGatewayOutputs(batchPlan.plan),
+      runMetadata: batchGatewayRunMetadata(batchPlan.plan),
+      workerFence: {
+        workerId: batchClaim.job.workItem.leaseOwner,
+        leaseToken: batchClaim.job.workItem.leaseToken,
+        inputHash: batchClaim.job.workItem.inputHash,
+        deletionGeneration: batchClaim.job.workItem.deletionGeneration
+      }
+    }
+  );
+  assert.equal(batchRecorded.batch.status, 'NEEDS_CONFIRMATION');
+  assert.ok(batchRecorded.batch.mapping.items[0].confirmationReasons
+    .includes('MODEL_DERIVED_REQUIRES_CONFIRMATION'));
+  const batchConfirmed = await service.confirmLearningBatch(
+    reviewStudent.id, reviewAttempt.attempt.id, batchCreated.batch.id,
+    `pg-batch-confirm-${randomUUID()}`,
+    {
+      mappingRevision: batchRecorded.batch.mapping.revision,
+      responses: [{
+        questionNumber: 1,
+        selectedOption: batchRecorded.batch.mapping.items[0].selectedOption,
+        reasoningText: batchRecorded.batch.mapping.items[0].evidenceText,
+        sourceItemIds: [batchRecorded.batch.mapping.items[0].id]
+      }],
+      discardedItemIds: []
+    }
+  );
+  assert.equal(batchConfirmed.batch.status, 'COMMITTED');
+  assert.equal(batchConfirmed.batch.committedVersion, 2);
+  assert.equal(batchConfirmed.batch.result.scoringScope, 'MAPPED_QUESTIONS_ONLY');
+  assert.equal(batchConfirmed.batch.result.mappedQuestionCount, 1);
+  assert.equal(batchRecorded.batch.mapping.items[0].proposedQuestionNumber, 1);
+
+  const batchDurability = await store.pool.query(
+    `SELECT b.status, b.base_version, b.committed_version_number,
+            v.creation_reason, v.context_status,
+            count(DISTINCT r.question_number)::integer AS response_count,
+            br.scoring_scope, br.mapped_question_count,
+            mr.gateway_run_metadata
+     FROM amc_practice.learning_batches b
+     JOIN amc_practice.learning_submission_versions v
+       ON v.id = b.committed_version_id AND v.batch_id = b.id
+     JOIN amc_practice.learning_question_responses r
+       ON r.learning_submission_version_id = v.id
+     JOIN amc_practice.learning_batch_results br
+       ON br.batch_id = b.id AND br.learning_submission_version_id = v.id
+     JOIN amc_practice.learning_batch_mapping_revisions mr
+       ON mr.batch_id = b.id AND mr.revision = b.mapping_revision
+     WHERE b.id = $1
+     GROUP BY b.status, b.base_version, b.committed_version_number,
+              v.creation_reason, v.context_status, br.scoring_scope,
+              br.mapped_question_count, mr.gateway_run_metadata`,
+    [batchCreated.batch.id]
+  );
+  assert.equal(batchDurability.rowCount, 1);
+  const { gateway_run_metadata: durableGatewayMetadata, ...durableBatchRow } = batchDurability.rows[0];
+  assert.deepEqual(durableBatchRow, {
+    status: 'COMMITTED',
+    base_version: 1,
+    committed_version_number: 2,
+    creation_reason: 'BATCH_COMMIT',
+    context_status: 'CONTEXT_READY',
+    response_count: 1,
+    scoring_scope: 'MAPPED_QUESTIONS_ONLY',
+    mapped_question_count: 1
+  });
+  assert.deepEqual(
+    durableGatewayMetadata.map(({ chunkId, inputHash }) => ({ chunkId, inputHash })),
+    batchPlan.plan.chunks.map(({ chunkId, inputHash }) => ({ chunkId, inputHash }))
+  );
+  const batchConfirmationAudit = await store.pool.query(
+    `SELECT r.answer_origin, r.reasoning_origin,
+            cr.source_evidence_hash AS confirmation_source_hash,
+            response.confirmed_reasoning_text, response.confirmed_reasoning_hash,
+            response.reasoning_origin AS confirmation_reasoning_origin,
+            response.canonical_source_item_ids, response.source_descriptors,
+            response.reconstructed_source_text, response.source_span_hash,
+            response.source_evidence_hash
+     FROM amc_practice.learning_batches b
+     JOIN amc_practice.learning_question_responses r
+       ON r.learning_submission_version_id = b.committed_version_id
+     JOIN amc_practice.learning_batch_confirmation_revisions cr
+       ON cr.batch_id = b.id AND cr.mapping_revision = b.mapping_revision
+     JOIN amc_practice.learning_batch_confirmation_responses response
+       ON response.batch_id = cr.batch_id AND response.mapping_revision = cr.mapping_revision
+      AND response.question_number = r.question_number
+     WHERE b.id = $1`, [batchCreated.batch.id]
+  );
+  assert.equal(batchConfirmationAudit.rowCount, 1);
+  assert.equal(batchConfirmationAudit.rows[0].answer_origin, 'BATCH_CONFIRMED');
+  assert.equal(batchConfirmationAudit.rows[0].reasoning_origin, 'BATCH_CONFIRMED_EVIDENCE');
+  assert.equal(batchConfirmationAudit.rows[0].confirmation_reasoning_origin,
+    'BATCH_CONFIRMED_EVIDENCE');
+  assert.equal(batchConfirmationAudit.rows[0].confirmed_reasoning_text,
+    batchRecorded.batch.mapping.items[0].evidenceText);
+  assert.equal(batchConfirmationAudit.rows[0].reconstructed_source_text,
+    batchRecorded.batch.mapping.items[0].evidenceText);
+  assert.match(batchConfirmationAudit.rows[0].confirmed_reasoning_hash, /^[a-f0-9]{64}$/);
+  assert.match(batchConfirmationAudit.rows[0].source_span_hash, /^[a-f0-9]{64}$/);
+  assert.match(batchConfirmationAudit.rows[0].source_evidence_hash, /^[a-f0-9]{64}$/);
+  assert.equal(batchConfirmationAudit.rows[0].confirmation_source_hash,
+    batchConfirmed.batch.confirmation.sourceEvidenceHash);
+  assert.deepEqual(batchConfirmationAudit.rows[0].canonical_source_item_ids,
+    [batchRecorded.batch.mapping.items[0].id]);
+  assert.equal(batchConfirmationAudit.rows[0].source_descriptors.length, 1);
+  await assert.rejects(
+    store.pool.query(
+      `UPDATE amc_practice.learning_batch_confirmation_responses
+       SET confirmed_reasoning_text = 'tampered' WHERE batch_id = $1`, [batchCreated.batch.id]
+    ),
+    /append-only/
+  );
+
+  const batchReportWorker = new LearningReviewWorker({
+    store: secondStore,
+    inferenceClient: fakeInference,
+    workerId: 'pg-batch-report-worker',
+    leaseMs: 120_000,
+    clock: () => new Date(batchClaimAt.getTime() + 1_000)
+  });
+  assert.deepEqual(
+    await batchReportWorker.runOnce(),
+    { processed: true, status: 'COMPLETE', providerCalls: 1 }
+  );
+  const batchLearning = await service.getLearningSubmission(reviewStudent.id, reviewAttempt.attempt.id);
+  assert.equal(batchLearning.version, 2);
+  const batchLearningReport = await service.getLearningReport(reviewStudent.id, reviewAttempt.attempt.id);
+  assert.equal(batchLearningReport.status, 'COMPLETE');
+  assert.equal(batchLearningReport.summary.analyzedCount, 1);
+  assert.equal(batchLearningReport.questions[0].questionNumber, 1);
+  assert.deepEqual((await store.pool.query(
+    'SELECT * FROM amc_practice.submissions WHERE id = $1', [reviewFinal.submission.id]
+  )).rows, officialBeforeAnalysis.rows,
+  'batch commit and batch report must not mutate the official FINAL score');
+  assert.deepEqual((await store.pool.query(
+    `SELECT * FROM amc_practice.submission_answers
+     WHERE submission_id = $1 ORDER BY question_number`, [reviewFinal.submission.id]
+  )).rows, officialAnswersBeforeAnalysis.rows,
+  'batch commit and analysis must not mutate any official answer row');
+
+  const pgAudio = Buffer.concat([Buffer.from('ID3'), Buffer.alloc(48, 6)]);
+  const createPgAudioBatch = async (studentId, attemptId, key, count = 1) => {
+    const created = await service.createLearningBatch(studentId, attemptId, `${key}-create-${randomUUID()}`, {
+      files: Array.from({ length: count }, (_, index) => ({
+        displayName: `${key}-${index}.mp3`, kind: 'AUDIO', contentType: 'audio/mpeg',
+        declaredBytes: pgAudio.length
+      }))
+    });
+    for (const [index, asset] of created.batch.assets.entries()) {
+      await service.uploadLearningBatchAsset(
+        studentId, attemptId, created.batch.id, asset.id, `${key}-upload-${index}-${randomUUID()}`,
+        Readable.from([pgAudio]), pgAudio.length
+      );
+    }
+    await service.submitLearningBatch(
+      studentId, attemptId, created.batch.id, `${key}-submit-${randomUUID()}`
+    );
+    return created;
+  };
+
+  // PostgreSQL parity for crash-after-upload: lease recovery purges local audio
+  // immediately, independently of the much later retention-window observation.
+  const pgTtlBatch = await createPgAudioBatch(
+    reviewStudent.id, reviewAttempt.attempt.id, 'pg-upload-crash'
+  );
+  const pgTtlAt = new Date(Date.now() + 20_000);
+  const pgTtlClaim = await store.claimNextTranscriptionWork({
+    workerId: 'pg-upload-crash-worker', now: pgTtlAt, leaseMs: 120_000
+  });
+  const pgTtlDeadline = new Date(pgTtlAt.getTime() + RETENTION_OFFSET_MS);
+  const pgUploadBarrier = await store.beginTranscriptionUploadCall({
+    workItemId: pgTtlClaim.workItemId, leaseToken: pgTtlClaim.leaseToken,
+    deletionGeneration: pgTtlClaim.deletionGeneration, startedAt: pgTtlAt,
+    providerRetentionNotBefore: pgTtlDeadline, retentionProfile: RETENTION_PROFILE
+  });
+  const pgAmbiguousAt = new Date(pgTtlAt.getTime() + 120_001);
+  const pgAmbiguous = await secondStore.claimNextTranscriptionWork({
+    workerId: 'pg-upload-ambiguous-recovery', now: pgAmbiguousAt, leaseMs: 120_000
+  });
+  assert.equal(pgAmbiguous.phase, 'await_upload_retention');
+  assert.equal(await secondStore.deferAmbiguousUploadUntilRetention({
+    workItemId: pgAmbiguous.workItemId, leaseToken: pgAmbiguous.leaseToken,
+    deletionGeneration: pgAmbiguous.deletionGeneration,
+    uploadCallId: pgUploadBarrier.callId, now: pgAmbiguousAt
+  }), true);
+  const pgTtlPurge = await store.claimNextTranscriptionWork({
+    workerId: 'pg-upload-retention-local-purge',
+    now: new Date(pgAmbiguousAt.getTime() + 1), leaseMs: 120_000
+  });
+  assert.equal(pgTtlPurge.phase, 'purge_resolved_orphan');
+  const pgTtlLocalFound = await privateUploadStore.delete(pgTtlPurge.assetStorageKey);
+  assert.equal(await store.recordResolvedOrphanLocalAudioPurged({
+    workItemId: pgTtlPurge.workItemId, leaseToken: pgTtlPurge.leaseToken,
+    deletionGeneration: pgTtlPurge.deletionGeneration, providerTranscriptId: null,
+    localObjectFound: pgTtlLocalFound, purgedAt: new Date(pgAmbiguousAt.getTime() + 2)
+  }), true);
+  const pgTtlCleanup = await secondStore.claimNextProviderOrphanCleanup({
+    workerId: 'pg-upload-retention-cleanup', now: pgTtlDeadline, leaseMs: 120_000
+  });
+  assert.equal(pgTtlCleanup.cleanupKind, 'OBSERVE_RETENTION_WINDOW');
+  assert.equal(await secondStore.completeProviderOrphanCleanup({
+    jobId: pgTtlCleanup.id, leaseToken: pgTtlCleanup.leaseToken,
+    evidenceType: 'provider-retention-window-elapsed', now: pgTtlDeadline
+  }), true);
+  const pgTtlState = await store.pool.query(
+    `SELECT p.status AS provider_status, a.status AS asset_status, a.storage_key,
+            w.status AS work_status, b.status AS batch_status
+     FROM amc_practice.learning_batches b
+     JOIN amc_practice.learning_batch_assets a ON a.batch_id = b.id
+     JOIN amc_practice.learning_batch_provider_artifacts p ON p.asset_id = a.id
+     JOIN amc_practice.learning_batch_work_items w
+       ON w.batch_id = b.id AND w.asset_id = a.id AND w.work_type = 'TRANSCRIBE_AUDIO'
+     WHERE b.id = $1`, [pgTtlBatch.batch.id]
+  );
+  assert.deepEqual(pgTtlState.rows[0], {
+    provider_status: 'PROVIDER_RETENTION_PENDING', asset_status: 'PURGED',
+    storage_key: null, work_status: 'FAILED', batch_status: 'FAILED'
+  });
+  const pgRetentionJob = await store.pool.query(
+    `SELECT status FROM amc_practice.learning_batch_provider_orphan_cleanup_jobs
+     WHERE batch_id = $1 AND cleanup_kind = 'OBSERVE_RETENTION_WINDOW'`, [pgTtlBatch.batch.id]
+  );
+  assert.deepEqual(pgRetentionJob.rows, [{ status: 'MANUAL_VERIFICATION_REQUIRED' }]);
+  assert.ok(pgUploadBarrier.callId);
+
+  // PostgreSQL parity for deletion racing a crashed submit: a new deletion
+  // generation performs bounded hash reconciliation, deletes every match, and
+  // supersedes the upload-retention-window observation before deletion can become COMPLETE.
+  const pgSubmitBatch = await createPgAudioBatch(
+    reviewStudent.id, reviewAttempt.attempt.id, 'pg-submit-crash-delete'
+  );
+  const pgSubmitAt = new Date(pgTtlDeadline.getTime() + 10_000);
+  const pgSubmitClaim = await secondStore.claimNextTranscriptionWork({
+    workerId: 'pg-submit-crash-worker', now: pgSubmitAt, leaseMs: 120_000
+  });
+  const pgUploadUrl = `https://cdn.assemblyai.com/upload/${randomUUID()}`;
+  const pgUploadHash = createHash('sha256').update(pgUploadUrl).digest('hex');
+  const pgUpload = await secondStore.beginTranscriptionUploadCall({
+    workItemId: pgSubmitClaim.workItemId, leaseToken: pgSubmitClaim.leaseToken,
+    deletionGeneration: pgSubmitClaim.deletionGeneration, startedAt: pgSubmitAt,
+    providerRetentionNotBefore: new Date(pgSubmitAt.getTime() + RETENTION_OFFSET_MS),
+    retentionProfile: RETENTION_PROFILE
+  });
+  assert.equal(await secondStore.recordTranscriptionUploadResponse({
+    workItemId: pgSubmitClaim.workItemId, leaseToken: pgSubmitClaim.leaseToken,
+    deletionGeneration: pgSubmitClaim.deletionGeneration, uploadCallId: pgUpload.callId,
+    uploadUrlSha256: pgUploadHash, returnedAt: pgSubmitAt
+  }), true);
+  const pgSubmit = await secondStore.beginTranscriptionSubmitCall({
+    workItemId: pgSubmitClaim.workItemId, leaseToken: pgSubmitClaim.leaseToken,
+    deletionGeneration: pgSubmitClaim.deletionGeneration, uploadCallId: pgUpload.callId,
+    uploadUrlSha256: pgUploadHash, startedAt: pgSubmitAt
+  });
+  const pgDeleted = await service.deleteLearningBatch(
+    reviewStudent.id, reviewAttempt.attempt.id, pgSubmitBatch.batch.id,
+    `pg-submit-crash-delete-${randomUUID()}`
+  );
+  assert.equal(pgDeleted.batch.deletionGeneration, 1);
+  assert.equal(pgDeleted.batch.deletionState, 'PROVIDER_RETENTION_PENDING',
+    'upload ambiguity remains retention-pending until submit reconciliation binds transcript ids');
+  const pgReconcileAt = new Date(pgSubmitAt.getTime() + 1_000);
+  const pgReconcile = await store.claimNextTranscriptionWork({
+    workerId: 'pg-submit-reconcile-worker', now: pgReconcileAt, leaseMs: 120_000
+  });
+  assert.equal(pgReconcile.phase, 'reconcile');
+  assert.equal(pgReconcile.deletionGeneration, 1);
+  const pgMatchedTranscriptIds = [randomUUID(), randomUUID()].sort();
+  assert.equal(await store.recordAmbiguousSubmitReconciliation({
+    workItemId: pgReconcile.workItemId, leaseToken: pgReconcile.leaseToken,
+    deletionGeneration: pgReconcile.deletionGeneration, submitCallId: pgSubmit.callId,
+    uploadUrlSha256: pgUploadHash, providerTranscriptIds: pgMatchedTranscriptIds,
+    scanComplete: true, manualAfterMs: 90 * 24 * 60 * 60 * 1_000,
+    reconciledAt: pgReconcileAt
+  }), true);
+  const pgPrimaryDelete = await secondStore.claimNextTranscriptionWork({
+    workerId: 'pg-primary-delete-worker', now: new Date(pgReconcileAt.getTime() + 1), leaseMs: 120_000
+  });
+  assert.equal(pgPrimaryDelete.phase, 'delete');
+  assert.equal(await secondStore.authorizeTranscriptionProviderCall({
+    workItemId: pgPrimaryDelete.workItemId, leaseToken: pgPrimaryDelete.leaseToken,
+    deletionGeneration: pgPrimaryDelete.deletionGeneration,
+    providerTranscriptId: pgPrimaryDelete.providerTranscriptId,
+    phase: 'DELETE', now: new Date(pgReconcileAt.getTime() + 2),
+    providerBudget: {
+      studentLimit: null, globalLimit: 100_000, windowMs: 24 * 60 * 60 * 1_000,
+      budgetKind: 'PROVIDER_CLEANUP'
+    }
+  }), true);
+  assert.equal(await secondStore.recordDeletionEvidence({
+    workItemId: pgPrimaryDelete.workItemId, leaseToken: pgPrimaryDelete.leaseToken,
+    deletionGeneration: pgPrimaryDelete.deletionGeneration,
+    providerTranscriptId: pgPrimaryDelete.providerTranscriptId,
+    evidenceType: 'provider-delete-response', evidencedAt: new Date(pgReconcileAt.getTime() + 3)
+  }), true);
+  const pgExtraDelete = await store.claimNextProviderOrphanCleanup({
+    workerId: 'pg-extra-delete-worker', now: new Date(pgReconcileAt.getTime() + 4), leaseMs: 120_000
+  });
+  assert.ok(pgMatchedTranscriptIds.includes(pgExtraDelete.externalId));
+  assert.equal(await store.completeProviderOrphanCleanup({
+    jobId: pgExtraDelete.id, leaseToken: pgExtraDelete.leaseToken,
+    evidenceType: 'provider-delete-response', now: new Date(pgReconcileAt.getTime() + 5)
+  }), true);
+  const pgDeletionState = await service.getLearningBatch(
+    reviewStudent.id, reviewAttempt.attempt.id, pgSubmitBatch.batch.id
+  );
+  assert.equal(pgDeletionState.batch.deletionState, 'COMPLETE');
+  const pgUploadCleanupState = await store.pool.query(
+    `SELECT j.status FROM amc_practice.learning_batch_provider_orphan_cleanup_jobs j
+     JOIN amc_practice.learning_batch_provider_orphan_audit a ON a.id = j.orphan_audit_id
+     WHERE a.provider_call_id = $1 AND a.event = 'PROVIDER_RETENTION_PENDING'`, [pgUpload.callId]
+  );
+  assert.deepEqual(pgUploadCleanupState.rows, [{ status: 'SUPERSEDED' }]);
+
+  // Two independent pools share the least-served dispatcher state. The exact
+  // first student is intentionally unspecified because UUID order is random.
+  const fairStudents = [];
+  const fairAttempts = [];
+  for (const label of ['A', 'B']) {
+    const fairStudent = await service.seedAccessCode({
+      code: `pg-fair-${label}-${randomUUID()}`, displayName: `PG fair ${label}`
+    });
+    const fairAttempt = await service.createAttempt(fairStudent.id, built.manifest.id);
+    await service.final(fairStudent.id, fairAttempt.attempt.id, `pg-fair-final-${label}-${randomUUID()}`, {
+      expectedAnswersRevision: fairAttempt.attempt.answersRevision,
+      expectedStateRevision: fairAttempt.attempt.stateRevision
+    });
+    fairStudents.push(fairStudent);
+    fairAttempts.push(fairAttempt.attempt);
+  }
+  await createPgAudioBatch(fairStudents[0].id, fairAttempts[0].id, 'pg-fair-a', 2);
+  await createPgAudioBatch(fairStudents[1].id, fairAttempts[1].id, 'pg-fair-b', 1);
+  const fairClaimStudents = [];
+  const fairAt = new Date(pgReconcileAt.getTime() + 60_000);
+  for (let index = 0; index < 3; index += 1) {
+    const fairStore = index % 2 === 0 ? store : secondStore;
+    const claim = await fairStore.claimNextTranscriptionWork({
+      workerId: `pg-fair-worker-${index}`, now: new Date(fairAt.getTime() + index), leaseMs: 120_000
+    });
+    assert.ok(claim);
+    const owner = await store.pool.query(
+      `SELECT b.student_id
+       FROM amc_practice.learning_batch_work_items w
+       JOIN amc_practice.learning_batches b ON b.id = w.batch_id
+       WHERE w.id = $1`, [claim.workItemId]
+    );
+    fairClaimStudents.push(owner.rows[0].student_id);
+  }
+  assert.notEqual(fairClaimStudents[0], fairClaimStudents[1]);
+  const fairCounts = [...new Set(fairClaimStudents)].map((studentId) =>
+    fairClaimStudents.filter((candidate) => candidate === studentId).length).sort();
+  assert.deepEqual(fairCounts, [1, 2]);
+
   await service.reset(reviewStudent.id, reviewAttempt.attempt.id, 'pg-review-reset-1');
-  assert.equal((await service.getLearningReport(reviewStudent.id, reviewAttempt.attempt.id)).status, 'PARTIAL');
+  assert.equal((await service.getLearningReport(reviewStudent.id, reviewAttempt.attempt.id)).status, 'COMPLETE');
 });
