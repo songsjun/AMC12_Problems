@@ -85,6 +85,8 @@ Each stage has its own tests, independent review, reflection, and Git commit.
   exact-version, revocation/deletion-aware learning-history read model.
 - `ADR-008`: analysis v2 derives answer status from immutable official/batch
   scoring snapshots and uses a drained, versioned provider-contract cutover.
+- `ADR-009`: Tutor v2 keeps Gateway context hashes separate from pinned
+  analysis/report lineage and requires an explicit fork before history loss.
 
 ## Module direction
 

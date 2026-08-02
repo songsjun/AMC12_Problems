@@ -1,0 +1,130 @@
+{
+  "request": {
+    "schema": "amc-tutor-turn-request-v2",
+    "task": "question_tutor_turn_v2",
+    "correlationId": "tutor-correlation-001",
+    "inputHash": "0a9b8b921c8acd5a2174035ca8534863612970d293ebed5aa96424450e973878",
+    "snapshotHash": "6ddf5866c6b730900056e5cbff9c148e03b1bd1cb7d89284362549b5019c7e69",
+    "contextHash": "ddd6a0f657f48d843ed17e70f492abe053b01100ada1c5762405e91b9dd8f186",
+    "historyHash": "6ca1383060010dfab2a96e5e97bde2e725368a63c5b90eeea60369d5e2670caf",
+    "safetyId": "amc-math-safe-v1",
+    "threadId": "tutor-thread-001",
+    "turnId": "tutor-turn-002",
+    "turnNumber": 2,
+    "context": {
+      "learningSubmissionId": "learning-submission-001",
+      "learningSubmissionVersionId": "learning-version-001",
+      "versionNumber": 1,
+      "formId": "2024-amc12a",
+      "formVersion": "review-v1",
+      "contextSetId": "approved-context-001",
+      "contextArtifactSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "contextReleaseHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "evidenceHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "question": {
+        "questionNumber": 1,
+        "questionId": "2024-AMC12A-01",
+        "promptMarkdown": "If $x+2=5$, what is $x$?",
+        "choices": [
+          {
+            "label": "A",
+            "textMarkdown": "$1$"
+          },
+          {
+            "label": "B",
+            "textMarkdown": "$2$"
+          },
+          {
+            "label": "C",
+            "textMarkdown": "$3$"
+          },
+          {
+            "label": "D",
+            "textMarkdown": "$4$"
+          },
+          {
+            "label": "E",
+            "textMarkdown": "$5$"
+          }
+        ],
+        "isScored": true,
+        "officialAnswer": "C",
+        "acceptedOptions": [
+          "C"
+        ],
+        "studentAnswer": "C",
+        "studentReasoning": "Subtract two from both sides, so $x=3$.",
+        "solutions": [
+          {
+            "solutionId": "solution-direct",
+            "approvalStatus": "APPROVED",
+            "modelEligible": true,
+            "title": "Direct algebra",
+            "markdown": "Subtract $2$ from both sides to obtain $x=3$.",
+            "bodySha256": "384b98595e023456fe97f6cb7ecdc91193f102adb5931869a3af24cda4544620",
+            "sourceSha256": "1111111111111111111111111111111111111111111111111111111111111111",
+            "reviewerId": "reviewer-001",
+            "reviewedAt": "2026-07-31T12:00:00.000Z",
+            "rightsStatus": "approved-for-ai-use",
+            "authorityReceiptId": "authority-receipt-001",
+            "authorityReceiptStatus": "active",
+            "methodTags": [
+              "algebra"
+            ],
+            "qualityFlags": []
+          },
+          {
+            "solutionId": "solution-choice",
+            "approvalStatus": "APPROVED",
+            "modelEligible": true,
+            "title": "Choice verification",
+            "markdown": "Evaluate the choices in $x+2=5$; only $x=3$ works.",
+            "bodySha256": "afbf4c72359f63da0d75bcd9b28154189e41bb410ec9ee8034823f77b069eedb",
+            "sourceSha256": "2222222222222222222222222222222222222222222222222222222222222222",
+            "reviewerId": "reviewer-002",
+            "reviewedAt": "2026-07-31T12:00:00.000Z",
+            "rightsStatus": "approved-for-ai-use",
+            "authorityReceiptId": "authority-receipt-001",
+            "authorityReceiptStatus": "active",
+            "methodTags": [
+              "choice-check"
+            ],
+            "qualityFlags": []
+          }
+        ]
+      }
+    },
+    "priorTurns": [
+      {
+        "turnNumber": 1,
+        "userMessage": "Why is subtracting two allowed?",
+        "assistantReply": "Subtracting the same number from both sides preserves equality."
+      }
+    ],
+    "message": "How does this compare with checking the choices?"
+  },
+  "modelOutput": {
+    "schema": "amc-tutor-turn-v2",
+    "correlationId": "tutor-correlation-001",
+    "inputHash": "0a9b8b921c8acd5a2174035ca8534863612970d293ebed5aa96424450e973878",
+    "snapshotHash": "6ddf5866c6b730900056e5cbff9c148e03b1bd1cb7d89284362549b5019c7e69",
+    "contextHash": "ddd6a0f657f48d843ed17e70f492abe053b01100ada1c5762405e91b9dd8f186",
+    "historyHash": "6ca1383060010dfab2a96e5e97bde2e725368a63c5b90eeea60369d5e2670caf",
+    "threadId": "tutor-thread-001",
+    "turnId": "tutor-turn-002",
+    "turnNumber": 2,
+    "replyMarkdown": "The direct method isolates $x$ immediately. Choice checking verifies the same result one option at a time."
+  },
+  "expectedOutput": {
+    "schema": "amc-tutor-turn-v2",
+    "correlationId": "tutor-correlation-001",
+    "inputHash": "0a9b8b921c8acd5a2174035ca8534863612970d293ebed5aa96424450e973878",
+    "snapshotHash": "6ddf5866c6b730900056e5cbff9c148e03b1bd1cb7d89284362549b5019c7e69",
+    "contextHash": "ddd6a0f657f48d843ed17e70f492abe053b01100ada1c5762405e91b9dd8f186",
+    "historyHash": "6ca1383060010dfab2a96e5e97bde2e725368a63c5b90eeea60369d5e2670caf",
+    "threadId": "tutor-thread-001",
+    "turnId": "tutor-turn-002",
+    "turnNumber": 2,
+    "replyMarkdown": "The direct method isolates $x$ immediately. Choice checking verifies the same result one option at a time."
+  }
+}
