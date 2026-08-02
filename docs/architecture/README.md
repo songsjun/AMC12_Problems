@@ -87,6 +87,8 @@ Each stage has its own tests, independent review, reflection, and Git commit.
   scoring snapshots and uses a drained, versioned provider-contract cutover.
 - `ADR-009`: Tutor v2 keeps Gateway context hashes separate from pinned
   analysis/report lineage and requires an explicit fork before history loss.
+- `TUTOR_PERSISTENCE_DEPLOYMENT.md`: maintenance-window procedure and rollback
+  boundary for migration 011.
 
 ## Module direction
 

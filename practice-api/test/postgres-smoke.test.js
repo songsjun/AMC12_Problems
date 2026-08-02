@@ -15,6 +15,16 @@ import { PostgresStore } from '../src/postgres-store.js';
 import { PracticeService } from '../src/service.js';
 import { ApprovedContextImporter } from '../src/learning-review/artifact.js';
 import { LearningReviewWorker } from '../src/learning-review/worker.js';
+import { canonicalHash } from '../src/learning-review/canonical.js';
+import {
+  buildTutorTurnRequest,
+  computeTutorContextHash,
+  computeTutorContextReleaseHash,
+  computeTutorSnapshotHash,
+  computeTutorThreadLineageHash,
+  isValidTutorContext,
+  tutorSha256
+} from '../src/question-tutor/domain.js';
 import { archiveReleaseFixture } from './archive-fixture.js';
 import { fixtureManifest } from './helpers.js';
 import {
@@ -131,7 +141,59 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     '007_batch_ingest.sql',
     '008_open_review.sql',
     '009_learning_history_read_model.sql',
-    '010_analysis_contract_v2.sql'
+    '010_analysis_contract_v2.sql',
+    '011_question_tutor_persistence.sql'
+  ]);
+
+  const tutorTables = await store.pool.query(
+    `SELECT table_name FROM information_schema.tables
+     WHERE table_schema = 'amc_practice' AND table_name = ANY($1::text[])
+     ORDER BY table_name`, [[
+      'learning_tutor_messages', 'learning_tutor_snapshots',
+      'learning_tutor_threads', 'learning_tutor_turn_jobs'
+    ]]
+  );
+  assert.deepEqual(tutorTables.rows.map((row) => row.table_name), [
+    'learning_tutor_messages', 'learning_tutor_snapshots',
+    'learning_tutor_threads', 'learning_tutor_turn_jobs'
+  ]);
+  const tutorConstraints = await store.pool.query(
+    `SELECT conname, convalidated FROM pg_constraint
+     WHERE connamespace = 'amc_practice'::regnamespace
+       AND conname = ANY($1::text[]) ORDER BY conname`, [[
+      'amc_tutor_job_owner_unique', 'amc_tutor_job_request_message_fk',
+      'amc_tutor_job_response_message_fk',
+      'amc_tutor_job_thread_fk',
+      'amc_tutor_message_source_job_fk', 'amc_tutor_snapshot_analysis_fk',
+      'amc_tutor_snapshot_batch_result_item_fk', 'amc_tutor_snapshot_batch_result_version_fk',
+      'amc_tutor_snapshot_context_artifact_fk', 'amc_tutor_snapshot_context_question_fk',
+      'amc_tutor_snapshot_identity_unique',
+      'amc_tutor_snapshot_official_answer_fk', 'amc_tutor_snapshot_official_submission_fk',
+      'amc_tutor_snapshot_report_fk', 'amc_tutor_snapshot_submission_fk',
+      'amc_tutor_snapshot_response_fk',
+      'amc_tutor_snapshot_version_fk', 'amc_tutor_thread_fork_job_fk',
+      'amc_tutor_thread_snapshot_fk'
+    ]]
+  );
+  assert.equal(tutorConstraints.rowCount, 19);
+  assert.equal(tutorConstraints.rows.every((row) => row.convalidated === true), true);
+  const tutorTriggers = await store.pool.query(
+    `SELECT tgname FROM pg_trigger
+     WHERE tgrelid IN (
+       'amc_practice.learning_tutor_snapshots'::regclass,
+       'amc_practice.learning_tutor_threads'::regclass,
+       'amc_practice.learning_tutor_messages'::regclass,
+       'amc_practice.learning_tutor_turn_jobs'::regclass
+     ) AND NOT tgisinternal ORDER BY tgname`
+  );
+  assert.deepEqual(tutorTriggers.rows.map((row) => row.tgname), [
+    'amc_guard_tutor_job_transition', 'amc_guard_tutor_thread_mutation',
+    'amc_reject_tutor_job_delete', 'amc_reject_tutor_thread_delete',
+    'amc_tutor_messages_append_only', 'amc_tutor_snapshots_append_only',
+    'amc_tutor_thread_head_from_job', 'amc_tutor_thread_head_from_message',
+    'amc_tutor_thread_head_from_thread',
+    'amc_validate_tutor_assistant_message', 'amc_validate_tutor_fork',
+    'amc_validate_tutor_job', 'amc_validate_tutor_snapshot_insert'
   ]);
 
   const analysisV2Schema = await store.pool.query(
@@ -1176,6 +1238,693 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     error_class: null,
     retryable: false
   });
+
+  // Exercise Tutor lineage, the deferred success/message cycle, and the
+  // delivery state machine against real PostgreSQL before any adapter can
+  // accidentally rely on weaker application-only assumptions.
+  const tutorLineage = (await store.pool.query(
+    `SELECT report.id AS report_id, report.report_hash,
+            analysis.question_input_hash, analysis.question_context_hash,
+            response.selected_option, response.reasoning_text, response.answer_origin,
+            submission.official_submission_id, submission.deletion_generation,
+            context.artifact_set_hash, context.approval_authority_id,
+            context.approval_receipt_set_hash, context.release_manifest_hash,
+            context.release_content_hash, context.release_question_bundle_hash,
+            question.question_content_hash
+     FROM amc_practice.learning_reports report
+     JOIN amc_practice.learning_analysis_runs run ON run.id = report.analysis_run_id
+     JOIN amc_practice.learning_submission_versions version
+       ON version.id = report.learning_submission_version_id
+     JOIN amc_practice.learning_submissions submission
+       ON submission.id = version.learning_submission_id
+     JOIN amc_practice.learning_question_analyses analysis
+       ON analysis.analysis_run_id = run.id AND analysis.question_number = 1
+     JOIN amc_practice.learning_question_responses response
+       ON response.learning_submission_version_id = version.id AND response.question_number = 1
+     JOIN amc_practice.approved_context_sets context ON context.id = version.context_set_id
+     JOIN amc_practice.approved_context_questions question
+       ON question.context_set_id = context.id AND question.question_number = 1
+     WHERE run.id = $1`, [staleClaim.run.id]
+  )).rows[0];
+  assert.ok(tutorLineage);
+  const tutorQuestionSource = reclaimed.questions.find((question) => question.questionNumber === 1);
+  const tutorApprovedQuestion = tutorQuestionSource.context;
+  const tutorChoiceMap = Array.isArray(tutorApprovedQuestion.choices)
+    ? Object.fromEntries(tutorApprovedQuestion.choices.map((choice) => [choice.option, choice.textMarkdown]))
+    : tutorApprovedQuestion.choices;
+  const tutorContextReleaseHash = computeTutorContextReleaseHash({
+    sourceType: 'INTERACTIVE_FINAL', formId: reclaimed.version.formId,
+    formVersion: reclaimed.version.formVersion,
+    manifestHash: tutorLineage.release_manifest_hash,
+    contentHash: tutorLineage.release_content_hash,
+    questionBundleHash: tutorLineage.release_question_bundle_hash,
+    contextSetId: reclaimed.version.contextSetId,
+    contextArtifactSha256: tutorLineage.artifact_set_hash,
+    approvalAuthorityId: tutorLineage.approval_authority_id,
+    approvalReceiptSetHash: tutorLineage.approval_receipt_set_hash,
+    openReviewReleaseHash: null
+  });
+  const tutorContext = {
+    learningSubmissionId: reclaimed.submission.id,
+    learningSubmissionVersionId: reclaimed.version.id,
+    versionNumber: reclaimed.version.versionNumber,
+    formId: reclaimed.version.formId,
+    formVersion: reclaimed.version.formVersion,
+    contextSetId: reclaimed.version.contextSetId,
+    contextArtifactSha256: tutorLineage.artifact_set_hash,
+    contextReleaseHash: tutorContextReleaseHash,
+    evidenceHash: reclaimed.version.evidenceHash,
+    question: {
+      questionNumber: 1,
+      questionId: `${reclaimed.version.formId}:q:1`,
+      promptMarkdown: tutorApprovedQuestion.promptMarkdown,
+      choices: ['A', 'B', 'C', 'D', 'E'].map((label) => ({
+        label, textMarkdown: tutorChoiceMap[label]
+      })),
+      isScored: tutorQuestionSource.scoring.isScored,
+      officialAnswer: tutorQuestionSource.scoring.canonicalAnswer,
+      acceptedOptions: tutorQuestionSource.scoring.acceptedOptions,
+      studentAnswer: tutorQuestionSource.selectedOption,
+      studentReasoning: tutorQuestionSource.reasoningText || null,
+      solutions: tutorApprovedQuestion.solutions
+        .filter((solution) => solution.modelEligibility.eligible
+          && solution.authorityReceipt.status === 'active')
+        .map((solution) => ({
+          solutionId: solution.artifactSolutionId,
+          approvalStatus: 'APPROVED', modelEligible: true, title: solution.title,
+          markdown: solution.bodyMarkdown, bodySha256: solution.bodySha256,
+          sourceSha256: solution.sourceRef.sha256, reviewerId: solution.reviewerId,
+          reviewedAt: solution.reviewedAt, rightsStatus: solution.rightsStatus,
+          authorityReceiptId: solution.authorityReceipt.receiptId,
+          authorityReceiptStatus: solution.authorityReceipt.status,
+          methodTags: solution.methodTags, qualityFlags: solution.qualityFlags
+        }))
+    }
+  };
+  assert.equal(isValidTutorContext(tutorContext), true);
+  const tutorSnapshotId = randomUUID();
+  const tutorThreadId = randomUUID();
+  const tutorJobId = randomUUID();
+  const tutorMessageId = randomUUID();
+  const tutorReplyMessageId = randomUUID();
+  const tutorSnapshotHash = computeTutorSnapshotHash(tutorContext);
+  const tutorQuestionResponseHash = canonicalHash({
+    questionNumber: 1, selectedOption: tutorQuestionSource.selectedOption,
+    reasoningText: tutorQuestionSource.reasoningText,
+    answerOrigin: tutorQuestionSource.answerOrigin
+  });
+  const tutorScoringHash = canonicalHash(tutorQuestionSource.scoring);
+  const tutorThreadLineageHash = computeTutorThreadLineageHash({
+    analysisRunId: staleClaim.run.id,
+    analysisContractVersion: reclaimed.run.analysisContractVersion,
+    reportId: tutorLineage.report_id, reportHash: tutorLineage.report_hash,
+    snapshotHash: tutorSnapshotHash,
+    questionResponseHash: tutorQuestionResponseHash,
+    scoringSnapshotHash: tutorScoringHash,
+    scoringOrigin: tutorLineage.answer_origin,
+    initialDeletionGeneration: tutorLineage.deletion_generation
+  });
+  // Keep synthetic application timestamps behind the database clock so queue
+  // readiness is proved by clock_timestamp(), never by a caller-supplied future value.
+  const tutorCreatedAt = new Date(Date.now() - 30_000);
+  await store.pool.query(
+    `INSERT INTO amc_practice.learning_tutor_snapshots
+     (id, student_id, learning_submission_id, learning_submission_version_id,
+      version_number, form_id, form_version, source_type, question_number,
+      context_set_id, question_content_hash, analysis_run_id, analysis_contract_version,
+      analysis_question_input_hash, analysis_question_context_hash, report_id, report_hash,
+      evidence_hash, question_response_hash, scoring_snapshot_hash, scoring_origin,
+      official_submission_id, batch_result_id, initial_deletion_generation,
+      context_artifact_sha256, context_release_hash, payload_schema, snapshot_payload,
+      snapshot_hash, thread_lineage_hash, created_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,'INTERACTIVE_FINAL',1,$8,$9,$10,$11,$12,$13,
+             $14,$15,$16,$17,$18,$19,$20,NULL,$21,$22,$23,'amc-tutor-snapshot-v2',
+             $24::jsonb,$25,$26,$27)`,
+    [tutorSnapshotId, reviewStudent.id, reclaimed.submission.id, reclaimed.version.id,
+      reclaimed.version.versionNumber, reclaimed.version.formId, reclaimed.version.formVersion,
+      reclaimed.version.contextSetId, tutorLineage.question_content_hash, staleClaim.run.id,
+      reclaimed.run.analysisContractVersion, tutorLineage.question_input_hash,
+      tutorLineage.question_context_hash, tutorLineage.report_id, tutorLineage.report_hash,
+      reclaimed.version.evidenceHash, tutorQuestionResponseHash, tutorScoringHash,
+      tutorLineage.answer_origin, tutorLineage.official_submission_id,
+      tutorLineage.deletion_generation, tutorLineage.artifact_set_hash,
+      tutorContextReleaseHash, JSON.stringify(tutorContext), tutorSnapshotHash,
+      tutorThreadLineageHash, tutorCreatedAt]
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `INSERT INTO amc_practice.learning_tutor_snapshots
+       (id, student_id, learning_submission_id, learning_submission_version_id,
+        version_number, form_id, form_version, source_type, question_number,
+        context_set_id, question_content_hash, analysis_run_id, analysis_contract_version,
+        analysis_question_input_hash, analysis_question_context_hash, report_id, report_hash,
+        evidence_hash, question_response_hash, scoring_snapshot_hash, scoring_origin,
+        official_submission_id, batch_result_id, initial_deletion_generation,
+        context_artifact_sha256, context_release_hash, payload_schema, snapshot_payload,
+        snapshot_hash, thread_lineage_hash, created_at)
+       SELECT $2, student_id, learning_submission_id, learning_submission_version_id,
+              version_number, form_id, form_version, source_type, question_number,
+              context_set_id, question_content_hash, analysis_run_id, analysis_contract_version,
+              analysis_question_input_hash, analysis_question_context_hash, report_id, report_hash,
+              evidence_hash, question_response_hash, scoring_snapshot_hash, scoring_origin,
+              official_submission_id, batch_result_id, initial_deletion_generation,
+              context_artifact_sha256, context_release_hash, payload_schema,
+              jsonb_set(snapshot_payload, '{question,studentReasoning}', '"forged"'::jsonb),
+              $3, $4, created_at + interval '1 second'
+       FROM amc_practice.learning_tutor_snapshots WHERE id = $1`,
+      [tutorSnapshotId, randomUUID(), tutorSha256('forged-snapshot'),
+        tutorSha256('forged-lineage')]
+    ),
+    (error) => error.code === '23514'
+  );
+  const tutorMessage = 'Can you compare my subtraction step with both approved methods?';
+  const tutorTurn = buildTutorTurnRequest({
+    correlationId: 'pg-tutor-correlation-001', threadId: tutorThreadId,
+    turnId: tutorJobId, turnNumber: 1, context: tutorContext, priorTurns: [],
+    message: tutorMessage
+  });
+  const tutorThreadCreation = await store.pool.connect();
+  const concurrentSourceDeletion = await store.pool.connect();
+  try {
+    await tutorThreadCreation.query('BEGIN');
+    await tutorThreadCreation.query(
+      `INSERT INTO amc_practice.learning_tutor_threads
+       (id, student_id, snapshot_id, learning_submission_id, learning_submission_version_id,
+        question_number, snapshot_hash, thread_lineage_hash, tutor_contract_version,
+        context_hash, status, initial_deletion_generation, deletion_generation,
+        creation_idempotency_key_hash, creation_request_hash, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,1,$6,$7,'amc-tutor-contract-v2',$8,'OPEN',$9,$9,$10,$11,$12,$12)`,
+      [tutorThreadId, reviewStudent.id, tutorSnapshotId, reclaimed.submission.id,
+        reclaimed.version.id, tutorSnapshotHash, tutorThreadLineageHash,
+        tutorTurn.contextHash, tutorLineage.deletion_generation,
+        tutorSha256('pg-tutor-thread-idempotency'), tutorSha256('pg-tutor-thread-request'),
+        tutorCreatedAt]
+    );
+    await concurrentSourceDeletion.query('BEGIN');
+    await concurrentSourceDeletion.query("SET LOCAL lock_timeout = '100ms'");
+    await assert.rejects(
+      () => concurrentSourceDeletion.query(
+        `UPDATE amc_practice.learning_submissions
+         SET lifecycle_status = 'DELETED', deletion_generation = deletion_generation + 1,
+             deleted_at = $2, updated_at = $2 WHERE id = $1`,
+        [reclaimed.submission.id, new Date(tutorCreatedAt.getTime() + 1_000)]
+      ),
+      (error) => error.code === '55P03'
+    );
+    await concurrentSourceDeletion.query('ROLLBACK');
+    await tutorThreadCreation.query('COMMIT');
+    await assert.rejects(
+      () => store.pool.query(
+        `UPDATE amc_practice.learning_submissions
+         SET lifecycle_status = 'DELETED', deletion_generation = deletion_generation + 1,
+             deleted_at = $2, updated_at = $2 WHERE id = $1`,
+        [reclaimed.submission.id, new Date(tutorCreatedAt.getTime() + 1_000)]
+      ),
+      (error) => error.code === '55000'
+    );
+  } catch (error) {
+    await tutorThreadCreation.query('ROLLBACK').catch(() => {});
+    await concurrentSourceDeletion.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    tutorThreadCreation.release();
+    concurrentSourceDeletion.release();
+  }
+  const orphanTutorMessage = await store.pool.connect();
+  try {
+    await orphanTutorMessage.query('BEGIN');
+    const orphanUserMessage = 'This user message has no durable turn job.';
+    await orphanTutorMessage.query(
+      `INSERT INTO amc_practice.learning_tutor_messages
+       (id, thread_id, student_id, role, content_markdown, content_sha256, created_at)
+       VALUES ($1,$2,$3,'USER',$4,$5,$6)`,
+      [randomUUID(), tutorThreadId, reviewStudent.id, orphanUserMessage,
+        tutorSha256(orphanUserMessage), tutorCreatedAt]
+    );
+    await assert.rejects(
+      () => orphanTutorMessage.query('COMMIT'),
+      (error) => error.code === '23514'
+    );
+    await orphanTutorMessage.query('ROLLBACK');
+  } finally {
+    orphanTutorMessage.release();
+  }
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.learning_tutor_threads
+       SET successful_turn_count = 1, successful_history_bytes = 1,
+           thread_revision = 1, updated_at = updated_at + interval '1 second'
+       WHERE id = $1`, [tutorThreadId]
+    ),
+    (error) => error.code === '55000'
+  );
+  const tutorQueuedAt = new Date(tutorCreatedAt.getTime() + 1_000);
+  const tutorSessionId = `pg-tutor-session-${randomUUID()}`;
+  await store.pool.query(
+    `INSERT INTO amc_practice.sessions
+     (id, student_id, csrf_token_hash, created_at, expires_at, revoked_at)
+     VALUES ($1,$2,$3,$4,$5,NULL)`,
+    [tutorSessionId, reviewStudent.id, tutorSha256('csrf'), tutorCreatedAt,
+      new Date(tutorCreatedAt.getTime() + 3_600_000)]
+  );
+  const tutorEnqueue = await store.pool.connect();
+  try {
+    await tutorEnqueue.query('BEGIN');
+    await tutorEnqueue.query(
+      `INSERT INTO amc_practice.learning_tutor_messages
+       (id, thread_id, student_id, role, content_markdown, content_sha256, created_at)
+       VALUES ($1,$2,$3,'USER',$4,$5,$6)`,
+      [tutorMessageId, tutorThreadId, reviewStudent.id, tutorMessage,
+        tutorSha256(tutorMessage), tutorCreatedAt]
+    );
+    await tutorEnqueue.query(
+      `UPDATE amc_practice.learning_tutor_threads
+       SET request_count = 1, thread_revision = 1, updated_at = $2 WHERE id = $1`,
+      [tutorThreadId, tutorQueuedAt]
+    );
+    await tutorEnqueue.query(
+      `INSERT INTO amc_practice.learning_tutor_turn_jobs
+       (id, thread_id, student_id, request_message_id, request_ordinal, turn_number,
+        authorized_session_id, idempotency_key_hash, request_hash, correlation_id,
+        snapshot_hash, context_hash, history_hash, input_hash, thread_lineage_hash,
+        tutor_contract_version, status, priority, attempt_count, max_attempts,
+        available_at, provider_invoked, delivery_disposition, retryable,
+        deletion_generation, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,1,1,$5,$6,$7,$8,$9,$10,$11,$12,$13,
+               'amc-tutor-contract-v2','QUEUED',100,0,3,$14,false,'NOT_DISPATCHED',false,$15,$14,$14)`,
+      [tutorJobId, tutorThreadId, reviewStudent.id, tutorMessageId, tutorSessionId,
+        tutorSha256('pg-tutor-turn-idempotency'), tutorSha256(JSON.stringify(tutorTurn)),
+        tutorTurn.correlationId, tutorTurn.snapshotHash, tutorTurn.contextHash,
+        tutorTurn.historyHash, tutorTurn.inputHash, tutorThreadLineageHash,
+        tutorQueuedAt, tutorLineage.deletion_generation]
+    );
+    await tutorEnqueue.query('COMMIT');
+  } catch (error) {
+    await tutorEnqueue.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    tutorEnqueue.release();
+  }
+  await assert.rejects(
+    () => store.pool.query(
+      `INSERT INTO amc_practice.learning_tutor_turn_jobs
+       (id, thread_id, student_id, request_message_id, request_ordinal, turn_number,
+        authorized_session_id, idempotency_key_hash, request_hash, correlation_id,
+        snapshot_hash, context_hash, history_hash, input_hash, thread_lineage_hash,
+        tutor_contract_version, status, priority, attempt_count, max_attempts,
+        available_at, provider_invoked, delivery_disposition, retryable,
+        deletion_generation, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,1,1,$5,$6,$7,'pg-tutor-illegal-terminal',$8,$9,$10,$11,$12,
+               'amc-tutor-contract-v2','SUCCEEDED',100,0,3,$13,false,
+               'NOT_DISPATCHED',false,$14,$13,$13)`,
+      [randomUUID(), tutorThreadId, reviewStudent.id, tutorMessageId, tutorSessionId,
+        tutorSha256('illegal-terminal-idempotency'), tutorSha256('illegal-terminal-request'),
+        tutorSnapshotHash, tutorTurn.contextHash, tutorTurn.historyHash,
+        tutorSha256('illegal-terminal-input'), tutorThreadLineageHash,
+        tutorQueuedAt, tutorLineage.deletion_generation]
+    ),
+    (error) => error.code === '23514'
+  );
+  const tutorLeaseToken = randomUUID();
+  const tutorClaimedAt = new Date(tutorQueuedAt.getTime() + 1_000);
+  const revokedTutor = await store.pool.connect();
+  try {
+    await revokedTutor.query('BEGIN');
+    await revokedTutor.query(
+      'UPDATE amc_practice.sessions SET revoked_at = $2 WHERE id = $1',
+      [tutorSessionId, tutorClaimedAt]
+    );
+    await assert.rejects(
+      () => revokedTutor.query(
+        `UPDATE amc_practice.learning_tutor_turn_jobs
+         SET status = 'RUNNING', attempt_count = 1, lease_owner = 'revoked-worker',
+             lease_token = $2, lease_expires_at = $3, started_at = $4, updated_at = $4
+         WHERE id = $1`,
+        [tutorJobId, randomUUID(), new Date(tutorClaimedAt.getTime() + 60_000), tutorClaimedAt]
+      ),
+      (error) => error.code === '55000'
+    );
+    await revokedTutor.query('ROLLBACK');
+  } finally {
+    revokedTutor.release();
+  }
+  const firstClaim = await store.pool.query(
+    `UPDATE amc_practice.learning_tutor_turn_jobs
+     SET status = 'RUNNING', attempt_count = 1, lease_owner = 'pg-tutor-worker',
+         lease_token = $2, lease_expires_at = $3, started_at = $4, updated_at = $4
+     WHERE id = $1 AND status = 'QUEUED'
+     RETURNING id`,
+    [tutorJobId, tutorLeaseToken, new Date(tutorClaimedAt.getTime() + 60_000), tutorClaimedAt]
+  );
+  assert.equal(firstClaim.rowCount, 1);
+  const tutorDispatchedAt = new Date(tutorClaimedAt.getTime() + 1_000);
+  const staleDispatch = await store.pool.query(
+    `UPDATE amc_practice.learning_tutor_turn_jobs
+     SET provider_invoked = true, delivery_disposition = 'MAY_HAVE_BEEN_DELIVERED',
+         provider = 'openai', requested_model = 'gpt-5.6-terra',
+         prompt_version = 'amc-question-tutor-prompt-v2',
+         response_schema_version = 'amc-tutor-turn-v2', updated_at = $2
+     WHERE id = $1 AND lease_token = $3 AND lease_expires_at > clock_timestamp()`,
+    [tutorJobId, tutorDispatchedAt, randomUUID()]
+  );
+  assert.equal(staleDispatch.rowCount, 0);
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.learning_tutor_turn_jobs
+       SET status = 'DELIVERY_UNKNOWN', provider_invoked = true,
+           delivery_disposition = 'MAY_HAVE_BEEN_DELIVERED', provider = 'openai',
+           requested_model = 'gpt-5.6-terra',
+           prompt_version = 'amc-question-tutor-prompt-v2',
+           response_schema_version = 'amc-tutor-turn-v2',
+           outcome_code = 'DELIVERY_UNKNOWN', lease_owner = NULL, lease_token = NULL,
+           lease_expires_at = NULL, completed_at = $2, updated_at = $2
+       WHERE id = $1 AND lease_token = $3 AND lease_expires_at > clock_timestamp()`,
+      [tutorJobId, tutorDispatchedAt, tutorLeaseToken]
+    ),
+    (error) => error.code === '55000'
+  );
+  await store.pool.query(
+    `UPDATE amc_practice.learning_tutor_turn_jobs
+     SET provider_invoked = true, delivery_disposition = 'MAY_HAVE_BEEN_DELIVERED',
+         provider = 'openai', requested_model = 'gpt-5.6-terra',
+         prompt_version = 'amc-question-tutor-prompt-v2',
+         response_schema_version = 'amc-tutor-turn-v2', updated_at = $2
+     WHERE id = $1 AND lease_token = $3 AND lease_expires_at > clock_timestamp()`,
+    [tutorJobId, tutorDispatchedAt, tutorLeaseToken]
+  );
+  const tutorReply = 'Your invariant is sound: subtracting the same quantity preserves equality.';
+  const tutorReplyHash = tutorSha256(tutorReply);
+  const tutorHistoryBytes = Buffer.byteLength(tutorMessage) + Buffer.byteLength(tutorReply);
+  const tutorCompletedAt = new Date(tutorDispatchedAt.getTime() + 1_000);
+  const tutorCompletion = await store.pool.connect();
+  try {
+    await tutorCompletion.query('BEGIN');
+    await tutorCompletion.query(
+      `UPDATE amc_practice.learning_tutor_turn_jobs
+       SET status = 'SUCCEEDED', delivery_disposition = 'DELIVERED_RESULT',
+           response_message_id = $2, reply_sha256 = $3,
+           response_model = 'gpt-5.6-terra-2026-07-15',
+           usage = '{"inputTokens":800,"outputTokens":120,"totalTokens":920}'::jsonb,
+           latency_ms = 250, lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+           completed_at = $4, updated_at = $4
+       WHERE id = $1 AND lease_token = $5 AND lease_expires_at > clock_timestamp()`,
+      [tutorJobId, tutorReplyMessageId, tutorReplyHash, tutorCompletedAt, tutorLeaseToken]
+    );
+    await tutorCompletion.query(
+      `INSERT INTO amc_practice.learning_tutor_messages
+       (id, thread_id, student_id, role, content_markdown, content_sha256,
+        source_turn_job_id, created_at)
+       VALUES ($1,$2,$3,'ASSISTANT',$4,$5,$6,$7)`,
+      [tutorReplyMessageId, tutorThreadId, reviewStudent.id, tutorReply,
+        tutorReplyHash, tutorJobId, tutorCompletedAt]
+    );
+    await tutorCompletion.query(
+      `UPDATE amc_practice.learning_tutor_threads
+       SET successful_turn_count = 1, successful_history_bytes = $2,
+           thread_revision = 2, updated_at = $3 WHERE id = $1`,
+      [tutorThreadId, tutorHistoryBytes, new Date(tutorCompletedAt.getTime() + 1_000)]
+    );
+    await tutorCompletion.query('COMMIT');
+  } catch (error) {
+    await tutorCompletion.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    tutorCompletion.release();
+  }
+  assert.deepEqual((await store.pool.query(
+    `SELECT job.status, job.delivery_disposition, count(message.id)::integer AS assistant_count
+     FROM amc_practice.learning_tutor_turn_jobs job
+     JOIN amc_practice.learning_tutor_messages message
+       ON message.source_turn_job_id = job.id
+     WHERE job.id = $1 GROUP BY job.status, job.delivery_disposition`, [tutorJobId]
+  )).rows, [{ status: 'SUCCEEDED', delivery_disposition: 'DELIVERED_RESULT', assistant_count: 1 }]);
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.learning_tutor_snapshots SET report_hash = $2 WHERE id = $1`,
+      [tutorSnapshotId, tutorSha256('tampered-report')]
+    ),
+    (error) => error.code === '55000'
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.learning_tutor_turn_jobs SET updated_at = updated_at + interval '1 second'
+       WHERE id = $1`, [tutorJobId]
+    ),
+    (error) => error.code === '55000'
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.learning_tutor_threads
+       SET deletion_generation = deletion_generation + 1,
+           thread_revision = thread_revision + 1, updated_at = updated_at + interval '1 second'
+       WHERE id = $1`, [tutorThreadId]
+    ),
+    (error) => error.code === '55000'
+  );
+
+  const rootReplay = await store.pool.connect();
+  try {
+    const rootReplayAt = new Date(tutorCompletedAt.getTime() + 1_500);
+    await rootReplay.query('BEGIN');
+    await rootReplay.query(
+      `UPDATE amc_practice.learning_tutor_threads
+       SET request_count = 2, thread_revision = 3, updated_at = $2 WHERE id = $1`,
+      [tutorThreadId, rootReplayAt]
+    );
+    await assert.rejects(
+      () => rootReplay.query(
+        `INSERT INTO amc_practice.learning_tutor_turn_jobs
+         (id, thread_id, student_id, request_message_id, request_ordinal, turn_number,
+          authorized_session_id, idempotency_key_hash, request_hash, correlation_id,
+          snapshot_hash, context_hash, history_hash, input_hash, thread_lineage_hash,
+          tutor_contract_version, status, priority, attempt_count, max_attempts,
+          available_at, provider_invoked, delivery_disposition, retryable,
+          deletion_generation, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,2,2,$5,$6,$7,'pg-tutor-root-replay',$8,$9,$10,$11,$12,
+                 'amc-tutor-contract-v2','QUEUED',100,0,3,$13,false,
+                 'NOT_DISPATCHED',false,$14,$13,$13)`,
+        [randomUUID(), tutorThreadId, reviewStudent.id, tutorMessageId, tutorSessionId,
+          tutorSha256('root-replay-idempotency'), tutorSha256('root-replay-request'),
+          tutorSnapshotHash, tutorTurn.contextHash, tutorSha256('root-replay-history'),
+          tutorSha256('root-replay-input'), tutorThreadLineageHash,
+          rootReplayAt, tutorLineage.deletion_generation]
+      ),
+      (error) => error.code === '23505'
+        && error.constraint === 'amc_tutor_one_root_job_per_request_idx'
+    );
+    await rootReplay.query('ROLLBACK');
+  } finally {
+    rootReplay.release();
+  }
+
+  const secondTutorMessageId = randomUUID();
+  const secondTutorMessage = 'Could you make that invariant more explicit?';
+  const secondTutorQueuedAt = new Date(tutorCompletedAt.getTime() + 2_000);
+  const secondTutorJobId = randomUUID();
+  const secondTutorTurn = buildTutorTurnRequest({
+    correlationId: 'pg-tutor-correlation-002', threadId: tutorThreadId,
+    turnId: secondTutorJobId, turnNumber: 2, context: tutorContext,
+    priorTurns: [{ turnNumber: 1, userMessage: tutorMessage, assistantReply: tutorReply }],
+    message: secondTutorMessage
+  });
+  const secondTutorEnqueue = await store.pool.connect();
+  try {
+    await secondTutorEnqueue.query('BEGIN');
+    await secondTutorEnqueue.query(
+      `INSERT INTO amc_practice.learning_tutor_messages
+       (id, thread_id, student_id, role, content_markdown, content_sha256, created_at)
+       VALUES ($1,$2,$3,'USER',$4,$5,$6)`,
+      [secondTutorMessageId, tutorThreadId, reviewStudent.id, secondTutorMessage,
+        tutorSha256(secondTutorMessage), secondTutorQueuedAt]
+    );
+    await secondTutorEnqueue.query(
+      `UPDATE amc_practice.learning_tutor_threads
+       SET request_count = 2, thread_revision = 3, updated_at = $2 WHERE id = $1`,
+      [tutorThreadId, secondTutorQueuedAt]
+    );
+    await secondTutorEnqueue.query(
+      `INSERT INTO amc_practice.learning_tutor_turn_jobs
+       (id, thread_id, student_id, request_message_id, request_ordinal, turn_number,
+        authorized_session_id, idempotency_key_hash, request_hash, correlation_id,
+        snapshot_hash, context_hash, history_hash, input_hash, thread_lineage_hash,
+        tutor_contract_version, status, priority, attempt_count, max_attempts,
+        available_at, provider_invoked, delivery_disposition, retryable,
+        deletion_generation, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,2,2,$5,$6,$7,$8,$9,$10,$11,$12,$13,
+               'amc-tutor-contract-v2','QUEUED',100,0,3,$14,false,'NOT_DISPATCHED',false,$15,$14,$14)`,
+      [secondTutorJobId, tutorThreadId, reviewStudent.id, secondTutorMessageId, tutorSessionId,
+        tutorSha256('pg-tutor-turn-idempotency-2'), tutorSha256(JSON.stringify(secondTutorTurn)),
+        secondTutorTurn.correlationId, secondTutorTurn.snapshotHash, secondTutorTurn.contextHash,
+        secondTutorTurn.historyHash, secondTutorTurn.inputHash, tutorThreadLineageHash,
+        secondTutorQueuedAt, tutorLineage.deletion_generation]
+    );
+    await secondTutorEnqueue.query('COMMIT');
+  } catch (error) {
+    await secondTutorEnqueue.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    secondTutorEnqueue.release();
+  }
+  const secondLeaseToken = randomUUID();
+  const secondClaimedAt = new Date(secondTutorQueuedAt.getTime() + 1_000);
+  const secondClaim = await store.pool.query(
+    `UPDATE amc_practice.learning_tutor_turn_jobs
+     SET status = 'RUNNING', attempt_count = 1, lease_owner = 'pg-tutor-worker',
+         lease_token = $2, lease_expires_at = $3, started_at = $4, updated_at = $4
+     WHERE id = $1 AND status = 'QUEUED'
+     RETURNING id`,
+    [secondTutorJobId, secondLeaseToken,
+      new Date(secondClaimedAt.getTime() + 60_000), secondClaimedAt]
+  );
+  assert.equal(secondClaim.rowCount, 1);
+  const secondDispatchedAt = new Date(secondClaimedAt.getTime() + 1_000);
+  await store.pool.query(
+    `UPDATE amc_practice.learning_tutor_turn_jobs
+     SET provider_invoked = true, delivery_disposition = 'MAY_HAVE_BEEN_DELIVERED',
+         provider = 'openai', requested_model = 'gpt-5.6-terra',
+         prompt_version = 'amc-question-tutor-prompt-v2',
+         response_schema_version = 'amc-tutor-turn-v2', updated_at = $2
+     WHERE id = $1 AND lease_token = $3 AND lease_expires_at > clock_timestamp()`,
+    [secondTutorJobId, secondDispatchedAt, secondLeaseToken]
+  );
+  const incompleteTutorCompletion = await store.pool.connect();
+  try {
+    const orphanReplyId = randomUUID();
+    const orphanReply = 'This reply must roll back without the thread head.';
+    const orphanReplyHash = tutorSha256(orphanReply);
+    const orphanCompletedAt = new Date(secondDispatchedAt.getTime() + 1_000);
+    await incompleteTutorCompletion.query('BEGIN');
+    await incompleteTutorCompletion.query(
+      `UPDATE amc_practice.learning_tutor_turn_jobs
+       SET status = 'SUCCEEDED', delivery_disposition = 'DELIVERED_RESULT',
+           response_message_id = $2, reply_sha256 = $3,
+           response_model = 'gpt-5.6-terra-2026-07-15',
+           usage = '{"inputTokens":800,"outputTokens":80,"totalTokens":880}'::jsonb,
+           latency_ms = 200, lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+           completed_at = $4, updated_at = $4
+       WHERE id = $1 AND lease_token = $5 AND lease_expires_at > clock_timestamp()`,
+      [secondTutorJobId, orphanReplyId, orphanReplyHash, orphanCompletedAt, secondLeaseToken]
+    );
+    await incompleteTutorCompletion.query(
+      `INSERT INTO amc_practice.learning_tutor_messages
+       (id, thread_id, student_id, role, content_markdown, content_sha256,
+        source_turn_job_id, created_at)
+       VALUES ($1,$2,$3,'ASSISTANT',$4,$5,$6,$7)`,
+      [orphanReplyId, tutorThreadId, reviewStudent.id, orphanReply,
+        orphanReplyHash, secondTutorJobId, orphanCompletedAt]
+    );
+    await assert.rejects(
+      () => incompleteTutorCompletion.query('COMMIT'),
+      (error) => error.code === '23514'
+    );
+    await incompleteTutorCompletion.query('ROLLBACK');
+  } finally {
+    incompleteTutorCompletion.release();
+  }
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.learning_tutor_turn_jobs
+       SET status = 'FAILED', provider_invoked = false,
+           delivery_disposition = 'NOT_DISPATCHED', outcome_code = 'FORGED_ROLLBACK',
+           error_class = 'permanent', lease_owner = NULL, lease_token = NULL,
+           lease_expires_at = NULL, completed_at = $2, updated_at = $2
+       WHERE id = $1 AND lease_token = $3 AND lease_expires_at > clock_timestamp()`,
+      [secondTutorJobId, new Date(secondDispatchedAt.getTime() + 1_000), secondLeaseToken]
+    ),
+    (error) => ['23514', '55000'].includes(error.code)
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `INSERT INTO amc_practice.learning_tutor_turn_jobs
+       (id, thread_id, student_id, request_message_id, request_ordinal, turn_number,
+        authorized_session_id, idempotency_key_hash, request_hash, correlation_id,
+        snapshot_hash, context_hash, history_hash, input_hash, thread_lineage_hash,
+        tutor_contract_version, status, priority, attempt_count, max_attempts,
+        available_at, provider_invoked, delivery_disposition, retryable,
+        deletion_generation, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,2,2,$5,$6,$7,'pg-tutor-duplicate',$8,$9,$10,$11,$12,
+               'amc-tutor-contract-v2','QUEUED',100,0,3,$13,false,'NOT_DISPATCHED',false,$14,$13,$13)`,
+      [randomUUID(), tutorThreadId, reviewStudent.id, secondTutorMessageId, tutorSessionId,
+        tutorSha256('duplicate-job-idempotency'), tutorSha256('duplicate-job-request'),
+        tutorSnapshotHash, tutorTurn.contextHash, secondTutorTurn.historyHash,
+        tutorSha256('duplicate-input'), tutorThreadLineageHash,
+        new Date(secondTutorQueuedAt.getTime() + 500), tutorLineage.deletion_generation]
+    ),
+    (error) => error.code === '23505'
+  );
+  const secondUnknownAt = new Date(secondDispatchedAt.getTime() + 2_000);
+  const deliveryUnknown = await store.pool.query(
+    `UPDATE amc_practice.learning_tutor_turn_jobs
+     SET status = 'DELIVERY_UNKNOWN', outcome_code = 'DELIVERY_UNKNOWN',
+         retryable = false, lease_owner = NULL, lease_token = NULL,
+         lease_expires_at = NULL, completed_at = $2, updated_at = $2
+     WHERE id = $1 AND lease_token = $3 AND lease_expires_at > clock_timestamp()
+     RETURNING id`,
+    [secondTutorJobId, secondUnknownAt, secondLeaseToken]
+  );
+  assert.equal(deliveryUnknown.rowCount, 1);
+  const explicitRetryJobId = randomUUID();
+  const explicitRetryAt = new Date(secondUnknownAt.getTime() + 1_000);
+  const explicitRetryAvailableAt = new Date(Date.now() + 60_000);
+  const explicitRetryTurn = buildTutorTurnRequest({
+    correlationId: 'pg-tutor-correlation-002-retry', threadId: tutorThreadId,
+    turnId: explicitRetryJobId, turnNumber: 2, context: tutorContext,
+    priorTurns: [{ turnNumber: 1, userMessage: tutorMessage, assistantReply: tutorReply }],
+    message: secondTutorMessage
+  });
+  const explicitTutorRetry = await store.pool.connect();
+  try {
+    await explicitTutorRetry.query('BEGIN');
+    await explicitTutorRetry.query(
+      `UPDATE amc_practice.learning_tutor_threads
+       SET request_count = 3, thread_revision = 4, updated_at = $2 WHERE id = $1`,
+      [tutorThreadId, explicitRetryAt]
+    );
+    await explicitTutorRetry.query(
+      `INSERT INTO amc_practice.learning_tutor_turn_jobs
+       (id, thread_id, student_id, request_message_id, request_ordinal, turn_number,
+        retry_of_job_id, retry_authorization, authorized_session_id,
+        idempotency_key_hash, request_hash, correlation_id, snapshot_hash, context_hash,
+        history_hash, input_hash, thread_lineage_hash, tutor_contract_version,
+        status, priority, attempt_count, max_attempts, available_at,
+        provider_invoked, delivery_disposition, retryable, deletion_generation,
+        created_at, updated_at)
+       VALUES ($1,$2,$3,$4,3,2,$5,'STUDENT_EXPLICIT',$6,$7,$8,$9,$10,$11,$12,$13,$14,
+               'amc-tutor-contract-v2','QUEUED',100,0,3,$15,false,
+               'NOT_DISPATCHED',false,$16,$17,$17)`,
+      [explicitRetryJobId, tutorThreadId, reviewStudent.id, secondTutorMessageId,
+        secondTutorJobId, tutorSessionId, tutorSha256('pg-tutor-explicit-retry-idempotency'),
+        tutorSha256(JSON.stringify(explicitRetryTurn)), explicitRetryTurn.correlationId,
+        explicitRetryTurn.snapshotHash, explicitRetryTurn.contextHash,
+        explicitRetryTurn.historyHash, explicitRetryTurn.inputHash, tutorThreadLineageHash,
+        explicitRetryAvailableAt, tutorLineage.deletion_generation, explicitRetryAt]
+    );
+    await explicitTutorRetry.query('COMMIT');
+  } catch (error) {
+    await explicitTutorRetry.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    explicitTutorRetry.release();
+  }
+  assert.deepEqual((await store.pool.query(
+    `SELECT status, request_ordinal, turn_number, retry_of_job_id, retry_authorization
+     FROM amc_practice.learning_tutor_turn_jobs WHERE id = $1`, [explicitRetryJobId]
+  )).rows, [{
+    status: 'QUEUED', request_ordinal: 3, turn_number: 2,
+    retry_of_job_id: secondTutorJobId, retry_authorization: 'STUDENT_EXPLICIT'
+  }]);
+  const forgedEarlyClaimAt = new Date(explicitRetryAvailableAt.getTime() + 1_000);
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.learning_tutor_turn_jobs
+       SET status = 'RUNNING', attempt_count = 1, lease_owner = 'forged-early-worker',
+           lease_token = $2, lease_expires_at = $3, started_at = $4, updated_at = $4
+       WHERE id = $1 AND status = 'QUEUED'`,
+      [explicitRetryJobId, randomUUID(),
+        new Date(forgedEarlyClaimAt.getTime() + 60_000), forgedEarlyClaimAt]
+    ),
+    (error) => error.code === '55000'
+  );
   assert.deepEqual((await store.pool.query(
     'SELECT * FROM amc_practice.submissions WHERE id = $1', [reviewFinal.submission.id]
   )).rows, officialBeforeAnalysis.rows);
@@ -1409,6 +2158,185 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
   assert.equal(batchLearningReport.status, 'COMPLETE');
   assert.equal(batchLearningReport.summary.analyzedCount, 1);
   assert.equal(batchLearningReport.questions[0].questionNumber, 1);
+
+  // A confirmed batch uses the committed normalized response/result authority,
+  // not transient upload rows. Purging those raw rows must leave its Tutor
+  // snapshot/thread, immutable learning version, and report intact.
+  const batchTutorLineage = (await store.pool.query(
+    `SELECT report.id AS report_id, report.report_hash,
+            run.id AS analysis_run_id, run.analysis_contract_version,
+            analysis.question_input_hash, analysis.question_context_hash,
+            response.selected_option, response.reasoning_text, response.answer_origin,
+            submission.id AS learning_submission_id, submission.student_id,
+            submission.source_type, submission.deletion_generation,
+            version.id AS version_id, version.version_number, version.form_id,
+            version.form_version, version.context_set_id, version.evidence_hash,
+            context.artifact_set_hash, context.approval_authority_id,
+            context.approval_receipt_set_hash, context.release_manifest_hash,
+            context.release_content_hash, context.release_question_bundle_hash,
+            question.question_content_hash, result.id AS batch_result_id
+     FROM amc_practice.learning_reports report
+     JOIN amc_practice.learning_analysis_runs run ON run.id = report.analysis_run_id
+     JOIN amc_practice.learning_submission_versions version
+       ON version.id = report.learning_submission_version_id
+     JOIN amc_practice.learning_submissions submission
+       ON submission.id = version.learning_submission_id
+     JOIN amc_practice.learning_question_analyses analysis
+       ON analysis.analysis_run_id = run.id AND analysis.question_number = 1
+     JOIN amc_practice.learning_question_responses response
+       ON response.learning_submission_version_id = version.id
+      AND response.question_number = 1 AND response.answer_origin = 'BATCH_CONFIRMED'
+     JOIN amc_practice.approved_context_sets context ON context.id = version.context_set_id
+     JOIN amc_practice.approved_context_questions question
+       ON question.context_set_id = context.id AND question.question_number = 1
+     JOIN amc_practice.learning_batch_results result
+       ON result.learning_submission_version_id = version.id
+     WHERE run.id = $1`, [batchAnalysisClaim.run.id]
+  )).rows[0];
+  assert.ok(batchTutorLineage);
+  const batchTutorQuestionSource = batchAnalysisClaim.questions
+    .find((question) => question.questionNumber === 1);
+  const batchTutorApprovedQuestion = batchTutorQuestionSource.context;
+  const batchTutorChoiceMap = Array.isArray(batchTutorApprovedQuestion.choices)
+    ? Object.fromEntries(batchTutorApprovedQuestion.choices
+      .map((choice) => [choice.option, choice.textMarkdown]))
+    : batchTutorApprovedQuestion.choices;
+  const batchTutorContextReleaseHash = computeTutorContextReleaseHash({
+    sourceType: batchTutorLineage.source_type,
+    formId: batchTutorLineage.form_id,
+    formVersion: batchTutorLineage.form_version,
+    manifestHash: batchTutorLineage.release_manifest_hash,
+    contentHash: batchTutorLineage.release_content_hash,
+    questionBundleHash: batchTutorLineage.release_question_bundle_hash,
+    contextSetId: batchTutorLineage.context_set_id,
+    contextArtifactSha256: batchTutorLineage.artifact_set_hash,
+    approvalAuthorityId: batchTutorLineage.approval_authority_id,
+    approvalReceiptSetHash: batchTutorLineage.approval_receipt_set_hash,
+    openReviewReleaseHash: null
+  });
+  const batchTutorContext = {
+    learningSubmissionId: batchTutorLineage.learning_submission_id,
+    learningSubmissionVersionId: batchTutorLineage.version_id,
+    versionNumber: batchTutorLineage.version_number,
+    formId: batchTutorLineage.form_id,
+    formVersion: batchTutorLineage.form_version,
+    contextSetId: batchTutorLineage.context_set_id,
+    contextArtifactSha256: batchTutorLineage.artifact_set_hash,
+    contextReleaseHash: batchTutorContextReleaseHash,
+    evidenceHash: batchTutorLineage.evidence_hash,
+    question: {
+      questionNumber: 1,
+      questionId: `${batchTutorLineage.form_id}:q:1`,
+      promptMarkdown: batchTutorApprovedQuestion.promptMarkdown,
+      choices: ['A', 'B', 'C', 'D', 'E'].map((label) => ({
+        label, textMarkdown: batchTutorChoiceMap[label]
+      })),
+      isScored: batchTutorQuestionSource.scoring.isScored,
+      officialAnswer: batchTutorQuestionSource.scoring.canonicalAnswer,
+      acceptedOptions: batchTutorQuestionSource.scoring.acceptedOptions,
+      studentAnswer: batchTutorLineage.selected_option,
+      studentReasoning: batchTutorLineage.reasoning_text || null,
+      solutions: batchTutorApprovedQuestion.solutions
+        .filter((solution) => solution.modelEligibility.eligible
+          && solution.authorityReceipt.status === 'active')
+        .map((solution) => ({
+          solutionId: solution.artifactSolutionId,
+          approvalStatus: 'APPROVED', modelEligible: true, title: solution.title,
+          markdown: solution.bodyMarkdown, bodySha256: solution.bodySha256,
+          sourceSha256: solution.sourceRef.sha256, reviewerId: solution.reviewerId,
+          reviewedAt: solution.reviewedAt, rightsStatus: solution.rightsStatus,
+          authorityReceiptId: solution.authorityReceipt.receiptId,
+          authorityReceiptStatus: solution.authorityReceipt.status,
+          methodTags: solution.methodTags, qualityFlags: solution.qualityFlags
+        }))
+    }
+  };
+  assert.equal(isValidTutorContext(batchTutorContext), true);
+  const batchTutorSnapshotId = randomUUID();
+  const batchTutorThreadId = randomUUID();
+  const batchTutorSnapshotHash = computeTutorSnapshotHash(batchTutorContext);
+  const batchTutorQuestionResponseHash = canonicalHash({
+    questionNumber: 1, selectedOption: batchTutorLineage.selected_option,
+    reasoningText: batchTutorLineage.reasoning_text,
+    answerOrigin: batchTutorLineage.answer_origin
+  });
+  const batchTutorScoringHash = canonicalHash(batchTutorQuestionSource.scoring);
+  const batchTutorThreadLineageHash = computeTutorThreadLineageHash({
+    analysisRunId: batchTutorLineage.analysis_run_id,
+    analysisContractVersion: batchTutorLineage.analysis_contract_version,
+    reportId: batchTutorLineage.report_id,
+    reportHash: batchTutorLineage.report_hash,
+    snapshotHash: batchTutorSnapshotHash,
+    questionResponseHash: batchTutorQuestionResponseHash,
+    scoringSnapshotHash: batchTutorScoringHash,
+    scoringOrigin: 'BATCH_CONFIRMED',
+    initialDeletionGeneration: batchTutorLineage.deletion_generation
+  });
+  const batchTutorCreatedAt = new Date(Date.now() - 1_000);
+  await store.pool.query(
+    `INSERT INTO amc_practice.learning_tutor_snapshots
+     (id, student_id, learning_submission_id, learning_submission_version_id,
+      version_number, form_id, form_version, source_type, question_number,
+      context_set_id, question_content_hash, analysis_run_id, analysis_contract_version,
+      analysis_question_input_hash, analysis_question_context_hash, report_id, report_hash,
+      evidence_hash, question_response_hash, scoring_snapshot_hash, scoring_origin,
+      official_submission_id, batch_result_id, initial_deletion_generation,
+      context_artifact_sha256, context_release_hash, payload_schema, snapshot_payload,
+      snapshot_hash, thread_lineage_hash, created_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,1,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,
+             'BATCH_CONFIRMED',NULL,$20,$21,$22,$23,'amc-tutor-snapshot-v2',$24::jsonb,$25,$26,$27)`,
+    [batchTutorSnapshotId, batchTutorLineage.student_id,
+      batchTutorLineage.learning_submission_id, batchTutorLineage.version_id,
+      batchTutorLineage.version_number, batchTutorLineage.form_id,
+      batchTutorLineage.form_version, batchTutorLineage.source_type,
+      batchTutorLineage.context_set_id, batchTutorLineage.question_content_hash,
+      batchTutorLineage.analysis_run_id, batchTutorLineage.analysis_contract_version,
+      batchTutorLineage.question_input_hash, batchTutorLineage.question_context_hash,
+      batchTutorLineage.report_id, batchTutorLineage.report_hash,
+      batchTutorLineage.evidence_hash, batchTutorQuestionResponseHash,
+      batchTutorScoringHash, batchTutorLineage.batch_result_id,
+      batchTutorLineage.deletion_generation, batchTutorLineage.artifact_set_hash,
+      batchTutorContextReleaseHash, JSON.stringify(batchTutorContext),
+      batchTutorSnapshotHash, batchTutorThreadLineageHash, batchTutorCreatedAt]
+  );
+  await store.pool.query(
+    `INSERT INTO amc_practice.learning_tutor_threads
+     (id, student_id, snapshot_id, learning_submission_id, learning_submission_version_id,
+      question_number, snapshot_hash, thread_lineage_hash, tutor_contract_version,
+      context_hash, status, initial_deletion_generation, deletion_generation,
+      creation_idempotency_key_hash, creation_request_hash, created_at, updated_at)
+     VALUES ($1,$2,$3,$4,$5,1,$6,$7,'amc-tutor-contract-v2',$8,'OPEN',$9,$9,$10,$11,$12,$12)`,
+    [batchTutorThreadId, batchTutorLineage.student_id, batchTutorSnapshotId,
+      batchTutorLineage.learning_submission_id, batchTutorLineage.version_id,
+      batchTutorSnapshotHash, batchTutorThreadLineageHash,
+      computeTutorContextHash({ threadId: batchTutorThreadId, context: batchTutorContext }),
+      batchTutorLineage.deletion_generation,
+      tutorSha256('pg-batch-tutor-thread-idempotency'),
+      tutorSha256('pg-batch-tutor-thread-request'), batchTutorCreatedAt]
+  );
+  const purgedCommittedBatch = await service.deleteLearningBatch(
+    reviewStudent.id, reviewAttempt.attempt.id, batchCreated.batch.id,
+    `pg-batch-source-purge-${randomUUID()}`
+  );
+  assert.equal(purgedCommittedBatch.batch.status, 'COMMITTED');
+  assert.equal(purgedCommittedBatch.batch.deletionState, 'COMPLETE');
+  assert.deepEqual((await store.pool.query(
+    `SELECT thread.status, thread.deletion_generation,
+            version.id AS version_id, report.id AS report_id,
+            batch.deletion_state, asset.status AS asset_status, asset.storage_key
+     FROM amc_practice.learning_tutor_threads thread
+     JOIN amc_practice.learning_tutor_snapshots snapshot ON snapshot.id = thread.snapshot_id
+     JOIN amc_practice.learning_submission_versions version
+       ON version.id = snapshot.learning_submission_version_id
+     JOIN amc_practice.learning_reports report ON report.id = snapshot.report_id
+     JOIN amc_practice.learning_batches batch ON batch.id = $2
+     JOIN amc_practice.learning_batch_assets asset ON asset.batch_id = batch.id
+     WHERE thread.id = $1`, [batchTutorThreadId, batchCreated.batch.id]
+  )).rows, [{
+    status: 'OPEN', deletion_generation: batchTutorLineage.deletion_generation,
+    version_id: batchTutorLineage.version_id, report_id: batchTutorLineage.report_id,
+    deletion_state: 'COMPLETE', asset_status: 'PURGED', storage_key: null
+  }]);
   const historyStateSql = `SELECT
       (SELECT count(*)::integer FROM amc_practice.learning_submissions) AS submissions,
       (SELECT count(*)::integer FROM amc_practice.learning_submission_versions) AS versions,
