@@ -1,6 +1,10 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { badRequest, conflict } from '../errors.js';
-import { isBoundedInferenceInputText, isRestrictedInferenceOutputText } from '../infrastructure/amc-inference-contract.js';
+import {
+  ANALYSIS_CONTRACT_VERSION,
+  isBoundedInferenceInputText,
+  isRestrictedInferenceOutputText
+} from '../infrastructure/amc-inference-contract.js';
 import { analysisInputHash } from '../learning-review/canonical.js';
 
 export const MAX_BATCH_FILES = 10;
@@ -833,6 +837,7 @@ export function createBatchLearningAggregate({
   const analysisRun = contextReady ? {
     id: randomUUID(), learningSubmissionVersionId: version.id, contextSetId: approvedContext.id,
     versionNumber, inputHash, evidenceHash, deletionGeneration: batch.deletionGeneration,
+    analysisContractVersion: ANALYSIS_CONTRACT_VERSION,
     status: 'QUEUED', createdAt: now, startedAt: null, completedAt: null, lastErrorCode: null
   } : null;
   if (analysisRun) workItem.analysisRunId = analysisRun.id;

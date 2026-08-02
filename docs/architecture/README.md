@@ -83,6 +83,8 @@ Each stage has its own tests, independent review, reflection, and Git commit.
   context and revocation-aware worker entitlement.
 - `ADR-007`: timed, batch, and open-review records share one owner-scoped,
   exact-version, revocation/deletion-aware learning-history read model.
+- `ADR-008`: analysis v2 derives answer status from immutable official/batch
+  scoring snapshots and uses a drained, versioned provider-contract cutover.
 
 ## Module direction
 

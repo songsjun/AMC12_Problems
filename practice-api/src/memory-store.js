@@ -1,6 +1,10 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { providerRetentionNotBefore } from './infrastructure/assemblyai-retention-profile.js';
 import { analysisInputHash, canonicalHash } from './learning-review/canonical.js';
+import {
+  ANALYSIS_CONTRACT_VERSION,
+  isValidAnalysisScoringSnapshot
+} from './infrastructure/amc-inference-contract.js';
 import { ATTEMPT_MODE, OPEN_REVIEW_STATUS, openReviewReleaseHash } from './open-review/domain.js';
 
 const clone = (value) => structuredClone(value);
@@ -29,6 +33,26 @@ function validLearningEntitlement(store, learning, { cleanup = false } = {}) {
   const release = store.openReviewReleases.get(learning.openReviewReleaseId);
   return Boolean(release && release.formId === learning.formId && release.formVersion === learning.formVersion
     && (cleanup || [OPEN_REVIEW_STATUS.ACTIVE, OPEN_REVIEW_STATUS.SUPERSEDED_VALID].includes(release.status)));
+}
+
+function analysisScoringSnapshot(store, submission, version, response) {
+  let item = null;
+  if (response?.answerOrigin === 'BATCH_CONFIRMED' && version?.batchId) {
+    const result = store.learningBatchResults.get(version.batchId);
+    if (result?.learningSubmissionVersionId !== version.id) return null;
+    item = result.items.find((candidate) => candidate.questionNumber === response.questionNumber) || null;
+  } else if (response?.answerOrigin === 'OFFICIAL_FINAL' && !version?.batchId
+      && submission?.officialSubmissionId) {
+    item = (store.submissionAnswers.get(submission.officialSubmissionId) || [])
+      .find((candidate) => candidate.questionNumber === response.questionNumber) || null;
+  }
+  return item && {
+    isScored: item.isScored,
+    canonicalAnswer: item.correctOption,
+    acceptedOptions: clone(item.acceptedOptions),
+    studentAnswerIsCorrect: item.isCorrect,
+    selectedOption: item.selectedOption
+  };
 }
 
 function validBatchEntitlement(store, batch, learning, options = {}) {
@@ -888,6 +912,7 @@ export class MemoryStore {
           id: randomUUID(), learningSubmissionVersionId: version.id, contextSetId: contextSet.id,
           versionNumber: version.versionNumber, inputHash, evidenceHash: version.evidenceHash,
           deletionGeneration: workItem.deletionGeneration, status: 'QUEUED', createdAt: now,
+          analysisContractVersion: ANALYSIS_CONTRACT_VERSION,
           startedAt: null, completedAt: null, lastErrorCode: null
         };
         version.contextStatus = 'CONTEXT_READY';
@@ -940,7 +965,10 @@ export class MemoryStore {
       const candidates = [];
       if (accepted.has('INTERACTIVE_ANALYSIS')) {
         for (const item of [...this.learningWorkItems.values()].flat()) {
-          if (item.status === 'QUEUED' && new Date(item.availableAt).getTime() <= nowMs) {
+          const run = [...this.analysisRuns.values()]
+            .find((candidate) => candidate.id === item.analysisRunId);
+          if (item.status === 'QUEUED' && new Date(item.availableAt).getTime() <= nowMs
+              && run?.analysisContractVersion === ANALYSIS_CONTRACT_VERSION) {
             candidates.push({ kind: 'INTERACTIVE_ANALYSIS', item });
           }
         }
@@ -997,6 +1025,7 @@ export class MemoryStore {
         if (!version || !submission || !attempt || !run || !contextSet
             || !validLearningEntitlement(this, submission)
             || version.contextStatus !== 'CONTEXT_READY' || version.contextSetId !== run.contextSetId
+            || run.analysisContractVersion !== ANALYSIS_CONTRACT_VERSION
             || run.status !== 'QUEUED' || item.analysisRunId !== run.id
             || item.inputHash !== run.inputHash || item.deletionGeneration !== run.deletionGeneration) {
           Object.assign(item, {
@@ -1012,15 +1041,19 @@ export class MemoryStore {
         });
         Object.assign(run, { status: 'RUNNING', startedAt: run.startedAt || now, lastErrorCode: null });
         const responses = this.learningResponses.get(version.id) || [];
-        const form = this.forms.get(formKey(version.formId, version.formVersion));
         const contexts = new Map(contextSet.questions.map((question) => [question.questionNumber, question]));
         return clone({
           kind: 'INTERACTIVE_ANALYSIS',
           job: {
             workItem: item, run, version, submission,
             questions: responses.map((response) => {
-              const formQuestion = form.questions.find((question) => question.number === response.questionNumber);
-              return { ...response, officialAnswer: formQuestion.correctOption, context: contexts.get(response.questionNumber) || null };
+              const scoring = analysisScoringSnapshot(this, submission, version, response);
+              return {
+                ...response,
+                scoring,
+                scoringSnapshotValid: isValidAnalysisScoringSnapshot(scoring, response.selectedOption),
+                context: contexts.get(response.questionNumber) || null
+              };
             })
           }
         });
@@ -2318,9 +2351,10 @@ export class MemoryStore {
       const contextQuestion = contextSet?.questions
         .find((candidate) => candidate.questionNumber === input.questionNumber);
       const form = version && this.forms.get(formKey(version.formId, version.formVersion));
-      const formQuestion = form?.questions.find((candidate) => candidate.number === input.questionNumber);
       const response = version && (this.learningResponses.get(version.id) || [])
         .find((candidate) => candidate.questionNumber === input.questionNumber);
+      const scoring = version && submission
+        ? analysisScoringSnapshot(this, submission, version, response) : null;
       const batch = version?.batchId ? this.learningBatches.get(version.batchId) : null;
       const liveEligible = (contextQuestion?.solutions || [])
         .filter((solution) => solution.modelEligibility?.eligible === true
@@ -2335,14 +2369,16 @@ export class MemoryStore {
       const responseHash = response && canonicalHash({
         questionNumber: response.questionNumber,
         selectedOption: response.selectedOption,
-        reasoningText: response.reasoningText
+        reasoningText: response.reasoningText,
+        answerOrigin: response.answerOrigin
       });
       return Boolean(item && run && version && submission && attempt && contextSet
-        && contextQuestion && form && formQuestion && response
+        && contextQuestion && form && response && scoring
         && item.status === 'RUNNING' && item.leaseOwner === input.workerId
         && item.leaseToken === input.leaseToken && item.analysisRunId === run.id
         && item.learningSubmissionVersionId === version.id
         && item.inputHash === input.inputHash && run.inputHash === input.inputHash
+        && run.analysisContractVersion === ANALYSIS_CONTRACT_VERSION
         && item.deletionGeneration === input.deletionGeneration
         && run.deletionGeneration === input.deletionGeneration
         && new Date(item.leaseExpiresAt).getTime() > new Date(input.now).getTime()
@@ -2362,7 +2398,13 @@ export class MemoryStore {
         && contextSet.releaseBinding?.contentHash === form.contentHash
         && contextSet.releaseBinding?.manifestHash === form.manifestHash
         && contextQuestion.questionContentHash === input.questionContextHash
-        && formQuestion.correctOption === input.officialAnswer
+        && isValidAnalysisScoringSnapshot(scoring, response.selectedOption)
+        && input.isScored === true && scoring.isScored === true
+        && scoring.isScored === input.isScored
+        && scoring.canonicalAnswer === input.canonicalAnswer
+        && JSON.stringify(scoring.acceptedOptions) === JSON.stringify(input.acceptedOptions)
+        && scoring.studentAnswerIsCorrect === input.studentAnswerIsCorrect
+        && scoring.selectedOption === input.selectedOption
         && responseHash === input.questionResponseHash
         && liveEligible.length >= 2
         && JSON.stringify(liveEligible) === JSON.stringify(input.eligibleSolutions)

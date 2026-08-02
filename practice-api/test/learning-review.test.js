@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { buildApp } from '../src/app.js';
 import { ApiError } from '../src/errors.js';
 import { ApprovedContextImporter, validateApprovedContextArtifact } from '../src/learning-review/artifact.js';
+import { canonicalHash } from '../src/learning-review/canonical.js';
 import { LearningReviewWorker } from '../src/learning-review/worker.js';
 import {
   approvedArchiveContextArtifact,
@@ -19,9 +20,10 @@ function precondition(attempt) {
   return { expectedAnswersRevision: attempt.answersRevision, expectedStateRevision: attempt.stateRevision };
 }
 
-async function setup() {
+async function setup(mutateForm = () => {}) {
   const context = await makeService();
   const form = learningReviewForm();
+  mutateForm(form);
   await context.store.importForm(form, { publish: true, allowTestOnlyPublish: true });
   return { ...context, form };
 }
@@ -40,9 +42,58 @@ function importArtifact(context, artifact) {
   }).import(artifact, approvalReceiptsForArtifact(artifact));
 }
 
-async function finalizedWithReasoning(context, notes) {
+function providerAuthorizationInput(claimed, question, workerId, now) {
+  const eligibleSolutions = question.context.solutions
+    .filter((solution) => solution.modelEligibility?.eligible === true
+      && solution.authorityReceipt?.status === 'active')
+    .map((solution) => ({
+      artifactSolutionId: solution.artifactSolutionId,
+      bodySha256: solution.bodySha256,
+      sourceSha256: solution.sourceRef.sha256,
+      decisionRecordHash: solution.decisionRecordHash,
+      authorityReceiptId: solution.authorityReceipt.receiptId
+    }));
+  return {
+    workItemId: claimed.workItem.id,
+    analysisRunId: claimed.run.id,
+    workerId,
+    leaseToken: claimed.workItem.leaseToken,
+    inputHash: claimed.workItem.inputHash,
+    deletionGeneration: claimed.workItem.deletionGeneration,
+    versionId: claimed.version.id,
+    versionNumber: claimed.version.versionNumber,
+    evidenceHash: claimed.version.evidenceHash,
+    expectedStudentId: claimed.submission.studentId,
+    expectedSubmissionCurrentVersion: claimed.submission.currentVersion,
+    expectedContextSetId: claimed.version.contextSetId,
+    questionNumber: question.questionNumber,
+    questionResponseHash: canonicalHash({
+      questionNumber: question.questionNumber,
+      selectedOption: question.selectedOption,
+      reasoningText: question.reasoningText,
+      answerOrigin: question.answerOrigin
+    }),
+    questionContextHash: question.context.questionContentHash,
+    isScored: question.scoring.isScored,
+    canonicalAnswer: question.scoring.canonicalAnswer,
+    acceptedOptions: question.scoring.acceptedOptions,
+    studentAnswerIsCorrect: question.scoring.studentAnswerIsCorrect,
+    selectedOption: question.scoring.selectedOption,
+    eligibleSolutions,
+    now
+  };
+}
+
+async function finalizedWithReasoning(context, notes, answers = []) {
   const created = await context.service.createAttempt(context.student.id, context.form.id);
   let attempt = created.attempt;
+  if (answers.length) {
+    await context.service.putAnswers(context.student.id, attempt.id, {
+      revision: attempt.answersRevision,
+      answers
+    });
+    attempt = await context.service.getAttempt(context.student.id, attempt.id);
+  }
   if (notes.length) {
     await context.service.putReasoning(context.student.id, attempt.id, `reasoning-${attempt.id}`, {
       revision: 0,
@@ -170,7 +221,7 @@ test('import stores only ready questions, queues new finals, analyzes independen
   const analyses = [...context.store.questionAnalyses.values()][0];
   assert.equal(analyses.length, 25);
   assert.equal(analyses[0].status, 'SUCCEEDED');
-  assert.equal(analyses[0].runMetadata.promptVersion, 'amc-question-analysis-prompt-v1');
+  assert.equal(analyses[0].runMetadata.promptVersion, 'amc-question-analysis-prompt-v2');
   assert.equal(analyses[0].errorClass, null);
   assert.equal(analyses[1].outcomeCode, 'CONTEXT_UNAVAILABLE');
   assert.equal(analyses[1].providerInvoked, false);
@@ -413,6 +464,170 @@ test('per-question provider authorization rejects post-claim lineage and solutio
     }).processClaimed(claimed);
     assert.deepEqual(result, { processed: false, staleLease: true }, scenario);
     assert.equal(client.calls.length, 0, scenario);
+  }
+});
+
+test('v2 requests derive accepted-alternative, nonaccepted, and blank answer status from the immutable final snapshot', async () => {
+  const context = await setup((form) => {
+    Object.assign(form.questions[0], { correctOption: 'D', acceptedOptions: ['D', 'E'], isScored: true });
+  });
+  await importArtifact(context, approvedContextArtifact(context.form, { readyNumbers: [1, 2, 3] }));
+  await finalizedWithReasoning(context, [
+    { questionNumber: 1, reasoningText: 'An accepted alternative derivation.' },
+    { questionNumber: 2, reasoningText: 'A nonaccepted derivation.' },
+    { questionNumber: 3, reasoningText: 'A blank-answer derivation.' }
+  ], [
+    { questionNumber: 1, selectedOption: 'E' },
+    { questionNumber: 2, selectedOption: 'A' }
+  ]);
+  const client = new FakeInferenceClient();
+  const result = await new LearningReviewWorker({
+    store: context.store, inferenceClient: client, workerId: 'v2-answer-status-worker', clock: context.clock.now
+  }).runOnce();
+  assert.equal(result.providerCalls, 3);
+  assert.deepEqual(client.calls.slice(0, 3).map((request) => ({
+    schema: request.schema,
+    task: request.task,
+    scoring: request.question.scoring,
+    answer: request.question.student_answer,
+    status: request.question.student_answer_status
+  })), [
+    {
+      schema: 'amc-inference-request-v2', task: 'question_analysis_v2',
+      scoring: { is_scored: true, canonical_answer: 'D', accepted_options: ['D', 'E'] },
+      answer: 'E', status: 'ACCEPTED'
+    },
+    {
+      schema: 'amc-inference-request-v2', task: 'question_analysis_v2',
+      scoring: { is_scored: true, canonical_answer: 'B', accepted_options: ['B'] },
+      answer: 'A', status: 'NOT_ACCEPTED'
+    },
+    {
+      schema: 'amc-inference-request-v2', task: 'question_analysis_v2',
+      scoring: { is_scored: true, canonical_answer: 'C', accepted_options: ['C'] },
+      answer: null, status: 'BLANK'
+    }
+  ]);
+});
+
+test('unscored questions bypass blank-reasoning and missing-context checks with zero provider calls', async () => {
+  const context = await setup((form) => {
+    for (const question of form.questions.slice(0, 3)) {
+      Object.assign(question, { correctOption: null, acceptedOptions: [], isScored: false });
+    }
+  });
+  await importArtifact(context, approvedContextArtifact(context.form, { readyNumbers: [1, 2, 3] }));
+  await finalizedWithReasoning(context, [
+    { questionNumber: 2, reasoningText: 'Nonblank but deliberately unscored.' },
+    { questionNumber: 3, reasoningText: 'Context will disappear after claim.' }
+  ], [
+    { questionNumber: 2, selectedOption: 'A' },
+    { questionNumber: 3, selectedOption: 'B' }
+  ]);
+  const workerId = 'unscored-provider-zero-worker';
+  const claimed = await context.store.claimLearningAnalysisWork({
+    workerId, now: context.clock.now(), leaseMs: 120_000
+  });
+  assert.equal(await context.store.authorizeLearningAnalysisProviderCall(
+    providerAuthorizationInput(claimed, claimed.questions[0], workerId, context.clock.now())
+  ), false, 'the provider authorization boundary itself rejects unscored snapshots');
+  claimed.questions[2].context = null;
+  const client = new FakeInferenceClient();
+  const result = await new LearningReviewWorker({
+    store: context.store, inferenceClient: client, workerId, clock: context.clock.now
+  }).processClaimed(claimed);
+  assert.equal(result.providerCalls, 0);
+  assert.equal(client.calls.length, 0);
+  const outcomes = context.store.questionAnalyses.get(claimed.run.id);
+  assert.deepEqual(outcomes.slice(0, 3).map((outcome) => outcome.outcomeCode), [
+    'QUESTION_UNSCORED', 'QUESTION_UNSCORED', 'QUESTION_UNSCORED'
+  ]);
+  assert.equal(outcomes.slice(0, 3).every((outcome) => outcome.providerInvoked === false), true);
+});
+
+test('invalid scoring snapshots and legacy v1 queued runs never reach the provider', async () => {
+  const invalid = await setup();
+  await importArtifact(invalid, approvedContextArtifact(invalid.form, { readyNumbers: [1] }));
+  await finalizedWithReasoning(invalid, [
+    { questionNumber: 1, reasoningText: 'This claim will carry a corrupt scoring snapshot.' }
+  ], [{ questionNumber: 1, selectedOption: 'A' }]);
+  const invalidWorkerId = 'invalid-scoring-worker';
+  const claimed = await invalid.store.claimLearningAnalysisWork({
+    workerId: invalidWorkerId, now: invalid.clock.now(), leaseMs: 120_000
+  });
+  claimed.questions[0].scoring.acceptedOptions = ['B'];
+  const invalidClient = new FakeInferenceClient();
+  const invalidResult = await new LearningReviewWorker({
+    store: invalid.store, inferenceClient: invalidClient,
+    workerId: invalidWorkerId, clock: invalid.clock.now
+  }).processClaimed(claimed);
+  assert.equal(invalidResult.providerCalls, 0);
+  assert.equal(invalidClient.calls.length, 0);
+  assert.equal(invalid.store.questionAnalyses.get(claimed.run.id)[0].outcomeCode, 'SCORING_SNAPSHOT_INVALID');
+
+  const missing = await setup();
+  await importArtifact(missing, approvedContextArtifact(missing.form, { readyNumbers: [1] }));
+  await finalizedWithReasoning(missing, [
+    { questionNumber: 1, reasoningText: 'This claim is missing one scoring field.' }
+  ], [{ questionNumber: 1, selectedOption: 'A' }]);
+  const missingWorkerId = 'missing-scoring-field-worker';
+  const missingClaim = await missing.store.claimLearningAnalysisWork({
+    workerId: missingWorkerId, now: missing.clock.now(), leaseMs: 120_000
+  });
+  delete missingClaim.questions[0].scoring.acceptedOptions;
+  const missingClient = new FakeInferenceClient();
+  const missingResult = await new LearningReviewWorker({
+    store: missing.store, inferenceClient: missingClient,
+    workerId: missingWorkerId, clock: missing.clock.now
+  }).processClaimed(missingClaim);
+  assert.equal(missingResult.processed, true);
+  assert.equal(missingResult.providerCalls, 0);
+  assert.equal(missingClient.calls.length, 0);
+  assert.equal(
+    missing.store.questionAnalyses.get(missingClaim.run.id)[0].outcomeCode,
+    'SCORING_SNAPSHOT_INVALID'
+  );
+
+  const legacy = await setup();
+  await importArtifact(legacy, approvedContextArtifact(legacy.form, { readyNumbers: [1] }));
+  const { attemptId } = await finalizedWithReasoning(legacy, [
+    { questionNumber: 1, reasoningText: 'A legacy run must stay isolated.' }
+  ]);
+  const submission = legacy.store.learningSubmissions.get(attemptId);
+  const version = legacy.store.learningVersions.get(submission.id)[0];
+  legacy.store.analysisRuns.get(version.id).analysisContractVersion = 'amc-analysis-contract-v1';
+  assert.equal(await legacy.store.claimLearningAnalysisWork({
+    workerId: 'legacy-v1-isolation-worker', now: legacy.clock.now(), leaseMs: 120_000
+  }), null);
+});
+
+test('provider authorization re-reads and rejects drift in every final scoring field', async () => {
+  const scenarios = [
+    ['isScored', (snapshot) => { snapshot.isScored = false; }],
+    ['canonicalAnswer', (snapshot) => { snapshot.correctOption = 'B'; }],
+    ['acceptedOptions', (snapshot) => { snapshot.acceptedOptions = ['A', 'B']; }],
+    ['studentAnswerIsCorrect', (snapshot) => { snapshot.isCorrect = false; }],
+    ['selectedOption', (snapshot) => { snapshot.selectedOption = 'B'; }]
+  ];
+  for (const [name, mutate] of scenarios) {
+    const context = await setup();
+    await importArtifact(context, approvedContextArtifact(context.form, { readyNumbers: [1] }));
+    const { attemptId } = await finalizedWithReasoning(context, [
+      { questionNumber: 1, reasoningText: `Authorization drift scenario ${name}.` }
+    ], [{ questionNumber: 1, selectedOption: 'A' }]);
+    const workerId = `scoring-drift-${name}`;
+    const claimed = await context.store.claimLearningAnalysisWork({
+      workerId, now: context.clock.now(), leaseMs: 120_000
+    });
+    const submission = context.store.learningSubmissions.get(attemptId);
+    const snapshot = context.store.submissionAnswers.get(submission.officialSubmissionId)[0];
+    mutate(snapshot);
+    const client = new FakeInferenceClient();
+    const result = await new LearningReviewWorker({
+      store: context.store, inferenceClient: client, workerId, clock: context.clock.now
+    }).processClaimed(claimed);
+    assert.deepEqual(result, { processed: false, staleLease: true }, name);
+    assert.equal(client.calls.length, 0, name);
   }
 });
 

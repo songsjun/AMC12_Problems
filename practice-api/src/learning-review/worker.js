@@ -2,10 +2,39 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { canonicalHash } from './canonical.js';
 import { aggregateReportStatus, reportHash, reportSummary } from './report.js';
 import {
+  INFERENCE_REQUEST_SCHEMA,
+  INFERENCE_SAFETY_PROFILE,
+  INFERENCE_TASK,
   computeInferenceContextHash,
   computeInferenceInputHash,
+  deriveStudentAnswerStatus,
+  isValidAnalysisScoringSnapshot,
   isBoundedInferenceInputText
 } from '../infrastructure/amc-inference-contract.js';
+
+function canonicalScoringEvidence(scoring) {
+  if (!scoring || typeof scoring !== 'object' || Array.isArray(scoring)) {
+    return { record: false, type: scoring === null ? 'null' : typeof scoring };
+  }
+  const scalar = (value) => {
+    if (value === null) return { type: 'null', value: null };
+    if (typeof value === 'string' || typeof value === 'boolean'
+        || (typeof value === 'number' && Number.isFinite(value))) {
+      return { type: typeof value, value };
+    }
+    return { type: Array.isArray(value) ? 'array' : typeof value };
+  };
+  return {
+    record: true,
+    acceptedOptions: Array.isArray(scoring.acceptedOptions)
+      ? { type: 'array', value: Array.from(scoring.acceptedOptions, scalar) }
+      : scalar(scoring.acceptedOptions),
+    canonicalAnswer: scalar(scoring.canonicalAnswer),
+    isScored: scalar(scoring.isScored),
+    selectedOption: scalar(scoring.selectedOption),
+    studentAnswerIsCorrect: scalar(scoring.studentAnswerIsCorrect)
+  };
+}
 
 function deterministicUnassessable(question, code, summary) {
   return {
@@ -24,9 +53,12 @@ function deterministicUnassessable(question, code, summary) {
     errorClass: null,
     retryable: false,
     questionInputHash: canonicalHash({
+      schema: 'amc-deterministic-question-outcome-v2',
       selectedOption: question.selectedOption,
       reasoningText: question.reasoningText,
-      questionNumber: question.questionNumber
+      questionNumber: question.questionNumber,
+      scoring: canonicalScoringEvidence(question.scoring),
+      scoringSnapshotValid: question.scoringSnapshotValid === true
     }),
     questionContextHash: question.context?.questionContentHash || null
   };
@@ -34,12 +66,12 @@ function deterministicUnassessable(question, code, summary) {
 
 function requestFor(job, question, eligibleSolutions) {
   const request = {
-    schema: 'amc-inference-request-v1',
-    task: 'question_analysis_v1',
+    schema: INFERENCE_REQUEST_SCHEMA,
+    task: INFERENCE_TASK,
     correlation_id: `lr:${job.run.id}:${question.questionNumber}`,
     input_hash: '0'.repeat(64),
     context_hash: '0'.repeat(64),
-    safety_id: 'amc-math-safe-v1',
+    safety_id: INFERENCE_SAFETY_PROFILE,
     question: {
       question_id: `q:${question.questionNumber}:${question.context.questionContentHash.slice(0, 24)}`,
       prompt_markdown: question.context.promptMarkdown,
@@ -47,8 +79,15 @@ function requestFor(job, question, eligibleSolutions) {
         label,
         text_markdown: question.context.choices[label]
       })),
-      official_answer: question.officialAnswer,
+      scoring: {
+        is_scored: true,
+        canonical_answer: question.scoring.canonicalAnswer,
+        accepted_options: question.scoring.acceptedOptions
+      },
       student_answer: question.selectedOption,
+      student_answer_status: deriveStudentAnswerStatus(
+        question.selectedOption, question.scoring.acceptedOptions
+      ),
       student_reasoning: question.reasoningText,
       solutions: eligibleSolutions.map((solution) => ({
         solution_id: solution.artifactSolutionId,
@@ -203,10 +242,15 @@ export class LearningReviewWorker {
         questionResponseHash: canonicalHash({
           questionNumber: question.questionNumber,
           selectedOption: question.selectedOption,
-          reasoningText: question.reasoningText
+          reasoningText: question.reasoningText,
+          answerOrigin: question.answerOrigin
         }),
         questionContextHash: question.context.questionContentHash,
-        officialAnswer: question.officialAnswer,
+        isScored: question.scoring.isScored,
+        canonicalAnswer: question.scoring.canonicalAnswer,
+        acceptedOptions: question.scoring.acceptedOptions,
+        studentAnswerIsCorrect: question.scoring.studentAnswerIsCorrect,
+        selectedOption: question.scoring.selectedOption,
         eligibleSolutions: eligibleSolutions.map(solutionAuthorization),
         now: this.clock()
       });
@@ -255,6 +299,23 @@ export class LearningReviewWorker {
         leaseMs: this.leaseMs
       });
       if (!heartbeat) return { processed: false, staleLease: true };
+      if (question.scoringSnapshotValid !== true
+          || !isValidAnalysisScoringSnapshot(question.scoring, question.selectedOption)) {
+        outcomes.push(deterministicUnassessable(
+          question,
+          'SCORING_SNAPSHOT_INVALID',
+          'The immutable scoring snapshot is invalid or no longer matches the submitted response.'
+        ));
+        continue;
+      }
+      if (!question.scoring.isScored) {
+        outcomes.push(deterministicUnassessable(
+          question,
+          'QUESTION_UNSCORED',
+          'This question is intentionally unscored and is not sent for AI grading.'
+        ));
+        continue;
+      }
       if (!question.reasoningText?.trim()) {
         outcomes.push(deterministicUnassessable(question, 'BLANK_REASONING', 'No written reasoning was submitted for this question.'));
         continue;
@@ -270,10 +331,6 @@ export class LearningReviewWorker {
       const eligibleSolutions = question.context?.solutions.filter((solution) => solution.modelEligibility?.eligible !== false) || [];
       if (!question.context || question.context.visualContext?.modelAvailable === false || eligibleSolutions.length < 2) {
         outcomes.push(deterministicUnassessable(question, 'CONTEXT_UNAVAILABLE', 'Approved comparison context is unavailable for this question.'));
-        continue;
-      }
-      if (!question.officialAnswer) {
-        outcomes.push(deterministicUnassessable(question, 'QUESTION_UNSCORED', 'This question has no official scored answer for analysis.'));
         continue;
       }
       const request = requestFor(job, question, eligibleSolutions);

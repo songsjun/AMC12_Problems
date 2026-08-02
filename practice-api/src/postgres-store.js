@@ -3,6 +3,10 @@ import pg from 'pg';
 import { conflict } from './errors.js';
 import { providerRetentionNotBefore } from './infrastructure/assemblyai-retention-profile.js';
 import { analysisInputHash, canonicalHash } from './learning-review/canonical.js';
+import {
+  ANALYSIS_CONTRACT_VERSION,
+  isValidAnalysisScoringSnapshot
+} from './infrastructure/amc-inference-contract.js';
 import { ATTEMPT_MODE, OPEN_REVIEW_STATUS, openReviewReleaseHash } from './open-review/domain.js';
 
 const { Pool } = pg;
@@ -11,6 +15,16 @@ const clone = (value) => structuredClone(value);
 
 function number(value) {
   return typeof value === 'number' ? value : Number(value);
+}
+
+function mapAnalysisScoringSnapshot(row) {
+  return row && {
+    isScored: row.is_scored,
+    canonicalAnswer: row.correct_option,
+    acceptedOptions: row.accepted_options,
+    studentAnswerIsCorrect: row.is_correct,
+    selectedOption: row.selected_option
+  };
 }
 
 function transcriptionRetryAt(now, attemptCount, retryAfterSeconds) {
@@ -439,6 +453,7 @@ function mapAnalysisRun(row) {
     inputHash: row.input_hash,
     evidenceHash: row.evidence_hash,
     deletionGeneration: row.deletion_generation,
+    analysisContractVersion: row.analysis_contract_version,
     status: row.status,
     createdAt: row.created_at,
     startedAt: row.started_at,
@@ -628,10 +643,8 @@ function mapQuestion(row) {
     promptMarkdown: row.prompt_markdown,
     choices: row.choices,
     correctOption: row.correct_option,
-    acceptedOptions: Array.isArray(row.accepted_options) && row.accepted_options.length
-      ? row.accepted_options
-      : (row.correct_option ? [row.correct_option] : []),
-    isScored: row.is_scored !== false,
+    acceptedOptions: row.accepted_options,
+    isScored: row.is_scored,
     solutionMarkdown: row.solution_markdown
   };
 }
@@ -956,9 +969,10 @@ export class PostgresStore {
             await client.query(
               `INSERT INTO amc_practice.learning_analysis_runs
                (id, learning_submission_version_id, context_set_id, version_number, input_hash,
-                evidence_hash, deletion_generation, status, created_at)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,'QUEUED',$8)`,
-              [runId, row.id, contextSetId, row.version_number, inputHash, row.evidence_hash, row.deletion_generation, importedAt]
+                evidence_hash, deletion_generation, analysis_contract_version, status, created_at)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'QUEUED',$9)`,
+              [runId, row.id, contextSetId, row.version_number, inputHash, row.evidence_hash,
+                row.deletion_generation, ANALYSIS_CONTRACT_VERSION, importedAt]
             );
             await client.query(
               `UPDATE amc_practice.learning_work_items
@@ -1030,6 +1044,7 @@ export class PostgresStore {
            WHERE $2::boolean AND w.status = 'QUEUED' AND w.available_at <= $1
              AND amc_practice.learning_entitlement_allows(s.id, 'EXISTING_WORK')
              AND r.status = 'QUEUED' AND v.context_status = 'CONTEXT_READY'
+             AND r.analysis_contract_version = $5
              AND v.context_set_id = r.context_set_id AND w.input_hash = r.input_hash
              AND w.deletion_generation = r.deletion_generation
            UNION ALL
@@ -1056,7 +1071,8 @@ export class PostgresStore {
                   WHERE e.batch_id = b.id AND e.normalized_text IS NOT NULL)
          ) candidates
          ORDER BY priority DESC, available_at, created_at, id LIMIT 1`,
-        [now, accepted.has('INTERACTIVE_ANALYSIS'), accepted.has('BATCH_EXTRACTION'), maxBatchConcurrent]
+        [now, accepted.has('INTERACTIVE_ANALYSIS'), accepted.has('BATCH_EXTRACTION'),
+          maxBatchConcurrent, ANALYSIS_CONTRACT_VERSION]
       );
       if (!selected.rowCount) {
         await client.query('COMMIT');
@@ -1114,10 +1130,12 @@ export class PostgresStore {
         `SELECT r.id AS run_id, r.learning_submission_version_id, r.context_set_id AS run_context_set_id,
                 r.version_number AS run_version_number, r.input_hash AS run_input_hash,
                 r.evidence_hash AS run_evidence_hash, r.deletion_generation AS run_deletion_generation,
+                r.analysis_contract_version,
                 r.created_at AS run_created_at, r.started_at AS run_started_at,
                 v.id AS version_id, v.learning_submission_id, v.version_number,
-                v.form_id, v.form_version, v.context_set_id, v.evidence_hash,
+                v.form_id, v.form_version, v.context_set_id, v.evidence_hash, v.batch_id,
                 s.id AS submission_id, s.student_id, s.attempt_id,
+                s.official_submission_id,
                 s.current_version, s.lifecycle_status, s.form_id AS submission_form_id,
                 s.form_version AS submission_form_version
          FROM amc_practice.learning_analysis_runs r
@@ -1134,32 +1152,49 @@ export class PostgresStore {
       const version = {
         id: row.version_id, learningSubmissionId: row.learning_submission_id,
         versionNumber: row.version_number, formId: row.form_id, formVersion: row.form_version,
-        contextSetId: row.context_set_id, evidenceHash: row.evidence_hash
+        contextSetId: row.context_set_id, evidenceHash: row.evidence_hash,
+        batchId: row.batch_id
       };
       const run = {
         id: row.run_id, learningSubmissionVersionId: row.learning_submission_version_id,
         contextSetId: row.run_context_set_id, versionNumber: row.run_version_number,
         inputHash: row.run_input_hash, evidenceHash: row.run_evidence_hash,
         deletionGeneration: row.run_deletion_generation, status: 'RUNNING',
+        analysisContractVersion: row.analysis_contract_version,
         createdAt: row.run_created_at, startedAt: row.run_started_at || now,
         completedAt: null, lastErrorCode: null
       };
       const submission = {
         id: row.submission_id, studentId: row.student_id, attemptId: row.attempt_id,
+        officialSubmissionId: row.official_submission_id,
         currentVersion: row.current_version, lifecycleStatus: row.lifecycle_status,
         formId: row.submission_form_id, formVersion: row.submission_form_version
       };
       const responses = await client.query(
-          `SELECT question_number, selected_option, reasoning_text, reasoning_origin
+          `SELECT question_number, selected_option, answer_origin, reasoning_text, reasoning_origin
            FROM amc_practice.learning_question_responses
            WHERE learning_submission_version_id = $1 ORDER BY question_number`, [version.id]
       );
-      const formQuestions = await client.query(
-          `SELECT question_number, correct_option FROM amc_practice.form_questions
-           WHERE form_id = $1 AND form_version = $2 ORDER BY question_number`, [version.formId, version.formVersion]
+      const scoringRows = await client.query(
+        `SELECT 'OFFICIAL_FINAL'::text AS answer_origin,
+                answer.question_number, answer.selected_option, answer.correct_option,
+                answer.accepted_options, answer.is_scored, answer.is_correct
+         FROM amc_practice.submission_answers answer
+         WHERE $2::uuid IS NULL AND answer.submission_id = $1
+         UNION ALL
+         SELECT 'BATCH_CONFIRMED'::text AS answer_origin,
+                item.question_number, item.selected_option, item.correct_option,
+                item.accepted_options, item.is_scored, item.is_correct
+         FROM amc_practice.learning_batch_results result
+         JOIN amc_practice.learning_batch_result_items item ON item.batch_result_id = result.id
+         WHERE $2::uuid IS NOT NULL AND result.batch_id = $2
+           AND result.learning_submission_version_id = $3
+         ORDER BY question_number`, [submission.officialSubmissionId, version.batchId, version.id]
       );
       const contextSet = await loadApprovedContextSet(client, version.contextSetId);
-      const official = new Map(formQuestions.rows.map((question) => [question.question_number, question.correct_option]));
+      const scoring = new Map(scoringRows.rows.map((item) => [
+        `${item.answer_origin}\u0000${item.question_number}`, mapAnalysisScoringSnapshot(item)
+      ]));
       const contexts = new Map(contextSet.questions.map((question) => [question.questionNumber, question]));
       await client.query('COMMIT');
       return {
@@ -1168,8 +1203,12 @@ export class PostgresStore {
           workItem, run, version, submission,
           questions: responses.rows.map((response) => ({
             questionNumber: response.question_number, selectedOption: response.selected_option,
+            answerOrigin: response.answer_origin,
             reasoningText: response.reasoning_text, reasoningOrigin: response.reasoning_origin,
-            officialAnswer: official.get(response.question_number),
+            scoring: scoring.get(`${response.answer_origin}\u0000${response.question_number}`) || null,
+            scoringSnapshotValid: isValidAnalysisScoringSnapshot(
+              scoring.get(`${response.answer_origin}\u0000${response.question_number}`), response.selected_option
+            ),
             context: contexts.get(response.question_number) || null
           }))
         }
@@ -3137,9 +3176,9 @@ export class PostgresStore {
     try {
       await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
       const core = await client.query(
-        `SELECT v.form_id, v.form_version, v.context_status, v.context_set_id,
-                s.current_version, q.selected_option, q.reasoning_text,
-                fq.correct_option, fr.question_bundle_hash, fr.content_hash, fr.manifest_hash
+        `SELECT v.form_id, v.form_version, v.context_status, v.context_set_id, v.batch_id,
+                s.current_version, s.official_submission_id, q.selected_option, q.answer_origin, q.reasoning_text,
+                fr.question_bundle_hash, fr.content_hash, fr.manifest_hash
          FROM amc_practice.learning_work_items w
          JOIN amc_practice.learning_analysis_runs r ON r.id = w.analysis_run_id
          JOIN amc_practice.learning_submission_versions v ON v.id = w.learning_submission_version_id
@@ -3149,9 +3188,6 @@ export class PostgresStore {
           AND a.form_id = s.form_id AND a.form_version = s.form_version
           AND a.attempt_mode = s.attempt_mode
          JOIN amc_practice.form_revisions fr ON fr.form_id = v.form_id AND fr.version = v.form_version
-         JOIN amc_practice.form_questions fq
-           ON fq.form_id = v.form_id AND fq.form_version = v.form_version
-          AND fq.question_number = $14
          JOIN amc_practice.learning_question_responses q
            ON q.learning_submission_version_id = v.id AND q.question_number = $14
          LEFT JOIN amc_practice.learning_batches b ON b.id = v.batch_id
@@ -3167,21 +3203,40 @@ export class PostgresStore {
            AND amc_practice.learning_entitlement_allows(s.id, 'EXISTING_WORK')
            AND v.context_status = 'CONTEXT_READY'
            AND v.context_set_id = $12 AND r.context_set_id = $12 AND r.status = 'RUNNING'
+           AND r.analysis_contract_version = $15
            AND (v.batch_id IS NULL OR (b.deletion_state = 'ACTIVE' AND b.deletion_generation = $6))`,
         [input.workItemId, input.analysisRunId, input.workerId, input.leaseToken,
           input.inputHash, input.deletionGeneration, input.versionId, input.versionNumber,
           input.evidenceHash, input.expectedStudentId, input.expectedSubmissionCurrentVersion,
-          input.expectedContextSetId, input.now, input.questionNumber]
+          input.expectedContextSetId, input.now, input.questionNumber, ANALYSIS_CONTRACT_VERSION]
       );
       const row = core.rows[0];
-      if (!row || row.correct_option !== input.officialAnswer) {
+      if (!row) {
         await client.query('ROLLBACK');
         return false;
       }
+      const scoringRow = await client.query(
+        `SELECT answer.selected_option, answer.correct_option, answer.accepted_options,
+                answer.is_scored, answer.is_correct
+         FROM amc_practice.submission_answers answer
+         WHERE $5::text = 'OFFICIAL_FINAL' AND $2::uuid IS NULL
+           AND answer.submission_id = $1 AND answer.question_number = $4
+         UNION ALL
+         SELECT item.selected_option, item.correct_option, item.accepted_options,
+                item.is_scored, item.is_correct
+         FROM amc_practice.learning_batch_results result
+         JOIN amc_practice.learning_batch_result_items item ON item.batch_result_id = result.id
+         WHERE $5::text = 'BATCH_CONFIRMED' AND $2::uuid IS NOT NULL AND result.batch_id = $2
+           AND result.learning_submission_version_id = $3 AND item.question_number = $4`,
+        [row.official_submission_id, row.batch_id, input.versionId, input.questionNumber, row.answer_origin]
+      );
+      const scoring = scoringRow.rowCount === 1
+        ? mapAnalysisScoringSnapshot(scoringRow.rows[0]) : null;
       const responseHash = canonicalHash({
         questionNumber: input.questionNumber,
         selectedOption: row.selected_option,
-        reasoningText: row.reasoning_text
+        reasoningText: row.reasoning_text,
+        answerOrigin: row.answer_origin
       });
       const contextSet = await loadApprovedContextSet(client, input.expectedContextSetId);
       const question = contextSet?.questions
@@ -3202,6 +3257,13 @@ export class PostgresStore {
         && contextSet.releaseBinding?.contentHash === row.content_hash
         && contextSet.releaseBinding?.manifestHash === row.manifest_hash
         && question.questionContentHash === input.questionContextHash
+        && isValidAnalysisScoringSnapshot(scoring, row.selected_option)
+        && input.isScored === true && scoring.isScored === true
+        && scoring.isScored === input.isScored
+        && scoring.canonicalAnswer === input.canonicalAnswer
+        && JSON.stringify(scoring.acceptedOptions) === JSON.stringify(input.acceptedOptions)
+        && scoring.studentAnswerIsCorrect === input.studentAnswerIsCorrect
+        && scoring.selectedOption === input.selectedOption
         && responseHash === input.questionResponseHash && liveEligible.length >= 2
         && JSON.stringify(liveEligible) === JSON.stringify(input.eligibleSolutions));
       await client.query('COMMIT');
@@ -3887,9 +3949,8 @@ export class PostgresStore {
       questionNumber: row.question_number,
       selectedOption: row.selected_option,
       correctOption: row.correct_option,
-      acceptedOptions: Array.isArray(row.accepted_options) && row.accepted_options.length
-        ? row.accepted_options : (row.correct_option ? [row.correct_option] : []),
-      isScored: row.is_scored !== false,
+      acceptedOptions: row.accepted_options,
+      isScored: row.is_scored,
       isCorrect: row.is_correct,
       points: number(row.points)
     });
@@ -4277,10 +4338,8 @@ class PostgresAttemptTransaction {
       questionNumber: row.question_number,
       selectedOption: row.selected_option,
       correctOption: row.correct_option,
-      acceptedOptions: Array.isArray(row.accepted_options) && row.accepted_options.length
-        ? row.accepted_options
-        : (row.correct_option ? [row.correct_option] : []),
-      isScored: row.is_scored !== false,
+      acceptedOptions: row.accepted_options,
+      isScored: row.is_scored,
       isCorrect: row.is_correct,
       points: number(row.points)
     }));
@@ -4419,11 +4478,13 @@ class PostgresAttemptTransaction {
       await this.client.query(
         `INSERT INTO amc_practice.learning_analysis_runs
          (id, learning_submission_version_id, context_set_id, version_number, input_hash,
-          evidence_hash, deletion_generation, status, created_at, started_at, completed_at, last_error_code)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+          evidence_hash, deletion_generation, analysis_contract_version, status,
+          created_at, started_at, completed_at, last_error_code)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
         [analysisRun.id, analysisRun.learningSubmissionVersionId, analysisRun.contextSetId,
           analysisRun.versionNumber, analysisRun.inputHash, analysisRun.evidenceHash,
-          analysisRun.deletionGeneration, analysisRun.status, analysisRun.createdAt,
+          analysisRun.deletionGeneration, analysisRun.analysisContractVersion,
+          analysisRun.status, analysisRun.createdAt,
           analysisRun.startedAt, analysisRun.completedAt, analysisRun.lastErrorCode]
       );
     }
@@ -4817,10 +4878,12 @@ class PostgresAttemptTransaction {
       await this.client.query(
         `INSERT INTO amc_practice.learning_analysis_runs
          (id, learning_submission_version_id, context_set_id, version_number, input_hash,
-          evidence_hash, deletion_generation, status, created_at, started_at, completed_at, last_error_code)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+          evidence_hash, deletion_generation, analysis_contract_version, status,
+          created_at, started_at, completed_at, last_error_code)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
         [run.id, run.learningSubmissionVersionId, run.contextSetId, run.versionNumber,
-          run.inputHash, run.evidenceHash, run.deletionGeneration, run.status, run.createdAt,
+          run.inputHash, run.evidenceHash, run.deletionGeneration, run.analysisContractVersion,
+          run.status, run.createdAt,
           run.startedAt, run.completedAt, run.lastErrorCode]
       );
     }

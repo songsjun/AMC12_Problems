@@ -1,19 +1,25 @@
 import {
+  INFERENCE_PROMPT_VERSION,
+  INFERENCE_REQUEST_SCHEMA,
+  INFERENCE_RESPONSE_SCHEMA,
+  INFERENCE_SAFETY_PROFILE,
+  INFERENCE_TASK,
   computeInferenceContextHash,
   computeInferenceInputHash,
+  deriveStudentAnswerStatus,
   inferenceSha256,
   isBoundedInferenceInputText,
   isRestrictedInferenceOutputText
 } from './amc-inference-contract.js';
 
-const FIXED_PATH = '/v1/analyze-question';
+const FIXED_PATH = '/v2/analyze-question';
 const HASH = /^[a-f0-9]{64}$/;
 const ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,95}$/;
 const REVIEWER_ID = /^[A-Za-z0-9][A-Za-z0-9._:@/-]{2,127}$/;
 const TAG = /^[a-z0-9][a-z0-9-]{0,63}$/;
 const CLASSIFICATIONS = new Set([
   'CORRECT_AND_WELL_JUSTIFIED', 'CORRECT_WITH_REASONING_GAPS', 'INCORRECT_CONCEPTUAL',
-  'INCORRECT_EXECUTION', 'INCORRECT_UNCLASSIFIED', 'ANSWER_ONLY', 'NO_ATTEMPT'
+  'INCORRECT_EXECUTION', 'INCORRECT_UNCLASSIFIED'
 ]);
 const ALIGNMENTS = new Set(['ALIGNS', 'PARTIALLY_ALIGNS', 'DIFFERS', 'NOT_COMPARABLE']);
 const MAX_INFERENCE_REQUEST_BODY_BYTES = 524_288;
@@ -107,20 +113,37 @@ function validateLocalRequest(request) {
     return false;
   }
   if (!exactRecord(request, ['schema', 'task', 'correlation_id', 'input_hash', 'context_hash', 'safety_id', 'question'])
-      || request.schema !== 'amc-inference-request-v1' || request.task !== 'question_analysis_v1'
-      || request.safety_id !== 'amc-math-safe-v1' || !ID.test(request.correlation_id)
+      || request.schema !== INFERENCE_REQUEST_SCHEMA || request.task !== INFERENCE_TASK
+      || request.safety_id !== INFERENCE_SAFETY_PROFILE || !ID.test(request.correlation_id)
       || !HASH.test(request.input_hash) || !HASH.test(request.context_hash)
       || !exactRecord(request.question, [
-        'question_id', 'prompt_markdown', 'choices', 'official_answer', 'student_answer', 'student_reasoning', 'solutions'
+        'question_id', 'prompt_markdown', 'choices', 'scoring', 'student_answer',
+        'student_answer_status', 'student_reasoning', 'solutions'
       ]) || !ID.test(request.question.question_id)
-      || !['A', 'B', 'C', 'D', 'E'].includes(request.question.official_answer)
       || !(request.question.student_answer === null || ['A', 'B', 'C', 'D', 'E'].includes(request.question.student_answer))
       || !isBoundedInferenceInputText(request.question.prompt_markdown, 1, 16_384)
-      || !(request.question.student_reasoning === null || isBoundedInferenceInputText(request.question.student_reasoning, 1, 12_000))
+      || !isBoundedInferenceInputText(request.question.student_reasoning, 1, 12_000)
+      || request.question.student_reasoning.trim() === ''
       || !Array.isArray(request.question.choices) || request.question.choices.length !== 5
       || !Array.isArray(request.question.solutions) || request.question.solutions.length < 2
       || request.question.solutions.length > 8) return false;
   const labels = ['A', 'B', 'C', 'D', 'E'];
+  const scoring = request.question.scoring;
+  if (!exactRecord(scoring, ['is_scored', 'canonical_answer', 'accepted_options'])
+      || scoring.is_scored !== true || !labels.includes(scoring.canonical_answer)
+      || !Array.isArray(scoring.accepted_options) || scoring.accepted_options.length < 1
+      || scoring.accepted_options.length > labels.length
+      || !scoring.accepted_options.includes(scoring.canonical_answer)) return false;
+  let previous = -1;
+  for (const option of scoring.accepted_options) {
+    const position = labels.indexOf(option);
+    if (position < 0 || position <= previous) return false;
+    previous = position;
+  }
+  if (!['BLANK', 'ACCEPTED', 'NOT_ACCEPTED'].includes(request.question.student_answer_status)
+      || request.question.student_answer_status !== deriveStudentAnswerStatus(
+        request.question.student_answer, scoring.accepted_options
+      )) return false;
   if (request.question.choices.some((choice, index) => !exactRecord(choice, ['label', 'text_markdown'])
       || choice.label !== labels[index] || !isBoundedInferenceInputText(choice.text_markdown, 1, 2_048))) return false;
   const solutionIds = new Set();
@@ -151,12 +174,14 @@ function validateAnalysis(value, request) {
     'schema', 'correlation_id', 'input_hash', 'context_hash', 'assessability', 'classification',
     'summary', 'strengths', 'gaps', 'suggestions', 'solution_comparisons', 'confidence'
   ])) return false;
-  if (value.schema !== 'amc-question-analysis-v1' || value.correlation_id !== request.correlation_id
+  if (value.schema !== INFERENCE_RESPONSE_SCHEMA || value.correlation_id !== request.correlation_id
       || value.input_hash !== request.input_hash || value.context_hash !== request.context_hash
       || !CLASSIFICATIONS.has(value.classification) || !isRestrictedInferenceOutputText(value.summary, 1, 1_200)
       || !stringArray(value.strengths, 0, 5, 600) || !stringArray(value.gaps, 0, 5, 600)
       || !stringArray(value.suggestions, 1, 5, 600) || !Number.isFinite(value.confidence)
       || value.confidence < 0 || value.confidence > 1) return false;
+  if (request.question.student_answer_status === 'ACCEPTED' && value.classification.startsWith('INCORRECT_')) return false;
+  if (request.question.student_answer_status === 'NOT_ACCEPTED' && value.classification.startsWith('CORRECT_')) return false;
   if (!exactRecord(value.assessability, ['status', 'reasons'])
       || !['ASSESSABLE', 'PARTIALLY_ASSESSABLE', 'NOT_ASSESSABLE'].includes(value.assessability.status)
       || !stringArray(value.assessability.reasons, 1, 4, 400)) return false;
@@ -188,8 +213,8 @@ function validateRunMetadata(value) {
       || typeof value.requestedModel !== 'string' || typeof value.responseModel !== 'string'
       || !/^[A-Za-z0-9][A-Za-z0-9._-]{1,127}$/.test(value.requestedModel)
       || !/^[A-Za-z0-9][A-Za-z0-9._:-]{1,127}$/.test(value.responseModel)
-      || value.promptVersion !== 'amc-question-analysis-prompt-v1'
-      || value.schemaVersion !== 'amc-question-analysis-v1') return false;
+      || value.promptVersion !== INFERENCE_PROMPT_VERSION
+      || value.schemaVersion !== INFERENCE_RESPONSE_SCHEMA) return false;
   if (!value.usage || typeof value.usage !== 'object' || Array.isArray(value.usage)) return false;
   const allowedUsageKeys = ['cachedInputTokens', 'inputTokens', 'outputTokens', 'totalTokens'];
   if (Object.hasOwn(value.usage, 'cacheWriteTokens')) allowedUsageKeys.push('cacheWriteTokens');

@@ -20,6 +20,11 @@ Use a dedicated AMC Gateway instance/token or tenant-scoped credential so anothe
 
 Persist only schema-validated application output, input/output hashes, model/schema versions, usage/cost, latency, and redacted error codes. Raw provider output is transient and is not a long-term audit record.
 
+Question analysis additionally follows the versioned contract and immutable
+scoring-source decision in `ADR-008`. A worker claims only the contract version
+it implements and re-authorizes the exact official or batch result snapshot
+immediately before the provider call.
+
 ## Alternatives
 
 ### Synchronous provider calls inside browser/API request transactions

@@ -252,7 +252,7 @@ export class FakeInferenceClient {
     if (this.failQuestions.has(number)) throw Object.assign(new Error('redacted'), { code: this.failureCode });
     return {
       analysis: {
-        schema: 'amc-question-analysis-v1', correlation_id: request.correlation_id,
+        schema: 'amc-question-analysis-v2', correlation_id: request.correlation_id,
         input_hash: request.input_hash, context_hash: request.context_hash,
         assessability: { status: 'ASSESSABLE', reasons: ['Reasoning can be assessed.'] },
         classification: 'CORRECT_WITH_REASONING_GAPS', summary: `Safe analysis for question ${number}.`,
@@ -265,7 +265,7 @@ export class FakeInferenceClient {
       },
       runMetadata: {
         provider: 'openai', requestedModel: 'gpt-5.6-terra', responseModel: 'gpt-5.6-terra-2026-07-15',
-        promptVersion: 'amc-question-analysis-prompt-v1', schemaVersion: 'amc-question-analysis-v1',
+        promptVersion: 'amc-question-analysis-prompt-v2', schemaVersion: 'amc-question-analysis-v2',
         usage: { inputTokens: 800, cachedInputTokens: 120, outputTokens: 200, totalTokens: 1000, reasoningTokens: 50 }
       }
     };

@@ -130,7 +130,42 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     '006_approved_context_learning_reports.sql',
     '007_batch_ingest.sql',
     '008_open_review.sql',
-    '009_learning_history_read_model.sql'
+    '009_learning_history_read_model.sql',
+    '010_analysis_contract_v2.sql'
+  ]);
+
+  const analysisV2Schema = await store.pool.query(
+    `SELECT column_name, is_nullable, column_default
+     FROM information_schema.columns
+     WHERE table_schema = 'amc_practice' AND table_name = 'learning_analysis_runs'
+       AND column_name = 'analysis_contract_version'`
+  );
+  assert.equal(analysisV2Schema.rowCount, 1);
+  assert.equal(analysisV2Schema.rows[0].is_nullable, 'NO');
+  assert.match(analysisV2Schema.rows[0].column_default, /amc-analysis-contract-v2/);
+  const analysisV2Constraints = await store.pool.query(
+    `SELECT conname, convalidated FROM pg_constraint
+     WHERE connamespace = 'amc_practice'::regnamespace
+       AND conname = ANY($1::text[]) ORDER BY conname`, [[
+      'amc_form_question_scoring_v2_check',
+      'amc_submission_answer_scoring_v2_check',
+      'amc_batch_result_item_scoring_v2_check'
+    ]]
+  );
+  assert.equal(analysisV2Constraints.rowCount, 3);
+  assert.equal(analysisV2Constraints.rows.every((row) => row.convalidated === true), true);
+  const analysisV2Triggers = await store.pool.query(
+    `SELECT tgname FROM pg_trigger
+     WHERE tgname = ANY($1::text[]) AND NOT tgisinternal ORDER BY tgname`, [[
+      'amc_submission_answers_append_only',
+      'amc_learning_batch_results_append_only',
+      'amc_learning_batch_result_items_append_only'
+    ]]
+  );
+  assert.deepEqual(analysisV2Triggers.rows.map((row) => row.tgname), [
+    'amc_learning_batch_result_items_append_only',
+    'amc_learning_batch_results_append_only',
+    'amc_submission_answers_append_only'
   ]);
 
   const batchTables = await store.pool.query(
@@ -1010,6 +1045,12 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     `SELECT * FROM amc_practice.submission_answers
      WHERE submission_id = $1 ORDER BY question_number`, [reviewFinal.submission.id]
   );
+  await store.pool.query(
+    `UPDATE amc_practice.form_questions
+     SET correct_option = 'D', accepted_options = '["D", "E"]'::jsonb
+     WHERE form_id = $1 AND form_version = $2 AND question_number = 1`,
+    [reviewForm.id, reviewForm.version]
+  );
 
   const approvedArtifact = approvedContextArtifact(reviewForm, { readyNumbers: [1] });
   const importedContext = await new ApprovedContextImporter({
@@ -1046,6 +1087,11 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     workerId: 'pg-worker-shared', now: reclaimAt, leaseMs: 120_000
   });
   assert.ok(reclaimed);
+  assert.equal(reclaimed.run.analysisContractVersion, 'amc-analysis-contract-v2');
+  assert.deepEqual(reclaimed.questions[0].scoring, {
+    isScored: true, canonicalAnswer: 'A', acceptedOptions: ['A'],
+    studentAnswerIsCorrect: null, selectedOption: null
+  });
   assert.notEqual(reclaimed.workItem.leaseToken, staleClaim.workItem.leaseToken);
   assert.equal(await store.heartbeatLearningAnalysisWork({
     workItemId: staleClaim.workItem.id, workerId: 'pg-worker-shared',
@@ -1096,6 +1142,16 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
   });
   assert.deepEqual(await worker.runOnce(), { processed: true, status: 'PARTIAL', providerCalls: 1 });
   assert.equal(fakeInference.calls.length, 1);
+  assert.deepEqual(fakeInference.calls[0].question.scoring, {
+    is_scored: true, canonical_answer: 'A', accepted_options: ['A']
+  });
+  assert.equal(fakeInference.calls[0].question.student_answer_status, 'BLANK');
+  await store.pool.query(
+    `UPDATE amc_practice.form_questions
+     SET correct_option = 'A', accepted_options = '["A"]'::jsonb
+     WHERE form_id = $1 AND form_version = $2 AND question_number = 1`,
+    [reviewForm.id, reviewForm.version]
+  );
   const learningReport = await service.getLearningReport(reviewStudent.id, reviewAttempt.attempt.id);
   assert.equal(learningReport.status, 'PARTIAL');
   assert.equal(learningReport.summary.totalQuestions, 25);
@@ -1114,7 +1170,7 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     provider_invoked: true,
     run_metadata: {
       provider: 'openai', requestedModel: 'gpt-5.6-terra', responseModel: 'gpt-5.6-terra-2026-07-15',
-      promptVersion: 'amc-question-analysis-prompt-v1', schemaVersion: 'amc-question-analysis-v1',
+      promptVersion: 'amc-question-analysis-prompt-v2', schemaVersion: 'amc-question-analysis-v2',
       usage: { inputTokens: 800, cachedInputTokens: 120, outputTokens: 200, totalTokens: 1000, reasoningTokens: 50 }
     },
     error_class: null,
@@ -1304,16 +1360,48 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     /append-only/
   );
 
+  await store.pool.query(
+    `UPDATE amc_practice.form_questions
+     SET correct_option = 'D', accepted_options = '["D", "E"]'::jsonb
+     WHERE form_id = $1 AND form_version = $2 AND question_number = 1`,
+    [reviewForm.id, reviewForm.version]
+  );
+
+  const batchReviewAt = new Date(batchClaimAt.getTime() + 1_000);
   const batchReportWorker = new LearningReviewWorker({
     store: secondStore,
     inferenceClient: fakeInference,
     workerId: 'pg-batch-report-worker',
     leaseMs: 120_000,
-    clock: () => new Date(batchClaimAt.getTime() + 1_000)
+    clock: () => batchReviewAt
   });
+  const batchAnalysisClaim = await secondStore.claimLearningAnalysisWork({
+    workerId: 'pg-batch-report-worker', now: batchReviewAt, leaseMs: 120_000
+  });
+  assert.deepEqual(batchAnalysisClaim.questions[0].scoring, {
+    isScored: true, canonicalAnswer: 'A', acceptedOptions: ['A'],
+    studentAnswerIsCorrect: true, selectedOption: 'A'
+  });
+  batchAnalysisClaim.questions[0].scoring.acceptedOptions = ['A', 'B'];
+  const callsBeforeScoringDrift = fakeInference.calls.length;
+  assert.deepEqual(await batchReportWorker.processClaimed(batchAnalysisClaim), {
+    processed: false, staleLease: true
+  }, 'authorization re-reads the exact batch result item and rejects a drifted claimed snapshot');
+  assert.equal(fakeInference.calls.length, callsBeforeScoringDrift);
+  batchAnalysisClaim.questions[0].scoring.acceptedOptions = ['A'];
   assert.deepEqual(
-    await batchReportWorker.runOnce(),
+    await batchReportWorker.processClaimed(batchAnalysisClaim),
     { processed: true, status: 'COMPLETE', providerCalls: 1 }
+  );
+  assert.deepEqual(fakeInference.calls[1].question.scoring, {
+    is_scored: true, canonical_answer: 'A', accepted_options: ['A']
+  }, 'PostgreSQL batch analysis uses its exact committed result item instead of form_questions');
+  assert.equal(fakeInference.calls[1].question.student_answer_status, 'ACCEPTED');
+  await store.pool.query(
+    `UPDATE amc_practice.form_questions
+     SET correct_option = 'A', accepted_options = '["A"]'::jsonb
+     WHERE form_id = $1 AND form_version = $2 AND question_number = 1`,
+    [reviewForm.id, reviewForm.version]
   );
   const batchLearning = await service.getLearningSubmission(reviewStudent.id, reviewAttempt.attempt.id);
   assert.equal(batchLearning.version, 2);

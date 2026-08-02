@@ -1,0 +1,91 @@
+{
+  "request": {
+    "schema": "amc-inference-request-v2",
+    "task": "question_analysis_v2",
+    "correlation_id": "corr-v2-test-0001",
+    "input_hash": "f6ca1b61bde47b1c40e3c2f98b31caf2445949a6c9cbfd5e85c5afa4f8d83f36",
+    "context_hash": "f5eb674f941a1a6eefd68e03b73587527e75a4a12e963ecc727a42234dd1014d",
+    "safety_id": "amc-math-safe-v1",
+    "question": {
+      "question_id": "2024-AMC12A-01",
+      "prompt_markdown": "If $x+2=5$, what is $x$?",
+      "choices": [
+        { "label": "A", "text_markdown": "$1$" },
+        { "label": "B", "text_markdown": "$2$" },
+        { "label": "C", "text_markdown": "$3$" },
+        { "label": "D", "text_markdown": "$4$" },
+        { "label": "E", "text_markdown": "$5$" }
+      ],
+      "scoring": {
+        "is_scored": true,
+        "canonical_answer": "C",
+        "accepted_options": ["C"]
+      },
+      "student_answer": "C",
+      "student_answer_status": "ACCEPTED",
+      "student_reasoning": "Subtract 2 from both sides, obtaining $x=3$.",
+      "solutions": [
+        {
+          "solution_id": "solution-1",
+          "approval_status": "APPROVED",
+          "title": "Direct algebra",
+          "markdown": "Subtract $2$ from both sides to get $x=3$.",
+          "body_sha256": "46a7d3ec1f1171b69cdbeaa0ef2d7df2b600fca4c4e5a79f6b1f4f7fbfa451ac",
+          "source_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+          "reviewer_id": "reviewer-1",
+          "reviewed_at": "2026-07-31T12:00:00.000Z",
+          "rights_status": "approved-for-ai-use",
+          "method_tags": ["algebra"],
+          "quality_flags": []
+        },
+        {
+          "solution_id": "solution-2",
+          "approval_status": "APPROVED",
+          "title": "Choice verification",
+          "markdown": "Check each choice; only $3+2=5$.",
+          "body_sha256": "5de3698f9e452213bf57fa8faf60067abca308ca0195d8d70f8b1df27ae27392",
+          "source_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+          "reviewer_id": "reviewer-2",
+          "reviewed_at": "2026-07-31T13:00:00Z",
+          "rights_status": "approved-for-ai-use",
+          "method_tags": ["choice-check"],
+          "quality_flags": ["concise"]
+        }
+      ]
+    }
+  },
+  "modelOutput": {
+    "schema": "amc-question-analysis-v2",
+    "correlation_id": "corr-v2-test-0001",
+    "input_hash": "f6ca1b61bde47b1c40e3c2f98b31caf2445949a6c9cbfd5e85c5afa4f8d83f36",
+    "context_hash": "f5eb674f941a1a6eefd68e03b73587527e75a4a12e963ecc727a42234dd1014d",
+    "assessability": { "status": "ASSESSABLE", "reasons": ["The answer and reasoning are present."] },
+    "classification": "CORRECT_AND_WELL_JUSTIFIED",
+    "summary": "The accepted response is supported by a valid algebraic step.",
+    "strengths": ["The inverse operation is applied correctly."],
+    "gaps": [],
+    "suggestions": ["State that subtracting the same value preserves equality."],
+    "solution_comparisons": [
+      { "solution_id": "solution-1", "alignment": "ALIGNS", "observation": "It uses the same direct algebraic step." },
+      { "solution_id": "solution-2", "alignment": "PARTIALLY_ALIGNS", "observation": "It reaches the same result without testing every choice." }
+    ],
+    "confidence": 0.97
+  },
+  "expectedOutput": {
+    "schema": "amc-question-analysis-v2",
+    "correlation_id": "corr-v2-test-0001",
+    "input_hash": "f6ca1b61bde47b1c40e3c2f98b31caf2445949a6c9cbfd5e85c5afa4f8d83f36",
+    "context_hash": "f5eb674f941a1a6eefd68e03b73587527e75a4a12e963ecc727a42234dd1014d",
+    "assessability": { "status": "ASSESSABLE", "reasons": ["The answer and reasoning are present."] },
+    "classification": "CORRECT_AND_WELL_JUSTIFIED",
+    "summary": "The accepted response is supported by a valid algebraic step.",
+    "strengths": ["The inverse operation is applied correctly."],
+    "gaps": [],
+    "suggestions": ["State that subtracting the same value preserves equality."],
+    "solution_comparisons": [
+      { "solution_id": "solution-1", "alignment": "ALIGNS", "observation": "It uses the same direct algebraic step." },
+      { "solution_id": "solution-2", "alignment": "PARTIALLY_ALIGNS", "observation": "It reaches the same result without testing every choice." }
+    ],
+    "confidence": 0.97
+  }
+}

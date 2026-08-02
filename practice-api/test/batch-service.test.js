@@ -1066,6 +1066,7 @@ test('unified AI dispatcher selects interactive priority 50 before batch extract
     id: '22222222-2222-4222-8222-222222222222', learningSubmissionVersionId: version.id,
     contextSetId: contextSet.id, versionNumber: version.versionNumber,
     inputHash: 'b'.repeat(64), evidenceHash: version.evidenceHash, deletionGeneration: 0,
+    analysisContractVersion: 'amc-analysis-contract-v2',
     status: 'QUEUED', createdAt: new Date('2026-08-01T12:00:00.000Z'), startedAt: null,
     completedAt: null, lastErrorCode: null
   };
@@ -1141,6 +1142,7 @@ test('a running batch cannot consume the slot reserved for a late interactive an
     id: '32222222-2222-4222-8222-222222222222', learningSubmissionVersionId: version.id,
     contextSetId: contextSet.id, versionNumber: version.versionNumber,
     inputHash: 'd'.repeat(64), evidenceHash: version.evidenceHash, deletionGeneration: 0,
+    analysisContractVersion: 'amc-analysis-contract-v2',
     status: 'QUEUED', createdAt: new Date('2026-08-01T12:00:00.000Z'), startedAt: null,
     completedAt: null, lastErrorCode: null
   };
@@ -1263,8 +1265,18 @@ test('current v3 preserves exact interactive v1 and batch v2/v3 questions and re
     store: context.store, inferenceClient, workerId: 'two-version-review-worker',
     clock: () => new Date('2026-08-01T12:00:02.000Z')
   });
+  const storedForm = [...context.store.forms.values()][0];
+  const originalScoring = structuredClone(storedForm.questions[0]);
+  Object.assign(storedForm.questions[0], {
+    correctOption: 'C', acceptedOptions: ['C'], isScored: true
+  });
   assert.equal((await interactiveWorker.runOnce()).processed, true);
   assert.equal((await interactiveWorker.runOnce()).processed, true);
+  assert.deepEqual(inferenceClient.calls[0].question.scoring, {
+    is_scored: true, canonical_answer: 'A', accepted_options: ['A']
+  }, 'batch v2 analysis uses its committed result item, not the mutable form row');
+  assert.equal(inferenceClient.calls[0].question.student_answer_status, 'ACCEPTED');
+  Object.assign(storedForm.questions[0], originalScoring);
   assert.equal(context.store.learningReports.has(versions[0].id), true);
   assert.equal(context.store.learningReports.has(versions[1].id), true);
   assert.equal(context.store.learningReports.size, 2);
@@ -1305,7 +1317,15 @@ test('current v3 preserves exact interactive v1 and batch v2/v3 questions and re
   await confirmExtractedBatch(context, v3Mapped.batch, 'confirm-three-version-batch');
   assert.equal(submission.currentVersion, 3);
   assert.equal(versions.length, 3);
+  Object.assign(storedForm.questions[0], {
+    correctOption: 'D', acceptedOptions: ['D', 'E'], isScored: true
+  });
   assert.equal((await interactiveWorker.runOnce()).processed, true);
+  assert.deepEqual(inferenceClient.calls[1].question.scoring, {
+    is_scored: true, canonical_answer: 'A', accepted_options: ['A']
+  }, 'batch v3 analysis remains pinned to its own result item');
+  assert.equal(inferenceClient.calls[1].question.student_answer_status, 'NOT_ACCEPTED');
+  Object.assign(storedForm.questions[0], originalScoring);
   assert.equal(context.store.learningReports.has(versions[2].id), true);
   assert.equal(context.store.learningReports.size, 3);
 
@@ -1439,4 +1459,65 @@ test('current v3 preserves exact interactive v1 and batch v2/v3 questions and re
   );
   assert.equal(inferenceClient.calls.length, providerCallsBeforeHistoryReads,
     'all learning-history GET projections make zero provider calls');
+});
+
+test('batch analysis authorization re-reads the exact committed result item before provider dispatch', async (t) => {
+  const context = await fixture(t);
+  const artifact = approvedContextArtifact(context.form);
+  await new ApprovedContextImporter({
+    store: context.store,
+    clock: () => new Date('2026-08-01T12:00:00.000Z'),
+    trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
+  }).import(artifact, approvalReceiptsForArtifact(artifact));
+  const text = 'Question 1: A because the committed batch evidence supports it.';
+  const created = await context.service.createLearningBatch(
+    context.student.id, context.attemptId, 'create-batch-auth-reread',
+    { files: [{ displayName: 'auth.txt', kind: 'TEXT', contentType: 'text/plain', declaredBytes: Buffer.byteLength(text) }] }
+  );
+  await context.service.uploadLearningBatchAsset(
+    context.student.id, context.attemptId, created.batch.id, created.batch.assets[0].id,
+    'upload-batch-auth-reread', Readable.from([text]), Buffer.byteLength(text)
+  );
+  await context.service.submitLearningBatch(
+    context.student.id, context.attemptId, created.batch.id, 'submit-batch-auth-reread'
+  );
+  const batchWorkerId = 'batch-auth-extraction-worker';
+  const batchWorker = new BatchExtractionWorker({
+    store: context.store, service: context.service, workerId: batchWorkerId,
+    gatewayClient: {
+      async decomposeChunk(request, { plan }) {
+        return {
+          decomposition: gatewayOutputs(plan).find((output) => output.chunkId === request.chunkId),
+          runMetadata: gatewayRunMetadata()
+        };
+      }
+    },
+    clock: () => new Date('2026-08-01T12:00:01.000Z')
+  });
+  await new AiWorkDispatcher({
+    store: context.store, interactiveWorker: null, batchWorker,
+    workerId: batchWorkerId, clock: () => new Date('2026-08-01T12:00:01.000Z')
+  }).runOnce();
+  const mapped = await context.service.getLearningBatch(
+    context.student.id, context.attemptId, created.batch.id
+  );
+  await confirmExtractedBatch(context, mapped.batch, 'confirm-batch-auth-reread');
+
+  const client = new FakeInferenceClient();
+  const workerId = 'batch-auth-review-worker';
+  const worker = new LearningReviewWorker({
+    store: context.store, inferenceClient: client, workerId,
+    clock: () => new Date('2026-08-01T12:00:02.000Z')
+  });
+  assert.equal((await worker.runOnce()).providerCalls, 0, 'the older blank interactive version drains first');
+  const claimed = await context.store.claimLearningAnalysisWork({
+    workerId, now: new Date('2026-08-01T12:00:02.000Z'), leaseMs: 120_000
+  });
+  assert.deepEqual(claimed.questions[0].scoring, {
+    isScored: true, canonicalAnswer: 'A', acceptedOptions: ['A'],
+    studentAnswerIsCorrect: true, selectedOption: 'A'
+  });
+  context.store.learningBatchResults.get(created.batch.id).items[0].acceptedOptions = ['A', 'B'];
+  assert.deepEqual(await worker.processClaimed(claimed), { processed: false, staleLease: true });
+  assert.equal(client.calls.length, 0);
 });

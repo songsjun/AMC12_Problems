@@ -1,7 +1,15 @@
 import { createHash } from 'node:crypto';
 
-const CONTEXT_HASH_SCHEMA = 'amc-question-context-hash-v1';
-const INPUT_HASH_SCHEMA = 'amc-student-input-hash-v1';
+export const ANALYSIS_CONTRACT_VERSION = 'amc-analysis-contract-v2';
+export const INFERENCE_REQUEST_SCHEMA = 'amc-inference-request-v2';
+export const INFERENCE_TASK = 'question_analysis_v2';
+export const INFERENCE_RESPONSE_SCHEMA = 'amc-question-analysis-v2';
+export const INFERENCE_PROMPT_VERSION = 'amc-question-analysis-prompt-v2';
+export const INFERENCE_CONTEXT_HASH_SCHEMA = 'amc-question-context-hash-v2';
+export const INFERENCE_INPUT_HASH_SCHEMA = 'amc-student-input-hash-v2';
+export const INFERENCE_SAFETY_PROFILE = 'amc-math-safe-v1';
+
+const OPTIONS = ['A', 'B', 'C', 'D', 'E'];
 const ACTIVE_MARKDOWN_OR_LINK = /(?:!\[[^\]]*\]\s*(?:\(|\[)|\[[^\]]+\]\s*(?:\(|\[)|^\s*\[[^\]]+\]:|\b[a-z][a-z0-9+.-]{0,31}:\S|www\.|<[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+>)/imu;
 const RAW_HTML = /(?:<!--|<![^>]*>|<\?[^>]*>|<\/?[A-Za-z][A-Za-z0-9-]*(?:[\s/][^<>]*)?>)/iu;
 const DANGEROUS_TEX = /\\(?:catcode|class|csname|cssId|def|edef|endcsname|every|expandafter|href|htmlClass|htmlData|htmlId|htmlStyle|immediate|include|includegraphics|input|loop|newcommand|openin|openout|read|renewcommand|repeat|require|setOptions|special|style|url|usepackage|write|write18)\b/iu;
@@ -55,23 +63,55 @@ export function inferenceSha256(value) {
   return createHash('sha256').update(value, 'utf8').digest('hex');
 }
 
+export function deriveStudentAnswerStatus(studentAnswer, acceptedOptions) {
+  if (studentAnswer === null) return 'BLANK';
+  return acceptedOptions.includes(studentAnswer) ? 'ACCEPTED' : 'NOT_ACCEPTED';
+}
+
+export function isValidAnalysisScoringSnapshot(value, responseSelectedOption) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)
+      || Object.keys(value).sort().join(',') !== [
+        'acceptedOptions', 'canonicalAnswer', 'isScored', 'selectedOption', 'studentAnswerIsCorrect'
+      ].sort().join(',')
+      || value.selectedOption !== responseSelectedOption
+      || !(value.selectedOption === null || OPTIONS.includes(value.selectedOption))
+      || typeof value.isScored !== 'boolean' || !Array.isArray(value.acceptedOptions)) return false;
+  if (!value.isScored) {
+    return value.canonicalAnswer === null && value.acceptedOptions.length === 0
+      && value.studentAnswerIsCorrect === null;
+  }
+  if (!OPTIONS.includes(value.canonicalAnswer) || value.acceptedOptions.length < 1
+      || value.acceptedOptions.length > OPTIONS.length) return false;
+  let previous = -1;
+  for (const option of value.acceptedOptions) {
+    const position = OPTIONS.indexOf(option);
+    if (position < 0 || position <= previous) return false;
+    previous = position;
+  }
+  if (!value.acceptedOptions.includes(value.canonicalAnswer)) return false;
+  const expectedCorrect = value.selectedOption === null
+    ? null : value.acceptedOptions.includes(value.selectedOption);
+  return value.studentAnswerIsCorrect === expectedCorrect;
+}
+
 export function computeInferenceContextHash(request) {
   const question = request.question;
   return inferenceSha256(canonicalInferenceJson({
-    schema: CONTEXT_HASH_SCHEMA,
+    schema: INFERENCE_CONTEXT_HASH_SCHEMA,
     question_id: question.question_id,
     prompt_markdown: question.prompt_markdown,
     choices: question.choices,
-    official_answer: question.official_answer,
+    scoring: question.scoring,
     solutions: question.solutions
   }));
 }
 
 export function computeInferenceInputHash(request) {
   return inferenceSha256(canonicalInferenceJson({
-    schema: INPUT_HASH_SCHEMA,
+    schema: INFERENCE_INPUT_HASH_SCHEMA,
     context_hash: request.context_hash,
     student_answer: request.question.student_answer,
+    student_answer_status: request.question.student_answer_status,
     student_reasoning: request.question.student_reasoning
   }));
 }

@@ -41,6 +41,17 @@ These are invariants, not model-quality targets:
 - The same canary gate proves the model cannot access the executor's provider credential; only a tool-free, non-persistent inference path is eligible.
 - Batch/report/chat endpoint-by-state matrices prove no standalone batch can bypass the exact form revision's release entitlement, including an active timed attempt conflict.
 - Workers recheck owner, relation, deletion generation, mapping confirmation, and release entitlement before protected context load and provider invocation.
+- Analysis claims and provider authorization select scoring only from the exact
+  immutable source for the response origin: official FINAL submission answers
+  or the matching batch/version result item. There is no current-form fallback.
+- Accepted alternatives derive `ACCEPTED`, selected nonmembers derive
+  `NOT_ACCEPTED`, blanks derive `BLANK`, and contract validation rejects model
+  classifications that contradict those deterministic facts.
+- Unscored and invalid scoring snapshots record deterministic provider-free
+  outcomes. Database checks require unscored `is_correct IS NULL` and
+  `points = 0`; official answer and batch result snapshots are append-only.
+- Contract migration refuses active analysis, preserves terminal v1 lineage,
+  upgrades only queued work, and v2 workers never claim v1 runs.
 - All new mutations enforce CSRF and idempotency; provider spies record zero calls on rejected requests.
 - Model output uses a restricted Markdown/MathJax profile with no raw HTML, external media, active links, style/HTML/URL TeX macros, or unreviewed solution content.
 - Dependency audit has no unaccepted High/Critical findings.

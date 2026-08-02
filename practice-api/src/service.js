@@ -23,6 +23,7 @@ import {
 import { badRequest, conflict, forbidden, notFound, tooManyRequests, unauthorized } from './errors.js';
 import { newOpaqueToken } from './config.js';
 import { analysisInputHash } from './learning-review/canonical.js';
+import { ANALYSIS_CONTRACT_VERSION } from './infrastructure/amc-inference-contract.js';
 import { publicLearningReport } from './learning-review/report.js';
 import { BatchPracticeService } from './batch-ingest/service.js';
 import {
@@ -1561,6 +1562,7 @@ export class PracticeService {
       inputHash: workInputHash,
       evidenceHash,
       deletionGeneration: workItem.deletionGeneration,
+      analysisContractVersion: ANALYSIS_CONTRACT_VERSION,
       status: 'QUEUED',
       createdAt: now,
       startedAt: null,
