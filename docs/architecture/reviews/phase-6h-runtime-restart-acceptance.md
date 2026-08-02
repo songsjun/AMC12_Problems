@@ -196,6 +196,16 @@ service and was intentionally not treated as the AMC Gateway. Production batch
 decomposition, analysis, and Tutor therefore remain gated even though their
 full isolated process workflow passed.
 
+The gate is currently operational rather than a complete API-surface gate:
+after the API restart, the authenticated batch intake routes and UI are loaded
+even though their consumers are absent. A production student could therefore
+create and upload a batch that remains in PROCESSING instead of receiving a
+report. No production student batch was created during this acceptance, and
+the feature must not be announced as available in this state. Either deploy and
+canary the dedicated Gateway and Worker before student use, or add a coordinated
+batch release flag that rejects/hides intake until those dependencies are
+ready. Objective final scoring remains independent of this AI backlog.
+
 There is also a deployment drift that should not be hidden. The installed API
 plist invokes the user's untracked PostgreSQL-wait wrapper and has an effective
 five-second exit timeout; the reviewed repository plist invokes Node directly
