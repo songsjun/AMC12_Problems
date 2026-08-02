@@ -11,6 +11,7 @@ import { batchSha256, segmentBatchGatewaySources } from '../src/batch-ingest/dom
 import { BatchExtractionWorker } from '../src/batch-ingest/worker.js';
 import { ProviderOrphanCleanupWorker } from '../src/batch-ingest/provider-orphan-cleanup-worker.js';
 import { BatchTranscriptionWorker } from '../src/batch-ingest/transcription-worker.js';
+import { ApiError } from '../src/errors.js';
 import { PrivateUploadStore } from '../src/infrastructure/private-upload-store.js';
 import { TranscriptionWorkerPort } from '../src/learning-review/transcription-worker-port.js';
 import { ApprovedContextImporter } from '../src/learning-review/artifact.js';
@@ -119,6 +120,7 @@ async function fixture(t) {
     authPepper: 'test-pepper-that-is-long-enough-for-a-safe-local-test-suite',
     sessionTtlMs: 12 * 60 * 60 * 1000,
     allowTestOnlyImport: true, allowTestOnlyPublish: true,
+    batchIntakeEnabled: true,
     clock: () => new Date('2026-08-01T12:00:00.000Z')
   });
   const form = learningReviewForm();
@@ -128,7 +130,7 @@ async function fixture(t) {
   await service.final(student.id, created.attempt.id, 'finalize-batch-fixture', {
     expectedAnswersRevision: 0, expectedStateRevision: 0
   });
-  return { root, store, service, student, attemptId: created.attempt.id, form };
+  return { root, store, service, student, attemptId: created.attempt.id, form, privateUploadStore };
 }
 
 async function submittedAudioBatch(context, key) {
@@ -146,6 +148,108 @@ async function submittedAudioBatch(context, key) {
   );
   return created;
 }
+
+test('default-off batch intake blocks student mutations while reads, deletion, and worker recovery remain available', async (t) => {
+  const context = await fixture(t);
+  const disabled = new PracticeService({
+    store: context.store,
+    privateUploadStore: context.privateUploadStore,
+    authPepper: 'test-pepper-that-is-long-enough-for-a-safe-local-test-suite',
+    sessionTtlMs: 12 * 60 * 60 * 1000,
+    allowTestOnlyImport: true,
+    allowTestOnlyPublish: true,
+    batchIntakeEnabled: false,
+    clock: () => new Date('2026-08-01T12:00:00.000Z')
+  });
+  const unavailable = (error) => error instanceof ApiError
+    && error.statusCode === 503
+    && error.code === 'BATCH_INTAKE_UNAVAILABLE'
+    && error.message === 'Batch intake is temporarily unavailable.';
+  const text = Buffer.from('Question 1\nAnswer: A\nReasoning: Direct calculation.');
+  const files = [{
+    displayName: 'release-gate.md', kind: 'TEXT', contentType: 'text/markdown', declaredBytes: text.length
+  }];
+
+  await assert.rejects(
+    () => disabled.createLearningBatch(
+      context.student.id, context.attemptId, 'disabled-create-key', { files }
+    ),
+    unavailable
+  );
+
+  const created = await context.service.createLearningBatch(
+    context.student.id, context.attemptId, 'enabled-create-key', { files }
+  );
+  const batchId = created.batch.id;
+  const assetId = created.batch.assets[0].id;
+  await assert.rejects(
+    () => disabled.uploadLearningBatchAsset(
+      context.student.id, context.attemptId, batchId, assetId,
+      'disabled-upload-key', Readable.from([text]), text.length
+    ),
+    unavailable
+  );
+  assert.deepEqual(await readdir(join(context.root, 'objects')), []);
+
+  await context.service.uploadLearningBatchAsset(
+    context.student.id, context.attemptId, batchId, assetId,
+    'enabled-upload-key', Readable.from([text]), text.length
+  );
+  await assert.rejects(
+    () => disabled.submitLearningBatch(
+      context.student.id, context.attemptId, batchId, 'disabled-submit-key'
+    ),
+    unavailable
+  );
+  assert.equal((await disabled.getLearningBatch(
+    context.student.id, context.attemptId, batchId
+  )).batch.status, 'DRAFT');
+
+  await context.service.submitLearningBatch(
+    context.student.id, context.attemptId, batchId, 'enabled-submit-key'
+  );
+  const prepared = await disabled.prepareLearningBatchDecomposition(
+    context.student.id, context.attemptId, batchId
+  );
+  const recorded = await disabled.recordLearningBatchDecomposition(
+    context.student.id,
+    context.attemptId,
+    batchId,
+    {
+      masterPlanHash: prepared.plan.masterPlanHash,
+      outputs: gatewayOutputs(prepared.plan),
+      runMetadata: gatewayRunMetadataForPlan(prepared.plan),
+      workerFence: await claimBatchExtraction(context)
+    }
+  );
+  assert.equal(recorded.batch.status, 'NEEDS_CONFIRMATION');
+  const items = recorded.batch.mapping.items;
+  const confirmation = {
+    mappingRevision: recorded.batch.mapping.revision,
+    responses: items.filter((item) => !item.unmapped).map((item) => ({
+      questionNumber: item.proposedQuestionNumber,
+      selectedOption: item.selectedOption,
+      reasoningText: item.evidenceText,
+      sourceItemIds: [item.id]
+    })),
+    discardedItemIds: items.filter((item) => item.unmapped).map((item) => item.id)
+  };
+  await assert.rejects(
+    () => disabled.confirmLearningBatch(
+      context.student.id, context.attemptId, batchId, 'disabled-confirm-key', confirmation
+    ),
+    unavailable
+  );
+  assert.equal((await disabled.listLearningBatches(
+    context.student.id, context.attemptId
+  )).batches[0].status, 'NEEDS_CONFIRMATION');
+
+  const deleted = await disabled.deleteLearningBatch(
+    context.student.id, context.attemptId, batchId, 'disabled-delete-key'
+  );
+  assert.ok(deleted.batch.deletedAt);
+  assert.deepEqual(await readdir(join(context.root, 'objects')), []);
+});
 
 test('distributed student budgets atomically bound concurrent units and reset at the next window', async () => {
   const store = new MemoryStore();

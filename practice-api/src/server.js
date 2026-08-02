@@ -24,6 +24,7 @@ const service = new PracticeService({
   batchStudentQuotaBytes: config.batchStudentQuotaBytes,
   batchGlobalQuotaBytes: config.batchGlobalQuotaBytes,
   batchActiveLimit: config.batchActiveLimit,
+  batchIntakeEnabled: config.batchIntakeEnabled,
   batchRequestLimitPerMinute: config.studentRequestsPerMinute,
   batchUploadByteBudget: config.batchUploadBytesPerHour,
   batchProviderWorkBudget: config.batchProviderWorkPerDay,

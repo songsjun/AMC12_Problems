@@ -10,6 +10,10 @@ test('loopback proxy is the safe default for the loopback-only listener and can 
   assert.equal(loadConfig(base).reasoningWritesPerMinute, 30);
   assert.equal(loadConfig(base).tutorEnabled, false);
   assert.equal(loadConfig({ ...base, AMC12_TUTOR_ENABLED: 'true' }).tutorEnabled, true);
+  assert.equal(loadConfig(base).batchIntakeEnabled, false);
+  assert.equal(loadConfig({ ...base, AMC12_BATCH_INTAKE_ENABLED: 'true' }).batchIntakeEnabled, true);
+  assert.equal(loadConfig({ ...base, AMC12_BATCH_INTAKE_ENABLED: 'TRUE' }).batchIntakeEnabled, false);
+  assert.equal(loadConfig({ ...base, AMC12_BATCH_INTAKE_ENABLED: '1' }).batchIntakeEnabled, false);
   assert.equal(loadConfig(base).studentRequestsPerMinute, 120);
   assert.equal(loadConfig(base).batchUploadBytesPerHour, 250 * 1024 * 1024);
   assert.equal(loadConfig(base).batchProviderWorkPerDay, 30);
@@ -41,6 +45,13 @@ test('test-only import and publish flags are independent and production disables
   });
   assert.equal(production.allowTestOnlyImport, false);
   assert.equal(production.allowTestOnlyPublish, false);
+  assert.equal(production.batchIntakeEnabled, false);
+  assert.equal(loadConfig({
+    ...base,
+    NODE_ENV: 'production',
+    AMC12_PRIVATE_UPLOAD_ROOT: '/var/lib/amc12-private',
+    AMC12_BATCH_INTAKE_ENABLED: 'true'
+  }).batchIntakeEnabled, true);
   assert.equal(loadConfig(base).allowGenericManifestImport, false);
   assert.equal(loadConfig({ ...base, AMC12_ALLOW_GENERIC_MANIFEST_IMPORT: 'true' }).allowGenericManifestImport, true);
   assert.equal(loadConfig({

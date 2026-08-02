@@ -49,6 +49,7 @@ async function openReviewFixture(t, { privateStorage = false } = {}) {
     authPepper: 'test-pepper-that-is-long-enough-for-a-safe-local-test-suite',
     sessionTtlMs: 12 * 60 * 60 * 1000,
     allowTestOnlyImport: true, allowTestOnlyPublish: true,
+    batchIntakeEnabled: true,
     clock: () => new Date(NOW)
   });
   const form = learningReviewForm();

@@ -58,6 +58,7 @@ export async function makeService({
   manifest = fixtureManifest,
   allowTestOnlyImport = false,
   allowTestOnlyPublish = false,
+  batchIntakeEnabled = false,
   // Generic test fixtures are deliberately opt-in at the service boundary;
   // this helper makes that intent explicit for non-production unit tests.
   allowGenericManifestImport = true
@@ -70,6 +71,7 @@ export async function makeService({
     allowTestOnlyImport,
     allowTestOnlyPublish,
     allowGenericManifestImport,
+    batchIntakeEnabled,
     clock: clock.now
   });
   await service.importManifest(manifest, { publish: true });

@@ -355,6 +355,7 @@ export class PracticeService {
     batchStudentQuotaBytes,
     batchGlobalQuotaBytes,
     batchActiveLimit,
+    batchIntakeEnabled = false,
     batchRequestLimitPerMinute = 120,
     batchUploadByteBudget,
     batchProviderWorkBudget,
@@ -370,11 +371,13 @@ export class PracticeService {
     this.allowTestOnlyPublish = allowTestOnlyImport && allowTestOnlyPublish;
     this.allowGenericManifestImport = allowGenericManifestImport;
     this.clock = clock;
+    this.batchIntakeEnabled = batchIntakeEnabled === true;
     this.batchRequestLimitPerMinute = batchRequestLimitPerMinute;
     this.batchPractice = new BatchPracticeService({
       store,
       privateUploadStore,
       clock,
+      intakeEnabled: this.batchIntakeEnabled,
       ...(batchStudentQuotaBytes === undefined ? {} : { studentQuotaBytes: batchStudentQuotaBytes }),
       ...(batchGlobalQuotaBytes === undefined ? {} : { globalQuotaBytes: batchGlobalQuotaBytes }),
       ...(batchActiveLimit === undefined ? {} : { activeBatchLimit: batchActiveLimit }),
@@ -590,7 +593,10 @@ export class PracticeService {
 
   async listForms({ includeUnpublished = false } = {}) {
     const forms = await this.store.listForms({ includeUnpublished });
-    return forms.map(publicFormSummary);
+    return forms.map((form) => ({
+      ...publicFormSummary(form),
+      batchIntakeAvailable: this.batchIntakeEnabled
+    }));
   }
 
   async getPublicForm(formId) {

@@ -127,6 +127,7 @@ export class BatchPracticeService {
     store,
     privateUploadStore = null,
     clock = () => new Date(),
+    intakeEnabled = false,
     studentQuotaBytes = 250 * 1024 * 1024,
     globalQuotaBytes = 2 * 1024 * 1024 * 1024,
     activeBatchLimit = 3,
@@ -149,6 +150,7 @@ export class BatchPracticeService {
     this.store = store;
     this.privateUploadStore = privateUploadStore;
     this.clock = clock;
+    this.intakeEnabled = intakeEnabled === true;
     this.studentQuotaBytes = studentQuotaBytes;
     this.globalQuotaBytes = globalQuotaBytes;
     this.activeBatchLimit = activeBatchLimit;
@@ -164,7 +166,18 @@ export class BatchPracticeService {
     return value instanceof Date ? value : new Date(value);
   }
 
+  assertIntakeEnabled() {
+    if (!this.intakeEnabled) {
+      throw new ApiError(
+        503,
+        'BATCH_INTAKE_UNAVAILABLE',
+        'Batch intake is temporarily unavailable.'
+      );
+    }
+  }
+
   async create(studentId, attemptId, idempotencyKey, input) {
+    this.assertIntakeEnabled();
     requireUuid(attemptId, 'attemptId');
     const key = requireIdempotencyKey(idempotencyKey);
     exactBody(input, ['files']);
@@ -249,6 +262,7 @@ export class BatchPracticeService {
   }
 
   async upload(studentId, attemptId, batchId, assetId, idempotencyKey, stream, contentLength) {
+    this.assertIntakeEnabled();
     requireUuid(attemptId, 'attemptId');
     requireUuid(batchId, 'batchId');
     requireUuid(assetId, 'assetId');
@@ -348,6 +362,7 @@ export class BatchPracticeService {
   }
 
   async submit(studentId, attemptId, batchId, idempotencyKey) {
+    this.assertIntakeEnabled();
     requireUuid(attemptId, 'attemptId');
     requireUuid(batchId, 'batchId');
     const key = requireIdempotencyKey(idempotencyKey);
@@ -525,6 +540,7 @@ export class BatchPracticeService {
   }
 
   async confirm(studentId, attemptId, batchId, idempotencyKey, input) {
+    this.assertIntakeEnabled();
     requireUuid(attemptId, 'attemptId');
     requireUuid(batchId, 'batchId');
     const key = requireIdempotencyKey(idempotencyKey);

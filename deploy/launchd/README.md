@@ -87,6 +87,7 @@ AMC12_AUTH_PEPPER=<distinct, at least 32 random characters>
 AMC12_DATABASE_URL=postgres://<dedicated-api-user>:<password>@127.0.0.1:5432/<database>
 AMC12_PRIVATE_UPLOAD_ROOT=/var/lib/kapy/amc12-private-uploads
 AMC12_SECURE_COOKIES=true
+AMC12_BATCH_INTAKE_ENABLED=false
 AMC12_TUTOR_ENABLED=true
 ```
 
@@ -119,6 +120,26 @@ false; then enable the API flag only after the worker can claim a synthetic
 Tutor job. The worker's model value does not let the browser or job choose a
 model: it binds completion metadata to the operator-pinned Gateway model and
 fails closed if the two deployments drift.
+
+Batch intake has a separate coordinated API release gate. It is disabled in
+development and production unless the API environment contains the literal
+`AMC12_BATCH_INTAKE_ENABLED=true`; values such as `1`, `yes`, or `on` remain
+disabled. The same value is projected as the non-sensitive
+`batchIntakeAvailable` field by `GET /api/amc12/forms` so the UI can disable
+new intake, but the API gate remains authoritative. When disabled, student
+batch create, upload, submit, and confirm fail with HTTP 503
+`BATCH_INTAKE_UNAVAILABLE` before reserving quota, persisting a private upload,
+enqueueing Provider work, or committing a learning version. GET/list and
+deletion remain available, and worker decomposition, cleanup, lease recovery,
+and existing backlog processing do not consult this API flag.
+
+Do not turn this flag into a runtime dependency probe. Deploy the dedicated AMC
+Gateway and learning worker, import the approved question/solution context,
+run an authenticated synthetic batch canary, verify queue progress and cleanup,
+and only then set the API flag to literal `true` and restart the API. For a
+rollback, set it back to `false` to stop new student mutations while workers
+drain or recover already durable work. Never enable it while the production
+Worker or dedicated Gateway is absent.
 
 These four retention settings are a deployment gate, not tunable guesses. The
 worker fails closed without an explicit verified profile. `NO_TTL_OR_BAA`

@@ -8,6 +8,10 @@ function bool(value, fallback) {
   return ['1', 'true', 'yes', 'on'].includes(String(value).toLowerCase());
 }
 
+function explicitReleaseEnabled(value) {
+  return value === 'true';
+}
+
 function positiveInteger(value, fallback, name) {
   if (value === undefined || value === '') return fallback;
   const parsed = Number.parseInt(value, 10);
@@ -73,6 +77,10 @@ export function loadConfig(env = process.env) {
       env.AMC12_BATCH_GLOBAL_QUOTA_BYTES, 10 * 1024 * 1024 * 1024, 'AMC12_BATCH_GLOBAL_QUOTA_BYTES'
     ),
     batchActiveLimit: positiveInteger(env.AMC12_BATCH_ACTIVE_LIMIT, 3, 'AMC12_BATCH_ACTIVE_LIMIT'),
+    // Batch intake creates durable private uploads and asynchronous Provider
+    // work. Keep it fail-closed in every environment until the supervised
+    // Worker and dedicated Gateway have passed their coordinated canary.
+    batchIntakeEnabled: explicitReleaseEnabled(env.AMC12_BATCH_INTAKE_ENABLED),
     batchUploadBytesPerHour: positiveInteger(
       env.AMC12_BATCH_UPLOAD_BYTES_PER_HOUR, 250 * 1024 * 1024,
       'AMC12_BATCH_UPLOAD_BYTES_PER_HOUR'

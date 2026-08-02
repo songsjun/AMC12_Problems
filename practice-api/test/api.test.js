@@ -39,6 +39,7 @@ test('Fastify API authenticates, enforces CSRF, redacts keys, and exposes result
   response = await app.inject(requestWithSession(session, { method: 'GET', url: '/api/amc12/forms' }));
   assert.equal(response.statusCode, 200);
   assert.equal(response.json().forms[0].id, fixtureManifest.id);
+  assert.equal(response.json().forms[0].batchIntakeAvailable, false);
   response = await app.inject(requestWithSession(session, { method: 'GET', url: `/api/amc12/forms/${fixtureManifest.id}` }));
   assert.equal(response.statusCode, 200);
   assert.equal(response.body.includes('correctOption'), false);
@@ -100,6 +101,57 @@ test('Fastify API authenticates, enforces CSRF, redacts keys, and exposes result
   response = await app.inject(requestWithSession(session, { method: 'GET', url: `/api/amc12/attempts/${attemptId}/solutions` }));
   assert.equal(response.statusCode, 200);
   assert.equal(response.json().form.questions[0].solutionMarkdown, 'Fixture solution one');
+});
+
+test('forms capability and batch HTTP mutations follow the default-off intake release gate', async (t) => {
+  const disabledContext = await makeApp();
+  t.after(() => disabledContext.app.close());
+  const session = await login(disabledContext.app);
+  const csrfHeaders = { 'x-csrf-token': session.csrf };
+  let response = await disabledContext.app.inject(requestWithSession(session, {
+    method: 'POST', url: '/api/amc12/attempts', headers: csrfHeaders,
+    payload: { formId: fixtureManifest.id }
+  }));
+  const attempt = response.json().attempt;
+  response = await disabledContext.app.inject(requestWithSession(session, {
+    method: 'POST', url: `/api/amc12/attempts/${attempt.id}/final`,
+    headers: { ...csrfHeaders, 'idempotency-key': 'batch-gate-final-key' },
+    payload: {
+      expectedAnswersRevision: attempt.answersRevision,
+      expectedStateRevision: attempt.stateRevision
+    }
+  }));
+  assert.equal(response.statusCode, 200);
+  response = await disabledContext.app.inject(requestWithSession(session, {
+    method: 'POST', url: `/api/amc12/attempts/${attempt.id}/learning-batches`,
+    headers: { ...csrfHeaders, 'idempotency-key': 'batch-gate-create-key' },
+    payload: {
+      files: [{
+        displayName: 'gate.md', kind: 'TEXT', contentType: 'text/markdown', declaredBytes: 10
+      }]
+    }
+  }));
+  assert.equal(response.statusCode, 503);
+  assert.deepEqual(response.json(), {
+    error: {
+      code: 'BATCH_INTAKE_UNAVAILABLE',
+      message: 'Batch intake is temporarily unavailable.'
+    }
+  });
+  response = await disabledContext.app.inject(requestWithSession(session, {
+    method: 'GET', url: `/api/amc12/attempts/${attempt.id}/learning-batches`
+  }));
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(response.json().batches, []);
+
+  const enabledContext = await makeApp({ batchIntakeEnabled: true });
+  t.after(() => enabledContext.app.close());
+  const enabledSession = await login(enabledContext.app);
+  response = await enabledContext.app.inject(requestWithSession(enabledSession, {
+    method: 'GET', url: '/api/amc12/forms'
+  }));
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.json().forms[0].batchIntakeAvailable, true);
 });
 
 test('API idempotency, reset history, and CSRF rejection survive the full HTTP flow', async (t) => {

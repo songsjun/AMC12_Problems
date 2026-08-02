@@ -642,14 +642,16 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     authPepper: 'postgres-test-pepper-that-is-long-enough-for-safe-hmac-tests',
     sessionTtlMs: 60 * 60 * 1000,
     allowTestOnlyImport: true,
-    allowTestOnlyPublish: true
+    allowTestOnlyPublish: true,
+    batchIntakeEnabled: true
   });
   const secondService = new PracticeService({
     store: secondStore, privateUploadStore,
     authPepper: 'postgres-test-pepper-that-is-long-enough-for-safe-hmac-tests',
     sessionTtlMs: 60 * 60 * 1000,
     allowTestOnlyImport: true,
-    allowTestOnlyPublish: true
+    allowTestOnlyPublish: true,
+    batchIntakeEnabled: true
   });
   // The source fixture has a stable revision; importing it repeatedly is safe
   // because the canonical source manifest hash is immutable.
@@ -726,7 +728,8 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     questionCount: 25,
     practiceKind: 'standard',
     archiveNotice: null,
-    scoredQuestionCount: 25
+    scoredQuestionCount: 25,
+    batchIntakeAvailable: true
   });
 
   const student = await service.seedAccessCode({
