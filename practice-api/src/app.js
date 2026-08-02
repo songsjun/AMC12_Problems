@@ -39,6 +39,17 @@ function bodyObject(body) {
   return body;
 }
 
+function assertBodyKeys(body, allowed) {
+  const unknown = Object.keys(body).filter((key) => !allowed.has(key));
+  if (unknown.length) throw badRequest('VALIDATION_ERROR', 'Request body contains unsupported fields.');
+}
+
+function emptyBody(body) {
+  const parsed = body === undefined ? {} : bodyObject(body);
+  assertBodyKeys(parsed, new Set());
+  return parsed;
+}
+
 /** Build an injectable API app; server.js is intentionally the only network entrypoint. */
 export async function buildApp({ service, config, logger = false }) {
   const app = Fastify({
@@ -257,6 +268,76 @@ export async function buildApp({ service, config, logger = false }) {
       auth.student.id, request.params.submissionId, request.params.versionNumber
     );
   });
+
+  if (config.tutorEnabled) {
+    const tutorCollection = `${base}/learning-history/:submissionId/versions/:versionNumber/questions/:questionNumber/tutor-threads`;
+    app.get(tutorCollection, async (request) => {
+      const auth = await requireAuth(request);
+      return service.listTutorThreads(
+        auth.student.id, auth.session.id, request.params.submissionId,
+        request.params.versionNumber, request.params.questionNumber, request.query || {}
+      );
+    });
+    app.post(tutorCollection, async (request, reply) => {
+      const auth = await requireCsrf(request);
+      emptyBody(request.body);
+      const result = await service.createTutorRootThread(
+        auth.student.id, auth.session.id, request.params.submissionId,
+        request.params.versionNumber, request.params.questionNumber, idempotencyKey(request)
+      );
+      return reply.status(result.replayed ? 200 : 201).send(result);
+    });
+
+    const tutorThread = `${tutorCollection}/:threadId`;
+    app.get(tutorThread, async (request) => {
+      const auth = await requireAuth(request);
+      return service.getTutorThread(
+        auth.student.id, auth.session.id, request.params.submissionId,
+        request.params.versionNumber, request.params.questionNumber, request.params.threadId
+      );
+    });
+    app.delete(tutorThread, async (request, reply) => {
+      const auth = await requireCsrf(request);
+      emptyBody(request.body);
+      await service.tombstoneTutorThread(
+        auth.student.id, auth.session.id, request.params.submissionId,
+        request.params.versionNumber, request.params.questionNumber, request.params.threadId,
+        idempotencyKey(request)
+      );
+      return reply.status(204).send();
+    });
+    app.post(`${tutorThread}/messages`, async (request, reply) => {
+      const auth = await requireCsrf(request);
+      const body = bodyObject(request.body);
+      assertBodyKeys(body, new Set(['message']));
+      const result = await service.sendTutorMessage(
+        auth.student.id, auth.session.id, request.params.submissionId,
+        request.params.versionNumber, request.params.questionNumber, request.params.threadId,
+        idempotencyKey(request), body.message
+      );
+      return reply.status(result.acceptedRequest.replayed ? 200 : 202).send(result);
+    });
+    app.post(`${tutorThread}/forks`, async (request, reply) => {
+      const auth = await requireCsrf(request);
+      emptyBody(request.body);
+      const result = await service.forkTutorThread(
+        auth.student.id, auth.session.id, request.params.submissionId,
+        request.params.versionNumber, request.params.questionNumber, request.params.threadId,
+        idempotencyKey(request)
+      );
+      return reply.status(result.replayed ? 200 : 201).send(result);
+    });
+    app.post(`${tutorThread}/requests/:requestOrdinal/retries`, async (request, reply) => {
+      const auth = await requireCsrf(request);
+      emptyBody(request.body);
+      const result = await service.retryTutorRequest(
+        auth.student.id, auth.session.id, request.params.submissionId,
+        request.params.versionNumber, request.params.questionNumber, request.params.threadId,
+        request.params.requestOrdinal, idempotencyKey(request)
+      );
+      return reply.status(result.acceptedRequest.replayed ? 200 : 202).send(result);
+    });
+  }
 
   app.post(`${base}/attempts`, async (request, reply) => {
     const auth = await requireCsrf(request);

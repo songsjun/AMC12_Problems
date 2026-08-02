@@ -56,6 +56,9 @@ export function loadConfig(env = process.env) {
     reasoningWritesPerMinute: positiveInteger(
       env.AMC12_REASONING_WRITES_PER_MINUTE, 30, 'AMC12_REASONING_WRITES_PER_MINUTE'
     ),
+    // Keep the HTTP surface dark until the API and provider worker for the
+    // same release have both passed their crash-window gates.
+    tutorEnabled: bool(env.AMC12_TUTOR_ENABLED, false),
     studentRequestsPerMinute: positiveInteger(
       env.AMC12_STUDENT_REQUESTS_PER_MINUTE, 120, 'AMC12_STUDENT_REQUESTS_PER_MINUTE'
     ),

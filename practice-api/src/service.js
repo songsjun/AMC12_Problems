@@ -26,6 +26,7 @@ import { analysisInputHash } from './learning-review/canonical.js';
 import { ANALYSIS_CONTRACT_VERSION } from './infrastructure/amc-inference-contract.js';
 import { publicLearningReport } from './learning-review/report.js';
 import { BatchPracticeService } from './batch-ingest/service.js';
+import { QuestionTutorApplicationService } from './question-tutor/application-service.js';
 import {
   ATTEMPT_MODE,
   OPEN_REVIEW_STATUS,
@@ -384,6 +385,16 @@ export class PracticeService {
         ? {} : { globalProviderWorkBudget: batchGlobalProviderWorkBudget }),
       ...(batchGlobalProviderAudioByteBudget === undefined
         ? {} : { globalProviderAudioByteBudget: batchGlobalProviderAudioByteBudget })
+    });
+    this.questionTutor = new QuestionTutorApplicationService({
+      store,
+      clock,
+      providerBudget: {
+        ...(batchProviderWorkBudget === undefined
+          ? {} : { studentLimit: batchProviderWorkBudget }),
+        ...(batchGlobalProviderWorkBudget === undefined
+          ? {} : { globalLimit: batchGlobalProviderWorkBudget })
+      }
     });
   }
 
@@ -819,6 +830,62 @@ export class PracticeService {
       analyses: versionRecord.analyses,
       report: versionRecord.report,
       workItem: versionRecord.workItems.find((item) => item.workType === 'ANALYZE_SUBMISSION') || null
+    });
+  }
+
+  async createTutorRootThread(studentId, authorizedSessionId, submissionId,
+    versionNumber, questionNumber, idempotencyKey) {
+    return this.questionTutor.createRootThread({
+      studentId, authorizedSessionId, learningSubmissionId: submissionId,
+      versionNumber, questionNumber, idempotencyKey
+    });
+  }
+
+  async listTutorThreads(studentId, authorizedSessionId, submissionId,
+    versionNumber, questionNumber, query) {
+    return this.questionTutor.listThreads({
+      studentId, authorizedSessionId, learningSubmissionId: submissionId,
+      versionNumber, questionNumber, query
+    });
+  }
+
+  async getTutorThread(studentId, authorizedSessionId, submissionId,
+    versionNumber, questionNumber, threadId) {
+    return this.questionTutor.getThread({
+      studentId, authorizedSessionId, learningSubmissionId: submissionId,
+      versionNumber, questionNumber, threadId
+    });
+  }
+
+  async sendTutorMessage(studentId, authorizedSessionId, submissionId,
+    versionNumber, questionNumber, threadId, idempotencyKey, message) {
+    return this.questionTutor.sendMessage({
+      studentId, authorizedSessionId, learningSubmissionId: submissionId,
+      versionNumber, questionNumber, threadId, idempotencyKey, message
+    });
+  }
+
+  async forkTutorThread(studentId, authorizedSessionId, submissionId,
+    versionNumber, questionNumber, threadId, idempotencyKey) {
+    return this.questionTutor.forkThread({
+      studentId, authorizedSessionId, learningSubmissionId: submissionId,
+      versionNumber, questionNumber, threadId, idempotencyKey
+    });
+  }
+
+  async retryTutorRequest(studentId, authorizedSessionId, submissionId,
+    versionNumber, questionNumber, threadId, requestOrdinal, idempotencyKey) {
+    return this.questionTutor.retryRequest({
+      studentId, authorizedSessionId, learningSubmissionId: submissionId,
+      versionNumber, questionNumber, threadId, requestOrdinal, idempotencyKey
+    });
+  }
+
+  async tombstoneTutorThread(studentId, authorizedSessionId, submissionId,
+    versionNumber, questionNumber, threadId, idempotencyKey) {
+    return this.questionTutor.tombstoneThread({
+      studentId, authorizedSessionId, learningSubmissionId: submissionId,
+      versionNumber, questionNumber, threadId, idempotencyKey
     });
   }
 

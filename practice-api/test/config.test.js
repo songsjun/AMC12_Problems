@@ -8,6 +8,8 @@ test('loopback proxy is the safe default for the loopback-only listener and can 
   assert.equal(loadConfig({ ...base, AMC12_TRUST_PROXY: 'false' }).trustedProxy, false);
   assert.equal(loadConfig({ ...base, AMC12_TRUST_PROXY: '10.0.0.0/8' }).trustedProxy, '10.0.0.0/8');
   assert.equal(loadConfig(base).reasoningWritesPerMinute, 30);
+  assert.equal(loadConfig(base).tutorEnabled, false);
+  assert.equal(loadConfig({ ...base, AMC12_TUTOR_ENABLED: 'true' }).tutorEnabled, true);
   assert.equal(loadConfig(base).studentRequestsPerMinute, 120);
   assert.equal(loadConfig(base).batchUploadBytesPerHour, 250 * 1024 * 1024);
   assert.equal(loadConfig(base).batchProviderWorkPerDay, 30);

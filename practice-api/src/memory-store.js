@@ -9,14 +9,25 @@ import { ATTEMPT_MODE, OPEN_REVIEW_STATUS, openReviewReleaseHash } from './open-
 import {
   TUTOR_MAX_ACTIVE_JOBS_PER_STUDENT,
   TutorStoreError,
+  assertTutorLiveThreadCapacity,
   assertTutorEnqueueCapacity,
   buildAndValidateTutorRequest,
+  buildTutorForkThreadRecord,
+  buildTutorRootThreadRecord,
+  buildTutorSnapshotRecord,
   nextTutorThreadStatus,
+  normalizeTutorProviderBudget,
   projectTutorThreadBundle,
+  projectTutorThreadSummary,
   tutorDispatchMetadata,
+  tutorForkCreationRequestHash,
   tutorMessageHash,
+  tutorProviderBudgetError,
   tutorRequestHash,
+  tutorRootThreadCreationRequestHash,
   tutorSnapshotSemanticHash,
+  tutorThreadTombstoneRequestHash,
+  validateTutorSummaryPage,
   tutorThreadCreationRequestHash,
   validateTutorClaimOptions,
   validateTutorGatewaySuccess,
@@ -79,28 +90,29 @@ function memoryTutorSource(store, snapshot) {
   const context = store.approvedContextSets.get(snapshot.contextSetId);
   const question = context?.questions
     .find((candidate) => candidate.questionNumber === snapshot.questionNumber);
-  return { submission, version, run, analysis, report, response, context, question };
+  const form = version && store.forms.get(formKey(version.formId, version.formVersion));
+  const batch = version?.batchId ? store.learningBatches.get(version.batchId) : null;
+  return { submission, version, run, analysis, report, response, context, question, form, batch };
 }
 
-function assertMemoryTutorSourceIsLive(store, snapshot) {
-  const source = memoryTutorSource(store, snapshot);
-  const { submission, version, run, analysis, report, response, context, question } = source;
-  const scoring = submission && version && response
-    ? analysisScoringSnapshot(store, submission, version, response) : null;
-  const batchResult = version?.batchId ? store.learningBatchResults.get(version.batchId) : null;
-  const scoringAuthorityMatches = snapshot.scoringOrigin === 'OFFICIAL_FINAL'
-    ? snapshot.officialSubmissionId === submission?.officialSubmissionId
-      && snapshot.batchResultId === null && !version?.batchId
-    : snapshot.scoringOrigin === 'BATCH_CONFIRMED'
-      ? snapshot.officialSubmissionId === null
-      && batchResult?.id === snapshot.batchResultId
-      && batchResult?.learningSubmissionVersionId === version?.id
-      : false;
-  const payloadQuestion = snapshot.snapshotPayload?.question;
-  const choices = question && (Array.isArray(question.choices)
-    ? Object.fromEntries(question.choices.map((choice) => [choice.option, choice.textMarkdown]))
-    : question.choices);
-  const expectedSolutions = (question?.solutions || [])
+function memoryTutorCommittedBatchAuthorityMatches({ submission, version, batch, batchResult }) {
+  return Boolean(version?.batchId
+    && batch?.id === version.batchId
+    && batch.studentId === submission?.studentId
+    && batch.learningSubmissionId === submission?.id
+    && batch.attemptId === submission?.attemptId
+    && batch.formId === submission?.formId
+    && batch.formVersion === submission?.formVersion
+    && batch.sourceType === submission?.sourceType
+    && batch.status === 'COMMITTED'
+    && batch.committedVersionId === version.id
+    && batch.committedVersionNumber === version.versionNumber
+    && batchResult?.batchId === version.batchId
+    && batchResult.learningSubmissionVersionId === version.id);
+}
+
+function memoryTutorEligibleSolutions(question) {
+  return (question?.solutions || [])
     .filter((solution) => solution.modelEligibility?.eligible === true
       && solution.authorityReceipt?.status === 'active')
     .map((solution) => ({
@@ -114,28 +126,56 @@ function assertMemoryTutorSourceIsLive(store, snapshot) {
       authorityReceiptStatus: solution.authorityReceipt.status,
       methodTags: clone(solution.methodTags), qualityFlags: clone(solution.qualityFlags)
     }));
+}
+
+function memoryTutorContextReleaseHash(store, submission, context) {
+  const release = submission?.sourceType === 'OPEN_REVIEW'
+    ? store.openReviewReleases.get(submission.openReviewReleaseId) : null;
+  if (!submission || !context?.releaseBinding) return null;
+  return computeTutorContextReleaseHash({
+    sourceType: submission.sourceType,
+    formId: submission.formId,
+    formVersion: submission.formVersion,
+    manifestHash: context.releaseBinding.manifestHash,
+    contentHash: context.releaseBinding.contentHash,
+    questionBundleHash: context.releaseBinding.questionBundleHash,
+    contextSetId: context.id,
+    contextArtifactSha256: context.artifactSetHash,
+    approvalAuthorityId: context.approvalAuthorityId,
+    approvalReceiptSetHash: context.approvalReceiptSetHash,
+    openReviewReleaseHash: release?.releaseHash || null
+  });
+}
+
+function assertMemoryTutorSourceIsLive(store, snapshot) {
+  const source = memoryTutorSource(store, snapshot);
+  const {
+    submission, version, run, analysis, report, response, context, question, form, batch
+  } = source;
+  const scoring = submission && version && response
+    ? analysisScoringSnapshot(store, submission, version, response) : null;
+  const batchResult = version?.batchId ? store.learningBatchResults.get(version.batchId) : null;
+  const batchAuthorityMatches = memoryTutorCommittedBatchAuthorityMatches({
+    submission, version, batch, batchResult
+  });
+  const scoringAuthorityMatches = snapshot.scoringOrigin === 'OFFICIAL_FINAL'
+    ? snapshot.officialSubmissionId === submission?.officialSubmissionId
+      && snapshot.batchResultId === null && !version?.batchId
+    : snapshot.scoringOrigin === 'BATCH_CONFIRMED'
+      ? snapshot.officialSubmissionId === null
+      && batchResult?.id === snapshot.batchResultId
+      && batchResult?.learningSubmissionVersionId === version?.id
+      : false;
+  const payloadQuestion = snapshot.snapshotPayload?.question;
+  const choices = question && (Array.isArray(question.choices)
+    ? Object.fromEntries(question.choices.map((choice) => [choice.option, choice.textMarkdown]))
+    : question.choices);
+  const expectedSolutions = memoryTutorEligibleSolutions(question);
   const responseHash = response && canonicalHash({
     questionNumber: response.questionNumber, selectedOption: response.selectedOption,
     reasoningText: response.reasoningText, answerOrigin: response.answerOrigin
   });
-  const release = submission?.sourceType === 'OPEN_REVIEW'
-    ? store.openReviewReleases.get(submission.openReviewReleaseId) : null;
-  let authoritativeReleaseHash = null;
-  if (submission && context?.releaseBinding) {
-    authoritativeReleaseHash = computeTutorContextReleaseHash({
-      sourceType: submission.sourceType,
-      formId: submission.formId,
-      formVersion: submission.formVersion,
-      manifestHash: context.releaseBinding.manifestHash,
-      contentHash: context.releaseBinding.contentHash,
-      questionBundleHash: context.releaseBinding.questionBundleHash,
-      contextSetId: context.id,
-      contextArtifactSha256: context.artifactSetHash,
-      approvalAuthorityId: context.approvalAuthorityId,
-      approvalReceiptSetHash: context.approvalReceiptSetHash,
-      openReviewReleaseHash: release?.releaseHash || null
-    });
-  }
+  const authoritativeReleaseHash = memoryTutorContextReleaseHash(store, submission, context);
   if (!submission || submission.studentId !== snapshot.studentId
       || snapshot.sourceType !== submission.sourceType
       || submission.lifecycleStatus !== 'COMMITTED'
@@ -150,16 +190,23 @@ function assertMemoryTutorSourceIsLive(store, snapshot) {
       || run.evidenceHash !== snapshot.evidenceHash
       || run.analysisContractVersion !== snapshot.analysisContractVersion
       || run.deletionGeneration !== snapshot.initialDeletionGeneration
-      || !analysis || analysis.questionInputHash !== snapshot.analysisQuestionInputHash
+      || !['COMPLETE', 'PARTIAL'].includes(run.status)
+      || !analysis || analysis.status !== 'SUCCEEDED'
+      || analysis.questionInputHash !== snapshot.analysisQuestionInputHash
       || analysis.questionContextHash !== snapshot.analysisQuestionContextHash
       || !report || report.analysisRunId !== run.id
       || report.learningSubmissionVersionId !== version.id || report.reportHash !== snapshot.reportHash
+      || !['COMPLETE', 'PARTIAL'].includes(report.status) || report.status !== run.status
       || !response || !context || context.artifactSetHash !== snapshot.contextArtifactSha256
       || context.formId !== snapshot.formId || context.formVersion !== snapshot.formVersion
+      || !form || form.manifestHash !== context.releaseBinding?.manifestHash
+      || form.contentHash !== context.releaseBinding?.contentHash
+      || form.questionBundleHash !== context.releaseBinding?.questionBundleHash
       || !question || question.questionContentHash !== snapshot.questionContentHash
       || responseHash !== snapshot.questionResponseHash
       || !scoring || canonicalHash(scoring) !== snapshot.scoringSnapshotHash
       || !scoringAuthorityMatches
+      || (snapshot.scoringOrigin === 'BATCH_CONFIRMED' && !batchAuthorityMatches)
       || payloadQuestion.promptMarkdown !== question.promptMarkdown
       || payloadQuestion.questionId !== `${snapshot.formId}:q:${snapshot.questionNumber}`
       || authoritativeReleaseHash !== snapshot.contextReleaseHash
@@ -176,6 +223,102 @@ function assertMemoryTutorSourceIsLive(store, snapshot) {
   return source;
 }
 
+function buildMemoryTutorRootSnapshot(store, input, createdAt) {
+  const submission = [...store.learningSubmissions.values()].find((candidate) =>
+    candidate.id === input.learningSubmissionId && candidate.studentId === input.studentId);
+  const version = (store.learningVersions.get(input.learningSubmissionId) || [])
+    .find((candidate) => candidate.versionNumber === input.versionNumber);
+  const run = version && [...store.analysisRuns.values()]
+    .find((candidate) => candidate.learningSubmissionVersionId === version.id);
+  const analysis = run && (store.questionAnalyses.get(run.id) || [])
+    .find((candidate) => candidate.questionNumber === input.questionNumber);
+  const report = version && store.learningReports.get(version.id);
+  const response = version && (store.learningResponses.get(version.id) || [])
+    .find((candidate) => candidate.questionNumber === input.questionNumber
+      && ['OFFICIAL_FINAL', 'BATCH_CONFIRMED'].includes(candidate.answerOrigin));
+  const context = version && store.approvedContextSets.get(version.contextSetId);
+  const question = context?.questions
+    .find((candidate) => candidate.questionNumber === input.questionNumber);
+  const form = version && store.forms.get(formKey(version.formId, version.formVersion));
+  const scoring = submission && version && response
+    ? analysisScoringSnapshot(store, submission, version, response) : null;
+  const solutions = memoryTutorEligibleSolutions(question);
+  const batch = version?.batchId ? store.learningBatches.get(version.batchId) : null;
+  const batchResult = version?.batchId ? store.learningBatchResults.get(version.batchId) : null;
+  const batchAuthorityMatches = memoryTutorCommittedBatchAuthorityMatches({
+    submission, version, batch, batchResult
+  });
+  if (!submission || submission.lifecycleStatus !== 'COMMITTED'
+      || !validLearningEntitlement(store, submission)
+      || !version || version.learningSubmissionId !== submission.id
+      || version.formId !== submission.formId || version.formVersion !== submission.formVersion
+      || !run || !['COMPLETE', 'PARTIAL'].includes(run.status)
+      || run.learningSubmissionVersionId !== version.id
+      || run.contextSetId !== version.contextSetId || run.versionNumber !== version.versionNumber
+      || run.evidenceHash !== version.evidenceHash
+      || run.deletionGeneration !== submission.deletionGeneration
+      || !analysis || analysis.status !== 'SUCCEEDED'
+      || !analysis.questionInputHash || !analysis.questionContextHash
+      || !report || report.analysisRunId !== run.id
+      || report.learningSubmissionVersionId !== version.id
+      || !['COMPLETE', 'PARTIAL'].includes(report.status) || report.status !== run.status
+      || !response || !scoring || !isValidAnalysisScoringSnapshot(scoring, response.selectedOption)
+      || !context || context.formId !== version.formId || context.formVersion !== version.formVersion
+      || !form || form.manifestHash !== context.releaseBinding?.manifestHash
+      || form.contentHash !== context.releaseBinding?.contentHash
+      || form.questionBundleHash !== context.releaseBinding?.questionBundleHash
+      || !question || solutions.length < 2
+      || (response.answerOrigin === 'OFFICIAL_FINAL'
+        && (version.batchId || !submission.officialSubmissionId))
+      || (response.answerOrigin === 'BATCH_CONFIRMED' && !batchAuthorityMatches)) {
+    throw new TutorStoreError('TUTOR_ROOT_NOT_AVAILABLE');
+  }
+  const choices = ['A', 'B', 'C', 'D', 'E'].map((label) => ({
+    label,
+    textMarkdown: Array.isArray(question.choices)
+      ? question.choices.find((choice) => choice.option === label)?.textMarkdown
+      : question.choices[label]
+  }));
+  const snapshot = buildTutorSnapshotRecord({
+    id: input.snapshotId,
+    studentId: input.studentId,
+    learningSubmissionId: submission.id,
+    learningSubmissionVersionId: version.id,
+    versionNumber: version.versionNumber,
+    formId: version.formId,
+    formVersion: version.formVersion,
+    sourceType: submission.sourceType,
+    questionNumber: input.questionNumber,
+    contextSetId: version.contextSetId,
+    questionContentHash: question.questionContentHash,
+    analysisRunId: run.id,
+    analysisContractVersion: run.analysisContractVersion,
+    analysisQuestionInputHash: analysis.questionInputHash,
+    analysisQuestionContextHash: analysis.questionContextHash,
+    reportId: report.id,
+    reportHash: report.reportHash,
+    evidenceHash: version.evidenceHash,
+    response: {
+      selectedOption: response.selectedOption,
+      reasoningText: response.reasoningText,
+      answerOrigin: response.answerOrigin
+    },
+    scoring,
+    officialSubmissionId: response.answerOrigin === 'OFFICIAL_FINAL'
+      ? submission.officialSubmissionId : null,
+    batchResultId: response.answerOrigin === 'BATCH_CONFIRMED' ? batchResult.id : null,
+    initialDeletionGeneration: submission.deletionGeneration,
+    contextArtifactSha256: context.artifactSetHash,
+    contextReleaseHash: memoryTutorContextReleaseHash(store, submission, context),
+    promptMarkdown: question.promptMarkdown,
+    choices,
+    solutions,
+    createdAt
+  });
+  assertMemoryTutorSourceIsLive(store, snapshot);
+  return snapshot;
+}
+
 function memoryTutorThreadAggregate(store, threadId) {
   const thread = store.tutorThreads.get(threadId);
   const snapshot = thread && store.tutorSnapshots.get(thread.snapshotId);
@@ -185,6 +328,16 @@ function memoryTutorThreadAggregate(store, threadId) {
   const messages = [...store.tutorMessages.values()]
     .filter((message) => message.threadId === threadId);
   return { thread, snapshot, jobs, messages };
+}
+
+function memoryTutorAggregateMatchesPath(aggregate, {
+  studentId, learningSubmissionId, versionNumber, questionNumber
+}) {
+  return Boolean(aggregate.thread && aggregate.snapshot
+    && aggregate.thread.studentId === studentId
+    && aggregate.thread.learningSubmissionId === learningSubmissionId
+    && aggregate.thread.questionNumber === questionNumber
+    && aggregate.snapshot.versionNumber === versionNumber);
 }
 
 function tutorPriorTurns(jobs, messages, successfulTurnCount) {
@@ -312,6 +465,41 @@ function consumeMemoryGlobalBudget(store, { budgetKind, units, limit, windowMs, 
   existing.updatedAt = now;
   store.globalResourceBudgetWindows.set(key, existing);
   return { allowed: true, retryAfterSeconds: 0, usedUnits: existing.usedUnits };
+}
+
+function consumeMemoryTutorProviderBudget(store, { studentId, providerBudget, now }) {
+  const limits = normalizeTutorProviderBudget(providerBudget);
+  const studentCheckpoint = cloneMap(store.studentResourceBudgetWindows);
+  const globalCheckpoint = cloneMap(store.globalResourceBudgetWindows);
+  const student = consumeMemoryStudentBudget(store, {
+    studentId, budgetKind: limits.budgetKind, units: 1,
+    limit: limits.studentLimit, windowMs: limits.windowMs, now
+  });
+  const global = consumeMemoryGlobalBudget(store, {
+    budgetKind: limits.budgetKind, units: 1,
+    limit: limits.globalLimit, windowMs: limits.windowMs, now
+  });
+  if (student.allowed && global.allowed) return;
+  store.studentResourceBudgetWindows = studentCheckpoint;
+  store.globalResourceBudgetWindows = globalCheckpoint;
+  throw tutorProviderBudgetError({
+    studentAllowed: student.allowed,
+    studentRetryAfterSeconds: student.retryAfterSeconds,
+    globalRetryAfterSeconds: global.retryAfterSeconds
+  });
+}
+
+function assertMemoryTutorThreadCapacity(store, {
+  studentId, learningSubmissionVersionId, questionNumber
+}) {
+  const live = [...store.tutorThreads.values()].filter((thread) =>
+    thread.studentId === studentId && thread.status !== 'TOMBSTONED');
+  assertTutorLiveThreadCapacity({
+    studentQuestionCount: live.filter((thread) =>
+      thread.learningSubmissionVersionId === learningSubmissionVersionId
+        && thread.questionNumber === questionNumber).length,
+    studentCount: live.length
+  });
 }
 
 function transcriptionAggregate(store, workItemId) {
@@ -2678,6 +2866,97 @@ export class MemoryStore {
     });
   }
 
+  async createTutorRootThread({
+    studentId, authorizedSessionId, learningSubmissionId, versionNumber, questionNumber,
+    idempotencyKey: rawIdempotencyKey, snapshotId, threadId, now = new Date()
+  }) {
+    return this.#withGlobalLock(async () => {
+      const session = this.sessions.get(authorizedSessionId);
+      if (!session || session.studentId !== studentId || session.revokedAt
+          || new Date(session.expiresAt).getTime() <= new Date(now).getTime()) {
+        throw new TutorStoreError('TUTOR_ROOT_NOT_AVAILABLE');
+      }
+      const creationIdempotencyKeyHash = tutorSha256(rawIdempotencyKey);
+      const creationRequestHash = tutorRootThreadCreationRequestHash({
+        studentId, learningSubmissionId, versionNumber, questionNumber
+      });
+      const replay = [...this.tutorThreads.values()].find((candidate) =>
+        candidate.studentId === studentId
+          && candidate.creationIdempotencyKeyHash === creationIdempotencyKeyHash);
+      if (replay) {
+        if (replay.creationRequestHash !== creationRequestHash) {
+          throw new TutorStoreError('IDEMPOTENCY_KEY_REUSED');
+        }
+        const replaySnapshot = this.tutorSnapshots.get(replay.snapshotId);
+        if (!replaySnapshot || !['OPEN', 'CAPACITY_REACHED'].includes(replay.status)
+            || replaySnapshot.studentId !== studentId
+            || replaySnapshot.learningSubmissionId !== learningSubmissionId
+            || replaySnapshot.versionNumber !== versionNumber
+            || replaySnapshot.questionNumber !== questionNumber) {
+          throw new TutorStoreError('TUTOR_ROOT_NOT_AVAILABLE');
+        }
+        try {
+          validateTutorSnapshotRecord(replaySnapshot);
+          assertMemoryTutorSourceIsLive(this, replaySnapshot);
+        } catch (error) {
+          if (error instanceof TutorStoreError) {
+            throw new TutorStoreError('TUTOR_ROOT_NOT_AVAILABLE');
+          }
+          throw error;
+        }
+        return clone({ snapshot: replaySnapshot, thread: replay, replayed: true });
+      }
+
+      let derivedSnapshot;
+      try {
+        derivedSnapshot = buildMemoryTutorRootSnapshot(this, {
+          studentId, learningSubmissionId, versionNumber, questionNumber, snapshotId
+        }, now);
+      } catch (error) {
+        if (error instanceof TutorStoreError) {
+          throw new TutorStoreError('TUTOR_ROOT_NOT_AVAILABLE');
+        }
+        throw error;
+      }
+      const semanticSnapshot = [...this.tutorSnapshots.values()].find((candidate) =>
+        candidate.learningSubmissionVersionId === derivedSnapshot.learningSubmissionVersionId
+          && candidate.questionNumber === derivedSnapshot.questionNumber
+          && candidate.analysisRunId === derivedSnapshot.analysisRunId
+          && candidate.reportId === derivedSnapshot.reportId);
+      let snapshot = derivedSnapshot;
+      if (semanticSnapshot) {
+        if (tutorSnapshotSemanticHash(semanticSnapshot)
+            !== tutorSnapshotSemanticHash(derivedSnapshot)) {
+          throw new TutorStoreError('TUTOR_ROOT_NOT_AVAILABLE');
+        }
+        snapshot = semanticSnapshot;
+      } else if (this.tutorSnapshots.has(snapshotId)) {
+        throw new TutorStoreError('TUTOR_SNAPSHOT_ID_CONFLICT');
+      }
+      assertMemoryTutorThreadCapacity(this, {
+        studentId,
+        learningSubmissionVersionId: snapshot.learningSubmissionVersionId,
+        questionNumber: snapshot.questionNumber
+      });
+      if (this.tutorThreads.has(threadId)) {
+        throw new TutorStoreError('TUTOR_THREAD_ID_CONFLICT');
+      }
+      const thread = buildTutorRootThreadRecord({
+        id: threadId,
+        studentId,
+        snapshot,
+        creationIdempotencyKeyHash,
+        creationRequestHash,
+        createdAt: now
+      });
+      // All validation and collision checks happen before either map changes,
+      // making the pair one deterministic MemoryStore unit of work.
+      if (!semanticSnapshot) this.tutorSnapshots.set(snapshot.id, clone(snapshot));
+      this.tutorThreads.set(thread.id, clone(thread));
+      return clone({ snapshot, thread, replayed: false });
+    });
+  }
+
   async createTutorSnapshot(snapshot) {
     return this.#withGlobalLock(async () => {
       const validated = validateTutorSnapshotRecord(snapshot);
@@ -2767,6 +3046,79 @@ export class MemoryStore {
     });
   }
 
+  async createTutorForkFromHead({
+    studentId, authorizedSessionId, learningSubmissionId, versionNumber,
+    questionNumber, parentThreadId, idempotencyKey: rawIdempotencyKey,
+    threadId, now = new Date()
+  }) {
+    return this.#withGlobalLock(async () => {
+      const session = this.sessions.get(authorizedSessionId);
+      if (!session || session.studentId !== studentId || session.revokedAt
+          || new Date(session.expiresAt).getTime() <= new Date(now).getTime()) {
+        throw new TutorStoreError('TUTOR_SESSION_NOT_LIVE');
+      }
+      const creationIdempotencyKeyHash = tutorSha256(rawIdempotencyKey);
+      const creationRequestHash = tutorForkCreationRequestHash({
+        studentId, learningSubmissionId, versionNumber, questionNumber, parentThreadId
+      });
+      const replay = [...this.tutorThreads.values()].find((candidate) =>
+        candidate.studentId === studentId
+          && candidate.creationIdempotencyKeyHash === creationIdempotencyKeyHash);
+      if (replay) {
+        if (replay.creationRequestHash !== creationRequestHash) {
+          throw new TutorStoreError('IDEMPOTENCY_KEY_REUSED');
+        }
+        const replayAggregate = memoryTutorThreadAggregate(this, replay.id);
+        if (!memoryTutorAggregateMatchesPath(replayAggregate, {
+          studentId, learningSubmissionId, versionNumber, questionNumber
+        }) || !['OPEN', 'CAPACITY_REACHED'].includes(replay.status)
+            || replay.forkedFromThreadId !== parentThreadId) {
+          throw new TutorStoreError('TUTOR_ROOT_NOT_AVAILABLE');
+        }
+        try {
+          validateTutorSnapshotRecord(replayAggregate.snapshot);
+          assertMemoryTutorSourceIsLive(this, replayAggregate.snapshot);
+        } catch (error) {
+          if (error instanceof TutorStoreError) {
+            throw new TutorStoreError('TUTOR_ROOT_NOT_AVAILABLE');
+          }
+          throw error;
+        }
+        return clone({ thread: replay, replayed: true });
+      }
+
+      const parent = memoryTutorThreadAggregate(this, parentThreadId);
+      if (!memoryTutorAggregateMatchesPath(parent, {
+        studentId, learningSubmissionId, versionNumber, questionNumber
+      }) || parent.thread.status === 'TOMBSTONED') {
+        throw new TutorStoreError('TUTOR_ROOT_NOT_AVAILABLE');
+      }
+      validateTutorSnapshotRecord(parent.snapshot);
+      assertMemoryTutorSourceIsLive(this, parent.snapshot);
+      tutorPriorTurns(parent.jobs, parent.messages, parent.thread.successfulTurnCount);
+      const parentHeadJob = parent.jobs.find((job) => job.status === 'SUCCEEDED'
+        && job.turnNumber === parent.thread.successfulTurnCount);
+      if (!parentHeadJob || parent.thread.successfulTurnCount < 1) {
+        throw new TutorStoreError('INVALID_TUTOR_FORK');
+      }
+      assertMemoryTutorThreadCapacity(this, {
+        studentId,
+        learningSubmissionVersionId: parent.snapshot.learningSubmissionVersionId,
+        questionNumber: parent.snapshot.questionNumber
+      });
+      if (this.tutorThreads.has(threadId)) {
+        throw new TutorStoreError('TUTOR_THREAD_ID_CONFLICT');
+      }
+      const thread = buildTutorForkThreadRecord({
+        id: threadId, studentId, snapshot: parent.snapshot,
+        parentThread: parent.thread, parentHeadJob,
+        creationIdempotencyKeyHash, creationRequestHash, createdAt: now
+      });
+      this.tutorThreads.set(thread.id, clone(thread));
+      return clone({ thread, replayed: false });
+    });
+  }
+
   async getTutorThreadBundle(studentId, threadId) {
     const aggregate = memoryTutorThreadAggregate(this, threadId);
     if (!aggregate.thread || aggregate.thread.studentId !== studentId
@@ -2784,10 +3136,75 @@ export class MemoryStore {
     });
   }
 
+  async listTutorThreadBundles(studentId, learningSubmissionId, versionNumber, questionNumber) {
+    const bundles = [];
+    for (const thread of this.tutorThreads.values()) {
+      const aggregate = memoryTutorThreadAggregate(this, thread.id);
+      if (thread.status === 'TOMBSTONED'
+          || !memoryTutorAggregateMatchesPath(aggregate, {
+            studentId, learningSubmissionId, versionNumber, questionNumber
+          })) continue;
+      try {
+        validateTutorSnapshotRecord(aggregate.snapshot);
+        assertMemoryTutorSourceIsLive(this, aggregate.snapshot);
+      } catch (error) {
+        if (error instanceof TutorStoreError) continue;
+        throw error;
+      }
+      bundles.push(projectTutorThreadBundle({
+        ...aggregate,
+        messages: aggregate.messages.sort((left, right) =>
+          new Date(left.createdAt) - new Date(right.createdAt) || left.id.localeCompare(right.id))
+      }));
+    }
+    return clone(bundles.sort((left, right) =>
+      new Date(right.thread.updatedAt) - new Date(left.thread.updatedAt)
+        || left.thread.id.localeCompare(right.thread.id)));
+  }
+
+  async listTutorThreadSummaries(studentId, learningSubmissionId, versionNumber,
+    questionNumber, page = {}) {
+    const { limit, cursor } = validateTutorSummaryPage(page);
+    const candidates = [];
+    for (const thread of this.tutorThreads.values()) {
+      const aggregate = memoryTutorThreadAggregate(this, thread.id);
+      if (thread.status === 'TOMBSTONED'
+          || !memoryTutorAggregateMatchesPath(aggregate, {
+            studentId, learningSubmissionId, versionNumber, questionNumber
+          })) continue;
+      const updatedAtMs = new Date(thread.updatedAt).getTime();
+      if (cursor) {
+        const cursorMs = cursor.updatedAt.getTime();
+        if (updatedAtMs > cursorMs
+            || (updatedAtMs === cursorMs && thread.id >= cursor.threadId)) continue;
+      }
+      try {
+        validateTutorSnapshotRecord(aggregate.snapshot);
+      } catch {
+        continue;
+      }
+      let sourceEntitled = false;
+      try {
+        assertMemoryTutorSourceIsLive(this, aggregate.snapshot);
+        sourceEntitled = true;
+      } catch (error) {
+        if (!(error instanceof TutorStoreError)) throw error;
+      }
+      candidates.push({
+        thread, snapshot: aggregate.snapshot, sourceEntitled,
+        latestJob: sourceEntitled ? aggregate.jobs.at(-1) || null : null
+      });
+    }
+    candidates.sort((left, right) =>
+      new Date(right.thread.updatedAt) - new Date(left.thread.updatedAt)
+        || right.thread.id.localeCompare(left.thread.id));
+    return candidates.slice(0, limit + 1).map(projectTutorThreadSummary);
+  }
+
   async enqueueTutorTurn({
     studentId, threadId, authorizedSessionId, idempotencyKey: rawIdempotencyKey,
     message, correlationId, jobId, messageId, priority = 100, maxAttempts = 3,
-    now = new Date()
+    providerBudget, now = new Date()
   }) {
     validateTutorQueueOptions({ priority, maxAttempts });
     return this.#withGlobalLock(async () => {
@@ -2866,6 +3283,7 @@ export class MemoryStore {
         createdAt: now, startedAt: null, completedAt: null, updatedAt: now
       };
       buildAndValidateTutorRequest({ job, thread, snapshot, priorTurns, message });
+      consumeMemoryTutorProviderBudget(this, { studentId, providerBudget, now });
       this.tutorMessages.set(actualMessageId, clone(requestMessage));
       this.tutorTurnJobs.set(actualJobId, clone(job));
       thread.requestCount = requestOrdinal;
@@ -2879,7 +3297,7 @@ export class MemoryStore {
   async retryTutorTurnExplicitly({
     studentId, threadId, previousJobId, authorizedSessionId,
     idempotencyKey: rawIdempotencyKey, correlationId, jobId, priority = 100,
-    maxAttempts = 3, now = new Date()
+    maxAttempts = 3, providerBudget, now = new Date()
   }) {
     validateTutorQueueOptions({ priority, maxAttempts });
     return this.#withGlobalLock(async () => {
@@ -2957,8 +3375,108 @@ export class MemoryStore {
       buildAndValidateTutorRequest({
         job, thread, snapshot, priorTurns, message: requestMessage.contentMarkdown
       });
+      consumeMemoryTutorProviderBudget(this, { studentId, providerBudget, now });
       this.tutorTurnJobs.set(actualJobId, clone(job));
       thread.requestCount = requestOrdinal;
+      thread.threadRevision += 1;
+      thread.status = nextTutorThreadStatus(thread);
+      thread.updatedAt = now;
+      return clone({ job, request, replayed: false });
+    });
+  }
+
+  async retryTutorTurnByOrdinal({
+    studentId, learningSubmissionId, versionNumber, questionNumber,
+    threadId, requestOrdinal: previousRequestOrdinal, authorizedSessionId,
+    idempotencyKey: rawIdempotencyKey, correlationId, jobId,
+    priority = 100, maxAttempts = 3, providerBudget, now = new Date()
+  }) {
+    validateTutorQueueOptions({ priority, maxAttempts });
+    return this.#withGlobalLock(async () => {
+      const aggregate = memoryTutorThreadAggregate(this, threadId);
+      const { thread, snapshot, jobs, messages } = aggregate;
+      const previous = jobs.find((candidate) =>
+        candidate.requestOrdinal === previousRequestOrdinal);
+      if (!memoryTutorAggregateMatchesPath(aggregate, {
+        studentId, learningSubmissionId, versionNumber, questionNumber
+      }) || !previous
+          || !['FAILED', 'DELIVERY_UNKNOWN', 'CANCELLED'].includes(previous.status)) {
+        throw new TutorStoreError('TUTOR_RETRY_NOT_ALLOWED');
+      }
+      const session = this.sessions.get(authorizedSessionId);
+      if (!session || session.studentId !== studentId || session.revokedAt
+          || new Date(session.expiresAt).getTime() <= new Date(now).getTime()) {
+        throw new TutorStoreError('TUTOR_SESSION_NOT_LIVE');
+      }
+      if (!['OPEN', 'CAPACITY_REACHED'].includes(thread.status)) {
+        throw new TutorStoreError('TUTOR_THREAD_NOT_AVAILABLE');
+      }
+      validateTutorSnapshotRecord(snapshot);
+      assertMemoryTutorSourceIsLive(this, snapshot);
+      const idempotencyKeyHash = tutorSha256(rawIdempotencyKey);
+      const replay = jobs.find((candidate) =>
+        candidate.idempotencyKeyHash === idempotencyKeyHash);
+      if (replay) {
+        const replayMessage = this.tutorMessages.get(replay.requestMessageId);
+        const request = replayMessage && buildAndValidateTutorRequest({
+          job: replay, thread, snapshot,
+          priorTurns: tutorPriorTurns(jobs, messages, replay.turnNumber - 1),
+          message: replayMessage.contentMarkdown
+        });
+        if (!request || replay.retryOfJobId !== previous.id
+            || replay.requestHash !== tutorRequestHash(request)) {
+          throw new TutorStoreError('IDEMPOTENCY_KEY_REUSED');
+        }
+        return clone({ job: replay, request, replayed: true });
+      }
+      if (thread.status !== 'OPEN' || previous.turnNumber !== thread.successfulTurnCount + 1) {
+        throw new TutorStoreError('FORK_REQUIRED');
+      }
+      if (jobs.some((candidate) => candidate.retryOfJobId === previous.id)
+          || jobs.some((candidate) => ['QUEUED', 'RUNNING', 'RETRY_WAIT'].includes(candidate.status))) {
+        throw new TutorStoreError('TUTOR_THREAD_BUSY');
+      }
+      const activeForStudent = [...this.tutorTurnJobs.values()].filter((candidate) =>
+        candidate.studentId === studentId
+          && ['QUEUED', 'RUNNING', 'RETRY_WAIT'].includes(candidate.status)).length;
+      if (activeForStudent >= TUTOR_MAX_ACTIVE_JOBS_PER_STUDENT) {
+        throw new TutorStoreError('TUTOR_STUDENT_CAPACITY_REACHED');
+      }
+      const requestMessage = this.tutorMessages.get(previous.requestMessageId);
+      if (!requestMessage) throw new TutorStoreError('INCOMPLETE_TUTOR_HISTORY');
+      assertTutorEnqueueCapacity(thread, requestMessage.contentMarkdown);
+      const actualJobId = jobId || randomUUID();
+      if (this.tutorTurnJobs.has(actualJobId)) {
+        throw new TutorStoreError('TUTOR_TURN_ID_CONFLICT');
+      }
+      const nextRequestOrdinal = thread.requestCount + 1;
+      const priorTurns = tutorPriorTurns(jobs, messages, thread.successfulTurnCount);
+      const request = buildTutorTurnRequest({
+        correlationId, threadId, turnId: actualJobId, turnNumber: previous.turnNumber,
+        context: snapshot.snapshotPayload, priorTurns,
+        message: requestMessage.contentMarkdown
+      });
+      const job = {
+        ...clone(previous), id: actualJobId, requestOrdinal: nextRequestOrdinal,
+        retryOfJobId: previous.id, retryAuthorization: 'STUDENT_EXPLICIT',
+        authorizedSessionId, idempotencyKeyHash, correlationId,
+        requestHash: tutorRequestHash(request), historyHash: request.historyHash,
+        inputHash: request.inputHash, status: 'QUEUED', attemptCount: 0, maxAttempts,
+        priority, availableAt: now, leaseOwner: null, leaseToken: null, leaseExpiresAt: null,
+        providerInvoked: false, deliveryDisposition: 'NOT_DISPATCHED',
+        provider: null, requestedModel: null, responseModel: null,
+        promptVersion: null, responseSchemaVersion: null, usage: null, latencyMs: null,
+        outcomeCode: null, errorClass: null, retryable: false,
+        responseMessageId: null, replySha256: null,
+        deletionGeneration: thread.deletionGeneration,
+        createdAt: now, startedAt: null, completedAt: null, updatedAt: now
+      };
+      buildAndValidateTutorRequest({
+        job, thread, snapshot, priorTurns, message: requestMessage.contentMarkdown
+      });
+      consumeMemoryTutorProviderBudget(this, { studentId, providerBudget, now });
+      this.tutorTurnJobs.set(actualJobId, clone(job));
+      thread.requestCount = nextRequestOrdinal;
       thread.threadRevision += 1;
       thread.status = nextTutorThreadStatus(thread);
       thread.updatedAt = now;
@@ -3191,6 +3709,68 @@ export class MemoryStore {
       thread.threadRevision += 1;
       thread.tombstonedAt = now;
       thread.updatedAt = now;
+      return true;
+    });
+  }
+
+  async tombstoneTutorThreadByPath({
+    studentId, authorizedSessionId, learningSubmissionId, versionNumber,
+    questionNumber, threadId, idempotencyKey: rawIdempotencyKey,
+    now = new Date()
+  }) {
+    return this.#withGlobalLock(async () => {
+      const session = this.sessions.get(authorizedSessionId);
+      if (!session || session.studentId !== studentId || session.revokedAt
+          || new Date(session.expiresAt).getTime() <= new Date(now).getTime()) {
+        throw new TutorStoreError('TUTOR_SESSION_NOT_LIVE');
+      }
+      const keyHash = tutorSha256(rawIdempotencyKey);
+      const scope = 'question-tutor-thread-tombstone-v1';
+      const recordKey = idempotencyKey(studentId, scope, keyHash);
+      const requestHash = tutorThreadTombstoneRequestHash({
+        studentId, learningSubmissionId, versionNumber, questionNumber, threadId
+      });
+      const replay = this.idempotency.get(recordKey);
+      if (replay) {
+        if (replay.requestHash !== requestHash) {
+          throw new TutorStoreError('IDEMPOTENCY_KEY_REUSED');
+        }
+        return true;
+      }
+      const aggregate = memoryTutorThreadAggregate(this, threadId);
+      if (!memoryTutorAggregateMatchesPath(aggregate, {
+        studentId, learningSubmissionId, versionNumber, questionNumber
+      })) return false;
+      if (aggregate.thread.status !== 'TOMBSTONED') {
+        for (const job of aggregate.jobs) {
+          if (!['QUEUED', 'RUNNING', 'RETRY_WAIT'].includes(job.status)) continue;
+          if (job.providerInvoked && job.deliveryDisposition === 'MAY_HAVE_BEEN_DELIVERED') {
+            Object.assign(job, {
+              status: 'DELIVERY_UNKNOWN', retryable: false,
+              outcomeCode: 'DELIVERY_UNKNOWN', errorClass: 'transient',
+              completedAt: now, updatedAt: now,
+              leaseOwner: null, leaseToken: null, leaseExpiresAt: null
+            });
+          } else {
+            Object.assign(job, {
+              status: 'CANCELLED', retryable: false,
+              outcomeCode: 'CANCELLED', errorClass: 'permanent',
+              completedAt: now, updatedAt: now,
+              leaseOwner: null, leaseToken: null, leaseExpiresAt: null
+            });
+          }
+        }
+        Object.assign(aggregate.thread, {
+          status: 'TOMBSTONED',
+          deletionGeneration: aggregate.thread.deletionGeneration + 1,
+          threadRevision: aggregate.thread.threadRevision + 1,
+          tombstonedAt: now, updatedAt: now
+        });
+      }
+      this.idempotency.set(recordKey, {
+        studentId, scope, key: keyHash, requestHash,
+        responseStatus: 204, responseBody: { threadId }, createdAt: now
+      });
       return true;
     });
   }

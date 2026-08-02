@@ -15,22 +15,91 @@ import {
   tutorCanonicalJson,
   tutorSha256
 } from './domain.js';
-import { isRestrictedInferenceOutputText } from '../infrastructure/amc-inference-contract.js';
+import {
+  isRestrictedInferenceOutputText,
+  isValidAnalysisScoringSnapshot
+} from '../infrastructure/amc-inference-contract.js';
+import { canonicalHash } from '../learning-review/canonical.js';
 
 export const TUTOR_MAX_ACTIVE_JOBS_PER_STUDENT = 2;
+export const TUTOR_MAX_LIVE_THREADS_PER_STUDENT_QUESTION = 20;
+export const TUTOR_MAX_LIVE_THREADS_PER_STUDENT = 100;
+export const TUTOR_PROVIDER_WORK_PER_DAY = 30;
+export const TUTOR_GLOBAL_PROVIDER_WORK_PER_DAY = 1_000;
+export const TUTOR_PROVIDER_WORK_WINDOW_MS = 24 * 60 * 60 * 1_000;
+export const TUTOR_THREAD_SUMMARY_MAX_LIMIT = 20;
 export const TUTOR_SNAPSHOT_SCHEMA = 'amc-tutor-snapshot-v2';
 export const TUTOR_THREAD_CREATION_SCHEMA = 'amc-tutor-thread-create-v1';
+export const TUTOR_ROOT_THREAD_CREATION_SCHEMA = 'amc-tutor-root-thread-create-v1';
 
 export class TutorStoreError extends Error {
-  constructor(code, message = code) {
+  constructor(code, message = code, { retryAfterSeconds } = {}) {
     super(message);
     this.name = 'TutorStoreError';
     this.code = code;
+    if (retryAfterSeconds !== undefined) this.retryAfterSeconds = retryAfterSeconds;
   }
 }
 
 export function tutorStoreError(code, message = code) {
   return new TutorStoreError(code, message);
+}
+
+export function normalizeTutorProviderBudget(providerBudget = {}) {
+  if (!providerBudget || typeof providerBudget !== 'object' || Array.isArray(providerBudget)) {
+    throw tutorStoreError('INVALID_TUTOR_PROVIDER_BUDGET');
+  }
+  const studentLimit = providerBudget.studentLimit ?? TUTOR_PROVIDER_WORK_PER_DAY;
+  const globalLimit = providerBudget.globalLimit ?? TUTOR_GLOBAL_PROVIDER_WORK_PER_DAY;
+  if (!Number.isSafeInteger(studentLimit) || studentLimit < 1
+      || !Number.isSafeInteger(globalLimit) || globalLimit < 1
+      || (providerBudget.windowMs !== undefined
+        && providerBudget.windowMs !== TUTOR_PROVIDER_WORK_WINDOW_MS)
+      || (providerBudget.budgetKind !== undefined
+        && providerBudget.budgetKind !== 'PROVIDER_WORK')) {
+    throw tutorStoreError('INVALID_TUTOR_PROVIDER_BUDGET');
+  }
+  return {
+    budgetKind: 'PROVIDER_WORK', studentLimit, globalLimit,
+    windowMs: TUTOR_PROVIDER_WORK_WINDOW_MS
+  };
+}
+
+export function tutorProviderBudgetError({ studentAllowed, studentRetryAfterSeconds,
+  globalRetryAfterSeconds }) {
+  const code = studentAllowed
+    ? 'TUTOR_GLOBAL_PROVIDER_WORK_RATE_LIMITED'
+    : 'TUTOR_STUDENT_PROVIDER_WORK_RATE_LIMITED';
+  const retryAfterSeconds = studentAllowed
+    ? globalRetryAfterSeconds : studentRetryAfterSeconds;
+  return new TutorStoreError(code, code, { retryAfterSeconds });
+}
+
+export function assertTutorLiveThreadCapacity({ studentQuestionCount, studentCount }) {
+  if (studentQuestionCount >= TUTOR_MAX_LIVE_THREADS_PER_STUDENT_QUESTION) {
+    throw tutorStoreError('TUTOR_STUDENT_QUESTION_THREAD_CAP_REACHED');
+  }
+  if (studentCount >= TUTOR_MAX_LIVE_THREADS_PER_STUDENT) {
+    throw tutorStoreError('TUTOR_STUDENT_THREAD_CAP_REACHED');
+  }
+}
+
+export function validateTutorSummaryPage({ limit = TUTOR_THREAD_SUMMARY_MAX_LIMIT,
+  cursor = null } = {}) {
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > TUTOR_THREAD_SUMMARY_MAX_LIMIT) {
+    throw tutorStoreError('INVALID_TUTOR_SUMMARY_PAGE');
+  }
+  if (cursor === null) return { limit, cursor: null };
+  const updatedAt = cursor?.updatedAt instanceof Date
+    ? cursor.updatedAt : new Date(cursor?.updatedAt);
+  if (!cursor || typeof cursor !== 'object' || Array.isArray(cursor)
+      || !Number.isFinite(updatedAt.getTime())
+      || typeof cursor.threadId !== 'string'
+      || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(
+        cursor.threadId)) {
+    throw tutorStoreError('INVALID_TUTOR_SUMMARY_PAGE');
+  }
+  return { limit, cursor: { updatedAt, threadId: cursor.threadId } };
 }
 
 export function tutorRequestHash(request) {
@@ -50,6 +119,194 @@ export function tutorThreadCreationRequestHash({ studentId, snapshotId, forkedFr
     forkedFromThreadId,
     forkedFromTurnJobId
   }));
+}
+
+export function tutorRootThreadCreationRequestHash({
+  studentId, learningSubmissionId, versionNumber, questionNumber
+}) {
+  return tutorSha256(tutorCanonicalJson({
+    schema: TUTOR_ROOT_THREAD_CREATION_SCHEMA,
+    studentId,
+    learningSubmissionId,
+    versionNumber,
+    questionNumber
+  }));
+}
+
+export function buildTutorSnapshotRecord({
+  id, studentId, learningSubmissionId, learningSubmissionVersionId, versionNumber,
+  formId, formVersion, sourceType, questionNumber, contextSetId, questionContentHash,
+  analysisRunId, analysisContractVersion, analysisQuestionInputHash,
+  analysisQuestionContextHash, reportId, reportHash, evidenceHash, response, scoring,
+  officialSubmissionId, batchResultId, initialDeletionGeneration, contextArtifactSha256,
+  contextReleaseHash, promptMarkdown, choices, solutions, createdAt
+}) {
+  if (!response || !['OFFICIAL_FINAL', 'BATCH_CONFIRMED'].includes(response.answerOrigin)
+      || !isValidAnalysisScoringSnapshot(scoring, response.selectedOption)
+      || (response.answerOrigin === 'OFFICIAL_FINAL'
+        && (!officialSubmissionId || batchResultId !== null))
+      || (response.answerOrigin === 'BATCH_CONFIRMED'
+        && (officialSubmissionId !== null || !batchResultId))) {
+    throw tutorStoreError('TUTOR_ROOT_NOT_AVAILABLE');
+  }
+  const snapshotPayload = {
+    learningSubmissionId,
+    learningSubmissionVersionId,
+    versionNumber,
+    formId,
+    formVersion,
+    contextSetId,
+    contextArtifactSha256,
+    contextReleaseHash,
+    evidenceHash,
+    question: {
+      questionNumber,
+      questionId: `${formId}:q:${questionNumber}`,
+      promptMarkdown,
+      choices: structuredClone(choices),
+      isScored: scoring.isScored,
+      officialAnswer: scoring.canonicalAnswer,
+      acceptedOptions: structuredClone(scoring.acceptedOptions),
+      studentAnswer: response.selectedOption,
+      studentReasoning: response.reasoningText || null,
+      solutions: structuredClone(solutions)
+    }
+  };
+  const snapshotHash = computeTutorSnapshotHash(snapshotPayload);
+  const questionResponseHash = canonicalHash({
+    questionNumber,
+    selectedOption: response.selectedOption,
+    reasoningText: response.reasoningText,
+    answerOrigin: response.answerOrigin
+  });
+  const scoringSnapshotHash = canonicalHash(scoring);
+  return validateTutorSnapshotRecord({
+    id,
+    studentId,
+    learningSubmissionId,
+    learningSubmissionVersionId,
+    versionNumber,
+    formId,
+    formVersion,
+    sourceType,
+    questionNumber,
+    contextSetId,
+    questionContentHash,
+    analysisRunId,
+    analysisContractVersion,
+    analysisQuestionInputHash,
+    analysisQuestionContextHash,
+    reportId,
+    reportHash,
+    evidenceHash,
+    questionResponseHash,
+    scoringSnapshotHash,
+    scoringOrigin: response.answerOrigin,
+    officialSubmissionId,
+    batchResultId,
+    initialDeletionGeneration,
+    contextArtifactSha256,
+    contextReleaseHash,
+    payloadSchema: TUTOR_SNAPSHOT_SCHEMA,
+    snapshotPayload,
+    snapshotHash,
+    threadLineageHash: computeTutorThreadLineageHash({
+      analysisRunId,
+      analysisContractVersion,
+      reportId,
+      reportHash,
+      snapshotHash,
+      questionResponseHash,
+      scoringSnapshotHash,
+      scoringOrigin: response.answerOrigin,
+      initialDeletionGeneration
+    }),
+    createdAt
+  });
+}
+
+export function tutorForkCreationRequestHash({
+  studentId, learningSubmissionId, versionNumber, questionNumber, parentThreadId
+}) {
+  return canonicalHash({
+    schema: 'amc-tutor-fork-create-v1',
+    studentId,
+    learningSubmissionId,
+    versionNumber,
+    questionNumber,
+    parentThreadId
+  });
+}
+
+export function tutorThreadTombstoneRequestHash({
+  studentId, learningSubmissionId, versionNumber, questionNumber, threadId
+}) {
+  return canonicalHash({
+    schema: 'amc-tutor-thread-tombstone-v1',
+    studentId,
+    learningSubmissionId,
+    versionNumber,
+    questionNumber,
+    threadId
+  });
+}
+
+export function buildTutorRootThreadRecord({
+  id, studentId, snapshot, creationIdempotencyKeyHash, creationRequestHash, createdAt
+}) {
+  const validatedSnapshot = validateTutorSnapshotRecord(snapshot);
+  return {
+    id,
+    studentId,
+    snapshotId: validatedSnapshot.id,
+    learningSubmissionId: validatedSnapshot.learningSubmissionId,
+    learningSubmissionVersionId: validatedSnapshot.learningSubmissionVersionId,
+    questionNumber: validatedSnapshot.questionNumber,
+    snapshotHash: validatedSnapshot.snapshotHash,
+    threadLineageHash: validatedSnapshot.threadLineageHash,
+    tutorContractVersion: TUTOR_CONTRACT_VERSION,
+    contextHash: computeTutorContextHash({
+      threadId: id, context: validatedSnapshot.snapshotPayload
+    }),
+    status: 'OPEN',
+    successfulTurnCount: 0,
+    requestCount: 0,
+    successfulHistoryBytes: 0,
+    threadRevision: 0,
+    initialDeletionGeneration: validatedSnapshot.initialDeletionGeneration,
+    deletionGeneration: validatedSnapshot.initialDeletionGeneration,
+    forkedFromThreadId: null,
+    forkedFromTurnJobId: null,
+    creationIdempotencyKeyHash,
+    creationRequestHash,
+    createdAt,
+    updatedAt: createdAt,
+    closedAt: null,
+    tombstonedAt: null
+  };
+}
+
+export function buildTutorForkThreadRecord({
+  id, studentId, snapshot, parentThread, parentHeadJob,
+  creationIdempotencyKeyHash, creationRequestHash, createdAt
+}) {
+  if (!parentThread || !parentHeadJob
+      || parentThread.studentId !== studentId
+      || parentThread.snapshotId !== snapshot?.id
+      || parentThread.status === 'TOMBSTONED'
+      || parentHeadJob.threadId !== parentThread.id
+      || parentHeadJob.status !== 'SUCCEEDED'
+      || parentHeadJob.turnNumber !== parentThread.successfulTurnCount) {
+    throw tutorStoreError('INVALID_TUTOR_FORK');
+  }
+  return {
+    ...buildTutorRootThreadRecord({
+      id, studentId, snapshot, creationIdempotencyKeyHash,
+      creationRequestHash, createdAt
+    }),
+    forkedFromThreadId: parentThread.id,
+    forkedFromTurnJobId: parentHeadJob.id
+  };
 }
 
 export function validateTutorSnapshotRecord(snapshot) {
@@ -264,6 +521,40 @@ export function projectTutorThreadBundle({ thread, snapshot, jobs, messages }) {
       contentMarkdown: message.contentMarkdown,
       createdAt: message.createdAt
     }))
+  });
+}
+
+export function projectTutorThreadSummary({
+  thread, snapshot, latestJob = null, sourceEntitled = true
+}) {
+  return structuredClone({
+    thread: {
+      id: thread.id,
+      learningSubmissionId: thread.learningSubmissionId,
+      versionNumber: snapshot.versionNumber,
+      formId: snapshot.formId,
+      formVersion: snapshot.formVersion,
+      sourceType: snapshot.sourceType,
+      questionNumber: thread.questionNumber,
+      status: thread.status,
+      successfulTurnCount: thread.successfulTurnCount,
+      requestCount: thread.requestCount,
+      threadRevision: thread.threadRevision,
+      forkedFromThreadId: thread.forkedFromThreadId,
+      createdAt: thread.createdAt,
+      updatedAt: thread.updatedAt,
+      closedAt: thread.closedAt
+    },
+    sourceEntitled,
+    latestRequest: sourceEntitled && latestJob ? {
+      requestOrdinal: latestJob.requestOrdinal,
+      turnNumber: latestJob.turnNumber,
+      status: latestJob.status,
+      retryAuthorization: latestJob.retryAuthorization,
+      outcomeCode: latestJob.outcomeCode,
+      createdAt: latestJob.createdAt,
+      completedAt: latestJob.completedAt
+    } : null
   });
 }
 
