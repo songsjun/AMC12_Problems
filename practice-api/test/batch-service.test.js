@@ -1049,7 +1049,7 @@ test('user deletion fences an in-flight poll and requeues provider cleanup after
   }
 });
 
-test('unified AI dispatcher selects interactive priority 50 before batch extraction priority 30', async (t) => {
+test('durable non-Tutor rotation prevents sustained analysis from starving batch extraction', async (t) => {
   const context = await fixture(t);
   const submission = context.store.learningSubmissions.get(context.attemptId);
   const version = context.store.learningVersions.get(submission.id)[0];
@@ -1097,8 +1097,21 @@ test('unified AI dispatcher selects interactive priority 50 before batch extract
     clock: () => new Date('2026-08-01T12:00:01.000Z')
   });
   await dispatcher.runOnce();
+  Object.assign(interactiveWork, {
+    status: 'QUEUED', leaseOwner: null, leaseToken: null, leaseExpiresAt: null
+  });
+  Object.assign(run, { status: 'QUEUED', startedAt: null });
   await dispatcher.runOnce();
-  assert.deepEqual(order, ['interactive', 'batch']);
+  const batchWork = context.store.learningBatchWorkItems.get(batch.batch.id)
+    .find((item) => item.workType === 'BATCH_EXTRACTION');
+  Object.assign(batchWork, {
+    status: 'QUEUED', leaseOwner: null, leaseToken: null, leaseExpiresAt: null
+  });
+  await dispatcher.runOnce();
+  assert.deepEqual(order, ['interactive', 'batch', 'interactive']);
+  assert.deepEqual(context.store.aiDispatchState, {
+    lastClaimedKind: 'INTERACTIVE_ANALYSIS', revision: 3
+  });
 });
 
 test('a running batch cannot consume the slot reserved for a late interactive analysis', async (t) => {

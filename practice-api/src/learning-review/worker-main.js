@@ -12,6 +12,8 @@ import { loadAssemblyAiRetentionProfile } from '../infrastructure/assemblyai-ret
 import { PrivateUploadStore } from '../infrastructure/private-upload-store.js';
 import { runMigrations } from '../migrate.js';
 import { PostgresStore } from '../postgres-store.js';
+import { AmcTutorGatewayClient } from '../question-tutor/gateway-client.js';
+import { QuestionTutorWorker } from '../question-tutor/worker.js';
 import { PracticeService } from '../service.js';
 import { TranscriptionWorkerPort } from './transcription-worker-port.js';
 import { LearningReviewWorker } from './worker.js';
@@ -25,6 +27,14 @@ function integer(name, fallback, minimum, maximum) {
     throw new Error(`${name} is outside the supported range.`);
   }
   return value;
+}
+
+function boolean(name, fallback = false) {
+  const raw = process.env[name];
+  if (raw === undefined || raw === '') return fallback;
+  if (raw === 'true') return true;
+  if (raw === 'false') return false;
+  throw new Error(`${name} must be true or false.`);
 }
 
 function childWorkerId(base, role) {
@@ -46,10 +56,12 @@ const pollMs = integer('AMC12_LEARNING_WORKER_POLL_MS', 1_000, 100, 60_000);
 const leaseMs = integer('AMC12_LEARNING_WORKER_LEASE_MS', 120_000, 10_000, 600_000);
 const concurrency = integer('AMC12_AI_WORKER_CONCURRENCY', 2, 2, 32);
 const maxBatchConcurrent = integer('AMC12_BATCH_MAX_CONCURRENT', 1, 1, 31);
+const maxTutorConcurrent = integer('AMC12_TUTOR_MAX_CONCURRENT', 1, 1, 31);
 if (maxBatchConcurrent >= concurrency) {
   throw new Error('AMC12_BATCH_MAX_CONCURRENT must reserve at least one interactive AI slot.');
 }
 const workerId = process.env.AMC12_LEARNING_WORKER_ID || `${hostname()}:${process.pid}:learning`;
+const tutorEnabled = boolean('AMC12_TUTOR_ENABLED', false);
 const transcriptionWorkerId = childWorkerId(workerId, 'transcription');
 const orphanCleanupWorkerId = childWorkerId(workerId, 'provider-orphan');
 const store = new PostgresStore({ connectionString: databaseUrl });
@@ -71,6 +83,8 @@ const service = new PracticeService({
 });
 const gatewayOrigin = process.env.AMC12_INFERENCE_ORIGIN || 'http://127.0.0.1:4110';
 const gatewayTimeoutMs = integer('AMC12_INFERENCE_TIMEOUT_MS', 65_000, 1_000, 180_000);
+const tutorModel = process.env.AMC12_INFERENCE_MODEL;
+if (tutorEnabled && !tutorModel) throw new Error('AMC12_INFERENCE_MODEL is required when Tutor is enabled.');
 const interactiveWorker = new LearningReviewWorker({
   store,
   inferenceClient: new AmcInferenceClient({
@@ -100,8 +114,26 @@ const batchWorker = new BatchExtractionWorker({
   retryBaseMs: integer('AMC12_BATCH_RETRY_BASE_MS', 5_000, 100, 600_000),
   retryMaxMs: integer('AMC12_BATCH_RETRY_MAX_MS', 60_000, 100, 3_600_000)
 });
+const tutorWorker = tutorEnabled ? new QuestionTutorWorker({
+  store,
+  gatewayClient: new AmcTutorGatewayClient({
+    origin: gatewayOrigin,
+    token,
+    requestedModel: tutorModel,
+    timeoutMs: gatewayTimeoutMs,
+    maxResponseBytes: integer(
+      'AMC12_TUTOR_INFERENCE_MAX_RESPONSE_BYTES', 32 * 1024, 2_048, 256 * 1024
+    )
+  }),
+  workerId,
+  leaseMs,
+  knownNoResultRetryMs: integer(
+    'AMC12_TUTOR_KNOWN_NO_RESULT_RETRY_MS', 5_000, 0, 3_600_000
+  )
+}) : null;
 const dispatcher = new AiWorkDispatcher({
-  store, interactiveWorker, batchWorker, workerId, leaseMs, concurrency, maxBatchConcurrent,
+  store, tutorWorker, interactiveWorker, batchWorker,
+  workerId, leaseMs, concurrency, maxBatchConcurrent, maxTutorConcurrent,
   onError: (error) => console.error(JSON.stringify({
     event: 'ai_work_handler_error', code: error?.code || 'WORKER_FAILED'
   }))

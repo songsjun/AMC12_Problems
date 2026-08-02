@@ -132,6 +132,9 @@ test('fixed paths exist and worker exposes its bounded cooperative shutdown step
   assert.match(workerSource, /providerAbort\.abort\(\)/);
   assert.match(workerSource, /await dispatcher\.drain\(\)/);
   assert.match(workerSource, /await store\.close\(\)/);
+  assert.match(workerSource, /boolean\('AMC12_TUTOR_ENABLED', false\)/);
+  assert.match(workerSource, /AMC12_INFERENCE_MODEL is required when Tutor is enabled/);
+  assert.match(workerSource, /maxTutorConcurrent/);
 });
 
 test('runbook defines env isolation, TCB limitation, alerts, and bounded recovery drills', async () => {
@@ -140,6 +143,14 @@ test('runbook defines env isolation, TCB limitation, alerts, and bounded recover
   assert.match(readme, /\/etc\/kapy\/amc12-learning-worker\.env/);
   assert.match(readme, /must not contain `AMC12_ASSEMBLYAI_API_KEY`, `AMC12_INFERENCE_TOKEN`/);
   assert.match(readme, /AMC12_ASSEMBLYAI_RETENTION_PROFILE_VERIFIED=true/);
+  assert.match(readme, /AMC12_INFERENCE_MODEL=<must exactly match the Gateway AMC_INFERENCE_MODEL>/);
+  assert.equal([...readme.matchAll(/AMC12_TUTOR_ENABLED=true/g)].length, 2);
+  assert.match(readme, /AMC12_TUTOR_MAX_CONCURRENT=1/);
+  assert.match(readme, /coordinated, default-off release gate/);
+  assert.match(readme, /learning_tutor_turn_jobs/);
+  assert.match(readme, /oldest ready Tutor work exceeds 2\/5 minutes/);
+  assert.match(readme, /global_resource_budget_windows/);
+  assert.match(readme, /ai_dispatch_fairness_state/);
   assert.match(readme, /fails closed without an explicit verified profile/);
   assert.match(readme, /cannot make batch deletion `COMPLETE`/);
   assert.match(readme, /same trusted computing base \(TCB\)/);

@@ -15,8 +15,8 @@ crash loop; `ExitTimeOut` bounds how long launchd waits after `SIGTERM` before
 it terminates a job; decimal umask `63` is octal `077`.
 
 The API has a cooperative close path. The worker stops timers, propagates one
-shutdown `AbortSignal` through AssemblyAI/provider cleanup and both AI Gateway
-workers, drains in-flight dispatch, and closes PostgreSQL. A shutdown abort
+shutdown `AbortSignal` through AssemblyAI/provider cleanup and all AI Gateway
+handlers, drains in-flight dispatch, and closes PostgreSQL. A shutdown abort
 does not persist a terminal result or stale retry decision: the durable lease
 is left for normal expiry and reclaim. Keep individual provider timeouts below
 the 240-second launchd `ExitTimeOut`; the slow-Gateway abort tests are the
@@ -87,6 +87,7 @@ AMC12_AUTH_PEPPER=<distinct, at least 32 random characters>
 AMC12_DATABASE_URL=postgres://<dedicated-api-user>:<password>@127.0.0.1:5432/<database>
 AMC12_PRIVATE_UPLOAD_ROOT=/var/lib/kapy/amc12-private-uploads
 AMC12_SECURE_COOKIES=true
+AMC12_TUTOR_ENABLED=true
 ```
 
 It must not contain `AMC12_ASSEMBLYAI_API_KEY`, `AMC12_INFERENCE_TOKEN`, or
@@ -102,12 +103,22 @@ AMC12_AUTH_PEPPER=<at least 32 random characters; currently required by the batc
 AMC12_PRIVATE_UPLOAD_ROOT=/var/lib/kapy/amc12-private-uploads
 AMC12_INFERENCE_ORIGIN=http://127.0.0.1:4110
 AMC12_INFERENCE_TOKEN=<at least 32 random characters>
+AMC12_INFERENCE_MODEL=<must exactly match the Gateway AMC_INFERENCE_MODEL>
+AMC12_TUTOR_ENABLED=true
+AMC12_TUTOR_MAX_CONCURRENT=1
 AMC12_ASSEMBLYAI_API_KEY=<secret from the protected operator workflow>
 AMC12_ASSEMBLYAI_RETENTION_PROFILE=<CONFIGURED_TTL|BAA_DEFAULT|NO_TTL_OR_BAA>
 AMC12_ASSEMBLYAI_RETENTION_PROFILE_VERIFIED=true
 AMC12_ASSEMBLYAI_RETENTION_POLICY_HOURS=<operator-verified account policy delay>
 AMC12_ASSEMBLYAI_RETENTION_PROCESSING_SLACK_HOURS=<explicit conservative AWS processing slack>
 ```
+
+Tutor is a coordinated, default-off release gate in both env files. Deploy and
+validate the migrations, Gateway, and worker first with the API flag still
+false; then enable the API flag only after the worker can claim a synthetic
+Tutor job. The worker's model value does not let the browser or job choose a
+model: it binds completion metadata to the operator-pinned Gateway model and
+fails closed if the two deployments drift.
 
 These four retention settings are a deployment gate, not tunable guesses. The
 worker fails closed without an explicit verified profile. `NO_TTL_OR_BAA`
@@ -213,6 +224,23 @@ FROM amc_practice.learning_batch_provider_orphan_cleanup_jobs
 WHERE status <> 'SUCCEEDED'
 GROUP BY cleanup_kind, status ORDER BY cleanup_kind, status;
 
+SELECT status, count(*) AS items,
+       min(available_at) FILTER (
+         WHERE status IN ('QUEUED','RETRY_WAIT') AND available_at <= clock_timestamp()
+       ) AS oldest_ready
+FROM amc_practice.learning_tutor_turn_jobs
+WHERE status IN ('QUEUED','RETRY_WAIT','RUNNING','DELIVERY_UNKNOWN','FAILED')
+GROUP BY status ORDER BY status;
+
+SELECT budget_kind, window_started_at, window_ms, used_units
+FROM amc_practice.global_resource_budget_windows
+WHERE budget_kind = 'PROVIDER_WORK'
+ORDER BY window_started_at DESC LIMIT 2;
+
+SELECT last_claimed_kind, revision, updated_at
+FROM amc_practice.ai_dispatch_fairness_state
+WHERE singleton = true;
+
 SELECT count(*) AS expired_running_leases
 FROM (
   SELECT lease_expires_at FROM amc_practice.learning_work_items WHERE status = 'RUNNING'
@@ -220,6 +248,8 @@ FROM (
   SELECT lease_expires_at FROM amc_practice.learning_batch_work_items WHERE status = 'RUNNING'
   UNION ALL
   SELECT lease_expires_at FROM amc_practice.learning_batch_provider_orphan_cleanup_jobs WHERE status = 'RUNNING'
+  UNION ALL
+  SELECT lease_expires_at FROM amc_practice.learning_tutor_turn_jobs WHERE status = 'RUNNING'
 ) AS leases
 WHERE lease_expires_at < clock_timestamp();
 ```
@@ -236,10 +266,16 @@ time rather than treating these initial values as SLOs:
   `MANUAL_VERIFICATION_REQUIRED` retention job may be completed only from an
   independently authenticated provider/operator confirmation and its reference
   hash; the elapsed window alone must remain `PROVIDER_RETENTION_PENDING`.
+- **Warn/Page:** oldest ready Tutor work exceeds 2/5 minutes, or the shared
+  provider-work window approaches/exhausts its configured limit. Compare
+  Tutor, analysis and batch oldest-ready age before changing claim precedence;
+  preserve the shared cost boundary when tuning either producer.
 - **Ticket/page by impact:** oldest ready interactive analysis exceeds 5
   minutes or batch/transcription work exceeds 15 minutes. Compare queue arrival
   rate, worker concurrency, provider latency, and PostgreSQL saturation before
-  increasing capacity; interactive capacity must remain reserved.
+  increasing capacity. A stuck `ai_dispatch_fairness_state.revision` while both
+  non-Tutor classes are ready is a dispatcher fault; do not manually edit the
+  cursor while workers are live.
 - **Ticket:** `private_storage_reconcile_attention`, orphan-cleanup retry, or
   worker error events recur. Also alert before free space reaches
   `AMC12_PRIVATE_MINIMUM_FREE_BYTES`; do not delete private files manually.

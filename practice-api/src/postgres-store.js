@@ -45,6 +45,7 @@ import {
   computeTutorContextReleaseHash,
   tutorSha256
 } from './question-tutor/domain.js';
+import { AI_PRIORITY_STARVATION_MAX_WAIT_MS } from './ai-work-policy.js';
 
 const { Pool } = pg;
 
@@ -1680,6 +1681,17 @@ export class PostgresStore {
       // dispatcher lock. Processing happens after COMMIT, so the lock only
       // serializes fair priority selection, not provider latency.
       await client.query("SELECT pg_advisory_xact_lock(hashtext('amc_ai_dispatcher'), 0)");
+      await client.query(
+        `INSERT INTO amc_practice.ai_dispatch_fairness_state
+          (singleton, last_claimed_kind, revision, updated_at)
+         VALUES (true, NULL, 0, $1) ON CONFLICT (singleton) DO NOTHING`, [now]
+      );
+      const fairness = await client.query(
+        `SELECT last_claimed_kind, revision
+         FROM amc_practice.ai_dispatch_fairness_state
+         WHERE singleton = true FOR UPDATE`
+      );
+      const lastClaimedKind = fairness.rows[0].last_claimed_kind;
       const reclaimedInteractive = await client.query(
         `UPDATE amc_practice.learning_work_items
          SET status = 'QUEUED', lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
@@ -1701,7 +1713,7 @@ export class PostgresStore {
          WHERE work_type = 'BATCH_EXTRACTION' AND status = 'RUNNING' AND lease_expires_at <= $1`, [now]
       );
       const selected = await client.query(
-        `SELECT * FROM (
+        `WITH candidates AS (
            SELECT 'INTERACTIVE_ANALYSIS'::text AS kind, w.id, w.priority, w.available_at, w.created_at
            FROM amc_practice.learning_work_items w
            JOIN amc_practice.learning_analysis_runs r ON r.id = w.analysis_run_id
@@ -1737,10 +1749,29 @@ export class PostgresStore {
              AND (SELECT count(*) FROM amc_practice.learning_batch_assets a WHERE a.batch_id = b.id)
                = (SELECT count(*) FROM amc_practice.learning_batch_evidence e
                   WHERE e.batch_id = b.id AND e.normalized_text IS NOT NULL)
-         ) candidates
-         ORDER BY priority DESC, available_at, created_at, id LIMIT 1`,
+         ), class_heads AS (
+           SELECT candidates.*,
+                  row_number() OVER (
+                    PARTITION BY kind
+                    ORDER BY
+                      CASE WHEN available_at <= $1::timestamptz
+                        - ($7::text || ' milliseconds')::interval THEN 0 ELSE 1 END,
+                      CASE WHEN available_at <= $1::timestamptz
+                        - ($7::text || ' milliseconds')::interval THEN available_at END,
+                      CASE WHEN available_at <= $1::timestamptz
+                        - ($7::text || ' milliseconds')::interval THEN created_at END,
+                      priority DESC, available_at, created_at, id
+                  ) AS class_position
+           FROM candidates
+         )
+         SELECT * FROM class_heads WHERE class_position = 1
+         ORDER BY CASE WHEN $6::text IS NULL THEN
+                    CASE WHEN kind = 'INTERACTIVE_ANALYSIS' THEN 0 ELSE 1 END
+                  WHEN kind IS DISTINCT FROM $6::text THEN 0 ELSE 1 END,
+                  available_at, created_at, priority DESC, id LIMIT 1`,
         [now, accepted.has('INTERACTIVE_ANALYSIS'), accepted.has('BATCH_EXTRACTION'),
-          maxBatchConcurrent, ANALYSIS_CONTRACT_VERSION]
+          maxBatchConcurrent, ANALYSIS_CONTRACT_VERSION, lastClaimedKind,
+          AI_PRIORITY_STARVATION_MAX_WAIT_MS]
       );
       if (!selected.rowCount) {
         await client.query('COMMIT');
@@ -1771,6 +1802,12 @@ export class PostgresStore {
           `SELECT e.*, a.position FROM amc_practice.learning_batch_evidence e
            JOIN amc_practice.learning_batch_assets a ON a.batch_id = e.batch_id AND a.id = e.asset_id
            WHERE e.batch_id = $1 ORDER BY a.position`, [batch.id]
+        );
+        await client.query(
+          `UPDATE amc_practice.ai_dispatch_fairness_state
+           SET last_claimed_kind = 'BATCH_EXTRACTION', revision = revision + 1,
+               updated_at = $1
+           WHERE singleton = true`, [now]
         );
         await client.query('COMMIT');
         return {
@@ -1864,6 +1901,13 @@ export class PostgresStore {
         `${item.answer_origin}\u0000${item.question_number}`, mapAnalysisScoringSnapshot(item)
       ]));
       const contexts = new Map(contextSet.questions.map((question) => [question.questionNumber, question]));
+      await client.query(
+        `UPDATE amc_practice.ai_dispatch_fairness_state
+         SET last_claimed_kind = 'INTERACTIVE_ANALYSIS', revision = revision + 1,
+             updated_at = $1
+         WHERE singleton = true`,
+        [now]
+      );
       await client.query('COMMIT');
       return {
         kind: 'INTERACTIVE_ANALYSIS',

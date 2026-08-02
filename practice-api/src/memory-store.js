@@ -44,6 +44,7 @@ import {
   tutorLeaseExpiryStatus,
   tutorSha256
 } from './question-tutor/domain.js';
+import { compareAiWorkWithinKind } from './ai-work-policy.js';
 
 const clone = (value) => structuredClone(value);
 const cloneMap = (map) => new Map([...map].map(([key, value]) => [key, clone(value)]));
@@ -594,6 +595,7 @@ export class MemoryStore {
     this.events = new Map();
     this.idempotency = new Map();
     this.attemptLocks = new Map();
+    this.aiDispatchState = { lastClaimedKind: null, revision: 0 };
     this.globalLock = Promise.resolve();
   }
 
@@ -1371,10 +1373,16 @@ export class MemoryStore {
           }
         }
       }
-      candidates.sort((left, right) => right.item.priority - left.item.priority
-        || new Date(left.item.availableAt) - new Date(right.item.availableAt)
-        || new Date(left.item.createdAt) - new Date(right.item.createdAt)
-        || left.item.id.localeCompare(right.item.id));
+      const candidateKinds = new Set(candidates.map((candidate) => candidate.kind));
+      const rotateKinds = candidateKinds.size > 1;
+      candidates.sort((left, right) => {
+        if (rotateKinds && left.kind !== right.kind) {
+          const preferredKind = this.aiDispatchState.lastClaimedKind === 'INTERACTIVE_ANALYSIS'
+            ? 'BATCH_EXTRACTION' : 'INTERACTIVE_ANALYSIS';
+          return left.kind === preferredKind ? -1 : 1;
+        }
+        return compareAiWorkWithinKind(left.item, right.item, now);
+      });
       for (const candidate of candidates) {
         const item = candidate.item;
         if (candidate.kind === 'BATCH_EXTRACTION') {
@@ -1398,6 +1406,9 @@ export class MemoryStore {
             status: 'RUNNING', attemptCount: item.attemptCount + 1, leaseOwner: workerId,
             leaseToken: randomUUID(), leaseExpiresAt: new Date(nowMs + leaseMs), updatedAt: now
           });
+          this.aiDispatchState = {
+            lastClaimedKind: 'BATCH_EXTRACTION', revision: this.aiDispatchState.revision + 1
+          };
           return clone({
             kind: 'BATCH_EXTRACTION',
             job: { workItem: item, batch, assets, evidence, studentId: batch.studentId, attemptId: batch.attemptId }
@@ -1428,6 +1439,9 @@ export class MemoryStore {
           leaseToken: randomUUID(), leaseExpiresAt: new Date(nowMs + leaseMs), updatedAt: now
         });
         Object.assign(run, { status: 'RUNNING', startedAt: run.startedAt || now, lastErrorCode: null });
+        this.aiDispatchState = {
+          lastClaimedKind: 'INTERACTIVE_ANALYSIS', revision: this.aiDispatchState.revision + 1
+        };
         const responses = this.learningResponses.get(version.id) || [];
         const contexts = new Map(contextSet.questions.map((question) => [question.questionNumber, question]));
         return clone({
@@ -3859,7 +3873,8 @@ export class MemoryStore {
       privateStorageCandidates: cloneMap(this.privateStorageCandidates),
       privateStorageReconciliationAudit: clone(this.privateStorageReconciliationAudit),
       events: cloneMap(this.events),
-      idempotency: cloneMap(this.idempotency)
+      idempotency: cloneMap(this.idempotency),
+      aiDispatchState: clone(this.aiDispatchState)
     };
   }
 

@@ -143,8 +143,13 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     '009_learning_history_read_model.sql',
     '010_analysis_contract_v2.sql',
     '011_question_tutor_persistence.sql',
-    '012_tutor_expired_lease_recovery.sql'
+    '012_tutor_expired_lease_recovery.sql',
+    '013_ai_dispatch_fairness.sql'
   ]);
+  assert.deepEqual((await store.pool.query(
+    `SELECT last_claimed_kind, revision
+     FROM amc_practice.ai_dispatch_fairness_state WHERE singleton = true`
+  )).rows, [{ last_claimed_kind: null, revision: '0' }]);
 
   const tutorTables = await store.pool.query(
     `SELECT table_name FROM information_schema.tables
@@ -1980,12 +1985,70 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
   assert.equal(batchSubmitted.batch.status, 'PROCESSING');
 
   const batchClaimAt = new Date(Date.now() + 1_000);
-  const batchClaim = await store.claimNextAiWork({
-    workerId: 'pg-batch-worker',
-    now: batchClaimAt,
-    leaseMs: 120_000,
-    acceptedKinds: ['BATCH_EXTRACTION']
-  });
+  const fairnessBefore = (await store.pool.query(
+    `SELECT last_claimed_kind, revision
+     FROM amc_practice.ai_dispatch_fairness_state WHERE singleton = true`
+  )).rows[0];
+  assert.equal(fairnessBefore.last_claimed_kind, 'INTERACTIVE_ANALYSIS');
+  const completedInteractive = (await store.pool.query(
+    `SELECT w.id AS work_id, w.status AS work_status, w.attempt_count,
+            w.updated_at AS work_updated_at, r.id AS run_id,
+            r.status AS run_status, r.started_at, r.last_error_code
+     FROM amc_practice.learning_work_items w
+     JOIN amc_practice.learning_analysis_runs r ON r.id = w.analysis_run_id
+     JOIN amc_practice.learning_submission_versions v
+       ON v.id = w.learning_submission_version_id
+     WHERE v.learning_submission_id = $1 AND v.version_number = 1`,
+    [reviewFinal.learningSubmission.id]
+  )).rows[0];
+  await store.pool.query(
+    `UPDATE amc_practice.learning_work_items
+     SET status = 'QUEUED', available_at = $2, lease_owner = NULL,
+         lease_token = NULL, lease_expires_at = NULL, updated_at = $2
+     WHERE id = $1`, [completedInteractive.work_id, new Date(batchClaimAt.getTime() - 1)]
+  );
+  await store.pool.query(
+    `UPDATE amc_practice.learning_analysis_runs
+     SET status = 'QUEUED', last_error_code = NULL WHERE id = $1`,
+    [completedInteractive.run_id]
+  );
+  const fairClaims = await Promise.all([
+    store.claimNextAiWork({
+      workerId: 'pg-fair-worker-a', now: batchClaimAt, leaseMs: 120_000,
+      acceptedKinds: ['INTERACTIVE_ANALYSIS', 'BATCH_EXTRACTION'], maxBatchConcurrent: 1
+    }),
+    secondStore.claimNextAiWork({
+      workerId: 'pg-fair-worker-b', now: batchClaimAt, leaseMs: 120_000,
+      acceptedKinds: ['INTERACTIVE_ANALYSIS', 'BATCH_EXTRACTION'], maxBatchConcurrent: 1
+    })
+  ]);
+  assert.deepEqual(fairClaims.map((claim) => claim.kind).sort(), [
+    'BATCH_EXTRACTION', 'INTERACTIVE_ANALYSIS'
+  ]);
+  const batchClaim = fairClaims.find((claim) => claim.kind === 'BATCH_EXTRACTION');
+  const fairnessAfter = (await store.pool.query(
+    `SELECT last_claimed_kind, revision
+     FROM amc_practice.ai_dispatch_fairness_state WHERE singleton = true`
+  )).rows[0];
+  assert.equal(fairnessAfter.last_claimed_kind, 'INTERACTIVE_ANALYSIS');
+  assert.equal(Number(fairnessAfter.revision), Number(fairnessBefore.revision) + 2);
+  assert.equal(await store.claimNextAiWork({
+    workerId: 'pg-fair-worker-cap', now: batchClaimAt, leaseMs: 120_000,
+    acceptedKinds: ['BATCH_EXTRACTION'], maxBatchConcurrent: 1
+  }), null, 'durable rotation cannot bypass the global running-batch cap');
+  await store.pool.query(
+    `UPDATE amc_practice.learning_work_items
+     SET status = $2, attempt_count = $3, lease_owner = NULL, lease_token = NULL,
+         lease_expires_at = NULL, updated_at = $4 WHERE id = $1`,
+    [completedInteractive.work_id, completedInteractive.work_status,
+      completedInteractive.attempt_count, completedInteractive.work_updated_at]
+  );
+  await store.pool.query(
+    `UPDATE amc_practice.learning_analysis_runs
+     SET status = $2, started_at = $3, last_error_code = $4 WHERE id = $1`,
+    [completedInteractive.run_id, completedInteractive.run_status,
+      completedInteractive.started_at, completedInteractive.last_error_code]
+  );
   assert.equal(batchClaim?.kind, 'BATCH_EXTRACTION');
   assert.equal(batchClaim.job.batch.id, batchCreated.batch.id);
   const batchPlan = await service.prepareLearningBatchDecomposition(

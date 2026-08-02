@@ -210,13 +210,24 @@ dedicated loopback Gateway token, independent `AMC12_AUTH_PEPPER`, absolute
 npm run start:learning-worker
 ```
 
-The worker cannot select a URL, model, tool, or generation control. Its unified
-AI dispatcher uses only `POST /v1/analyze-question` and
+The browser and persisted work cannot select a URL, model, tool, or generation
+control. Tutor completion validates `AMC12_INFERENCE_MODEL` against the
+operator-pinned Gateway model. The unified AI dispatcher uses only
+`POST /v1/tutor-turn`, `POST /v1/analyze-question`, and
 `POST /v1/decompose-batch` on the configured loopback origin, reserves at least
-one concurrency slot for interactive analysis, heartbeats
-its lease during provider calls, sends only model-eligible approved solutions,
-rejects stale completion writes, and uses bounded exponential backoff for
-retryable transient/rate-limit failures before persisting a terminal report.
+one concurrency slot for non-Tutor work, and sends only model-eligible approved
+solutions. Within that slot, a PostgreSQL-persisted class cursor alternates
+eligible interactive-analysis and batch-extraction claims across worker
+processes. Class-local priority remains the normal latency preference, but a
+work item ready for two minutes enters an overdue FIFO tier so sustained
+higher-priority arrivals cannot prevent either interactive or batch-confirmed
+reports.
+Analysis/batch handlers heartbeat their leases during provider calls. Tutor
+instead requires a lease covering the fixed Gateway timeout plus a persistence
+margin, rechecks the remaining lease after durable dispatch intent, and never
+replays an uncertain delivery. All handlers reject stale completion writes.
+Analysis and batch work use bounded exponential backoff; Tutor creates an
+automatic retry only when the Gateway strictly proves `KNOWN_NO_RESULT`.
 The paired Gateway must retain its frozen `AMC_INFERENCE_MAX_BODY_BYTES=524288`
 minimum/default; the API performs the same 524,288-byte serialized-request
 preflight, including the worst valid eight-solution escaped payload.
@@ -318,6 +329,11 @@ credentials on every authenticated state-changing request.
 | `GET /learning-history/:submissionId` | Exact owner-only lineage detail; deleted records return only minimal tombstone metadata |
 | `GET /learning-history/:submissionId/versions/:versionNumber/questions/:questionNumber` | Exact-version prompt, choices, own evidence, deterministic result, and analysis subject to release/deletion policy |
 | `GET /learning-history/:submissionId/versions/:versionNumber/report` | Exact immutable report; blank anchors are unavailable and revoked/deleted protected content fails closed |
+| `GET`, `POST /learning-history/:submissionId/versions/:versionNumber/questions/:questionNumber/tutor-threads` | List or idempotently create owner-only question threads from server-derived immutable context |
+| `GET`, `DELETE /learning-history/:submissionId/versions/:versionNumber/questions/:questionNumber/tutor-threads/:threadId` | Read or idempotently tombstone one exact-path thread |
+| `POST /learning-history/:submissionId/versions/:versionNumber/questions/:questionNumber/tutor-threads/:threadId/messages` | Queue one bounded student message; the browser supplies no context/model/hash fields |
+| `POST /learning-history/:submissionId/versions/:versionNumber/questions/:questionNumber/tutor-threads/:threadId/forks` | Explicitly fork from the Store-selected current successful head |
+| `POST /learning-history/:submissionId/versions/:versionNumber/questions/:questionNumber/tutor-threads/:threadId/requests/:requestOrdinal/retries` | Explicitly retry one visible terminal request ordinal; no internal job ID crosses the API |
 
 The learning-submission status GET is strictly read-only; missing historical
 aggregates are repaired only through the internal maintenance entrypoint. The
@@ -326,6 +342,9 @@ reconcile semantics: crossing the server deadline during that read records the
 same deadline transition as `GET /attempts/:id`, then returns `editable=false`.
 Learning-history GETs are pure projections: they neither repair/enqueue state
 nor call a provider, and all success/error responses are explicitly `no-store`.
+Tutor routes are absent unless `AMC12_TUTOR_ENABLED=true`; the same flag must be
+enabled in the independently configured learning worker only after the Gateway
+and durable crash-window checks pass.
 
 `reasoning-notes` PUT, `pause`, `resume`, `checkpoint`, `final`, `deadline-decision`, and `reset`
 require an `Idempotency-Key` (8–128 opaque characters). Replaying the same key
