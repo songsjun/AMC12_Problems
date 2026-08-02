@@ -99,6 +99,74 @@ body {
 
 .practice-link:hover { background: var(--c-accent); color: #fff; }
 
+.practice-dialog {
+  width: min(560px, calc(100% - 32px));
+  padding: 0;
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+  color: var(--c-text);
+  background: var(--c-card);
+  box-shadow: 0 20px 50px rgb(15 23 42 / 28%);
+}
+
+.practice-dialog::backdrop { background: rgb(15 23 42 / 55%); }
+
+.practice-dialog-content { padding: 24px; }
+
+.practice-dialog h2 {
+  margin: 0;
+  color: var(--c-primary);
+  font-size: 21px;
+}
+
+.practice-dialog p { margin: 6px 0 18px; color: var(--c-muted); }
+
+.practice-choices {
+  display: grid;
+  gap: 10px;
+}
+
+.practice-choices a {
+  display: grid;
+  gap: 3px;
+  padding: 14px 16px;
+  border: 1px solid var(--c-border);
+  border-radius: 8px;
+  color: var(--c-primary);
+  text-decoration: none;
+}
+
+.practice-choices a:hover {
+  border-color: var(--c-accent);
+  background: #eff6ff;
+}
+
+.practice-choices a:focus-visible,
+.practice-dialog-actions button:focus-visible {
+  outline: 3px solid #60a5fa;
+  outline-offset: 2px;
+}
+
+.practice-choices span { color: var(--c-muted); font-size: 14px; }
+
+.practice-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+.practice-dialog-actions button {
+  padding: 7px 16px;
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  color: var(--c-text);
+  background: var(--c-card);
+  font: inherit;
+  cursor: pointer;
+}
+
+.practice-dialog-actions button:hover { border-color: #94a3b8; background: #f8fafc; }
+
 .problem-nav {
   display: flex;
   flex-wrap: wrap;
@@ -298,4 +366,5 @@ body {
   .header h1 { font-size: 15px; }
   .problem-nav button { width: 26px; height: 24px; font-size: 11px; }
   .content { padding: 20px 18px; }
+  .practice-dialog-content { padding: 20px; }
 }

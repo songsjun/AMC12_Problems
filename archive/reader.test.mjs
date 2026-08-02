@@ -2,12 +2,54 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-import { normalizeHref, normalizeImageSrc, normalizeProblem, problemPath, protectMath } from './reader.js';
+import {
+  normalizeHref,
+  normalizeImageSrc,
+  normalizeProblem,
+  practiceDestination,
+  problemPath,
+  protectMath
+} from './reader.js';
 
 test('problem paths are constrained to the fixed archive corpus', () => {
   assert.deepEqual(normalizeProblem('2025', 'B', '25'), { year: 2025, variant: 'B', number: 25 });
   assert.deepEqual(normalizeProblem('../2025', 'Z', '0'), { year: 2025, variant: 'A', number: 1 });
   assert.equal(problemPath(2002, 'A', 1), '2002_AMC_12A_Problems/Problem_01.md');
+});
+
+test('practice destinations identify a complete paper with a constrained same-origin query', () => {
+  assert.equal(practiceDestination(2024, 'B', 'practice'), 'practice/?form=amc12-2024-b&mode=practice');
+  assert.equal(practiceDestination('2023', 'A', 'batch'), 'practice/?form=amc12-2023-a&mode=batch');
+  assert.equal(practiceDestination('../2025', 'Z', 'practice'), 'practice/?form=amc12-2025-a&mode=practice');
+  assert.throws(() => practiceDestination(2025, 'A', 'unsafe'), {
+    name: 'TypeError', message: 'Practice mode must be practice or batch.'
+  });
+  assert.doesNotMatch(practiceDestination(2025, 'B', 'batch'), /problem|number/i);
+});
+
+test('practice destinations preserve root and portal subpath deployments', () => {
+  const destination = practiceDestination(2025, 'B', 'batch');
+  assert.equal(
+    new URL(destination, 'https://kapy.ca/').href,
+    'https://kapy.ca/practice/?form=amc12-2025-b&mode=batch'
+  );
+  assert.equal(
+    new URL(destination, 'https://portal.kapy.ca/amc12/').href,
+    'https://portal.kapy.ca/amc12/practice/?form=amc12-2025-b&mode=batch'
+  );
+});
+
+test('archive root declares a labelled modal chooser with two paper-level choices and cancel', async () => {
+  const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  assert.match(html, /id="practiceEntry"[^>]*aria-haspopup="dialog"[^>]*aria-controls="practiceChoiceDialog"/s);
+  assert.match(html, /<dialog[^>]*id="practiceChoiceDialog"[^>]*aria-labelledby="practiceChoiceTitle"[^>]*aria-describedby="practiceChoiceDescription"/s);
+  assert.match(html, /id="practiceModeLink"[^>]*mode=practice/);
+  assert.match(html, /id="batchModeLink"[^>]*mode=batch/);
+  assert.match(html, /Add text or audio to this paper's existing completed result\./);
+  assert.match(html, /id="practiceChoiceCancel"[^>]*type="button"/);
+  const reader = await readFile(new URL('./reader.js', import.meta.url), 'utf8');
+  assert.match(reader, /if \(practiceChoiceDialog\?\.open \|\| practiceChoiceDialog\?\.hasAttribute\('open'\)\) return;/,
+    'an open chooser must precede Archive arrow-key navigation');
 });
 
 test('only HTTP(S) destinations survive link normalization', () => {

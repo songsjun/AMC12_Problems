@@ -57,6 +57,23 @@ cancel marks, and `\coloneqq`—while treating hostile extensions as unsupported
   owner-scoped batch resource. AI mapping confidence is display-only input:
   the client sends no confirmation until the student has assigned or
   discarded every extracted item and presses **Confirm reviewed mapping**.
+- A dashboard card with no active attempt opens a practice-method dialog.
+  Question-by-question starts the ordinary timed attempt. Batch submission
+  is operable only when the form summary contains the exact boolean
+  `batchIntakeAvailable: true`, then opens the upload section only through the
+  latest owned final result for the exact form revision. A false, omitted, or
+  malformed capability disables the modal action; the same check prevents a
+  batch deep link from navigating or posting. If that immutable learning
+  anchor does not exist, the browser explains the prerequisite and performs no
+  attempt or batch mutation; it never treats a newly created or in-progress
+  timed attempt as batch-eligible. Resume, prior-result, and question-by-question
+  actions retain their direct behavior.
+- The public archive may deep-link with exactly
+  `?form=amc12-YYYY-a|b&mode=practice|batch`. The browser validates the
+  same-origin intent strictly, removes it from the address bar before any
+  mutation, retains it in memory across an unauthenticated sign-in, and
+  consumes it once after both forms and saved-attempt history load. Form ids
+  match exactly: no title or nearest-version fallback is allowed.
 - `GET /learning-history` is the common read model for interactive finals and
   confirmed batches. The client opens an immutable version, its report, and
   then an owner-scoped question; it never reconstructs a version from current

@@ -24,16 +24,22 @@ import {
   attemptAllowsReasoningEdits,
   attemptCanBeReset,
   batchConfirmationPayload,
+  batchAnchorForForm,
   batchFileDescriptors,
+  batchIntakeAvailableForAttempt,
+  batchIntakeAvailableForForm,
   batchMutationContextMatches,
   batchPollContextMatches,
+  beginModalAction,
   canAccessFinalReview,
+  consumePracticeEntryIntent,
   createTutorThreadRequest,
   deleteTutorThreadRequest,
   extractAttempt,
   fetchFinalReview,
   fetchLearningReport,
   firstEntitledTutorThreadId,
+  focusSafeVisibleTarget,
   forkTutorThreadRequest,
   formatDuration,
   maximumScoreFromSubmission,
@@ -58,6 +64,7 @@ import {
   normalizeReasoningNotes,
   normalizeLearningReport,
   preserveDirtyReasoningNotes,
+  parsePracticeEntryIntent,
   reasoningEnvelopeMatchesAttempt,
   publicFormPath,
   attemptFormPath,
@@ -774,6 +781,111 @@ test('batch file descriptors enforce the server media, count, and byte boundarie
   }))), { code: 'INVALID_BATCH_FILES' });
 });
 
+test('dashboard batch entry selects only the latest final result for the exact form revision', () => {
+  const form = { id: '2025-amc-12a', version: 'reviewed-v2' };
+  const attempts = [
+    { id: 'active-v2', formId: form.id, formVersion: form.version, phase: 'TIMED', createdAt: '2026-08-02T03:00:00Z' },
+    { id: 'final-v1', formId: form.id, formVersion: 'reviewed-v1', phase: 'FINALIZED', finalizedAt: '2026-08-02T05:00:00Z' },
+    { id: 'reset-before-final', formId: form.id, formVersion: form.version, phase: 'RESET', resultsAvailable: false, updatedAt: '2026-08-02T06:00:00Z' },
+    { id: 'final-v2-old', formId: form.id, formVersion: form.version, phase: 'FINALIZED', finalizedAt: '2026-08-01T05:00:00Z' },
+    { id: 'reset-v2-final', formId: form.id, formVersion: form.version, phase: 'RESET', resultsAvailable: true, updatedAt: '2026-08-02T04:00:00Z' }
+  ];
+  assert.equal(batchAnchorForForm(form, attempts)?.id, 'reset-v2-final');
+  assert.equal(batchAnchorForForm({ id: form.id }, attempts), null, 'missing revision fails closed');
+  assert.equal(batchAnchorForForm(form, attempts.filter((attempt) => !canAccessFinalReview(attempt))), null);
+  assert.equal(batchIntakeAvailableForForm({ batchIntakeAvailable: true }), true);
+  for (const unavailable of [
+    {}, { batchIntakeAvailable: false }, { batchIntakeAvailable: 'true' }, { batchIntakeAvailable: 1 }
+  ]) assert.equal(batchIntakeAvailableForForm(unavailable), false, 'only an explicit boolean true opens intake');
+});
+
+test('result batch intake capability is pinned to the attempt form revision and fails closed', () => {
+  const attempt = { formId: 'amc12-2025-a', formVersion: 'reviewed-v1' };
+  assert.equal(batchIntakeAvailableForAttempt(attempt, [
+    { id: attempt.formId, version: 'reviewed-v2', batchIntakeAvailable: true },
+    { id: attempt.formId, version: attempt.formVersion, batchIntakeAvailable: false }
+  ]), false, 'a newer enabled revision cannot enable intake for this result');
+  assert.equal(batchIntakeAvailableForAttempt(attempt, [
+    { id: attempt.formId, version: attempt.formVersion, batchIntakeAvailable: true }
+  ]), true);
+  assert.equal(batchIntakeAvailableForAttempt(attempt, [
+    { id: attempt.formId, version: attempt.formVersion, batchIntakeAvailable: 'true' }
+  ]), false, 'non-boolean capability data fails closed');
+  assert.equal(batchIntakeAvailableForAttempt({ formId: attempt.formId }, [
+    { id: attempt.formId, version: attempt.formVersion, batchIntakeAvailable: true }
+  ]), false, 'an unversioned historical result cannot borrow the current revision capability');
+});
+
+test('safe focus recovery skips a hidden or disabled modal return target', () => {
+  const focused = [];
+  const visible = {
+    isConnected: true,
+    closest: () => null,
+    focus: () => focused.push('preferred')
+  };
+  const fallback = {
+    isConnected: true,
+    closest: () => null,
+    focus: () => focused.push('fallback')
+  };
+  assert.equal(focusSafeVisibleTarget(visible, fallback), visible);
+  assert.deepEqual(focused, ['preferred']);
+  visible.closest = () => ({ hidden: true });
+  assert.equal(focusSafeVisibleTarget(visible, fallback), fallback);
+  visible.closest = () => null;
+  visible.disabled = true;
+  assert.equal(focusSafeVisibleTarget(visible, fallback), fallback);
+  assert.deepEqual(focused, ['preferred', 'fallback', 'fallback']);
+});
+
+test('archive practice deep links are strict, same-origin, exact-form, and consumed once', () => {
+  const origin = 'https://amc12.kapy.ca';
+  assert.deepEqual(parsePracticeEntryIntent(
+    `${origin}/practice/?form=amc12-2025-a&mode=practice`, origin
+  ), { formId: 'amc12-2025-a', mode: 'practice' });
+  assert.deepEqual(parsePracticeEntryIntent(
+    `${origin}/practice/?form=amc12-2025-b&mode=batch`, origin
+  ), { formId: 'amc12-2025-b', mode: 'batch' });
+  for (const invalid of [
+    `${origin}/practice/?form=AMC12-2025-a&mode=batch`,
+    `${origin}/practice/?form=amc12-2025-c&mode=batch`,
+    `${origin}/practice/?form=amc12-2025-a&mode=unknown`,
+    `${origin}/practice/?form=amc12-2025-a&form=amc12-2024-a&mode=batch`,
+    `${origin}/practice/?form=amc12-2025-a&mode=batch&utm_source=archive`,
+    `https://example.invalid/practice/?form=amc12-2025-a&mode=batch`
+  ]) assert.equal(parsePracticeEntryIntent(invalid, origin), null, invalid);
+
+  const target = { practiceEntryIntent: { formId: 'amc12-2025-a', mode: 'batch' } };
+  const forms = [{ id: 'amc12-2025-b' }, { id: 'amc12-2025-a', title: '2025 AMC 12A' }];
+  assert.deepEqual(consumePracticeEntryIntent(target, forms), {
+    intent: { formId: 'amc12-2025-a', mode: 'batch' }, form: forms[1]
+  });
+  assert.equal(target.practiceEntryIntent, null);
+  assert.equal(consumePracticeEntryIntent(target, forms), null, 'refresh cannot replay a consumed intent');
+});
+
+test('modal actions are mutually exclusive and stale completion cannot unlock a replacement dialog', () => {
+  const oldInvocation = { type: 'practice-mode', dismissible: true, busy: false };
+  const target = { modal: oldInvocation };
+  const oldControls = [{ disabled: false }, { disabled: true }, { disabled: false }];
+  const finishOld = beginModalAction(target, oldInvocation, oldControls);
+  assert.equal(typeof finishOld, 'function');
+  assert.deepEqual(oldControls.map((control) => control.disabled), [true, true, true]);
+  assert.equal(beginModalAction(target, oldInvocation, oldControls), null,
+    'a double click or a different action in the same dialog cannot start concurrently');
+
+  const replacement = { type: 'timed-practice-confirmation', dismissible: true, busy: false };
+  const replacementControls = [{ disabled: false }, { disabled: true }, { disabled: false }];
+  target.modal = replacement;
+  const finishReplacement = beginModalAction(target, replacement, replacementControls);
+  assert.equal(finishOld(), false, 'the old finally does not own the replacement dialog');
+  assert.deepEqual(replacementControls.map((control) => control.disabled), [true, true, true]);
+  assert.equal(finishReplacement(), true);
+  assert.deepEqual(replacementControls.map((control) => control.disabled), [false, true, false],
+    'the current dialog restores each control to its own initial disabled state');
+  assert.equal(finishReplacement(), false, 'completion is idempotent');
+});
+
 test('batch mapping can never commit without explicit complete student decisions', () => {
   const mapping = {
     revision: 7,
@@ -1209,6 +1321,49 @@ test('batch, history, report, and Tutor DOM contracts are accessible and keep AI
   assert.match(client, /retryTutorRequestRequest\(api, identity, threadId, requestOrdinal\)/,
     'explicit retry uses the public request ordinal and an empty body, never an internal job ID');
   assert.match(client, /batchConfirmationPayload\(mapping, decisions, \{ confirmed: true \}\)/);
+  assert.match(client, /start\.addEventListener\('click', \(\) => choosePracticeMode\(form\)\)/,
+    'only the new-attempt path opens the mode chooser; Resume and View result keep their direct behavior');
+  assert.match(client, /resume\.addEventListener\('click', \(\) => resumeAttempt\(activeAttempt\.id\)\)/);
+  assert.match(client, /view\.addEventListener\('click', \(\) => resumeAttempt\(attempt\.id, attempt\)\)/);
+  assert.match(client, /label: batchIntakeAvailable \? 'Batch submit files' : 'Batch submit files \(not available yet\)'[\s\S]*?label: 'Question-by-question test'/,
+    'the dashboard dialog exposes both requested paths');
+  assert.match(client, /Batch submission is not available yet\./);
+  assert.match(client, /disabled: !batchIntakeAvailable/,
+    'a false or omitted server capability makes the modal action natively inoperable');
+  assert.match(client, /button\.disabled = action\.disabled === true/,
+    'the shared dialog applies disabled before focus selection or click handling');
+  assert.match(client, /if \(!button\.disabled\) \{[\s\S]*?button\.addEventListener\('click'/,
+    'disabled modal actions have no mutation handler even under synthetic event dispatch');
+  assert.match(client, /const finishAction = beginModalAction\(state, invocation, \[[\s\S]*?elements\.modalClose[\s\S]*?\]\)/,
+    'one async action locks every action and close control for that dialog invocation');
+  assert.match(client, /elements\.modalActions\.querySelector\('button:not\(\[disabled\]\)'\)/,
+    'initial focus skips unavailable actions');
+  assert.match(client, /openBatchSubmissionForForm\(form, batchAnchor\)/);
+  assert.match(client, /async function openBatchSubmissionForForm[\s\S]*?if \(!batchIntakeAvailableForForm\(form\)\)[\s\S]*?showError\('Batch submission is not available yet\.'\);[\s\S]*?return;/,
+    'deep links fail before result navigation when form intake is not explicitly ready');
+  assert.match(client, /function syncBatchIntakeControls\(\)[\s\S]*?batchFiles\.disabled = !available[\s\S]*?batchSubmitButton\.disabled = !available[\s\S]*?batchUploadForm\.reset\(\)[\s\S]*?clearNode\(elements\.batchSelectedFiles\)/,
+    'direct result navigation gates and clears the new-intake controls');
+  assert.match(client, /async function showResults\(\)[\s\S]*?showOnly\(elements\.resultsView\)[\s\S]*?syncBatchIntakeControls\(\)/,
+    'the result view applies the exact-form capability before its review requests finish');
+  assert.match(client, /function appendBatchMapping[\s\S]*?You can still review or delete this existing file submission[\s\S]*?confirm\.disabled = true/,
+    'an existing mapping stays visible and deletable while new confirmation is gated');
+  assert.match(client, /async function submitBatchUpload[\s\S]*?if \(!currentBatchIntakeAvailable\(\)\)[\s\S]*?return;[\s\S]*?submitLearningBatchFiles/,
+    'synthetic upload submission is rejected before an API mutation');
+  assert.match(client, /elements\.batchLearningSection\.scrollIntoView[\s\S]*?elements\.batchFiles\.focus\(\)/,
+    'an entitled batch choice lands at and focuses the existing upload entry');
+  assert.match(client, /const returnFocus = state\.lastFocused;[\s\S]*?const opened = await resumeAttempt[\s\S]*?if \(!opened[\s\S]*?focusSafeVisibleTarget\(returnFocus, main\)/,
+    'failed resume or final-review loading restores focus outside the hidden modal');
+  assert.match(client, /if \(!eligibleAnchor\)[\s\S]*?showError\([\s\S]*?return;/,
+    'a missing immutable learning anchor fails before any attempt or batch mutation');
+  assert.match(client, /type: 'practice-mode'[\s\S]*?label: 'Cancel'[\s\S]*?close: true/,
+    'the mode chooser remains dismissible and uses the shared focus-restoring dialog path');
+  assert.match(client, /state\.practiceEntryIntent = parsePracticeEntryIntent\(requestedUrl\.href, requestedUrl\.origin\)/);
+  assert.match(client, /window\.history\.replaceState\(window\.history\.state, '', `\$\{requestedUrl\.pathname\}\$\{requestedUrl\.hash\}`\)/,
+    'the browser removes the intent query before any authentication or mutation can replay it');
+  assert.match(client, /const selection = consumePracticeEntryIntent\(state, state\.forms\)/,
+    'the in-memory intent is consumed only after forms and saved attempts load');
+  assert.match(client, /if \(!elements\.dashboardView\.hidden && !state\.modal\) document\.getElementById\('main-content'\)\.focus\(\)/,
+    'dashboard setup cannot steal focus back from a routed upload input or modal');
   assert.match(client, /api\.get\(tutorThreadListPath\(identity\)\)/);
   assert.match(client, /Array\.isArray\(response\.items\)/);
   assert.doesNotMatch(client, /Array\.isArray\(response\.threads\)/,

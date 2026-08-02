@@ -9,6 +9,7 @@
 const FIRST_YEAR = 2002;
 const LAST_YEAR = 2025;
 const VARIANTS = new Set(['A', 'B']);
+const PRACTICE_MODES = new Set(['practice', 'batch']);
 const MATH_TOKEN_PREFIX = '\uE000AMC12_MATH_';
 const MATH_TOKEN_SUFFIX = '\uE001';
 
@@ -44,6 +45,17 @@ export function normalizeProblem(year, variant, number) {
 export function problemPath(year, variant, number) {
   const safe = normalizeProblem(year, variant, number);
   return `${safe.year}_AMC_12${safe.variant}_Problems/Problem_${String(safe.number).padStart(2, '0')}.md`;
+}
+
+/** Build a deployment-base-relative Practice destination for one complete AMC 12 paper. */
+export function practiceDestination(year, variant, mode) {
+  const safe = normalizeProblem(year, variant, 1);
+  if (!PRACTICE_MODES.has(mode)) throw new TypeError('Practice mode must be practice or batch.');
+  const query = new URLSearchParams({
+    form: `amc12-${safe.year}-${safe.variant.toLowerCase()}`,
+    mode
+  });
+  return `practice/?${query}`;
 }
 
 export function normalizeHref(rawHref, baseHref = 'https://archive.invalid/') {
@@ -331,6 +343,62 @@ function parseHash() {
   return value.year === Number(match[1]) && value.number === Number(match[3]) ? value : null;
 }
 
+/**
+ * Bind the Archive entry link to an accessible paper-level Practice chooser.
+ * Returning the refresh function keeps state ownership inside the reader while
+ * leaving URL construction and dialog behavior independently testable.
+ */
+export function connectPracticeChooser({
+  trigger,
+  dialog,
+  practiceOption,
+  batchOption,
+  cancelButton,
+  paperLabel,
+  getCurrentPaper
+}) {
+  const elements = [trigger, dialog, practiceOption, batchOption, cancelButton, paperLabel];
+  if (elements.some((element) => !element) || typeof getCurrentPaper !== 'function') return () => {};
+
+  const refresh = () => {
+    const paper = getCurrentPaper();
+    const safe = normalizeProblem(paper?.year, paper?.variant, 1);
+    paperLabel.textContent = `Choose how to work on ${safe.year} AMC 12${safe.variant}.`;
+    practiceOption.href = practiceDestination(safe.year, safe.variant, 'practice');
+    batchOption.href = practiceDestination(safe.year, safe.variant, 'batch');
+  };
+
+  const isOpen = () => dialog.open === true || dialog.hasAttribute('open');
+  const close = () => {
+    if (!isOpen()) return;
+    if (typeof dialog.close === 'function') dialog.close('cancel');
+    else {
+      dialog.removeAttribute('open');
+      trigger.focus();
+    }
+  };
+
+  trigger.addEventListener('click', (event) => {
+    event.preventDefault();
+    refresh();
+    if (!isOpen()) {
+      if (typeof dialog.showModal === 'function') dialog.showModal();
+      else dialog.setAttribute('open', '');
+    }
+    practiceOption.focus();
+  });
+  // Arrow keys navigate the Archive behind this dialog. Keep a focused dialog
+  // choice from bubbling into that global shortcut handler.
+  dialog.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') event.stopPropagation();
+  });
+  cancelButton.addEventListener('click', close);
+  dialog.addEventListener('close', () => trigger.focus());
+
+  refresh();
+  return refresh;
+}
+
 function bootstrap() {
   const reader = document.querySelector('[data-archive-reader]');
   if (!reader) return;
@@ -346,8 +414,18 @@ function bootstrap() {
   const toolbar = document.getElementById('toolbar');
   const expand = document.getElementById('expandAll');
   const collapse = document.getElementById('collapseAll');
+  const practiceChoiceDialog = document.getElementById('practiceChoiceDialog');
   let current = normalizeProblem(LAST_YEAR, 'A', 1);
   let requestNumber = 0;
+  const refreshPracticeChooser = connectPracticeChooser({
+    trigger: document.getElementById('practiceEntry'),
+    dialog: practiceChoiceDialog,
+    practiceOption: document.getElementById('practiceModeLink'),
+    batchOption: document.getElementById('batchModeLink'),
+    cancelButton: document.getElementById('practiceChoiceCancel'),
+    paperLabel: document.getElementById('practiceChoiceDescription'),
+    getCurrentPaper: () => current
+  });
 
   for (let year = LAST_YEAR; year >= FIRST_YEAR; year -= 1) {
     const option = document.createElement('option');
@@ -367,6 +445,7 @@ function bootstrap() {
   const updateControls = () => {
     yearSelect.value = String(current.year);
     variantSelect.value = current.variant;
+    refreshPracticeChooser();
     for (const [index, button] of [...problemNav.querySelectorAll('button')].entries()) {
       button.classList.toggle('active', index + 1 === current.number);
     }
@@ -434,6 +513,9 @@ function bootstrap() {
     content.querySelectorAll('details').forEach((details) => { details.open = false; });
   });
   document.addEventListener('keydown', (event) => {
+    // A defensive document-level guard also covers transient focus outside the
+    // dialog (for example, before the initial focus task completes).
+    if (practiceChoiceDialog?.open || practiceChoiceDialog?.hasAttribute('open')) return;
     if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
     if (event.key === 'ArrowLeft') {
       event.preventDefault();

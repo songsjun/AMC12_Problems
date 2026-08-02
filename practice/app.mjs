@@ -559,6 +559,100 @@ export function canAccessFinalReview(attempt) {
     || (normalizePhase(attempt) === 'RESET' && attempt?.resultsAvailable === true);
 }
 
+/**
+ * Batch uploads are additions to an existing immutable learning submission,
+ * not an alternate way to create a timed attempt. Select only an owned result
+ * summary for this exact form revision; the server remains the final owner and
+ * entitlement check when the student opens it or reserves an upload.
+ */
+export function batchAnchorForForm(form, attempts) {
+  const formId = firstDefined(form?.id, form?.formId, null);
+  const formVersion = firstDefined(form?.version, form?.formVersion, null);
+  if (!formId || formVersion === null || formVersion === undefined || !Array.isArray(attempts)) return null;
+  return attempts
+    .filter((attempt) => attempt?.id
+      && String(firstDefined(attempt.formId, attempt.form?.id, '')) === String(formId)
+      && String(firstDefined(attempt.formVersion, attempt.form?.version, '')) === String(formVersion)
+      && canAccessFinalReview(attempt))
+    .sort((left, right) => timestampMs({ createdAt: firstDefined(right.finalizedAt, right.updatedAt, right.createdAt) })
+      - timestampMs({ createdAt: firstDefined(left.finalizedAt, left.updatedAt, left.createdAt) })
+      || String(left.id).localeCompare(String(right.id)))[0] || null;
+}
+
+export function batchIntakeAvailableForForm(form) {
+  return form?.batchIntakeAvailable === true;
+}
+
+/**
+ * Results can be opened without passing through the dashboard mode chooser.
+ * Resolve intake capability from the server's form-list snapshot for the
+ * exact revision owned by the attempt; missing, stale, or loosely typed data
+ * must fail closed. Detailed/embedded form payloads intentionally do not
+ * override this deployment capability.
+ */
+export function batchIntakeAvailableForAttempt(attempt, forms) {
+  const formId = extractFormId(attempt);
+  const formVersion = extractFormVersion(attempt);
+  if (!formId || formVersion === null || formVersion === undefined || !Array.isArray(forms)) return false;
+  const form = forms.find((candidate) => String(candidate?.id || '') === String(formId)
+    && String(candidate?.version ?? '') === String(formVersion));
+  return batchIntakeAvailableForForm(form);
+}
+
+export function focusSafeVisibleTarget(...candidates) {
+  const target = candidates.find((candidate) => candidate
+    && typeof candidate.focus === 'function'
+    && candidate.disabled !== true
+    && candidate.hidden !== true
+    && candidate.isConnected !== false
+    && !candidate.closest?.('[hidden]')) || null;
+  target?.focus();
+  return target;
+}
+
+export function parsePracticeEntryIntent(value, expectedOrigin = null) {
+  let parsed;
+  try {
+    parsed = new URL(String(value), expectedOrigin || 'http://practice.invalid');
+  } catch {
+    return null;
+  }
+  if (expectedOrigin && parsed.origin !== expectedOrigin) return null;
+  const keys = [...parsed.searchParams.keys()];
+  if (keys.length !== 2 || keys.filter((key) => key === 'form').length !== 1
+      || keys.filter((key) => key === 'mode').length !== 1) return null;
+  const formId = parsed.searchParams.get('form');
+  const mode = parsed.searchParams.get('mode');
+  if (!/^amc12-\d{4}-[ab]$/.test(String(formId || '')) || !['practice', 'batch'].includes(mode)) return null;
+  return { formId, mode };
+}
+
+export function consumePracticeEntryIntent(target, forms) {
+  const intent = target?.practiceEntryIntent;
+  if (!intent) return null;
+  target.practiceEntryIntent = null;
+  const form = (Array.isArray(forms) ? forms : [])
+    .find((candidate) => String(candidate?.id || '') === intent.formId) || null;
+  return { intent, form };
+}
+
+export function beginModalAction(target, invocation, controls) {
+  if (!target || target.modal !== invocation || invocation?.busy === true) return null;
+  const snapshots = (Array.isArray(controls) ? controls : [])
+    .filter(Boolean).map((control) => ({ control, disabled: control.disabled === true }));
+  invocation.busy = true;
+  snapshots.forEach(({ control }) => { control.disabled = true; });
+  let finished = false;
+  return () => {
+    if (finished) return false;
+    finished = true;
+    if (target.modal !== invocation) return false;
+    invocation.busy = false;
+    snapshots.forEach(({ control, disabled }) => { control.disabled = disabled; });
+    return true;
+  };
+}
+
 export function solutionEndpointForAttempt(attempt) {
   if (!canAccessFinalReview(attempt) || !attempt?.id) return null;
   return `${API_BASE}/attempts/${encodeURIComponent(String(attempt.id))}/solutions`;
@@ -1235,6 +1329,8 @@ const state = {
   student: null,
   forms: [],
   attemptHistory: [],
+  attemptHistoryLoaded: false,
+  practiceEntryIntent: null,
   attempt: null,
   questions: [],
   answers: new Map(),
@@ -1327,7 +1423,8 @@ function getElements() {
     analysisReportSummary: byId('analysis-report-summary'), analysisQuestions: byId('analysis-questions'), refreshAnalysisButton: byId('refresh-analysis-button'),
     submissionHistory: byId('submission-history'), resultsQuestions: byId('results-questions'), solutionsList: byId('solutions-list'),
     expandSolutions: byId('expand-solutions-button'), resetButton: byId('reset-button'), resultsDashboardButton: byId('results-dashboard-button'),
-    batchUploadForm: byId('batch-upload-form'), batchFiles: byId('batch-files'), batchSelectedFiles: byId('batch-selected-files'),
+    batchLearningSection: byId('batch-learning-section'), batchUploadForm: byId('batch-upload-form'),
+    batchFiles: byId('batch-files'), batchSelectedFiles: byId('batch-selected-files'),
     batchSubmitButton: byId('batch-submit-button'), batchStatus: byId('batch-status'), batchWorkspace: byId('batch-workspace'),
     learningHistoryBackButton: byId('learning-history-back-button'), refreshLearningHistoryButton: byId('refresh-learning-history-button'),
     learningHistoryStatus: byId('learning-history-status'), learningHistoryList: byId('learning-history-list'),
@@ -1491,6 +1588,7 @@ function localSignOut({ message = null } = {}) {
   state.student = null;
   state.forms = [];
   state.attemptHistory = [];
+  state.attemptHistoryLoaded = false;
   state.formCache.clear();
   clearAttemptState();
   resetLearningTutorState(state);
@@ -2752,6 +2850,7 @@ async function refreshAttempt({ quiet = false, urgent = false } = {}) {
 
 async function loadForms({ quiet = false } = {}) {
   setButtonBusy(elements.refreshForms, true, 'Refreshing…');
+  state.attemptHistoryLoaded = false;
   try {
     const response = await api.get(`${API_BASE}/forms`);
     state.forms = extractForms(response);
@@ -2759,6 +2858,7 @@ async function loadForms({ quiet = false } = {}) {
     try {
       const historyResponse = await api.get(`${API_BASE}/attempts`);
       state.attemptHistory = extractAttemptHistory(historyResponse);
+      state.attemptHistoryLoaded = true;
     } catch (historyError) {
       // Form selection remains useful if a deployment is rolling out history
       // separately; a normal user-facing error is shown only for the form API.
@@ -2768,11 +2868,37 @@ async function loadForms({ quiet = false } = {}) {
       }
     }
     renderForms();
+    await applyPracticeEntryIntent();
   } catch (error) {
     if (!quiet) handleError(error, 'Could not load practice forms.');
   } finally {
     setButtonBusy(elements.refreshForms, false);
   }
+}
+
+async function applyPracticeEntryIntent() {
+  if (!state.practiceEntryIntent) return;
+  if (!state.attemptHistoryLoaded) {
+    showStatus('The requested practice choice is waiting for saved-attempt history. Refresh to try again.', { persistent: true });
+    return;
+  }
+  showStatus('');
+  const selection = consumePracticeEntryIntent(state, state.forms);
+  if (!selection?.form) {
+    showError('The requested AMC 12 test is not currently available. Choose a test from this page.');
+    return;
+  }
+  const { intent, form } = selection;
+  if (intent.mode === 'batch') {
+    await openBatchSubmissionForForm(form);
+    return;
+  }
+  const activeAttempt = activeAttemptForForm(form);
+  if (activeAttempt?.id) {
+    await resumeAttempt(activeAttempt.id);
+    return;
+  }
+  confirmTimedPractice(form);
 }
 
 function activeAttemptForForm(form) {
@@ -2835,7 +2961,8 @@ function renderForms() {
     } else {
       const start = document.createElement('button');
       start.type = 'button'; start.className = 'button button-primary'; start.textContent = 'Start practice';
-      start.addEventListener('click', () => confirmStartNew(form));
+      start.setAttribute('aria-label', `Choose practice method for ${title.textContent}`);
+      start.addEventListener('click', () => choosePracticeMode(form));
       actions.appendChild(start);
     }
     card.append(label, title, meta);
@@ -2873,24 +3000,84 @@ function renderForms() {
   }
 }
 
-async function confirmStartNew(form) {
+function choosePracticeMode(form) {
   const count = finiteNumber(firstDefined(form.questionCount, form.questions?.length), 25);
   const scoredCount = finiteNumber(form.scoredQuestionCount, count);
+  const duration = finiteNumber(form.durationMs)
+    || (finiteNumber(firstDefined(form.durationSeconds, form.duration, null)) || 0) * 1000;
+  const formTitle = String(firstDefined(form.title, form.name, 'This form'));
+  const batchIntakeAvailable = batchIntakeAvailableForForm(form);
+  const batchAnchor = batchIntakeAvailable ? batchAnchorForForm(form, state.attemptHistory) : null;
   const archiveDetail = form?.archiveNotice
     ? String(form.archiveNotice)
     : (scoredCount < count ? `${count - scoredCount} archived item${count - scoredCount === 1 ? ' is' : 's are'} not scored.` : null);
   openModal({
-    title: 'Start a new practice test?',
+    type: 'practice-mode',
+    title: 'Choose how to submit your work',
     paragraphs: [
-      `${String(firstDefined(form.title, form.name, 'This form'))} has 25 questions and a 75-minute active timer.`,
+      `${formTitle} has ${count} questions${duration ? ` and a ${formatDuration(duration)} active timer` : ''}.`,
       'Pausing stops active time. You may check one in-progress score, then submit final answers when you are ready.',
+      'Choose the question-by-question test, or add answers and approaches from text or audio files to a completed final submission for this exact test version.',
+      !batchIntakeAvailable
+        ? 'Batch submission is not available yet.'
+        : batchAnchor
+          ? `Batch submission will use your completed result from ${formatDateTime({ createdAt: firstDefined(batchAnchor.finalizedAt, batchAnchor.updatedAt, batchAnchor.createdAt) })}. It cannot change that official score.`
+          : 'Batch submission is not available for this test yet because this exact version has no completed final submission. The server does not accept file batches for a new or in-progress timed attempt.',
       ...(archiveDetail ? [archiveDetail] : [])
     ],
     actions: [
       { label: 'Cancel', className: 'button button-secondary', close: true },
-      { label: 'Start practice', className: 'button button-primary', handler: () => startAttempt(form) }
+      {
+        label: batchIntakeAvailable ? 'Batch submit files' : 'Batch submit files (not available yet)',
+        className: 'button button-secondary',
+        disabled: !batchIntakeAvailable,
+        handler: () => openBatchSubmissionForForm(form, batchAnchor)
+      },
+      { label: 'Question-by-question test', className: 'button button-primary', handler: () => startAttempt(form) }
     ]
   });
+}
+
+function confirmTimedPractice(form) {
+  const count = finiteNumber(firstDefined(form.questionCount, form.questions?.length), 25);
+  const duration = finiteNumber(form.durationMs)
+    || (finiteNumber(firstDefined(form.durationSeconds, form.duration, null)) || 0) * 1000;
+  openModal({
+    type: 'timed-practice-confirmation',
+    title: 'Start a new question-by-question test?',
+    paragraphs: [
+      `${String(firstDefined(form.title, form.name, 'This form'))} has ${count} questions${duration ? ` and a ${formatDuration(duration)} active timer` : ''}.`,
+      'Pausing stops active time. You may check one in-progress score, then submit final answers when you are ready.'
+    ],
+    actions: [
+      { label: 'Cancel', className: 'button button-secondary', close: true },
+      { label: 'Start test', className: 'button button-primary', handler: () => startAttempt(form) }
+    ]
+  });
+}
+
+async function openBatchSubmissionForForm(form, anchor = null) {
+  if (!batchIntakeAvailableForForm(form)) {
+    showError('Batch submission is not available yet.');
+    return;
+  }
+  const eligibleAnchor = anchor || batchAnchorForForm(form, state.attemptHistory);
+  if (!eligibleAnchor) {
+    showError(`Complete ${String(firstDefined(form?.title, form?.name, 'this test version'))} first, then choose batch submission from this menu.`);
+    return;
+  }
+  const returnFocus = state.lastFocused;
+  const main = document.getElementById('main-content');
+  hideModal({ force: true, restoreFocus: false });
+  const opened = await resumeAttempt(eligibleAnchor.id, eligibleAnchor);
+  if (!opened || elements.resultsView.hidden || !sameAttemptId(state.attempt, eligibleAnchor)
+      || !canAccessFinalReview(state.attempt)) {
+    focusSafeVisibleTarget(returnFocus, main);
+    return;
+  }
+  setBatchStatus('Choose text or audio files containing your answers and approaches.');
+  elements.batchLearningSection.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  elements.batchFiles.focus();
 }
 
 async function startAttempt(form) {
@@ -2912,16 +3099,17 @@ async function resumeAttempt(attemptId, historySummary = null, { skipSwitchFlush
       historySummary,
       { skipSwitchFlush: true }
     ));
-    if (!canSwitch) return;
+    if (!canSwitch) return false;
   }
   try {
     const response = await api.get(`${API_BASE}/attempts/${encodeURIComponent(String(attemptId))}`);
     if (historySummary?.resultsAvailable === true && isRecord(response?.attempt)) {
       response.attempt = { ...response.attempt, resultsAvailable: true };
     }
-    await openAttempt(response);
+    return await openAttempt(response);
   } catch (error) {
     handleError(error, 'Could not resume this practice test.');
+    return false;
   }
 }
 
@@ -2933,7 +3121,7 @@ async function openAttempt(payload, knownForm = null, { skipSwitchFlush = false 
       knownForm,
       { skipSwitchFlush: true }
     ));
-    if (!canSwitch) return null;
+    if (!canSwitch) return false;
   }
   clearAttemptState();
   if (knownForm?.id) state.formCache.set(formCacheKey(knownForm.id, knownForm.version), knownForm);
@@ -2943,8 +3131,7 @@ async function openAttempt(payload, knownForm = null, { skipSwitchFlush = false 
   // version is unpublished. Results and solutions are owner-gated API data;
   // they do not require re-fetching the public form first.
   if (canAccessFinalReview(attempt)) {
-    await showResults();
-    return;
+    return showResults();
   }
   await ensureQuestions(payload);
   if (!state.questions.length) throw new ApiError('This practice form contains no accessible questions.', { code: 'FORM_EMPTY' });
@@ -2958,6 +3145,7 @@ async function openAttempt(payload, knownForm = null, { skipSwitchFlush = false 
   startAttemptSync();
   document.getElementById('main-content').focus();
   if (normalizePhase(attempt) === 'LIMIT_NOTICE') openLimitNotice();
+  return true;
 }
 
 async function pauseAttempt() {
@@ -3145,7 +3333,8 @@ async function continueAfterLimit() {
 function openModal({ type = 'general', title, paragraphs = [], actions = [], dismissible = true }) {
   hideModal({ force: true, restoreFocus: false });
   state.lastFocused = document.activeElement;
-  state.modal = { type, dismissible };
+  const invocation = { type, dismissible, busy: false };
+  state.modal = invocation;
   elements.modalTitle.textContent = title;
   clearNode(elements.modalMessage);
   for (const paragraphText of paragraphs) {
@@ -3159,29 +3348,43 @@ function openModal({ type = 'general', title, paragraphs = [], actions = [], dis
     button.type = 'button';
     button.className = action.className || 'button button-secondary';
     button.textContent = action.label;
-    button.addEventListener('click', async () => {
-      if (action.close) {
-        hideModal();
-        return;
-      }
-      if (!action.handler) return;
-      setButtonBusy(button, true, 'Working…');
-      try {
-        await action.handler();
-      } finally {
-        if (!elements.modalBackdrop.hidden) setButtonBusy(button, false);
-      }
-    });
+    button.disabled = action.disabled === true;
+    if (!button.disabled) {
+      button.addEventListener('click', async () => {
+        if (action.close) {
+          hideModal();
+          return;
+        }
+        if (!action.handler) return;
+        const finishAction = beginModalAction(state, invocation, [
+          ...elements.modalActions.querySelectorAll('button'), elements.modalClose
+        ]);
+        if (!finishAction) return;
+        const originalLabel = button.textContent;
+        button.textContent = 'Working…';
+        try {
+          await action.handler();
+        } finally {
+          if (finishAction()) button.textContent = originalLabel;
+        }
+      });
+    }
     elements.modalActions.appendChild(button);
   }
+  elements.modalClose.disabled = false;
   elements.modalClose.hidden = !dismissible;
   elements.modalBackdrop.hidden = false;
-  window.setTimeout(() => (elements.modalActions.querySelector('button') || elements.modalClose).focus(), 0);
+  window.setTimeout(() => {
+    if (state.modal !== invocation) return;
+    const initial = elements.modalActions.querySelector('button:not([disabled])')
+      || (!elements.modalClose.hidden && !elements.modalClose.disabled ? elements.modalClose : null);
+    initial?.focus();
+  }, 0);
 }
 
 function hideModal({ force = false, restoreFocus = true } = {}) {
   if (!state.modal) return;
-  if (!state.modal.dismissible && !force) return;
+  if ((!state.modal.dismissible || state.modal.busy) && !force) return;
   elements.modalBackdrop.hidden = true;
   state.modal = null;
   if (restoreFocus && state.lastFocused?.focus) state.lastFocused.focus();
@@ -3442,7 +3645,36 @@ function batchItemPath(batchId) {
   return `${batchCollectionPath()}/${opaquePathPart(batchId)}`;
 }
 
+const BATCH_INTAKE_UNAVAILABLE_MESSAGE = 'Batch submission is not available yet.';
+
+function currentBatchIntakeAvailable() {
+  return batchIntakeAvailableForAttempt(state.attempt, state.forms);
+}
+
+function setBatchStatus(message = '') {
+  const parts = [];
+  if (!currentBatchIntakeAvailable()) parts.push(BATCH_INTAKE_UNAVAILABLE_MESSAGE);
+  if (message) parts.push(String(message));
+  elements.batchStatus.textContent = parts.join(' ');
+}
+
+function syncBatchIntakeControls() {
+  const available = currentBatchIntakeAvailable();
+  elements.batchFiles.disabled = !available;
+  elements.batchSubmitButton.disabled = !available;
+  if (!available) {
+    elements.batchUploadForm.reset();
+    clearNode(elements.batchSelectedFiles);
+  }
+  setBatchStatus();
+  return available;
+}
+
 function renderSelectedBatchFiles() {
+  if (!currentBatchIntakeAvailable()) {
+    syncBatchIntakeControls();
+    return;
+  }
   clearNode(elements.batchSelectedFiles);
   const files = Array.from(elements.batchFiles.files || []);
   if (!files.length) return;
@@ -3598,9 +3830,23 @@ function appendBatchMapping(batch, container) {
   confirm.type = 'submit';
   confirm.className = 'button button-primary';
   confirm.textContent = 'Confirm reviewed mapping';
+  const intakeAvailable = currentBatchIntakeAvailable();
+  if (!intakeAvailable) {
+    const unavailable = document.createElement('p');
+    unavailable.id = `batch-${batch.id}-confirmation-unavailable`;
+    unavailable.className = 'muted';
+    unavailable.textContent = `${BATCH_INTAKE_UNAVAILABLE_MESSAGE} You can still review or delete this existing file submission.`;
+    confirm.disabled = true;
+    confirm.setAttribute('aria-describedby', unavailable.id);
+    form.appendChild(unavailable);
+  }
   form.appendChild(confirm);
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (!currentBatchIntakeAvailable()) {
+      syncBatchIntakeControls();
+      return;
+    }
     const context = currentBatchContext(batch.id);
     if (!context || !isCurrentBatchContext(context)) return;
     const decisions = new Map();
@@ -3780,7 +4026,7 @@ async function loadLearningBatch(context) {
     if (['DRAFT', 'PROCESSING'].includes(batch.status)) scheduleBatchPoll(context);
   } catch (error) {
     if (!isCurrentBatchContext(context)) return;
-    elements.batchStatus.textContent = 'Could not refresh file processing. Use Learning history or reopen this result to retry.';
+    setBatchStatus('Could not refresh file processing. Use Learning history or reopen this result to retry.');
     scheduleBatchPoll(context);
   }
 }
@@ -3805,12 +4051,16 @@ async function loadLatestLearningBatch() {
   } catch {
     if (String(state.attempt?.id || '') !== requestedAttemptId || elements.resultsView.hidden
         || state.batchEpoch !== requestedEpoch) return;
-    elements.batchStatus.textContent = 'Existing file submissions could not be loaded. Your final result is unaffected.';
+    setBatchStatus('Existing file submissions could not be loaded. Your final result is unaffected.');
   }
 }
 
 async function submitBatchUpload(event) {
   event.preventDefault();
+  if (!currentBatchIntakeAvailable()) {
+    syncBatchIntakeControls();
+    return;
+  }
   const files = Array.from(elements.batchFiles.files || []);
   try {
     batchFileDescriptors(files);
@@ -3827,7 +4077,7 @@ async function submitBatchUpload(event) {
   };
   if (!context.attemptId) return;
   setButtonBusy(elements.batchSubmitButton, true, 'Uploading…');
-  elements.batchStatus.textContent = '';
+  setBatchStatus();
   try {
     const batch = await submitLearningBatchFiles(api, state.attempt?.id, files, {
       onProgress(progress) {
@@ -3843,7 +4093,7 @@ async function submitBatchUpload(event) {
           SUBMITTING: 'Submitting files for transcription and decomposition…',
           PROCESSING: 'Files uploaded. Processing has started.'
         };
-        elements.batchStatus.textContent = messages[progress.phase] || '';
+        setBatchStatus(messages[progress.phase] || '');
       }
     });
     if (!batchMutationContextMatches(context, {
@@ -3870,14 +4120,17 @@ async function submitBatchUpload(event) {
       visible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
     })) return;
     handleError(error, 'Could not upload this file submission.');
-    elements.batchStatus.textContent = 'Upload did not finish. Reopen this result to inspect any durable server-side progress before retrying.';
+    setBatchStatus('Upload did not finish. Reopen this result to inspect any durable server-side progress before retrying.');
   } finally {
     if (batchMutationContextMatches(context, {
       attemptId: state.attempt?.id,
       activeBatchId: state.activeBatchId,
       epoch: state.batchEpoch,
       visible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
-    })) setButtonBusy(elements.batchSubmitButton, false);
+    })) {
+      setButtonBusy(elements.batchSubmitButton, false);
+      if (!currentBatchIntakeAvailable()) syncBatchIntakeControls();
+    }
   }
 }
 
@@ -4820,7 +5073,7 @@ function renderSolutions(solutions) {
 async function showResults() {
   if (!canAccessFinalReview(state.attempt)) {
     showError('Final results are not available until final submission.');
-    return;
+    return false;
   }
   stopAttemptSync();
   stopLearningReportPolling();
@@ -4838,7 +5091,7 @@ async function showResults() {
   elements.scoreDetails.textContent = 'Retrieving your final score and solutions.';
   clearNode(elements.submissionHistory); clearNode(elements.resultsQuestions); clearNode(elements.solutionsList);
   clearNode(elements.batchWorkspace); clearNode(elements.batchSelectedFiles);
-  elements.batchStatus.textContent = '';
+  syncBatchIntakeControls();
   renderLearningAnalysisStatus();
   try {
     // The exported fetchFinalReview guards this request; do not bypass it.
@@ -4857,10 +5110,12 @@ async function showResults() {
     void loadLearningReport({ quiet: true });
     void loadLatestLearningBatch();
     document.getElementById('main-content').focus();
+    return true;
   } catch (error) {
     elements.finalScore.textContent = 'Unavailable';
     elements.scoreDetails.textContent = 'Could not load final review. Use “My tests” and reopen this attempt to retry.';
     handleError(error, 'Could not load final results.');
+    return false;
   }
 }
 
@@ -4976,7 +5231,7 @@ async function showDashboard({ skipSwitchFlush = false } = {}) {
   stopAttemptSync();
   showOnly(elements.dashboardView);
   await loadForms();
-  document.getElementById('main-content').focus();
+  if (!elements.dashboardView.hidden && !state.modal) document.getElementById('main-content').focus();
 }
 
 async function logout() {
@@ -5113,6 +5368,11 @@ async function bootstrap() {
   elements = getElements();
   api = new ApiClient({ onCsrfToken: setCsrfToken, onUnauthorized: handleUnauthorized });
   bindEvents();
+  const requestedUrl = new URL(window.location.href);
+  state.practiceEntryIntent = parsePracticeEntryIntent(requestedUrl.href, requestedUrl.origin);
+  if (requestedUrl.searchParams.has('form') || requestedUrl.searchParams.has('mode')) {
+    window.history.replaceState(window.history.state, '', `${requestedUrl.pathname}${requestedUrl.hash}`);
+  }
   // If MathJax completed before this module registered its ready listener,
   // queue a pass after bootstrap.  If it completes later, the ready listener
   // below re-typesets the already rendered current question/results instead.
