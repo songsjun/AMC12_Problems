@@ -88,7 +88,9 @@ Each stage has its own tests, independent review, reflection, and Git commit.
 - `ADR-009`: Tutor v2 keeps Gateway context hashes separate from pinned
   analysis/report lineage and requires an explicit fork before history loss.
 - `TUTOR_PERSISTENCE_DEPLOYMENT.md`: maintenance-window procedure and rollback
-  boundary for migration 011.
+  boundary for migrations 011/012.
+- `reviews/phase-6c-tutor-store.md`: Store adapter, lease recovery, safe read
+  projection, PostgreSQL concurrency evidence, and remaining HTTP/worker gates.
 
 ## Module direction
 

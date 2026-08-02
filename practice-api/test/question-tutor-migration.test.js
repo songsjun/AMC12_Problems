@@ -1,8 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import pg from 'pg';
 
 const migrationUrl = new URL('../migrations/011_question_tutor_persistence.sql', import.meta.url);
+const recoveryMigrationUrl = new URL('../migrations/012_tutor_expired_lease_recovery.sql', import.meta.url);
+const connectionString = process.env.AMC12_TEST_DATABASE_URL;
+const { Pool } = pg;
 
 test('Tutor persistence migration freezes immutable lineage and bounded thread/job state', async () => {
   const sql = await readFile(migrationUrl, 'utf8');
@@ -76,3 +81,44 @@ test('Tutor persistence migration freezes immutable lineage and bounded thread/j
   assert.match(sql, /tutor_source_generation_is_live/);
   assert.doesNotMatch(sql, /ON DELETE CASCADE/);
 });
+
+test('migration 012 replaces the immutable 011 guard for bounded expired-lease recovery',
+  async () => {
+    const oldSql = await readFile(migrationUrl, 'utf8');
+    const recoverySql = await readFile(recoveryMigrationUrl, 'utf8');
+    assert.doesNotMatch(oldSql, /Expired Tutor lease permits only bounded safe recovery/);
+    assert.match(recoverySql, /CREATE OR REPLACE FUNCTION amc_practice\.guard_tutor_job_transition/);
+    assert.match(recoverySql, /Expired Tutor lease permits only bounded safe recovery/);
+    assert.match(recoverySql, /NEW\.outcome_code = 'ATTEMPTS_EXHAUSTED'/);
+    assert.match(recoverySql, /NEW\.delivery_disposition = OLD\.delivery_disposition/);
+  });
+
+test('migration 012 upgrades an already-installed 011 guard in PostgreSQL',
+  { skip: !connectionString }, async (t) => {
+    const pool = new Pool({ connectionString, max: 2 });
+    const schema = `amc_tutor_upgrade_${randomUUID().replaceAll('-', '')}`;
+    t.after(async () => {
+      await pool.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);
+      await pool.end();
+    });
+    await pool.query(`CREATE SCHEMA ${schema}`);
+    const oldSql = await readFile(migrationUrl, 'utf8');
+    const oldFunction = oldSql.match(
+      /CREATE FUNCTION amc_practice\.guard_tutor_job_transition\(\)[\s\S]*?\n\$\$;/
+    )?.[0];
+    assert.ok(oldFunction, '011 must retain its original guard definition');
+    await pool.query(oldFunction.replaceAll('amc_practice', schema));
+    let definition = (await pool.query(
+      `SELECT pg_get_functiondef('${schema}.guard_tutor_job_transition()'::regprocedure) AS body`
+    )).rows[0].body;
+    assert.match(definition, /Expired Tutor lease cannot dispatch or publish a worker result/);
+
+    const recoverySql = (await readFile(recoveryMigrationUrl, 'utf8'))
+      .replaceAll('amc_practice', schema);
+    await pool.query(recoverySql);
+    definition = (await pool.query(
+      `SELECT pg_get_functiondef('${schema}.guard_tutor_job_transition()'::regprocedure) AS body`
+    )).rows[0].body;
+    assert.doesNotMatch(definition, /Expired Tutor lease cannot dispatch or publish a worker result/);
+    assert.match(definition, /Expired Tutor lease permits only bounded safe recovery/);
+  });

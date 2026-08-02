@@ -101,8 +101,9 @@ preflight.
 
 SQL checks cannot recompute the application's canonical JSON/content hashes or
 prove that an outbound provider call occurred only after the dispatch-intent
-transaction committed. BOLA-safe reads, lease-fenced worker orchestration, and
-privacy-tombstone behavior remain blocked until both stores, the HTTP service,
-and the worker have adversarial tests. The schema deliberately stores no raw
-provider request/response envelope; approved context and student evidence exist
-only in the pinned snapshot and final messages.
+transaction committed. Phase 6c adds the Memory/PostgreSQL Store enforcement,
+student-safe projection, lease recovery, and privacy-tombstone tests described
+in `phase-6c-tutor-store.md`. HTTP publication and provider dispatch still wait
+for the server-owned atomic use case and worker gates in that review. The schema
+deliberately stores no raw provider request/response envelope; approved context
+and student evidence exist only in the pinned snapshot and final messages.

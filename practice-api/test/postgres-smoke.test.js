@@ -142,7 +142,8 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     '008_open_review.sql',
     '009_learning_history_read_model.sql',
     '010_analysis_contract_v2.sql',
-    '011_question_tutor_persistence.sql'
+    '011_question_tutor_persistence.sql',
+    '012_tutor_expired_lease_recovery.sql'
   ]);
 
   const tutorTables = await store.pool.query(

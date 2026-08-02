@@ -8,6 +8,11 @@ ADR-009. It also adds composite candidate keys to existing learning tables so
 PostgreSQL, rather than application convention, checks complete owner and
 version lineage.
 
+Migration `012_tutor_expired_lease_recovery.sql` replaces only the Tutor job
+transition function so an expired, known-safe final attempt can become
+`FAILED / ATTEMPTS_EXHAUSTED`. Migration 011 is immutable after release: never
+edit it to obtain the 012 behavior.
+
 The migration is additive and an old application binary does not use the new
 tables. It still creates unique indexes on existing tables, so run it in a
 maintenance window rather than allowing unpredictable production write stalls.
@@ -30,23 +35,27 @@ maintenance window rather than allowing unpredictable production write stalls.
 
 ## Cutover and verification
 
-1. Run the normal migration runner exactly once and verify 011 is recorded in
-   `amc_practice.schema_migrations`.
+1. Run the normal migration runner exactly once and verify 011 and then 012 are
+   recorded in `amc_practice.schema_migrations` in filename order.
 2. Verify the four `learning_tutor_*` tables, all nineteen critical lineage
    constraints, and all thirteen application triggers listed in the PostgreSQL
    smoke test.
-3. Start an application release that understands 011. Do not enable the Tutor
+3. Verify an upgrade database with 011 already recorded accepts 012 without
+   changing the recorded 011 checksum. Exercise one expired safe final attempt
+   and verify it terminates rather than remaining capacity-consuming work.
+4. Start an application release that understands 011/012. Do not enable the Tutor
    HTTP routes or Tutor worker until their own release gates have passed.
-4. Create one thread and one successful turn using a test student. Verify a
+5. Create one thread and one successful turn using a test student. Verify a
    cross-owner snapshot, a second active job, an update to a snapshot/message,
    and a terminal-job update are rejected.
-5. Confirm logs contain IDs and stable outcome codes only—never student
+6. Confirm logs contain IDs and stable outcome codes only—never student
    reasoning, approved solution bodies, prompt bodies, cookies, or bearer
    tokens.
 
 All Tutor write transactions acquire aggregate locks in the order `thread ->
-session -> learning submission -> open-review release`. New maintenance and
-privacy workflows must preserve that order.
+job -> session -> learning submission -> open-review release`. Claim uses a
+bounded thread-first `SKIP LOCKED` scan; new maintenance and privacy workflows
+must preserve that order.
 
 ## Rollback boundary
 
@@ -59,21 +68,26 @@ If migration execution fails, PostgreSQL rolls back the migration transaction.
 Investigate the exact constraint or lock failure, restore service with the old
 binary if necessary, and retry only after a new maintenance preflight.
 
+Rolling an application back after 012 is safe because 012 broadens only the
+expired-safe state transition required by the Store. Do not restore the 011
+function text after 012 has been recorded: doing so can strand final-attempt
+jobs and consume capacity indefinitely.
+
 ## Operational gates left for later phases
 
-- PostgreSQL enforces session/release authorization, deletion-generation
-  fences, and atomic request/head ledgers. Store code must additionally use
-  current, unexpired lease tokens on every worker write and expose dispatch
-  intent as a transaction that has committed before it returns.
+- PostgreSQL and Store adapters now enforce session/release authorization,
+  deletion-generation fences, current lease tokens, safe recovery, and atomic
+  request/head ledgers. The worker must call the provider only after the
+  dispatch-intent Store transaction returned success.
 - Snapshot JSON is reconstructed from authoritative rows in PostgreSQL, but
   canonical snapshot/request/message hashes cannot be recomputed by SQL. Store
   code must revalidate them on every trusted read/write boundary.
 - A `MAY_HAVE_BEEN_DELIVERED` row is never enough evidence that the provider
   was not called. Lease recovery must terminate it as `DELIVERY_UNKNOWN`; only
   explicit student action may create the separately counted retry job.
-- Tombstoning must immediately remove authorization to read or dispatch a
-  thread. Physical retention/deletion remains governed by the product privacy
-  policy and must be verified in system acceptance.
+- Tombstoning now immediately removes Store authorization to read or dispatch
+  a thread. HTTP DTO/BOLA behavior and physical retention/deletion remain
+  release gates for system acceptance.
 - Purging transient batch uploads/transcripts does not tombstone a committed
   learning version or its Tutor history. Tutor lifetime follows the learning
   submission generation; raw batch work keeps its separate cleanup generation.

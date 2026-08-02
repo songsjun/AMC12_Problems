@@ -8,6 +8,32 @@ import {
   isValidAnalysisScoringSnapshot
 } from './infrastructure/amc-inference-contract.js';
 import { ATTEMPT_MODE, OPEN_REVIEW_STATUS, openReviewReleaseHash } from './open-review/domain.js';
+import {
+  TUTOR_MAX_ACTIVE_JOBS_PER_STUDENT,
+  TutorStoreError,
+  assertTutorEnqueueCapacity,
+  buildAndValidateTutorRequest,
+  nextTutorThreadStatus,
+  projectTutorThreadBundle,
+  tutorDispatchMetadata,
+  tutorMessageHash,
+  tutorRequestHash,
+  tutorSnapshotSemanticHash,
+  tutorThreadCreationRequestHash,
+  validateTutorClaimOptions,
+  validateTutorGatewaySuccess,
+  validateTutorQueueOptions,
+  validateTutorRetryAfterMs,
+  validateTutorSnapshotRecord
+} from './question-tutor/store-contract.js';
+import {
+  TUTOR_CONTRACT_VERSION,
+  TUTOR_MAX_HISTORY_BYTES,
+  buildTutorTurnRequest,
+  computeTutorContextHash,
+  computeTutorContextReleaseHash,
+  tutorSha256
+} from './question-tutor/domain.js';
 
 const { Pool } = pg;
 
@@ -15,6 +41,315 @@ const clone = (value) => structuredClone(value);
 
 function number(value) {
   return typeof value === 'number' ? value : Number(value);
+}
+
+function mapTutorSnapshot(row) {
+  return row && {
+    id: row.id, studentId: row.student_id,
+    learningSubmissionId: row.learning_submission_id,
+    learningSubmissionVersionId: row.learning_submission_version_id,
+    versionNumber: number(row.version_number), formId: row.form_id,
+    formVersion: row.form_version, sourceType: row.source_type,
+    questionNumber: number(row.question_number), contextSetId: row.context_set_id,
+    questionContentHash: row.question_content_hash,
+    analysisRunId: row.analysis_run_id,
+    analysisContractVersion: row.analysis_contract_version,
+    analysisQuestionInputHash: row.analysis_question_input_hash,
+    analysisQuestionContextHash: row.analysis_question_context_hash,
+    reportId: row.report_id, reportHash: row.report_hash,
+    evidenceHash: row.evidence_hash, questionResponseHash: row.question_response_hash,
+    scoringSnapshotHash: row.scoring_snapshot_hash, scoringOrigin: row.scoring_origin,
+    officialSubmissionId: row.official_submission_id,
+    batchResultId: row.batch_result_id,
+    initialDeletionGeneration: number(row.initial_deletion_generation),
+    contextArtifactSha256: row.context_artifact_sha256,
+    contextReleaseHash: row.context_release_hash, payloadSchema: row.payload_schema,
+    snapshotPayload: row.snapshot_payload, snapshotHash: row.snapshot_hash,
+    threadLineageHash: row.thread_lineage_hash, createdAt: row.created_at
+  };
+}
+
+function mapTutorThread(row) {
+  return row && {
+    id: row.id, studentId: row.student_id, snapshotId: row.snapshot_id,
+    learningSubmissionId: row.learning_submission_id,
+    learningSubmissionVersionId: row.learning_submission_version_id,
+    questionNumber: number(row.question_number), snapshotHash: row.snapshot_hash,
+    threadLineageHash: row.thread_lineage_hash,
+    tutorContractVersion: row.tutor_contract_version, contextHash: row.context_hash,
+    status: row.status, successfulTurnCount: number(row.successful_turn_count),
+    requestCount: number(row.request_count),
+    successfulHistoryBytes: number(row.successful_history_bytes),
+    threadRevision: number(row.thread_revision),
+    initialDeletionGeneration: number(row.initial_deletion_generation),
+    deletionGeneration: number(row.deletion_generation),
+    forkedFromThreadId: row.forked_from_thread_id,
+    forkedFromTurnJobId: row.forked_from_turn_job_id,
+    creationIdempotencyKeyHash: row.creation_idempotency_key_hash,
+    creationRequestHash: row.creation_request_hash,
+    createdAt: row.created_at, updatedAt: row.updated_at,
+    closedAt: row.closed_at, tombstonedAt: row.tombstoned_at
+  };
+}
+
+function mapTutorMessage(row) {
+  return row && {
+    id: row.id, threadId: row.thread_id, studentId: row.student_id,
+    role: row.role, contentMarkdown: row.content_markdown,
+    contentSha256: row.content_sha256, sourceTurnJobId: row.source_turn_job_id,
+    createdAt: row.created_at
+  };
+}
+
+function mapTutorJob(row) {
+  return row && {
+    id: row.id, threadId: row.thread_id, studentId: row.student_id,
+    requestMessageId: row.request_message_id, requestOrdinal: number(row.request_ordinal),
+    turnNumber: number(row.turn_number), retryOfJobId: row.retry_of_job_id,
+    retryAuthorization: row.retry_authorization,
+    responseMessageId: row.response_message_id, replySha256: row.reply_sha256,
+    authorizedSessionId: row.authorized_session_id,
+    idempotencyKeyHash: row.idempotency_key_hash, requestHash: row.request_hash,
+    correlationId: row.correlation_id, snapshotHash: row.snapshot_hash,
+    contextHash: row.context_hash, historyHash: row.history_hash,
+    inputHash: row.input_hash, threadLineageHash: row.thread_lineage_hash,
+    tutorContractVersion: row.tutor_contract_version, status: row.status,
+    priority: number(row.priority), attemptCount: number(row.attempt_count),
+    maxAttempts: number(row.max_attempts), availableAt: row.available_at,
+    leaseOwner: row.lease_owner, leaseToken: row.lease_token,
+    leaseExpiresAt: row.lease_expires_at, providerInvoked: row.provider_invoked,
+    deliveryDisposition: row.delivery_disposition, provider: row.provider,
+    requestedModel: row.requested_model, responseModel: row.response_model,
+    promptVersion: row.prompt_version,
+    responseSchemaVersion: row.response_schema_version,
+    usage: row.usage, latencyMs: row.latency_ms === null ? null : number(row.latency_ms),
+    outcomeCode: row.outcome_code, errorClass: row.error_class,
+    retryable: row.retryable, deletionGeneration: number(row.deletion_generation),
+    createdAt: row.created_at, startedAt: row.started_at,
+    completedAt: row.completed_at, updatedAt: row.updated_at
+  };
+}
+
+function postgresTutorPriorTurns(jobs, messages, successfulTurnCount) {
+  const byId = new Map(messages.map((message) => [message.id, message]));
+  const successful = jobs.filter((job) => job.status === 'SUCCEEDED'
+      && job.turnNumber <= successfulTurnCount)
+    .sort((left, right) => left.turnNumber - right.turnNumber);
+  if (successful.length !== successfulTurnCount) throw new TutorStoreError('INCOMPLETE_TUTOR_HISTORY');
+  return successful.map((job, index) => {
+    const request = byId.get(job.requestMessageId);
+    const response = byId.get(job.responseMessageId);
+    if (job.turnNumber !== index + 1 || !request || !response
+        || request.contentSha256 !== tutorMessageHash(request.contentMarkdown)
+        || response.contentSha256 !== tutorMessageHash(response.contentMarkdown)
+        || response.contentSha256 !== job.replySha256) {
+      throw new TutorStoreError('INCOMPLETE_TUTOR_HISTORY');
+    }
+    return { turnNumber: job.turnNumber, userMessage: request.contentMarkdown,
+      assistantReply: response.contentMarkdown };
+  });
+}
+
+async function loadTutorAggregateUsing(queryable, threadId, {
+  lock = false, share = false, studentId = null
+} = {}) {
+  const lockClause = lock ? ' FOR UPDATE' : share ? ' FOR SHARE' : '';
+  const threadResult = await queryable.query(
+    `SELECT * FROM amc_practice.learning_tutor_threads
+     WHERE id = $1${studentId === null ? '' : ' AND student_id = $2'}${lockClause}`,
+    studentId === null ? [threadId] : [threadId, studentId]
+  );
+  if (!threadResult.rowCount) return { thread: null, snapshot: null, jobs: [], messages: [] };
+  const thread = mapTutorThread(threadResult.rows[0]);
+  const snapshotResult = await queryable.query(
+    'SELECT * FROM amc_practice.learning_tutor_snapshots WHERE id = $1', [thread.snapshotId]
+  );
+  const jobsResult = await queryable.query(
+    'SELECT * FROM amc_practice.learning_tutor_turn_jobs WHERE thread_id = $1 ORDER BY request_ordinal',
+    [threadId]
+  );
+  const messagesResult = await queryable.query(
+    'SELECT * FROM amc_practice.learning_tutor_messages WHERE thread_id = $1 ORDER BY created_at, id',
+    [threadId]
+  );
+  return {
+    thread, snapshot: mapTutorSnapshot(snapshotResult.rows[0]),
+    jobs: jobsResult.rows.map(mapTutorJob), messages: messagesResult.rows.map(mapTutorMessage)
+  };
+}
+
+async function assertPostgresTutorSource(queryable, snapshot, {
+  requireLive = true, lockLive = true
+} = {}) {
+  validateTutorSnapshotRecord(snapshot);
+  const source = await queryable.query(
+    `SELECT submission.source_type, submission.open_review_release_id,
+            submission.official_submission_id, submission.deletion_generation,
+            version.version_number, version.evidence_hash, version.context_set_id,
+            context.artifact_set_hash, context.release_manifest_hash,
+            context.release_content_hash, context.release_question_bundle_hash,
+            context.approval_authority_id, context.approval_receipt_set_hash,
+            question.question_content_hash, question.prompt_markdown, question.choices,
+            release.release_hash AS open_review_release_hash,
+            run.id AS analysis_run_id,
+            run.analysis_contract_version, run.deletion_generation AS run_generation,
+            analysis.question_input_hash, analysis.question_context_hash,
+            report.id AS report_id, report.report_hash,
+            response.selected_option::text AS response_selected_option,
+            response.reasoning_text, response.answer_origin,
+            CASE WHEN response.answer_origin = 'OFFICIAL_FINAL'
+              THEN official.selected_option::text ELSE batch.selected_option::text END
+              AS scoring_selected_option,
+            CASE WHEN response.answer_origin = 'OFFICIAL_FINAL'
+              THEN official.correct_option::text ELSE batch.correct_option::text END
+              AS canonical_answer,
+            CASE WHEN response.answer_origin = 'OFFICIAL_FINAL'
+              THEN official.accepted_options ELSE batch.accepted_options END AS accepted_options,
+            CASE WHEN response.answer_origin = 'OFFICIAL_FINAL'
+              THEN official.is_scored ELSE batch.is_scored END AS is_scored,
+            CASE WHEN response.answer_origin = 'OFFICIAL_FINAL'
+              THEN official.is_correct ELSE batch.is_correct END AS is_correct,
+            CASE
+              WHEN $5 AND $15 THEN amc_practice.tutor_source_generation_is_live($1,$2,$3,$4)
+              WHEN $5 THEN submission.lifecycle_status = 'COMMITTED'
+                AND submission.deletion_generation = $4
+                AND amc_practice.learning_entitlement_allows(submission.id, 'EXISTING_WORK')
+              ELSE true
+            END AS source_is_live
+     FROM amc_practice.learning_submissions submission
+     JOIN amc_practice.learning_submission_versions version
+       ON version.id = $2 AND version.learning_submission_id = submission.id
+     JOIN amc_practice.approved_context_sets context ON context.id = $6
+     JOIN amc_practice.approved_context_questions question
+       ON question.context_set_id = context.id AND question.question_number = $7
+     JOIN amc_practice.learning_analysis_runs run ON run.id = $10
+       AND run.learning_submission_version_id = version.id
+     JOIN amc_practice.learning_question_analyses analysis
+       ON analysis.analysis_run_id = run.id AND analysis.question_number = $7
+     JOIN amc_practice.learning_reports report ON report.id = $11
+       AND report.analysis_run_id = run.id
+       AND report.learning_submission_version_id = version.id
+     JOIN amc_practice.learning_question_responses response
+       ON response.learning_submission_version_id = version.id
+       AND response.question_number = $7 AND response.answer_origin = $12
+     LEFT JOIN amc_practice.submission_answers official
+       ON official.submission_id = $13 AND official.question_number = $7
+     LEFT JOIN amc_practice.learning_batch_result_items batch
+       ON batch.batch_result_id = $14 AND batch.question_number = $7
+     LEFT JOIN amc_practice.open_review_releases release
+       ON release.id = submission.open_review_release_id
+     WHERE submission.id = $1 AND submission.student_id = $3
+       AND submission.form_id = $8 AND submission.form_version = $9
+       AND context.form_id = $8 AND context.form_version = $9`,
+    [snapshot.learningSubmissionId, snapshot.learningSubmissionVersionId, snapshot.studentId,
+      snapshot.initialDeletionGeneration, requireLive, snapshot.contextSetId,
+      snapshot.questionNumber, snapshot.formId, snapshot.formVersion,
+      snapshot.analysisRunId, snapshot.reportId, snapshot.scoringOrigin,
+      snapshot.officialSubmissionId, snapshot.batchResultId, lockLive]
+  );
+  if (!source.rowCount || !source.rows[0].source_is_live) {
+    throw new TutorStoreError('TUTOR_SOURCE_NOT_LIVE');
+  }
+  const row = source.rows[0];
+  const solutionResult = await queryable.query(
+    `SELECT artifact_solution_id, title, body_markdown, body_sha256, source_sha256,
+            reviewer_id, reviewed_at, rights_status, authority_receipt_id,
+            authority_receipt_status, method_tags, quality_flags
+     FROM amc_practice.approved_context_solutions
+     WHERE context_set_id = $1 AND question_number = $2
+       AND model_eligible AND authority_receipt_status = 'active'
+     ORDER BY solution_position`, [snapshot.contextSetId, snapshot.questionNumber]
+  );
+  const contextReleaseHash = computeTutorContextReleaseHash({
+    sourceType: row.source_type,
+    formId: snapshot.formId,
+    formVersion: snapshot.formVersion,
+    manifestHash: row.release_manifest_hash,
+    contentHash: row.release_content_hash,
+    questionBundleHash: row.release_question_bundle_hash,
+    contextSetId: snapshot.contextSetId,
+    contextArtifactSha256: row.artifact_set_hash,
+    approvalAuthorityId: row.approval_authority_id,
+    approvalReceiptSetHash: row.approval_receipt_set_hash,
+    openReviewReleaseHash: row.source_type === 'OPEN_REVIEW' ? row.open_review_release_hash : null
+  });
+  const responseHash = canonicalHash({
+    questionNumber: snapshot.questionNumber,
+    selectedOption: row.response_selected_option,
+    reasoningText: row.reasoning_text,
+    answerOrigin: row.answer_origin
+  });
+  const scoring = {
+    isScored: row.is_scored,
+    canonicalAnswer: row.canonical_answer,
+    acceptedOptions: row.accepted_options,
+    studentAnswerIsCorrect: row.is_correct,
+    selectedOption: row.scoring_selected_option
+  };
+  const expectedChoices = ['A', 'B', 'C', 'D', 'E'].map((label) => ({
+    label, textMarkdown: row.choices[label]
+  }));
+  const expectedSolutions = solutionResult.rows.map((solution) => ({
+    solutionId: solution.artifact_solution_id,
+    approvalStatus: 'APPROVED', modelEligible: true,
+    title: solution.title, markdown: solution.body_markdown,
+    bodySha256: solution.body_sha256, sourceSha256: solution.source_sha256,
+    reviewerId: solution.reviewer_id,
+    reviewedAt: solution.reviewed_at instanceof Date
+      ? solution.reviewed_at.toISOString() : solution.reviewed_at,
+    rightsStatus: solution.rights_status,
+    authorityReceiptId: solution.authority_receipt_id,
+    authorityReceiptStatus: solution.authority_receipt_status,
+    methodTags: solution.method_tags, qualityFlags: solution.quality_flags
+  }));
+  const question = snapshot.snapshotPayload.question;
+  if (snapshot.sourceType !== row.source_type
+      || snapshot.versionNumber !== number(row.version_number)
+      || snapshot.evidenceHash !== row.evidence_hash
+      || snapshot.initialDeletionGeneration !== number(row.deletion_generation)
+      || snapshot.initialDeletionGeneration !== number(row.run_generation)
+      || snapshot.analysisRunId !== row.analysis_run_id
+      || snapshot.analysisContractVersion !== row.analysis_contract_version
+      || snapshot.analysisQuestionInputHash !== row.question_input_hash
+      || snapshot.analysisQuestionContextHash !== row.question_context_hash
+      || snapshot.reportId !== row.report_id || snapshot.reportHash !== row.report_hash
+      || snapshot.questionResponseHash !== responseHash
+      || snapshot.scoringSnapshotHash !== canonicalHash(scoring)
+      || snapshot.scoringOrigin !== row.answer_origin
+      || snapshot.officialSubmissionId !== (snapshot.scoringOrigin === 'OFFICIAL_FINAL'
+        ? row.official_submission_id : null)
+      || (snapshot.scoringOrigin === 'OFFICIAL_FINAL' && snapshot.batchResultId !== null)
+      || (snapshot.scoringOrigin === 'BATCH_CONFIRMED' && !snapshot.batchResultId)
+      || snapshot.contextArtifactSha256 !== row.artifact_set_hash
+      || snapshot.contextReleaseHash !== contextReleaseHash
+      || snapshot.questionContentHash !== row.question_content_hash
+      || question.questionId !== `${snapshot.formId}:q:${snapshot.questionNumber}`
+      || question.promptMarkdown !== row.prompt_markdown
+      || canonicalHash(question.choices) !== canonicalHash(expectedChoices)
+      || question.studentAnswer !== row.response_selected_option
+      || question.studentReasoning !== (row.reasoning_text || null)
+      || question.isScored !== scoring.isScored
+      || question.officialAnswer !== scoring.canonicalAnswer
+      || canonicalHash(question.acceptedOptions) !== canonicalHash(scoring.acceptedOptions)
+      || canonicalHash(question.solutions) !== canonicalHash(expectedSolutions)) {
+    throw new TutorStoreError('TUTOR_SOURCE_LINEAGE_MISMATCH');
+  }
+  return row;
+}
+
+async function withPostgresTransaction(pool, work) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await work(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 function mapAnalysisScoringSnapshot(row) {
@@ -4142,6 +4477,894 @@ export class PostgresStore {
     } finally {
       client.release();
     }
+  }
+
+  async createTutorSnapshot(snapshot) {
+    const validated = validateTutorSnapshotRecord(snapshot);
+    try {
+      return await withPostgresTransaction(this.pool, async (client) => {
+        await assertPostgresTutorSource(client, validated);
+        const inserted = await client.query(
+        `INSERT INTO amc_practice.learning_tutor_snapshots
+         (id, student_id, learning_submission_id, learning_submission_version_id,
+          version_number, form_id, form_version, source_type, question_number,
+          context_set_id, question_content_hash, analysis_run_id, analysis_contract_version,
+          analysis_question_input_hash, analysis_question_context_hash, report_id, report_hash,
+          evidence_hash, question_response_hash, scoring_snapshot_hash, scoring_origin,
+          official_submission_id, batch_result_id, initial_deletion_generation,
+          context_artifact_sha256, context_release_hash, payload_schema, snapshot_payload,
+          snapshot_hash, thread_lineage_hash, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,
+                 $19,$20,$21,$22,$23,$24,$25,$26,$27,$28::jsonb,$29,$30,$31)
+         ON CONFLICT (id) DO NOTHING RETURNING *`,
+        [validated.id, validated.studentId, validated.learningSubmissionId,
+          validated.learningSubmissionVersionId, validated.versionNumber,
+          validated.formId, validated.formVersion, validated.sourceType,
+          validated.questionNumber, validated.contextSetId, validated.questionContentHash,
+          validated.analysisRunId, validated.analysisContractVersion,
+          validated.analysisQuestionInputHash, validated.analysisQuestionContextHash,
+          validated.reportId, validated.reportHash, validated.evidenceHash,
+          validated.questionResponseHash, validated.scoringSnapshotHash,
+          validated.scoringOrigin, validated.officialSubmissionId,
+          validated.batchResultId, validated.initialDeletionGeneration,
+          validated.contextArtifactSha256, validated.contextReleaseHash,
+          validated.payloadSchema, JSON.stringify(validated.snapshotPayload),
+          validated.snapshotHash, validated.threadLineageHash,
+          validated.createdAt || new Date()]
+      );
+        const stored = inserted.rows[0] || (await client.query(
+          'SELECT * FROM amc_practice.learning_tutor_snapshots WHERE id = $1', [validated.id]
+        )).rows[0];
+        if (!stored) throw new TutorStoreError('TUTOR_SNAPSHOT_CONFLICT');
+        const mapped = mapTutorSnapshot(stored);
+        validateTutorSnapshotRecord(mapped);
+        if (tutorSnapshotSemanticHash(mapped) !== tutorSnapshotSemanticHash(validated)) {
+          throw new TutorStoreError('TUTOR_SNAPSHOT_IMMUTABLE');
+        }
+        return mapped;
+      });
+    } catch (error) {
+      if (error.code !== '23505'
+          || error.constraint !== 'amc_tutor_snapshot_identity_unique') throw error;
+      return withPostgresTransaction(this.pool, async (client) => {
+        const existing = await client.query(
+          `SELECT * FROM amc_practice.learning_tutor_snapshots
+           WHERE learning_submission_version_id = $1 AND question_number = $2
+             AND analysis_run_id = $3 AND report_id = $4 FOR SHARE`,
+          [validated.learningSubmissionVersionId, validated.questionNumber,
+            validated.analysisRunId, validated.reportId]
+        );
+        if (!existing.rowCount) throw new TutorStoreError('TUTOR_SNAPSHOT_CONFLICT');
+        const mapped = mapTutorSnapshot(existing.rows[0]);
+        validateTutorSnapshotRecord(mapped);
+        await assertPostgresTutorSource(client, mapped);
+        if (tutorSnapshotSemanticHash(mapped) !== tutorSnapshotSemanticHash(validated)) {
+          throw new TutorStoreError('TUTOR_SNAPSHOT_IMMUTABLE');
+        }
+        return mapped;
+      });
+    }
+  }
+
+  async createTutorThread({
+    id = randomUUID(), studentId, snapshotId, idempotencyKey: rawIdempotencyKey,
+    forkedFromThreadId = null, forkedFromTurnJobId = null
+  }) {
+    try {
+      return await withPostgresTransaction(this.pool, async (client) => {
+        const persistedNow = (await client.query('SELECT clock_timestamp() AS now')).rows[0].now;
+      const idempotencyKeyHash = tutorSha256(rawIdempotencyKey);
+      const requestHash = tutorThreadCreationRequestHash({
+        studentId, snapshotId, forkedFromThreadId, forkedFromTurnJobId
+      });
+      await client.query(
+        "SELECT pg_advisory_xact_lock(hashtext('amc_tutor_thread_create'), hashtext($1 || ':' || $2))",
+        [studentId, idempotencyKeyHash]
+      );
+      const replay = await client.query(
+        `SELECT * FROM amc_practice.learning_tutor_threads
+         WHERE student_id = $1 AND creation_idempotency_key_hash = $2`,
+        [studentId, idempotencyKeyHash]
+      );
+      if (replay.rowCount) {
+        const thread = mapTutorThread(replay.rows[0]);
+        const replaySnapshotResult = await client.query(
+          `SELECT * FROM amc_practice.learning_tutor_snapshots
+           WHERE id = $1 AND student_id = $2 FOR SHARE`, [thread.snapshotId, studentId]
+        );
+        if (!replaySnapshotResult.rowCount) throw new TutorStoreError('TUTOR_SNAPSHOT_NOT_FOUND');
+        await assertPostgresTutorSource(client, mapTutorSnapshot(replaySnapshotResult.rows[0]));
+        if (!['OPEN', 'CAPACITY_REACHED'].includes(thread.status)) {
+          throw new TutorStoreError('TUTOR_THREAD_NOT_AVAILABLE');
+        }
+        if (thread.creationRequestHash !== requestHash) {
+          throw new TutorStoreError('IDEMPOTENCY_KEY_REUSED');
+        }
+        return thread;
+      }
+      const snapshotResult = await client.query(
+        `SELECT * FROM amc_practice.learning_tutor_snapshots
+         WHERE id = $1 AND student_id = $2 FOR SHARE`, [snapshotId, studentId]
+      );
+      if (!snapshotResult.rowCount) throw new TutorStoreError('TUTOR_SNAPSHOT_NOT_FOUND');
+      const snapshot = mapTutorSnapshot(snapshotResult.rows[0]);
+      await assertPostgresTutorSource(client, snapshot);
+      const contextHash = computeTutorContextHash({ threadId: id, context: snapshot.snapshotPayload });
+      const result = await client.query(
+        `INSERT INTO amc_practice.learning_tutor_threads
+         (id, student_id, snapshot_id, learning_submission_id, learning_submission_version_id,
+          question_number, snapshot_hash, thread_lineage_hash, tutor_contract_version,
+          context_hash, status, successful_turn_count, request_count,
+          successful_history_bytes, thread_revision, initial_deletion_generation,
+          deletion_generation, forked_from_thread_id, forked_from_turn_job_id,
+          creation_idempotency_key_hash, creation_request_hash, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'OPEN',0,0,0,0,$11,$11,$12,$13,$14,$15,$16,$16)
+         RETURNING *`,
+        [id, studentId, snapshotId, snapshot.learningSubmissionId,
+          snapshot.learningSubmissionVersionId, snapshot.questionNumber,
+          snapshot.snapshotHash, snapshot.threadLineageHash, TUTOR_CONTRACT_VERSION,
+          contextHash, snapshot.initialDeletionGeneration,
+          forkedFromThreadId, forkedFromTurnJobId,
+          idempotencyKeyHash, requestHash, persistedNow]
+      );
+        return mapTutorThread(result.rows[0]);
+      });
+    } catch (error) {
+      if (error.code === '23505' && error.constraint === 'learning_tutor_threads_pkey') {
+        throw new TutorStoreError('TUTOR_THREAD_ID_CONFLICT');
+      }
+      throw error;
+    }
+  }
+
+  async getTutorThreadBundle(studentId, threadId) {
+    try {
+      return await withPostgresTransaction(this.pool, async (client) => {
+        await client.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
+        const aggregate = await loadTutorAggregateUsing(client, threadId, {
+          share: true, studentId
+        });
+        if (!aggregate.thread
+            || aggregate.thread.status === 'TOMBSTONED') return null;
+        await assertPostgresTutorSource(client, aggregate.snapshot);
+        return projectTutorThreadBundle(aggregate);
+      });
+    } catch (error) {
+      if (error instanceof TutorStoreError) return null;
+      throw error;
+    }
+  }
+
+  async enqueueTutorTurn({
+    studentId, threadId, authorizedSessionId, idempotencyKey: rawIdempotencyKey,
+    message, correlationId, jobId, messageId, priority = 100, maxAttempts = 3,
+  }) {
+    validateTutorQueueOptions({ priority, maxAttempts });
+    return withPostgresTransaction(this.pool, async (client) => {
+      const persistedNow = (await client.query('SELECT clock_timestamp() AS now')).rows[0].now;
+      const idempotencyKeyHash = tutorSha256(rawIdempotencyKey);
+      // Resource reservations serialize by student before any per-request or
+      // thread lock, so different threads cannot all observe the same slot.
+      await client.query(
+        "SELECT pg_advisory_xact_lock(hashtext('amc_tutor_student_capacity'), hashtext($1))",
+        [studentId]
+      );
+      await client.query(
+        "SELECT pg_advisory_xact_lock(hashtext('amc_tutor_turn_enqueue'), hashtext($1 || ':' || $2 || ':' || $3))",
+        [studentId, threadId, idempotencyKeyHash]
+      );
+      const aggregate = await loadTutorAggregateUsing(client, threadId, { lock: true });
+      const { thread, snapshot, jobs, messages } = aggregate;
+      if (!thread || thread.studentId !== studentId) throw new TutorStoreError('TUTOR_THREAD_NOT_FOUND');
+      if (!['OPEN', 'CAPACITY_REACHED'].includes(thread.status)) {
+        throw new TutorStoreError('TUTOR_THREAD_NOT_AVAILABLE');
+      }
+      const session = await client.query(
+        `SELECT 1 FROM amc_practice.sessions
+         WHERE id = $1 AND student_id = $2 AND revoked_at IS NULL
+           AND expires_at > clock_timestamp() FOR SHARE`,
+        [authorizedSessionId, studentId]
+      );
+      if (!session.rowCount) throw new TutorStoreError('TUTOR_SESSION_NOT_LIVE');
+      await assertPostgresTutorSource(client, snapshot);
+      const replay = jobs.find((candidate) => candidate.idempotencyKeyHash === idempotencyKeyHash);
+      if (replay) {
+        const priorTurns = postgresTutorPriorTurns(jobs, messages, replay.turnNumber - 1);
+        const replayMessage = messages.find((candidate) => candidate.id === replay.requestMessageId);
+        const request = replayMessage && buildTutorTurnRequest({
+          correlationId: replay.correlationId, threadId, turnId: replay.id,
+          turnNumber: replay.turnNumber,
+          context: snapshot.snapshotPayload, priorTurns, message
+        });
+        if (!request || replayMessage.contentMarkdown !== message
+            || replay.requestHash !== tutorRequestHash(request)) {
+          throw new TutorStoreError('IDEMPOTENCY_KEY_REUSED');
+        }
+        return { job: replay, message: replayMessage, request, replayed: true };
+      }
+      if (thread.status !== 'OPEN') throw new TutorStoreError('FORK_REQUIRED');
+      assertTutorEnqueueCapacity(thread, message);
+      if (jobs.some((candidate) => ['QUEUED', 'RUNNING', 'RETRY_WAIT'].includes(candidate.status))) {
+        throw new TutorStoreError('TUTOR_THREAD_BUSY');
+      }
+      const active = await client.query(
+        `SELECT count(*)::integer AS active_count
+         FROM amc_practice.learning_tutor_turn_jobs
+         WHERE student_id = $1 AND status IN ('QUEUED','RUNNING','RETRY_WAIT')`, [studentId]
+      );
+      if (number(active.rows[0].active_count) >= TUTOR_MAX_ACTIVE_JOBS_PER_STUDENT) {
+        throw new TutorStoreError('TUTOR_STUDENT_CAPACITY_REACHED');
+      }
+      const actualJobId = jobId || randomUUID();
+      const actualMessageId = messageId || randomUUID();
+      const turnNumber = thread.successfulTurnCount + 1;
+      const requestOrdinal = thread.requestCount + 1;
+      const priorTurns = postgresTutorPriorTurns(jobs, messages, thread.successfulTurnCount);
+      const request = buildTutorTurnRequest({
+        correlationId, threadId, turnId: actualJobId, turnNumber,
+        context: snapshot.snapshotPayload, priorTurns, message
+      });
+      const requestHash = tutorRequestHash(request);
+      const nextStatus = nextTutorThreadStatus({ ...thread, requestCount: requestOrdinal });
+      await client.query(
+        `INSERT INTO amc_practice.learning_tutor_messages
+         (id, thread_id, student_id, role, content_markdown, content_sha256,
+          source_turn_job_id, created_at)
+         VALUES ($1,$2,$3,'USER',$4,$5,NULL,$6)`,
+        [actualMessageId, threadId, studentId, message, tutorMessageHash(message), persistedNow]
+      );
+      const threadResult = await client.query(
+        `UPDATE amc_practice.learning_tutor_threads
+         SET request_count = $2, thread_revision = thread_revision + 1,
+             status = $3, updated_at = $4
+         WHERE id = $1 RETURNING *`,
+        [threadId, requestOrdinal, nextStatus, persistedNow]
+      );
+      const jobResult = await client.query(
+        `INSERT INTO amc_practice.learning_tutor_turn_jobs
+         (id, thread_id, student_id, request_message_id, request_ordinal, turn_number,
+          retry_of_job_id, retry_authorization, response_message_id, reply_sha256,
+          authorized_session_id, idempotency_key_hash, request_hash, correlation_id,
+          snapshot_hash, context_hash, history_hash, input_hash, thread_lineage_hash,
+          tutor_contract_version, status, priority, attempt_count, max_attempts,
+          available_at, lease_owner, lease_token, lease_expires_at, provider_invoked,
+          delivery_disposition, provider, requested_model, response_model, prompt_version,
+          response_schema_version, usage, latency_ms, outcome_code, error_class, retryable,
+          deletion_generation, created_at, started_at, completed_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,NULL,NULL,NULL,NULL,$7,$8,$9,$10,$11,$12,$13,$14,
+                 $15,$16,'QUEUED',$17,0,$18,$19,NULL,NULL,NULL,false,'NOT_DISPATCHED',
+                 NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,false,$20,$19,NULL,NULL,$19)
+         RETURNING *`,
+        [actualJobId, threadId, studentId, actualMessageId, requestOrdinal, turnNumber,
+          authorizedSessionId, idempotencyKeyHash, requestHash, correlationId,
+          request.snapshotHash, request.contextHash, request.historyHash, request.inputHash,
+          thread.threadLineageHash, TUTOR_CONTRACT_VERSION, priority, maxAttempts,
+          persistedNow, thread.deletionGeneration]
+      );
+      const job = mapTutorJob(jobResult.rows[0]);
+      const updatedThread = mapTutorThread(threadResult.rows[0]);
+      buildAndValidateTutorRequest({
+        job, thread: updatedThread, snapshot, priorTurns, message
+      });
+      return {
+        job, message: mapTutorMessage((await client.query(
+          'SELECT * FROM amc_practice.learning_tutor_messages WHERE id = $1', [actualMessageId]
+        )).rows[0]), request, replayed: false
+      };
+    });
+  }
+
+  async claimTutorTurnJob({ workerId, leaseMs }) {
+    validateTutorClaimOptions({ workerId, leaseMs });
+    return withPostgresTransaction(this.pool, async (client) => {
+      // A bounded thread-first scan is deliberate. Every mutation below takes
+      // locks in aggregate order: thread -> job -> session -> source. This
+      // matches tombstone and prevents the job trigger from becoming the first
+      // owner of a thread lock.
+      const candidateThreads = await client.query(
+        `SELECT thread.*
+         FROM amc_practice.learning_tutor_threads thread
+         JOIN LATERAL (
+           SELECT job.priority,
+                  CASE WHEN job.status = 'RUNNING' THEN 0
+                    WHEN job.available_at <= clock_timestamp() THEN 1 ELSE 2 END AS schedule_rank,
+                  CASE WHEN job.status = 'RUNNING'
+                    THEN job.lease_expires_at ELSE job.available_at END AS schedule_at,
+                  job.created_at, job.id
+           FROM amc_practice.learning_tutor_turn_jobs job
+           WHERE job.thread_id = thread.id
+             AND ((job.status = 'RUNNING' AND job.lease_expires_at <= clock_timestamp())
+               OR job.status IN ('QUEUED','RETRY_WAIT'))
+           ORDER BY schedule_rank, job.priority DESC, schedule_at, job.created_at, job.id
+           LIMIT 1
+         ) candidate ON true
+         ORDER BY candidate.schedule_rank, candidate.priority DESC,
+                  candidate.schedule_at, candidate.created_at, candidate.id
+         FOR UPDATE OF thread SKIP LOCKED
+         LIMIT 16`
+      );
+      for (const threadRow of candidateThreads.rows) {
+        const thread = mapTutorThread(threadRow);
+        const lockedJobs = await client.query(
+          `SELECT * FROM amc_practice.learning_tutor_turn_jobs
+           WHERE thread_id = $1
+             AND ((status = 'RUNNING' AND lease_expires_at <= clock_timestamp())
+               OR status IN ('QUEUED','RETRY_WAIT'))
+           ORDER BY CASE WHEN status = 'RUNNING' THEN 0
+                     WHEN available_at <= clock_timestamp() THEN 1 ELSE 2 END,
+                    priority DESC,
+                    CASE WHEN status = 'RUNNING' THEN lease_expires_at ELSE available_at END,
+                    created_at, id
+           FOR UPDATE SKIP LOCKED`, [thread.id]
+        );
+        if (!lockedJobs.rowCount) continue;
+        let job = mapTutorJob(lockedJobs.rows[0]);
+
+        if (job.status === 'RUNNING') {
+          if (job.providerInvoked && job.deliveryDisposition === 'MAY_HAVE_BEEN_DELIVERED') {
+            await client.query(
+              `WITH transition AS MATERIALIZED (
+                 SELECT clock_timestamp() AS transitioned_at
+               )
+               UPDATE amc_practice.learning_tutor_turn_jobs
+               SET status = 'DELIVERY_UNKNOWN', retryable = false,
+                   outcome_code = 'DELIVERY_UNKNOWN', error_class = 'transient',
+                   completed_at = transition.transitioned_at,
+                   updated_at = transition.transitioned_at,
+                   lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL
+               FROM transition
+               WHERE id = $1 AND status = 'RUNNING'
+                 AND lease_expires_at <= transition.transitioned_at
+                 AND provider_invoked
+                 AND delivery_disposition = 'MAY_HAVE_BEEN_DELIVERED'`, [job.id]
+            );
+            continue;
+          }
+          if (job.attemptCount >= job.maxAttempts) {
+            await client.query(
+              `WITH transition AS MATERIALIZED (
+                 SELECT clock_timestamp() AS transitioned_at
+               )
+               UPDATE amc_practice.learning_tutor_turn_jobs
+               SET status = 'FAILED', retryable = false,
+                   outcome_code = 'ATTEMPTS_EXHAUSTED', error_class = 'transient',
+                   completed_at = transition.transitioned_at,
+                   updated_at = transition.transitioned_at,
+                   lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL
+               FROM transition
+               WHERE id = $1 AND status = 'RUNNING'
+                 AND lease_expires_at <= transition.transitioned_at
+                 AND ((NOT provider_invoked AND delivery_disposition = 'NOT_DISPATCHED')
+                   OR (provider_invoked AND delivery_disposition = 'KNOWN_NO_RESULT'))`, [job.id]
+            );
+            continue;
+          }
+          const recovered = await client.query(
+            `WITH transition AS MATERIALIZED (
+               SELECT clock_timestamp() AS transitioned_at
+             )
+             UPDATE amc_practice.learning_tutor_turn_jobs
+             SET status = 'RETRY_WAIT', retryable = true,
+                 available_at = transition.transitioned_at,
+                 updated_at = transition.transitioned_at,
+                 lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL
+             FROM transition
+             WHERE id = $1 AND status = 'RUNNING'
+               AND lease_expires_at <= transition.transitioned_at
+               AND attempt_count < max_attempts
+               AND ((NOT provider_invoked AND delivery_disposition = 'NOT_DISPATCHED')
+                 OR (provider_invoked AND delivery_disposition = 'KNOWN_NO_RESULT'))
+             RETURNING *`, [job.id]
+          );
+          if (!recovered.rowCount) continue;
+          job = mapTutorJob(recovered.rows[0]);
+        }
+
+        const threadIsLive = ['OPEN', 'CAPACITY_REACHED'].includes(thread.status)
+          && thread.deletionGeneration === job.deletionGeneration;
+        let sessionIsLive = false;
+        if (threadIsLive) {
+          const session = await client.query(
+            `SELECT revoked_at IS NULL AND expires_at > clock_timestamp() AS is_live
+             FROM amc_practice.sessions
+             WHERE id = $1 AND student_id = $2
+             FOR SHARE`, [job.authorizedSessionId, job.studentId]
+          );
+          sessionIsLive = Boolean(session.rowCount && session.rows[0].is_live);
+        }
+
+        let aggregate = null;
+        let sourceIsLive = false;
+        if (threadIsLive && sessionIsLive) {
+          aggregate = await loadTutorAggregateUsing(client, thread.id);
+          try {
+            await assertPostgresTutorSource(client, aggregate.snapshot);
+            sourceIsLive = true;
+          } catch (error) {
+            if (!(error instanceof TutorStoreError)) throw error;
+          }
+        }
+        if (!threadIsLive || !sessionIsLive || !sourceIsLive) {
+          await client.query(
+            `WITH transition AS MATERIALIZED (
+               SELECT clock_timestamp() AS transitioned_at
+             )
+             UPDATE amc_practice.learning_tutor_turn_jobs
+             SET status = 'CANCELLED', retryable = false, outcome_code = 'CANCELLED',
+                 error_class = 'permanent', completed_at = transition.transitioned_at,
+                 updated_at = transition.transitioned_at,
+                 lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL
+             FROM transition
+             WHERE id = $1 AND status IN ('QUEUED','RETRY_WAIT')`, [job.id]
+          );
+          continue;
+        }
+
+        const requestMessage = aggregate.messages
+          .find((message) => message.id === job.requestMessageId);
+        if (!requestMessage) throw new TutorStoreError('INCOMPLETE_TUTOR_HISTORY');
+        const priorTurns = postgresTutorPriorTurns(
+          aggregate.jobs.map((candidate) => candidate.id === job.id ? job : candidate),
+          aggregate.messages, job.turnNumber - 1
+        );
+        const request = buildAndValidateTutorRequest({
+          job, thread: aggregate.thread, snapshot: aggregate.snapshot,
+          priorTurns, message: requestMessage.contentMarkdown
+        });
+        const leaseToken = randomUUID();
+        const claimed = await client.query(
+          `WITH transition AS MATERIALIZED (
+             SELECT clock_timestamp() AS transitioned_at
+           )
+           UPDATE amc_practice.learning_tutor_turn_jobs
+           SET status = 'RUNNING', attempt_count = attempt_count + 1,
+               lease_owner = $2, lease_token = $3,
+               lease_expires_at = transition.transitioned_at + ($4 * interval '1 millisecond'),
+               started_at = COALESCE(started_at, transition.transitioned_at),
+               provider_invoked = false, delivery_disposition = 'NOT_DISPATCHED',
+               provider = NULL, requested_model = NULL, response_model = NULL,
+               prompt_version = NULL, response_schema_version = NULL,
+               usage = NULL, latency_ms = NULL, outcome_code = NULL,
+               error_class = NULL, retryable = false,
+               updated_at = transition.transitioned_at
+           FROM transition
+           WHERE id = $1 AND status IN ('QUEUED','RETRY_WAIT')
+             AND available_at <= transition.transitioned_at
+             AND attempt_count < max_attempts
+             AND EXISTS (
+               SELECT 1 FROM amc_practice.sessions session
+               WHERE session.id = authorized_session_id
+                 AND session.student_id = learning_tutor_turn_jobs.student_id
+                 AND session.revoked_at IS NULL
+                 AND session.expires_at > transition.transitioned_at)
+           RETURNING *`, [job.id, workerId, leaseToken, leaseMs]
+        );
+        if (!claimed.rowCount) continue;
+        const claimedJob = mapTutorJob(claimed.rows[0]);
+        return {
+          job: claimedJob, thread: aggregate.thread, snapshot: aggregate.snapshot, request
+        };
+      }
+      return null;
+    });
+  }
+
+  async retryTutorTurnExplicitly({
+    studentId, threadId, previousJobId, authorizedSessionId,
+    idempotencyKey: rawIdempotencyKey, correlationId, jobId,
+    priority = 100, maxAttempts = 3
+  }) {
+    validateTutorQueueOptions({ priority, maxAttempts });
+    return withPostgresTransaction(this.pool, async (client) => {
+      const persistedNow = (await client.query('SELECT clock_timestamp() AS now')).rows[0].now;
+      const idempotencyKeyHash = tutorSha256(rawIdempotencyKey);
+      await client.query(
+        "SELECT pg_advisory_xact_lock(hashtext('amc_tutor_student_capacity'), hashtext($1))",
+        [studentId]
+      );
+      await client.query(
+        "SELECT pg_advisory_xact_lock(hashtext('amc_tutor_turn_retry'), hashtext($1 || ':' || $2 || ':' || $3))",
+        [studentId, threadId, idempotencyKeyHash]
+      );
+      const aggregate = await loadTutorAggregateUsing(client, threadId, { lock: true });
+      const { thread, snapshot, jobs, messages } = aggregate;
+      const previous = jobs.find((candidate) => candidate.id === previousJobId);
+      if (!thread || thread.studentId !== studentId || !previous
+          || !['FAILED', 'DELIVERY_UNKNOWN', 'CANCELLED'].includes(previous.status)) {
+        throw new TutorStoreError('TUTOR_RETRY_NOT_ALLOWED');
+      }
+      if (!['OPEN', 'CAPACITY_REACHED'].includes(thread.status)) {
+        throw new TutorStoreError('TUTOR_THREAD_NOT_AVAILABLE');
+      }
+      const session = await client.query(
+        `SELECT 1 FROM amc_practice.sessions WHERE id = $1 AND student_id = $2
+           AND revoked_at IS NULL AND expires_at > clock_timestamp() FOR SHARE`,
+        [authorizedSessionId, studentId]
+      );
+      if (!session.rowCount) throw new TutorStoreError('TUTOR_SESSION_NOT_LIVE');
+      await assertPostgresTutorSource(client, snapshot);
+      const replay = jobs.find((candidate) => candidate.idempotencyKeyHash === idempotencyKeyHash);
+      if (replay) {
+        const replayMessage = messages.find((message) => message.id === replay.requestMessageId);
+        const request = replayMessage && buildAndValidateTutorRequest({
+          job: replay, thread, snapshot,
+          priorTurns: postgresTutorPriorTurns(jobs, messages, replay.turnNumber - 1),
+          message: replayMessage.contentMarkdown
+        });
+        if (!request || replay.retryOfJobId !== previousJobId
+            || replay.requestHash !== tutorRequestHash(request)) {
+          throw new TutorStoreError('IDEMPOTENCY_KEY_REUSED');
+        }
+        return { job: replay, request, replayed: true };
+      }
+      if (thread.status !== 'OPEN' || previous.turnNumber !== thread.successfulTurnCount + 1) {
+        throw new TutorStoreError('FORK_REQUIRED');
+      }
+      if (jobs.some((candidate) => candidate.retryOfJobId === previousJobId)
+          || jobs.some((candidate) => ['QUEUED', 'RUNNING', 'RETRY_WAIT'].includes(candidate.status))) {
+        throw new TutorStoreError('TUTOR_THREAD_BUSY');
+      }
+      const active = await client.query(
+        `SELECT count(*)::integer AS active_count
+         FROM amc_practice.learning_tutor_turn_jobs
+         WHERE student_id = $1 AND status IN ('QUEUED','RUNNING','RETRY_WAIT')`, [studentId]
+      );
+      if (number(active.rows[0].active_count) >= TUTOR_MAX_ACTIVE_JOBS_PER_STUDENT) {
+        throw new TutorStoreError('TUTOR_STUDENT_CAPACITY_REACHED');
+      }
+      const requestMessage = messages.find((message) => message.id === previous.requestMessageId);
+      if (!requestMessage) throw new TutorStoreError('INCOMPLETE_TUTOR_HISTORY');
+      assertTutorEnqueueCapacity(thread, requestMessage.contentMarkdown);
+      const actualJobId = jobId || randomUUID();
+      const requestOrdinal = thread.requestCount + 1;
+      const priorTurns = postgresTutorPriorTurns(jobs, messages, thread.successfulTurnCount);
+      const request = buildTutorTurnRequest({
+        correlationId, threadId, turnId: actualJobId, turnNumber: previous.turnNumber,
+        context: snapshot.snapshotPayload, priorTurns,
+        message: requestMessage.contentMarkdown
+      });
+      const nextStatus = nextTutorThreadStatus({ ...thread, requestCount: requestOrdinal });
+      const threadResult = await client.query(
+        `UPDATE amc_practice.learning_tutor_threads
+         SET request_count = $2, thread_revision = thread_revision + 1,
+             status = $3, updated_at = $4 WHERE id = $1 RETURNING *`,
+        [threadId, requestOrdinal, nextStatus, persistedNow]
+      );
+      const jobResult = await client.query(
+        `INSERT INTO amc_practice.learning_tutor_turn_jobs
+         (id, thread_id, student_id, request_message_id, request_ordinal, turn_number,
+          retry_of_job_id, retry_authorization, authorized_session_id,
+          idempotency_key_hash, request_hash, correlation_id, snapshot_hash, context_hash,
+          history_hash, input_hash, thread_lineage_hash, tutor_contract_version,
+          status, priority, attempt_count, max_attempts, available_at,
+          provider_invoked, delivery_disposition, retryable, deletion_generation,
+          created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,'STUDENT_EXPLICIT',$8,$9,$10,$11,$12,$13,$14,
+                 $15,$16,$17,'QUEUED',$18,0,$19,$20,false,'NOT_DISPATCHED',false,$21,$20,$20)
+         RETURNING *`,
+        [actualJobId, threadId, studentId, previous.requestMessageId, requestOrdinal,
+          previous.turnNumber, previous.id, authorizedSessionId, idempotencyKeyHash,
+          tutorRequestHash(request), correlationId, request.snapshotHash, request.contextHash,
+          request.historyHash, request.inputHash, thread.threadLineageHash,
+          TUTOR_CONTRACT_VERSION, priority, maxAttempts, persistedNow,
+          thread.deletionGeneration]
+      );
+      const job = mapTutorJob(jobResult.rows[0]);
+      buildAndValidateTutorRequest({
+        job, thread: mapTutorThread(threadResult.rows[0]), snapshot,
+        priorTurns, message: requestMessage.contentMarkdown
+      });
+      return { job, request, replayed: false };
+    });
+  }
+
+  async markTutorTurnDispatched(input) {
+    return withPostgresTransaction(this.pool, async (client) => {
+      const identity = await client.query(
+        'SELECT thread_id FROM amc_practice.learning_tutor_turn_jobs WHERE id = $1', [input.jobId]
+      );
+      if (!identity.rowCount) return false;
+      const aggregate = await loadTutorAggregateUsing(client, identity.rows[0].thread_id, { lock: true });
+      const locked = await client.query(
+        `SELECT * FROM amc_practice.learning_tutor_turn_jobs
+         WHERE id = $1 AND status = 'RUNNING' AND lease_owner = $2 AND lease_token = $3
+           AND lease_expires_at > clock_timestamp()
+           AND deletion_generation = $4 FOR UPDATE`,
+        [input.jobId, input.workerId, input.leaseToken, input.expectedDeletionGeneration]
+      );
+      if (!locked.rowCount) return false;
+      const job = mapTutorJob(locked.rows[0]);
+      if (aggregate.thread.deletionGeneration !== input.expectedDeletionGeneration
+          || job.providerInvoked || job.deliveryDisposition !== 'NOT_DISPATCHED') return false;
+      const session = await client.query(
+        `SELECT 1 FROM amc_practice.sessions WHERE id = $1 AND student_id = $2
+           AND revoked_at IS NULL AND expires_at > clock_timestamp() FOR SHARE`,
+        [job.authorizedSessionId, job.studentId]
+      );
+      if (!session.rowCount) return false;
+      await assertPostgresTutorSource(client, aggregate.snapshot);
+      const requestMessage = aggregate.messages.find((message) => message.id === job.requestMessageId);
+      const priorTurns = postgresTutorPriorTurns(aggregate.jobs, aggregate.messages, job.turnNumber - 1);
+      buildAndValidateTutorRequest({
+        job, thread: aggregate.thread, snapshot: aggregate.snapshot,
+        priorTurns, message: requestMessage.contentMarkdown
+      });
+      const metadata = tutorDispatchMetadata(input);
+      const updated = await client.query(
+        `UPDATE amc_practice.learning_tutor_turn_jobs
+         SET provider_invoked = true,
+             delivery_disposition = 'MAY_HAVE_BEEN_DELIVERED',
+             provider = $5, requested_model = $6, prompt_version = $7,
+             response_schema_version = $8, updated_at = clock_timestamp()
+         WHERE id = $1 AND status = 'RUNNING' AND lease_owner = $2 AND lease_token = $3
+           AND lease_expires_at > clock_timestamp() AND deletion_generation = $4
+           AND NOT provider_invoked AND delivery_disposition = 'NOT_DISPATCHED'
+         RETURNING id`,
+        [input.jobId, input.workerId, input.leaseToken, input.expectedDeletionGeneration,
+          metadata.provider, metadata.requestedModel, metadata.promptVersion,
+          metadata.responseSchemaVersion]
+      );
+      return Boolean(updated.rowCount);
+    });
+  }
+
+  async recordTutorKnownNoResult(input) {
+    validateTutorRetryAfterMs(input.retryAfterMs);
+    return withPostgresTransaction(this.pool, async (client) => {
+      const identity = await client.query(
+        'SELECT thread_id FROM amc_practice.learning_tutor_turn_jobs WHERE id = $1', [input.jobId]
+      );
+      if (!identity.rowCount) return false;
+      // Worker mutations follow thread -> job -> session -> source, matching
+      // tombstone and avoiding a job-trigger/thread-lock inversion.
+      const aggregate = await loadTutorAggregateUsing(client, identity.rows[0].thread_id, { lock: true });
+      const locked = await client.query(
+        `SELECT * FROM amc_practice.learning_tutor_turn_jobs
+         WHERE id = $1 AND status = 'RUNNING' AND lease_owner = $2
+           AND lease_token = $3 AND lease_expires_at > clock_timestamp()
+           AND deletion_generation = $4 FOR UPDATE`,
+        [input.jobId, input.workerId, input.leaseToken, input.expectedDeletionGeneration]
+      );
+      if (!locked.rowCount || aggregate.thread.deletionGeneration !== input.expectedDeletionGeneration) return false;
+      const job = mapTutorJob(locked.rows[0]);
+      if (!job.providerInvoked || job.deliveryDisposition !== 'MAY_HAVE_BEEN_DELIVERED') return false;
+      const session = await client.query(
+        `SELECT 1 FROM amc_practice.sessions WHERE id = $1 AND student_id = $2
+           AND revoked_at IS NULL AND expires_at > clock_timestamp() FOR SHARE`,
+        [job.authorizedSessionId, job.studentId]
+      );
+      if (!session.rowCount) return false;
+      await assertPostgresTutorSource(client, aggregate.snapshot);
+      const requestMessage = aggregate.messages.find((message) => message.id === job.requestMessageId);
+      buildAndValidateTutorRequest({
+        job, thread: aggregate.thread, snapshot: aggregate.snapshot,
+        priorTurns: postgresTutorPriorTurns(aggregate.jobs, aggregate.messages, job.turnNumber - 1),
+        message: requestMessage.contentMarkdown
+      });
+      const retry = input.retryable !== false && job.attemptCount < job.maxAttempts;
+      const result = await client.query(
+        `WITH transition AS MATERIALIZED (
+           SELECT clock_timestamp() AS transitioned_at
+         )
+         UPDATE amc_practice.learning_tutor_turn_jobs
+         SET status = CASE WHEN $5 THEN 'RETRY_WAIT' ELSE 'FAILED' END,
+             delivery_disposition = 'KNOWN_NO_RESULT', retryable = $5,
+             available_at = CASE WHEN $5
+               THEN transition.transitioned_at + ($6 * interval '1 millisecond')
+               ELSE available_at END,
+             outcome_code = CASE WHEN $5 THEN NULL ELSE $7 END,
+             error_class = $8,
+             completed_at = CASE WHEN $5 THEN NULL ELSE transition.transitioned_at END,
+             lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+             updated_at = transition.transitioned_at
+         FROM transition
+         WHERE id = $1 AND status = 'RUNNING' AND lease_owner = $2 AND lease_token = $3
+           AND lease_expires_at > clock_timestamp() AND deletion_generation = $4
+           AND provider_invoked AND delivery_disposition = 'MAY_HAVE_BEEN_DELIVERED'
+         RETURNING id`,
+        [input.jobId, input.workerId, input.leaseToken, input.expectedDeletionGeneration,
+          retry, input.retryAfterMs, input.outcomeCode || 'KNOWN_NO_RESULT',
+          input.errorClass || 'transient']
+      );
+      return Boolean(result.rowCount);
+    });
+  }
+
+  async recordTutorDeliveryUnknown(input) {
+    return withPostgresTransaction(this.pool, async (client) => {
+      const identity = await client.query(
+        'SELECT thread_id FROM amc_practice.learning_tutor_turn_jobs WHERE id = $1', [input.jobId]
+      );
+      if (!identity.rowCount) return false;
+      const aggregate = await loadTutorAggregateUsing(client, identity.rows[0].thread_id, { lock: true });
+      const locked = await client.query(
+        `SELECT * FROM amc_practice.learning_tutor_turn_jobs
+         WHERE id = $1 AND status = 'RUNNING' AND lease_owner = $2
+           AND lease_token = $3 AND lease_expires_at > clock_timestamp()
+           AND deletion_generation = $4 FOR UPDATE`,
+        [input.jobId, input.workerId, input.leaseToken, input.expectedDeletionGeneration]
+      );
+      if (!locked.rowCount || aggregate.thread.deletionGeneration !== input.expectedDeletionGeneration) return false;
+      const job = mapTutorJob(locked.rows[0]);
+      if (!job.providerInvoked || job.deliveryDisposition !== 'MAY_HAVE_BEEN_DELIVERED') return false;
+      const session = await client.query(
+        `SELECT 1 FROM amc_practice.sessions WHERE id = $1 AND student_id = $2
+           AND revoked_at IS NULL AND expires_at > clock_timestamp() FOR SHARE`,
+        [job.authorizedSessionId, job.studentId]
+      );
+      if (!session.rowCount) return false;
+      await assertPostgresTutorSource(client, aggregate.snapshot);
+      const requestMessage = aggregate.messages.find((message) => message.id === job.requestMessageId);
+      buildAndValidateTutorRequest({
+        job, thread: aggregate.thread, snapshot: aggregate.snapshot,
+        priorTurns: postgresTutorPriorTurns(aggregate.jobs, aggregate.messages, job.turnNumber - 1),
+        message: requestMessage.contentMarkdown
+      });
+      const result = await client.query(
+        `WITH transition AS MATERIALIZED (
+           SELECT clock_timestamp() AS transitioned_at
+         )
+         UPDATE amc_practice.learning_tutor_turn_jobs
+         SET status = 'DELIVERY_UNKNOWN', retryable = false,
+             outcome_code = 'DELIVERY_UNKNOWN', error_class = $5,
+             completed_at = transition.transitioned_at,
+             updated_at = transition.transitioned_at,
+             lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL
+         FROM transition
+         WHERE id = $1 AND status = 'RUNNING' AND lease_owner = $2 AND lease_token = $3
+           AND lease_expires_at > clock_timestamp() AND deletion_generation = $4
+           AND provider_invoked AND delivery_disposition = 'MAY_HAVE_BEEN_DELIVERED'
+         RETURNING id`,
+        [input.jobId, input.workerId, input.leaseToken, input.expectedDeletionGeneration,
+          input.errorClass || 'transient']
+      );
+      return Boolean(result.rowCount);
+    });
+  }
+
+  async completeTutorTurnJob(input) {
+    return withPostgresTransaction(this.pool, async (client) => {
+      const identity = await client.query(
+        'SELECT thread_id FROM amc_practice.learning_tutor_turn_jobs WHERE id = $1', [input.jobId]
+      );
+      if (!identity.rowCount) return false;
+      const aggregate = await loadTutorAggregateUsing(client, identity.rows[0].thread_id, { lock: true });
+      const locked = await client.query(
+        `SELECT job.* FROM amc_practice.learning_tutor_turn_jobs job
+         JOIN amc_practice.sessions session
+           ON session.id = job.authorized_session_id AND session.student_id = job.student_id
+         WHERE job.id = $1 AND job.status = 'RUNNING' AND job.lease_owner = $2
+           AND job.lease_token = $3 AND job.lease_expires_at > clock_timestamp()
+           AND job.deletion_generation = $4
+           AND session.revoked_at IS NULL AND session.expires_at > clock_timestamp()
+         FOR UPDATE OF job`,
+        [input.jobId, input.workerId, input.leaseToken, input.expectedDeletionGeneration]
+      );
+      if (!locked.rowCount || aggregate.thread.deletionGeneration !== input.expectedDeletionGeneration) return false;
+      const job = mapTutorJob(locked.rows[0]);
+      if (!job.providerInvoked || job.deliveryDisposition !== 'MAY_HAVE_BEEN_DELIVERED') return false;
+      await assertPostgresTutorSource(client, aggregate.snapshot);
+      const requestMessage = aggregate.messages.find((message) => message.id === job.requestMessageId);
+      const priorTurns = postgresTutorPriorTurns(aggregate.jobs, aggregate.messages, job.turnNumber - 1);
+      const request = buildAndValidateTutorRequest({
+        job, thread: aggregate.thread, snapshot: aggregate.snapshot,
+        priorTurns, message: requestMessage.contentMarkdown
+      });
+      const validated = validateTutorGatewaySuccess({
+        gatewayResult: input.gatewayResult, request, job, latencyMs: input.latencyMs
+      });
+      const historyBytes = aggregate.thread.successfulHistoryBytes
+        + Buffer.byteLength(requestMessage.contentMarkdown, 'utf8') + validated.replyBytes;
+      if (historyBytes > TUTOR_MAX_HISTORY_BYTES) throw new TutorStoreError('FORK_REQUIRED');
+      const metadata = validated.runMetadata;
+      const assistantMessageId = input.assistantMessageId || randomUUID();
+      const messageConflict = await client.query(
+        'SELECT 1 FROM amc_practice.learning_tutor_messages WHERE id = $1',
+        [assistantMessageId]
+      );
+      if (messageConflict.rowCount) throw new TutorStoreError('TUTOR_MESSAGE_ID_CONFLICT');
+      const succeeded = await client.query(
+        `WITH transition AS MATERIALIZED (
+           SELECT clock_timestamp() AS transitioned_at
+         )
+         UPDATE amc_practice.learning_tutor_turn_jobs
+         SET status = 'SUCCEEDED', response_message_id = $5, reply_sha256 = $6,
+             delivery_disposition = 'DELIVERED_RESULT', response_model = $7,
+             usage = $8::jsonb, latency_ms = $9, retryable = false,
+             outcome_code = NULL, error_class = NULL,
+             completed_at = transition.transitioned_at,
+             updated_at = transition.transitioned_at,
+             lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL
+         FROM transition
+         WHERE id = $1 AND status = 'RUNNING' AND lease_owner = $2 AND lease_token = $3
+           AND lease_expires_at > clock_timestamp() AND deletion_generation = $4
+           AND provider_invoked AND delivery_disposition = 'MAY_HAVE_BEEN_DELIVERED'
+         RETURNING *`,
+        [input.jobId, input.workerId, input.leaseToken, input.expectedDeletionGeneration,
+          assistantMessageId, validated.replyHash, metadata.responseModel,
+          JSON.stringify(metadata.usage), metadata.latencyMs]
+      );
+      if (!succeeded.rowCount) return false;
+      const assistant = await client.query(
+        `INSERT INTO amc_practice.learning_tutor_messages
+         (id, thread_id, student_id, role, content_markdown, content_sha256,
+          source_turn_job_id, created_at)
+        VALUES ($1,$2,$3,'ASSISTANT',$4,$5,$6,clock_timestamp()) RETURNING *`,
+        [assistantMessageId, job.threadId, job.studentId,
+          validated.replyMarkdown, validated.replyHash, job.id]
+      );
+      const successfulTurnCount = aggregate.thread.successfulTurnCount + 1;
+      const threadStatus = nextTutorThreadStatus({
+        ...aggregate.thread, successfulTurnCount, successfulHistoryBytes: historyBytes
+      });
+      const updatedThread = await client.query(
+        `UPDATE amc_practice.learning_tutor_threads
+         SET successful_turn_count = $2, successful_history_bytes = $3,
+             thread_revision = thread_revision + 1, status = $4,
+             updated_at = clock_timestamp()
+         WHERE id = $1 AND deletion_generation = $5 RETURNING *`,
+        [job.threadId, successfulTurnCount, historyBytes,
+          threadStatus, input.expectedDeletionGeneration]
+      );
+      if (!updatedThread.rowCount) throw new TutorStoreError('TUTOR_GENERATION_STALE');
+      return {
+        job: mapTutorJob(succeeded.rows[0]), message: mapTutorMessage(assistant.rows[0]),
+        thread: mapTutorThread(updatedThread.rows[0])
+      };
+    });
+  }
+
+  async tombstoneTutorThread({ studentId, threadId }) {
+    return withPostgresTransaction(this.pool, async (client) => {
+      const locked = await client.query(
+        `SELECT * FROM amc_practice.learning_tutor_threads
+         WHERE id = $1 AND student_id = $2 FOR UPDATE`, [threadId, studentId]
+      );
+      if (!locked.rowCount) return false;
+      if (locked.rows[0].status === 'TOMBSTONED') return true;
+      await client.query(
+        `WITH transition AS MATERIALIZED (
+           SELECT clock_timestamp() AS transitioned_at
+         )
+         UPDATE amc_practice.learning_tutor_turn_jobs
+         SET status = 'DELIVERY_UNKNOWN', retryable = false,
+             outcome_code = 'DELIVERY_UNKNOWN', error_class = 'transient',
+             completed_at = transition.transitioned_at,
+             updated_at = transition.transitioned_at,
+             lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL
+         FROM transition
+         WHERE thread_id = $1 AND status = 'RUNNING'
+           AND provider_invoked
+           AND delivery_disposition = 'MAY_HAVE_BEEN_DELIVERED'`, [threadId]
+      );
+      await client.query(
+        `WITH transition AS MATERIALIZED (
+           SELECT clock_timestamp() AS transitioned_at
+         )
+         UPDATE amc_practice.learning_tutor_turn_jobs
+         SET status = 'CANCELLED', retryable = false, outcome_code = 'CANCELLED',
+             completed_at = transition.transitioned_at,
+             updated_at = transition.transitioned_at,
+             lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL
+         FROM transition
+         WHERE thread_id = $1 AND status IN ('QUEUED','RUNNING','RETRY_WAIT')
+           AND ((NOT provider_invoked AND delivery_disposition = 'NOT_DISPATCHED')
+             OR (provider_invoked AND delivery_disposition = 'KNOWN_NO_RESULT'))`, [threadId]
+      );
+      const updated = await client.query(
+        `WITH transition AS MATERIALIZED (
+           SELECT clock_timestamp() AS transitioned_at
+         )
+         UPDATE amc_practice.learning_tutor_threads
+         SET status = 'TOMBSTONED', deletion_generation = deletion_generation + 1,
+             thread_revision = thread_revision + 1,
+             tombstoned_at = transition.transitioned_at,
+             updated_at = transition.transitioned_at
+         FROM transition
+         WHERE id = $1 AND student_id = $2 RETURNING id`, [threadId, studentId]
+      );
+      return Boolean(updated.rowCount);
+    });
   }
 
   async withAttemptLock(attemptId, work) {
