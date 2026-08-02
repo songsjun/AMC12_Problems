@@ -4,7 +4,8 @@ Run the static UI behind the same origin as the AMC practice API. The browser
 uses `credentials: 'include'` and sends the CSRF token returned by login in an
 `X-CSRF-Token` header for every state-changing request.
 
-The automated baseline is deliberately browser-independent:
+The automated baseline is runnable without a browser; when Chrome/Chromium is
+present it also runs the browser-level restricted-MathJax probe:
 
 ```sh
 cd AMC12_Problems/practice
@@ -12,8 +13,11 @@ npm run verify
 ```
 
 It includes an invariant that a non-final attempt makes **zero** requests to
-the results or solutions endpoints. Use the checklist below for browser/API
-acceptance once a reviewed form and a test access code have been seeded.
+the results or solutions endpoints. If no supported Chrome/Chromium binary is
+available, the MathJax browser probe is explicitly skipped while its package
+configuration and TeX preprocessing unit tests still run. Use the checklist
+below for browser/API acceptance once a reviewed form and a test access code
+have been seeded.
 
 ## Preconditions
 
@@ -46,6 +50,21 @@ acceptance once a reviewed form and a test access code have been seeded.
 | Reset/retry | From final results choose Start a new attempt, return to My tests, and open the prior final result. | `POST /reset` returns a new `TIMED/RUNNING` attempt with blank answers. The previous attempt and every submission remain in the database; its `RESET` history item is marked `resultsAvailable` only when it has an immutable `FINAL` submission, so its final results/solutions remain viewable. |
 | Network failure | Disconnect after choosing an answer and before final submission. Reconnect and retry/reload. | The UI warns that answers are not saved and does not submit final while a save has failed. The server remains the source of truth. |
 | Two tabs | Resume the same attempt in two tabs, change answers in each; in the stale tab try Check score, Stop, or Submit final. | A revision conflict does not silently overwrite the other tab; saves and score-producing actions reject with `ANSWER_REVISION_CONFLICT`, the UI refreshes/requires a new confirmation, and the server retains an audit trail. |
+| Batch text upload | Open a finalized result, choose a `.txt` or `.md` file containing answers and approaches, then upload. | Network shows an exact file-descriptor reservation, `application/octet-stream` body upload, and empty submit mutation. Processing status polls without changing the official final score. |
+| Batch audio upload | Upload a supported MP3/M4A/MP4/WAV/OGG/FLAC test recording. | The private asset progresses through upload/transcription/decomposition; no API key or provider identifier appears in browser source, requests, or responses. |
+| Explicit mapping confirmation | Wait for `NEEDS_CONFIRMATION`. Inspect AI-proposed question/answer/reasoning fields, change at least one, discard one item, and press Confirm reviewed mapping. | No confirmation request occurs merely because confidence is high. The mutation contains only the displayed mapping revision and complete student decisions; every item is assigned exactly once or discarded. The committed mapped-question score appears separately from the official final score. |
+| Batch recovery | Drop the network response once during create/upload/submit/confirm, then restore it. For a repeatedly interrupted draft, reopen the result and delete the incomplete file submission. | The immediate retry reuses the exact idempotency key and cannot create a duplicate operation. Durable status is recovered by GET; incomplete private assets can be explicitly purged. |
+| Unified learning history | Open Learning history after an interactive final and after confirming a batch. Open the submission and each version. | Both sources appear under one submission. Each immutable version shows its own response count, question set, result/report status, and origin; older pages load with the cursor button. |
+| Version and question report | Open a version report, then a specific question. | Queued/running analysis polls to a terminal status. The question view shows its frozen answer/reasoning, objective mapped/final result, strengths, gaps, suggestions, and comparisons with approved solutions. |
+| Restricted Markdown | Put a raw `<script>`, `<img onerror>`, and an external Markdown link in test student/AI fixtures. | The strings render as inert text or restricted prose. No active link, remote image, raw HTML node, or script is created. |
+| Restricted TeX | In a student reasoning note or Tutor reply, test `\href`, `\url`, `\includegraphics`, `\require`, `\class`, `\cssId`, and `\style`; in reviewed question content also test `\frac`, `\sqrt`, `\boldsymbol`, `\textcolor`, `\cancel`, and `\coloneqq`. Keep DevTools Network open. | Untrusted extension commands are shown as unsupported and create no link, image, external request, event handler, or caller-chosen class/id/style. Ordinary AMC TeX still renders. `npm run verify` performs the same core probe in headless Chrome when available. |
+| Tutor discussion | From a released question report start a discussion, send a question, and wait for the reply. | Create sends an empty body and message sends only `{ message }`; DevTools contains no question, solutions, scoring, hashes, provider metadata, or internal job ID in mutation bodies. Pending status polls to success and Markdown remains restricted. |
+| Tutor summary pagination | Create more than 10 discussions for one question, including one whose source entitlement has expired, reopen it, then choose Load earlier discussions. | The collection GET uses `limit=10` and an opaque cursor and returns only `thread`, nullable `latestRequest`, and `sourceEntitled`. The first entitled row opens automatically. The stale row says “Source unavailable—delete to free capacity,” cannot be opened, and still has an independently labelled Delete button. Earlier summaries append once; messages and request history load only after a single discussion GET. |
+| Tutor failure/retry | Inject a terminal `FAILED` or `DELIVERY_UNKNOWN` Tutor outcome. | The failure remains visible and does not auto-retry. Only pressing **Retry request** sends an empty retry mutation using the public request ordinal. |
+| Tutor capacity/fork | Reach the configured Tutor turn/context limit. | Message input disables, **Fork discussion** appears, and only an explicit fork creates a new server-grounded thread from the latest successful answer. |
+| Tutor deletion and stale polls | Start a slow poll on discussion A, switch to B, then delete B after it becomes idle. Separately delete an unselected source-unavailable row while an older cursor page is delayed. | A's delayed response never replaces B. Both selected and unselected deletion require confirmation and target the row's explicit thread ID. The tombstone removes the row, invalidates the delayed page/poll/full GET, and prevents resurrection. |
+| Tutor context privacy | Open a discussion containing distinctive text, then switch questions, close the question, return to the dashboard, and separately revoke its source before a full refresh. Inspect hidden DOM after each transition. | Messages, requests, composer text, and the full bundle are physically absent rather than merely hidden. Revocation retains only the context-free summary with Delete; a delayed GET/poll cannot restore content. |
+| Sign-out privacy | Open a final result, learning report, question reasoning, and Tutor messages, then sign out and inspect hidden page DOM before another login. | Attempt, batch, learning-history, and Tutor state is empty; rendered score, reasoning, report, solution, message, cursor, file selection, and cached form DOM is cleared. |
 
 ## API smoke checks
 
@@ -69,6 +88,20 @@ POST /api/amc12/attempts/:attemptId/deadline-decision  { decision, expectedAnswe
 POST /api/amc12/attempts/:attemptId/reset              {}
 GET  /api/amc12/attempts/:attemptId/results            (final only)
 GET  /api/amc12/attempts/:attemptId/solutions          (final only)
+POST /api/amc12/attempts/:attemptId/learning-batches   { files: [{ displayName, kind, contentType, declaredBytes }] }
+PUT  /api/amc12/attempts/:attemptId/learning-batches/:batchId/assets/:assetId/body
+POST /api/amc12/attempts/:attemptId/learning-batches/:batchId/submit   {}
+POST /api/amc12/attempts/:attemptId/learning-batches/:batchId/confirm { mappingRevision, responses, discardedItemIds }
+DELETE /api/amc12/attempts/:attemptId/learning-batches/:batchId      (Idempotency-Key required)
+GET  /api/amc12/learning-history
+GET  /api/amc12/learning-history/:submissionId
+GET  /api/amc12/learning-history/:submissionId/versions/:version/report
+GET  /api/amc12/learning-history/:submissionId/versions/:version/questions/:question
+POST /api/amc12/learning-history/:submissionId/versions/:version/questions/:question/tutor-threads {}
+POST /api/amc12/learning-history/:submissionId/versions/:version/questions/:question/tutor-threads/:thread/messages { message }
+POST /api/amc12/learning-history/:submissionId/versions/:version/questions/:question/tutor-threads/:thread/requests/:ordinal/retries {}
+POST /api/amc12/learning-history/:submissionId/versions/:version/questions/:question/tutor-threads/:thread/forks {}
+DELETE /api/amc12/learning-history/:submissionId/versions/:version/questions/:question/tutor-threads/:thread (Idempotency-Key required)
 ```
 
 All mutations carry `X-CSRF-Token`; attempt mutations also carry an opaque

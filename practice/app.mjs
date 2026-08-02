@@ -26,6 +26,17 @@ export const MAX_REASONING_BATCH_TEXT_BYTES = 48_000;
 export const MAX_REASONING_REQUEST_BYTES = 60_000;
 export const LEARNING_REPORT_POLL_MS = 5_000;
 export const MAX_LEARNING_REPORT_POLLS = 12;
+export const MAX_BATCH_FILES = 10;
+export const MAX_BATCH_BYTES = 100 * 1024 * 1024;
+export const MAX_TEXT_FILE_BYTES = 256 * 1024;
+export const MAX_AUDIO_FILE_BYTES = 25 * 1024 * 1024;
+export const BATCH_POLL_MS = 3_000;
+export const TUTOR_POLL_MS = 2_500;
+
+const BATCH_TEXT_TYPES = new Set(['text/plain', 'text/markdown']);
+const BATCH_AUDIO_TYPES = new Set(['audio/mpeg', 'audio/mp4', 'audio/wav', 'audio/x-wav', 'audio/ogg', 'audio/flac']);
+const TUTOR_PENDING_STATUSES = new Set(['QUEUED', 'RUNNING', 'RETRY_WAIT']);
+const TUTOR_RETRYABLE_TERMINAL_STATUSES = new Set(['FAILED', 'DELIVERY_UNKNOWN', 'CANCELLED']);
 
 export class ApiError extends Error {
   constructor(message, { status = 0, code = 'REQUEST_FAILED', payload = null } = {}) {
@@ -53,6 +64,425 @@ function finiteNumber(value, fallback = null) {
 function unwrapData(payload) {
   if (isRecord(payload) && isRecord(payload.data)) return payload.data;
   return payload || {};
+}
+
+function opaquePathPart(value) {
+  return encodeURIComponent(String(value));
+}
+
+export function learningHistoryPath({ cursor = null, limit = 20 } = {}) {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (cursor) params.set('cursor', cursor);
+  return `${API_BASE}/learning-history?${params}`;
+}
+
+export function learningHistorySubmissionPath(submissionId) {
+  return `${API_BASE}/learning-history/${opaquePathPart(submissionId)}`;
+}
+
+export function learningHistoryReportPath(submissionId, versionNumber) {
+  return `${learningHistorySubmissionPath(submissionId)}/versions/${opaquePathPart(versionNumber)}/report`;
+}
+
+export function learningHistoryQuestionPath(submissionId, versionNumber, questionNumber) {
+  return `${learningHistorySubmissionPath(submissionId)}/versions/${opaquePathPart(versionNumber)}/questions/${opaquePathPart(questionNumber)}`;
+}
+
+export function tutorThreadsPath({ submissionId, versionNumber, questionNumber }) {
+  return `${learningHistoryQuestionPath(submissionId, versionNumber, questionNumber)}/tutor-threads`;
+}
+
+export function tutorThreadListPath(identity, { limit = 10, cursor = null } = {}) {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (cursor) params.set('cursor', cursor);
+  return `${tutorThreadsPath(identity)}?${params}`;
+}
+
+export function tutorThreadPath(identity, threadId) {
+  return `${tutorThreadsPath(identity)}/${opaquePathPart(threadId)}`;
+}
+
+export function validTutorMessage(value) {
+  return typeof value === 'string' && value.trim().length > 0 && !value.includes('\u0000')
+    && new TextEncoder().encode(value).byteLength <= 2_048;
+}
+
+export async function createTutorThreadRequest(apiClient, identity, { generateKey = idempotencyKey } = {}) {
+  const key = generateKey();
+  return retryIdempotentNetworkMutation(
+    () => apiClient.post(tutorThreadsPath(identity), {}, { idempotency: key })
+  );
+}
+
+export async function sendTutorMessageRequest(apiClient, identity, threadId, message,
+  { generateKey = idempotencyKey } = {}) {
+  if (!validTutorMessage(message)) {
+    throw new ApiError('Tutor messages must contain 1-2048 UTF-8 bytes.', { code: 'INVALID_TUTOR_MESSAGE' });
+  }
+  const key = generateKey();
+  return retryIdempotentNetworkMutation(
+    () => apiClient.post(`${tutorThreadPath(identity, threadId)}/messages`, { message }, { idempotency: key })
+  );
+}
+
+export async function retryTutorRequestRequest(apiClient, identity, threadId, requestOrdinal,
+  { generateKey = idempotencyKey } = {}) {
+  if (!Number.isSafeInteger(requestOrdinal) || requestOrdinal < 1 || requestOrdinal > 32) {
+    throw new ApiError('Tutor request ordinal is invalid.', { code: 'INVALID_TUTOR_REQUEST_ORDINAL' });
+  }
+  const key = generateKey();
+  return retryIdempotentNetworkMutation(() => apiClient.post(
+    `${tutorThreadPath(identity, threadId)}/requests/${opaquePathPart(requestOrdinal)}/retries`, {},
+    { idempotency: key }
+  ));
+}
+
+export async function forkTutorThreadRequest(apiClient, identity, threadId,
+  { generateKey = idempotencyKey } = {}) {
+  const key = generateKey();
+  return retryIdempotentNetworkMutation(
+    () => apiClient.post(`${tutorThreadPath(identity, threadId)}/forks`, {}, { idempotency: key })
+  );
+}
+
+export async function deleteTutorThreadRequest(apiClient, identity, threadId,
+  { generateKey = idempotencyKey } = {}) {
+  const key = generateKey();
+  return retryIdempotentNetworkMutation(
+    () => apiClient.delete(tutorThreadPath(identity, threadId), { idempotency: key })
+  );
+}
+
+export function tutorRequestIsPending(request) {
+  return TUTOR_PENDING_STATUSES.has(String(request?.status || '').toUpperCase());
+}
+
+export function tutorRequestMayRetry(request) {
+  return Number.isSafeInteger(request?.requestOrdinal)
+    && TUTOR_RETRYABLE_TERMINAL_STATUSES.has(String(request?.status || '').toUpperCase());
+}
+
+export function tutorBundleMatchesIdentity(bundle, identity, threadId = null) {
+  return Boolean(bundle?.thread?.id && identity
+    && String(bundle.thread.learningSubmissionId) === String(identity.submissionId)
+    && Number(bundle.thread.versionNumber) === Number(identity.versionNumber)
+    && Number(bundle.thread.questionNumber) === Number(identity.questionNumber)
+    && (threadId === null || String(bundle.thread.id) === String(threadId)));
+}
+
+function publicTutorThread(thread) {
+  if (!thread?.id) return null;
+  return {
+    id: String(thread.id),
+    learningSubmissionId: String(thread.learningSubmissionId || ''),
+    versionNumber: finiteNumber(thread.versionNumber),
+    formId: String(thread.formId || ''),
+    formVersion: String(thread.formVersion || ''),
+    sourceType: String(thread.sourceType || ''),
+    questionNumber: finiteNumber(thread.questionNumber),
+    status: String(thread.status || ''),
+    successfulTurnCount: finiteNumber(thread.successfulTurnCount, 0),
+    requestCount: finiteNumber(thread.requestCount, 0),
+    threadRevision: finiteNumber(thread.threadRevision, 0),
+    forkedFromThreadId: thread.forkedFromThreadId == null ? null : String(thread.forkedFromThreadId),
+    createdAt: thread.createdAt || null,
+    updatedAt: thread.updatedAt || null,
+    closedAt: thread.closedAt || null
+  };
+}
+
+function publicTutorLatestRequest(request) {
+  if (!request || !Number.isSafeInteger(request.requestOrdinal)) return null;
+  return {
+    requestOrdinal: request.requestOrdinal,
+    turnNumber: finiteNumber(request.turnNumber),
+    status: String(request.status || ''),
+    retryAuthorization: request.retryAuthorization == null ? null : String(request.retryAuthorization),
+    outcomeCode: request.outcomeCode == null ? null : String(request.outcomeCode),
+    createdAt: request.createdAt || null,
+    completedAt: request.completedAt || null
+  };
+}
+
+export function normalizeTutorThreadSummary(value) {
+  const thread = publicTutorThread(value?.thread);
+  if (!thread) return null;
+  const sourceEntitled = value?.sourceEntitled === true;
+  return {
+    thread,
+    sourceEntitled,
+    latestRequest: sourceEntitled ? publicTutorLatestRequest(value.latestRequest) : null
+  };
+}
+
+export function tutorSummaryFromBundle(bundle) {
+  const requests = Array.isArray(bundle?.requests) ? bundle.requests : [];
+  const latestRequest = [...requests].filter((request) => Number.isSafeInteger(request?.requestOrdinal))
+    .sort((left, right) => right.requestOrdinal - left.requestOrdinal)[0] || null;
+  return normalizeTutorThreadSummary({ thread: bundle?.thread, latestRequest, sourceEntitled: true });
+}
+
+export function firstEntitledTutorThreadId(summaries) {
+  return (Array.isArray(summaries) ? summaries : [])
+    .find((summary) => summary?.sourceEntitled === true)?.thread?.id || null;
+}
+
+export function tutorThreadRowModel(summary, index, selectedThreadId = null) {
+  const ordinal = Number(index) + 1;
+  const sourceEntitled = summary?.sourceEntitled === true;
+  const status = String(summary?.latestRequest?.status || summary?.thread?.status || 'unknown')
+    .toLowerCase().replaceAll('_', ' ');
+  return {
+    canOpen: sourceEntitled,
+    current: String(summary?.thread?.id) === String(selectedThreadId),
+    openLabel: `Open discussion ${ordinal}: ${status}`,
+    deleteLabel: `Delete discussion ${ordinal}`,
+    visibleLabel: `Discussion ${ordinal} · ${status}`,
+    unavailableText: sourceEntitled ? null : 'Source unavailable—delete to free capacity.'
+  };
+}
+
+export function applyTutorThreadTombstone(target, threadId) {
+  const normalizedThreadId = String(threadId || '');
+  if (!normalizedThreadId) return { deletedSelectedThread: false, nextThreadId: null };
+  target.tutorLoadSequence = finiteNumber(target.tutorLoadSequence, 0) + 1;
+  target.tutorListSequence = finiteNumber(target.tutorListSequence, 0) + 1;
+  if (!(target.deletedTutorThreadIds instanceof Set)) target.deletedTutorThreadIds = new Set();
+  target.deletedTutorThreadIds.add(normalizedThreadId);
+  target.tutorThreads = (Array.isArray(target.tutorThreads) ? target.tutorThreads : [])
+    .filter((item) => String(item?.thread?.id) !== normalizedThreadId);
+  const deletedSelectedThread = String(target.tutorSelectedThreadId) === normalizedThreadId;
+  if (deletedSelectedThread) {
+    target.tutorSelectedThreadId = null;
+    target.tutorThread = null;
+    target.tutorForkRequired = false;
+  }
+  return {
+    deletedSelectedThread,
+    nextThreadId: deletedSelectedThread ? firstEntitledTutorThreadId(target.tutorThreads) : null
+  };
+}
+
+export function tutorFullGetSourceUnavailable(error) {
+  const code = String(error?.code || '').toUpperCase();
+  return [403, 404].includes(Number(error?.status))
+    || ['TUTOR_SOURCE_UNAVAILABLE', 'SOURCE_UNAVAILABLE', 'SOURCE_NOT_ENTITLED'].includes(code);
+}
+
+export function tutorSummaryMatchesIdentity(summary, identity) {
+  return tutorBundleMatchesIdentity(summary, identity);
+}
+
+export function tutorListPageContextMatches(request, current) {
+  return Boolean(request && current?.visible
+    && request.listSequence === current.listSequence
+    && String(request.cursor) === String(current.cursor));
+}
+
+export function batchPollContextMatches(context, { attemptId, batchId, epoch, visible }) {
+  return Boolean(context && visible
+    && String(context.attemptId) === String(attemptId)
+    && String(context.batchId) === String(batchId)
+    && context.epoch === epoch);
+}
+
+export function batchMutationContextMatches(context, { attemptId, activeBatchId, epoch, visible }) {
+  return Boolean(context && visible && context.epoch === epoch
+    && String(context.attemptId) === String(attemptId)
+    && (context.batchId === null || String(context.batchId) === String(activeBatchId)));
+}
+
+export function numberedBatchMappingItems(mapping) {
+  return Array.isArray(mapping?.items)
+    ? mapping.items.map((item, itemIndex) => ({ item, itemIndex })) : [];
+}
+
+export function tutorPollContextMatches(context, current) {
+  return Boolean(context && current?.visible && context.epoch === current.epoch
+    && String(context.submissionId) === String(current.submissionId)
+    && Number(context.versionNumber) === Number(current.versionNumber)
+    && Number(context.questionNumber) === Number(current.questionNumber)
+    && String(context.threadId) === String(current.threadId));
+}
+
+export function tutorThreadLoadContextMatches(context, current) {
+  return Boolean(context && !current?.deleted
+    && context.loadSequence === current?.loadSequence
+    && tutorPollContextMatches(context, {
+      ...current, threadId: current.selectedThreadId
+    }));
+}
+
+export function resetLearningTutorState(target) {
+  target.learningHistoryEpoch = finiteNumber(target.learningHistoryEpoch, 0) + 1;
+  target.learningHistoryItems = [];
+  target.learningHistoryNextCursor = null;
+  target.learningHistorySubmission = null;
+  target.learningHistoryVersion = null;
+  target.learningHistoryReport = null;
+  target.learningHistoryQuestion = null;
+  target.learningHistoryReportPollCount = 0;
+  resetTutorConversationState(target, { clearSummaries: true });
+  return target;
+}
+
+export function resetTutorConversationState(target, { clearSummaries = false } = {}) {
+  target.tutorLoadSequence = finiteNumber(target.tutorLoadSequence, 0) + 1;
+  target.tutorSelectedThreadId = null;
+  target.tutorForkRequired = false;
+  target.tutorThread = null;
+  if (clearSummaries) {
+    target.tutorListSequence = finiteNumber(target.tutorListSequence, 0) + 1;
+    target.deletedTutorThreadIds = new Set();
+    target.tutorThreads = [];
+    target.tutorNextCursor = null;
+  }
+  return target;
+}
+
+function batchContentType(file) {
+  const declared = String(file?.type || '').split(';', 1)[0].trim().toLowerCase();
+  if (BATCH_TEXT_TYPES.has(declared) || BATCH_AUDIO_TYPES.has(declared)) return declared;
+  const name = String(file?.name || '').toLowerCase();
+  if (name.endsWith('.txt')) return 'text/plain';
+  if (name.endsWith('.md') || name.endsWith('.markdown')) return 'text/markdown';
+  if (name.endsWith('.mp3')) return 'audio/mpeg';
+  if (name.endsWith('.m4a') || name.endsWith('.mp4')) return 'audio/mp4';
+  if (name.endsWith('.wav')) return 'audio/wav';
+  if (name.endsWith('.ogg') || name.endsWith('.oga')) return 'audio/ogg';
+  if (name.endsWith('.flac')) return 'audio/flac';
+  return null;
+}
+
+export function batchFileDescriptors(files) {
+  const list = Array.from(files || []);
+  if (list.length < 1 || list.length > MAX_BATCH_FILES) {
+    throw new ApiError(`Choose 1-${MAX_BATCH_FILES} text or audio files.`, { code: 'INVALID_BATCH_FILES' });
+  }
+  let total = 0;
+  const descriptors = list.map((file) => {
+    const contentType = batchContentType(file);
+    const displayName = String(file?.name || '');
+    const declaredBytes = Number(file?.size);
+    const kind = BATCH_TEXT_TYPES.has(contentType) ? 'TEXT'
+      : (BATCH_AUDIO_TYPES.has(contentType) ? 'AUDIO' : null);
+    if (!kind) throw new ApiError(`${displayName || 'This file'} has an unsupported type.`, { code: 'UNSUPPORTED_MEDIA_TYPE' });
+    if (!displayName || displayName.length > 255 || /[\u0000-\u001f\u007f]/u.test(displayName)
+        || new TextEncoder().encode(displayName).byteLength > 512) {
+      throw new ApiError('Each file needs a safe name no longer than 512 UTF-8 bytes.', { code: 'INVALID_FILE_NAME' });
+    }
+    const maximum = kind === 'TEXT' ? MAX_TEXT_FILE_BYTES : MAX_AUDIO_FILE_BYTES;
+    if (!Number.isSafeInteger(declaredBytes) || declaredBytes < 1 || declaredBytes > maximum) {
+      throw new ApiError(`${displayName} exceeds the ${kind === 'TEXT' ? '256 KiB' : '25 MiB'} file limit.`, { code: 'FILE_SIZE_LIMIT' });
+    }
+    total += declaredBytes;
+    return { displayName, kind, contentType, declaredBytes };
+  });
+  if (total > MAX_BATCH_BYTES) {
+    throw new ApiError('The selected files exceed the 100 MiB batch limit.', { code: 'BATCH_SIZE_LIMIT' });
+  }
+  return descriptors;
+}
+
+export function batchConfirmationPayload(mapping, decisions, { confirmed = false } = {}) {
+  if (!confirmed) throw new ApiError('Review every extracted item and explicitly confirm the mapping.', {
+    code: 'EXPLICIT_CONFIRMATION_REQUIRED'
+  });
+  if (!mapping || !Number.isSafeInteger(mapping.revision) || !Array.isArray(mapping.items)) {
+    throw new ApiError('The extracted mapping is unavailable or stale.', { code: 'INVALID_BATCH_MAPPING' });
+  }
+  const decisionMap = decisions instanceof Map ? decisions : new Map(
+    Array.isArray(decisions) ? decisions.map((item) => [item.itemId, item]) : []
+  );
+  const discardedItemIds = [];
+  const grouped = new Map();
+  for (const [itemIndex, item] of mapping.items.entries()) {
+    const decision = decisionMap.get(item.id);
+    if (!decision || !['MAP', 'DISCARD'].includes(decision.action)) {
+      throw new ApiError('Choose a question or discard every extracted item.', { code: 'INCOMPLETE_MAPPING_CONFIRMATION' });
+    }
+    if (decision.action === 'DISCARD') {
+      discardedItemIds.push(item.id);
+      continue;
+    }
+    const questionNumber = Number(decision.questionNumber);
+    const selectedOption = decision.selectedOption === '' || decision.selectedOption === undefined
+      ? null : String(decision.selectedOption).toUpperCase();
+    const reasoningText = String(decision.reasoningText ?? '');
+    if (!Number.isSafeInteger(questionNumber) || questionNumber < 1 || questionNumber > 25
+        || !(selectedOption === null || OPTIONS.includes(selectedOption))
+        || new TextEncoder().encode(reasoningText).byteLength > MAX_REASONING_NOTE_BYTES) {
+      throw new ApiError('Each mapped item needs a valid question, answer A-E or blank, and approach within 8000 bytes.', {
+        code: 'INVALID_MAPPING_CONFIRMATION'
+      });
+    }
+    const existing = grouped.get(questionNumber);
+    if (existing && existing.selectedOption !== selectedOption) {
+      throw new ApiError(`Items assigned to question ${questionNumber} must use the same answer.`, {
+        code: 'CONFLICTING_MAPPING_CONFIRMATION'
+      });
+    }
+    if (existing) {
+      existing.sourceItemIds.push(item.id);
+      if (reasoningText && !existing.reasoningParts.includes(reasoningText)) existing.reasoningParts.push(reasoningText);
+    } else {
+      grouped.set(questionNumber, {
+        questionNumber, selectedOption, sourceItemIds: [item.id], reasoningParts: reasoningText ? [reasoningText] : []
+      });
+    }
+  }
+  const responses = [...grouped.values()].sort((left, right) => left.questionNumber - right.questionNumber)
+    .map(({ reasoningParts, ...response }) => ({ ...response, reasoningText: reasoningParts.join('\n') }));
+  if (!responses.length) throw new ApiError('At least one extracted item must be mapped to a question.', {
+    code: 'INVALID_MAPPING_CONFIRMATION'
+  });
+  if (responses.some((response) => new TextEncoder().encode(response.reasoningText).byteLength > MAX_REASONING_NOTE_BYTES)) {
+    throw new ApiError('Combined approach text for one question exceeds 8000 bytes.', { code: 'INVALID_MAPPING_CONFIRMATION' });
+  }
+  return { mappingRevision: mapping.revision, responses, discardedItemIds };
+}
+
+export async function retryIdempotentNetworkMutation(operation) {
+  try {
+    return await operation();
+  } catch (error) {
+    if (!(error instanceof ApiError) || error.code !== 'NETWORK_ERROR') throw error;
+    return operation();
+  }
+}
+
+export async function submitLearningBatchFiles(apiClient, attemptId, files, {
+  generateKey = idempotencyKey,
+  onProgress = () => {}
+} = {}) {
+  const selected = Array.from(files || []);
+  const descriptors = batchFileDescriptors(selected);
+  const root = `${API_BASE}/attempts/${opaquePathPart(attemptId)}/learning-batches`;
+  const createKey = generateKey();
+  onProgress({ phase: 'CREATING', completed: 0, total: selected.length });
+  const created = await retryIdempotentNetworkMutation(
+    () => apiClient.post(root, { files: descriptors }, { idempotency: createKey })
+  );
+  const batch = unwrapData(created).batch;
+  if (!batch?.id || !Array.isArray(batch.assets) || batch.assets.length !== selected.length) {
+    throw new ApiError('The server returned an invalid batch reservation.', { code: 'INVALID_BATCH_RESPONSE' });
+  }
+  const assets = [...batch.assets].sort((left, right) => left.position - right.position);
+  for (let index = 0; index < selected.length; index += 1) {
+    onProgress({ phase: 'UPLOADING', completed: index, total: selected.length, displayName: descriptors[index].displayName });
+    const uploadKey = generateKey();
+    await retryIdempotentNetworkMutation(() => apiClient.putBinary(
+      `${root}/${opaquePathPart(batch.id)}/assets/${opaquePathPart(assets[index].id)}/body`,
+      selected[index], { idempotency: uploadKey }
+    ));
+  }
+  onProgress({ phase: 'SUBMITTING', completed: selected.length, total: selected.length });
+  const submitKey = generateKey();
+  const submitted = await retryIdempotentNetworkMutation(
+    () => apiClient.post(`${root}/${opaquePathPart(batch.id)}/submit`, {}, { idempotency: submitKey })
+  );
+  onProgress({ phase: 'PROCESSING', completed: selected.length, total: selected.length });
+  return unwrapData(submitted).batch || batch;
 }
 
 export function extractAttempt(payload) {
@@ -725,9 +1155,11 @@ class ApiClient {
     this.csrfToken = token || null;
   }
 
-  async request(path, { method = 'GET', body, idempotency = false, signal } = {}) {
+  async request(path, { method = 'GET', body, rawBody, contentType: requestContentType,
+    idempotency = false, signal } = {}) {
     const headers = { Accept: 'application/json', 'Cache-Control': 'no-store' };
-    if (body !== undefined) headers['Content-Type'] = 'application/json';
+    if (rawBody !== undefined) headers['Content-Type'] = requestContentType || 'application/octet-stream';
+    else if (body !== undefined) headers['Content-Type'] = 'application/json';
     if (this.csrfToken && !['GET', 'HEAD', 'OPTIONS'].includes(method)) headers['X-CSRF-Token'] = this.csrfToken;
     const mutationKey = !['GET', 'HEAD', 'OPTIONS'].includes(method)
       ? idempotencyHeaderValue(idempotency)
@@ -739,7 +1171,7 @@ class ApiClient {
       response = await fetch(path.startsWith('/') ? path : `${API_BASE}${path}`, {
         method,
         headers,
-        body: body === undefined ? undefined : JSON.stringify(body),
+        body: rawBody !== undefined ? rawBody : (body === undefined ? undefined : JSON.stringify(body)),
         credentials: 'include',
         cache: 'no-store',
         redirect: 'error',
@@ -791,6 +1223,12 @@ class ApiClient {
   get(path) { return this.request(path); }
   post(path, body = {}, options = {}) { return this.request(path, { method: 'POST', body, idempotency: true, ...options }); }
   put(path, body = {}, options = {}) { return this.request(path, { method: 'PUT', body, idempotency: true, ...options }); }
+  putBinary(path, rawBody, options = {}) {
+    return this.request(path, {
+      method: 'PUT', rawBody, contentType: 'application/octet-stream', idempotency: true, ...options
+    });
+  }
+  delete(path, options = {}) { return this.request(path, { method: 'DELETE', ...options }); }
 }
 
 const state = {
@@ -836,7 +1274,28 @@ const state = {
   learningReportLoadError: null,
   learningReportPollTimer: null,
   learningReportPollCount: 0,
-  learningReportRequestInFlight: false
+  learningReportRequestInFlight: false,
+  batchEpoch: 0,
+  batchPollTimer: null,
+  activeBatchId: null,
+  learningHistoryEpoch: 0,
+  learningHistoryItems: [],
+  learningHistoryNextCursor: null,
+  learningHistorySubmission: null,
+  learningHistoryVersion: null,
+  learningHistoryReport: null,
+  learningHistoryQuestion: null,
+  learningHistoryReportPollTimer: null,
+  learningHistoryReportPollCount: 0,
+  tutorPollTimer: null,
+  tutorLoadSequence: 0,
+  tutorListSequence: 0,
+  tutorSelectedThreadId: null,
+  deletedTutorThreadIds: new Set(),
+  tutorForkRequired: false,
+  tutorThreads: [],
+  tutorNextCursor: null,
+  tutorThread: null
 };
 
 let elements = null;
@@ -850,8 +1309,8 @@ function getElements() {
   const byId = (id) => document.getElementById(id);
   return {
     loadingView: byId('loading-view'), loginView: byId('login-view'), dashboardView: byId('dashboard-view'),
-    practiceView: byId('practice-view'), resultsView: byId('results-view'),
-    userName: byId('user-name'), dashboardButton: byId('dashboard-button'), logoutButton: byId('logout-button'),
+    practiceView: byId('practice-view'), resultsView: byId('results-view'), learningHistoryView: byId('learning-history-view'),
+    userName: byId('user-name'), learningHistoryButton: byId('learning-history-button'), dashboardButton: byId('dashboard-button'), logoutButton: byId('logout-button'),
     globalStatus: byId('global-status'), globalError: byId('global-error'), globalErrorMessage: byId('global-error-message'),
     globalErrorDismiss: byId('global-error-dismiss'), loginForm: byId('login-form'), loginAccessCode: byId('login-access-code'),
     loginSubmit: byId('login-submit'), loginError: byId('login-error'), formsList: byId('forms-list'), formsEmpty: byId('forms-empty'),
@@ -868,16 +1327,39 @@ function getElements() {
     analysisReportSummary: byId('analysis-report-summary'), analysisQuestions: byId('analysis-questions'), refreshAnalysisButton: byId('refresh-analysis-button'),
     submissionHistory: byId('submission-history'), resultsQuestions: byId('results-questions'), solutionsList: byId('solutions-list'),
     expandSolutions: byId('expand-solutions-button'), resetButton: byId('reset-button'), resultsDashboardButton: byId('results-dashboard-button'),
+    batchUploadForm: byId('batch-upload-form'), batchFiles: byId('batch-files'), batchSelectedFiles: byId('batch-selected-files'),
+    batchSubmitButton: byId('batch-submit-button'), batchStatus: byId('batch-status'), batchWorkspace: byId('batch-workspace'),
+    learningHistoryBackButton: byId('learning-history-back-button'), refreshLearningHistoryButton: byId('refresh-learning-history-button'),
+    learningHistoryStatus: byId('learning-history-status'), learningHistoryList: byId('learning-history-list'),
+    learningHistoryLoadMore: byId('learning-history-load-more'),
+    learningHistoryDetail: byId('learning-history-detail'), learningHistoryDetailTitle: byId('learning-history-detail-title'),
+    learningHistoryDetailSource: byId('learning-history-detail-source'), closeLearningHistoryDetail: byId('close-learning-history-detail'),
+    learningHistoryVersions: byId('learning-history-versions'), learningVersionReport: byId('learning-version-report'),
+    learningVersionReportMeta: byId('learning-version-report-meta'), learningVersionReportStatus: byId('learning-version-report-status'),
+    learningVersionReportSummary: byId('learning-version-report-summary'), learningVersionQuestions: byId('learning-version-questions'),
+    closeLearningVersionReport: byId('close-learning-version-report'), learningQuestionDetail: byId('learning-question-detail'),
+    learningQuestionMeta: byId('learning-question-meta'), learningQuestionTitle: byId('learning-question-title'),
+    learningQuestionPrompt: byId('learning-question-prompt'), learningQuestionChoices: byId('learning-question-choices'),
+    learningQuestionResponse: byId('learning-question-response'), learningQuestionAnalysis: byId('learning-question-analysis'),
+    closeLearningQuestion: byId('close-learning-question'), tutorStatus: byId('tutor-status'),
+    tutorThreadList: byId('tutor-thread-list'), tutorThread: byId('tutor-thread'), tutorMessages: byId('tutor-messages'),
+    tutorLoadMore: byId('tutor-load-more'),
+    tutorRequests: byId('tutor-requests'), createTutorThread: byId('create-tutor-thread'), forkTutorThread: byId('fork-tutor-thread'),
+    deleteTutorThread: byId('delete-tutor-thread'), tutorMessageForm: byId('tutor-message-form'), tutorMessage: byId('tutor-message'),
+    sendTutorMessage: byId('send-tutor-message'),
     modalBackdrop: byId('modal-backdrop'), modal: byId('modal'), modalTitle: byId('modal-title'), modalMessage: byId('modal-message'),
     modalActions: byId('modal-actions'), modalClose: byId('modal-close')
   };
 }
 
 function showOnly(view) {
-  const views = [elements.loadingView, elements.loginView, elements.dashboardView, elements.practiceView, elements.resultsView];
+  const views = [elements.loadingView, elements.loginView, elements.dashboardView, elements.practiceView,
+    elements.resultsView, elements.learningHistoryView];
   views.forEach((candidate) => { candidate.hidden = candidate !== view; });
   if (view !== elements.practiceView) stopAttemptSync();
   if (view !== elements.resultsView) stopLearningReportPolling();
+  if (view !== elements.resultsView) stopBatchPolling();
+  if (view !== elements.learningHistoryView) purgeTutorWorkspace({ clearSummaries: true });
 }
 
 function clearNode(node) {
@@ -944,6 +1426,7 @@ function showLoginError(message) {
 function updateHeader() {
   const signedIn = Boolean(state.student);
   elements.userName.hidden = !signedIn;
+  elements.learningHistoryButton.hidden = !signedIn;
   elements.dashboardButton.hidden = !signedIn;
   elements.logoutButton.hidden = !signedIn;
   elements.userName.textContent = signedIn ? String(firstDefined(state.student.displayName, state.student.name, state.student.id, 'Student')) : '';
@@ -962,14 +1445,61 @@ function setCsrfToken(token) {
   if (token) api.setCsrfToken(token);
 }
 
+function clearSensitiveDom() {
+  for (const node of [
+    elements.formsList, elements.questionNav, elements.questionContent, elements.answerOptions,
+    elements.submissionHistory, elements.resultsQuestions, elements.solutionsList,
+    elements.analysisReportSummary, elements.analysisQuestions, elements.batchSelectedFiles, elements.batchWorkspace,
+    elements.learningHistoryList, elements.learningHistoryVersions, elements.learningVersionReportSummary,
+    elements.learningVersionQuestions, elements.learningQuestionPrompt, elements.learningQuestionChoices,
+    elements.learningQuestionResponse, elements.learningQuestionAnalysis, elements.tutorThreadList,
+    elements.tutorMessages, elements.tutorRequests, elements.modalMessage, elements.modalActions
+  ]) {
+    if (node) clearNode(node);
+  }
+  for (const node of [
+    elements.formLabel, elements.attemptTitle, elements.attemptState, elements.saveStatus,
+    elements.questionPosition, elements.questionSaveIndicator, elements.reasoningSaveStatus,
+    elements.resultsSummary, elements.finalScore, elements.scoreDetails, elements.analysisStatus,
+    elements.analysisMeta, elements.batchStatus, elements.learningHistoryStatus,
+    elements.learningHistoryDetailSource, elements.learningVersionReportMeta,
+    elements.learningVersionReportStatus, elements.learningQuestionMeta, elements.tutorStatus,
+    elements.learningHistoryDetailTitle, elements.learningQuestionTitle, elements.modalTitle
+  ]) {
+    if (node) node.textContent = '';
+  }
+  elements.reasoningInput.value = '';
+  elements.batchUploadForm.reset();
+  elements.tutorMessageForm.reset();
+  elements.loginForm.reset();
+  setButtonBusy(elements.batchSubmitButton, false);
+  setButtonBusy(elements.tutorLoadMore, false);
+  setButtonBusy(elements.createTutorThread, false);
+  setButtonBusy(elements.sendTutorMessage, false);
+  setButtonBusy(elements.forkTutorThread, false);
+  elements.analysisSummary.hidden = true;
+  elements.tutorThread.hidden = true;
+  elements.learningHistoryDetail.hidden = true;
+  elements.learningVersionReport.hidden = true;
+  elements.learningQuestionDetail.hidden = true;
+}
+
 function localSignOut({ message = null } = {}) {
+  hideModal({ force: true });
+  stopLearningHistoryReportPolling();
+  stopTutorPolling({ invalidate: false });
   state.student = null;
   state.forms = [];
   state.attemptHistory = [];
+  state.formCache.clear();
   clearAttemptState();
+  resetLearningTutorState(state);
+  clearSensitiveDom();
   api.setCsrfToken(null);
   updateHeader();
   showOnly(elements.loginView);
+  showStatus('');
+  hideError();
   clearLoginError();
   if (message) showLoginError(message);
   window.setTimeout(() => elements.loginAccessCode.focus(), 0);
@@ -1013,6 +1543,8 @@ function clearAttemptState() {
   state.learningReportLoadError = null;
   state.learningReportPollCount = 0;
   state.learningReportRequestInFlight = false;
+  stopBatchPolling();
+  state.activeBatchId = null;
 }
 
 function handleUnauthorized() {
@@ -1523,10 +2055,23 @@ function appendInlineMarkdown(parent, source, { allowExternalResources = true } 
   if (cursor < value.length) appendLegacyAwareText(parent, value.slice(cursor));
 }
 
+// Restricted Markdown is used for student and AI-authored text. MathJax parses
+// TeX after the Markdown DOM exists, so HTML escaping alone is insufficient:
+// commands supplied by optional MathJax packages can otherwise create links,
+// resource loads, or caller-chosen DOM attributes.
+const RESTRICTED_TEX_COMMAND = /\\(?:href|url|includegraphics|require|class|cssId|style|htmlClass|htmlId|htmlStyle|htmlData|color|textcolor|colorbox|fcolorbox|newcommand|renewcommand|providecommand|newenvironment|renewenvironment|DeclareMathOperator|def|edef|gdef|xdef|let|futurelet|global|csname)\b/giu;
+
+export function sanitizeRestrictedTeX(value) {
+  return String(value ?? '').replace(RESTRICTED_TEX_COMMAND, '\\operatorname{unsupported}');
+}
+
 /** A deliberately small, safe Markdown renderer for API-provided prompt/solution text. */
 function renderMarkdown(container, markdown, { allowExternalResources = true } = {}) {
   clearNode(container);
-  const lines = String(markdown ?? '').replace(/\r\n?/g, '\n').split('\n');
+  if (allowExternalResources) delete container.dataset.restrictedMath;
+  else container.dataset.restrictedMath = 'true';
+  const source = allowExternalResources ? String(markdown ?? '') : sanitizeRestrictedTeX(markdown);
+  const lines = source.replace(/\r\n?/g, '\n').split('\n');
   let index = 0;
   const appendParagraph = (paragraphLines) => {
     if (!paragraphLines.length) return;
@@ -1614,12 +2159,48 @@ function mathJaxTypesetter() {
   return window.MathJax.typesetPromise.bind(window.MathJax);
 }
 
+export function scrubRestrictedMathDom(container) {
+  if (!container?.querySelectorAll) return;
+  for (const element of container.querySelectorAll('a, img, image, foreignObject, iframe, object, embed')) {
+    if (String(element.localName).toLowerCase() === 'a') {
+      const text = element.ownerDocument?.createTextNode?.(element.textContent || '');
+      if (text) element.replaceWith(text);
+      else element.remove();
+    } else {
+      element.remove();
+    }
+  }
+  for (const element of container.querySelectorAll('*')) {
+    for (const attribute of Array.from(element.attributes || [])) {
+      const name = String(attribute.name).toLowerCase();
+      const value = String(attribute.value || '').trim();
+      if (name.startsWith('on') || name === 'srcset' || name === 'formaction'
+          || ((name === 'href' || name === 'xlink:href' || name === 'src') && !value.startsWith('#'))
+          || (name === 'style' && /(?:url\s*\(|expression\s*\(|@import)/iu.test(value))) {
+        element.removeAttribute(attribute.name);
+      }
+    }
+  }
+}
+
+function restrictedMathContainers(nodes) {
+  const restricted = new Set();
+  for (const node of nodes || []) {
+    if (node?.dataset?.restrictedMath === 'true') restricted.add(node);
+    for (const descendant of node?.querySelectorAll?.('[data-restricted-math="true"]') || []) restricted.add(descendant);
+  }
+  return [...restricted];
+}
+
 function typesetMath(nodes) {
   const typesetter = mathJaxTypesetter();
   if (typesetter) {
-    typesetter(nodes).catch(() => {
-      // Rendering text fallback is preferable to failing the test UI.
-    });
+    const restricted = restrictedMathContainers(nodes);
+    typesetter(nodes)
+      .then(() => restricted.forEach(scrubRestrictedMathDom))
+      .catch(() => {
+        // Rendering text fallback is preferable to failing the test UI.
+      });
   }
 }
 
@@ -1629,7 +2210,16 @@ function typesetVisiblePracticeMath() {
     elements.questionContent,
     elements.answerOptions,
     elements.resultsQuestions,
-    elements.solutionsList
+    elements.solutionsList,
+    elements.analysisReportSummary,
+    elements.analysisQuestions,
+    elements.learningVersionReportSummary,
+    elements.learningVersionQuestions,
+    elements.learningQuestionPrompt,
+    elements.learningQuestionChoices,
+    elements.learningQuestionResponse,
+    elements.learningQuestionAnalysis,
+    elements.tutorMessages
   ].filter(Boolean);
   typesetMath(nodes);
 }
@@ -2824,6 +3414,1334 @@ async function loadLearningReport({ context = learningReportContext(), quiet = f
   }
 }
 
+function stopBatchPolling({ invalidate = true } = {}) {
+  if (state.batchPollTimer) window.clearTimeout(state.batchPollTimer);
+  state.batchPollTimer = null;
+  if (invalidate) state.batchEpoch += 1;
+}
+
+function currentBatchContext(batchId = state.activeBatchId) {
+  if (!state.attempt?.id || !batchId) return null;
+  return { attemptId: String(state.attempt.id), batchId: String(batchId), epoch: state.batchEpoch };
+}
+
+function isCurrentBatchContext(context) {
+  return batchPollContextMatches(context, {
+    attemptId: state.attempt?.id,
+    batchId: state.activeBatchId,
+    epoch: state.batchEpoch,
+    visible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
+  });
+}
+
+function batchCollectionPath(attemptId = state.attempt?.id) {
+  return `${API_BASE}/attempts/${opaquePathPart(attemptId)}/learning-batches`;
+}
+
+function batchItemPath(batchId) {
+  return `${batchCollectionPath()}/${opaquePathPart(batchId)}`;
+}
+
+function renderSelectedBatchFiles() {
+  clearNode(elements.batchSelectedFiles);
+  const files = Array.from(elements.batchFiles.files || []);
+  if (!files.length) return;
+  try {
+    const descriptors = batchFileDescriptors(files);
+    descriptors.forEach((descriptor) => {
+      const row = document.createElement('div');
+      row.className = 'batch-selected-file';
+      const name = document.createElement('span');
+      name.textContent = descriptor.displayName;
+      const detail = document.createElement('span');
+      detail.className = 'muted';
+      detail.textContent = `${descriptor.kind.toLowerCase()} · ${formatFileBytes(descriptor.declaredBytes)}`;
+      row.append(name, detail);
+      elements.batchSelectedFiles.appendChild(row);
+    });
+  } catch (error) {
+    const note = document.createElement('p');
+    note.className = 'form-error';
+    note.textContent = error.message;
+    elements.batchSelectedFiles.appendChild(note);
+  }
+}
+
+function formatFileBytes(value) {
+  const bytes = Number(value);
+  if (!Number.isFinite(bytes) || bytes < 0) return 'unknown size';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KiB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MiB`;
+}
+
+function statusPill(value) {
+  const pill = document.createElement('span');
+  pill.className = 'status-pill';
+  const status = String(value || 'UNKNOWN').toUpperCase();
+  pill.dataset.status = status;
+  pill.textContent = status.toLowerCase().replaceAll('_', ' ');
+  return pill;
+}
+
+function appendBatchMapping(batch, container) {
+  const mapping = batch.mapping;
+  const form = document.createElement('form');
+  form.className = 'mapping-form';
+  const callout = document.createElement('p');
+  callout.className = 'confirmation-callout';
+  callout.textContent = 'AI suggestions below are not accepted automatically. Review every answer and approach, assign it to the correct question or discard it, then explicitly confirm.';
+  form.appendChild(callout);
+
+  for (const { item, itemIndex } of numberedBatchMappingItems(mapping)) {
+    const card = document.createElement('article');
+    card.className = 'mapping-item';
+    card.dataset.itemId = item.id;
+    const header = document.createElement('div');
+    header.className = 'mapping-item-header';
+    const title = document.createElement('h3');
+    title.textContent = `Extracted item ${itemIndex + 1}`;
+    const warning = document.createElement('span');
+    warning.className = 'muted';
+    warning.textContent = item.requiresConfirmation ? 'Needs careful review' : 'AI suggestion';
+    header.append(title, warning);
+    card.appendChild(header);
+    const evidence = document.createElement('blockquote');
+    evidence.textContent = String(item.evidenceText || 'No evidence preview was returned.');
+    card.appendChild(evidence);
+    if (Array.isArray(item.confirmationReasons) && item.confirmationReasons.length) {
+      const reasons = document.createElement('p');
+      reasons.className = 'muted';
+      reasons.textContent = `Review flags: ${item.confirmationReasons.map((reason) =>
+        String(reason).toLowerCase().replaceAll('_', ' ')).join(', ')}.`;
+      card.appendChild(reasons);
+    }
+
+    const discardLabel = document.createElement('label');
+    discardLabel.className = 'mapping-discard';
+    const discard = document.createElement('input');
+    discard.type = 'checkbox';
+    discard.className = 'mapping-discard-input';
+    discard.checked = !Number.isSafeInteger(item.proposedQuestionNumber);
+    discardLabel.append(discard, document.createTextNode('Discard this extracted item'));
+    card.appendChild(discardLabel);
+
+    const grid = document.createElement('div');
+    grid.className = 'mapping-grid';
+    const questionField = document.createElement('div');
+    questionField.className = 'field';
+    const questionId = `batch-${batch.id}-question-${item.id}`;
+    const questionLabel = document.createElement('label');
+    questionLabel.htmlFor = questionId;
+    questionLabel.textContent = 'Question';
+    const questionSelect = document.createElement('select');
+    questionSelect.id = questionId;
+    questionSelect.className = 'mapping-question';
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'Choose question';
+    questionSelect.appendChild(placeholder);
+    for (let number = 1; number <= 25; number += 1) {
+      const option = document.createElement('option');
+      option.value = String(number);
+      option.textContent = `Question ${number}${number === item.proposedQuestionNumber ? ' — AI suggestion' : ''}`;
+      option.selected = number === item.proposedQuestionNumber;
+      questionSelect.appendChild(option);
+    }
+    questionField.append(questionLabel, questionSelect);
+
+    const answerField = document.createElement('div');
+    answerField.className = 'field';
+    const answerId = `batch-${batch.id}-answer-${item.id}`;
+    const answerLabel = document.createElement('label');
+    answerLabel.htmlFor = answerId;
+    answerLabel.textContent = 'Answer';
+    const answerSelect = document.createElement('select');
+    answerSelect.id = answerId;
+    answerSelect.className = 'mapping-answer';
+    for (const [value, label] of [['', 'Blank / no answer'], ...OPTIONS.map((option) => [option, option])]) {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = label;
+      option.selected = value === String(item.selectedOption || '');
+      answerSelect.appendChild(option);
+    }
+    answerField.append(answerLabel, answerSelect);
+
+    const reasoningField = document.createElement('div');
+    reasoningField.className = 'field mapping-reasoning';
+    const reasoningId = `batch-${batch.id}-reasoning-${item.id}`;
+    const reasoningLabel = document.createElement('label');
+    reasoningLabel.htmlFor = reasoningId;
+    reasoningLabel.textContent = 'Your approach (review and edit)';
+    const reasoning = document.createElement('textarea');
+    reasoning.id = reasoningId;
+    reasoning.className = 'mapping-reasoning-input';
+    reasoning.rows = 4;
+    reasoning.maxLength = MAX_REASONING_NOTE_BYTES;
+    reasoning.value = String(item.reasoningSummary || '');
+    reasoningField.append(reasoningLabel, reasoning);
+    grid.append(questionField, answerField, reasoningField);
+    card.appendChild(grid);
+
+    const syncDiscard = () => {
+      questionSelect.disabled = discard.checked;
+      answerSelect.disabled = discard.checked;
+      reasoning.disabled = discard.checked;
+    };
+    discard.addEventListener('change', syncDiscard);
+    syncDiscard();
+    form.appendChild(card);
+  }
+
+  const confirm = document.createElement('button');
+  confirm.type = 'submit';
+  confirm.className = 'button button-primary';
+  confirm.textContent = 'Confirm reviewed mapping';
+  form.appendChild(confirm);
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const context = currentBatchContext(batch.id);
+    if (!context || !isCurrentBatchContext(context)) return;
+    const decisions = new Map();
+    for (const card of form.querySelectorAll('.mapping-item')) {
+      const discarded = card.querySelector('.mapping-discard-input').checked;
+      decisions.set(card.dataset.itemId, discarded ? { action: 'DISCARD' } : {
+        action: 'MAP',
+        questionNumber: Number(card.querySelector('.mapping-question').value),
+        selectedOption: card.querySelector('.mapping-answer').value,
+        reasoningText: card.querySelector('.mapping-reasoning-input').value
+      });
+    }
+    setButtonBusy(confirm, true, 'Confirming…');
+    try {
+      const payload = batchConfirmationPayload(mapping, decisions, { confirmed: true });
+      const confirmKey = idempotencyKey();
+      const response = await retryIdempotentNetworkMutation(
+        () => api.post(`${batchItemPath(batch.id)}/confirm`, payload, { idempotency: confirmKey })
+      );
+      const confirmed = unwrapData(response).batch;
+      if (!batchMutationContextMatches(context, {
+        attemptId: state.attempt?.id,
+        activeBatchId: state.activeBatchId,
+        epoch: state.batchEpoch,
+        visible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
+      })) return;
+      if (!confirmed?.id || String(confirmed.id) !== String(batch.id)
+          || String(confirmed.attemptId) !== context.attemptId) {
+        throw new ApiError('The confirmation response was invalid.', { code: 'INVALID_BATCH_RESPONSE' });
+      }
+      stopBatchPolling();
+      state.activeBatchId = confirmed.id;
+      renderBatchWorkspace(confirmed);
+      showStatus('The reviewed mapping was committed. Its result and analysis now appear in Learning history.');
+    } catch (error) {
+      if (!batchMutationContextMatches(context, {
+        attemptId: state.attempt?.id,
+        activeBatchId: state.activeBatchId,
+        epoch: state.batchEpoch,
+        visible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
+      })) return;
+      handleError(error, 'Could not confirm this mapping.');
+    } finally {
+      if (batchMutationContextMatches(context, {
+        attemptId: state.attempt?.id,
+        activeBatchId: state.activeBatchId,
+        epoch: state.batchEpoch,
+        visible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
+      })) setButtonBusy(confirm, false);
+    }
+  });
+  container.appendChild(form);
+}
+
+function renderBatchWorkspace(batch) {
+  clearNode(elements.batchWorkspace);
+  if (!batch) return;
+  const card = document.createElement('article');
+  card.className = 'batch-card';
+  const header = document.createElement('div');
+  header.className = 'batch-card-header';
+  const heading = document.createElement('div');
+  const title = document.createElement('h3');
+  title.textContent = 'File submission';
+  const meta = document.createElement('p');
+  meta.className = 'muted';
+  meta.textContent = `${batch.assets?.length || 0} file${batch.assets?.length === 1 ? '' : 's'} · Updated ${formatDateTime(batch.updatedAt)}`;
+  heading.append(title, meta);
+  header.append(heading, statusPill(batch.status));
+  card.appendChild(header);
+
+  if (Array.isArray(batch.assets) && batch.assets.length) {
+    const assets = document.createElement('ul');
+    for (const asset of batch.assets) {
+      const row = document.createElement('li');
+      row.textContent = `${asset.displayName} — ${String(asset.status || '').toLowerCase().replaceAll('_', ' ')}`;
+      assets.appendChild(row);
+    }
+    card.appendChild(assets);
+  }
+  if (batch.status === 'PROCESSING') {
+    const note = document.createElement('p');
+    note.className = 'muted';
+    note.textContent = 'Audio transcription and answer decomposition are running. This page refreshes automatically.';
+    card.appendChild(note);
+  } else if (batch.status === 'NEEDS_CONFIRMATION' && batch.mapping) {
+    appendBatchMapping(batch, card);
+  } else if (batch.status === 'COMMITTED') {
+    const score = document.createElement('p');
+    score.className = 'analysis-verdict';
+    score.textContent = batch.result
+      ? `Mapped-question score: ${formatScore(batch.result.totalPoints)} / ${formatScore(batch.result.maximumPoints)} (${batch.result.mappedQuestionCount} mapped).`
+      : 'The batch is committed. Its protected result is currently unavailable.';
+    const history = document.createElement('button');
+    history.type = 'button';
+    history.className = 'button button-secondary';
+    history.textContent = 'View analysis in Learning history';
+    history.addEventListener('click', () => showLearningHistory({ submissionId: batch.learningSubmissionId }));
+    card.append(score, history);
+  } else if (batch.status === 'FAILED') {
+    const note = document.createElement('p');
+    note.className = 'form-error';
+    note.textContent = `Processing failed${batch.failureCode ? ` (${batch.failureCode})` : ''}. Your objective final result is unchanged; choose the files again to start a new batch.`;
+    card.appendChild(note);
+  }
+  if (['DRAFT', 'FAILED', 'NEEDS_CONFIRMATION'].includes(batch.status)
+      && String(batch.deletionState || 'ACTIVE') === 'ACTIVE') {
+    const remove = document.createElement('button');
+    remove.type = 'button'; remove.className = 'button button-danger'; remove.textContent = 'Delete file submission';
+    remove.addEventListener('click', () => confirmDeleteLearningBatch(batch));
+    card.appendChild(remove);
+  }
+  elements.batchWorkspace.appendChild(card);
+}
+
+function confirmDeleteLearningBatch(batch) {
+  openModal({
+    title: 'Delete this file submission?',
+    paragraphs: ['Private uploaded files, pending extraction, and unconfirmed mapping will be purged. This does not change your official final score.'],
+    actions: [
+      { label: 'Cancel', className: 'button button-secondary', close: true },
+      { label: 'Delete files', className: 'button button-danger', handler: () => deleteLearningBatch(batch) }
+    ]
+  });
+}
+
+async function deleteLearningBatch(batch) {
+  const context = currentBatchContext(batch?.id);
+  if (!context || !isCurrentBatchContext(context)) return;
+  const key = idempotencyKey();
+  try {
+    const response = await retryIdempotentNetworkMutation(
+      () => api.delete(batchItemPath(batch.id), { idempotency: key })
+    );
+    if (!batchMutationContextMatches(context, {
+      attemptId: state.attempt?.id,
+      activeBatchId: state.activeBatchId,
+      epoch: state.batchEpoch,
+      visible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
+    })) return;
+    hideModal({ force: true });
+    stopBatchPolling();
+    state.activeBatchId = null;
+    renderBatchWorkspace(unwrapData(response).batch || null);
+    showStatus('The private file submission was deleted.');
+  } catch (error) {
+    if (!batchMutationContextMatches(context, {
+      attemptId: state.attempt?.id,
+      activeBatchId: state.activeBatchId,
+      epoch: state.batchEpoch,
+      visible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
+    })) return;
+    handleError(error, 'Could not delete this file submission.');
+  }
+}
+
+function scheduleBatchPoll(context) {
+  if (state.batchPollTimer) window.clearTimeout(state.batchPollTimer);
+  if (!isCurrentBatchContext(context)) return;
+  state.batchPollTimer = window.setTimeout(() => {
+    state.batchPollTimer = null;
+    if (isCurrentBatchContext(context)) void loadLearningBatch(context);
+  }, BATCH_POLL_MS);
+}
+
+async function loadLearningBatch(context) {
+  if (!isCurrentBatchContext(context)) return;
+  try {
+    const response = await api.get(batchItemPath(context.batchId));
+    if (!isCurrentBatchContext(context)) return;
+    const batch = unwrapData(response).batch;
+    if (!batch?.id || String(batch.id) !== String(context.batchId)
+        || String(batch.attemptId) !== String(context.attemptId)) {
+      throw new ApiError('The batch response was invalid.', { code: 'INVALID_BATCH_RESPONSE' });
+    }
+    renderBatchWorkspace(batch);
+    if (['DRAFT', 'PROCESSING'].includes(batch.status)) scheduleBatchPoll(context);
+  } catch (error) {
+    if (!isCurrentBatchContext(context)) return;
+    elements.batchStatus.textContent = 'Could not refresh file processing. Use Learning history or reopen this result to retry.';
+    scheduleBatchPoll(context);
+  }
+}
+
+async function loadLatestLearningBatch() {
+  if (!state.attempt?.id || elements.resultsView.hidden) return;
+  const requestedAttemptId = String(state.attempt.id);
+  const requestedEpoch = state.batchEpoch;
+  try {
+    const response = await api.get(batchCollectionPath());
+    if (String(state.attempt?.id || '') !== requestedAttemptId || elements.resultsView.hidden
+        || state.batchEpoch !== requestedEpoch) return;
+    const batches = Array.isArray(unwrapData(response).batches) ? unwrapData(response).batches : [];
+    const batch = [...batches].filter((item) => !item.deletedAt
+        && String(item.attemptId) === requestedAttemptId)
+      .sort((left, right) => timestampMs(right.updatedAt) - timestampMs(left.updatedAt))[0];
+    if (!batch) return;
+    stopBatchPolling();
+    state.activeBatchId = batch.id;
+    renderBatchWorkspace(batch);
+    if (['DRAFT', 'PROCESSING'].includes(batch.status)) scheduleBatchPoll(currentBatchContext(batch.id));
+  } catch {
+    if (String(state.attempt?.id || '') !== requestedAttemptId || elements.resultsView.hidden
+        || state.batchEpoch !== requestedEpoch) return;
+    elements.batchStatus.textContent = 'Existing file submissions could not be loaded. Your final result is unaffected.';
+  }
+}
+
+async function submitBatchUpload(event) {
+  event.preventDefault();
+  const files = Array.from(elements.batchFiles.files || []);
+  try {
+    batchFileDescriptors(files);
+  } catch (error) {
+    handleError(error, 'Choose valid text or audio files first.');
+    return;
+  }
+  stopBatchPolling();
+  state.activeBatchId = null;
+  const context = {
+    attemptId: String(state.attempt?.id || ''),
+    batchId: null,
+    epoch: state.batchEpoch
+  };
+  if (!context.attemptId) return;
+  setButtonBusy(elements.batchSubmitButton, true, 'Uploading…');
+  elements.batchStatus.textContent = '';
+  try {
+    const batch = await submitLearningBatchFiles(api, state.attempt?.id, files, {
+      onProgress(progress) {
+        if (!batchMutationContextMatches(context, {
+          attemptId: state.attempt?.id,
+          activeBatchId: state.activeBatchId,
+          epoch: state.batchEpoch,
+          visible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
+        })) return;
+        const messages = {
+          CREATING: 'Creating a private upload reservation…',
+          UPLOADING: `Uploading ${progress.displayName || 'file'} (${progress.completed + 1} of ${progress.total})…`,
+          SUBMITTING: 'Submitting files for transcription and decomposition…',
+          PROCESSING: 'Files uploaded. Processing has started.'
+        };
+        elements.batchStatus.textContent = messages[progress.phase] || '';
+      }
+    });
+    if (!batchMutationContextMatches(context, {
+      attemptId: state.attempt?.id,
+      activeBatchId: state.activeBatchId,
+      epoch: state.batchEpoch,
+      visible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
+    })) return;
+    if (!batch?.id || String(batch.attemptId) !== context.attemptId) {
+      throw new ApiError('The batch response was invalid.', { code: 'INVALID_BATCH_RESPONSE' });
+    }
+    setButtonBusy(elements.batchSubmitButton, false);
+    stopBatchPolling();
+    state.activeBatchId = batch.id;
+    renderBatchWorkspace(batch);
+    elements.batchUploadForm.reset();
+    clearNode(elements.batchSelectedFiles);
+    if (['DRAFT', 'PROCESSING'].includes(batch.status)) scheduleBatchPoll(currentBatchContext(batch.id));
+  } catch (error) {
+    if (!batchMutationContextMatches(context, {
+      attemptId: state.attempt?.id,
+      activeBatchId: state.activeBatchId,
+      epoch: state.batchEpoch,
+      visible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
+    })) return;
+    handleError(error, 'Could not upload this file submission.');
+    elements.batchStatus.textContent = 'Upload did not finish. Reopen this result to inspect any durable server-side progress before retrying.';
+  } finally {
+    if (batchMutationContextMatches(context, {
+      attemptId: state.attempt?.id,
+      activeBatchId: state.activeBatchId,
+      epoch: state.batchEpoch,
+      visible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
+    })) setButtonBusy(elements.batchSubmitButton, false);
+  }
+}
+
+export function normalizeLearningHistory(payload) {
+  const root = unwrapData(payload);
+  const source = Array.isArray(root.items) ? root.items : [];
+  return {
+    items: source.slice(0, 100).filter(isRecord).map((item) => ({
+      submissionId: String(item.submissionId || ''),
+      attemptId: String(item.attemptId || ''),
+      title: item.title == null ? null : String(item.title),
+      sourceType: String(item.sourceType || ''),
+      currentVersion: finiteNumber(item.currentVersion),
+      lifecycleStatus: String(item.lifecycleStatus || ''),
+      protectedAccessStatus: String(item.protectedAccessStatus || ''),
+      latestAnalysisStatus: String(item.latestAnalysisStatus || ''),
+      latestReportStatus: item.latestReportStatus == null ? null : String(item.latestReportStatus),
+      lastActivityAt: item.lastActivityAt || null,
+      versions: Array.isArray(item.versions) ? item.versions.slice(0, 100).filter(isRecord).map((version) => ({
+        versionNumber: finiteNumber(version.versionNumber),
+        creationReason: String(version.creationReason || ''),
+        contextStatus: String(version.contextStatus || ''),
+        responseCount: finiteNumber(version.responseCount, 0),
+        mappedQuestionCount: version.mappedQuestionCount == null ? null : finiteNumber(version.mappedQuestionCount, 0),
+        questionNumbers: learningVersionQuestionNumbers(version),
+        batchLineage: isRecord(version.batchLineage) ? {
+          batchId: String(version.batchLineage.batchId || ''),
+          sourceType: String(version.batchLineage.sourceType || ''),
+          status: String(version.batchLineage.status || ''),
+          committedAt: version.batchLineage.committedAt || null
+        } : null,
+        analysisStatus: String(version.analysisStatus || ''),
+        resultStatus: String(version.resultStatus || ''),
+        reportStatus: version.reportStatus == null ? null : String(version.reportStatus),
+        createdAt: version.createdAt || null,
+        lastActivityAt: version.lastActivityAt || null
+      })).filter((version) => Number.isSafeInteger(version.versionNumber) && version.versionNumber > 0) : []
+    })).filter((item) => item.submissionId),
+    nextCursor: typeof root.nextCursor === 'string' && root.nextCursor ? root.nextCursor : null
+  };
+}
+
+export function learningVersionQuestionNumbers(version) {
+  return [...new Set((Array.isArray(version?.questionNumbers) ? version.questionNumbers : [])
+    .map(Number).filter((number) => Number.isSafeInteger(number) && number >= 1 && number <= 100))]
+    .sort((left, right) => left - right);
+}
+
+function stopLearningHistoryReportPolling() {
+  if (state.learningHistoryReportPollTimer) window.clearTimeout(state.learningHistoryReportPollTimer);
+  state.learningHistoryReportPollTimer = null;
+  state.learningHistoryReportPollCount = 0;
+}
+
+function stopTutorPolling({ invalidate = true } = {}) {
+  if (state.tutorPollTimer) window.clearTimeout(state.tutorPollTimer);
+  state.tutorPollTimer = null;
+  if (invalidate) state.learningHistoryEpoch += 1;
+}
+
+function clearTutorConversationDom({ clearSummaries = false, clearStatus = true } = {}) {
+  if (!elements) return;
+  clearNode(elements.tutorMessages);
+  clearNode(elements.tutorRequests);
+  elements.tutorMessageForm.reset();
+  elements.tutorThread.hidden = true;
+  elements.forkTutorThread.hidden = true;
+  elements.tutorMessage.disabled = true;
+  setButtonBusy(elements.sendTutorMessage, false);
+  elements.sendTutorMessage.disabled = true;
+  setButtonBusy(elements.forkTutorThread, false);
+  if (clearSummaries) {
+    clearNode(elements.tutorThreadList);
+    elements.tutorLoadMore.hidden = true;
+    setButtonBusy(elements.tutorLoadMore, false);
+    setButtonBusy(elements.createTutorThread, false);
+    elements.createTutorThread.disabled = true;
+  }
+  if (clearStatus) elements.tutorStatus.textContent = '';
+}
+
+function purgeTutorWorkspace({ clearSummaries = false, clearStatus = true } = {}) {
+  stopTutorPolling({ invalidate: false });
+  resetTutorConversationState(state, { clearSummaries });
+  clearTutorConversationDom({ clearSummaries, clearStatus });
+}
+
+function historyContext(extra = {}) {
+  return {
+    epoch: state.learningHistoryEpoch,
+    submissionId: state.learningHistorySubmission?.submissionId || null,
+    versionNumber: state.learningHistoryVersion?.versionNumber || null,
+    questionNumber: state.learningHistoryQuestion?.question?.questionNumber || null,
+    ...extra
+  };
+}
+
+function historyContextMatches(context, { requireQuestion = false } = {}) {
+  if (!context || elements?.learningHistoryView?.hidden || context.epoch !== state.learningHistoryEpoch) return false;
+  if (context.submissionId && String(context.submissionId) !== String(state.learningHistorySubmission?.submissionId)) return false;
+  if (context.versionNumber && Number(context.versionNumber) !== Number(state.learningHistoryVersion?.versionNumber)) return false;
+  if (requireQuestion && Number(context.questionNumber) !== Number(state.learningHistoryQuestion?.question?.questionNumber)) return false;
+  return true;
+}
+
+function humanSourceType(value) {
+  return ({ INTERACTIVE_FINAL: 'Interactive final', OPEN_REVIEW: 'Open review' })[String(value || '').toUpperCase()]
+    || String(value || 'Learning submission').toLowerCase().replaceAll('_', ' ');
+}
+
+function humanVersionReason(value) {
+  return ({ FINAL_SUBMISSION: 'Interactive final', BACKFILL: 'Interactive final', BATCH_COMMIT: 'Confirmed file batch', OPEN_REVIEW_ANCHOR: 'Open-review workspace' })[String(value || '').toUpperCase()]
+    || String(value || 'Version').toLowerCase().replaceAll('_', ' ');
+}
+
+function hideLearningHistoryPanels(panel = null) {
+  if (panel !== elements.learningQuestionDetail) {
+    purgeTutorWorkspace({ clearSummaries: true });
+  }
+  for (const candidate of [elements.learningHistoryDetail, elements.learningVersionReport, elements.learningQuestionDetail]) {
+    candidate.hidden = candidate !== panel;
+  }
+  elements.learningHistoryList.hidden = panel !== null;
+  elements.learningHistoryLoadMore.hidden = panel !== null || !state.learningHistoryNextCursor;
+}
+
+function renderLearningHistoryList(items) {
+  clearNode(elements.learningHistoryList);
+  if (!items.length) {
+    const empty = document.createElement('p');
+    empty.className = 'empty-state';
+    empty.textContent = 'No finalized or confirmed learning submissions are available yet.';
+    elements.learningHistoryList.appendChild(empty);
+    return;
+  }
+  for (const item of items) {
+    const card = document.createElement('article');
+    card.className = 'history-card';
+    const header = document.createElement('div');
+    header.className = 'history-card-header';
+    const heading = document.createElement('div');
+    const title = document.createElement('h2');
+    title.textContent = item.title || 'Unavailable learning submission';
+    const source = document.createElement('p');
+    source.className = 'muted';
+    source.textContent = humanSourceType(item.sourceType);
+    heading.append(title, source);
+    header.append(heading, statusPill(item.latestReportStatus || item.latestAnalysisStatus));
+    const meta = document.createElement('div');
+    meta.className = 'history-card-meta';
+    for (const text of [
+      `${item.versions.length} version${item.versions.length === 1 ? '' : 's'}`,
+      `Updated ${formatDateTime(item.lastActivityAt)}`,
+      item.protectedAccessStatus ? `Access: ${item.protectedAccessStatus.toLowerCase().replaceAll('_', ' ')}` : ''
+    ].filter(Boolean)) {
+      const span = document.createElement('span'); span.textContent = text; meta.appendChild(span);
+    }
+    const open = document.createElement('button');
+    open.type = 'button';
+    open.className = 'button button-secondary';
+    open.textContent = 'View versions and reports';
+    open.addEventListener('click', () => openLearningHistorySubmission(item.submissionId));
+    card.append(header, meta, open);
+    elements.learningHistoryList.appendChild(card);
+  }
+}
+
+function renderLearningHistoryVersions(record) {
+  elements.learningHistoryDetailTitle.textContent = record.title || 'Learning submission';
+  elements.learningHistoryDetailSource.textContent = `${humanSourceType(record.sourceType)} · ${record.versions?.length || 0} version${record.versions?.length === 1 ? '' : 's'}`;
+  clearNode(elements.learningHistoryVersions);
+  for (const version of record.versions || []) {
+    const card = document.createElement('article');
+    card.className = 'history-version';
+    const header = document.createElement('div');
+    header.className = 'history-version-header';
+    const heading = document.createElement('h3');
+    heading.textContent = `Version ${version.versionNumber} · ${humanVersionReason(version.creationReason)}`;
+    header.append(heading, statusPill(version.reportStatus || version.analysisStatus));
+    const meta = document.createElement('div');
+    meta.className = 'history-version-meta';
+    for (const text of [
+      `${finiteNumber(version.responseCount, 0)} submitted question${version.responseCount === 1 ? '' : 's'}`,
+      `Saved ${formatDateTime(version.createdAt)}`,
+      version.batchLineage ? 'Student-confirmed AI mapping' : ''
+    ].filter(Boolean)) {
+      const span = document.createElement('span'); span.textContent = text; meta.appendChild(span);
+    }
+    card.append(header, meta);
+    if (version.creationReason !== 'OPEN_REVIEW_ANCHOR' && learningVersionQuestionNumbers(version).length) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'button button-secondary';
+      button.textContent = 'Open result and analysis report';
+      button.addEventListener('click', () => openLearningHistoryVersion(version));
+      card.appendChild(button);
+    } else {
+      const note = document.createElement('p'); note.className = 'muted';
+      note.textContent = 'This blank workspace anchor has no submitted questions yet.';
+      card.appendChild(note);
+    }
+    elements.learningHistoryVersions.appendChild(card);
+  }
+}
+
+async function showLearningHistory({ submissionId = null } = {}) {
+  hideModal({ force: true });
+  stopAttemptSync();
+  stopBatchPolling();
+  purgeTutorWorkspace({ clearSummaries: true });
+  stopLearningHistoryReportPolling();
+  state.learningHistoryEpoch += 1;
+  state.learningHistorySubmission = null;
+  state.learningHistoryVersion = null;
+  state.learningHistoryQuestion = null;
+  state.learningHistoryNextCursor = null;
+  showOnly(elements.learningHistoryView);
+  hideLearningHistoryPanels();
+  clearNode(elements.learningHistoryList);
+  elements.learningHistoryStatus.textContent = 'Loading learning history…';
+  const epoch = state.learningHistoryEpoch;
+  try {
+    const response = await api.get(learningHistoryPath());
+    if (elements.learningHistoryView.hidden || epoch !== state.learningHistoryEpoch) return;
+    const history = normalizeLearningHistory(response);
+    state.learningHistoryItems = history.items;
+    state.learningHistoryNextCursor = history.nextCursor;
+    renderLearningHistoryList(history.items);
+    elements.learningHistoryLoadMore.hidden = !history.nextCursor;
+    elements.learningHistoryStatus.textContent = history.nextCursor ? 'Showing the 20 most recent submissions.' : '';
+    if (submissionId) await openLearningHistorySubmission(submissionId);
+    document.getElementById('main-content').focus();
+  } catch (error) {
+    if (epoch !== state.learningHistoryEpoch) return;
+    elements.learningHistoryStatus.textContent = 'Learning history could not be loaded.';
+    handleError(error, 'Could not load learning history.');
+  }
+}
+
+async function loadMoreLearningHistory() {
+  const cursor = state.learningHistoryNextCursor;
+  if (!cursor || elements.learningHistoryView.hidden) return;
+  const epoch = state.learningHistoryEpoch;
+  setButtonBusy(elements.learningHistoryLoadMore, true, 'Loading…');
+  try {
+    const response = await api.get(learningHistoryPath({ cursor }));
+    if (epoch !== state.learningHistoryEpoch || elements.learningHistoryView.hidden) return;
+    const page = normalizeLearningHistory(response);
+    const existing = new Set(state.learningHistoryItems.map((item) => item.submissionId));
+    state.learningHistoryItems.push(...page.items.filter((item) => !existing.has(item.submissionId)));
+    state.learningHistoryNextCursor = page.nextCursor;
+    renderLearningHistoryList(state.learningHistoryItems);
+    elements.learningHistoryLoadMore.hidden = !page.nextCursor;
+    elements.learningHistoryStatus.textContent = page.nextCursor ? 'More older submissions are available.' : 'All submissions are shown.';
+  } catch (error) {
+    if (epoch === state.learningHistoryEpoch) handleError(error, 'Could not load older submissions.');
+  } finally {
+    setButtonBusy(elements.learningHistoryLoadMore, false);
+  }
+}
+
+async function openLearningHistorySubmission(submissionId) {
+  purgeTutorWorkspace({ clearSummaries: true });
+  stopLearningHistoryReportPolling();
+  state.learningHistoryEpoch += 1;
+  const epoch = state.learningHistoryEpoch;
+  elements.learningHistoryStatus.textContent = 'Loading submission versions…';
+  try {
+    const rawRecord = unwrapData(await api.get(learningHistorySubmissionPath(submissionId)));
+    const record = normalizeLearningHistory({ items: [rawRecord] }).items[0];
+    if (elements.learningHistoryView.hidden || epoch !== state.learningHistoryEpoch) return;
+    if (!record || String(record.submissionId || '') !== String(submissionId)) {
+      throw new ApiError('The learning-history response did not match this submission.', { code: 'INVALID_LEARNING_HISTORY_RESPONSE' });
+    }
+    state.learningHistorySubmission = record;
+    state.learningHistoryVersion = null;
+    state.learningHistoryQuestion = null;
+    renderLearningHistoryVersions(record);
+    hideLearningHistoryPanels(elements.learningHistoryDetail);
+    elements.learningHistoryStatus.textContent = '';
+  } catch (error) {
+    if (epoch !== state.learningHistoryEpoch) return;
+    handleError(error, 'Could not open this learning submission.');
+  }
+}
+
+function renderHistoryReport(report, version) {
+  elements.learningVersionReportMeta.textContent = `Version ${version.versionNumber} · ${humanVersionReason(version.creationReason)}`;
+  elements.learningVersionReportStatus.textContent = learningReportStatusMessage(report.status);
+  clearNode(elements.learningVersionReportSummary);
+  clearNode(elements.learningVersionQuestions);
+  const summary = document.createElement('p');
+  summary.textContent = [
+    `${report.summary.analyzedCount} analyzed`, `${report.summary.unassessableCount} unassessable`,
+    `${report.summary.failedCount} failed`, `${report.summary.totalQuestions} total`
+  ].join(' · ');
+  elements.learningVersionReportSummary.appendChild(summary);
+  const analyses = new Map(report.questions.map((question) => [question.questionNumber, question]));
+  for (const questionNumber of learningVersionQuestionNumbers(version)) {
+    const question = analyses.get(questionNumber);
+    const card = document.createElement('article');
+    card.className = 'analysis-question';
+    const header = document.createElement('div');
+    header.className = 'analysis-question-heading';
+    const title = document.createElement('h3'); title.textContent = `Question ${questionNumber}`;
+    header.append(title, statusPill(question?.status || report.status));
+    card.appendChild(header);
+    if (question?.reasoningVerdict) {
+      const verdict = document.createElement('p'); verdict.className = 'analysis-verdict'; verdict.textContent = question.reasoningVerdict; card.appendChild(verdict);
+    }
+    if (question?.summaryMarkdown) {
+      const body = document.createElement('div');
+      renderMarkdown(body, question.summaryMarkdown, { allowExternalResources: false });
+      card.appendChild(body);
+    }
+    const open = document.createElement('button');
+    open.type = 'button'; open.className = 'button button-secondary'; open.textContent = 'Review question and discuss';
+    open.addEventListener('click', () => openLearningHistoryQuestion(questionNumber));
+    card.appendChild(open);
+    elements.learningVersionQuestions.appendChild(card);
+  }
+  typesetMath([elements.learningVersionReportSummary, elements.learningVersionQuestions]);
+}
+
+function scheduleHistoryReportPoll(context) {
+  if (state.learningHistoryReportPollTimer) window.clearTimeout(state.learningHistoryReportPollTimer);
+  if (!historyContextMatches(context) || !learningReportShouldPoll(state.learningHistoryReport?.status)
+      || state.learningHistoryReportPollCount >= MAX_LEARNING_REPORT_POLLS) return;
+  state.learningHistoryReportPollCount += 1;
+  state.learningHistoryReportPollTimer = window.setTimeout(() => {
+    state.learningHistoryReportPollTimer = null;
+    if (historyContextMatches(context)) void loadHistoryReport(context);
+  }, LEARNING_REPORT_POLL_MS);
+}
+
+async function loadHistoryReport(context) {
+  if (!historyContextMatches(context)) return;
+  try {
+    const response = await api.get(learningHistoryReportPath(context.submissionId, context.versionNumber));
+    if (!historyContextMatches(context)) return;
+    const report = normalizeLearningReport(response);
+    if (!report || String(report.learningSubmissionId) !== String(context.submissionId)
+        || Number(report.version) !== Number(context.versionNumber)) {
+      throw new ApiError('The analysis report did not match the selected version.', { code: 'INVALID_LEARNING_REPORT' });
+    }
+    state.learningHistoryReport = report;
+    renderHistoryReport(report, state.learningHistoryVersion);
+    if (learningReportShouldPoll(report.status)) scheduleHistoryReportPoll(context);
+  } catch (error) {
+    if (!historyContextMatches(context)) return;
+    elements.learningVersionReportStatus.textContent = 'The report could not be refreshed. The submitted response remains available.';
+    if (learningReportShouldPoll(state.learningHistoryReport?.status)) scheduleHistoryReportPoll(context);
+  }
+}
+
+async function openLearningHistoryVersion(version) {
+  purgeTutorWorkspace({ clearSummaries: true });
+  stopLearningHistoryReportPolling();
+  state.learningHistoryEpoch += 1;
+  state.learningHistoryVersion = version;
+  state.learningHistoryQuestion = null;
+  state.learningHistoryReport = {
+    learningSubmissionId: state.learningHistorySubmission.submissionId,
+    version: version.versionNumber,
+    status: ['QUEUED', 'RUNNING'].includes(version.analysisStatus) ? version.analysisStatus : 'QUEUED',
+    generatedAt: null,
+    summary: { totalQuestions: version.responseCount || 0, analyzedCount: 0, unassessableCount: 0, failedCount: 0 },
+    questions: []
+  };
+  hideLearningHistoryPanels(elements.learningVersionReport);
+  renderHistoryReport(state.learningHistoryReport, version);
+  const context = historyContext();
+  await loadHistoryReport(context);
+}
+
+function appendRestrictedMarkdownSection(container, title, markdown) {
+  const section = document.createElement('section');
+  const heading = document.createElement('h3'); heading.textContent = title;
+  const body = document.createElement('div');
+  renderMarkdown(body, markdown || 'Not provided.', { allowExternalResources: false });
+  section.append(heading, body);
+  container.appendChild(section);
+}
+
+function renderHistoryQuestion(record) {
+  const number = record.question.questionNumber;
+  elements.learningQuestionMeta.textContent = `Version ${record.versionNumber} · ${record.title || 'AMC 12'}`;
+  elements.learningQuestionTitle.textContent = `Question ${number}`;
+  clearNode(elements.learningQuestionPrompt);
+  renderMarkdown(elements.learningQuestionPrompt, record.question.promptMarkdown);
+  clearNode(elements.learningQuestionChoices);
+  for (const choice of record.question.choices || []) {
+    const row = document.createElement('div'); row.className = 'history-question-choice';
+    const label = document.createElement('strong'); label.textContent = `${choice.option}. `;
+    row.appendChild(label);
+    const body = document.createElement('div'); renderMarkdown(body, choice.textMarkdown); row.appendChild(body);
+    elements.learningQuestionChoices.appendChild(row);
+  }
+  clearNode(elements.learningQuestionResponse);
+  const responseTitle = document.createElement('h3'); responseTitle.textContent = 'Your submitted response';
+  const answer = document.createElement('p'); answer.textContent = `Answer: ${record.response.selectedOption || 'Blank'}`;
+  elements.learningQuestionResponse.append(responseTitle, answer);
+  appendRestrictedMarkdownSection(elements.learningQuestionResponse, 'Your approach', record.response.reasoningText || 'No approach was submitted.');
+  if (record.protected?.result) {
+    const result = document.createElement('p');
+    result.textContent = record.protected.result.isScored === false ? 'This question was not scored.'
+      : `Result: ${record.protected.result.isCorrect === true ? 'Correct' : (record.protected.result.isCorrect === false ? 'Incorrect' : 'Blank')} · ${formatScore(record.protected.result.points)} points`;
+    elements.learningQuestionResponse.appendChild(result);
+  }
+  clearNode(elements.learningQuestionAnalysis);
+  const analysis = record.protected?.analysis;
+  if (analysis) {
+    if (analysis.reasoningVerdict) {
+      const verdict = document.createElement('p'); verdict.className = 'analysis-verdict'; verdict.textContent = analysis.reasoningVerdict;
+      elements.learningQuestionAnalysis.appendChild(verdict);
+    }
+    if (analysis.summaryMarkdown) appendRestrictedMarkdownSection(elements.learningQuestionAnalysis, 'Analysis', analysis.summaryMarkdown);
+    appendLearningFeedbackList(elements.learningQuestionAnalysis, 'What worked', analysis.strengths || []);
+    appendLearningFeedbackList(elements.learningQuestionAnalysis, 'Gaps to address', analysis.gaps || []);
+    appendLearningFeedbackList(elements.learningQuestionAnalysis, 'Suggestions', analysis.suggestions || []);
+    for (const [index, comparison] of (analysis.solutionComparisons || []).entries()) {
+      appendRestrictedMarkdownSection(elements.learningQuestionAnalysis,
+        `Approved solution ${index + 1}${comparison.methodTags?.length ? ` · ${comparison.methodTags.join(', ')}` : ''}`,
+        comparison.analysisMarkdown);
+    }
+  } else {
+    const note = document.createElement('p'); note.className = 'muted';
+    note.textContent = record.protected ? 'Analysis for this question is not available yet.' : 'Protected result and analysis are currently withheld.';
+    elements.learningQuestionAnalysis.appendChild(note);
+  }
+  elements.createTutorThread.disabled = record.protected?.analysis?.status !== 'SUCCEEDED';
+  typesetMath([elements.learningQuestionPrompt, elements.learningQuestionChoices,
+    elements.learningQuestionResponse, elements.learningQuestionAnalysis]);
+}
+
+async function openLearningHistoryQuestion(questionNumber) {
+  purgeTutorWorkspace({ clearSummaries: true });
+  state.learningHistoryEpoch += 1;
+  const context = {
+    epoch: state.learningHistoryEpoch,
+    submissionId: state.learningHistorySubmission.submissionId,
+    versionNumber: state.learningHistoryVersion.versionNumber,
+    questionNumber
+  };
+  elements.learningVersionReportStatus.textContent = `Loading question ${questionNumber}…`;
+  try {
+    const record = unwrapData(await api.get(learningHistoryQuestionPath(
+      context.submissionId, context.versionNumber, questionNumber
+    )));
+    if (elements.learningHistoryView.hidden || context.epoch !== state.learningHistoryEpoch) return;
+    if (String(record.submissionId) !== String(context.submissionId)
+        || Number(record.versionNumber) !== Number(context.versionNumber)
+        || Number(record.question?.questionNumber) !== Number(questionNumber)) {
+      throw new ApiError('The question response did not match this report.', { code: 'INVALID_LEARNING_HISTORY_RESPONSE' });
+    }
+    state.learningHistoryQuestion = record;
+    renderHistoryQuestion(record);
+    hideLearningHistoryPanels(elements.learningQuestionDetail);
+    await loadTutorThreads(historyContext());
+  } catch (error) {
+    if (context.epoch !== state.learningHistoryEpoch) return;
+    handleError(error, 'Could not open this submitted question.');
+  }
+}
+
+function currentTutorIdentity() {
+  const question = state.learningHistoryQuestion;
+  if (!question) return null;
+  return {
+    submissionId: question.submissionId,
+    versionNumber: question.versionNumber,
+    questionNumber: question.question.questionNumber
+  };
+}
+
+function renderTutorThreads(threads) {
+  clearNode(elements.tutorThreadList);
+  for (const [index, summary] of threads.entries()) {
+    const model = tutorThreadRowModel(summary, index, state.tutorSelectedThreadId);
+    const row = document.createElement('article');
+    row.className = 'tutor-thread-card';
+    const open = document.createElement('button');
+    open.type = 'button';
+    open.className = 'button button-secondary tutor-thread-open';
+    open.textContent = model.visibleLabel;
+    open.setAttribute('aria-label', model.openLabel);
+    open.setAttribute('aria-current', model.current ? 'true' : 'false');
+    open.disabled = !model.canOpen;
+    open.addEventListener('click', () => loadTutorThread(summary.thread.id));
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'button button-danger';
+    remove.textContent = 'Delete';
+    remove.setAttribute('aria-label', model.deleteLabel);
+    remove.addEventListener('click', () => confirmDeleteTutorThread(summary.thread.id));
+    row.append(open, remove);
+    if (model.unavailableText) {
+      const unavailable = document.createElement('p');
+      unavailable.id = `tutor-source-unavailable-${index}`;
+      unavailable.className = 'muted tutor-source-unavailable';
+      unavailable.textContent = model.unavailableText;
+      open.setAttribute('aria-describedby', unavailable.id);
+      row.appendChild(unavailable);
+    }
+    elements.tutorThreadList.appendChild(row);
+  }
+  elements.tutorLoadMore.hidden = !state.tutorNextCursor;
+}
+
+function upsertTutorSummaryFromBundle(bundle) {
+  const identity = currentTutorIdentity();
+  const summary = tutorSummaryFromBundle(bundle);
+  if (!tutorSummaryMatchesIdentity(summary, identity)
+      || state.deletedTutorThreadIds.has(String(summary?.thread?.id))) {
+    throw new ApiError('The Tutor summary did not match this question.', { code: 'INVALID_TUTOR_RESPONSE' });
+  }
+  state.tutorThreads = [summary, ...state.tutorThreads.filter((item) => item.thread.id !== summary.thread.id)]
+    .sort((left, right) => timestampMs(right.thread.updatedAt) - timestampMs(left.thread.updatedAt)
+      || left.thread.id.localeCompare(right.thread.id));
+  return summary;
+}
+
+function renderTutorThread(bundle) {
+  upsertTutorSummaryFromBundle(bundle);
+  state.tutorThread = bundle;
+  state.tutorForkRequired = bundle.thread.status === 'CAPACITY_REACHED';
+  elements.tutorThread.hidden = false;
+  renderTutorThreads(state.tutorThreads);
+  clearNode(elements.tutorMessages);
+  for (const message of bundle.messages || []) {
+    const card = document.createElement('article'); card.className = 'tutor-message';
+    const role = String(message.role || '').toUpperCase(); card.dataset.role = role;
+    const label = document.createElement('p'); label.className = 'tutor-message-label';
+    label.textContent = role === 'ASSISTANT' ? 'AI tutor' : 'You';
+    const body = document.createElement('div');
+    renderMarkdown(body, message.contentMarkdown, { allowExternalResources: false });
+    card.append(label, body); elements.tutorMessages.appendChild(card);
+  }
+  clearNode(elements.tutorRequests);
+  for (const request of bundle.requests || []) {
+    const row = document.createElement('div'); row.className = 'tutor-request';
+    const label = document.createElement('span'); label.textContent = `Request ${request.requestOrdinal}`;
+    row.append(label, statusPill(request.status));
+    if (request.outcomeCode && request.status !== 'SUCCEEDED') {
+      const outcome = document.createElement('span'); outcome.className = 'muted';
+      outcome.textContent = String(request.outcomeCode).toLowerCase().replaceAll('_', ' '); row.appendChild(outcome);
+    }
+    if (tutorRequestMayRetry(request)) {
+      const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'button button-secondary';
+      retry.textContent = 'Retry request'; retry.addEventListener('click', () => retryTutorRequest(request.requestOrdinal, retry));
+      row.appendChild(retry);
+    }
+    elements.tutorRequests.appendChild(row);
+  }
+  const { pending, atCapacity } = syncTutorComposerAvailability(bundle);
+  elements.tutorStatus.textContent = pending ? 'AI is working on the latest request…'
+    : (atCapacity ? 'This discussion reached its safe context limit. Fork it to continue from the latest successful answer.' : '');
+  typesetMath([elements.tutorMessages]);
+}
+
+function syncTutorComposerAvailability(bundle = state.tutorThread) {
+  const pending = (bundle?.requests || []).some(tutorRequestIsPending);
+  const atCapacity = state.tutorForkRequired || bundle?.thread?.status === 'CAPACITY_REACHED';
+  elements.forkTutorThread.hidden = !atCapacity;
+  const unavailable = !bundle || pending || atCapacity || bundle.thread.status !== 'OPEN';
+  elements.tutorMessage.disabled = unavailable;
+  elements.sendTutorMessage.disabled = unavailable;
+  return { pending, atCapacity };
+}
+
+function currentTutorPollContext(threadId) {
+  const identity = currentTutorIdentity();
+  return identity && String(state.tutorSelectedThreadId) === String(threadId)
+    && !state.deletedTutorThreadIds.has(String(threadId)) ? {
+    ...identity, threadId, epoch: state.learningHistoryEpoch, loadSequence: state.tutorLoadSequence
+  } : null;
+}
+
+function isCurrentTutorPollContext(context) {
+  const identity = currentTutorIdentity();
+  return tutorThreadLoadContextMatches(context, {
+    ...identity,
+    selectedThreadId: state.tutorSelectedThreadId,
+    epoch: state.learningHistoryEpoch,
+    loadSequence: state.tutorLoadSequence,
+    deleted: state.deletedTutorThreadIds.has(String(context?.threadId)),
+    visible: Boolean(identity && elements?.learningQuestionDetail && !elements.learningQuestionDetail.hidden)
+  });
+}
+
+function scheduleTutorPoll(context) {
+  if (state.tutorPollTimer) window.clearTimeout(state.tutorPollTimer);
+  if (!isCurrentTutorPollContext(context)) return;
+  state.tutorPollTimer = window.setTimeout(() => {
+    state.tutorPollTimer = null;
+    if (isCurrentTutorPollContext(context)) void loadTutorThread(context.threadId, { quiet: true, context });
+  }, TUTOR_POLL_MS);
+}
+
+async function loadTutorThreads(context = historyContext()) {
+  if (!historyContextMatches(context, { requireQuestion: true })) return;
+  const identity = currentTutorIdentity();
+  purgeTutorWorkspace({ clearSummaries: true, clearStatus: false });
+  elements.tutorStatus.textContent = 'Loading discussions…';
+  const listSequence = state.tutorListSequence;
+  renderTutorThreads([]);
+  elements.tutorLoadMore.hidden = true;
+  try {
+    const response = unwrapData(await api.get(tutorThreadListPath(identity)));
+    if (!historyContextMatches(context, { requireQuestion: true })
+        || listSequence !== state.tutorListSequence) return;
+    state.tutorThreads = Array.isArray(response.items)
+      ? response.items.map(normalizeTutorThreadSummary)
+        .filter((summary) => tutorSummaryMatchesIdentity(summary, identity)
+          && !state.deletedTutorThreadIds.has(String(summary.thread.id))) : [];
+    state.tutorNextCursor = typeof response.nextCursor === 'string' && response.nextCursor
+      ? response.nextCursor : null;
+    const eligible = state.learningHistoryQuestion?.protected?.analysis?.status === 'SUCCEEDED';
+    elements.createTutorThread.disabled = !eligible;
+    renderTutorThreads(state.tutorThreads);
+    elements.tutorStatus.textContent = state.tutorThreads.length ? 'Choose a discussion or start a new one.'
+      : (eligible ? 'No discussion has been started for this question.'
+        : 'AI discussion becomes available after this question has a completed analysis.');
+    const initialThreadId = firstEntitledTutorThreadId(state.tutorThreads);
+    if (initialThreadId) await loadTutorThread(initialThreadId);
+    else if (state.tutorThreads.length) {
+      elements.tutorStatus.textContent = 'Source unavailable—delete a discussion to free capacity or start a new one.';
+    }
+  } catch (error) {
+    if (!historyContextMatches(context, { requireQuestion: true })
+        || listSequence !== state.tutorListSequence) return;
+    state.tutorThreads = [];
+    state.tutorNextCursor = null;
+    if (error.status === 404) elements.createTutorThread.disabled = true;
+    renderTutorThreads([]);
+    elements.tutorStatus.textContent = error.status === 404
+      ? 'AI discussion is not available for this report yet.' : 'Discussions could not be loaded.';
+  }
+}
+
+async function loadMoreTutorThreads() {
+  const identity = currentTutorIdentity();
+  const cursor = state.tutorNextCursor;
+  const listSequence = state.tutorListSequence;
+  const pageContext = { cursor, listSequence };
+  const context = historyContext();
+  if (!identity || !cursor || !historyContextMatches(context, { requireQuestion: true })) return;
+  setButtonBusy(elements.tutorLoadMore, true, 'Loading…');
+  try {
+    const response = unwrapData(await api.get(tutorThreadListPath(identity, { cursor })));
+    if (!historyContextMatches(context, { requireQuestion: true })
+        || !tutorListPageContextMatches(pageContext, {
+          cursor: state.tutorNextCursor, listSequence: state.tutorListSequence, visible: true
+        })) return;
+    const page = Array.isArray(response.items) ? response.items.map(normalizeTutorThreadSummary)
+      .filter((summary) => tutorSummaryMatchesIdentity(summary, identity)
+        && !state.deletedTutorThreadIds.has(String(summary.thread.id))) : [];
+    const seen = new Set(state.tutorThreads.map((summary) => summary.thread.id));
+    state.tutorThreads.push(...page.filter((summary) => !seen.has(summary.thread.id)));
+    state.tutorNextCursor = typeof response.nextCursor === 'string' && response.nextCursor
+      ? response.nextCursor : null;
+    renderTutorThreads(state.tutorThreads);
+    elements.tutorStatus.textContent = state.tutorNextCursor
+      ? 'More earlier discussions are available.' : 'All discussions are shown.';
+  } catch (error) {
+    if (historyContextMatches(context, { requireQuestion: true })
+        && listSequence === state.tutorListSequence) {
+      handleError(error, 'Could not load earlier discussions.');
+    }
+  } finally {
+    setButtonBusy(elements.tutorLoadMore, false);
+    if (listSequence === state.tutorListSequence) {
+      elements.tutorLoadMore.hidden = !state.tutorNextCursor;
+    }
+  }
+}
+
+async function loadTutorThread(threadId, { quiet = false, context = null } = {}) {
+  const identity = currentTutorIdentity();
+  const summary = state.tutorThreads.find((item) => String(item.thread.id) === String(threadId));
+  if (!identity || state.deletedTutorThreadIds.has(String(threadId))
+      || (summary && summary.sourceEntitled !== true)) return;
+  if (!context) {
+    if (state.tutorPollTimer) window.clearTimeout(state.tutorPollTimer);
+    state.tutorPollTimer = null;
+    state.tutorLoadSequence += 1;
+    state.tutorSelectedThreadId = String(threadId);
+    state.tutorThread = null;
+    clearTutorConversationDom({ clearStatus: false });
+    context = currentTutorPollContext(threadId);
+  }
+  if (!isCurrentTutorPollContext(context)) return;
+  try {
+    const response = unwrapData(await api.get(tutorThreadPath(identity, threadId)));
+    if (!isCurrentTutorPollContext(context)) return;
+    if (!tutorBundleMatchesIdentity(response.thread, identity, threadId)) {
+      throw new ApiError('The Tutor response did not match this discussion.', { code: 'INVALID_TUTOR_RESPONSE' });
+    }
+    const bundle = response.thread;
+    renderTutorThread(bundle);
+    if ((bundle.requests || []).some(tutorRequestIsPending)) scheduleTutorPoll(currentTutorPollContext(threadId));
+  } catch (error) {
+    if (!isCurrentTutorPollContext(context)) return;
+    if (tutorFullGetSourceUnavailable(error)) {
+      const unavailable = state.tutorThreads.find((item) => String(item.thread.id) === String(threadId));
+      if (unavailable) {
+        unavailable.sourceEntitled = false;
+        unavailable.latestRequest = null;
+      }
+      purgeTutorWorkspace({ clearSummaries: false });
+      renderTutorThreads(state.tutorThreads);
+      elements.tutorStatus.textContent = 'Source unavailable—delete to free capacity.';
+      return;
+    }
+    if (quiet) {
+      elements.tutorStatus.textContent = 'Tutor status could not be refreshed; retrying…';
+      scheduleTutorPoll(context);
+      return;
+    }
+    handleError(error, 'Could not load this discussion.');
+  }
+}
+
+async function createTutorThread() {
+  const identity = currentTutorIdentity();
+  if (!identity || elements.createTutorThread.disabled) return;
+  setButtonBusy(elements.createTutorThread, true, 'Starting…');
+  const context = historyContext();
+  const loadSequence = state.tutorLoadSequence;
+  try {
+    const response = unwrapData(await createTutorThreadRequest(api, identity));
+    if (!historyContextMatches(context, { requireQuestion: true })
+        || loadSequence !== state.tutorLoadSequence) return;
+    if (!tutorBundleMatchesIdentity(response.thread, identity)) {
+      throw new ApiError('The Tutor response was invalid.', { code: 'INVALID_TUTOR_RESPONSE' });
+    }
+    state.tutorLoadSequence += 1;
+    state.tutorSelectedThreadId = response.thread.thread.id;
+    renderTutorThread(response.thread);
+    elements.tutorStatus.textContent = 'Discussion ready. Ask about this question below.';
+  } catch (error) {
+    if (historyContextMatches(context, { requireQuestion: true })) handleError(error, 'Could not start a discussion for this question.');
+  } finally {
+    setButtonBusy(elements.createTutorThread, false);
+    elements.createTutorThread.disabled = state.learningHistoryQuestion?.protected?.analysis?.status !== 'SUCCEEDED';
+  }
+}
+
+async function sendTutorMessage(event) {
+  event.preventDefault();
+  const identity = currentTutorIdentity();
+  const threadId = state.tutorThread?.thread?.id;
+  const message = elements.tutorMessage.value.trim();
+  if (!identity || !threadId || !message) return;
+  const context = currentTutorPollContext(threadId);
+  if (!context) return;
+  setButtonBusy(elements.sendTutorMessage, true, 'Sending…');
+  try {
+    const response = unwrapData(await sendTutorMessageRequest(api, identity, threadId, message));
+    if (!isCurrentTutorPollContext(context)) return;
+    if (!tutorBundleMatchesIdentity(response.thread, identity, threadId)) {
+      throw new ApiError('The Tutor response did not match this discussion.', { code: 'INVALID_TUTOR_RESPONSE' });
+    }
+    elements.tutorMessageForm.reset();
+    renderTutorThread(response.thread);
+    scheduleTutorPoll(currentTutorPollContext(threadId));
+  } catch (error) {
+    if (!isCurrentTutorPollContext(context)) return;
+    if (error instanceof ApiError && error.code === 'TUTOR_FORK_REQUIRED') {
+      state.tutorForkRequired = true;
+      elements.tutorStatus.textContent = 'This discussion reached its limit. Fork it to continue.';
+    }
+    handleError(error, 'Could not send this Tutor message.');
+  } finally {
+    setButtonBusy(elements.sendTutorMessage, false);
+    syncTutorComposerAvailability();
+  }
+}
+
+async function retryTutorRequest(requestOrdinal, button) {
+  const identity = currentTutorIdentity();
+  const threadId = state.tutorThread?.thread?.id;
+  if (!identity || !threadId) return;
+  const context = currentTutorPollContext(threadId);
+  if (!context) return;
+  setButtonBusy(button, true, 'Retrying…');
+  try {
+    const response = unwrapData(await retryTutorRequestRequest(api, identity, threadId, requestOrdinal));
+    if (!isCurrentTutorPollContext(context)) return;
+    if (!tutorBundleMatchesIdentity(response.thread, identity, threadId)) {
+      throw new ApiError('The Tutor response did not match this discussion.', { code: 'INVALID_TUTOR_RESPONSE' });
+    }
+    renderTutorThread(response.thread);
+    scheduleTutorPoll(currentTutorPollContext(threadId));
+  } catch (error) {
+    if (isCurrentTutorPollContext(context)) handleError(error, 'Could not retry this Tutor request.');
+  } finally {
+    setButtonBusy(button, false);
+  }
+}
+
+async function forkTutorThread() {
+  const identity = currentTutorIdentity();
+  const threadId = state.tutorThread?.thread?.id;
+  if (!identity || !threadId) return;
+  const context = currentTutorPollContext(threadId);
+  if (!context) return;
+  setButtonBusy(elements.forkTutorThread, true, 'Forking…');
+  try {
+    const response = unwrapData(await forkTutorThreadRequest(api, identity, threadId));
+    if (!isCurrentTutorPollContext(context)) return;
+    if (!tutorBundleMatchesIdentity(response.thread, identity)) {
+      throw new ApiError('The Tutor fork response was invalid.', { code: 'INVALID_TUTOR_RESPONSE' });
+    }
+    state.tutorLoadSequence += 1;
+    state.tutorSelectedThreadId = response.thread.thread.id;
+    renderTutorThread(response.thread);
+    elements.tutorStatus.textContent = 'A new discussion was forked from the latest successful Tutor answer.';
+  } catch (error) {
+    if (isCurrentTutorPollContext(context)) handleError(error, 'Could not fork this discussion.');
+  } finally {
+    setButtonBusy(elements.forkTutorThread, false);
+  }
+}
+
+function confirmDeleteTutorThread(threadId) {
+  const normalizedThreadId = String(threadId || '');
+  const visible = state.tutorThreads.some((item) => String(item.thread.id) === normalizedThreadId)
+    || String(state.tutorThread?.thread?.id) === normalizedThreadId;
+  if (!normalizedThreadId || !visible || state.deletedTutorThreadIds.has(normalizedThreadId)) return;
+  openModal({
+    title: 'Delete this discussion?',
+    paragraphs: ['The discussion will no longer appear in your learning history. This action cannot be undone.'],
+    actions: [
+      { label: 'Cancel', className: 'button button-secondary', close: true },
+      { label: 'Delete discussion', className: 'button button-danger', handler: () => deleteTutorThread(normalizedThreadId) }
+    ]
+  });
+}
+
+async function deleteTutorThread(threadId) {
+  const identity = currentTutorIdentity();
+  if (!identity || !threadId) return;
+  const normalizedThreadId = String(threadId);
+  const context = historyContext();
+  try {
+    await deleteTutorThreadRequest(api, identity, normalizedThreadId);
+    if (!historyContextMatches(context, { requireQuestion: true })) return;
+    hideModal({ force: true });
+    stopTutorPolling({ invalidate: false });
+    const { deletedSelectedThread, nextThreadId } = applyTutorThreadTombstone(state, normalizedThreadId);
+    if (deletedSelectedThread) {
+      clearTutorConversationDom();
+    } else if ((state.tutorThread?.requests || []).some(tutorRequestIsPending)) {
+      scheduleTutorPoll(currentTutorPollContext(state.tutorThread.thread.id));
+    }
+    renderTutorThreads(state.tutorThreads);
+    elements.tutorStatus.textContent = 'Discussion deleted.';
+    if (nextThreadId) await loadTutorThread(nextThreadId);
+  } catch (error) {
+    if (historyContextMatches(context, { requireQuestion: true })) handleError(error, 'Could not delete this discussion.');
+  }
+}
+
 function humanSubmissionKind(submission) {
   const kind = String(firstDefined(submission?.kind, submission?.type, 'SUBMISSION')).toUpperCase();
   return ({ CHECKPOINT: 'Score checkpoint', DEADLINE: '75-minute checkpoint', FINAL: 'Final submission' })[kind] || kind.toLowerCase();
@@ -2908,10 +4826,19 @@ async function showResults() {
   stopLearningReportPolling();
   state.learningReportPollCount = 0;
   state.learningReportLoadError = null;
+  stopBatchPolling();
+  state.activeBatchId = null;
+  // A prior owner-less upload completion is fenced by batchEpoch when the
+  // results view is re-entered; its detached operation must not leave the
+  // shared upload control disabled for the current result.
+  setButtonBusy(elements.batchSubmitButton, false);
+  elements.batchUploadForm.reset();
   showOnly(elements.resultsView);
   elements.finalScore.textContent = 'Loading…';
   elements.scoreDetails.textContent = 'Retrieving your final score and solutions.';
   clearNode(elements.submissionHistory); clearNode(elements.resultsQuestions); clearNode(elements.solutionsList);
+  clearNode(elements.batchWorkspace); clearNode(elements.batchSelectedFiles);
+  elements.batchStatus.textContent = '';
   renderLearningAnalysisStatus();
   try {
     // The exported fetchFinalReview guards this request; do not bypass it.
@@ -2928,6 +4855,7 @@ async function showResults() {
     // delay the student's score, answer review, or approved solutions.
     renderResults(review.results, review.solutions);
     void loadLearningReport({ quiet: true });
+    void loadLatestLearningBatch();
     document.getElementById('main-content').focus();
   } catch (error) {
     elements.finalScore.textContent = 'Unavailable';
@@ -3094,6 +5022,27 @@ function bindEvents() {
   });
   elements.dashboardButton.addEventListener('click', () => showDashboard());
   elements.resultsDashboardButton.addEventListener('click', () => showDashboard());
+  elements.learningHistoryButton.addEventListener('click', () => showLearningHistory());
+  elements.learningHistoryBackButton.addEventListener('click', () => showDashboard());
+  elements.refreshLearningHistoryButton.addEventListener('click', () => showLearningHistory({
+    submissionId: state.learningHistorySubmission?.submissionId || null
+  }));
+  elements.learningHistoryLoadMore.addEventListener('click', loadMoreLearningHistory);
+  elements.closeLearningHistoryDetail.addEventListener('click', () => {
+    purgeTutorWorkspace({ clearSummaries: true }); stopLearningHistoryReportPolling();
+    state.learningHistorySubmission = null; state.learningHistoryVersion = null; state.learningHistoryQuestion = null;
+    hideLearningHistoryPanels();
+  });
+  elements.closeLearningVersionReport.addEventListener('click', () => {
+    purgeTutorWorkspace({ clearSummaries: true }); stopLearningHistoryReportPolling();
+    state.learningHistoryVersion = null; state.learningHistoryQuestion = null;
+    hideLearningHistoryPanels(elements.learningHistoryDetail);
+  });
+  elements.closeLearningQuestion.addEventListener('click', () => {
+    purgeTutorWorkspace({ clearSummaries: true });
+    state.learningHistoryQuestion = null;
+    hideLearningHistoryPanels(elements.learningVersionReport);
+  });
   elements.logoutButton.addEventListener('click', logout);
   elements.refreshForms.addEventListener('click', () => loadForms());
   elements.pauseButton.addEventListener('click', pauseAttempt);
@@ -3119,6 +5068,15 @@ function bindEvents() {
   elements.reloadReasoningButton.addEventListener('click', reloadReasoningNotes);
   elements.resetButton.addEventListener('click', confirmReset);
   elements.refreshAnalysisButton.addEventListener('click', () => loadLearningReport());
+  elements.batchFiles.addEventListener('change', renderSelectedBatchFiles);
+  elements.batchUploadForm.addEventListener('submit', submitBatchUpload);
+  elements.createTutorThread.addEventListener('click', createTutorThread);
+  elements.tutorLoadMore.addEventListener('click', loadMoreTutorThreads);
+  elements.tutorMessageForm.addEventListener('submit', sendTutorMessage);
+  elements.forkTutorThread.addEventListener('click', forkTutorThread);
+  elements.deleteTutorThread.addEventListener('click', () => {
+    confirmDeleteTutorThread(state.tutorThread?.thread?.id);
+  });
   elements.expandSolutions.addEventListener('click', expandAllSolutions);
   elements.modalClose.addEventListener('click', () => hideModal());
   elements.modalBackdrop.addEventListener('click', (event) => { if (event.target === elements.modalBackdrop) hideModal(); });

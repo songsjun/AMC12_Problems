@@ -19,6 +19,7 @@
     <span class="brand-context">Practice</span>
     <div class="header-spacer"></div>
     <p id="user-name" class="user-name" hidden></p>
+    <button id="learning-history-button" class="button button-quiet" type="button" aria-label="Open learning history" hidden>History</button>
     <button id="dashboard-button" class="button button-quiet" type="button" hidden>My tests</button>
     <button id="logout-button" class="button button-quiet" type="button" hidden>Sign out</button>
   </header>
@@ -170,6 +171,26 @@
         <div id="analysis-questions" class="analysis-questions"></div>
       </section>
 
+      <section id="batch-learning-section" class="content-section" aria-labelledby="batch-learning-title">
+        <div class="section-heading-row">
+          <div>
+            <h2 id="batch-learning-title">Add work from files</h2>
+            <p class="muted">Upload text, Markdown, or audio containing answers and your approach. AI suggests a question mapping; you must review and confirm every item before it affects your learning record.</p>
+          </div>
+        </div>
+        <form id="batch-upload-form" class="batch-upload-form">
+          <div class="field">
+            <label for="batch-files">Text or audio files</label>
+            <input id="batch-files" name="files" type="file" multiple required accept=".txt,.md,.markdown,.mp3,.m4a,.mp4,.wav,.ogg,.oga,.flac,text/plain,text/markdown,audio/mpeg,audio/mp4,audio/wav,audio/ogg,audio/flac" aria-describedby="batch-file-help">
+          </div>
+          <p id="batch-file-help" class="muted">Up to 10 files and 100 MiB total. Text: 256 KiB each. Audio: 25 MiB each. Uploads are private and processed asynchronously.</p>
+          <div id="batch-selected-files" class="batch-selected-files" aria-live="polite"></div>
+          <button id="batch-submit-button" class="button button-primary" type="submit">Upload for analysis</button>
+        </form>
+        <p id="batch-status" class="muted" role="status" aria-live="polite"></p>
+        <div id="batch-workspace" class="batch-workspace"></div>
+      </section>
+
       <section id="submission-history-section" class="content-section" aria-labelledby="submission-history-title">
         <h2 id="submission-history-title">Submission history</h2>
         <div id="submission-history" class="submission-history"></div>
@@ -190,6 +211,84 @@
           <button id="expand-solutions-button" class="button button-secondary" type="button">Expand all</button>
         </div>
         <div id="solutions-list" class="solutions-list" aria-live="polite"></div>
+      </section>
+    </section>
+
+    <section id="learning-history-view" class="page-shell learning-history-view" hidden aria-labelledby="learning-history-title">
+      <div class="page-intro">
+        <div>
+          <p class="eyebrow">Your submitted work</p>
+          <h1 id="learning-history-title">Learning history</h1>
+          <p class="muted">Interactive final submissions and confirmed file batches appear together as immutable versions.</p>
+        </div>
+        <div class="result-actions">
+          <button id="learning-history-back-button" class="button button-secondary" type="button">My tests</button>
+          <button id="refresh-learning-history-button" class="button button-primary" type="button">Refresh</button>
+        </div>
+      </div>
+      <p id="learning-history-status" class="muted" role="status" aria-live="polite"></p>
+      <div id="learning-history-list" class="history-list" aria-live="polite"></div>
+      <button id="learning-history-load-more" class="button button-secondary" type="button" hidden>Load older submissions</button>
+      <section id="learning-history-detail" class="content-section" hidden aria-labelledby="learning-history-detail-title">
+        <div class="section-heading-row">
+          <div>
+            <p id="learning-history-detail-source" class="eyebrow"></p>
+            <h2 id="learning-history-detail-title">Submission</h2>
+          </div>
+          <button id="close-learning-history-detail" class="button button-secondary" type="button">All submissions</button>
+        </div>
+        <div id="learning-history-versions" class="history-versions"></div>
+      </section>
+      <section id="learning-version-report" class="content-section" hidden aria-labelledby="learning-version-report-title">
+        <div class="section-heading-row">
+          <div>
+            <p id="learning-version-report-meta" class="eyebrow"></p>
+            <h2 id="learning-version-report-title">Analysis report</h2>
+          </div>
+          <button id="close-learning-version-report" class="button button-secondary" type="button">Back to versions</button>
+        </div>
+        <p id="learning-version-report-status" class="muted" role="status" aria-live="polite"></p>
+        <div id="learning-version-report-summary" class="analysis-report-summary"></div>
+        <div id="learning-version-questions" class="analysis-questions"></div>
+      </section>
+      <section id="learning-question-detail" class="content-section" hidden aria-labelledby="learning-question-title">
+        <div class="section-heading-row">
+          <div>
+            <p id="learning-question-meta" class="eyebrow"></p>
+            <h2 id="learning-question-title">Question</h2>
+          </div>
+          <button id="close-learning-question" class="button button-secondary" type="button">Back to report</button>
+        </div>
+        <article id="learning-question-prompt" class="question-content"></article>
+        <div id="learning-question-choices" class="history-question-choices"></div>
+        <div id="learning-question-response" class="history-question-response"></div>
+        <div id="learning-question-analysis" class="analysis-question-body"></div>
+
+        <section id="tutor-workspace" class="tutor-workspace" aria-labelledby="tutor-title">
+          <div class="section-heading-row">
+            <div>
+              <h3 id="tutor-title">Discuss this question with AI</h3>
+              <p class="muted">The server supplies this exact question, approved solutions, and your frozen answer and approach. Your browser sends only your message.</p>
+            </div>
+            <button id="create-tutor-thread" class="button button-primary" type="button">Start discussion</button>
+          </div>
+          <p id="tutor-status" class="muted" role="status" aria-live="polite"></p>
+          <div id="tutor-thread-list" class="tutor-thread-list" aria-label="Tutor discussions"></div>
+          <button id="tutor-load-more" class="button button-secondary" type="button" hidden>Load earlier discussions</button>
+          <article id="tutor-thread" class="tutor-thread" hidden>
+            <div class="tutor-thread-actions">
+              <button id="fork-tutor-thread" class="button button-secondary" type="button" hidden>Fork discussion</button>
+              <button id="delete-tutor-thread" class="button button-danger" type="button">Delete discussion</button>
+            </div>
+            <div id="tutor-messages" class="tutor-messages" aria-live="polite"></div>
+            <div id="tutor-requests" class="tutor-requests"></div>
+            <form id="tutor-message-form" class="tutor-message-form">
+              <label for="tutor-message">Your message</label>
+              <textarea id="tutor-message" rows="3" maxlength="2048" required placeholder="Ask about a step, compare methods, or explain where you are stuck."></textarea>
+              <button id="send-tutor-message" class="button button-primary" type="submit">Send message</button>
+            </form>
+          </article>
+        </section>
       </section>
     </section>
   </main>
