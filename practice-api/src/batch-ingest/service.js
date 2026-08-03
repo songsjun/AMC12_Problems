@@ -98,6 +98,14 @@ async function requireBatchMutationEntitlement(tx, options = {}) {
   return entitlement;
 }
 
+// API release flags stop new student mutations. They must not strand a batch
+// that was already durably accepted while the gate was open. Worker-only
+// decomposition still revalidates ownership, the pinned form/context lineage,
+// and the NEW_BATCH entitlement; it bypasses only the process-local UI gate.
+async function requireBatchProcessingEntitlement(tx) {
+  return requireBatchMutationEntitlement(tx, { batchReviewEnabled: true });
+}
+
 function storeConflict(error) {
   if (error instanceof ApiError) return error;
   const messages = {
@@ -502,9 +510,7 @@ export class BatchPracticeService {
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwner(attempt, studentId);
-      await requireBatchMutationEntitlement(tx, {
-        batchReviewEnabled: this.batchReviewEnabled
-      });
+      await requireBatchProcessingEntitlement(tx);
       const bundle = await tx.getLearningBatchBundle(batchId);
       if (!bundle) throw notFound('BATCH_NOT_FOUND', 'The learning batch was not found.');
       if (bundle.batch.status !== BATCH_STATUS.PROCESSING || bundle.batch.deletionState !== BATCH_DELETION_STATE.ACTIVE
@@ -537,9 +543,7 @@ export class BatchPracticeService {
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwner(attempt, studentId);
-      await requireBatchMutationEntitlement(tx, {
-        batchReviewEnabled: this.batchReviewEnabled
-      });
+      await requireBatchProcessingEntitlement(tx);
       let bundle = await tx.getLearningBatchBundle(batchId);
       if (!bundle) throw notFound('BATCH_NOT_FOUND', 'The learning batch was not found.');
       const existing = bundle.mapping;

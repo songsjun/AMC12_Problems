@@ -289,6 +289,70 @@ test('batch review entry is independently fail-closed in config projection and s
   );
 });
 
+test('a disabled API gate cannot strand already accepted batch-review extraction work', async (t) => {
+  const context = await fixture(t);
+  const workspace = await context.service.createBatchReviewWorkspace(
+    context.student.id, context.form.id, context.form.version, 'worker-drain-workspace'
+  );
+  const text = 'Question 1: A. I used a direct algebraic calculation.';
+  const size = Buffer.byteLength(text);
+  const created = await context.service.createLearningBatch(
+    context.student.id, workspace.workspace.id, 'worker-drain-create',
+    { files: [{ displayName: 'answer.md', kind: 'TEXT', contentType: 'text/markdown', declaredBytes: size }] }
+  );
+  await context.service.uploadLearningBatchAsset(
+    context.student.id, workspace.workspace.id, created.batch.id, created.batch.assets[0].id,
+    'worker-drain-upload', Readable.from([text]), size
+  );
+  await context.service.submitLearningBatch(
+    context.student.id, workspace.workspace.id, created.batch.id, 'worker-drain-submit'
+  );
+
+  const workerService = new PracticeService({
+    store: context.store,
+    privateUploadStore: context.privateUploadStore,
+    authPepper: 'batch-review-test-pepper-that-is-long-enough-for-tests',
+    sessionTtlMs: 12 * 60 * 60 * 1000,
+    batchIntakeEnabled: false,
+    batchReviewEnabled: false,
+    clock: () => new Date(NOW)
+  });
+  const claimed = await context.store.claimNextAiWork({
+    workerId: 'worker-drain-extractor', now: new Date(NOW), leaseMs: 120_000,
+    acceptedKinds: ['BATCH_EXTRACTION']
+  });
+  const prepared = await workerService.prepareLearningBatchDecomposition(
+    context.student.id, workspace.workspace.id, created.batch.id
+  );
+  const recorded = await workerService.recordLearningBatchDecomposition(
+    context.student.id, workspace.workspace.id, created.batch.id,
+    {
+      masterPlanHash: prepared.plan.masterPlanHash,
+      outputs: decompositionOutput(prepared),
+      runMetadata: gatewayMetadata(prepared),
+      workerFence: {
+        workerId: claimed.job.workItem.leaseOwner,
+        leaseToken: claimed.job.workItem.leaseToken,
+        inputHash: claimed.job.workItem.inputHash,
+        deletionGeneration: claimed.job.workItem.deletionGeneration
+      }
+    }
+  );
+  assert.equal(recorded.batch.status, 'NEEDS_CONFIRMATION');
+  await assert.rejects(
+    () => workerService.confirmLearningBatch(
+      context.student.id, workspace.workspace.id, created.batch.id, 'worker-drain-confirm',
+      {
+        mappingRevision: recorded.batch.mapping.revision,
+        responses: [],
+        discardedItemIds: recorded.batch.mapping.items.map((item) => item.id)
+      }
+    ),
+    (error) => error instanceof ApiError && error.statusCode === 503
+      && error.code === 'BATCH_INTAKE_UNAVAILABLE'
+  );
+});
+
 test('missing exact approved context is unavailable in catalog and workspace creation is zero-write', async (t) => {
   const context = await fixture(t, { contextReady: false });
   const [catalogForm] = await context.service.listForms();
