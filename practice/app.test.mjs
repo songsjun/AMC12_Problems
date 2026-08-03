@@ -824,21 +824,45 @@ test('independent batch-review capability, path, and workspace identity fail clo
 
   const workspace = {
     id: 'workspace-1', attemptMode: 'BATCH_REVIEW', formId: form.id, formVersion: form.version,
-    lifecycleStatus: 'ACTIVE', protectedAccessStatus: 'AVAILABLE', analysisContextStatus: 'UNAVAILABLE',
+    lifecycleStatus: 'ACTIVE', protectedAccessStatus: 'AVAILABLE', analysisContextStatus: 'READY',
     batchReviewAvailable: true, batchIntakeAvailable: true
   };
   assert.equal(normalizeBatchReviewWorkspace({ workspace }, form), workspace,
-    'analysis context is not an intake prerequisite');
+    'the server-authoritative ready context is an intake prerequisite');
   for (const invalid of [
     { ...workspace, id: '' },
     { ...workspace, attemptMode: 'TIMED' },
     { ...workspace, formVersion: 'reviewed-v3' },
     { ...workspace, protectedAccessStatus: 'RECORD_DELETED' },
     { ...workspace, lifecycleStatus: undefined },
-    { ...workspace, lifecycleStatus: 'DELETED' }
+    { ...workspace, lifecycleStatus: 'DELETED' },
+    { ...workspace, analysisContextStatus: 'UNAVAILABLE' },
+    { ...workspace, batchReviewAvailable: false },
+    { ...workspace, batchIntakeAvailable: false }
   ]) assert.throws(() => normalizeBatchReviewWorkspace({ workspace: invalid }, form), {
     code: 'INVALID_BATCH_REVIEW_WORKSPACE'
   });
+
+  const releaseForms = Array.from({ length: 48 }, (_, index) => ({
+    id: index === 0 ? 'amc12-2002-b' : `amc12-fixture-${index}`,
+    version: 'r3', batchReviewAvailable: index === 0
+  }));
+  assert.deepEqual(releaseForms.filter(batchReviewAvailableForForm).map(({ id }) => id),
+    ['amc12-2002-b'], 'the UI cannot promote a global flag into 48 form capabilities');
+});
+
+test('superseded historical batch-review workspaces remain viewable but cannot reopen intake', () => {
+  const historical = {
+    id: 'workspace-history', attemptMode: 'BATCH_REVIEW',
+    formId: 'amc12-2002-b', formVersion: 'r2',
+    lifecycleStatus: 'ACTIVE', protectedAccessStatus: 'AVAILABLE',
+    analysisStatus: 'COMPLETE', analysisContextStatus: 'READY',
+    batchReviewAvailable: false, batchIntakeAvailable: false
+  };
+  assert.equal(historical.protectedAccessStatus, 'AVAILABLE');
+  assert.equal(historical.analysisStatus, 'COMPLETE');
+  assert.equal(batchReviewWorkspaceIntakeAvailable(historical), false,
+    'history projection is retained while all new batch mutations fail closed');
 });
 
 test('batch-review create-or-resume retries one empty-body POST with one caller-owned key', async () => {
@@ -881,18 +905,18 @@ test('delayed batch-review workspace responses cannot cross navigation or studen
   assert.equal(batchReviewOpenContextMatches(context, { sequence: 4, studentId: 'student-2' }), false);
 });
 
-test('delayed attempt history permits batch intake but produces zero timed-attempt POSTs', async () => {
+test('delayed attempt history keeps context-gated batch intake separate from timed POSTs', async () => {
   const form = { id: 'amc12-2025-a', version: 4, batchReviewAvailable: true };
   const contextUnavailableWorkspace = {
     id: 'workspace-4', attemptMode: 'BATCH_REVIEW', formId: form.id, formVersion: form.version,
     lifecycleStatus: 'ACTIVE', protectedAccessStatus: 'AVAILABLE', analysisContextStatus: 'UNAVAILABLE',
-    batchReviewAvailable: true, batchIntakeAvailable: true
+    batchReviewAvailable: false, batchIntakeAvailable: true
   };
-  assert.equal(batchReviewWorkspaceIntakeAvailable(contextUnavailableWorkspace), true,
-    'missing approved analysis context delays report/Tutor but does not disable file intake');
+  assert.equal(batchReviewWorkspaceIntakeAvailable(contextUnavailableWorkspace), false,
+    'missing approved analysis context disables batch intake');
   assert.equal(batchReviewWorkspaceIntakeAvailable({
-    ...contextUnavailableWorkspace, batchReviewAvailable: undefined
-  }), false, 'workspace capability remains fail closed');
+    ...contextUnavailableWorkspace, analysisContextStatus: 'READY', batchReviewAvailable: true
+  }), true, 'only the exact ready revision enables workspace intake');
 
   const calls = [];
   const fakeApi = {

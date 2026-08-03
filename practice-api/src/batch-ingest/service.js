@@ -1,6 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { ApiError, badRequest, conflict, notFound, tooManyRequests } from '../errors.js';
-import { BATCH_REVIEW_SOURCE_TYPE } from '../batch-review/domain.js';
+import {
+  BATCH_REVIEW_SOURCE_TYPE,
+  isPinnedBatchReviewContextComplete
+} from '../batch-review/domain.js';
 import {
   ASSET_STATUS,
   BATCH_DELETION_STATE,
@@ -60,15 +63,37 @@ function assertOwner(attempt, studentId) {
   }
 }
 
-async function requireLearningEntitlement(tx, purpose) {
+async function requireLearningEntitlement(tx, purpose, { batchReviewEnabled = true } = {}) {
   const entitlement = await tx.getLearningEntitlement({ purpose });
+  if (entitlement?.sourceType === BATCH_REVIEW_SOURCE_TYPE && !batchReviewEnabled) {
+    throw new ApiError(
+      503,
+      'BATCH_REVIEW_UNAVAILABLE',
+      'Batch review is temporarily unavailable.'
+    );
+  }
   if (!entitlement?.allowed) {
+    if (entitlement?.sourceType === BATCH_REVIEW_SOURCE_TYPE) {
+      throw new ApiError(
+        503,
+        'BATCH_REVIEW_UNAVAILABLE',
+        'Batch review is not available for this form revision.'
+      );
+    }
     throw conflict(
       entitlement?.sourceType === 'OPEN_REVIEW' ? 'OPEN_REVIEW_NOT_ACTIVE' : 'BATCH_REQUIRES_FINAL',
       entitlement?.sourceType === 'OPEN_REVIEW'
         ? 'This open review release no longer permits that learning operation.'
         : 'Batch evidence can be added only to an owned finalized learning submission.'
     );
+  }
+  return entitlement;
+}
+
+async function requireBatchMutationEntitlement(tx, options = {}) {
+  const entitlement = await requireLearningEntitlement(tx, 'EXISTING_WORK', options);
+  if (entitlement.sourceType === BATCH_REVIEW_SOURCE_TYPE) {
+    return requireLearningEntitlement(tx, 'NEW_BATCH', options);
   }
   return entitlement;
 }
@@ -129,6 +154,7 @@ export class BatchPracticeService {
     privateUploadStore = null,
     clock = () => new Date(),
     intakeEnabled = false,
+    batchReviewEnabled = false,
     studentQuotaBytes = 250 * 1024 * 1024,
     globalQuotaBytes = 2 * 1024 * 1024 * 1024,
     activeBatchLimit = 3,
@@ -152,6 +178,7 @@ export class BatchPracticeService {
     this.privateUploadStore = privateUploadStore;
     this.clock = clock;
     this.intakeEnabled = intakeEnabled === true;
+    this.batchReviewEnabled = batchReviewEnabled === true;
     this.studentQuotaBytes = studentQuotaBytes;
     this.globalQuotaBytes = globalQuotaBytes;
     this.activeBatchLimit = activeBatchLimit;
@@ -201,7 +228,9 @@ export class BatchPracticeService {
           created: false
         };
       }
-      const entitlement = await requireLearningEntitlement(tx, 'NEW_BATCH');
+      const entitlement = await requireLearningEntitlement(tx, 'NEW_BATCH', {
+        batchReviewEnabled: this.batchReviewEnabled
+      });
       const learning = await tx.getLearningSubmissionBundle();
       const now = this.now();
       const batch = {
@@ -276,7 +305,9 @@ export class BatchPracticeService {
       prepared = await this.store.withAttemptLock(attemptId, async (tx) => {
         const attempt = await tx?.getAttempt();
         assertOwner(attempt, studentId);
-        await requireLearningEntitlement(tx, 'EXISTING_WORK');
+        await requireBatchMutationEntitlement(tx, {
+          batchReviewEnabled: this.batchReviewEnabled
+        });
         const value = await tx.beginLearningBatchAssetUpload({
           batchId, assetId, uploadIdempotencyKey: key, now: this.now()
         });
@@ -324,15 +355,27 @@ export class BatchPracticeService {
         kind: prepared.asset.kind,
         contentType: prepared.asset.contentType
       });
-      const completedAsset = await this.store.withAttemptLock(attemptId, async (tx) => {
-        const attempt = await tx?.getAttempt();
-        assertOwner(attempt, studentId);
-        return tx.completeLearningBatchAssetUpload({
-          batchId, assetId, uploadIdempotencyKey: key,
-          deletionGeneration: prepared.deletionGeneration, stored,
-          normalizedText: stored.normalizedText, now: this.now()
+      let completedAsset;
+      try {
+        completedAsset = await this.store.withAttemptLock(attemptId, async (tx) => {
+          const attempt = await tx?.getAttempt();
+          assertOwner(attempt, studentId);
+          await requireBatchMutationEntitlement(tx, {
+            batchReviewEnabled: this.batchReviewEnabled
+          });
+          return tx.completeLearningBatchAssetUpload({
+            batchId, assetId, uploadIdempotencyKey: key,
+            deletionGeneration: prepared.deletionGeneration, stored,
+            normalizedText: stored.normalizedText, now: this.now()
+          });
         });
-      });
+      } catch (error) {
+        if (error instanceof ApiError
+            && ['BATCH_REVIEW_UNAVAILABLE', 'BATCH_INTAKE_UNAVAILABLE'].includes(error.code)) {
+          completionWasExplicitlyRejected = true;
+        }
+        throw error;
+      }
       if (!completedAsset) {
         completionWasExplicitlyRejected = true;
         await this.privateUploadStore.delete(stored.storageKey);
@@ -372,7 +415,9 @@ export class BatchPracticeService {
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwner(attempt, studentId);
-      await requireLearningEntitlement(tx, 'EXISTING_WORK');
+      await requireBatchMutationEntitlement(tx, {
+        batchReviewEnabled: this.batchReviewEnabled
+      });
       const existing = await tx.getIdempotency(studentId, scope, key);
       if (existing) {
         if (existing.requestHash !== requestHash) throw conflict('IDEMPOTENCY_KEY_REUSED', 'Idempotency key was reused.');
@@ -457,7 +502,9 @@ export class BatchPracticeService {
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwner(attempt, studentId);
-      await requireLearningEntitlement(tx, 'EXISTING_WORK');
+      await requireBatchMutationEntitlement(tx, {
+        batchReviewEnabled: this.batchReviewEnabled
+      });
       const bundle = await tx.getLearningBatchBundle(batchId);
       if (!bundle) throw notFound('BATCH_NOT_FOUND', 'The learning batch was not found.');
       if (bundle.batch.status !== BATCH_STATUS.PROCESSING || bundle.batch.deletionState !== BATCH_DELETION_STATE.ACTIVE
@@ -490,7 +537,9 @@ export class BatchPracticeService {
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwner(attempt, studentId);
-      await requireLearningEntitlement(tx, 'EXISTING_WORK');
+      await requireBatchMutationEntitlement(tx, {
+        batchReviewEnabled: this.batchReviewEnabled
+      });
       let bundle = await tx.getLearningBatchBundle(batchId);
       if (!bundle) throw notFound('BATCH_NOT_FOUND', 'The learning batch was not found.');
       const existing = bundle.mapping;
@@ -550,7 +599,9 @@ export class BatchPracticeService {
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwner(attempt, studentId);
-      await requireLearningEntitlement(tx, 'EXISTING_WORK');
+      await requireBatchMutationEntitlement(tx, {
+        batchReviewEnabled: this.batchReviewEnabled
+      });
       const replay = await tx.getIdempotency(studentId, scope, key);
       if (replay) {
         if (replay.requestHash !== requestHash) throw conflict('IDEMPOTENCY_KEY_REUSED', 'Idempotency key was reused.');
@@ -582,12 +633,22 @@ export class BatchPracticeService {
       const learning = await tx.getLearningSubmissionBundle();
       const form = knownForm || await this.store.getForm(bundle.batch.formId, bundle.batch.formVersion);
       if (!learning || !form) throw new Error('Pinned batch learning context is missing.');
-      const entitlement = await requireLearningEntitlement(tx, 'EXISTING_WORK');
+      const entitlement = await requireBatchMutationEntitlement(tx, {
+        batchReviewEnabled: this.batchReviewEnabled
+      });
       const approvedContext = entitlement.sourceType === 'OPEN_REVIEW'
         ? await tx.getApprovedContextSetById(entitlement.release.contextSetId)
         : entitlement.sourceType === BATCH_REVIEW_SOURCE_TYPE
-          ? await tx.getCompleteApprovedContextSetForForm(bundle.batch.formId, bundle.batch.formVersion)
+          ? await tx.getApprovedContextSetById(learning.version.contextSetId)
           : await tx.getApprovedContextSetForForm(bundle.batch.formId, bundle.batch.formVersion);
+      if (entitlement.sourceType === BATCH_REVIEW_SOURCE_TYPE
+          && (learning.version.contextStatus !== 'CONTEXT_READY'
+            || !isPinnedBatchReviewContextComplete(form, approvedContext))) {
+        throw conflict(
+          'BATCH_REVIEW_CONTEXT_LINEAGE_INVALID',
+          'The batch-review workspace lost its pinned approved-context lineage.'
+        );
+      }
       const aggregate = createBatchLearningAggregate({
         batch: bundle.batch,
         currentVersion: learning.version,

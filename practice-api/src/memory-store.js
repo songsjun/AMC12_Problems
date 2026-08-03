@@ -59,7 +59,16 @@ const cloneMap = (map) => new Map([...map].map(([key, value]) => [key, clone(val
 const formKey = (id, version) => `${id}\u0000${version}`;
 const idempotencyKey = (studentId, scope, key) => `${studentId}\u0000${scope}\u0000${key}`;
 
-function validLearningEntitlement(store, learning, { cleanup = false } = {}) {
+function completeActiveBatchReviewContext(store, form) {
+  if (!form?.contentSealed) return null;
+  const contextId = store.activeContextSetByForm.get(formKey(form.id, form.version));
+  const context = contextId && store.approvedContextSets.get(contextId);
+  return isCompleteBatchReviewContext(form, context) ? context : null;
+}
+
+function validLearningEntitlement(store, learning, {
+  cleanup = false, purpose = 'EXISTING_WORK'
+} = {}) {
   const attempt = learning && store.attempts.get(learning.attemptId);
   if (!learning || !attempt
       || attempt.studentId !== learning.studentId
@@ -68,11 +77,14 @@ function validLearningEntitlement(store, learning, { cleanup = false } = {}) {
   if (learning.sourceType === 'INTERACTIVE_FINAL') {
     const official = (store.submissions.get(attempt.id) || [])
       .find((submission) => submission.id === learning.officialSubmissionId);
+    const form = store.forms.get(formKey(learning.formId, learning.formVersion));
     return Boolean(attempt.attemptMode === ATTEMPT_MODE.TIMED
       && ['FINALIZED', 'RESET'].includes(attempt.phase)
       && (learning.attemptMode || ATTEMPT_MODE.TIMED) === ATTEMPT_MODE.TIMED
       && learning.officialSubmissionKind === 'FINAL'
-      && official?.attemptId === attempt.id && official.kind === 'FINAL');
+      && official?.attemptId === attempt.id && official.kind === 'FINAL'
+      && (purpose !== 'NEW_BATCH'
+        || (form?.published === true && completeActiveBatchReviewContext(store, form))));
   }
   if (learning.sourceType === BATCH_REVIEW_SOURCE_TYPE) {
     const form = store.forms.get(formKey(learning.formId, learning.formVersion));
@@ -81,7 +93,9 @@ function validLearningEntitlement(store, learning, { cleanup = false } = {}) {
       && learning.attemptMode === ATTEMPT_MODE.BATCH_REVIEW
       && learning.officialSubmissionId === null && learning.officialSubmissionKind === null
       && learning.openReviewReleaseId === null
-      && Boolean(form?.publishedAt));
+      && Boolean(form?.publishedAt)
+      && (cleanup || purpose === 'EXISTING_WORK'
+        || (form.published === true && completeActiveBatchReviewContext(store, form))));
   }
   if (learning.sourceType !== 'OPEN_REVIEW' || attempt.attemptMode !== ATTEMPT_MODE.OPEN_REVIEW
       || attempt.phase !== 'OPEN_REVIEW' || learning.attemptMode !== ATTEMPT_MODE.OPEN_REVIEW
@@ -436,6 +450,13 @@ function validBatchEntitlement(store, batch, learning, options = {}) {
     && validLearningEntitlement(store, learning, options));
 }
 
+function validBatchMutationEntitlement(store, batch, learning, { cleanup = false } = {}) {
+  if (cleanup) return validBatchEntitlement(store, batch, learning, { cleanup: true, purpose: 'CLEANUP' });
+  return validBatchEntitlement(store, batch, learning, { purpose: 'EXISTING_WORK' })
+    && (learning?.sourceType !== BATCH_REVIEW_SOURCE_TYPE
+      || validBatchEntitlement(store, batch, learning, { purpose: 'NEW_BATCH' }));
+}
+
 function retryAvailableAt(now, attemptCount, retryAfterSeconds) {
   const seconds = Number.isSafeInteger(retryAfterSeconds)
     ? Math.min(3_600, Math.max(1, retryAfterSeconds))
@@ -560,7 +581,7 @@ function validTranscriptionLeaseFence(aggregate, input, now) {
 
 function validTranscriptionFence(store, aggregate, input, now) {
   return validTranscriptionLeaseFence(aggregate, input, now)
-    && validBatchEntitlement(store, aggregate.batch, aggregate.learning)
+    && validBatchMutationEntitlement(store, aggregate.batch, aggregate.learning)
     && aggregate.batch.status === 'PROCESSING' && aggregate.batch.deletionState === 'ACTIVE';
 }
 
@@ -735,7 +756,9 @@ export class MemoryStore {
   async getForm(id, version = undefined) {
     if (version !== undefined) {
       const form = this.forms.get(formKey(id, version));
-      return form?.contentSealed ? clone(form) : null;
+      return form?.contentSealed ? {
+        ...clone(form), batchReviewContextReady: this.#batchReviewContextReady(form)
+      } : null;
     }
     const candidates = [...this.forms.values()]
       .filter((form) => form.id === id && form.contentSealed);
@@ -745,7 +768,20 @@ export class MemoryStore {
       const leftTime = new Date(left.publishedAt || left.importedAt || 0).getTime();
       return rightTime - leftTime || String(right.version).localeCompare(String(left.version), undefined, { numeric: true });
     });
-    return candidates[0] ? clone(candidates[0]) : null;
+    return candidates[0] ? {
+      ...clone(candidates[0]), batchReviewContextReady: this.#batchReviewContextReady(candidates[0])
+    } : null;
+  }
+
+  #batchReviewContextReady(form) {
+    return Boolean(this.#completeActiveBatchReviewContext(form));
+  }
+
+  #completeActiveBatchReviewContext(form) {
+    if (!form?.contentSealed) return null;
+    const contextId = this.activeContextSetByForm.get(formKey(form.id, form.version));
+    const context = contextId && this.approvedContextSets.get(contextId);
+    return isCompleteBatchReviewContext(form, context) ? context : null;
   }
 
   async listForms({ includeUnpublished = false } = {}) {
@@ -763,7 +799,9 @@ export class MemoryStore {
     }
     return [...currentById.values()]
       .sort((a, b) => a.id.localeCompare(b.id))
-      .map(clone);
+      .map((form) => ({
+        ...clone(form), batchReviewContextReady: this.#batchReviewContextReady(form)
+      }));
   }
 
   async findOrCreateActiveAttempt({ studentId, form, now }) {
@@ -1256,13 +1294,31 @@ export class MemoryStore {
         const attempt = this.attempts.get(storedIdempotency.responseBody.attemptId);
         const learningSubmission = attempt && this.learningSubmissions.get(attempt.id);
         if (!attempt || !learningSubmission || attempt.studentId !== studentId
-            || attempt.attemptMode !== ATTEMPT_MODE.BATCH_REVIEW) {
+            || attempt.formId !== formId || attempt.formVersion !== formVersion
+            || attempt.attemptMode !== ATTEMPT_MODE.BATCH_REVIEW
+            || attempt.phase !== BATCH_REVIEW_PHASE
+            || learningSubmission.studentId !== studentId
+            || learningSubmission.attemptId !== attempt.id
+            || learningSubmission.formId !== formId
+            || learningSubmission.formVersion !== formVersion
+            || learningSubmission.attemptMode !== ATTEMPT_MODE.BATCH_REVIEW
+            || learningSubmission.sourceType !== BATCH_REVIEW_SOURCE_TYPE
+            || learningSubmission.lifecycleStatus !== 'COMMITTED'
+            || learningSubmission.officialSubmissionId !== null
+            || learningSubmission.officialSubmissionKind !== null
+            || learningSubmission.openReviewReleaseId !== null) {
           throw new Error('Batch review idempotency record lost its aggregate.');
         }
         return { attempt: clone(attempt), learningSubmission: clone(learningSubmission), created: false };
       }
       const form = this.forms.get(formKey(formId, formVersion));
       if (!form?.contentSealed || form.published !== true) return null;
+      const readyContext = this.#completeActiveBatchReviewContext(form);
+      if (!readyContext) {
+        throw Object.assign(new Error('Batch review requires a complete active approved context.'), {
+          code: 'BATCH_REVIEW_CONTEXT_NOT_READY'
+        });
+      }
       let attempt = [...this.attempts.values()].find((candidate) => candidate.studentId === studentId
         && candidate.formId === formId && candidate.formVersion === formVersion
         && candidate.attemptMode === ATTEMPT_MODE.BATCH_REVIEW);
@@ -1280,8 +1336,9 @@ export class MemoryStore {
           id: randomUUID(), learningSubmissionId: randomUUID(), versionNumber: 1,
           formId, formVersion, answersRevision: 0, reasoningRevision: 0,
           creationReason: BATCH_REVIEW_ANCHOR_REASON, batchId: null,
-          contextStatus: 'CONTEXT_UNAVAILABLE', contextSetId: null,
-          evidenceHash: batchReviewAnchorHash({ studentId, form }), createdAt: now
+          contextStatus: 'CONTEXT_READY', contextSetId: readyContext.id,
+          evidenceHash: batchReviewAnchorHash({ studentId, form, context: readyContext }),
+          createdAt: now
         };
         learningSubmission = {
           id: version.learningSubmissionId, studentId, attemptId: attempt.id,
@@ -1306,7 +1363,20 @@ export class MemoryStore {
         })));
         this.learningWorkItems.set(version.id, []);
       }
-      if (!learningSubmission || learningSubmission.sourceType !== BATCH_REVIEW_SOURCE_TYPE) {
+      if (!learningSubmission || attempt.studentId !== studentId
+          || attempt.formId !== formId || attempt.formVersion !== formVersion
+          || attempt.attemptMode !== ATTEMPT_MODE.BATCH_REVIEW
+          || attempt.phase !== BATCH_REVIEW_PHASE
+          || learningSubmission.studentId !== studentId
+          || learningSubmission.attemptId !== attempt.id
+          || learningSubmission.formId !== formId
+          || learningSubmission.formVersion !== formVersion
+          || learningSubmission.attemptMode !== ATTEMPT_MODE.BATCH_REVIEW
+          || learningSubmission.sourceType !== BATCH_REVIEW_SOURCE_TYPE
+          || learningSubmission.lifecycleStatus !== 'COMMITTED'
+          || learningSubmission.officialSubmissionId !== null
+          || learningSubmission.officialSubmissionKind !== null
+          || learningSubmission.openReviewReleaseId !== null) {
         throw new Error('Batch review workspace lost its learning anchor.');
       }
       this.idempotency.set(idempotencyKey(studentId, scope, key), {
@@ -1542,7 +1612,7 @@ export class MemoryStore {
           const evidence = this.learningBatchEvidence.get(item.batchId) || [];
           const learning = batch && [...this.learningSubmissions.values()]
             .find((submission) => submission.id === batch.learningSubmissionId);
-          if (!validBatchEntitlement(this, batch, learning)
+          if (!validBatchMutationEntitlement(this, batch, learning)
               || batch.status !== 'PROCESSING' || batch.deletionState !== 'ACTIVE'
               || batch.deletionGeneration !== item.deletionGeneration
               || learning.currentVersion !== batch.baseVersion
@@ -1650,7 +1720,9 @@ export class MemoryStore {
           || aggregate?.batch?.status === 'FAILED'
           || ['SUBMIT_MAY_HAVE_DELIVERED', 'DELETE_PENDING', 'DELETION_EVIDENCED', 'PROVIDER_RETENTION_PENDING',
             'PROVIDER_RETENTION_DELETION_CONFIRMED'].includes(aggregate?.artifact?.status);
-        if (!aggregate || !validBatchEntitlement(this, aggregate.batch, aggregate.learning, { cleanup })
+        if (!aggregate || !validBatchMutationEntitlement(
+          this, aggregate.batch, aggregate.learning, { cleanup }
+        )
             || (!cleanup && (aggregate.batch.status !== 'PROCESSING' || aggregate.batch.deletionState !== 'ACTIVE'))
             || (!cleanup && aggregate.learning.currentVersion !== aggregate.batch.baseVersion)
             || aggregate.batch.deletionGeneration !== work.deletionGeneration
@@ -1833,7 +1905,7 @@ export class MemoryStore {
     return this.#withGlobalLock(async () => {
       const value = transcriptionAggregate(this, input.workItemId);
       if (!validTranscriptionLeaseFence(value, input, input.now)
-          || !validBatchEntitlement(this, value.batch, value.learning, {
+          || !validBatchMutationEntitlement(this, value.batch, value.learning, {
             cleanup: ['DELETE', 'RECONCILE'].includes(input.phase)
           })) return false;
       let allowed = false;
@@ -2853,7 +2925,7 @@ export class MemoryStore {
         && new Date(item.leaseExpiresAt).getTime() > new Date(input.now).getTime()
         && batch.status === 'PROCESSING' && batch.deletionState === 'ACTIVE'
         && learning.currentVersion === batch.baseVersion
-        && validBatchEntitlement(this, batch, learning));
+        && validBatchMutationEntitlement(this, batch, learning));
     });
   }
 
@@ -4158,7 +4230,7 @@ class MemoryAttemptTransaction {
       ? this.store.openReviewReleases.get(submission.openReviewReleaseId) : null;
     const cleanup = purpose === 'CLEANUP';
     const allowed = ['NEW_BATCH', 'EXISTING_WORK', 'CLEANUP'].includes(purpose)
-      && validLearningEntitlement(this.store, submission, { cleanup })
+      && validLearningEntitlement(this.store, submission, { cleanup, purpose })
       && (submission.sourceType !== 'OPEN_REVIEW'
         || (cleanup
           || (purpose === 'NEW_BATCH'
@@ -4230,7 +4302,8 @@ class MemoryAttemptTransaction {
   }) {
     const learning = this.store.learningSubmissions.get(this.attemptId);
     if (!learning || batch.attemptId !== this.attemptId || batch.learningSubmissionId !== learning.id
-        || batch.sourceType !== learning.sourceType || !validBatchEntitlement(this.store, batch, learning)
+        || batch.sourceType !== learning.sourceType
+        || !validBatchEntitlement(this.store, batch, learning, { purpose: 'NEW_BATCH' })
         || assets.length !== reservations.length || assets.some((asset) => asset.batchId !== batch.id)
         || reservations.some((reservation) => reservation.batchId !== batch.id
           || reservation.studentId !== batch.studentId)) {
@@ -4271,7 +4344,7 @@ class MemoryAttemptTransaction {
     const assets = this.store.learningBatchAssets.get(batchId) || [];
     const asset = assets.find((candidate) => candidate.id === assetId);
     if (!batch || batch.attemptId !== this.attemptId || !asset
-        || !validBatchEntitlement(this.store, batch, learning)) return null;
+        || !validBatchMutationEntitlement(this.store, batch, learning)) return null;
     if (batch.deletionState !== 'ACTIVE' || batch.status !== 'DRAFT') {
       const error = new Error('Batch does not accept uploads.');
       error.code = 'BATCH_NOT_UPLOADABLE';
@@ -4310,7 +4383,7 @@ class MemoryAttemptTransaction {
     const assets = this.store.learningBatchAssets.get(batchId) || [];
     const asset = assets.find((candidate) => candidate.id === assetId);
     if (!batch || !asset || batch.attemptId !== this.attemptId || batch.deletionState !== 'ACTIVE'
-        || !validBatchEntitlement(this.store, batch, learning)
+        || !validBatchMutationEntitlement(this.store, batch, learning)
         || batch.deletionGeneration !== deletionGeneration || asset.status !== 'WRITING'
         || asset.uploadIdempotencyKey !== uploadIdempotencyKey
         || this.store.privateStorageCandidates.get(`OBJECT:${stored.storageKey}`)?.status === 'DELETING') return false;
@@ -4351,7 +4424,7 @@ class MemoryAttemptTransaction {
     const learning = batch && this.store.learningSubmissions.get(this.attemptId);
     const assets = this.store.learningBatchAssets.get(batchId) || [];
     if (!batch || batch.attemptId !== this.attemptId
-        || !validBatchEntitlement(this.store, batch, learning)) return null;
+        || !validBatchMutationEntitlement(this.store, batch, learning)) return null;
     if (batch.status !== 'DRAFT' || batch.deletionState !== 'ACTIVE'
         || assets.some((asset) => !['NORMALIZED', 'STORED'].includes(asset.status))) {
       const error = new Error('Every reserved asset must be uploaded before submission.');
@@ -4389,7 +4462,7 @@ class MemoryAttemptTransaction {
     const work = (this.store.learningBatchWorkItems.get(batchId) || [])
       .find((item) => item.workType === 'BATCH_EXTRACTION');
     if (!batch || batch.attemptId !== this.attemptId || batch.deletionState !== 'ACTIVE'
-        || !validBatchEntitlement(this.store, batch, learning)
+        || !validBatchMutationEntitlement(this.store, batch, learning)
         || batch.status !== 'PROCESSING' || mapping.revision !== batch.mappingRevision + 1
         || !work || work.status !== 'RUNNING' || work.leaseOwner !== workerFence?.workerId
         || work.leaseToken !== workerFence?.leaseToken || work.inputHash !== workerFence?.inputHash
@@ -4414,7 +4487,7 @@ class MemoryAttemptTransaction {
     const revisions = this.store.learningBatchMappings.get(batchId) || [];
     const mapping = revisions.find((candidate) => candidate.revision === expectedMappingRevision);
     if (!batch || !learning || !mapping || batch.attemptId !== this.attemptId
-        || !validBatchEntitlement(this.store, batch, learning)
+        || !validBatchMutationEntitlement(this.store, batch, learning)
         || batch.learningSubmissionId !== learning.id || learning.currentVersion !== batch.baseVersion
         || learning.lifecycleStatus !== 'COMMITTED' || learning.studentId !== batch.studentId
         || learning.formId !== batch.formId || learning.formVersion !== batch.formVersion

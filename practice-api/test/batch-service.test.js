@@ -125,6 +125,13 @@ async function fixture(t) {
   });
   const form = learningReviewForm();
   await store.importForm(form, { publish: true, allowTestOnlyPublish: true });
+  const approvedContext = approvedContextArtifact(form, {
+    readyNumbers: form.questions.map((question) => question.number)
+  });
+  await new ApprovedContextImporter({
+    store, clock: () => new Date('2026-08-01T12:00:00.000Z'),
+    trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
+  }).import(approvedContext, approvalReceiptsForArtifact(approvedContext));
   const student = await service.seedAccessCode({ code: 'batch-student-code', displayName: 'Batch Student' });
   const created = await service.createAttempt(student.id, form.id);
   await service.final(student.id, created.attempt.id, 'finalize-batch-fixture', {
@@ -740,7 +747,10 @@ test('dispatcher shutdown aborts a slow batch Gateway call without stale complet
 
 test('mixed text and audio follows durable transcription, purging, extraction, and report flow', async (t) => {
   const context = await fixture(t);
-  const artifact = approvedContextArtifact(context.form);
+  const artifact = approvedContextArtifact(context.form, {
+    readyNumbers: context.form.questions.map((question) => question.number),
+    solutionIdentityOffset: 100
+  });
   await new ApprovedContextImporter({
     store: context.store,
     clock: () => new Date('2026-08-01T12:00:00.000Z'),
@@ -1232,6 +1242,10 @@ test('a running batch cannot consume the slot reserved for a late interactive an
   await context.service.submitLearningBatch(
     context.student.id, context.attemptId, created.batch.id, 'submit-late-interactive-batch'
   );
+  const submission = context.store.learningSubmissions.get(context.attemptId);
+  const version = context.store.learningVersions.get(submission.id)[0];
+  const work = context.store.learningWorkItems.get(version.id)[0];
+  Object.assign(work, { status: 'BLOCKED_CONTEXT', analysisRunId: null });
   let releaseBatch;
   const heldBatch = new Promise((resolve) => { releaseBatch = resolve; });
   const order = [];
@@ -1245,9 +1259,6 @@ test('a running batch cannot consume the slot reserved for a late interactive an
   assert.deepEqual(await dispatcher.tick(), { claimed: 1, active: 1 });
   assert.deepEqual(order, ['batch']);
 
-  const submission = context.store.learningSubmissions.get(context.attemptId);
-  const version = context.store.learningVersions.get(submission.id)[0];
-  const work = context.store.learningWorkItems.get(version.id)[0];
   const contextSet = {
     id: '31111111-1111-4111-8111-111111111111', formId: version.formId,
     formVersion: version.formVersion, artifactSetHash: 'c'.repeat(64),
@@ -1335,7 +1346,10 @@ test('overlapping dispatcher ticks serialize slow claims and never exceed local 
 
 test('current v3 preserves exact interactive v1 and batch v2/v3 questions and reports', async (t) => {
   const context = await fixture(t);
-  const artifact = approvedContextArtifact(context.form);
+  const artifact = approvedContextArtifact(context.form, {
+    readyNumbers: context.form.questions.map((question) => question.number),
+    solutionIdentityOffset: 100
+  });
   await new ApprovedContextImporter({
     store: context.store,
     clock: () => new Date('2026-08-01T12:00:00.000Z'),
@@ -1580,7 +1594,10 @@ test('current v3 preserves exact interactive v1 and batch v2/v3 questions and re
 
 test('batch analysis authorization re-reads the exact committed result item before provider dispatch', async (t) => {
   const context = await fixture(t);
-  const artifact = approvedContextArtifact(context.form);
+  const artifact = approvedContextArtifact(context.form, {
+    readyNumbers: context.form.questions.map((question) => question.number),
+    solutionIdentityOffset: 100
+  });
   await new ApprovedContextImporter({
     store: context.store,
     clock: () => new Date('2026-08-01T12:00:00.000Z'),

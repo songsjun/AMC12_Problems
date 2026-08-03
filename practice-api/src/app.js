@@ -60,13 +60,15 @@ export async function buildApp({ service, config, logger = false }) {
   const reasoningWriteWindows = new Map();
   const reasoningWritesPerMinute = config.reasoningWritesPerMinute || 30;
   const learningHistoryPrefix = `${config.basePath}/learning-history`;
+  const formsPrefix = `${config.basePath}/forms`;
 
   // Global onRequest hooks (notably the IP limiter) can terminate a request
   // before a route handler runs. Apply the private-history cache policy at
   // serialization time as well, so every status code follows the same rule.
   app.addHook('onSend', async (request, reply, payload) => {
     const path = request.raw.url?.split('?', 1)[0] || '';
-    if (path === learningHistoryPrefix || path.startsWith(`${learningHistoryPrefix}/`)) {
+    if (path === learningHistoryPrefix || path.startsWith(`${learningHistoryPrefix}/`)
+        || path === formsPrefix || path.startsWith(`${formsPrefix}/`)) {
       reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
     }
     return payload;

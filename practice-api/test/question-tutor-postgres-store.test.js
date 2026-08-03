@@ -535,15 +535,14 @@ test('PostgresStore atomically creates a Tutor root from path identity and repla
       `SELECT release_manifest_hash FROM amc_practice.approved_context_sets
        WHERE id = $1`, [fixture.snapshot.contextSetId]
     )).rows[0].release_manifest_hash;
-    await store.pool.query(
+    await assert.rejects(() => store.pool.query(
       `UPDATE amc_practice.approved_context_sets SET release_manifest_hash = $2
        WHERE id = $1`, [fixture.snapshot.contextSetId, 'a'.repeat(64)]
-    );
-    await assertUnavailableWithoutRows(rootInput({ sessionId: liveSessionId }));
-    await store.pool.query(
-      `UPDATE amc_practice.approved_context_sets SET release_manifest_hash = $2
-       WHERE id = $1`, [fixture.snapshot.contextSetId, originalRelease]
-    );
+    ), /approved context audit lineage is immutable after import/);
+    assert.equal((await store.pool.query(
+      `SELECT release_manifest_hash FROM amc_practice.approved_context_sets
+       WHERE id = $1`, [fixture.snapshot.contextSetId]
+    )).rows[0].release_manifest_hash, originalRelease);
 
     const key = `pg-root-success-${randomUUID()}`;
     const created = await store.createTutorRootThread(rootInput({
@@ -758,7 +757,7 @@ test('PostgresStore decouples committed Tutor authority from raw batch cleanup a
     }), true);
 
     const adversarialVersionId = randomUUID();
-    await store.pool.query(
+    await assert.rejects(() => store.pool.query(
       `INSERT INTO amc_practice.learning_submission_versions
        (id, learning_submission_id, version_number, form_id, form_version,
         answers_revision, reasoning_revision, creation_reason, context_status,
@@ -768,25 +767,14 @@ test('PostgresStore decouples committed Tutor authority from raw batch cleanup a
               evidence_hash, clock_timestamp(), batch_id
        FROM amc_practice.learning_submission_versions WHERE id = $1`,
       [batch.versionId, adversarialVersionId]
-    );
-    await store.pool.query(
-      `UPDATE amc_practice.learning_batches
-       SET committed_version_id = $2, committed_version_number = $3,
-           updated_at = clock_timestamp() WHERE id = $1`,
-      [batch.batchId, adversarialVersionId, batch.versionNumber + 1]
-    );
-    assert.equal(await store.getTutorThreadBundle(batch.studentId, root.thread.id), null,
-      'assert-source rejects a committed marker that drifts to another batch version');
-    await assert.rejects(() => store.createTutorRootThread(rootInput(
-      `pg-batch-adversarial-${randomUUID()}`
-    )), (error) => error.code === 'TUTOR_ROOT_NOT_AVAILABLE',
-    'root authority rejects the same committed-version mismatch');
-    await store.pool.query(
-      `UPDATE amc_practice.learning_batches
-       SET committed_version_id = $2, committed_version_number = $3,
-           updated_at = clock_timestamp() WHERE id = $1`,
-      [batch.batchId, batch.versionId, batch.versionNumber]
-    );
+    ), (error) => error.code === '23505'
+      && error.constraint === 'amc_learning_version_one_per_batch_idx',
+    'one batch cannot manufacture a second authoritative learning version');
+    assert.equal((await store.pool.query(
+      `SELECT committed_version_id, committed_version_number
+       FROM amc_practice.learning_batches WHERE id = $1`, [batch.batchId]
+    )).rows[0].committed_version_id, batch.versionId,
+    'the rejected duplicate version leaves the committed marker unchanged');
     assert.ok(await store.getTutorThreadBundle(batch.studentId, root.thread.id));
     await store.tombstoneTutorThread({ studentId: batch.studentId, threadId: root.thread.id });
     await store.tombstoneTutorThread({ studentId: batch.studentId, threadId: secondRoot.thread.id });

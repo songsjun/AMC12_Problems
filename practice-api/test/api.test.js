@@ -103,7 +103,7 @@ test('Fastify API authenticates, enforces CSRF, redacts keys, and exposes result
   assert.equal(response.json().form.questions[0].solutionMarkdown, 'Fixture solution one');
 });
 
-test('forms capability and batch HTTP mutations follow the default-off intake release gate', async (t) => {
+test('forms capability and batch HTTP mutations require both the intake flag and exact ready context', async (t) => {
   const disabledContext = await makeApp();
   t.after(() => disabledContext.app.close());
   const session = await login(disabledContext.app);
@@ -151,7 +151,8 @@ test('forms capability and batch HTTP mutations follow the default-off intake re
     method: 'GET', url: '/api/amc12/forms'
   }));
   assert.equal(response.statusCode, 200);
-  assert.equal(response.json().forms[0].batchIntakeAvailable, true);
+  assert.equal(response.json().forms[0].batchIntakeAvailable, false,
+    'a global release flag cannot advertise a form without complete approved context');
 });
 
 test('API idempotency, reset history, and CSRF rejection survive the full HTTP flow', async (t) => {

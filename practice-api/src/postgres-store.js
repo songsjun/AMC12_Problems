@@ -1346,7 +1346,9 @@ async function lockTranscriptionAggregate(client, input, { activeRequired = true
        AND w.lease_token = $2 AND w.deletion_generation = $3
        AND b.deletion_generation = $3 AND w.lease_expires_at > $4
        AND amc_practice.learning_entitlement_allows(
-         s.id, CASE WHEN $5::boolean THEN 'EXISTING_WORK' ELSE 'CLEANUP' END
+         s.id, CASE WHEN $5::boolean
+           THEN CASE WHEN s.source_type = 'BATCH_REVIEW' THEN 'NEW_BATCH' ELSE 'EXISTING_WORK' END
+           ELSE 'CLEANUP' END
        )
        AND ($5::boolean = false OR (b.status = 'PROCESSING' AND b.deletion_state = 'ACTIVE'
          AND s.current_version = b.base_version))
@@ -1368,6 +1370,7 @@ function mapFormHeader(row) {
     developmentPublishEligible: row.development_publish_eligible,
     contentSealed: row.content_sealed,
     declaredQuestionCount: number(row.declared_question_count),
+    batchReviewContextReady: row.batch_review_context_ready === true,
     publishedAt: row.published_at,
     publicationStatus: row.publication_status,
     sourceSchemaVersion: row.source_schema_version,
@@ -1400,12 +1403,28 @@ function mapQuestion(row) {
 async function getFormUsing(queryable, id, version = undefined) {
   const header = version === undefined
     ? await queryable.query(
-      `SELECT * FROM amc_practice.form_revisions
-       WHERE form_id = $1 AND content_sealed
-       ORDER BY published DESC, published_at DESC NULLS LAST, imported_at DESC LIMIT 1`, [id])
+      `SELECT revision.*, EXISTS (
+         SELECT 1 FROM amc_practice.approved_context_sets context
+         WHERE context.form_id = revision.form_id AND context.form_version = revision.version
+           AND context.active AND context.sealed
+           AND amc_practice.batch_review_context_is_complete(
+             revision.form_id, revision.version, context.id)
+       ) AS batch_review_context_ready
+       FROM amc_practice.form_revisions revision
+       WHERE revision.form_id = $1 AND revision.content_sealed
+       ORDER BY revision.published DESC, revision.published_at DESC NULLS LAST,
+                revision.imported_at DESC LIMIT 1`, [id])
     : await queryable.query(
-      `SELECT * FROM amc_practice.form_revisions
-       WHERE form_id = $1 AND version = $2 AND content_sealed`, [id, version]);
+      `SELECT revision.*, EXISTS (
+         SELECT 1 FROM amc_practice.approved_context_sets context
+         WHERE context.form_id = revision.form_id AND context.form_version = revision.version
+           AND context.active AND context.sealed
+           AND amc_practice.batch_review_context_is_complete(
+             revision.form_id, revision.version, context.id)
+       ) AS batch_review_context_ready
+       FROM amc_practice.form_revisions revision
+       WHERE revision.form_id = $1 AND revision.version = $2
+         AND revision.content_sealed`, [id, version]);
   if (!header.rowCount) return null;
   const form = mapFormHeader(header.rows[0]);
   const questions = await queryable.query(
@@ -1863,7 +1882,8 @@ export class PostgresStore {
            WHERE $3::boolean AND w.work_type = 'BATCH_EXTRACTION' AND w.status = 'QUEUED'
              AND w.available_at <= $1 AND b.status = 'PROCESSING' AND b.deletion_state = 'ACTIVE'
              AND b.deletion_generation = w.deletion_generation
-             AND amc_practice.learning_entitlement_allows(s.id, 'EXISTING_WORK')
+             AND amc_practice.learning_entitlement_allows(s.id,
+               CASE WHEN s.source_type = 'BATCH_REVIEW' THEN 'NEW_BATCH' ELSE 'EXISTING_WORK' END)
              AND s.current_version = b.base_version
              AND (SELECT count(*) FROM amc_practice.learning_batch_work_items running
                   WHERE running.work_type = 'BATCH_EXTRACTION' AND running.status = 'RUNNING') < $4
@@ -2094,7 +2114,9 @@ export class PostgresStore {
              CASE WHEN b.deletion_state <> 'ACTIVE' OR b.status = 'FAILED'
                     OR p.status IN ('DELETE_PENDING','DELETION_EVIDENCED',
                       'PROVIDER_RETENTION_PENDING','PROVIDER_RETENTION_DELETION_CONFIRMED')
-                  THEN 'CLEANUP' ELSE 'EXISTING_WORK' END)
+                  THEN 'CLEANUP'
+                  ELSE CASE WHEN s.source_type = 'BATCH_REVIEW'
+                    THEN 'NEW_BATCH' ELSE 'EXISTING_WORK' END END)
            AND (
              (b.deletion_state = 'ACTIVE' AND s.current_version = b.base_version
                AND ((b.status = 'PROCESSING' AND (
@@ -3946,7 +3968,8 @@ export class PostgresStore {
          AND w.deletion_generation = $5 AND b.deletion_generation = $5
          AND w.lease_expires_at > $6 AND b.status = 'PROCESSING'
          AND b.deletion_state = 'ACTIVE'
-         AND amc_practice.learning_entitlement_allows(s.id, 'EXISTING_WORK')
+         AND amc_practice.learning_entitlement_allows(s.id,
+           CASE WHEN s.source_type = 'BATCH_REVIEW' THEN 'NEW_BATCH' ELSE 'EXISTING_WORK' END)
          AND s.current_version = b.base_version`,
       [input.workItemId, input.workerId, input.leaseToken, input.inputHash,
         input.deletionGeneration, input.now]
@@ -4270,7 +4293,14 @@ export class PostgresStore {
          SELECT count(*)::integer
          FROM amc_practice.form_questions q
          WHERE q.form_id = f.form_id AND q.form_version = f.version AND q.is_scored = true
-       ) AS scored_question_count
+       ) AS scored_question_count,
+       EXISTS (
+         SELECT 1 FROM amc_practice.approved_context_sets context
+         WHERE context.form_id = f.form_id AND context.form_version = f.version
+           AND context.active AND context.sealed
+           AND amc_practice.batch_review_context_is_complete(
+             f.form_id, f.version, context.id)
+       ) AS batch_review_context_ready
        FROM current_revisions f
        ORDER BY f.form_id`,
     );
@@ -5021,31 +5051,6 @@ export class PostgresStore {
     const scope = `batch-review-form:${formId}:${formVersion}:workspace`;
     try {
       await client.query('BEGIN');
-      const replay = await client.query(
-        `SELECT request_hash, response_body FROM amc_practice.idempotency_records
-         WHERE student_id = $1 AND scope = $2 AND key = $3 FOR UPDATE`,
-        [studentId, scope, idempotencyKey]
-      );
-      if (replay.rowCount) {
-        if (replay.rows[0].request_hash !== requestHash) {
-          throw Object.assign(new Error('Idempotency key was reused.'), { code: 'IDEMPOTENCY_KEY_REUSED' });
-        }
-        const bundle = await client.query(
-          `SELECT to_jsonb(attempt.*) AS attempt, to_jsonb(submission.*) AS submission
-           FROM amc_practice.attempts attempt
-           JOIN amc_practice.learning_submissions submission ON submission.attempt_id = attempt.id
-           WHERE attempt.id = $1 AND attempt.student_id = $2
-             AND attempt.attempt_mode = 'BATCH_REVIEW'`,
-          [replay.rows[0].response_body.attemptId, studentId]
-        );
-        if (!bundle.rowCount) throw new Error('Batch review idempotency record lost its aggregate.');
-        await client.query('COMMIT');
-        return {
-          attempt: mapAttempt(bundle.rows[0].attempt),
-          learningSubmission: mapLearningSubmission(bundle.rows[0].submission),
-          created: false
-        };
-      }
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))',
         [studentId, `batch-review:${formId}:${formVersion}`]);
       const serializedReplay = await client.query(
@@ -5060,10 +5065,22 @@ export class PostgresStore {
         const bundle = await client.query(
           `SELECT to_jsonb(attempt.*) AS attempt, to_jsonb(submission.*) AS submission
            FROM amc_practice.attempts attempt
-           JOIN amc_practice.learning_submissions submission ON submission.attempt_id = attempt.id
+           JOIN amc_practice.learning_submissions submission
+             ON submission.attempt_id = attempt.id
+            AND submission.student_id = attempt.student_id
+            AND submission.form_id = attempt.form_id
+            AND submission.form_version = attempt.form_version
+            AND submission.attempt_mode = attempt.attempt_mode
            WHERE attempt.id = $1 AND attempt.student_id = $2
-             AND attempt.attempt_mode = 'BATCH_REVIEW'`,
-          [serializedReplay.rows[0].response_body.attemptId, studentId]
+             AND attempt.form_id = $3 AND attempt.form_version = $4
+             AND attempt.attempt_mode = 'BATCH_REVIEW'
+             AND attempt.phase = 'BATCH_REVIEW'
+             AND submission.source_type = 'BATCH_REVIEW'
+             AND submission.lifecycle_status = 'COMMITTED'
+             AND submission.official_submission_id IS NULL
+             AND submission.official_submission_kind IS NULL
+             AND submission.open_review_release_id IS NULL`,
+          [serializedReplay.rows[0].response_body?.attemptId, studentId, formId, formVersion]
         );
         if (!bundle.rowCount) throw new Error('Batch review idempotency record lost its aggregate.');
         await client.query('COMMIT');
@@ -5086,6 +5103,13 @@ export class PostgresStore {
         "SELECT pg_advisory_xact_lock(hashtext('amc_open_delivery_bundle'), hashtext($1))",
         [deliveryIdentity.rows[0].question_bundle_hash]
       );
+      // Context import, batch confirmation, and this creation boundary share
+      // the same exact-form lock. The catalog projection is advisory; this
+      // transaction rechecks readiness after serialization and then row-locks
+      // both form and context through commit.
+      await client.query(
+        'SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))', [formId, formVersion]
+      );
       const formIdentity = await client.query(
         `SELECT * FROM amc_practice.form_revisions
          WHERE form_id = $1 AND version = $2 AND content_sealed AND published = true FOR SHARE`,
@@ -5095,12 +5119,37 @@ export class PostgresStore {
         await client.query('COMMIT');
         return null;
       }
+      const readyContext = await client.query(
+        `SELECT context.id, context.artifact_set_hash
+         FROM amc_practice.approved_context_sets context
+         WHERE context.form_id = $1 AND context.form_version = $2
+           AND context.active AND context.sealed
+           AND amc_practice.batch_review_context_is_complete($1, $2, context.id)
+         FOR SHARE`,
+        [formId, formVersion]
+      );
+      if (!readyContext.rowCount) {
+        throw Object.assign(new Error('Batch review requires a complete active approved context.'), {
+          code: 'BATCH_REVIEW_CONTEXT_NOT_READY'
+        });
+      }
       let aggregate = await client.query(
         `SELECT to_jsonb(attempt.*) AS attempt, to_jsonb(submission.*) AS submission
          FROM amc_practice.attempts attempt
-         JOIN amc_practice.learning_submissions submission ON submission.attempt_id = attempt.id
+         JOIN amc_practice.learning_submissions submission
+           ON submission.attempt_id = attempt.id
+          AND submission.student_id = attempt.student_id
+          AND submission.form_id = attempt.form_id
+          AND submission.form_version = attempt.form_version
+          AND submission.attempt_mode = attempt.attempt_mode
          WHERE attempt.student_id = $1 AND attempt.form_id = $2 AND attempt.form_version = $3
-           AND attempt.attempt_mode = 'BATCH_REVIEW' FOR UPDATE OF attempt, submission`,
+           AND attempt.attempt_mode = 'BATCH_REVIEW' AND attempt.phase = 'BATCH_REVIEW'
+           AND submission.source_type = 'BATCH_REVIEW'
+           AND submission.lifecycle_status = 'COMMITTED'
+           AND submission.official_submission_id IS NULL
+           AND submission.official_submission_kind IS NULL
+           AND submission.open_review_release_id IS NULL
+         FOR UPDATE OF attempt, submission`,
         [studentId, formId, formVersion]
       );
       const created = !aggregate.rowCount;
@@ -5109,7 +5158,14 @@ export class PostgresStore {
         const attemptId = randomUUID();
         const submissionId = randomUUID();
         const versionId = randomUUID();
-        const evidenceHash = batchReviewAnchorHash({ studentId, form });
+        const evidenceHash = batchReviewAnchorHash({
+          studentId,
+          form,
+          context: {
+            id: readyContext.rows[0].id,
+            artifactSetHash: readyContext.rows[0].artifact_set_hash
+          }
+        });
         const attempt = await client.query(
           `INSERT INTO amc_practice.attempts
            (id, student_id, form_id, form_version, duration_ms, attempt_mode, phase, clock_state,
@@ -5135,9 +5191,9 @@ export class PostgresStore {
            (id, learning_submission_id, version_number, form_id, form_version,
             answers_revision, reasoning_revision, creation_reason, batch_id,
             context_status, context_set_id, evidence_hash, created_at)
-           VALUES ($1,$2,1,$3,$4,0,0,$5,NULL,'CONTEXT_UNAVAILABLE',NULL,$6,$7)`,
+           VALUES ($1,$2,1,$3,$4,0,0,$5,NULL,'CONTEXT_READY',$6,$7,$8)`,
           [versionId, submissionId, formId, formVersion,
-            BATCH_REVIEW_ANCHOR_REASON, evidenceHash, now]
+            BATCH_REVIEW_ANCHOR_REASON, readyContext.rows[0].id, evidenceHash, now]
         );
         await client.query(
           `INSERT INTO amc_practice.learning_question_responses
@@ -5153,7 +5209,14 @@ export class PostgresStore {
       }
       const attempt = mapAttempt(aggregate.rows[0].attempt);
       const submission = mapLearningSubmission(aggregate.rows[0].submission);
-      if (submission.sourceType !== BATCH_REVIEW_SOURCE_TYPE) {
+      if (attempt.studentId !== studentId || attempt.formId !== formId
+          || attempt.formVersion !== formVersion || attempt.attemptMode !== ATTEMPT_MODE.BATCH_REVIEW
+          || attempt.phase !== BATCH_REVIEW_PHASE || submission.studentId !== studentId
+          || submission.attemptId !== attempt.id || submission.formId !== formId
+          || submission.formVersion !== formVersion || submission.attemptMode !== ATTEMPT_MODE.BATCH_REVIEW
+          || submission.sourceType !== BATCH_REVIEW_SOURCE_TYPE
+          || submission.lifecycleStatus !== 'COMMITTED' || submission.officialSubmissionId !== null
+          || submission.officialSubmissionKind !== null || submission.openReviewReleaseId !== null) {
         throw new Error('Batch review workspace lost its learning anchor.');
       }
       await client.query(
@@ -7115,7 +7178,8 @@ class PostgresAttemptTransaction {
        JOIN amc_practice.learning_submissions s
          ON s.id = b.learning_submission_id AND s.source_type = b.source_type
        WHERE b.id = $1 AND a.id = $2 AND b.attempt_id = $3
-         AND amc_practice.learning_entitlement_allows(s.id, 'EXISTING_WORK')
+         AND amc_practice.learning_entitlement_allows(s.id,
+           CASE WHEN s.source_type = 'BATCH_REVIEW' THEN 'NEW_BATCH' ELSE 'EXISTING_WORK' END)
        FOR UPDATE OF b, a`, [batchId, assetId, this.attempt.id]
     );
     if (!selected.rowCount) return null;
@@ -7156,7 +7220,8 @@ class PostgresAttemptTransaction {
        JOIN amc_practice.learning_submissions s
          ON s.id = b.learning_submission_id AND s.source_type = b.source_type
        WHERE b.id = $1 AND a.id = $2 AND b.attempt_id = $3
-         AND amc_practice.learning_entitlement_allows(s.id, 'EXISTING_WORK')
+         AND amc_practice.learning_entitlement_allows(s.id,
+           CASE WHEN s.source_type = 'BATCH_REVIEW' THEN 'NEW_BATCH' ELSE 'EXISTING_WORK' END)
        FOR UPDATE OF b, a`, [batchId, assetId, this.attempt.id]
     );
     if (!locked.rowCount) return false;
@@ -7219,7 +7284,10 @@ class PostgresAttemptTransaction {
     const bundle = await loadLearningBatchBundleUsing(this.client, this.attempt.id, batchId, { lock: true });
     if (!bundle) return null;
     const entitlement = await this.client.query(
-      `SELECT amc_practice.learning_entitlement_allows(learning_submission_id, 'EXISTING_WORK') AS allowed
+      `SELECT amc_practice.learning_entitlement_allows(
+          learning_submission_id,
+          CASE WHEN source_type = 'BATCH_REVIEW' THEN 'NEW_BATCH' ELSE 'EXISTING_WORK' END
+        ) AS allowed
        FROM amc_practice.learning_batches WHERE id = $1`, [batchId]
     );
     if (!entitlement.rows[0]?.allowed) return null;
@@ -7267,7 +7335,9 @@ class PostgresAttemptTransaction {
        WHERE id = $1 AND attempt_id = $5 AND deletion_state = 'ACTIVE'
          AND status = 'PROCESSING' AND mapping_revision = $2 - 1
          AND deletion_generation = $9
-         AND amc_practice.learning_entitlement_allows(learning_submission_id, 'EXISTING_WORK')
+         AND amc_practice.learning_entitlement_allows(
+           learning_submission_id,
+           CASE WHEN source_type = 'BATCH_REVIEW' THEN 'NEW_BATCH' ELSE 'EXISTING_WORK' END)
          AND EXISTS (
            SELECT 1 FROM amc_practice.learning_batch_work_items w
            WHERE w.batch_id = learning_batches.id AND w.work_type = 'BATCH_EXTRACTION'
@@ -7317,7 +7387,9 @@ class PostgresAttemptTransaction {
     const locked = await this.client.query(
       `SELECT b.*, s.current_version, s.lifecycle_status, s.source_type AS submission_source_type,
               release.context_set_id AS release_context_set_id,
-              amc_practice.learning_entitlement_allows(s.id, 'EXISTING_WORK') AS entitled,
+              amc_practice.learning_entitlement_allows(s.id,
+                CASE WHEN s.source_type = 'BATCH_REVIEW' THEN 'NEW_BATCH' ELSE 'EXISTING_WORK' END
+              ) AS entitled,
               s.student_id AS submission_student_id, s.form_id AS submission_form_id,
               s.form_version AS submission_form_version
        FROM amc_practice.learning_batches b

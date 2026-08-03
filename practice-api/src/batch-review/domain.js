@@ -6,20 +6,22 @@ export const BATCH_REVIEW_PHASE = 'BATCH_REVIEW';
 export const BATCH_REVIEW_ANCHOR_REASON = 'BATCH_REVIEW_ANCHOR';
 export const BATCH_REVIEW_BLANK_ORIGIN = 'BATCH_REVIEW_BLANK';
 
-export function batchReviewAnchorHash({ studentId, form }) {
+export function batchReviewAnchorHash({ studentId, form, context }) {
   return canonicalHash({
-    schema: 'amc-batch-review-anchor-v1',
+    schema: 'amc-batch-review-anchor-v2',
     studentId,
     formId: form.id,
     formVersion: form.version,
     manifestHash: form.manifestHash,
     contentHash: form.contentHash,
-    questionBundleHash: form.questionBundleHash
+    questionBundleHash: form.questionBundleHash,
+    contextSetId: context.id,
+    contextArtifactSetHash: context.artifactSetHash
   });
 }
 
-export function isCompleteBatchReviewContext(form, context) {
-  if (!form || !form.publishedAt || !context || context.sealed !== true || context.active !== true
+export function isPinnedBatchReviewContextComplete(form, context) {
+  if (!form || !form.publishedAt || !context || context.sealed !== true
       || context.formId !== form.id || context.formVersion !== form.version
       || context.releaseBinding?.manifestHash !== form.manifestHash
       || context.releaseBinding?.contentHash !== form.contentHash
@@ -33,6 +35,10 @@ export function isCompleteBatchReviewContext(form, context) {
       && question.solutions.filter((solution) => solution.modelEligibility?.eligible === true
         && solution.authorityReceipt?.status === 'active').length >= 2;
   });
+}
+
+export function isCompleteBatchReviewContext(form, context) {
+  return context?.active === true && isPinnedBatchReviewContextComplete(form, context);
 }
 
 function publicBatchReviewForm(form) {

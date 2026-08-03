@@ -588,7 +588,10 @@ export function normalizeBatchReviewWorkspace(payload, form) {
       || expectedFormVersion === null || expectedFormVersion === undefined
       || String(workspace.formVersion ?? '') !== String(expectedFormVersion)
       || workspace.protectedAccessStatus !== 'AVAILABLE'
-      || workspace.lifecycleStatus !== 'ACTIVE') {
+      || workspace.lifecycleStatus !== 'ACTIVE'
+      || workspace.analysisContextStatus !== 'READY'
+      || workspace.batchReviewAvailable !== true
+      || workspace.batchIntakeAvailable !== true) {
     throw new ApiError('The service returned an invalid batch-review workspace.', {
       code: 'INVALID_BATCH_REVIEW_WORKSPACE'
     });

@@ -129,10 +129,13 @@ async function verifyZeroChildV1Upgrade(pool) {
     '012_tutor_expired_lease_recovery.sql',
     '013_ai_dispatch_fairness.sql',
     '014_batch_review_workspace.sql',
-    '015_approved_context_v2.sql'
+    '015_approved_context_v2.sql',
+    '016_batch_review_readiness_gate.sql',
+    '017_batch_review_historical_access.sql'
   ];
   try {
-    for (const name of migrationNames.slice(0, -1)) {
+    const approvedContextV2Index = migrationNames.indexOf('015_approved_context_v2.sql');
+    for (const name of migrationNames.slice(0, approvedContextV2Index)) {
       const sql = await readFile(new URL(`../migrations/${name}`, import.meta.url), 'utf8');
       await pool.query(sql.replaceAll('amc_practice', schema));
     }
@@ -178,10 +181,10 @@ async function verifyZeroChildV1Upgrade(pool) {
       [contextId, 'a'.repeat(64), 'b'.repeat(64), 'c'.repeat(64), 'd'.repeat(64),
         'e'.repeat(64), '3'.repeat(64), '2'.repeat(64), '4'.repeat(64)]
     );
-    const migration = await readFile(
-      new URL('../migrations/015_approved_context_v2.sql', import.meta.url), 'utf8'
-    );
-    await pool.query(migration.replaceAll('amc_practice', schema));
+    for (const name of migrationNames.slice(approvedContextV2Index)) {
+      const migration = await readFile(new URL(`../migrations/${name}`, import.meta.url), 'utf8');
+      await pool.query(migration.replaceAll('amc_practice', schema));
+    }
     assert.deepEqual((await pool.query(
       `SELECT sealed, declared_question_count, active, superseded_at
        FROM ${schema}.approved_context_sets WHERE id = $1`, [contextId]
@@ -233,7 +236,9 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     '012_tutor_expired_lease_recovery.sql',
     '013_ai_dispatch_fairness.sql',
     '014_batch_review_workspace.sql',
-    '015_approved_context_v2.sql'
+    '015_approved_context_v2.sql',
+    '016_batch_review_readiness_gate.sql',
+    '017_batch_review_historical_access.sql'
   ]);
   await verifyZeroChildV1Upgrade(store.pool);
   assert.deepEqual((await store.pool.query(
@@ -843,6 +848,18 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
   const v2StoredForm = importedArchive.find((form) => form.id === alternativeArchive.id);
   await store.importForm(v2StoredForm, { publish: true, allowTestOnlyPublish: false });
   const v2Now = new Date('2026-08-03T12:30:00.000Z');
+  const v2Importer = new ApprovedContextImporter({
+    store, clock: () => new Date(v2Now), trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
+  });
+  const [v2Context] = await v2Importer.import(v2Fixture.artifact, v2Fixture.approvalReceipts);
+  const [v2Replay] = await v2Importer.import(v2Fixture.artifact, v2Fixture.approvalReceipts);
+  assert.equal(v2Replay.id, v2Context.id);
+  assert.equal(v2Context.schemaVersion, 'amc-approved-question-context-set-v2');
+  assert.equal(v2Context.sealed, true);
+  assert.equal(v2Context.declaredQuestionCount, 25);
+  assert.equal(v2Context.candidateSchemaVersion,
+    'amc-question-context-supplemented-archive-candidate-set-v1');
+  assert.deepEqual(v2Context.reviewGovernance, v2Fixture.artifact.reviewGovernance);
   const v2BatchService = new PracticeService({
     store, privateUploadStore,
     authPepper: 'postgres-v2-batch-pepper-that-is-long-enough-for-tests',
@@ -961,19 +978,7 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
   );
   assert.equal((await v2BatchService.getLearningReport(
     v2Student.id, v2Workspace.workspace.id
-  )).status, 'BLOCKED_CONTEXT');
-  const v2Importer = new ApprovedContextImporter({
-    store, clock: () => new Date(v2Now), trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
-  });
-  const [v2Context] = await v2Importer.import(v2Fixture.artifact, v2Fixture.approvalReceipts);
-  const [v2Replay] = await v2Importer.import(v2Fixture.artifact, v2Fixture.approvalReceipts);
-  assert.equal(v2Replay.id, v2Context.id);
-  assert.equal(v2Context.schemaVersion, 'amc-approved-question-context-set-v2');
-  assert.equal(v2Context.sealed, true);
-  assert.equal(v2Context.declaredQuestionCount, 25);
-  assert.equal(v2Context.candidateSchemaVersion,
-    'amc-question-context-supplemented-archive-candidate-set-v1');
-  assert.deepEqual(v2Context.reviewGovernance, v2Fixture.artifact.reviewGovernance);
+  )).status, 'QUEUED');
   assert.equal(v2Context.questions.length, 25);
   assert.ok(v2Context.questions.every((question) => question.solutions.length === 2));
   const expectedV2Solution = v2Fixture.artifact.forms[0].questions[0].approvedSolutions[0];
@@ -1498,7 +1503,7 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     practiceKind: 'standard',
     archiveNotice: null,
     scoredQuestionCount: 25,
-    batchIntakeAvailable: true,
+    batchIntakeAvailable: false,
     batchReviewAvailable: false
   });
 
@@ -2718,6 +2723,14 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
   // transaction adapter and private filesystem store. The model seam below
   // supplies the frozen Gateway contract; lease lineage is still claimed and
   // enforced by PostgreSQL before the mapping can create immutable version 2.
+  const batchReadyArtifact = approvedContextArtifact(reviewForm, {
+    readyNumbers: reviewForm.questions.map((question) => question.number),
+    solutionIdentityOffset: 100,
+    solutionBodyLabel: 'postgres-batch-ready'
+  });
+  await new ApprovedContextImporter({
+    store, trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
+  }).import(batchReadyArtifact, approvalReceiptsForArtifact(batchReadyArtifact));
   const batchText = 'Question 1: A. I subtract the same quantity from both sides, so the equality is preserved.';
   const batchCreated = await service.createLearningBatch(
     reviewStudent.id,
@@ -3420,6 +3433,13 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
 
   // Two independent pools share the least-served dispatcher state. The exact
   // first student is intentionally unspecified because UUID order is random.
+  const fairBatchForm = await store.getForm(built.manifest.id, built.manifest.version);
+  const fairBatchContext = approvedContextArtifact(fairBatchForm, {
+    readyNumbers: fairBatchForm.questions.map((question) => question.number)
+  });
+  await new ApprovedContextImporter({
+    store, trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
+  }).import(fairBatchContext, approvalReceiptsForArtifact(fairBatchContext));
   const fairStudents = [];
   const fairAttempts = [];
   for (const label of ['A', 'B']) {
@@ -3456,6 +3476,17 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
   const fairCounts = [...new Set(fairClaimStudents)].map((studentId) =>
     fairClaimStudents.filter((candidate) => candidate === studentId).length).sort();
   assert.deepEqual(fairCounts, [1, 2]);
+  await store.pool.query(
+    `UPDATE amc_practice.learning_work_items work
+     SET available_at = '2100-01-01T00:00:00Z'
+     FROM amc_practice.learning_submission_versions version
+     JOIN amc_practice.learning_submissions submission
+       ON submission.id = version.learning_submission_id
+     WHERE work.learning_submission_version_id = version.id
+       AND submission.form_id = $1 AND submission.form_version = $2
+       AND work.status = 'QUEUED'`,
+    [fairBatchForm.id, fairBatchForm.version]
+  );
 
   const openCandidate = async (label, questionBundleHash = null) => {
     const form = {
@@ -4366,7 +4397,8 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
          WHERE datname = current_database()
            AND pid <> pg_backend_pid()
            AND wait_event_type = 'Lock'
-           AND query ILIKE '%form_questions%'`
+           AND (query ILIKE '%form_questions%'
+             OR query ILIKE '%batch_review_context_is_complete%')`
       );
       blockedReaders = waiting.rows[0].count;
       if (blockedReaders < 3) await new Promise((resolve) => setTimeout(resolve, 10));

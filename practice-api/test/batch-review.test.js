@@ -40,7 +40,7 @@ function cookies(response) {
     .map((value) => value.split(';')[0]).join('; ');
 }
 
-async function fixture(t, { enabled = true } = {}) {
+async function fixture(t, { enabled = true, contextReady = true } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'amc-batch-review-'));
   t.after(async () => { await rm(root, { recursive: true, force: true }); });
   const privateUploadStore = new PrivateUploadStore({ root, highWatermarkPercent: 100 });
@@ -59,10 +59,17 @@ async function fixture(t, { enabled = true } = {}) {
   });
   const form = learningReviewForm();
   await store.importForm(form, { publish: true, allowTestOnlyPublish: true });
+  let approvedContext = null;
+  if (contextReady) {
+    const artifact = approvedContextArtifact(form, { readyNumbers: ALL_QUESTIONS });
+    [approvedContext] = await new ApprovedContextImporter({
+      store, clock: () => new Date(NOW), trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
+    }).import(artifact, approvalReceiptsForArtifact(artifact));
+  }
   const student = await service.seedAccessCode({
     code: 'batch-review-student-code', displayName: 'Batch Review Student'
   });
-  return { store, service, form, student, privateUploadStore };
+  return { store, service, form, student, privateUploadStore, approvedContext };
 }
 
 function decompositionOutput(prepared) {
@@ -121,7 +128,7 @@ function gatewayMetadata(prepared) {
   }));
 }
 
-async function commitQuestionOneBatch(context, workspaceId, prefix) {
+async function prepareQuestionOneBatch(context, workspaceId, prefix) {
   const text = 'Question 1: A. I used a direct algebraic calculation.';
   const size = Buffer.byteLength(text);
   const created = await context.service.createLearningBatch(
@@ -157,20 +164,29 @@ async function commitQuestionOneBatch(context, workspaceId, prefix) {
     }
   );
   const item = decomposed.batch.mapping.items.find((candidate) => !candidate.unmapped);
+  return { batchId: created.batch.id, decomposed, item };
+}
+
+async function confirmPreparedQuestionOneBatch(context, workspaceId, prefix, prepared) {
   return context.service.confirmLearningBatch(
-    context.student.id, workspaceId, created.batch.id, `${prefix}-confirm`,
+    context.student.id, workspaceId, prepared.batchId, `${prefix}-confirm`,
     {
-      mappingRevision: decomposed.batch.mapping.revision,
+      mappingRevision: prepared.decomposed.batch.mapping.revision,
       responses: [{
         questionNumber: 1,
         selectedOption: 'A',
-        reasoningText: item.evidenceText,
-        sourceItemIds: [item.id]
+        reasoningText: prepared.item.evidenceText,
+        sourceItemIds: [prepared.item.id]
       }],
-      discardedItemIds: decomposed.batch.mapping.items
+      discardedItemIds: prepared.decomposed.batch.mapping.items
         .filter((candidate) => candidate.unmapped).map((candidate) => candidate.id)
     }
   );
+}
+
+async function commitQuestionOneBatch(context, workspaceId, prefix) {
+  const prepared = await prepareQuestionOneBatch(context, workspaceId, prefix);
+  return confirmPreparedQuestionOneBatch(context, workspaceId, prefix, prepared);
 }
 
 test('batch review migration freezes the context-late anchor and revalidates context-status repair', async () => {
@@ -206,6 +222,29 @@ test('approved-context v2 migration keeps explicit row pairing and immutable aud
   assert.match(sql, /learning_submissions submission[\s\S]*source_type = 'BATCH_REVIEW'/);
   assert.match(sql, /NEW\.approval_policy_version[\s\S]*NEW\.review_schema_version[\s\S]*NEW\.review_governance/);
   assert.match(sql, /DROP TRIGGER amc_guard_released_context_solution[\s\S]*CREATE TRIGGER amc_guard_released_context_solution/);
+});
+
+test('readiness migrations gate exact-form creation while preserving historical read and Tutor access', async () => {
+  const readiness = await readFile(
+    new URL('../migrations/016_batch_review_readiness_gate.sql', import.meta.url), 'utf8'
+  );
+  const historical = await readFile(
+    new URL('../migrations/017_batch_review_historical_access.sql', import.meta.url), 'utf8'
+  );
+  assert.match(readiness,
+    /batch_review_context_is_complete\([\s\S]*revision\.form_id, revision\.version, context\.id/);
+  assert.match(readiness, /new batch review anchor must pin a complete active context/);
+  assert.match(readiness, /pg_advisory_xact_lock\(hashtext\(NEW\.form_id\), hashtext\(NEW\.form_version\)\)/);
+  assert.match(historical, /purpose IN \('EXISTING_WORK', 'CLEANUP'\)/);
+  assert.match(historical, /purpose = 'NEW_BATCH' AND form\.published/);
+  assert.match(historical,
+    /SELECT version\.context_set_id INTO batch_anchor_context[\s\S]*version_number = 1[\s\S]*creation_reason = 'BATCH_REVIEW_ANCHOR'/);
+  assert.match(historical,
+    /NEW\.context_set_id IS DISTINCT FROM batch_anchor_context[\s\S]*commit context must equal its version-one anchor context/);
+  assert.match(historical,
+    /GROUP BY version\.batch_id[\s\S]*HAVING count\(\*\) > 1[\s\S]*ERRCODE = '23505'/);
+  assert.match(historical,
+    /CREATE UNIQUE INDEX amc_learning_version_one_per_batch_idx[\s\S]*WHERE batch_id IS NOT NULL/);
 });
 
 test('batch review context completeness requires the AMC12 25-question invariant', () => {
@@ -250,6 +289,113 @@ test('batch review entry is independently fail-closed in config projection and s
   );
 });
 
+test('missing exact approved context is unavailable in catalog and workspace creation is zero-write', async (t) => {
+  const context = await fixture(t, { contextReady: false });
+  const [catalogForm] = await context.service.listForms();
+  assert.equal(catalogForm.batchIntakeAvailable, false);
+  assert.equal(catalogForm.batchReviewAvailable, false);
+  assert.equal((await context.service.getPublicForm(context.form.id)).batchIntakeAvailable, false);
+  assert.equal((await context.service.getPublicFormVersion(
+    context.form.id, context.form.version
+  )).batchReviewAvailable, false);
+
+  const before = {
+    attempts: context.store.attempts.size,
+    submissions: context.store.learningSubmissions.size,
+    versions: context.store.learningVersions.size,
+    idempotency: context.store.idempotency.size
+  };
+  await assert.rejects(
+    () => context.service.createBatchReviewWorkspace(
+      context.student.id, context.form.id, context.form.version, 'no-context-direct'
+    ),
+    (error) => error instanceof ApiError && error.statusCode === 503
+      && error.code === 'BATCH_REVIEW_UNAVAILABLE'
+  );
+  assert.deepEqual({
+    attempts: context.store.attempts.size,
+    submissions: context.store.learningSubmissions.size,
+    versions: context.store.learningVersions.size,
+    idempotency: context.store.idempotency.size
+  }, before);
+
+  const app = await buildApp({ service: context.service, config: APP_CONFIG, logger: false });
+  t.after(async () => { await app.close(); });
+  const login = await app.inject({
+    method: 'POST', url: '/api/amc12/auth/login',
+    payload: { accessCode: 'batch-review-student-code' }
+  });
+  for (const url of [
+    '/api/amc12/forms',
+    `/api/amc12/forms/${context.form.id}`,
+    `/api/amc12/forms/${context.form.id}/versions/${context.form.version}`
+  ]) {
+    const catalogResponse = await app.inject({
+      method: 'GET', url, headers: { cookie: cookies(login) }
+    });
+    assert.equal(catalogResponse.statusCode, 200);
+    assert.equal(catalogResponse.headers['cache-control'], 'no-store');
+  }
+  const response = await app.inject({
+    method: 'POST',
+    url: `/api/amc12/forms/${context.form.id}/versions/${context.form.version}/batch-review-workspace`,
+    headers: {
+      cookie: cookies(login), 'x-csrf-token': login.json().csrfToken,
+      'idempotency-key': 'no-context-http'
+    },
+    payload: {}
+  });
+  assert.equal(response.statusCode, 503);
+  assert.equal(response.json().error.code, 'BATCH_REVIEW_UNAVAILABLE');
+  assert.equal(response.headers['cache-control'], 'no-store');
+  assert.deepEqual({
+    attempts: context.store.attempts.size,
+    submissions: context.store.learningSubmissions.size,
+    versions: context.store.learningVersions.size,
+    idempotency: context.store.idempotency.size
+  }, before);
+});
+
+test('readiness rejects partial, one-eligible, inactive, unsealed, wrong-lineage, and unpublished states', async (t) => {
+  const context = await fixture(t, { contextReady: false });
+  const importer = new ApprovedContextImporter({
+    store: context.store, clock: () => new Date(NOW),
+    trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
+  });
+  const available = async () => (await context.service.listForms())
+    .find((form) => form.id === context.form.id)?.batchReviewAvailable === true;
+  assert.equal(await available(), false, 'no context');
+
+  const partial = approvedContextArtifact(context.form, { readyNumbers: [1] });
+  await importer.import(partial, approvalReceiptsForArtifact(partial));
+  assert.equal(await available(), false, 'partial context');
+
+  const oneEligible = approvedContextArtifact(context.form, {
+    readyNumbers: ALL_QUESTIONS, visualSolutionNumbers: [1], solutionIdentityOffset: 100
+  });
+  await importer.import(oneEligible, approvalReceiptsForArtifact(oneEligible));
+  assert.equal(await available(), false, 'one eligible solution on one question');
+
+  const full = approvedContextArtifact(context.form, {
+    readyNumbers: ALL_QUESTIONS, solutionIdentityOffset: 200
+  });
+  const [stored] = await importer.import(full, approvalReceiptsForArtifact(full));
+  assert.equal(await available(), true, 'complete exact context');
+  const mutableStored = context.store.approvedContextSets.get(stored.id);
+  mutableStored.active = false;
+  assert.equal(await available(), false, 'inactive context');
+  mutableStored.active = true;
+  mutableStored.sealed = false;
+  assert.equal(await available(), false, 'unsealed context');
+  mutableStored.sealed = true;
+  const exactManifestHash = mutableStored.releaseBinding.manifestHash;
+  mutableStored.releaseBinding.manifestHash = '0'.repeat(64);
+  assert.equal(await available(), false, 'wrong release lineage');
+  mutableStored.releaseBinding.manifestHash = exactManifestHash;
+  context.store.forms.get(`${context.form.id}\u0000${context.form.version}`).published = false;
+  assert.equal(await available(), false, 'unpublished exact revision');
+});
+
 test('MemoryStore quarantines an unsealed form revision and will not overwrite it', async (t) => {
   const context = await fixture(t);
   const key = `${context.form.id}\u0000${context.form.version}`;
@@ -263,7 +409,7 @@ test('MemoryStore quarantines an unsealed form revision and will not overwrite i
   );
 });
 
-test('published exact form creates a context-late batch workspace, repairs its report, and enables Tutor', async (t) => {
+test('ready published exact form creates a context-pinned batch workspace and enables Tutor', async (t) => {
   const context = await fixture(t);
   const timed = await context.service.createAttempt(context.student.id, context.form.id);
   const app = await buildApp({ service: context.service, config: APP_CONFIG, logger: false });
@@ -297,7 +443,7 @@ test('published exact form creates a context-late batch workspace, repairs its r
   assert.equal(workspace.formVersion, context.form.version);
   assert.equal(workspace.protectedAccessStatus, 'AVAILABLE');
   assert.equal(workspace.analysisStatus, 'AWAITING_BATCH');
-  assert.equal(workspace.analysisContextStatus, 'UNAVAILABLE');
+  assert.equal(workspace.analysisContextStatus, 'READY');
   assert.equal(workspace.batchReviewAvailable, true);
   assert.equal(workspace.form.questions.length, 25);
   assert.equal(/correctOption|acceptedOptions|solutionMarkdown|approvedSolutions/.test(created.body), false);
@@ -330,8 +476,8 @@ test('published exact form creates a context-late batch workspace, repairs its r
   assert.deepEqual(context.store.submissions.get(attempt.id), []);
   assert.deepEqual(context.store.events.get(attempt.id), []);
   assert.equal(anchor.creationReason, 'BATCH_REVIEW_ANCHOR');
-  assert.equal(anchor.contextStatus, 'CONTEXT_UNAVAILABLE');
-  assert.equal(anchor.contextSetId, null);
+  assert.equal(anchor.contextStatus, 'CONTEXT_READY');
+  assert.equal(anchor.contextSetId, context.approvedContext.id);
   assert.deepEqual(context.store.learningWorkItems.get(anchor.id), []);
   assert.ok(context.store.learningResponses.get(anchor.id).every((response) =>
     response.selectedOption === null && response.reasoningText === ''
@@ -418,11 +564,11 @@ test('published exact form creates a context-late batch workspace, repairs its r
   assert.ok(committedQuestionResponses.slice(1).every((response) =>
     !/officialAnswer|acceptedOptions|result/.test(response.body)),
   'only the mapped BATCH_COMMIT response is individually readable');
-  const blockedWorkspace = await context.service.getBatchReviewWorkspace(context.student.id, workspace.id);
-  assert.equal(blockedWorkspace.analysisStatus, 'BLOCKED_CONTEXT');
-  assert.equal(blockedWorkspace.analysisContextStatus, 'UNAVAILABLE');
-  const blockedReport = await context.service.getLearningReport(context.student.id, workspace.id);
-  assert.equal(blockedReport.status, 'BLOCKED_CONTEXT');
+  const queuedWorkspace = await context.service.getBatchReviewWorkspace(context.student.id, workspace.id);
+  assert.equal(queuedWorkspace.analysisStatus, 'QUEUED');
+  assert.equal(queuedWorkspace.analysisContextStatus, 'READY');
+  const queuedReport = await context.service.getLearningReport(context.student.id, workspace.id);
+  assert.equal(queuedReport.status, 'QUEUED');
   const loginResult = await context.service.login('batch-review-student-code');
   await assert.rejects(
     () => context.service.createTutorRootThread(
@@ -431,16 +577,6 @@ test('published exact form creates a context-late batch workspace, repairs its r
     (error) => error instanceof ApiError && error.statusCode === 404
       && error.code === 'TUTOR_RESOURCE_NOT_FOUND'
   );
-
-  const artifact = approvedContextArtifact(context.form, { readyNumbers: ALL_QUESTIONS });
-  await new ApprovedContextImporter({
-    store: context.store,
-    clock: () => new Date(NOW),
-    trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
-  }).import(artifact, approvalReceiptsForArtifact(artifact));
-  const repairedWorkspace = await context.service.getBatchReviewWorkspace(context.student.id, workspace.id);
-  assert.equal(repairedWorkspace.analysisStatus, 'QUEUED');
-  assert.equal(repairedWorkspace.analysisContextStatus, 'READY');
 
   const inference = new FakeInferenceClient();
   const worker = new LearningReviewWorker({
@@ -466,6 +602,11 @@ test('published exact form creates a context-late batch workspace, repairs its r
     manifestHash: '9'.repeat(64), sourceManifestHash: '9'.repeat(64)
   });
   await context.store.importForm(successor, { publish: true, allowTestOnlyPublish: true });
+  const successorArtifact = approvedContextArtifact(successor, { readyNumbers: ALL_QUESTIONS });
+  await new ApprovedContextImporter({
+    store: context.store, clock: () => new Date(NOW),
+    trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
+  }).import(successorArtifact, approvalReceiptsForArtifact(successorArtifact));
   assert.equal((await context.store.getForm(context.form.id, context.form.version)).published, false);
   assert.equal((await context.service.getBatchReviewWorkspace(context.student.id, workspace.id)).formVersion,
     context.form.version, 'an existing workspace follows its ever-published pinned revision');
@@ -490,10 +631,13 @@ test('published exact form creates a context-late batch workspace, repairs its r
   assert.equal(successorWorkspace.workspace.formVersion, successor.version);
 });
 
-test('partial approved context never queues batch-review analysis and full import repairs it', async (t) => {
+test('an existing workspace is read/delete-only while exact context is partial, then resumes after repair', async (t) => {
   const context = await fixture(t);
   const created = await context.service.createBatchReviewWorkspace(
     context.student.id, context.form.id, context.form.version, 'partial-context-workspace'
+  );
+  const prepared = await prepareQuestionOneBatch(
+    context, created.workspace.id, 'partial-context-batch'
   );
   const partial = approvedContextArtifact(context.form, { readyNumbers: [1] });
   await new ApprovedContextImporter({
@@ -502,15 +646,49 @@ test('partial approved context never queues batch-review analysis and full impor
     trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
   }).import(partial, approvalReceiptsForArtifact(partial));
 
-  await commitQuestionOneBatch(context, created.workspace.id, 'partial-context-batch');
+  const replay = await context.service.createBatchReviewWorkspace(
+    context.student.id, context.form.id, context.form.version, 'partial-context-workspace'
+  );
+  assert.equal(replay.created, false);
+  assert.equal(replay.workspace.id, created.workspace.id);
+  assert.equal(replay.workspace.batchIntakeAvailable, false,
+    'a lost successful response remains replayable but cannot restore intake authority');
+  await assert.rejects(
+    () => context.service.createBatchReviewWorkspace(
+      context.student.id, context.form.id, context.form.version, 'partial-context-new-key'
+    ),
+    (error) => error instanceof ApiError && error.statusCode === 503
+      && error.code === 'BATCH_REVIEW_UNAVAILABLE'
+  );
+
+  await assert.rejects(
+    () => confirmPreparedQuestionOneBatch(
+      context, created.workspace.id, 'partial-context-batch', prepared
+    ),
+    (error) => error instanceof ApiError && error.statusCode === 503
+      && error.code === 'BATCH_REVIEW_UNAVAILABLE'
+  );
+  await assert.rejects(
+    () => context.service.createLearningBatch(
+      context.student.id, created.workspace.id, 'partial-context-new-input',
+      { files: [{
+        displayName: 'blocked.md', kind: 'TEXT', contentType: 'text/markdown', declaredBytes: 1
+      }] }
+    ),
+    (error) => error instanceof ApiError && error.statusCode === 503
+      && error.code === 'BATCH_REVIEW_UNAVAILABLE'
+  );
   const learning = context.store.learningSubmissions.get(created.workspace.id);
   const current = context.store.learningVersions.get(learning.id).at(-1);
-  assert.equal(current.contextStatus, 'CONTEXT_UNAVAILABLE');
-  assert.equal(current.contextSetId, null);
+  assert.equal(current.creationReason, 'BATCH_REVIEW_ANCHOR');
+  assert.equal(current.contextStatus, 'CONTEXT_READY');
+  assert.equal(current.contextSetId, context.approvedContext.id,
+    'workspace creation pins immutable original context lineage');
   assert.equal(context.store.analysisRuns.has(current.id), false);
-  assert.equal((context.store.learningWorkItems.get(current.id) || [])[0].status, 'BLOCKED_CONTEXT');
   const blocked = await context.service.getBatchReviewWorkspace(context.student.id, created.workspace.id);
   assert.equal(blocked.analysisContextStatus, 'UNAVAILABLE');
+  assert.equal(blocked.batchIntakeAvailable, false);
+  assert.equal(blocked.batchReviewAvailable, false);
   const inference = new FakeInferenceClient();
   const worker = new LearningReviewWorker({
     store: context.store, inferenceClient: inference,
@@ -519,15 +697,25 @@ test('partial approved context never queues batch-review analysis and full impor
   assert.deepEqual(await worker.runOnce(), { processed: false });
   assert.equal(inference.calls.length, 0);
 
-  const full = approvedContextArtifact(context.form, { readyNumbers: ALL_QUESTIONS });
+  const full = approvedContextArtifact(context.form, {
+    readyNumbers: ALL_QUESTIONS,
+    solutionIdentityOffset: 100,
+    solutionBodyLabel: 'repair'
+  });
   await new ApprovedContextImporter({
     store: context.store,
     clock: () => new Date(NOW),
     trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
   }).import(full, approvalReceiptsForArtifact(full));
-  assert.equal(current.contextStatus, 'CONTEXT_READY');
-  assert.ok(current.contextSetId);
-  assert.equal(context.store.analysisRuns.get(current.id).status, 'QUEUED');
+  const committed = await confirmPreparedQuestionOneBatch(
+    context, created.workspace.id, 'partial-context-batch-repaired', prepared
+  );
+  assert.equal(committed.batch.status, 'COMMITTED');
+  const committedVersion = context.store.learningVersions.get(learning.id).at(-1);
+  assert.equal(committedVersion.contextStatus, 'CONTEXT_READY');
+  assert.equal(committedVersion.contextSetId, current.contextSetId,
+    'a repaired readiness gate cannot silently rebind the workspace context lineage');
+  assert.equal(context.store.analysisRuns.get(committedVersion.id).status, 'QUEUED');
 });
 
 test('duplicate active context import is idempotent and does not duplicate analysis work', async (t) => {
@@ -559,7 +747,70 @@ test('duplicate active context import is idempotent and does not duplicate analy
     .filter((run) => run.learningSubmissionVersionId === current.id).length, 1);
 });
 
-test('real Python v2 archive import repairs batch review and preserves governance through Tutor', async (t) => {
+test('an r3 archive release exposes batch review for only the one exact context-ready form', async (t) => {
+  const context = await fixture(t, { contextReady: false });
+  const release = archiveReleaseFixture({ version: 'r3' });
+  await context.service.importArchiveRelease(release, { publish: true });
+  let archiveForms = (await context.service.listForms())
+    .filter((form) => form.version === 'r3');
+  assert.equal(archiveForms.length, 48);
+  assert.equal(archiveForms.filter((form) => form.batchReviewAvailable).length, 0);
+
+  const targetId = 'amc12-2002-b';
+  const { artifact, approvalReceipts } = pythonV2ApprovedArchiveFixture(release, { targetId });
+  await new ApprovedContextImporter({
+    store: context.store, clock: () => new Date(NOW),
+    trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
+  }).import(artifact, approvalReceipts);
+  archiveForms = (await context.service.listForms()).filter((form) => form.version === 'r3');
+  assert.deepEqual(archiveForms.filter((form) => form.batchReviewAvailable)
+    .map((form) => form.id), [targetId]);
+  assert.deepEqual(archiveForms.filter((form) => form.batchIntakeAvailable)
+    .map((form) => form.id), [targetId]);
+  assert.equal((await context.service.getPublicFormVersion(targetId, 'r3')).batchReviewAvailable, true);
+  const unavailable = archiveForms.find((form) => form.id !== targetId);
+  assert.equal((await context.service.getPublicFormVersion(
+    unavailable.id, unavailable.version
+  )).batchReviewAvailable, false);
+
+  const app = await buildApp({ service: context.service, config: APP_CONFIG, logger: false });
+  t.after(async () => { await app.close(); });
+  const login = await app.inject({
+    method: 'POST', url: '/api/amc12/auth/login',
+    payload: { accessCode: 'batch-review-student-code' }
+  });
+  const headers = {
+    cookie: cookies(login), 'x-csrf-token': login.json().csrfToken
+  };
+  const catalog = await app.inject({
+    method: 'GET', url: '/api/amc12/forms', headers: { cookie: headers.cookie }
+  });
+  assert.equal(catalog.statusCode, 200);
+  assert.equal(catalog.headers['cache-control'], 'no-store');
+  assert.deepEqual(catalog.json().forms
+    .filter((form) => form.version === 'r3' && form.batchReviewAvailable)
+    .map((form) => form.id), [targetId]);
+
+  const beforeFailedCreate = context.store.attempts.size;
+  const denied = await app.inject({
+    method: 'POST',
+    url: `/api/amc12/forms/${unavailable.id}/versions/r3/batch-review-workspace`,
+    headers: { ...headers, 'idempotency-key': 'r3-unavailable-form' }, payload: {}
+  });
+  assert.equal(denied.statusCode, 503);
+  assert.equal(denied.headers['cache-control'], 'no-store');
+  assert.equal(context.store.attempts.size, beforeFailedCreate);
+  const created = await app.inject({
+    method: 'POST',
+    url: `/api/amc12/forms/${targetId}/versions/r3/batch-review-workspace`,
+    headers: { ...headers, 'idempotency-key': 'r3-ready-form' }, payload: {}
+  });
+  assert.equal(created.statusCode, 201);
+  assert.equal(created.json().workspace.formId, targetId);
+  assert.equal(created.json().workspace.analysisContextStatus, 'READY');
+});
+
+test('real Python v2 archive context enables exact-form batch review and preserves governance through Tutor', async (t) => {
   const context = await fixture(t);
   const release = archiveReleaseFixture({ version: 'archive-python-v2-r1' });
   await context.service.importArchiveRelease(release, { publish: true });
@@ -568,15 +819,6 @@ test('real Python v2 archive import repairs batch review and preserves governanc
   const memoryRoundTrip = await context.store.getForm(targetManifest.id, targetManifest.version);
   assert.equal(memoryRoundTrip.publishEligible, true);
   assert.equal(memoryRoundTrip.developmentPublishEligible, false);
-  const created = await context.service.createBatchReviewWorkspace(
-    context.student.id, targetManifest.id, targetManifest.version, 'v2-archive-workspace'
-  );
-  await commitQuestionOneBatch(context, created.workspace.id, 'v2-archive-batch');
-  const learning = context.store.learningSubmissions.get(created.workspace.id);
-  const version = context.store.learningVersions.get(learning.id).at(-1);
-  assert.equal(version.contextStatus, 'CONTEXT_UNAVAILABLE');
-  assert.equal((context.store.learningWorkItems.get(version.id) || [])[0].status, 'BLOCKED_CONTEXT');
-
   const { artifact, approvalReceipts } = pythonV2ApprovedArchiveFixture(release);
   assert.equal(artifact.schemaVersion, 'amc-approved-question-context-archive-set-v2');
   assert.equal(artifact.candidateSetBinding.schemaVersion,
@@ -615,6 +857,12 @@ test('real Python v2 archive import repairs batch review and preserves governanc
   assert.equal(supplement.sourceRef.path,
     `protected-supplements/${supplement.candidateProvenance.supplementId}.json`);
   assert.equal(supplement.sourceRef.sha256, supplement.candidateProvenance.supplementRecordHash);
+  const created = await context.service.createBatchReviewWorkspace(
+    context.student.id, targetManifest.id, targetManifest.version, 'v2-archive-workspace'
+  );
+  await commitQuestionOneBatch(context, created.workspace.id, 'v2-archive-batch');
+  const learning = context.store.learningSubmissions.get(created.workspace.id);
+  const version = context.store.learningVersions.get(learning.id).at(-1);
   await assert.rejects(
     () => context.store.importApprovedContextSets({
       ...canonicalValidated,

@@ -113,6 +113,41 @@ async function prepareBatch(service, store, studentId, attemptId, prefix) {
   };
 }
 
+async function batchCommitLineageState(pool, learningSubmissionId, batchId) {
+  return (await pool.query(
+    `SELECT submission.current_version,
+            batch.status AS batch_status,
+            batch.committed_version_id,
+            batch.committed_version_number,
+            (SELECT count(*)::integer
+             FROM amc_practice.learning_submission_versions version
+             WHERE version.learning_submission_id = submission.id) AS version_count,
+            (SELECT count(*)::integer
+             FROM amc_practice.learning_submission_versions version
+             WHERE version.batch_id = batch.id) AS batch_version_count
+     FROM amc_practice.learning_submissions submission
+     JOIN amc_practice.learning_batches batch
+       ON batch.learning_submission_id = submission.id AND batch.id = $2
+     WHERE submission.id = $1`,
+    [learningSubmissionId, batchId]
+  )).rows[0];
+}
+
+function insertDirectBatchCommit(pool, {
+  learningSubmissionId, versionNumber, formId, formVersion,
+  contextSetId, batchId, label
+}) {
+  return pool.query(
+    `INSERT INTO amc_practice.learning_submission_versions
+     (id, learning_submission_id, version_number, form_id, form_version,
+      answers_revision, reasoning_revision, creation_reason, context_status,
+      context_set_id, evidence_hash, created_at, batch_id)
+     VALUES ($1,$2,$3,$4,$5,NULL,NULL,'BATCH_COMMIT','CONTEXT_READY',$6,$7,$8,$9)`,
+    [randomUUID(), learningSubmissionId, versionNumber, formId, formVersion,
+      contextSetId, canonicalHash({ label }), NOW, batchId]
+  );
+}
+
 async function waitForAdvisoryWaiters(pool, holderPid, expected) {
   for (let attempt = 0; attempt < 200; attempt += 1) {
     const result = await pool.query(
@@ -177,6 +212,35 @@ export async function runBatchReviewPostgresEvidence({ connectionString, t }) {
     code: `batch-review-${suffix}`,
     displayName: 'Postgres Batch Review Student'
   });
+  const importer = new ApprovedContextImporter({
+    store, clock: () => new Date(NOW), trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
+  });
+  const noContextCatalog = (await service.listForms())
+    .find((candidate) => candidate.id === form.id);
+  assert.equal(noContextCatalog.batchIntakeAvailable, false);
+  assert.equal(noContextCatalog.batchReviewAvailable, false);
+  const zeroWriteBefore = await store.pool.query(
+    `SELECT (SELECT count(*)::integer FROM amc_practice.attempts) AS attempts,
+            (SELECT count(*)::integer FROM amc_practice.learning_submissions) AS submissions,
+            (SELECT count(*)::integer FROM amc_practice.idempotency_records) AS idempotency`
+  );
+  await assert.rejects(
+    () => service.createBatchReviewWorkspace(
+      student.id, form.id, form.version, 'postgres-batch-workspace-no-context'
+    ),
+    (error) => error?.statusCode === 503 && error?.code === 'BATCH_REVIEW_UNAVAILABLE'
+  );
+  assert.deepEqual((await store.pool.query(
+    `SELECT (SELECT count(*)::integer FROM amc_practice.attempts) AS attempts,
+            (SELECT count(*)::integer FROM amc_practice.learning_submissions) AS submissions,
+            (SELECT count(*)::integer FROM amc_practice.idempotency_records) AS idempotency`
+  )).rows, zeroWriteBefore.rows);
+  const initialArtifact = approvedContextArtifact(form, {
+    readyNumbers: Array.from({ length: 25 }, (_, index) => index + 1)
+  });
+  const [initialContext] = await importer.import(
+    initialArtifact, approvalReceiptsForArtifact(initialArtifact)
+  );
   const timed = await service.createAttempt(student.id, form.id);
   const first = await service.createBatchReviewWorkspace(
     student.id, form.id, form.version, 'postgres-batch-workspace-first'
@@ -188,10 +252,10 @@ export async function runBatchReviewPostgresEvidence({ connectionString, t }) {
   assert.equal(resumed.created, false);
   assert.equal(resumed.workspace.id, first.workspace.id);
   assert.notEqual(first.workspace.id, timed.attempt.id);
-  assert.equal(first.workspace.analysisContextStatus, 'UNAVAILABLE');
+  assert.equal(first.workspace.analysisContextStatus, 'READY');
   const listed = await service.listBatchReviewWorkspaces(student.id);
   assert.equal(listed.length, 1);
-  assert.equal(listed[0].analysisContextStatus, 'UNAVAILABLE');
+  assert.equal(listed[0].analysisContextStatus, 'READY');
   for (const questionNumber of Array.from({ length: 25 }, (_, index) => index + 1)) {
     await assert.rejects(
       () => service.getLearningHistoryQuestion(
@@ -236,8 +300,8 @@ export async function runBatchReviewPostgresEvidence({ connectionString, t }) {
     source_type: 'BATCH_REVIEW',
     current_version: 1,
     creation_reason: 'BATCH_REVIEW_ANCHOR',
-    context_status: 'CONTEXT_UNAVAILABLE',
-    context_set_id: null,
+    context_status: 'CONTEXT_READY',
+    context_set_id: initialContext.id,
     response_count: 25,
     work_count: 0,
     mutable_answer_count: 0,
@@ -262,19 +326,19 @@ export async function runBatchReviewPostgresEvidence({ connectionString, t }) {
   await assert.rejects(
     () => store.pool.query(
       `UPDATE amc_practice.learning_submission_versions version
-       SET context_status = 'CONTEXT_READY'
+       SET context_status = 'CONTEXT_UNAVAILABLE', context_set_id = NULL
        FROM amc_practice.learning_submissions submission
        WHERE submission.id = version.learning_submission_id
          AND submission.attempt_id = $1
          AND version.version_number = 1`,
       [first.workspace.id]
     ),
-    /batch review anchor cannot pin analysis context|violates check constraint/
+    /batch review anchor context lineage is immutable|violates check constraint/
   );
 
-  const importer = new ApprovedContextImporter({
-    store, clock: () => new Date(NOW), trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
-  });
+  const prepared = await prepareBatch(
+    service, store, student.id, first.workspace.id, `pg-readiness-loss-${suffix}`
+  );
   const partialArtifact = approvedContextArtifact(form, { readyNumbers: [1] });
   const [partialContext] = await importer.import(
     partialArtifact, approvalReceiptsForArtifact(partialArtifact)
@@ -283,13 +347,66 @@ export async function runBatchReviewPostgresEvidence({ connectionString, t }) {
     `SELECT amc_practice.batch_review_context_is_complete($1, $2, $3) AS complete`,
     [form.id, form.version, partialContext.id]
   )).rows[0].complete, false);
-
-  const prepared = await prepareBatch(
-    service, store, student.id, first.workspace.id, `pg-context-late-${suffix}`
+  await assert.rejects(
+    () => service.confirmLearningBatch(
+      student.id, first.workspace.id, prepared.batchId,
+      `pg-readiness-loss-confirm-${suffix}`, prepared.input
+    ),
+    (error) => error?.statusCode === 503 && error?.code === 'BATCH_REVIEW_UNAVAILABLE'
   );
+  const artifact = approvedContextArtifact(form, {
+    readyNumbers: Array.from({ length: 25 }, (_, index) => index + 1),
+    solutionIdentityOffset: 100,
+    solutionBodyLabel: 'readiness-repair'
+  });
+  const [context] = await importer.import(artifact, approvalReceiptsForArtifact(artifact));
+  const activeAlternateArtifact = approvedContextArtifact(form, {
+    readyNumbers: Array.from({ length: 25 }, (_, index) => index + 1),
+    solutionIdentityOffset: 200,
+    solutionBodyLabel: 'active-alternate-lineage'
+  });
+  const [activeAlternateContext] = await importer.import(
+    activeAlternateArtifact, approvalReceiptsForArtifact(activeAlternateArtifact)
+  );
+  assert.deepEqual((await store.pool.query(
+    `SELECT id, active FROM amc_practice.approved_context_sets
+     WHERE id = ANY($1::uuid[]) ORDER BY id`,
+    [[context.id, activeAlternateContext.id]]
+  )).rows, [
+    { id: context.id, active: false },
+    { id: activeAlternateContext.id, active: true }
+  ].sort((left, right) => left.id.localeCompare(right.id)));
+
+  // A complete context for the same form is not interchangeable with the
+  // context pinned by this workspace. Exercise the trigger directly so no
+  // application-layer check can conceal a database lineage gap.
+  const attackState = await batchCommitLineageState(
+    store.pool, first.workspace.learningSubmissionId, prepared.batchId
+  );
+  for (const [label, alternateContext] of [
+    ['superseded', context], ['active', activeAlternateContext]
+  ]) {
+    await assert.rejects(
+      () => insertDirectBatchCommit(store.pool, {
+        learningSubmissionId: first.workspace.learningSubmissionId,
+        versionNumber: 2,
+        formId: form.id,
+        formVersion: form.version,
+        contextSetId: alternateContext.id,
+        batchId: prepared.batchId,
+        label: `${label}-alternate-context-${suffix}`
+      }),
+      (error) => error?.code === 'P0001'
+        && /commit context must equal its version-one anchor context/.test(error.message)
+    );
+    assert.deepEqual(await batchCommitLineageState(
+      store.pool, first.workspace.learningSubmissionId, prepared.batchId
+    ), attackState, `${label} alternate-context rejection must be zero-state`);
+  }
+
   const committed = await service.confirmLearningBatch(
     student.id, first.workspace.id, prepared.batchId,
-    `pg-context-late-confirm-${suffix}`, prepared.input
+    `pg-readiness-repaired-confirm-${suffix}`, prepared.input
   );
   assert.equal(committed.batch.status, 'COMMITTED');
   assert.equal(committed.batch.committedVersion, 2);
@@ -302,22 +419,32 @@ export async function runBatchReviewPostgresEvidence({ connectionString, t }) {
     ),
     (error) => error?.statusCode === 404 && error?.code === 'LEARNING_HISTORY_QUESTION_NOT_FOUND'
   );
-  assert.equal((await service.getLearningReport(student.id, first.workspace.id)).status, 'BLOCKED_CONTEXT');
-  assert.equal((await store.pool.query(
-    `SELECT count(*)::integer AS count
-     FROM amc_practice.learning_analysis_runs run
-     JOIN amc_practice.learning_submission_versions version
-       ON version.id = run.learning_submission_version_id
-     JOIN amc_practice.learning_submissions submission
-       ON submission.id = version.learning_submission_id
-     WHERE submission.attempt_id = $1`, [first.workspace.id]
-  )).rows[0].count, 0);
-
-  const artifact = approvedContextArtifact(form, {
-    readyNumbers: Array.from({ length: 25 }, (_, index) => index + 1)
-  });
-  const [context] = await importer.import(artifact, approvalReceiptsForArtifact(artifact));
   assert.equal((await service.getLearningReport(student.id, first.workspace.id)).status, 'QUEUED');
+  assert.equal((await store.pool.query(
+    `SELECT context_set_id FROM amc_practice.learning_submission_versions
+     WHERE learning_submission_id = $1 AND version_number = 2`,
+    [first.workspace.learningSubmissionId]
+  )).rows[0].context_set_id, initialContext.id,
+  'the commit retains workspace-pinned context even after current readiness repair');
+  const committedState = await batchCommitLineageState(
+    store.pool, first.workspace.learningSubmissionId, prepared.batchId
+  );
+  await assert.rejects(
+    () => insertDirectBatchCommit(store.pool, {
+      learningSubmissionId: first.workspace.learningSubmissionId,
+      versionNumber: 3,
+      formId: form.id,
+      formVersion: form.version,
+      contextSetId: initialContext.id,
+      batchId: prepared.batchId,
+      label: `duplicate-batch-version-${suffix}`
+    }),
+    (error) => error?.code === '23505'
+      && error?.constraint === 'amc_learning_version_one_per_batch_idx'
+  );
+  assert.deepEqual(await batchCommitLineageState(
+    store.pool, first.workspace.learningSubmissionId, prepared.batchId
+  ), committedState, 'duplicate batch-version rejection must be zero-state');
   await store.pool.query(
     `UPDATE amc_practice.learning_work_items work
      SET priority = 100, available_at = '1900-01-01T00:00:00.000Z'
@@ -360,6 +487,12 @@ export async function runBatchReviewPostgresEvidence({ connectionString, t }) {
     manifestHash: canonicalHash({ suffix, kind: 'successor-manifest' })
   };
   await store.importForm(successor, { publish: true, allowTestOnlyPublish: true });
+  const successorArtifact = approvedContextArtifact(successor, {
+    readyNumbers: Array.from({ length: 25 }, (_, index) => index + 1)
+  });
+  const [successorContext] = await importer.import(
+    successorArtifact, approvalReceiptsForArtifact(successorArtifact)
+  );
   assert.equal((await store.getForm(form.id, form.version)).published, false);
   assert.equal((await service.getBatchReviewWorkspace(student.id, first.workspace.id)).formVersion,
     form.version);
@@ -384,49 +517,50 @@ export async function runBatchReviewPostgresEvidence({ connectionString, t }) {
   assert.equal(successorWorkspace.workspace.formVersion, successor.version);
 
   // Re-importing the same active artifact is idempotent and never manufactures
-  // a second analysis run. Superseded contexts are terminal and are not revived
-  // as a shortcut for exercising the separate context-late repair flow.
+  // a second analysis run on the current successor workspace.
   const duplicatePrepared = await prepareBatch(
-    service, store, student.id, first.workspace.id, `pg-duplicate-repair-${suffix}`
+    service, store, student.id, successorWorkspace.workspace.id, `pg-duplicate-repair-${suffix}`
   );
   await service.confirmLearningBatch(
-    student.id, first.workspace.id, duplicatePrepared.batchId,
+    student.id, successorWorkspace.workspace.id, duplicatePrepared.batchId,
     `pg-duplicate-repair-confirm-${suffix}`, duplicatePrepared.input
   );
-  assert.equal((await service.getLearningReport(student.id, first.workspace.id)).status, 'QUEUED');
-  const [duplicateContext] = await importer.import(artifact, approvalReceiptsForArtifact(artifact));
-  assert.equal(duplicateContext.id, context.id);
+  assert.equal((await service.getLearningReport(
+    student.id, successorWorkspace.workspace.id
+  )).status, 'QUEUED');
+  const [duplicateContext] = await importer.import(
+    successorArtifact, approvalReceiptsForArtifact(successorArtifact)
+  );
+  assert.equal(duplicateContext.id, successorContext.id);
   assert.equal(duplicateContext.active, true);
-  assert.equal((await service.getLearningReport(student.id, first.workspace.id)).status, 'QUEUED');
+  assert.equal((await service.getLearningReport(
+    student.id, successorWorkspace.workspace.id
+  )).status, 'QUEUED');
   assert.equal((await store.pool.query(
     `SELECT count(*)::integer AS count
      FROM amc_practice.learning_analysis_runs run
      JOIN amc_practice.learning_submission_versions version
        ON version.id = run.learning_submission_version_id
-     WHERE version.learning_submission_id = $1 AND version.version_number = 3`,
-    [first.workspace.learningSubmissionId]
+     WHERE version.learning_submission_id = $1 AND version.version_number = 2`,
+    [successorWorkspace.workspace.learningSubmissionId]
   )).rows[0].count, 1);
 
-  // Force confirm and import to queue behind one exact-form advisory lock.
-  // Confirm is deliberately the first waiter; after the gate is released it
-  // commits BLOCKED_CONTEXT, then import observes and repairs that version.
-  // Without the shared lock this ordering has a deterministic missed wakeup.
+  // Both directions of the create/import race serialize on the exact-form
+  // advisory lock. If creation observes the partial context first it performs
+  // zero writes; if the full import commits first, creation pins that context.
   const raceForm = uniqueForm('batch-review-pg-lock-race');
   await store.importForm(raceForm, { publish: true, allowTestOnlyPublish: true });
   const raceStudent = await service.seedAccessCode({
     code: `batch-review-race-${suffix}`, displayName: 'Batch Review Lock Race Student'
   });
-  const raceWorkspace = await service.createBatchReviewWorkspace(
-    raceStudent.id, raceForm.id, raceForm.version, `pg-race-workspace-${suffix}`
-  );
-  const racePrepared = await prepareBatch(
-    service, store, raceStudent.id, raceWorkspace.workspace.id, `pg-lock-race-${suffix}`
-  );
-  const raceArtifact = approvedContextArtifact(raceForm, {
-    readyNumbers: Array.from({ length: 25 }, (_, index) => index + 1)
-  });
   const raceImporter = new ApprovedContextImporter({
     store, clock: () => new Date(NOW), trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
+  });
+  const racePartial = approvedContextArtifact(raceForm, { readyNumbers: [1] });
+  await raceImporter.import(racePartial, approvalReceiptsForArtifact(racePartial));
+  const raceFullFirst = approvedContextArtifact(raceForm, {
+    readyNumbers: Array.from({ length: 25 }, (_, index) => index + 1),
+    solutionIdentityOffset: 100
   });
   const gate = await store.pool.connect();
   try {
@@ -435,32 +569,92 @@ export async function runBatchReviewPostgresEvidence({ connectionString, t }) {
       'SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))',
       [raceForm.id, raceForm.version]
     );
-    const confirmPromise = service.confirmLearningBatch(
-      raceStudent.id, raceWorkspace.workspace.id, racePrepared.batchId,
-      `pg-lock-race-confirm-${suffix}`, racePrepared.input
+    const createFirstPromise = service.createBatchReviewWorkspace(
+      raceStudent.id, raceForm.id, raceForm.version, `pg-race-create-first-${suffix}`
     );
     await waitForAdvisoryWaiters(store.pool, gate.processID, 1);
-    const importPromise = raceImporter.import(
-      raceArtifact, approvalReceiptsForArtifact(raceArtifact)
+    const importSecondPromise = raceImporter.import(
+      raceFullFirst, approvalReceiptsForArtifact(raceFullFirst)
     );
     await waitForAdvisoryWaiters(store.pool, gate.processID, 2);
     await gate.query('COMMIT');
-    const [raceCommitted] = await Promise.all([confirmPromise, importPromise]);
-    assert.equal(raceCommitted.batch.status, 'COMMITTED');
+    const [createFirst, importSecond] = await Promise.allSettled([
+      createFirstPromise, importSecondPromise
+    ]);
+    assert.equal(createFirst.status, 'rejected');
+    assert.equal(createFirst.reason?.statusCode, 503);
+    assert.equal(createFirst.reason?.code, 'BATCH_REVIEW_UNAVAILABLE');
+    assert.equal(importSecond.status, 'fulfilled');
   } finally {
     await gate.query('ROLLBACK').catch(() => {});
     gate.release();
   }
-  const raceReport = await service.getLearningReport(
-    raceStudent.id, raceWorkspace.workspace.id
-  );
-  assert.equal(raceReport.status, 'QUEUED');
   assert.equal((await store.pool.query(
-    `SELECT count(*)::integer AS count
-     FROM amc_practice.learning_analysis_runs run
-     JOIN amc_practice.learning_submission_versions version
-       ON version.id = run.learning_submission_version_id
-     WHERE version.learning_submission_id = $1 AND version.version_number = 2`,
+    `SELECT count(*)::integer AS count FROM amc_practice.attempts
+     WHERE student_id = $1 AND form_id = $2 AND form_version = $3
+       AND attempt_mode = 'BATCH_REVIEW'`,
+    [raceStudent.id, raceForm.id, raceForm.version]
+  )).rows[0].count, 0);
+
+  const racePartialSecond = approvedContextArtifact(raceForm, {
+    readyNumbers: [1], solutionIdentityOffset: 200
+  });
+  await raceImporter.import(
+    racePartialSecond, approvalReceiptsForArtifact(racePartialSecond)
+  );
+  const raceFullSecond = approvedContextArtifact(raceForm, {
+    readyNumbers: Array.from({ length: 25 }, (_, index) => index + 1),
+    solutionIdentityOffset: 300
+  });
+  const reverseGate = await store.pool.connect();
+  let raceWorkspace;
+  let winningContext;
+  try {
+    await reverseGate.query('BEGIN');
+    await reverseGate.query(
+      'SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))',
+      [raceForm.id, raceForm.version]
+    );
+    const importFirstPromise = raceImporter.import(
+      raceFullSecond, approvalReceiptsForArtifact(raceFullSecond)
+    );
+    await waitForAdvisoryWaiters(store.pool, reverseGate.processID, 1);
+    const createSecondPromise = service.createBatchReviewWorkspace(
+      raceStudent.id, raceForm.id, raceForm.version, `pg-race-import-first-${suffix}`
+    );
+    await waitForAdvisoryWaiters(store.pool, reverseGate.processID, 2);
+    await reverseGate.query('COMMIT');
+    [[winningContext], raceWorkspace] = await Promise.all([
+      importFirstPromise, createSecondPromise
+    ]);
+  } finally {
+    await reverseGate.query('ROLLBACK').catch(() => {});
+    reverseGate.release();
+  }
+  assert.equal(raceWorkspace.created, true);
+  assert.equal(raceWorkspace.workspace.analysisContextStatus, 'READY');
+  assert.equal((await store.pool.query(
+    `SELECT version.context_set_id
+     FROM amc_practice.learning_submission_versions version
+     WHERE version.learning_submission_id = $1 AND version.version_number = 1`,
     [raceWorkspace.workspace.learningSubmissionId]
-  )).rows[0].count, 1);
+  )).rows[0].context_set_id, winningContext.id,
+  'import-first ordering pins the exact full context that won the advisory race');
+
+  const replayPartial = approvedContextArtifact(raceForm, {
+    readyNumbers: [1], solutionIdentityOffset: 400
+  });
+  await raceImporter.import(replayPartial, approvalReceiptsForArtifact(replayPartial));
+  const replayedRaceWorkspace = await service.createBatchReviewWorkspace(
+    raceStudent.id, raceForm.id, raceForm.version, `pg-race-import-first-${suffix}`
+  );
+  assert.equal(replayedRaceWorkspace.created, false);
+  assert.equal(replayedRaceWorkspace.workspace.id, raceWorkspace.workspace.id);
+  assert.equal(replayedRaceWorkspace.workspace.batchIntakeAvailable, false);
+  await assert.rejects(
+    () => service.createBatchReviewWorkspace(
+      raceStudent.id, raceForm.id, raceForm.version, `pg-race-new-key-unready-${suffix}`
+    ),
+    (error) => error?.statusCode === 503 && error?.code === 'BATCH_REVIEW_UNAVAILABLE'
+  );
 }

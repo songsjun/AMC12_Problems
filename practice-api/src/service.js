@@ -402,6 +402,7 @@ export class PracticeService {
       privateUploadStore,
       clock,
       intakeEnabled: this.batchIntakeEnabled,
+      batchReviewEnabled: this.batchReviewEnabled,
       ...(batchStudentQuotaBytes === undefined ? {} : { studentQuotaBytes: batchStudentQuotaBytes }),
       ...(batchGlobalQuotaBytes === undefined ? {} : { globalQuotaBytes: batchGlobalQuotaBytes }),
       ...(batchActiveLimit === undefined ? {} : { activeBatchLimit: batchActiveLimit }),
@@ -617,12 +618,14 @@ export class PracticeService {
 
   async listForms({ includeUnpublished = false } = {}) {
     const forms = await this.store.listForms({ includeUnpublished });
-    return forms.map((form) => ({
-      ...publicFormSummary(form),
-      batchIntakeAvailable: this.batchIntakeEnabled,
-      batchReviewAvailable: form.published === true
-        && this.batchIntakeEnabled && this.batchReviewEnabled
-    }));
+    return forms.map((form) => {
+      const exactReady = form.published === true && form.batchReviewContextReady === true;
+      return {
+        ...publicFormSummary(form),
+        batchIntakeAvailable: this.batchIntakeEnabled && exactReady,
+        batchReviewAvailable: this.batchIntakeEnabled && this.batchReviewEnabled && exactReady
+      };
+    });
   }
 
   async getPublicForm(formId) {
@@ -630,8 +633,10 @@ export class PracticeService {
     if (!form || !form.published) throw notFound('FORM_NOT_FOUND', 'The requested practice form was not found.');
     return {
       ...publicForm(form),
-      batchIntakeAvailable: this.batchIntakeEnabled,
-      batchReviewAvailable: this.batchIntakeEnabled && this.batchReviewEnabled
+      batchIntakeAvailable: this.batchIntakeEnabled
+        && form.batchReviewContextReady === true,
+      batchReviewAvailable: form.batchReviewContextReady === true
+        && this.batchIntakeEnabled && this.batchReviewEnabled
     };
   }
 
@@ -642,8 +647,10 @@ export class PracticeService {
     if (!form || !form.published) throw notFound('FORM_NOT_FOUND', 'The requested practice form was not found.');
     return {
       ...publicForm(form),
-      batchIntakeAvailable: this.batchIntakeEnabled,
-      batchReviewAvailable: this.batchIntakeEnabled && this.batchReviewEnabled
+      batchIntakeAvailable: this.batchIntakeEnabled
+        && form.batchReviewContextReady === true,
+      batchReviewAvailable: form.batchReviewContextReady === true
+        && this.batchIntakeEnabled && this.batchReviewEnabled
     };
   }
 
@@ -766,6 +773,13 @@ export class PracticeService {
       if (error?.code === 'IDEMPOTENCY_KEY_REUSED') {
         throw conflict('IDEMPOTENCY_KEY_REUSED', 'Idempotency key was reused with a different request.');
       }
+      if (error?.code === 'BATCH_REVIEW_CONTEXT_NOT_READY') {
+        throw new ApiError(
+          503,
+          'BATCH_REVIEW_UNAVAILABLE',
+          'Batch review is not available for this form revision yet.'
+        );
+      }
       throw error;
     }
     if (!result) {
@@ -787,11 +801,15 @@ export class PracticeService {
     const records = await this.store.listBatchReviewWorkspaces(studentId);
     const workspaces = [];
     for (const { attempt, learningSubmission, analysisStatus, analysisContextStatus } of records) {
+      const form = await this.store.getForm(attempt.formId, attempt.formVersion);
+      const exactReady = form?.published === true && form.batchReviewContextReady === true;
+      const batchReviewAvailable = this.batchIntakeEnabled && this.batchReviewEnabled
+        && exactReady && analysisContextStatus === 'READY';
       workspaces.push(publicBatchReviewWorkspace(attempt, learningSubmission, null, {
         analysisStatus,
         analysisContextStatus,
-        batchIntakeAvailable: this.batchIntakeEnabled,
-        batchReviewAvailable: this.batchIntakeEnabled && this.batchReviewEnabled
+        batchIntakeAvailable: this.batchIntakeEnabled && exactReady,
+        batchReviewAvailable
       }));
     }
     return workspaces;
@@ -814,11 +832,15 @@ export class PracticeService {
       const analysis = bundle.workItems.find((item) => item.workType === 'ANALYZE_SUBMISSION');
       const analysisStatus = bundle.version.creationReason === BATCH_REVIEW_ANCHOR_REASON
         ? 'AWAITING_BATCH' : (analysis?.status || 'BLOCKED_CONTEXT');
+      const analysisContextStatus = await this.#batchReviewContextStatus(tx, form);
+      const exactReady = form.published === true && form.batchReviewContextReady === true
+        && analysisContextStatus === 'READY';
       return publicBatchReviewWorkspace(attempt, bundle.submission, form, {
         analysisStatus,
-        analysisContextStatus: await this.#batchReviewContextStatus(tx, form),
-        batchIntakeAvailable: this.batchIntakeEnabled,
+        analysisContextStatus,
+        batchIntakeAvailable: this.batchIntakeEnabled && exactReady,
         batchReviewAvailable: this.batchIntakeEnabled && this.batchReviewEnabled
+          && exactReady
       });
     });
   }
