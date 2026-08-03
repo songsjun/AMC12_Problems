@@ -11,6 +11,7 @@ const REPOSITORY_ROOT = resolve(TEST_DIR, '../..');
 const LAUNCHD_DIR = join(REPOSITORY_ROOT, 'deploy/launchd');
 const API_PLIST_PATH = join(LAUNCHD_DIR, 'com.kapy.education.amc12-practice-api.plist');
 const WORKER_PLIST_PATH = join(LAUNCHD_DIR, 'com.kapy.education.amc12-learning-worker.plist');
+const NEWSYSLOG_PROFILE_PATH = join(LAUNCHD_DIR, 'newsyslog-amc12-learning-worker.conf.example');
 const README_PATH = join(LAUNCHD_DIR, 'README.md');
 const EXPECTED_NODE = '/Users/ss/.nvm/versions/node/v24.14.0/bin/node';
 const EXPECTED_WORKING_DIRECTORY =
@@ -143,7 +144,11 @@ test('runbook defines env isolation, TCB limitation, alerts, and bounded recover
   assert.match(readme, /\/etc\/kapy\/amc12-learning-worker\.env/);
   assert.match(readme, /must not contain `AMC12_ASSEMBLYAI_API_KEY`, `AMC12_INFERENCE_TOKEN`/);
   assert.match(readme, /AMC12_ASSEMBLYAI_RETENTION_PROFILE_VERIFIED=true/);
-  assert.match(readme, /AMC12_INFERENCE_MODEL=<must exactly match the Gateway AMC_INFERENCE_MODEL>/);
+  assert.match(readme, /AMC12_BATCH_REVIEW_ENABLED=false/);
+  assert.match(readme, /both `AMC12_BATCH_REVIEW_ENABLED=true` and\s+`AMC12_BATCH_INTAKE_ENABLED=true` must be literal/);
+  assert.match(readme, /all 25 questions in approved context/);
+  assert.match(readme, /AMC12_INFERENCE_MODEL=gpt-5\.4-mini/);
+  assert.match(readme, /pins both to `gpt-5\.4-mini`/);
   assert.equal([...readme.matchAll(/AMC12_TUTOR_ENABLED=true/g)].length, 2);
   assert.match(readme, /AMC12_TUTOR_MAX_CONCURRENT=1/);
   assert.match(readme, /coordinated, default-off release gate/);
@@ -170,4 +175,35 @@ test('runbook defines env isolation, TCB limitation, alerts, and bounded recover
   assert.match(readme, /learning_batch_provider_orphan_cleanup_jobs/);
   assert.match(readme, /launchctl kill SIGTERM system\/com\.kapy\.education\.amc12-learning-worker/);
   assert.match(readme, /launchctl kill SIGKILL system\/com\.kapy\.education\.amc12-learning-worker/);
+});
+
+test('worker log rotation profile is bounded, private, and only used during a stopped job', async () => {
+  const [profile, readme] = await Promise.all([
+    readFile(NEWSYSLOG_PROFILE_PATH, 'utf8'), readFile(README_PATH, 'utf8')
+  ]);
+  const rows = profile.split(/\r?\n/).map((line) => line.trim())
+    .filter((line) => line && !line.startsWith('#'));
+  assert.equal(rows.length, 2);
+  for (const row of rows) {
+    const fields = row.split(/\s+/);
+    assert.equal(fields.length, 7, row);
+    assert.match(fields[0], /^\/var\/log\/kapy\/amc12-learning-worker\.(?:stdout|stderr)\.log$/);
+    assert.equal(fields[1], 'ss:staff');
+    assert.equal(fields[2], '600');
+    assert.ok(Number(fields[3]) >= 7);
+    assert.ok(Number(fields[4]) <= 10 * 1024, 'size rotation must happen by 10 MiB');
+    assert.equal(fields[5], '$D0', 'age must be bounded by a daily rotation opportunity');
+    assert.match(fields[6], /N/, 'newsyslog must not signal an unrelated process');
+    assert.match(fields[6], /Z/, 'archives must be compressed');
+  }
+  assert.match(profile, /Do NOT install this example in \/etc\/newsyslog\.d/);
+  assert.match(readme, /literal `AMC12_BATCH_INTAKE_ENABLED=false`/);
+  assert.match(readme, /launchctl bootout system\/com\.kapy\.education\.amc12-learning-worker/);
+  assert.match(readme, /newsyslog -F -f/);
+  assert.match(readme, /log directory itself remains `root:staff 0750`/);
+  assert.doesNotMatch(readme, /chown ss:staff \/var\/log\/kapy\/amc12-learning-worker\.\*\.log\*/);
+  assert.match(readme, /available space is below either 10% or 5 GiB/);
+  assert.match(readme, /expired running leases increase\s+across two polls/);
+  assert.match(readme, /Do not delete uploads, edit queue\s+rows, reset the fairness cursor/);
+  assert.match(readme, /two polling windows show no increasing expired\s+leases/);
 });

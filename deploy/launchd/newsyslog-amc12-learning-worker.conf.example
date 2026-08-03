@@ -1,0 +1,11 @@
+# Manual-maintenance newsyslog profile for the AMC learning worker.
+#
+# Do NOT install this example in /etc/newsyslog.d: launchd opens the stdout and
+# stderr file descriptors only when it starts the child. Periodic rotation
+# without first stopping the job would leave the worker writing to the renamed
+# inode. Follow deploy/launchd/README.md: gate intake, bootout the worker, run a
+# dry-run and forced rotation with this file, then bootstrap and verify progress.
+#
+# logfile                                      owner:group mode count size-KiB when flags
+/var/log/kapy/amc12-learning-worker.stdout.log ss:staff   600  7     10240    $D0  NZ
+/var/log/kapy/amc12-learning-worker.stderr.log ss:staff   600  14    10240    $D0  NZ

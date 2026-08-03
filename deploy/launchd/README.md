@@ -65,7 +65,7 @@ sudo install -d -o ss -g staff -m 0700 /var/lib/kapy/amc12-private-uploads
 sudoedit /etc/kapy/amc12-practice.env
 sudoedit /etc/kapy/amc12-learning-worker.env
 
-sudo install -d -o ss -g staff -m 0750 /var/log/kapy
+sudo install -d -o root -g staff -m 0750 /var/log/kapy
 sudo install -o ss -g staff -m 0600 /dev/null /var/log/kapy/amc12-practice-api.stdout.log
 sudo install -o ss -g staff -m 0600 /dev/null /var/log/kapy/amc12-practice-api.stderr.log
 sudo install -o ss -g staff -m 0600 /dev/null /var/log/kapy/amc12-learning-worker.stdout.log
@@ -79,6 +79,20 @@ graceful job restart so inherited file descriptors reopen the current path,
 and alert on both log-volume spikes and `/var/log` free space. Never use a
 rotation mode that silently discards the only incident evidence.
 
+The log directory itself remains `root:staff 0750`; only the regular log files
+are `ss:staff 0600`. This lets the service append to its files without letting a
+compromised service replace a pathname with a symlink before root maintenance.
+
+The checked-in
+[`newsyslog-amc12-learning-worker.conf.example`](newsyslog-amc12-learning-worker.conf.example)
+is a manual-maintenance profile, not a file to install under
+`/etc/newsyslog.d`. It retains seven compressed stdout archives and fourteen
+compressed stderr archives, rotates at 10 MiB or the daily boundary, and
+recreates both as `0600 ss:staff`. Its `N` flag deliberately sends no signal:
+the bounded stop/rotate/bootstrap procedure below owns process lifecycle.
+Installing it into the automatic system schedule would rotate the pathname
+while the running worker continued writing to the renamed inode.
+
 The API environment contains request-serving settings only:
 
 ```text
@@ -88,6 +102,7 @@ AMC12_DATABASE_URL=postgres://<dedicated-api-user>:<password>@127.0.0.1:5432/<da
 AMC12_PRIVATE_UPLOAD_ROOT=/var/lib/kapy/amc12-private-uploads
 AMC12_SECURE_COOKIES=true
 AMC12_BATCH_INTAKE_ENABLED=false
+AMC12_BATCH_REVIEW_ENABLED=false
 AMC12_TUTOR_ENABLED=true
 ```
 
@@ -104,7 +119,7 @@ AMC12_AUTH_PEPPER=<at least 32 random characters; currently required by the batc
 AMC12_PRIVATE_UPLOAD_ROOT=/var/lib/kapy/amc12-private-uploads
 AMC12_INFERENCE_ORIGIN=http://127.0.0.1:4110
 AMC12_INFERENCE_TOKEN=<at least 32 random characters>
-AMC12_INFERENCE_MODEL=<must exactly match the Gateway AMC_INFERENCE_MODEL>
+AMC12_INFERENCE_MODEL=gpt-5.4-mini
 AMC12_TUTOR_ENABLED=true
 AMC12_TUTOR_MAX_CONCURRENT=1
 AMC12_ASSEMBLYAI_API_KEY=<secret from the protected operator workflow>
@@ -113,6 +128,9 @@ AMC12_ASSEMBLYAI_RETENTION_PROFILE_VERIFIED=true
 AMC12_ASSEMBLYAI_RETENTION_POLICY_HOURS=<operator-verified account policy delay>
 AMC12_ASSEMBLYAI_RETENTION_PROCESSING_SLACK_HOURS=<explicit conservative AWS processing slack>
 ```
+
+The worker model must exactly match the Gateway's reviewed
+`AMC_INFERENCE_MODEL`; this deployment profile pins both to `gpt-5.4-mini`.
 
 Tutor is a coordinated, default-off release gate in both env files. Deploy and
 validate the migrations, Gateway, and worker first with the API flag still
@@ -140,6 +158,15 @@ and only then set the API flag to literal `true` and restart the API. For a
 rollback, set it back to `false` to stop new student mutations while workers
 drain or recover already durable work. Never enable it while the production
 Worker or dedicated Gateway is absent.
+
+Direct `BATCH_REVIEW` workspace creation has an additional fail-closed gate:
+both `AMC12_BATCH_REVIEW_ENABLED=true` and
+`AMC12_BATCH_INTAKE_ENABLED=true` must be literal. Keep both false while the
+schema and worker are deployed. Enable them together only after the exact
+published form revision has all 25 questions in approved context and every
+question has at least two model-eligible solutions with active authority
+receipts. Disabling intake blocks new workspace/batch mutations but preserves
+owner-scoped workspace/history reads, deletion, and durable backlog recovery.
 
 These four retention settings are a deployment gate, not tunable guesses. The
 worker fails closed without an explicit verified profile. `NO_TTL_OR_BAA`
@@ -306,6 +333,111 @@ time rather than treating these initial values as SLOs:
 
 Never log or alert on transcript text, uploaded reasoning, provider external
 IDs, tokens, env-file contents, or raw upstream error bodies.
+
+## Disk, log, and queue preflight
+
+Run this preflight before enabling intake, after each release, and whenever a
+capacity alert fires. These commands are read-only and contain no credential:
+
+```sh
+df -Pk /var/lib/kapy/amc12-private-uploads /var/log/kapy
+du -sk /var/lib/kapy/amc12-private-uploads /var/log/kapy
+stat -f '%N %Sp %Su:%Sg %z' \
+  /var/log/kapy/amc12-learning-worker.stdout.log \
+  /var/log/kapy/amc12-learning-worker.stderr.log
+sudo launchctl print system/com.kapy.education.amc12-learning-worker
+```
+
+Use the read-only monitoring database role for the queue queries in the prior
+section. Capture one row per work/status class, oldest-ready age, expired
+leases, provider budget usage, and fairness revision. Never source either
+production env into an interactive shell and never pass a database password on
+the command line.
+
+Initial actionable thresholds, to be replaced only by observed SLO data:
+
+- **Page and keep intake disabled:** the worker is absent/crash-looping;
+  available space is below either 10% or 5 GiB; expired running leases increase
+  across two polls; provider-cleanup ready age exceeds 15 minutes; Tutor ready
+  age exceeds 5 minutes; or the provider-work budget is exhausted.
+- **Warn and stop rollout:** available space is below either 15% or 10 GiB;
+  either worker log exceeds 50 MiB or grows by 100 MiB in an hour; interactive
+  analysis ready age exceeds 5 minutes; batch/transcription ready age exceeds
+  15 minutes; Tutor ready age exceeds 2 minutes; or the fairness revision does
+  not advance while at least two non-Tutor classes remain ready.
+- **Ticket:** any private-storage reconciliation attention event, repeated
+  provider cleanup retry, manual-verification backlog growth, or daily log
+  rotation not completed.
+
+Every page disables new batch intake first. Do not delete uploads, edit queue
+rows, reset the fairness cursor, or mark provider deletion manually as a disk
+pressure response. Preserve the durable backlog and either restore capacity or
+move it through an approved encrypted migration procedure.
+
+## Bounded learning-worker log rotation
+
+Because launchd owns the worker's stdout/stderr descriptors, rotate only during
+a bounded maintenance stop. This procedure affects the worker, not the API;
+the API must already have literal `AMC12_BATCH_INTAKE_ENABLED=false` so no new
+file mutations enter while the worker is stopped.
+
+1. Record the disk/log preflight, all queue counts/oldest-ready timestamps,
+   expired leases, current worker PID, and the current plist checksum.
+2. Validate the profile without changing a file:
+
+   ```sh
+   sudo /usr/sbin/newsyslog -n -f \
+     /Users/ss/Workspaces/education/AMC12_Problems/deploy/launchd/newsyslog-amc12-learning-worker.conf.example
+   ```
+
+3. Gracefully remove the worker from launchd and confirm the label and PID are
+   absent. Allow the full 240-second `ExitTimeOut`; if drain fails, preserve
+   logs and follow the crash-recovery procedure rather than deleting leases:
+
+   ```sh
+   sudo launchctl bootout system/com.kapy.education.amc12-learning-worker
+   sudo launchctl print system/com.kapy.education.amc12-learning-worker
+   ```
+
+4. Reject symlink/non-regular log targets, then force one rotation while the
+   worker is stopped:
+
+   ```sh
+   sudo test ! -L /var/log/kapy/amc12-learning-worker.stdout.log
+   sudo test ! -L /var/log/kapy/amc12-learning-worker.stderr.log
+   sudo test -f /var/log/kapy/amc12-learning-worker.stdout.log
+   sudo test -f /var/log/kapy/amc12-learning-worker.stderr.log
+   sudo /usr/sbin/newsyslog -F -f \
+     /Users/ss/Workspaces/education/AMC12_Problems/deploy/launchd/newsyslog-amc12-learning-worker.conf.example
+   sudo chown ss:staff \
+     /var/log/kapy/amc12-learning-worker.stdout.log \
+     /var/log/kapy/amc12-learning-worker.stderr.log
+   sudo chmod 0600 \
+     /var/log/kapy/amc12-learning-worker.stdout.log \
+     /var/log/kapy/amc12-learning-worker.stderr.log
+   ```
+
+5. Bootstrap the already reviewed installed plist; verify a new PID, both
+   current files at `0600`, current-file size growth, no writes to archived
+   inodes, and decreasing oldest-ready age:
+
+   ```sh
+   sudo launchctl bootstrap system \
+     /Library/LaunchDaemons/com.kapy.education.amc12-learning-worker.plist
+   sudo launchctl print system/com.kapy.education.amc12-learning-worker
+   sudo lsof /var/log/kapy/amc12-learning-worker.stdout.log \
+     /var/log/kapy/amc12-learning-worker.stderr.log
+   ```
+
+6. Re-enable intake only after two polling windows show no increasing expired
+   leases, queue progress has resumed, disk is above the warning thresholds,
+   and no provider/manual-verification cleanup regression is present. Record
+   rotation duration and backlog recovery time as SRE evidence.
+
+If daily manual rotation becomes toil, do not install the `N` profile as a
+shortcut. Build and test a dedicated root-owned maintenance LaunchDaemon which
+executes the same gate/bootout/rotate/bootstrap/verify state machine, has a
+single-instance lock and abort thresholds, and pages on any partial transition.
 
 ## Restart and crash drills
 
