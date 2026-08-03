@@ -750,9 +750,19 @@ Text after the diagram.
 
     def test_timed_math_gate_rejects_unclosed_or_mixed_dollar_delimiters(self) -> None:
         _assert_timed_math_is_well_formed(r"A price of \$20 is literal currency and $x+1$ is math.", source_path="fixture/Problem_01.md", scope="prompt")
+        _assert_timed_math_is_well_formed(
+            r"Both $\frac{a}{d}$ and $\dfrac n{20-n}$ are valid TeX fractions.",
+            source_path="fixture/Problem_01.md",
+            scope="prompt",
+        )
         for text, message in (("The price is $20.", "unclosed"), ("$$x+$y$", "mixes")):
             with self.assertRaisesRegex(ContentBuildError, message):
                 _assert_timed_math_is_well_formed(text, source_path="fixture/Problem_01.md", scope="prompt")
+        for text in (r"then $\frac$ ad is", r"is $\dfrac$ n{20-n}"):
+            with self.assertRaisesRegex(ContentBuildError, "fraction command without arguments"):
+                _assert_timed_math_is_well_formed(
+                    text, source_path="fixture/Problem_01.md", scope="prompt"
+                )
 
 
 class HistoricalFormattingRegressionTests(unittest.TestCase):

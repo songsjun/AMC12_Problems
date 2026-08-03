@@ -133,6 +133,10 @@ _PROMPT_DISCLOSURE_PATTERNS = (
         re.compile(r"\\boxed\s*\{[^\n}]{0,120}?\(\s*[A-E]\s*\)"),
     ),
 )
+_DANGLING_FRACTION_MATH_RE = re.compile(
+    r"(?<!\\)\$\s*\\(?:d|t)?frac\s*(?<!\\)\$",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -822,6 +826,11 @@ def _assert_timed_math_is_well_formed(markdown: str, *, source_path: str, scope:
     every repair explicit instead of relying on browser recovery. Escaped
     currency (``\\$``) is intentionally ignored.
     """
+
+    if _DANGLING_FRACTION_MATH_RE.search(markdown):
+        raise ContentBuildError(
+            [f"{source_path}: timed {scope} contains a fraction command without arguments in its math span"]
+        )
 
     open_delimiter: tuple[str, int] | None = None
     index = 0
