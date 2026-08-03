@@ -3,7 +3,11 @@ const UPLOAD_ORIGIN = 'https://cdn.assemblyai.com';
 const UPLOAD_PATH = '/v2/upload';
 const TRANSCRIPT_PATH = '/v2/transcript';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const UPLOAD_URL_PATH = /^\/upload\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+// AssemblyAI currently returns both the documented /upload/<uuid> form and a
+// CDN-scoped /upload/<opaque-scope>/<uuid> form. Keep the origin fixed and the
+// optional scope to one conservative path segment so provider URL drift cannot
+// become an arbitrary URL or path-injection primitive.
+const UPLOAD_URL_PATH = /^\/upload\/(?:[a-z0-9_-]{1,128}\/)?[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
 const DEFAULT_MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
 const MAX_TRANSCRIPT_BYTES = 256 * 1024;

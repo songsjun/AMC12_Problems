@@ -7,6 +7,7 @@ import {
 
 const API_KEY = 'assembly-test-key-long-enough-never-real';
 const UPLOAD_ID = 'f756988d-47e2-4ca3-96ce-04bb168f8f2a';
+const UPLOAD_SCOPE = 'provider-scope_2026';
 const TRANSCRIPT_ID = '9ea68fd3-f953-42c1-9742-976c447fb463';
 const jsonResponse = (value, init = {}) => new Response(JSON.stringify(value), {
   ...init,
@@ -92,6 +93,24 @@ test('adapter rejects user/provider URL substitution and redirects without follo
     (error) => error.code === 'ASSEMBLYAI_REDIRECT_REJECTED' && !error.retryable
   );
   assert.equal(calls, 2);
+});
+
+test('upload URL validation accepts documented and current scoped CDN paths only', () => {
+  const legacy = `https://cdn.assemblyai.com/upload/${UPLOAD_ID}`;
+  const scoped = `https://cdn.assemblyai.com/upload/${UPLOAD_SCOPE}/${UPLOAD_ID}`;
+  assert.equal(_test.fixedUploadUrl(legacy), legacy);
+  assert.equal(_test.fixedUploadUrl(scoped), scoped);
+
+  for (const rejected of [
+    `https://cdn.assemblyai.com/upload/a/b/${UPLOAD_ID}`,
+    `https://cdn.assemblyai.com/upload/../${UPLOAD_ID}`,
+    `https://cdn.assemblyai.com/upload/%2e%2e/${UPLOAD_ID}`,
+    `https://cdn.assemblyai.com/upload/scope.with.dot/${UPLOAD_ID}`,
+    `https://cdn.assemblyai.com/upload/${UPLOAD_SCOPE}/${UPLOAD_ID}?next=http://127.0.0.1`,
+    `https://cdn.assemblyai.com/upload/${UPLOAD_SCOPE}/${UPLOAD_ID}#fragment`,
+    `https://user:password@cdn.assemblyai.com/upload/${UPLOAD_ID}`,
+    `https://cdn.assemblyai.com.evil.invalid/upload/${UPLOAD_ID}`
+  ]) assert.equal(_test.fixedUploadUrl(rejected), null, rejected);
 });
 
 test('an exact transcript DELETE 404 is idempotent absence evidence, while other delete errors remain failures', async () => {
