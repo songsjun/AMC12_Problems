@@ -142,23 +142,23 @@
     <section id="results-view" class="page-shell results-view" hidden aria-labelledby="results-title">
       <div class="page-intro results-intro">
         <div>
-          <p class="eyebrow">Final submission</p>
+          <p id="results-eyebrow" class="eyebrow">Final submission</p>
           <h1 id="results-title">Your results</h1>
           <p id="results-summary" class="muted"></p>
         </div>
         <div class="result-actions">
-          <button id="reset-button" class="button button-secondary" type="button">Start a new attempt</button>
+          <button id="reset-button" class="button button-secondary" type="button" data-timed-result-only>Start a new attempt</button>
           <button id="results-dashboard-button" class="button button-primary" type="button">My tests</button>
         </div>
       </div>
 
-      <section class="score-card" aria-label="Final score">
+      <section id="results-score-card" class="score-card" aria-label="Final score" data-timed-result-only>
         <p class="score-label">Final score</p>
         <p id="final-score" class="final-score">—</p>
         <p id="score-details" class="muted"></p>
       </section>
 
-      <section id="analysis-summary" class="content-section analysis-summary" aria-labelledby="analysis-summary-title" hidden>
+      <section id="analysis-summary" class="content-section analysis-summary" aria-labelledby="analysis-summary-title" data-timed-result-only hidden>
         <div class="section-heading-row">
           <div>
             <h2 id="analysis-summary-title">AI learning analysis</h2>
@@ -191,18 +191,18 @@
         <div id="batch-workspace" class="batch-workspace"></div>
       </section>
 
-      <section id="submission-history-section" class="content-section" aria-labelledby="submission-history-title">
+      <section id="submission-history-section" class="content-section" aria-labelledby="submission-history-title" data-timed-result-only>
         <h2 id="submission-history-title">Submission history</h2>
         <div id="submission-history" class="submission-history"></div>
       </section>
 
-      <section class="content-section" aria-labelledby="answer-review-title">
+      <section id="answer-review-section" class="content-section" aria-labelledby="answer-review-title" data-timed-result-only>
         <h2 id="answer-review-title">Answer review</h2>
         <p class="muted">Correct answers and explanations are available after a final submission.</p>
         <div id="results-questions" class="results-questions" aria-live="polite"></div>
       </section>
 
-      <section class="content-section" aria-labelledby="solutions-title">
+      <section id="solutions-section" class="content-section" aria-labelledby="solutions-title" data-timed-result-only>
         <div class="section-heading-row">
           <div>
             <h2 id="solutions-title">Solutions</h2>

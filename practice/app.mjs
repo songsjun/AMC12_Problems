@@ -292,6 +292,12 @@ export function batchMutationContextMatches(context, { attemptId, activeBatchId,
     && (context.batchId === null || String(context.batchId) === String(activeBatchId)));
 }
 
+export function batchReviewOpenContextMatches(context, current) {
+  return Boolean(context && current
+    && context.sequence === current.sequence
+    && String(context.studentId) === String(current.studentId));
+}
+
 export function numberedBatchMappingItems(mapping) {
   return Array.isArray(mapping?.items)
     ? mapping.items.map((item, itemIndex) => ({ item, itemIndex })) : [];
@@ -559,28 +565,68 @@ export function canAccessFinalReview(attempt) {
     || (normalizePhase(attempt) === 'RESET' && attempt?.resultsAvailable === true);
 }
 
-/**
- * Batch uploads are additions to an existing immutable learning submission,
- * not an alternate way to create a timed attempt. Select only an owned result
- * summary for this exact form revision; the server remains the final owner and
- * entitlement check when the student opens it or reserves an upload.
- */
-export function batchAnchorForForm(form, attempts) {
-  const formId = firstDefined(form?.id, form?.formId, null);
-  const formVersion = firstDefined(form?.version, form?.formVersion, null);
-  if (!formId || formVersion === null || formVersion === undefined || !Array.isArray(attempts)) return null;
-  return attempts
-    .filter((attempt) => attempt?.id
-      && String(firstDefined(attempt.formId, attempt.form?.id, '')) === String(formId)
-      && String(firstDefined(attempt.formVersion, attempt.form?.version, '')) === String(formVersion)
-      && canAccessFinalReview(attempt))
-    .sort((left, right) => timestampMs({ createdAt: firstDefined(right.finalizedAt, right.updatedAt, right.createdAt) })
-      - timestampMs({ createdAt: firstDefined(left.finalizedAt, left.updatedAt, left.createdAt) })
-      || String(left.id).localeCompare(String(right.id)))[0] || null;
-}
-
 export function batchIntakeAvailableForForm(form) {
   return form?.batchIntakeAvailable === true;
+}
+
+export function batchReviewAvailableForForm(form) {
+  return form?.batchReviewAvailable === true;
+}
+
+export function batchReviewWorkspacePath(formId, formVersion) {
+  if (!formId || formVersion === null || formVersion === undefined || formVersion === '') return null;
+  return `${API_BASE}/forms/${opaquePathPart(formId)}/versions/${opaquePathPart(formVersion)}/batch-review-workspace`;
+}
+
+export function normalizeBatchReviewWorkspace(payload, form) {
+  const workspace = unwrapData(payload).workspace;
+  const expectedFormId = firstDefined(form?.id, form?.formId, null);
+  const expectedFormVersion = firstDefined(form?.version, form?.formVersion, null);
+  if (!workspace?.id
+      || workspace.attemptMode !== 'BATCH_REVIEW'
+      || String(workspace.formId || '') !== String(expectedFormId || '')
+      || expectedFormVersion === null || expectedFormVersion === undefined
+      || String(workspace.formVersion ?? '') !== String(expectedFormVersion)
+      || workspace.protectedAccessStatus !== 'AVAILABLE'
+      || workspace.lifecycleStatus !== 'ACTIVE') {
+    throw new ApiError('The service returned an invalid batch-review workspace.', {
+      code: 'INVALID_BATCH_REVIEW_WORKSPACE'
+    });
+  }
+  return workspace;
+}
+
+export async function createBatchReviewWorkspaceRequest(apiClient, form,
+  { generateKey = idempotencyKey } = {}) {
+  const path = batchReviewWorkspacePath(form?.id, form?.version);
+  if (!path || !batchReviewAvailableForForm(form)) {
+    throw new ApiError('Batch submission is not available yet.', {
+      status: 503,
+      code: 'BATCH_REVIEW_UNAVAILABLE'
+    });
+  }
+  const key = generateKey();
+  const response = await retryIdempotentNetworkMutation(
+    () => apiClient.post(path, {}, { idempotency: key })
+  );
+  return normalizeBatchReviewWorkspace(response, form);
+}
+
+export async function createTimedAttemptRequest(apiClient, form, { attemptHistoryLoaded = false } = {}) {
+  if (attemptHistoryLoaded !== true) {
+    throw new ApiError('Saved-attempt history must load before starting timed practice.', {
+      status: 409,
+      code: 'ATTEMPT_HISTORY_NOT_READY'
+    });
+  }
+  if (!form?.id) throw new ApiError('This form is missing an identifier.', { code: 'FORM_ID_REQUIRED' });
+  return apiClient.post(`${API_BASE}/attempts`, { formId: form.id });
+}
+
+export function batchReviewWorkspaceIntakeAvailable(workspace) {
+  return workspace?.batchReviewAvailable === true
+    && workspace?.batchIntakeAvailable === true
+    && workspace?.protectedAccessStatus === 'AVAILABLE';
 }
 
 /**
@@ -1330,6 +1376,7 @@ const state = {
   forms: [],
   attemptHistory: [],
   attemptHistoryLoaded: false,
+  attemptHistoryLoadError: false,
   practiceEntryIntent: null,
   attempt: null,
   questions: [],
@@ -1371,6 +1418,10 @@ const state = {
   learningReportPollTimer: null,
   learningReportPollCount: 0,
   learningReportRequestInFlight: false,
+  resultsViewMode: null,
+  batchReviewWorkspace: null,
+  batchReviewOpenSequence: 0,
+  batchReviewOpenPromise: null,
   batchEpoch: 0,
   batchPollTimer: null,
   activeBatchId: null,
@@ -1418,7 +1469,9 @@ function getElements() {
     questionSaveIndicator: byId('question-save-indicator'), questionContent: byId('question-content'), answerForm: byId('answer-form'),
     answerOptions: byId('answer-options'), previousQuestion: byId('previous-question'), clearAnswerButton: byId('clear-answer-button'), nextQuestion: byId('next-question'),
     reasoningInput: byId('reasoning-input'), reasoningSaveStatus: byId('reasoning-save-status'), saveReasoningButton: byId('save-reasoning-button'), reloadReasoningButton: byId('reload-reasoning-button'),
-    resultsSummary: byId('results-summary'), finalScore: byId('final-score'), scoreDetails: byId('score-details'),
+    resultsEyebrow: byId('results-eyebrow'), resultsTitle: byId('results-title'), resultsSummary: byId('results-summary'),
+    timedResultOnly: [...document.querySelectorAll('[data-timed-result-only]')],
+    finalScore: byId('final-score'), scoreDetails: byId('score-details'),
     analysisSummary: byId('analysis-summary'), analysisStatus: byId('analysis-status'), analysisMeta: byId('analysis-meta'),
     analysisReportSummary: byId('analysis-report-summary'), analysisQuestions: byId('analysis-questions'), refreshAnalysisButton: byId('refresh-analysis-button'),
     submissionHistory: byId('submission-history'), resultsQuestions: byId('results-questions'), solutionsList: byId('solutions-list'),
@@ -1457,6 +1510,19 @@ function showOnly(view) {
   if (view !== elements.resultsView) stopLearningReportPolling();
   if (view !== elements.resultsView) stopBatchPolling();
   if (view !== elements.learningHistoryView) purgeTutorWorkspace({ clearSummaries: true });
+}
+
+function configureResultsView(mode, { form = null, workspace = null } = {}) {
+  const timed = mode === 'TIMED_RESULT';
+  state.resultsViewMode = mode;
+  elements.timedResultOnly.forEach((node) => { node.hidden = !timed; });
+  elements.resultsEyebrow.textContent = timed ? 'Final submission' : 'Batch review workspace';
+  elements.resultsTitle.textContent = timed
+    ? 'Your results'
+    : String(firstDefined(form?.title, workspace?.form?.title, 'Batch file submission'));
+  if (!timed) {
+    elements.resultsSummary.textContent = `Exact form version ${String(workspace?.formVersion ?? form?.version ?? '—')}. Upload answers and approaches without starting a timed attempt.`;
+  }
 }
 
 function clearNode(node) {
@@ -1557,7 +1623,7 @@ function clearSensitiveDom() {
   for (const node of [
     elements.formLabel, elements.attemptTitle, elements.attemptState, elements.saveStatus,
     elements.questionPosition, elements.questionSaveIndicator, elements.reasoningSaveStatus,
-    elements.resultsSummary, elements.finalScore, elements.scoreDetails, elements.analysisStatus,
+    elements.resultsEyebrow, elements.resultsTitle, elements.resultsSummary, elements.finalScore, elements.scoreDetails, elements.analysisStatus,
     elements.analysisMeta, elements.batchStatus, elements.learningHistoryStatus,
     elements.learningHistoryDetailSource, elements.learningVersionReportMeta,
     elements.learningVersionReportStatus, elements.learningQuestionMeta, elements.tutorStatus,
@@ -1589,6 +1655,7 @@ function localSignOut({ message = null } = {}) {
   state.forms = [];
   state.attemptHistory = [];
   state.attemptHistoryLoaded = false;
+  state.attemptHistoryLoadError = false;
   state.formCache.clear();
   clearAttemptState();
   resetLearningTutorState(state);
@@ -1641,6 +1708,9 @@ function clearAttemptState() {
   state.learningReportLoadError = null;
   state.learningReportPollCount = 0;
   state.learningReportRequestInFlight = false;
+  state.batchReviewOpenSequence += 1;
+  state.batchReviewWorkspace = null;
+  state.resultsViewMode = null;
   stopBatchPolling();
   state.activeBatchId = null;
 }
@@ -2851,18 +2921,36 @@ async function refreshAttempt({ quiet = false, urgent = false } = {}) {
 async function loadForms({ quiet = false } = {}) {
   setButtonBusy(elements.refreshForms, true, 'Refreshing…');
   state.attemptHistoryLoaded = false;
+  state.attemptHistoryLoadError = false;
+  // Remove every timed start/resume handler immediately. Existing form data
+  // is also withdrawn until a fresh exact-version form snapshot arrives, so
+  // a stale revision cannot remain an actionable batch entry during refresh.
+  state.forms = [];
+  renderForms();
+  elements.formsEmpty.hidden = true;
   try {
     const response = await api.get(`${API_BASE}/forms`);
     state.forms = extractForms(response);
     for (const form of state.forms) if (form?.id) state.formCache.set(formCacheKey(form.id, form.version), form);
-    try {
-      const historyResponse = await api.get(`${API_BASE}/attempts`);
+    renderForms();
+    // A batch deep link is pinned directly to the exact version in this form
+    // snapshot. Start it without making availability depend on the unrelated
+    // timed-attempt history service; the history request may finish alongside
+    // workspace creation and refresh the dashboard if it remains visible.
+    const historyRequest = api.get(`${API_BASE}/attempts`)
+      .then((historyResponse) => ({ historyResponse, historyError: null }))
+      .catch((historyError) => ({ historyResponse: null, historyError }));
+    if (state.practiceEntryIntent?.mode === 'batch') await applyPracticeEntryIntent();
+    const { historyResponse, historyError } = await historyRequest;
+    if (!historyError) {
       state.attemptHistory = extractAttemptHistory(historyResponse);
       state.attemptHistoryLoaded = true;
-    } catch (historyError) {
+      state.attemptHistoryLoadError = false;
+    } else {
       // Form selection remains useful if a deployment is rolling out history
       // separately; a normal user-facing error is shown only for the form API.
       state.attemptHistory = [];
+      state.attemptHistoryLoadError = true;
       if (!quiet && !(historyError instanceof ApiError && historyError.status === 404)) {
         showStatus('Saved attempt history is temporarily unavailable.');
       }
@@ -2870,6 +2958,8 @@ async function loadForms({ quiet = false } = {}) {
     renderForms();
     await applyPracticeEntryIntent();
   } catch (error) {
+    state.attemptHistoryLoadError = true;
+    renderForms();
     if (!quiet) handleError(error, 'Could not load practice forms.');
   } finally {
     setButtonBusy(elements.refreshForms, false);
@@ -2878,7 +2968,7 @@ async function loadForms({ quiet = false } = {}) {
 
 async function applyPracticeEntryIntent() {
   if (!state.practiceEntryIntent) return;
-  if (!state.attemptHistoryLoaded) {
+  if (state.practiceEntryIntent.mode === 'practice' && !state.attemptHistoryLoaded) {
     showStatus('The requested practice choice is waiting for saved-attempt history. Refresh to try again.', { persistent: true });
     return;
   }
@@ -2945,19 +3035,41 @@ function renderForms() {
     const duration = finiteNumber(form.durationMs) || (finiteNumber(firstDefined(form.durationSeconds, form.duration, null)) || 0) * 1000;
     const scoredCount = finiteNumber(form.scoredQuestionCount, count);
     meta.textContent = `${count} questions${duration ? ` · ${formatDuration(duration)} active time` : ''}${scoredCount < count ? ` · ${scoredCount} scored` : ''}`;
-    const formHistory = historyForForm(form);
-    const activeAttempt = activeAttemptForForm(form);
+    const timedActionsAvailable = state.attemptHistoryLoaded === true;
+    const formHistory = timedActionsAvailable ? historyForForm(form) : [];
+    const activeAttempt = timedActionsAvailable ? activeAttemptForForm(form) : null;
     const history = document.createElement('p');
     history.className = 'form-history';
     const historicalAttempts = finiteNumber(firstDefined(form.attemptCount, formHistory.length, form.history?.length, form.attempts?.length), 0);
-    history.textContent = historicalAttempts > 0 ? `${historicalAttempts} saved attempt${historicalAttempts === 1 ? '' : 's'}` : 'No saved attempts yet';
+    history.textContent = !timedActionsAvailable
+      ? (state.attemptHistoryLoadError ? 'Saved timed attempts unavailable' : 'Checking saved timed attempts…')
+      : historicalAttempts > 0
+        ? `${historicalAttempts} saved attempt${historicalAttempts === 1 ? '' : 's'}`
+        : 'No saved attempts yet';
     const actions = document.createElement('div');
     actions.className = 'form-card-actions';
-    if (activeAttempt?.id) {
+    if (!timedActionsAvailable) {
+      if (batchReviewAvailableForForm(form)) {
+        const batch = document.createElement('button');
+        batch.type = 'button'; batch.className = 'button button-secondary'; batch.textContent = 'Batch submit files';
+        batch.addEventListener('click', () => openBatchSubmissionForForm(form));
+        actions.appendChild(batch);
+      }
+      const timedPending = document.createElement('button');
+      timedPending.type = 'button'; timedPending.className = 'button button-primary'; timedPending.disabled = true;
+      timedPending.textContent = state.attemptHistoryLoadError ? 'Timed practice unavailable' : 'Checking timed practice…';
+      actions.appendChild(timedPending);
+    } else if (activeAttempt?.id) {
       const resume = document.createElement('button');
       resume.type = 'button'; resume.className = 'button button-primary'; resume.textContent = 'Resume';
       resume.addEventListener('click', () => resumeAttempt(activeAttempt.id));
       actions.appendChild(resume);
+      if (batchReviewAvailableForForm(form)) {
+        const batch = document.createElement('button');
+        batch.type = 'button'; batch.className = 'button button-secondary'; batch.textContent = 'Batch submit files';
+        batch.addEventListener('click', () => openBatchSubmissionForForm(form));
+        actions.appendChild(batch);
+      }
     } else {
       const start = document.createElement('button');
       start.type = 'button'; start.className = 'button button-primary'; start.textContent = 'Start practice';
@@ -3006,8 +3118,7 @@ function choosePracticeMode(form) {
   const duration = finiteNumber(form.durationMs)
     || (finiteNumber(firstDefined(form.durationSeconds, form.duration, null)) || 0) * 1000;
   const formTitle = String(firstDefined(form.title, form.name, 'This form'));
-  const batchIntakeAvailable = batchIntakeAvailableForForm(form);
-  const batchAnchor = batchIntakeAvailable ? batchAnchorForForm(form, state.attemptHistory) : null;
+  const batchReviewAvailable = batchReviewAvailableForForm(form);
   const archiveDetail = form?.archiveNotice
     ? String(form.archiveNotice)
     : (scoredCount < count ? `${count - scoredCount} archived item${count - scoredCount === 1 ? ' is' : 's are'} not scored.` : null);
@@ -3017,21 +3128,19 @@ function choosePracticeMode(form) {
     paragraphs: [
       `${formTitle} has ${count} questions${duration ? ` and a ${formatDuration(duration)} active timer` : ''}.`,
       'Pausing stops active time. You may check one in-progress score, then submit final answers when you are ready.',
-      'Choose the question-by-question test, or add answers and approaches from text or audio files to a completed final submission for this exact test version.',
-      !batchIntakeAvailable
-        ? 'Batch submission is not available yet.'
-        : batchAnchor
-          ? `Batch submission will use your completed result from ${formatDateTime({ createdAt: firstDefined(batchAnchor.finalizedAt, batchAnchor.updatedAt, batchAnchor.createdAt) })}. It cannot change that official score.`
-          : 'Batch submission is not available for this test yet because this exact version has no completed final submission. The server does not accept file batches for a new or in-progress timed attempt.',
+      'Choose the question-by-question test, or submit answers and approaches from text or audio files in an independent workspace for this exact test version.',
+      batchReviewAvailable
+        ? 'Batch submission does not start a timer and does not require a prior completed test.'
+        : 'Batch submission is not available yet.',
       ...(archiveDetail ? [archiveDetail] : [])
     ],
     actions: [
       { label: 'Cancel', className: 'button button-secondary', close: true },
       {
-        label: batchIntakeAvailable ? 'Batch submit files' : 'Batch submit files (not available yet)',
+        label: batchReviewAvailable ? 'Batch submit files' : 'Batch submit files (not available yet)',
         className: 'button button-secondary',
-        disabled: !batchIntakeAvailable,
-        handler: () => openBatchSubmissionForForm(form, batchAnchor)
+        disabled: !batchReviewAvailable,
+        handler: () => openBatchSubmissionForForm(form)
       },
       { label: 'Question-by-question test', className: 'button button-primary', handler: () => startAttempt(form) }
     ]
@@ -3056,35 +3165,68 @@ function confirmTimedPractice(form) {
   });
 }
 
-async function openBatchSubmissionForForm(form, anchor = null) {
-  if (!batchIntakeAvailableForForm(form)) {
+async function openBatchSubmissionForForm(form) {
+  if (!batchReviewAvailableForForm(form)) {
     showError('Batch submission is not available yet.');
-    return;
+    return false;
   }
-  const eligibleAnchor = anchor || batchAnchorForForm(form, state.attemptHistory);
-  if (!eligibleAnchor) {
-    showError(`Complete ${String(firstDefined(form?.title, form?.name, 'this test version'))} first, then choose batch submission from this menu.`);
-    return;
-  }
+  if (state.batchReviewOpenPromise) return state.batchReviewOpenPromise;
   const returnFocus = state.lastFocused;
   const main = document.getElementById('main-content');
   hideModal({ force: true, restoreFocus: false });
-  const opened = await resumeAttempt(eligibleAnchor.id, eligibleAnchor);
-  if (!opened || elements.resultsView.hidden || !sameAttemptId(state.attempt, eligibleAnchor)
-      || !canAccessFinalReview(state.attempt)) {
-    focusSafeVisibleTarget(returnFocus, main);
-    return;
+  clearAttemptState();
+  const openContext = {
+    sequence: state.batchReviewOpenSequence,
+    studentId: String(firstDefined(state.student?.id, state.student?.studentId, ''))
+  };
+  showOnly(elements.loadingView);
+  const openPromise = (async () => {
+    try {
+      const workspace = await createBatchReviewWorkspaceRequest(api, form);
+      if (!batchReviewOpenContextMatches(openContext, {
+        sequence: state.batchReviewOpenSequence,
+        studentId: String(firstDefined(state.student?.id, state.student?.studentId, ''))
+      })) return false;
+      state.batchReviewWorkspace = workspace;
+      configureResultsView('BATCH_REVIEW', { form, workspace });
+      stopBatchPolling();
+      state.activeBatchId = null;
+      setButtonBusy(elements.batchSubmitButton, false);
+      elements.batchUploadForm.reset();
+      clearNode(elements.batchWorkspace);
+      clearNode(elements.batchSelectedFiles);
+      showOnly(elements.resultsView);
+      syncBatchIntakeControls();
+      setBatchStatus(workspace.analysisContextStatus === 'UNAVAILABLE'
+        ? 'You can submit files now. Detailed AI reports and Tutor chat will remain pending until approved solution context is available.'
+        : 'Choose text or audio files containing your answers and approaches.');
+      void loadLatestLearningBatch();
+      elements.batchLearningSection.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      focusSafeVisibleTarget(elements.batchFiles, main);
+      return true;
+    } catch (error) {
+      if (openContext.sequence !== state.batchReviewOpenSequence) return false;
+      showOnly(elements.dashboardView);
+      handleError(error, 'Could not open this batch submission workspace.');
+      focusSafeVisibleTarget(returnFocus, main);
+      return false;
+    }
+  })();
+  state.batchReviewOpenPromise = openPromise;
+  try {
+    return await openPromise;
+  } finally {
+    if (state.batchReviewOpenPromise === openPromise) state.batchReviewOpenPromise = null;
   }
-  setBatchStatus('Choose text or audio files containing your answers and approaches.');
-  elements.batchLearningSection.scrollIntoView({ block: 'start', behavior: 'smooth' });
-  elements.batchFiles.focus();
 }
 
 async function startAttempt(form) {
   const formId = form?.id;
   if (!formId) return showError('This form is missing an identifier.');
   try {
-    const response = await api.post(`${API_BASE}/attempts`, { formId });
+    const response = await createTimedAttemptRequest(api, form, {
+      attemptHistoryLoaded: state.attemptHistoryLoaded
+    });
     hideModal({ force: true });
     await openAttempt(response, form);
   } catch (error) {
@@ -3623,21 +3765,30 @@ function stopBatchPolling({ invalidate = true } = {}) {
   if (invalidate) state.batchEpoch += 1;
 }
 
+function currentBatchOwner() {
+  return state.resultsViewMode === 'BATCH_REVIEW' ? state.batchReviewWorkspace : state.attempt;
+}
+
+function currentBatchOwnerId() {
+  return currentBatchOwner()?.id || null;
+}
+
 function currentBatchContext(batchId = state.activeBatchId) {
-  if (!state.attempt?.id || !batchId) return null;
-  return { attemptId: String(state.attempt.id), batchId: String(batchId), epoch: state.batchEpoch };
+  const ownerId = currentBatchOwnerId();
+  if (!ownerId || !batchId) return null;
+  return { attemptId: String(ownerId), batchId: String(batchId), epoch: state.batchEpoch };
 }
 
 function isCurrentBatchContext(context) {
   return batchPollContextMatches(context, {
-    attemptId: state.attempt?.id,
+    attemptId: currentBatchOwnerId(),
     batchId: state.activeBatchId,
     epoch: state.batchEpoch,
     visible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
   });
 }
 
-function batchCollectionPath(attemptId = state.attempt?.id) {
+function batchCollectionPath(attemptId = currentBatchOwnerId()) {
   return `${API_BASE}/attempts/${opaquePathPart(attemptId)}/learning-batches`;
 }
 
@@ -3648,6 +3799,9 @@ function batchItemPath(batchId) {
 const BATCH_INTAKE_UNAVAILABLE_MESSAGE = 'Batch submission is not available yet.';
 
 function currentBatchIntakeAvailable() {
+  if (state.resultsViewMode === 'BATCH_REVIEW') {
+    return batchReviewWorkspaceIntakeAvailable(state.batchReviewWorkspace);
+  }
   return batchIntakeAvailableForAttempt(state.attempt, state.forms);
 }
 
@@ -3868,7 +4022,7 @@ function appendBatchMapping(batch, container) {
       );
       const confirmed = unwrapData(response).batch;
       if (!batchMutationContextMatches(context, {
-        attemptId: state.attempt?.id,
+        attemptId: currentBatchOwnerId(),
         activeBatchId: state.activeBatchId,
         epoch: state.batchEpoch,
         visible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
@@ -3883,7 +4037,7 @@ function appendBatchMapping(batch, container) {
       showStatus('The reviewed mapping was committed. Its result and analysis now appear in Learning history.');
     } catch (error) {
       if (!batchMutationContextMatches(context, {
-        attemptId: state.attempt?.id,
+        attemptId: currentBatchOwnerId(),
         activeBatchId: state.activeBatchId,
         epoch: state.batchEpoch,
         visible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
@@ -3891,7 +4045,7 @@ function appendBatchMapping(batch, container) {
       handleError(error, 'Could not confirm this mapping.');
     } finally {
       if (batchMutationContextMatches(context, {
-        attemptId: state.attempt?.id,
+        attemptId: currentBatchOwnerId(),
         activeBatchId: state.activeBatchId,
         epoch: state.batchEpoch,
         visible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
@@ -3949,7 +4103,7 @@ function renderBatchWorkspace(batch) {
   } else if (batch.status === 'FAILED') {
     const note = document.createElement('p');
     note.className = 'form-error';
-    note.textContent = `Processing failed${batch.failureCode ? ` (${batch.failureCode})` : ''}. Your objective final result is unchanged; choose the files again to start a new batch.`;
+    note.textContent = `Processing failed${batch.failureCode ? ` (${batch.failureCode})` : ''}. Your confirmed learning record is unchanged; choose the files again to start a new batch.`;
     card.appendChild(note);
   }
   if (['DRAFT', 'FAILED', 'NEEDS_CONFIRMATION'].includes(batch.status)
@@ -3965,7 +4119,7 @@ function renderBatchWorkspace(batch) {
 function confirmDeleteLearningBatch(batch) {
   openModal({
     title: 'Delete this file submission?',
-    paragraphs: ['Private uploaded files, pending extraction, and unconfirmed mapping will be purged. This does not change your official final score.'],
+    paragraphs: ['Private uploaded files, pending extraction, and unconfirmed mapping will be purged. This does not change any confirmed learning record.'],
     actions: [
       { label: 'Cancel', className: 'button button-secondary', close: true },
       { label: 'Delete files', className: 'button button-danger', handler: () => deleteLearningBatch(batch) }
@@ -3982,7 +4136,7 @@ async function deleteLearningBatch(batch) {
       () => api.delete(batchItemPath(batch.id), { idempotency: key })
     );
     if (!batchMutationContextMatches(context, {
-      attemptId: state.attempt?.id,
+      attemptId: currentBatchOwnerId(),
       activeBatchId: state.activeBatchId,
       epoch: state.batchEpoch,
       visible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
@@ -3994,7 +4148,7 @@ async function deleteLearningBatch(batch) {
     showStatus('The private file submission was deleted.');
   } catch (error) {
     if (!batchMutationContextMatches(context, {
-      attemptId: state.attempt?.id,
+      attemptId: currentBatchOwnerId(),
       activeBatchId: state.activeBatchId,
       epoch: state.batchEpoch,
       visible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
@@ -4026,18 +4180,19 @@ async function loadLearningBatch(context) {
     if (['DRAFT', 'PROCESSING'].includes(batch.status)) scheduleBatchPoll(context);
   } catch (error) {
     if (!isCurrentBatchContext(context)) return;
-    setBatchStatus('Could not refresh file processing. Use Learning history or reopen this result to retry.');
+    setBatchStatus('Could not refresh file processing. Use Learning history or reopen this workspace to retry.');
     scheduleBatchPoll(context);
   }
 }
 
 async function loadLatestLearningBatch() {
-  if (!state.attempt?.id || elements.resultsView.hidden) return;
-  const requestedAttemptId = String(state.attempt.id);
+  const ownerId = currentBatchOwnerId();
+  if (!ownerId || elements.resultsView.hidden) return;
+  const requestedAttemptId = String(ownerId);
   const requestedEpoch = state.batchEpoch;
   try {
     const response = await api.get(batchCollectionPath());
-    if (String(state.attempt?.id || '') !== requestedAttemptId || elements.resultsView.hidden
+    if (String(currentBatchOwnerId() || '') !== requestedAttemptId || elements.resultsView.hidden
         || state.batchEpoch !== requestedEpoch) return;
     const batches = Array.isArray(unwrapData(response).batches) ? unwrapData(response).batches : [];
     const batch = [...batches].filter((item) => !item.deletedAt
@@ -4049,9 +4204,9 @@ async function loadLatestLearningBatch() {
     renderBatchWorkspace(batch);
     if (['DRAFT', 'PROCESSING'].includes(batch.status)) scheduleBatchPoll(currentBatchContext(batch.id));
   } catch {
-    if (String(state.attempt?.id || '') !== requestedAttemptId || elements.resultsView.hidden
+    if (String(currentBatchOwnerId() || '') !== requestedAttemptId || elements.resultsView.hidden
         || state.batchEpoch !== requestedEpoch) return;
-    setBatchStatus('Existing file submissions could not be loaded. Your final result is unaffected.');
+    setBatchStatus('Existing file submissions could not be loaded. Your confirmed learning record is unaffected.');
   }
 }
 
@@ -4070,8 +4225,9 @@ async function submitBatchUpload(event) {
   }
   stopBatchPolling();
   state.activeBatchId = null;
+  const ownerId = currentBatchOwnerId();
   const context = {
-    attemptId: String(state.attempt?.id || ''),
+    attemptId: String(ownerId || ''),
     batchId: null,
     epoch: state.batchEpoch
   };
@@ -4079,10 +4235,10 @@ async function submitBatchUpload(event) {
   setButtonBusy(elements.batchSubmitButton, true, 'Uploading…');
   setBatchStatus();
   try {
-    const batch = await submitLearningBatchFiles(api, state.attempt?.id, files, {
+    const batch = await submitLearningBatchFiles(api, ownerId, files, {
       onProgress(progress) {
         if (!batchMutationContextMatches(context, {
-          attemptId: state.attempt?.id,
+          attemptId: currentBatchOwnerId(),
           activeBatchId: state.activeBatchId,
           epoch: state.batchEpoch,
           visible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
@@ -4097,7 +4253,7 @@ async function submitBatchUpload(event) {
       }
     });
     if (!batchMutationContextMatches(context, {
-      attemptId: state.attempt?.id,
+      attemptId: currentBatchOwnerId(),
       activeBatchId: state.activeBatchId,
       epoch: state.batchEpoch,
       visible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
@@ -4114,16 +4270,16 @@ async function submitBatchUpload(event) {
     if (['DRAFT', 'PROCESSING'].includes(batch.status)) scheduleBatchPoll(currentBatchContext(batch.id));
   } catch (error) {
     if (!batchMutationContextMatches(context, {
-      attemptId: state.attempt?.id,
+      attemptId: currentBatchOwnerId(),
       activeBatchId: state.activeBatchId,
       epoch: state.batchEpoch,
       visible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
     })) return;
     handleError(error, 'Could not upload this file submission.');
-    setBatchStatus('Upload did not finish. Reopen this result to inspect any durable server-side progress before retrying.');
+    setBatchStatus('Upload did not finish. Reopen this workspace to inspect any durable server-side progress before retrying.');
   } finally {
     if (batchMutationContextMatches(context, {
-      attemptId: state.attempt?.id,
+      attemptId: currentBatchOwnerId(),
       activeBatchId: state.activeBatchId,
       epoch: state.batchEpoch,
       visible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
@@ -5079,6 +5235,9 @@ async function showResults() {
   stopLearningReportPolling();
   state.learningReportPollCount = 0;
   state.learningReportLoadError = null;
+  state.batchReviewOpenSequence += 1;
+  state.batchReviewWorkspace = null;
+  configureResultsView('TIMED_RESULT');
   stopBatchPolling();
   state.activeBatchId = null;
   // A prior owner-less upload completion is fenced by batchEpoch when the
@@ -5227,6 +5386,9 @@ async function showDashboard({ skipSwitchFlush = false } = {}) {
     const canSwitch = await flushBeforeAttemptSwitch(null, () => showDashboard({ skipSwitchFlush: true }));
     if (!canSwitch) return;
   }
+  state.batchReviewOpenSequence += 1;
+  state.batchReviewWorkspace = null;
+  if (state.resultsViewMode === 'BATCH_REVIEW') state.resultsViewMode = null;
   hideModal({ force: true });
   stopAttemptSync();
   showOnly(elements.dashboardView);

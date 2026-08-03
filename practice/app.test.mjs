@@ -24,15 +24,20 @@ import {
   attemptAllowsReasoningEdits,
   attemptCanBeReset,
   batchConfirmationPayload,
-  batchAnchorForForm,
   batchFileDescriptors,
   batchIntakeAvailableForAttempt,
   batchIntakeAvailableForForm,
+  batchReviewAvailableForForm,
+  batchReviewOpenContextMatches,
+  batchReviewWorkspacePath,
+  batchReviewWorkspaceIntakeAvailable,
   batchMutationContextMatches,
   batchPollContextMatches,
   beginModalAction,
   canAccessFinalReview,
   consumePracticeEntryIntent,
+  createBatchReviewWorkspaceRequest,
+  createTimedAttemptRequest,
   createTutorThreadRequest,
   deleteTutorThreadRequest,
   extractAttempt,
@@ -57,6 +62,7 @@ import {
   learningReportShouldPoll,
   learningReportStatusMessage,
   normalizeChoices,
+  normalizeBatchReviewWorkspace,
   normalizeLegacyInlineTeX,
   normalizeLearningHistory,
   normalizeTutorThreadSummary,
@@ -781,18 +787,7 @@ test('batch file descriptors enforce the server media, count, and byte boundarie
   }))), { code: 'INVALID_BATCH_FILES' });
 });
 
-test('dashboard batch entry selects only the latest final result for the exact form revision', () => {
-  const form = { id: '2025-amc-12a', version: 'reviewed-v2' };
-  const attempts = [
-    { id: 'active-v2', formId: form.id, formVersion: form.version, phase: 'TIMED', createdAt: '2026-08-02T03:00:00Z' },
-    { id: 'final-v1', formId: form.id, formVersion: 'reviewed-v1', phase: 'FINALIZED', finalizedAt: '2026-08-02T05:00:00Z' },
-    { id: 'reset-before-final', formId: form.id, formVersion: form.version, phase: 'RESET', resultsAvailable: false, updatedAt: '2026-08-02T06:00:00Z' },
-    { id: 'final-v2-old', formId: form.id, formVersion: form.version, phase: 'FINALIZED', finalizedAt: '2026-08-01T05:00:00Z' },
-    { id: 'reset-v2-final', formId: form.id, formVersion: form.version, phase: 'RESET', resultsAvailable: true, updatedAt: '2026-08-02T04:00:00Z' }
-  ];
-  assert.equal(batchAnchorForForm(form, attempts)?.id, 'reset-v2-final');
-  assert.equal(batchAnchorForForm({ id: form.id }, attempts), null, 'missing revision fails closed');
-  assert.equal(batchAnchorForForm(form, attempts.filter((attempt) => !canAccessFinalReview(attempt))), null);
+test('timed-result batch intake capability is strictly boolean', () => {
   assert.equal(batchIntakeAvailableForForm({ batchIntakeAvailable: true }), true);
   for (const unavailable of [
     {}, { batchIntakeAvailable: false }, { batchIntakeAvailable: 'true' }, { batchIntakeAvailable: 1 }
@@ -814,6 +809,115 @@ test('result batch intake capability is pinned to the attempt form revision and 
   assert.equal(batchIntakeAvailableForAttempt({ formId: attempt.formId }, [
     { id: attempt.formId, version: attempt.formVersion, batchIntakeAvailable: true }
   ]), false, 'an unversioned historical result cannot borrow the current revision capability');
+});
+
+test('independent batch-review capability, path, and workspace identity fail closed', () => {
+  const form = { id: 'amc12-2025-a', version: 'reviewed v2', batchReviewAvailable: true };
+  assert.equal(batchReviewAvailableForForm(form), true);
+  assert.equal(batchReviewAvailableForForm({ ...form, batchReviewAvailable: 'true' }), false);
+  assert.equal(batchReviewAvailableForForm({ id: form.id, version: form.version }), false);
+  assert.equal(
+    batchReviewWorkspacePath(form.id, form.version),
+    `${API_BASE}/forms/amc12-2025-a/versions/reviewed%20v2/batch-review-workspace`
+  );
+  assert.equal(batchReviewWorkspacePath(form.id, null), null);
+
+  const workspace = {
+    id: 'workspace-1', attemptMode: 'BATCH_REVIEW', formId: form.id, formVersion: form.version,
+    lifecycleStatus: 'ACTIVE', protectedAccessStatus: 'AVAILABLE', analysisContextStatus: 'UNAVAILABLE',
+    batchReviewAvailable: true, batchIntakeAvailable: true
+  };
+  assert.equal(normalizeBatchReviewWorkspace({ workspace }, form), workspace,
+    'analysis context is not an intake prerequisite');
+  for (const invalid of [
+    { ...workspace, id: '' },
+    { ...workspace, attemptMode: 'TIMED' },
+    { ...workspace, formVersion: 'reviewed-v3' },
+    { ...workspace, protectedAccessStatus: 'RECORD_DELETED' },
+    { ...workspace, lifecycleStatus: undefined },
+    { ...workspace, lifecycleStatus: 'DELETED' }
+  ]) assert.throws(() => normalizeBatchReviewWorkspace({ workspace: invalid }, form), {
+    code: 'INVALID_BATCH_REVIEW_WORKSPACE'
+  });
+});
+
+test('batch-review create-or-resume retries one empty-body POST with one caller-owned key', async () => {
+  const form = { id: 'amc12-2025-a', version: 7, batchReviewAvailable: true };
+  const calls = [];
+  const workspace = {
+    id: 'workspace-7', attemptMode: 'BATCH_REVIEW', formId: form.id, formVersion: form.version,
+    lifecycleStatus: 'ACTIVE', protectedAccessStatus: 'AVAILABLE', analysisContextStatus: 'READY',
+    batchReviewAvailable: true, batchIntakeAvailable: true
+  };
+  const fakeApi = {
+    async post(path, body, options) {
+      calls.push({ path, body, options });
+      if (calls.length === 1) throw new ApiError('lost response', { code: 'NETWORK_ERROR' });
+      return { workspace };
+    }
+  };
+  assert.equal(await createBatchReviewWorkspaceRequest(fakeApi, form, {
+    generateKey: () => 'workspace-key'
+  }), workspace);
+  assert.equal(calls.length, 2);
+  assert.deepEqual(calls.map(({ body }) => body), [{}, {}]);
+  assert.deepEqual(calls.map(({ options }) => options.idempotency), ['workspace-key', 'workspace-key']);
+  assert.deepEqual(calls.map(({ path }) => path), [
+    `${API_BASE}/forms/${form.id}/versions/7/batch-review-workspace`,
+    `${API_BASE}/forms/${form.id}/versions/7/batch-review-workspace`
+  ]);
+
+  calls.length = 0;
+  await assert.rejects(() => createBatchReviewWorkspaceRequest(fakeApi, {
+    ...form, batchReviewAvailable: false
+  }), { code: 'BATCH_REVIEW_UNAVAILABLE' });
+  assert.equal(calls.length, 0, 'omitted or false server capability prevents the workspace mutation');
+});
+
+test('delayed batch-review workspace responses cannot cross navigation or student identity', () => {
+  const context = { sequence: 4, studentId: 'student-1' };
+  assert.equal(batchReviewOpenContextMatches(context, { sequence: 4, studentId: 'student-1' }), true);
+  assert.equal(batchReviewOpenContextMatches(context, { sequence: 5, studentId: 'student-1' }), false);
+  assert.equal(batchReviewOpenContextMatches(context, { sequence: 4, studentId: 'student-2' }), false);
+});
+
+test('delayed attempt history permits batch intake but produces zero timed-attempt POSTs', async () => {
+  const form = { id: 'amc12-2025-a', version: 4, batchReviewAvailable: true };
+  const contextUnavailableWorkspace = {
+    id: 'workspace-4', attemptMode: 'BATCH_REVIEW', formId: form.id, formVersion: form.version,
+    lifecycleStatus: 'ACTIVE', protectedAccessStatus: 'AVAILABLE', analysisContextStatus: 'UNAVAILABLE',
+    batchReviewAvailable: true, batchIntakeAvailable: true
+  };
+  assert.equal(batchReviewWorkspaceIntakeAvailable(contextUnavailableWorkspace), true,
+    'missing approved analysis context delays report/Tutor but does not disable file intake');
+  assert.equal(batchReviewWorkspaceIntakeAvailable({
+    ...contextUnavailableWorkspace, batchReviewAvailable: undefined
+  }), false, 'workspace capability remains fail closed');
+
+  const calls = [];
+  const fakeApi = {
+    async post(path, body) {
+      calls.push({ path, body });
+      return { attempt: { id: 'timed-1' } };
+    }
+  };
+  let finishHistory;
+  const delayedHistory = new Promise((resolve) => { finishHistory = resolve; });
+  let historyLoaded = false;
+  void delayedHistory.then(() => { historyLoaded = true; });
+
+  await assert.rejects(() => createTimedAttemptRequest(fakeApi, form, {
+    attemptHistoryLoaded: historyLoaded
+  }), { code: 'ATTEMPT_HISTORY_NOT_READY' });
+  assert.equal(calls.length, 0, 'no timed mutation is possible while /attempts is delayed');
+
+  finishHistory({ attempts: [] });
+  await delayedHistory;
+  await Promise.resolve();
+  await createTimedAttemptRequest(fakeApi, form, { attemptHistoryLoaded: historyLoaded });
+  assert.deepEqual(calls, [{
+    path: `${API_BASE}/attempts`, body: { formId: form.id }
+  }]);
 });
 
 test('safe focus recovery skips a hidden or disabled modal return target', () => {
@@ -1324,11 +1428,13 @@ test('batch, history, report, and Tutor DOM contracts are accessible and keep AI
   assert.match(client, /start\.addEventListener\('click', \(\) => choosePracticeMode\(form\)\)/,
     'only the new-attempt path opens the mode chooser; Resume and View result keep their direct behavior');
   assert.match(client, /resume\.addEventListener\('click', \(\) => resumeAttempt\(activeAttempt\.id\)\)/);
+  assert.match(client, /if \(batchReviewAvailableForForm\(form\)\)[\s\S]*?batch\.addEventListener\('click', \(\) => openBatchSubmissionForForm\(form\)\)/,
+    'an in-progress timed attempt does not block the independent batch workspace entry');
   assert.match(client, /view\.addEventListener\('click', \(\) => resumeAttempt\(attempt\.id, attempt\)\)/);
-  assert.match(client, /label: batchIntakeAvailable \? 'Batch submit files' : 'Batch submit files \(not available yet\)'[\s\S]*?label: 'Question-by-question test'/,
+  assert.match(client, /label: batchReviewAvailable \? 'Batch submit files' : 'Batch submit files \(not available yet\)'[\s\S]*?label: 'Question-by-question test'/,
     'the dashboard dialog exposes both requested paths');
   assert.match(client, /Batch submission is not available yet\./);
-  assert.match(client, /disabled: !batchIntakeAvailable/,
+  assert.match(client, /disabled: !batchReviewAvailable/,
     'a false or omitted server capability makes the modal action natively inoperable');
   assert.match(client, /button\.disabled = action\.disabled === true/,
     'the shared dialog applies disabled before focus selection or click handling');
@@ -1338,9 +1444,23 @@ test('batch, history, report, and Tutor DOM contracts are accessible and keep AI
     'one async action locks every action and close control for that dialog invocation');
   assert.match(client, /elements\.modalActions\.querySelector\('button:not\(\[disabled\]\)'\)/,
     'initial focus skips unavailable actions');
-  assert.match(client, /openBatchSubmissionForForm\(form, batchAnchor\)/);
-  assert.match(client, /async function openBatchSubmissionForForm[\s\S]*?if \(!batchIntakeAvailableForForm\(form\)\)[\s\S]*?showError\('Batch submission is not available yet\.'\);[\s\S]*?return;/,
-    'deep links fail before result navigation when form intake is not explicitly ready');
+  assert.match(client, /handler: \(\) => openBatchSubmissionForForm\(form\)/);
+  assert.match(client, /async function openBatchSubmissionForForm[\s\S]*?if \(!batchReviewAvailableForForm\(form\)\)[\s\S]*?showError\('Batch submission is not available yet\.'\);[\s\S]*?return false;/,
+    'deep links fail before workspace creation when form capability is not explicitly ready');
+  assert.match(client, /createBatchReviewWorkspaceRequest\(api, form\)/,
+    'batch mode creates or resumes its own exact-revision workspace');
+  assert.match(client, /function currentBatchOwner\(\)[\s\S]*?state\.resultsViewMode === 'BATCH_REVIEW'[\s\S]*?state\.batchReviewWorkspace : state\.attempt/,
+    'the shared upload workflow uses an explicit workspace owner without impersonating a timed result');
+  assert.match(client, /batchReviewWorkspaceIntakeAvailable\(state\.batchReviewWorkspace\)/,
+    'workspace upload and confirmation capability is strictly boolean and fails closed');
+  assert.match(client, /if \(!timedActionsAvailable\) \{[\s\S]*?timedPending\.disabled = true[\s\S]*?\} else if \(activeAttempt\?\.id\)/,
+    'dashboard renders no timed start/resume handler before attempt history is authoritative');
+  assert.match(client, /state\.forms = \[\];[\s\S]*?renderForms\(\);[\s\S]*?const response = await api\.get\(`\$\{API_BASE\}\/forms`\)/,
+    'refresh withdraws stale form actions until a fresh exact-version snapshot arrives');
+  assert.match(client, /createTimedAttemptRequest\(api, form, \{[\s\S]*?attemptHistoryLoaded: state\.attemptHistoryLoaded/,
+    'a second guard rejects synthetic or stale-modal timed creation before POST');
+  assert.match(client, /analysisContextStatus === 'UNAVAILABLE'[\s\S]*?Detailed AI reports and Tutor chat will remain pending/,
+    'context-unavailable workspaces allow intake without presenting report or Tutor as ready');
   assert.match(client, /function syncBatchIntakeControls\(\)[\s\S]*?batchFiles\.disabled = !available[\s\S]*?batchSubmitButton\.disabled = !available[\s\S]*?batchUploadForm\.reset\(\)[\s\S]*?clearNode\(elements\.batchSelectedFiles\)/,
     'direct result navigation gates and clears the new-intake controls');
   assert.match(client, /async function showResults\(\)[\s\S]*?showOnly\(elements\.resultsView\)[\s\S]*?syncBatchIntakeControls\(\)/,
@@ -1349,19 +1469,24 @@ test('batch, history, report, and Tutor DOM contracts are accessible and keep AI
     'an existing mapping stays visible and deletable while new confirmation is gated');
   assert.match(client, /async function submitBatchUpload[\s\S]*?if \(!currentBatchIntakeAvailable\(\)\)[\s\S]*?return;[\s\S]*?submitLearningBatchFiles/,
     'synthetic upload submission is rejected before an API mutation');
-  assert.match(client, /elements\.batchLearningSection\.scrollIntoView[\s\S]*?elements\.batchFiles\.focus\(\)/,
+  assert.match(client, /elements\.batchLearningSection\.scrollIntoView[\s\S]*?focusSafeVisibleTarget\(elements\.batchFiles, main\)/,
     'an entitled batch choice lands at and focuses the existing upload entry');
-  assert.match(client, /const returnFocus = state\.lastFocused;[\s\S]*?const opened = await resumeAttempt[\s\S]*?if \(!opened[\s\S]*?focusSafeVisibleTarget\(returnFocus, main\)/,
-    'failed resume or final-review loading restores focus outside the hidden modal');
-  assert.match(client, /if \(!eligibleAnchor\)[\s\S]*?showError\([\s\S]*?return;/,
-    'a missing immutable learning anchor fails before any attempt or batch mutation');
+  assert.match(client, /catch \(error\) \{[\s\S]*?showOnly\(elements\.dashboardView\);[\s\S]*?focusSafeVisibleTarget\(returnFocus, main\)/,
+    'failed workspace creation restores a visible dashboard and safe focus target');
   assert.match(client, /type: 'practice-mode'[\s\S]*?label: 'Cancel'[\s\S]*?close: true/,
     'the mode chooser remains dismissible and uses the shared focus-restoring dialog path');
   assert.match(client, /state\.practiceEntryIntent = parsePracticeEntryIntent\(requestedUrl\.href, requestedUrl\.origin\)/);
   assert.match(client, /window\.history\.replaceState\(window\.history\.state, '', `\$\{requestedUrl\.pathname\}\$\{requestedUrl\.hash\}`\)/,
     'the browser removes the intent query before any authentication or mutation can replay it');
   assert.match(client, /const selection = consumePracticeEntryIntent\(state, state\.forms\)/,
-    'the in-memory intent is consumed only after forms and saved attempts load');
+    'the in-memory intent is consumed only after an exact form snapshot exists');
+  assert.match(client, /if \(state\.practiceEntryIntent\?\.mode === 'batch'\) await applyPracticeEntryIntent\(\);[\s\S]*?await historyRequest/,
+    'batch deep links do not depend on timed-attempt history availability');
+  assert.match(html, /id="results-score-card"[^>]*data-timed-result-only/);
+  assert.match(html, /id="answer-review-section"[^>]*data-timed-result-only/);
+  assert.match(html, /id="solutions-section"[^>]*data-timed-result-only/);
+  assert.match(client, /function configureResultsView[\s\S]*?timedResultOnly\.forEach\([\s\S]*?node\.hidden = !timed/,
+    'the shared shell hides final-only data in batch mode and restores it for timed results');
   assert.match(client, /if \(!elements\.dashboardView\.hidden && !state\.modal\) document\.getElementById\('main-content'\)\.focus\(\)/,
     'dashboard setup cannot steal focus back from a routed upload input or modal');
   assert.match(client, /api\.get\(tutorThreadListPath\(identity\)\)/);
