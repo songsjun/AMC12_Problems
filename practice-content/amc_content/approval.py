@@ -1,8 +1,13 @@
-"""Compile explicitly human-approved solution context for private AI use.
+"""Compile explicitly reviewed solution context for private AI use.
 
 Candidate extraction and approval are intentionally separate trust domains.
 This module never infers approval: every emitted solution must have one exact,
-hash-bound human decision in a separately supplied document.
+hash-bound review decision in a separately supplied document and one active
+receipt from an independent approval authority.
+
+The original human-review v1 contract remains immutable.  A separate v2
+contract records operator-delegated, AI-assisted review honestly; it must
+never be described as human review.
 """
 
 from __future__ import annotations
@@ -23,14 +28,28 @@ from .question_context import (
     validate_archive_question_context_set,
     validate_question_context_set,
 )
+from .supplement import (
+    SUPPLEMENTED_ARCHIVE_CANDIDATE_SCHEMA,
+    supplemental_candidate_index,
+    validate_supplemented_archive_candidate_set,
+)
 
 
 REVIEW_DECISIONS_SCHEMA = "amc-question-context-review-decisions-v1"
+AI_ASSISTED_REVIEW_DECISIONS_SCHEMA = "amc-question-context-review-decisions-v2"
 APPROVAL_RECEIPT_SET_SCHEMA = "amc-solution-approval-receipt-set-v1"
 APPROVED_CONTEXT_SET_SCHEMA = "amc-approved-question-context-set-v1"
 APPROVED_TEST_CONTEXT_SET_SCHEMA = "amc-approved-question-context-test-set-v1"
 APPROVED_ARCHIVE_SET_SCHEMA = "amc-approved-question-context-archive-set-v1"
 APPROVAL_POLICY_VERSION = "amc-explicit-human-solution-approval-v1"
+AI_ASSISTED_APPROVAL_POLICY_VERSION = "amc-operator-delegated-ai-assisted-solution-approval-v1"
+AI_ASSISTED_APPROVED_CONTEXT_SET_SCHEMA = "amc-approved-question-context-set-v2"
+AI_ASSISTED_APPROVED_TEST_CONTEXT_SET_SCHEMA = "amc-approved-question-context-test-set-v2"
+AI_ASSISTED_APPROVED_ARCHIVE_SET_SCHEMA = "amc-approved-question-context-archive-set-v2"
+AI_ASSISTED_REVIEW_METHOD = "operator-delegated-ai-assisted"
+AI_ASSISTED_AUTHORIZATION_SCOPE = "solution-correctness-pedagogy-and-rights-review"
+AI_ASSISTED_AUTHORIZATION_STATEMENT = "operator-delegates-ai-assisted-solution-review"
+AI_ASSISTED_RIGHTS_ATTESTATION = "operator-attests-rights-for-reviewed-source-ai-use"
 MINIMUM_APPROVED_SOLUTIONS = 2
 MAX_APPROVAL_INPUT_BYTES = 64 * 1024 * 1024
 MAX_MODEL_PROMPT_BYTES = 16_384
@@ -40,6 +59,8 @@ MAX_MODEL_SOLUTION_BODY_BYTES = 16_384
 MAX_MODEL_SOLUTIONS = 8
 
 _SOLUTION_ID_RE = re.compile(r"solution-[0-9]{3}")
+_SUPPLEMENT_SOLUTION_ID_RE = re.compile(r"solution-9[0-9]{2}")
+_SUPPLEMENT_ID_RE = re.compile(r"supplement-[a-z0-9][a-z0-9-]{2,63}")
 _REVIEWER_ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:@/-]{2,127}")
 _TAG_RE = re.compile(r"[a-z0-9][a-z0-9-]{0,63}")
 _UTC_TIMESTAMP_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z")
@@ -53,6 +74,37 @@ _VISUAL_REFERENCE_RE = re.compile(
     re.IGNORECASE | re.MULTILINE,
 )
 _REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _is_ai_assisted_policy(value: Any) -> bool:
+    return isinstance(value, dict) and (
+        value.get("schemaVersion") == AI_ASSISTED_REVIEW_DECISIONS_SCHEMA
+        or value.get("approvalPolicyVersion") == AI_ASSISTED_APPROVAL_POLICY_VERSION
+    )
+
+
+def _review_schema_for_policy(policy: Any) -> str | None:
+    if policy == APPROVAL_POLICY_VERSION:
+        return REVIEW_DECISIONS_SCHEMA
+    if policy == AI_ASSISTED_APPROVAL_POLICY_VERSION:
+        return AI_ASSISTED_REVIEW_DECISIONS_SCHEMA
+    return None
+
+
+def _approved_schema_for_policy(policy: Any, *, test_only: bool) -> str | None:
+    if policy == APPROVAL_POLICY_VERSION:
+        return APPROVED_TEST_CONTEXT_SET_SCHEMA if test_only else APPROVED_CONTEXT_SET_SCHEMA
+    if policy == AI_ASSISTED_APPROVAL_POLICY_VERSION:
+        return AI_ASSISTED_APPROVED_TEST_CONTEXT_SET_SCHEMA if test_only else AI_ASSISTED_APPROVED_CONTEXT_SET_SCHEMA
+    return None
+
+
+def _approved_archive_schema_for_policy(policy: Any) -> str | None:
+    if policy == APPROVAL_POLICY_VERSION:
+        return APPROVED_ARCHIVE_SET_SCHEMA
+    if policy == AI_ASSISTED_APPROVAL_POLICY_VERSION:
+        return AI_ASSISTED_APPROVED_ARCHIVE_SET_SCHEMA
+    return None
 
 
 def _unicode_scalar_errors(value: Any, path: str) -> list[str]:
@@ -163,7 +215,7 @@ def load_strict_json(path: Path, *, require_protected: bool = False) -> dict[str
 
 def decision_record_projection(record: dict[str, Any], decisions: dict[str, Any]) -> dict[str, Any]:
     binding = decisions["candidateSetBinding"]
-    return {
+    projection = {
         "approvalPolicyVersion": decisions["approvalPolicyVersion"],
         "candidateSchemaVersion": binding["schemaVersion"],
         "candidateSetHash": binding["setHash"],
@@ -180,6 +232,18 @@ def decision_record_projection(record: dict[str, Any], decisions: dict[str, Any]
         "qualityFlags": record["qualityFlags"],
         "methodTags": record["methodTags"],
     }
+    if _is_ai_assisted_policy(decisions):
+        projection.update(
+            {
+                "reviewMethod": record["reviewMethod"],
+                "reviewModel": record["reviewModel"],
+                "operatorAuthorizationId": record["operatorAuthorizationId"],
+                "operatorAuthorization": decisions["operatorAuthorization"],
+                "candidateProvenance": record["candidateProvenance"],
+                "questionContentHash": record["questionContentHash"],
+            }
+        )
+    return projection
 
 
 def decision_record_hash(record: dict[str, Any], decisions: dict[str, Any]) -> str:
@@ -265,6 +329,22 @@ def validate_approval_receipt_set(receipts: Any, *, decisions: dict[str, Any] | 
                     errors.append(
                         f"reviewDecisions.decisions[{index}] must have exactly one active approval-authority receipt"
                     )
+            if _is_ai_assisted_policy(decisions):
+                reviewer_ids = {
+                    reviewer_id
+                    for record in decision_records
+                    if isinstance(record, dict)
+                    and isinstance((reviewer_id := record.get("reviewerId")), str)
+                }
+                authorization = decisions.get("operatorAuthorization")
+                authorized_by = authorization.get("authorizedBy") if isinstance(authorization, dict) else None
+                if isinstance(authority_id, str) and (
+                    authority_id in reviewer_ids or authority_id == authorized_by
+                ):
+                    errors.append(
+                        "approvalReceipts.authorityId must identify an authority distinct from the AI-assisted "
+                        "reviewer and authorizing operator"
+                    )
     return errors
 
 
@@ -326,7 +406,15 @@ def _model_text_errors(value: Any, path: str, *, maximum_bytes: int) -> list[str
 def _candidate_form_records(candidate_set: dict[str, Any]) -> list[dict[str, Any]]:
     if candidate_set.get("schemaVersion") == "amc-question-context-candidate-set-v1":
         return [{"form": candidate_set["form"], "questions": candidate_set["questions"]}]
+    if candidate_set.get("schemaVersion") == SUPPLEMENTED_ARCHIVE_CANDIDATE_SCHEMA:
+        return candidate_set["baseCandidateSet"]["forms"]
     return candidate_set["forms"]
+
+
+def _candidate_archive_release(candidate_set: dict[str, Any]) -> dict[str, Any]:
+    if candidate_set.get("schemaVersion") == SUPPLEMENTED_ARCHIVE_CANDIDATE_SCHEMA:
+        return candidate_set["baseCandidateSet"]["archiveRelease"]
+    return candidate_set["archiveRelease"]
 
 
 def _validate_candidate_set(candidate_set: Any) -> list[str]:
@@ -336,6 +424,8 @@ def _validate_candidate_set(candidate_set: Any) -> list[str]:
         return validate_question_context_set(candidate_set)
     if candidate_set.get("schemaVersion") == "amc-question-context-archive-candidate-set-v1":
         return validate_archive_question_context_set(candidate_set)
+    if candidate_set.get("schemaVersion") == SUPPLEMENTED_ARCHIVE_CANDIDATE_SCHEMA:
+        return validate_supplemented_archive_candidate_set(candidate_set)
     return ["candidateSet.schemaVersion is unsupported"]
 
 
@@ -347,7 +437,102 @@ def _candidate_index(candidate_set: dict[str, Any]) -> dict[tuple[str, str, int,
             number = context["question"]["number"]
             for solution in context["solutions"]:
                 result[(form["id"], form["version"], number, solution["solutionId"])] = solution
+    if candidate_set.get("schemaVersion") == SUPPLEMENTED_ARCHIVE_CANDIDATE_SCHEMA:
+        result.update(supplemental_candidate_index(candidate_set))
     return result
+
+
+def _candidate_provenance(candidate: dict[str, Any]) -> dict[str, Any]:
+    if isinstance(candidate.get("candidateProvenance"), dict):
+        return candidate["candidateProvenance"]
+    source_ref = candidate["sourceRef"]
+    return {
+        "origin": "source-markdown",
+        "sourcePath": source_ref["path"],
+        "sourceSha256": source_ref["sha256"],
+    }
+
+
+def _validate_candidate_provenance(value: Any, path: str) -> list[str]:
+    if not isinstance(value, dict):
+        return [f"{path} must be an object"]
+    origin = value.get("origin")
+    if origin == "source-markdown":
+        errors = _strict_keys(value, required={"origin", "sourcePath", "sourceSha256"}, path=path)
+        path_error = _safe_relative_path(value.get("sourcePath"), f"{path}.sourcePath")
+        if path_error:
+            errors.append(path_error)
+        hash_error = _sha256_error(value.get("sourceSha256"), f"{path}.sourceSha256")
+        if hash_error:
+            errors.append(hash_error)
+        return errors
+    if origin == "operator-original-supplement":
+        errors = _strict_keys(
+            value,
+            required={
+                "origin", "supplementId", "supplementSetHash", "supplementRecordHash", "authorId",
+                "createdAt", "rightsStatus", "rightsAuthorizationId",
+            },
+            path=path,
+        )
+        for key in ("supplementSetHash", "supplementRecordHash"):
+            hash_error = _sha256_error(value.get(key), f"{path}.{key}")
+            if hash_error:
+                errors.append(hash_error)
+        supplement_id = value.get("supplementId")
+        if not isinstance(supplement_id, str) or _SUPPLEMENT_ID_RE.fullmatch(supplement_id) is None:
+            errors.append(f"{path}.supplementId is invalid")
+        for key in ("authorId", "rightsAuthorizationId"):
+            if not isinstance(value.get(key), str) or _REVIEWER_ID_RE.fullmatch(value[key]) is None:
+                errors.append(f"{path}.{key} is invalid")
+        if not _valid_utc_timestamp(value.get("createdAt")):
+            errors.append(f"{path}.createdAt is invalid")
+        if value.get("rightsStatus") != "operator-attested-original-and-authorized-for-ai-use":
+            errors.append(f"{path}.rightsStatus is unsupported")
+        return errors
+    return [f"{path}.origin is unsupported"]
+
+
+def _validate_operator_authorization(value: Any, path: str) -> list[str]:
+    errors = _strict_keys(
+        value,
+        required={"authorizationId", "authorizedBy", "authorizedAt", "scope", "statement", "rightsAttestation"},
+        path=path,
+    )
+    if not isinstance(value, dict):
+        return errors
+    for key in ("authorizationId", "authorizedBy"):
+        item = value.get(key)
+        if not isinstance(item, str) or _REVIEWER_ID_RE.fullmatch(item) is None:
+            errors.append(f"{path}.{key} is invalid")
+    if not _valid_utc_timestamp(value.get("authorizedAt")):
+        errors.append(f"{path}.authorizedAt must be a valid UTC RFC3339 timestamp")
+    if value.get("scope") != AI_ASSISTED_AUTHORIZATION_SCOPE:
+        errors.append(f"{path}.scope is unsupported")
+    if value.get("statement") != AI_ASSISTED_AUTHORIZATION_STATEMENT:
+        errors.append(f"{path}.statement is unsupported")
+    if value.get("rightsAttestation") != AI_ASSISTED_RIGHTS_ATTESTATION:
+        errors.append(f"{path}.rightsAttestation is unsupported")
+    return errors
+
+
+def _validate_review_model(value: Any, path: str) -> list[str]:
+    errors = _strict_keys(value, required={"provider", "model", "runId"}, path=path)
+    if not isinstance(value, dict):
+        return errors
+    for key, maximum_bytes in (("provider", 128), ("model", 256), ("runId", 256)):
+        errors.extend(_model_text_errors(value.get(key), f"{path}.{key}", maximum_bytes=maximum_bytes))
+    return errors
+
+
+def _validate_review_governance(value: Any, path: str) -> list[str]:
+    errors = _strict_keys(value, required={"reviewMethod", "operatorAuthorization"}, path=path)
+    if not isinstance(value, dict):
+        return errors
+    if value.get("reviewMethod") != AI_ASSISTED_REVIEW_METHOD:
+        errors.append(f"{path}.reviewMethod must be {AI_ASSISTED_REVIEW_METHOD}")
+    errors.extend(_validate_operator_authorization(value.get("operatorAuthorization"), f"{path}.operatorAuthorization"))
+    return errors
 
 
 def validate_review_decisions(
@@ -355,27 +540,40 @@ def validate_review_decisions(
     *,
     candidate_set: dict[str, Any] | None = None,
 ) -> list[str]:
-    """Strictly validate human decisions and, when supplied, exact bindings."""
+    """Strictly validate one supported review policy and exact bindings."""
 
     unicode_errors = _unicode_scalar_errors(decisions, "reviewDecisions")
     if unicode_errors:
         return unicode_errors
+    if not isinstance(decisions, dict):
+        return ["reviewDecisions must be an object"]
+    schema_version = decisions.get("schemaVersion")
+    ai_assisted = schema_version == AI_ASSISTED_REVIEW_DECISIONS_SCHEMA
+    root_required = {
+        "schemaVersion", "audience", "approvalPolicyVersion", "candidateSetBinding",
+        "decisions", "decisionSetHash",
+    }
+    if ai_assisted:
+        root_required.add("operatorAuthorization")
     errors = _strict_keys(
         decisions,
-        required={
-            "schemaVersion", "audience", "approvalPolicyVersion", "candidateSetBinding",
-            "decisions", "decisionSetHash",
-        },
+        required=root_required,
         path="reviewDecisions",
     )
-    if errors or not isinstance(decisions, dict):
-        return errors
-    if decisions.get("schemaVersion") != REVIEW_DECISIONS_SCHEMA:
-        errors.append(f"reviewDecisions.schemaVersion must be {REVIEW_DECISIONS_SCHEMA}")
-    if decisions.get("audience") != "private-human-review-input":
-        errors.append("reviewDecisions.audience must be private-human-review-input")
-    if decisions.get("approvalPolicyVersion") != APPROVAL_POLICY_VERSION:
-        errors.append("reviewDecisions.approvalPolicyVersion is unsupported")
+    if schema_version not in (REVIEW_DECISIONS_SCHEMA, AI_ASSISTED_REVIEW_DECISIONS_SCHEMA):
+        errors.append("reviewDecisions.schemaVersion is unsupported")
+    expected_audience = (
+        "private-operator-delegated-ai-assisted-review-input" if ai_assisted
+        else "private-human-review-input"
+    )
+    if decisions.get("audience") != expected_audience:
+        errors.append(f"reviewDecisions.audience must be {expected_audience}")
+    expected_policy = AI_ASSISTED_APPROVAL_POLICY_VERSION if ai_assisted else APPROVAL_POLICY_VERSION
+    if decisions.get("approvalPolicyVersion") != expected_policy:
+        errors.append("reviewDecisions approval policy/schema pairing is unsupported")
+    operator_authorization = decisions.get("operatorAuthorization")
+    if ai_assisted:
+        errors.extend(_validate_operator_authorization(operator_authorization, "reviewDecisions.operatorAuthorization"))
 
     binding = decisions.get("candidateSetBinding")
     errors.extend(
@@ -388,10 +586,13 @@ def validate_review_decisions(
     selected_forms: set[tuple[str, str]] = set()
     if isinstance(binding, dict):
         binding_schema = binding.get("schemaVersion")
-        if not isinstance(binding_schema, str) or binding_schema not in {
+        supported_binding_schemas = {
             "amc-question-context-candidate-set-v1",
             "amc-question-context-archive-candidate-set-v1",
-        }:
+        }
+        if ai_assisted:
+            supported_binding_schemas.add(SUPPLEMENTED_ARCHIVE_CANDIDATE_SCHEMA)
+        if not isinstance(binding_schema, str) or binding_schema not in supported_binding_schemas:
             errors.append("reviewDecisions.candidateSetBinding.schemaVersion is unsupported")
         hash_error = _sha256_error(binding.get("setHash"), "reviewDecisions.candidateSetBinding.setHash")
         if hash_error:
@@ -424,13 +625,18 @@ def validate_review_decisions(
         errors.append("reviewDecisions.decisions must contain at most 10000 records")
     for index, record in enumerate(records):
         path = f"reviewDecisions.decisions[{index}]"
+        record_required = {
+            "formId", "formVersion", "questionNumber", "solutionId", "decision", "bodySha256", "sourceRef",
+            "reviewerId", "reviewedAt", "rightsStatus", "qualityFlags", "methodTags", "decisionRecordHash",
+        }
+        if ai_assisted:
+            record_required.update({
+                "reviewMethod", "reviewModel", "operatorAuthorizationId", "candidateProvenance", "questionContentHash",
+            })
         errors.extend(
             _strict_keys(
                 record,
-                required={
-                    "formId", "formVersion", "questionNumber", "solutionId", "decision", "bodySha256", "sourceRef",
-                    "reviewerId", "reviewedAt", "rightsStatus", "qualityFlags", "methodTags", "decisionRecordHash",
-                },
+                required=record_required,
                 path=path,
             )
         )
@@ -478,6 +684,34 @@ def validate_review_decisions(
             errors.append(f"{path}.rightsStatus must be approved-for-ai-use")
         errors.extend(_validate_tags(record.get("qualityFlags"), f"{path}.qualityFlags", require_one=False))
         errors.extend(_validate_tags(record.get("methodTags"), f"{path}.methodTags", require_one=True))
+        if ai_assisted:
+            if record.get("reviewMethod") != AI_ASSISTED_REVIEW_METHOD:
+                errors.append(f"{path}.reviewMethod must be {AI_ASSISTED_REVIEW_METHOD}")
+            errors.extend(_validate_review_model(record.get("reviewModel"), f"{path}.reviewModel"))
+            authorized_by = (
+                operator_authorization.get("authorizedBy")
+                if isinstance(operator_authorization, dict) else None
+            )
+            if reviewer_id == authorized_by:
+                errors.append(f"{path}.reviewerId must differ from the authorizing operator")
+            authorization_id = (
+                operator_authorization.get("authorizationId")
+                if isinstance(operator_authorization, dict) else None
+            )
+            if record.get("operatorAuthorizationId") != authorization_id:
+                errors.append(f"{path}.operatorAuthorizationId does not match review authorization")
+            errors.extend(_validate_candidate_provenance(record.get("candidateProvenance"), f"{path}.candidateProvenance"))
+            if (
+                isinstance(record.get("candidateProvenance"), dict)
+                and record["candidateProvenance"].get("origin") == "operator-original-supplement"
+            ):
+                if not isinstance(solution_id, str) or _SUPPLEMENT_SOLUTION_ID_RE.fullmatch(solution_id) is None:
+                    errors.append(f"{path}.solutionId must use reserved solution-9NN for a supplement")
+                if reviewer_id == record["candidateProvenance"].get("authorId"):
+                    errors.append(f"{path}.reviewerId must differ from the supplement author")
+            hash_error = _sha256_error(record.get("questionContentHash"), f"{path}.questionContentHash")
+            if hash_error:
+                errors.append(hash_error)
         record_hash_error = _sha256_error(record.get("decisionRecordHash"), f"{path}.decisionRecordHash")
         if record_hash_error:
             errors.append(record_hash_error)
@@ -546,6 +780,18 @@ def validate_review_decisions(
             errors.append(f"{path}.sourceRef.path does not match candidate solution")
         if not isinstance(source_ref, dict) or source_ref.get("sha256") != candidate["sourceRef"]["sha256"]:
             errors.append(f"{path}.sourceRef.sha256 does not match candidate solution")
+        if ai_assisted and record.get("candidateProvenance") != _candidate_provenance(candidate):
+            errors.append(f"{path}.candidateProvenance does not match candidate solution")
+        if ai_assisted:
+            expected_question_hash = next(
+                canonical_hash(_question_content_projection(context))
+                for form_record in _candidate_form_records(candidate_set)
+                if form_record["form"]["id"] == form_id and form_record["form"]["version"] == form_version
+                for context in form_record["questions"]
+                if context["question"]["number"] == number
+            )
+            if record.get("questionContentHash") != expected_question_hash:
+                errors.append(f"{path}.questionContentHash does not match exact candidate question")
     return errors
 
 
@@ -576,6 +822,7 @@ def compile_approved_question_context_set(
         (record["formId"], record["formVersion"], record["questionNumber"], record["solutionId"]): record
         for record in review_decisions["decisions"]
     }
+    candidate_index = _candidate_index(candidate_set)
     receipt_index = {
         receipt["decisionRecordHash"]: receipt
         for receipt in approval_receipts["receipts"]
@@ -585,19 +832,32 @@ def compile_approved_question_context_set(
         (form["id"], form["version"])
         for form in review_decisions["candidateSetBinding"]["forms"]
     }
+    approval_policy = review_decisions["approvalPolicyVersion"]
+    review_schema = review_decisions["schemaVersion"]
+    review_governance = None
+    if approval_policy == AI_ASSISTED_APPROVAL_POLICY_VERSION:
+        review_governance = {
+            "reviewMethod": AI_ASSISTED_REVIEW_METHOD,
+            "operatorAuthorization": review_decisions["operatorAuthorization"],
+        }
     compiled = [
         _compile_approved_form(
             form_record,
             candidate_set_hash=candidate_set["setHash"],
             candidate_schema_version=candidate_set["schemaVersion"],
             decision_set_hash=review_decisions["decisionSetHash"],
+            approval_policy=approval_policy,
+            review_schema=review_schema,
+            review_governance=review_governance,
             decision_index=decision_index,
+            candidate_index=candidate_index,
             approval_authority_binding={
                 "schemaVersion": APPROVAL_RECEIPT_SET_SCHEMA,
                 "authorityId": approval_receipts["authorityId"],
                 "receiptSetHash": approval_receipts["receiptSetHash"],
             },
             receipt_index=receipt_index,
+            approval_receipts=approval_receipts,
             allow_test_only=allow_test_only,
         )
         for form_record in _candidate_form_records(candidate_set)
@@ -606,16 +866,16 @@ def compile_approved_question_context_set(
     if candidate_set["schemaVersion"] == "amc-question-context-candidate-set-v1":
         return compiled[0]
     result: dict[str, Any] = {
-        "schemaVersion": APPROVED_ARCHIVE_SET_SCHEMA,
+        "schemaVersion": _approved_archive_schema_for_policy(approval_policy),
         "audience": "private-ai-context-only",
-        "approvalPolicyVersion": APPROVAL_POLICY_VERSION,
+        "approvalPolicyVersion": approval_policy,
         "candidateSetBinding": {
             "schemaVersion": candidate_set["schemaVersion"],
             "setHash": candidate_set["setHash"],
-            "archiveRelease": candidate_set["archiveRelease"],
+            "archiveRelease": _candidate_archive_release(candidate_set),
         },
         "reviewDecisionBinding": {
-            "schemaVersion": REVIEW_DECISIONS_SCHEMA,
+            "schemaVersion": review_schema,
             "decisionSetHash": review_decisions["decisionSetHash"],
         },
         "approvalAuthorityBinding": {
@@ -631,10 +891,19 @@ def compile_approved_question_context_set(
             "unavailableQuestionCount": sum(form["summary"]["unavailableQuestionCount"] for form in compiled),
         },
         "forms": compiled,
-        "disclaimer": "Private archive AI context containing only explicitly approved solutions and no answer keys.",
+        "disclaimer": (
+            "Private archive AI context containing only operator-delegated AI-assisted reviewed solutions "
+            "with independent authority receipts and no answer keys."
+            if review_governance is not None else
+            "Private archive AI context containing only explicitly approved solutions and no answer keys."
+        ),
     }
+    if review_governance is not None:
+        result["reviewGovernance"] = review_governance
     result["setHash"] = canonical_hash(result)
-    output_errors = validate_approved_archive_context_set(result)
+    output_errors = validate_approved_archive_context_set(
+        result, approval_receipts=approval_receipts
+    )
     if output_errors:
         raise ContentBuildError([f"invalid approved archive context set: {error}" for error in output_errors])
     return result
@@ -646,9 +915,14 @@ def _compile_approved_form(
     candidate_set_hash: str,
     candidate_schema_version: str,
     decision_set_hash: str,
+    approval_policy: str,
+    review_schema: str,
+    review_governance: dict[str, Any] | None,
     decision_index: dict[tuple[str, str, int, str], dict[str, Any]],
+    candidate_index: dict[tuple[str, str, int, str], dict[str, Any]],
     approval_authority_binding: dict[str, Any],
     receipt_index: dict[str, dict[str, Any]],
+    approval_receipts: dict[str, Any],
     allow_test_only: bool,
 ) -> dict[str, Any]:
     form = form_record["form"]
@@ -656,7 +930,14 @@ def _compile_approved_form(
     for context in form_record["questions"]:
         question = context["question"]
         approved: list[dict[str, Any]] = []
-        for solution in context["solutions"]:
+        solution_candidates = [
+            candidate
+            for (candidate_form_id, candidate_form_version, candidate_number, _), candidate in candidate_index.items()
+            if candidate_form_id == form["id"]
+            and candidate_form_version == form["version"]
+            and candidate_number == question["number"]
+        ]
+        for solution in sorted(solution_candidates, key=lambda item: item["solutionId"]):
             decision = decision_index.get(
                 (form["id"], form["version"], question["number"], solution["solutionId"])
             )
@@ -664,8 +945,27 @@ def _compile_approved_form(
                 continue
             receipt = receipt_index[decision["decisionRecordHash"]]
             visual = _contains_visual_reference(solution["bodyMarkdown"])
-            approved.append(
-                {
+            approval = {
+                "reviewerId": decision["reviewerId"],
+                "reviewedAt": decision["reviewedAt"],
+                "rightsStatus": decision["rightsStatus"],
+                "qualityFlags": decision["qualityFlags"],
+                "methodTags": decision["methodTags"],
+                "decisionRecordHash": decision["decisionRecordHash"],
+                "authorityReceipt": {
+                    key: receipt[key]
+                    for key in ("receiptId", "authorityId", "issuedAt", "status")
+                },
+            }
+            if review_governance is not None:
+                approval.update(
+                    {
+                        "reviewMethod": decision["reviewMethod"],
+                        "reviewModel": decision["reviewModel"],
+                        "operatorAuthorizationId": decision["operatorAuthorizationId"],
+                    }
+                )
+            approved_solution = {
                     "solutionId": solution["solutionId"],
                     "title": solution["title"],
                     "bodyMarkdown": solution["bodyMarkdown"],
@@ -675,20 +975,11 @@ def _compile_approved_form(
                         "eligible": not visual,
                         "reason": "solution-visual-context-unavailable" if visual else None,
                     },
-                    "approval": {
-                        "reviewerId": decision["reviewerId"],
-                        "reviewedAt": decision["reviewedAt"],
-                        "rightsStatus": decision["rightsStatus"],
-                        "qualityFlags": decision["qualityFlags"],
-                        "methodTags": decision["methodTags"],
-                        "decisionRecordHash": decision["decisionRecordHash"],
-                        "authorityReceipt": {
-                            key: receipt[key]
-                            for key in ("receiptId", "authorityId", "issuedAt", "status")
-                        },
-                    },
+                    "approval": approval,
                 }
-            )
+            if review_governance is not None:
+                approved_solution["candidateProvenance"] = _candidate_provenance(solution)
+            approved.append(approved_solution)
         question_visual = _contains_visual_reference(question["promptMarkdown"]) or any(
             _contains_visual_reference(value) for value in question["choices"].values()
         )
@@ -738,9 +1029,9 @@ def _compile_approved_form(
             "production approved context requires non-null releaseBinding; use --allow-test-only for synthetic input"
         ])
     result: dict[str, Any] = {
-        "schemaVersion": APPROVED_CONTEXT_SET_SCHEMA if release_binding is not None else APPROVED_TEST_CONTEXT_SET_SCHEMA,
+        "schemaVersion": _approved_schema_for_policy(approval_policy, test_only=release_binding is None),
         "audience": "private-ai-context-only" if release_binding is not None else "private-test-only",
-        "approvalPolicyVersion": APPROVAL_POLICY_VERSION,
+        "approvalPolicyVersion": approval_policy,
         "formBinding": {
             "id": form["id"],
             "version": form["version"],
@@ -750,7 +1041,7 @@ def _compile_approved_form(
             "releaseBinding": release_binding,
         },
         "reviewDecisionBinding": {
-            "schemaVersion": REVIEW_DECISIONS_SCHEMA,
+            "schemaVersion": review_schema,
             "decisionSetHash": decision_set_hash,
         },
         "approvalAuthorityBinding": approval_authority_binding,
@@ -763,59 +1054,89 @@ def _compile_approved_form(
         },
         "questions": output_questions,
         "disclaimer": (
+            "Private AI context compiled only from exact operator-delegated AI-assisted reviews "
+            "and independent authority receipts. It is not human review and intentionally contains no answer key "
+            "or correct option."
+            if review_governance is not None else
             "Private AI context compiled only from exact human approvals. "
             "It intentionally contains no answer key or correct option."
         ),
     }
+    if review_governance is not None:
+        result["reviewGovernance"] = review_governance
     result["setHash"] = canonical_hash(result)
     output_errors = (
-        validate_approved_question_context_set(result)
+        validate_approved_question_context_set(result, approval_receipts=approval_receipts)
         if release_binding is not None
-        else validate_approved_question_context_test_set(result)
+        else validate_approved_question_context_test_set(result, approval_receipts=approval_receipts)
     )
     if output_errors:
         raise ContentBuildError([f"invalid approved context set: {error}" for error in output_errors])
     return result
 
 
-def validate_approved_question_context_set(context_set: Any) -> list[str]:
-    """Validate production-importable context; test-only artifacts always fail."""
+def validate_approved_question_context_set(
+    context_set: Any,
+    *,
+    approval_receipts: Any | None = None,
+) -> list[str]:
+    """Validate production context against separately supplied receipts for v2."""
 
-    return _validate_approved_question_context_set(context_set, test_only=False)
+    return _validate_approved_question_context_set(
+        context_set, test_only=False, approval_receipts=approval_receipts
+    )
 
 
-def validate_approved_question_context_test_set(context_set: Any) -> list[str]:
-    """Validate an explicitly synthetic artifact that production importers reject."""
+def validate_approved_question_context_test_set(
+    context_set: Any,
+    *,
+    approval_receipts: Any | None = None,
+) -> list[str]:
+    """Validate synthetic context against separately supplied receipts for v2."""
 
-    return _validate_approved_question_context_set(context_set, test_only=True)
+    return _validate_approved_question_context_set(
+        context_set, test_only=True, approval_receipts=approval_receipts
+    )
 
 
-def _validate_approved_question_context_set(context_set: Any, *, test_only: bool) -> list[str]:
+def _validate_approved_question_context_set(
+    context_set: Any,
+    *,
+    test_only: bool,
+    approval_receipts: Any | None,
+) -> list[str]:
     """Strictly validate an approved model-context artifact and all hashes."""
 
     unicode_errors = _unicode_scalar_errors(context_set, "approvedContextSet")
     if unicode_errors:
         return unicode_errors
+    if not isinstance(context_set, dict):
+        return ["approvedContextSet must be an object"]
+    approval_policy = context_set.get("approvalPolicyVersion")
+    ai_assisted = approval_policy == AI_ASSISTED_APPROVAL_POLICY_VERSION
+    root_required = {
+        "schemaVersion", "audience", "approvalPolicyVersion", "formBinding",
+        "reviewDecisionBinding", "approvalAuthorityBinding", "summary", "questions", "disclaimer", "setHash",
+    }
+    if ai_assisted:
+        root_required.add("reviewGovernance")
     errors = _strict_keys(
         context_set,
-        required={
-            "schemaVersion", "audience", "approvalPolicyVersion", "formBinding",
-            "reviewDecisionBinding", "approvalAuthorityBinding", "summary", "questions", "disclaimer", "setHash",
-        },
+        required=root_required,
         path="approvedContextSet",
     )
-    if errors or not isinstance(context_set, dict):
-        return errors
-    expected_schema = APPROVED_TEST_CONTEXT_SET_SCHEMA if test_only else APPROVED_CONTEXT_SET_SCHEMA
+    expected_schema = _approved_schema_for_policy(approval_policy, test_only=test_only)
     expected_audience = "private-test-only" if test_only else "private-ai-context-only"
-    if context_set.get("schemaVersion") != expected_schema:
-        errors.append(f"approvedContextSet.schemaVersion must be {expected_schema}")
+    if expected_schema is None or context_set.get("schemaVersion") != expected_schema:
+        errors.append("approvedContextSet.schemaVersion/approvalPolicyVersion pairing is unsupported")
     if context_set.get("audience") != expected_audience:
         errors.append(f"approvedContextSet.audience must be {expected_audience}")
-    if context_set.get("approvalPolicyVersion") != APPROVAL_POLICY_VERSION:
+    if approval_policy not in (APPROVAL_POLICY_VERSION, AI_ASSISTED_APPROVAL_POLICY_VERSION):
         errors.append("approvedContextSet.approvalPolicyVersion is unsupported")
     if not isinstance(context_set.get("disclaimer"), str) or not context_set["disclaimer"]:
         errors.append("approvedContextSet.disclaimer must be non-empty")
+    if ai_assisted:
+        errors.extend(_validate_review_governance(context_set.get("reviewGovernance"), "approvedContextSet.reviewGovernance"))
 
     form = context_set.get("formBinding")
     errors.extend(
@@ -833,9 +1154,12 @@ def _validate_approved_question_context_set(context_set: Any, *, test_only: bool
             if not isinstance(form.get(key), str) or not form[key]:
                 errors.append(f"approvedContextSet.formBinding.{key} must be non-empty")
         candidate_schema = form.get("candidateSchemaVersion")
-        if not isinstance(candidate_schema, str) or candidate_schema not in {
+        supported_candidate_schemas = {
             "amc-question-context-candidate-set-v1", "amc-question-context-archive-candidate-set-v1",
-        }:
+        }
+        if ai_assisted:
+            supported_candidate_schemas.add(SUPPLEMENTED_ARCHIVE_CANDIDATE_SCHEMA)
+        if not isinstance(candidate_schema, str) or candidate_schema not in supported_candidate_schemas:
             errors.append("approvedContextSet.formBinding.candidateSchemaVersion is unsupported")
         for key in ("candidateSetHash", "contextContentHash"):
             hash_error = _sha256_error(form.get(key), f"approvedContextSet.formBinding.{key}")
@@ -870,7 +1194,7 @@ def _validate_approved_question_context_set(context_set: Any, *, test_only: bool
         )
     )
     if isinstance(review, dict):
-        if review.get("schemaVersion") != REVIEW_DECISIONS_SCHEMA:
+        if review.get("schemaVersion") != _review_schema_for_policy(approval_policy):
             errors.append("approvedContextSet.reviewDecisionBinding.schemaVersion is unsupported")
         hash_error = _sha256_error(review.get("decisionSetHash"), "approvedContextSet.reviewDecisionBinding.decisionSetHash")
         if hash_error:
@@ -889,6 +1213,38 @@ def _validate_approved_question_context_set(context_set: Any, *, test_only: bool
         hash_error = _sha256_error(authority.get("receiptSetHash"), "approvedContextSet.approvalAuthorityBinding.receiptSetHash")
         if hash_error:
             errors.append(hash_error)
+        if ai_assisted:
+            governance = context_set.get("reviewGovernance")
+            authorization = governance.get("operatorAuthorization") if isinstance(governance, dict) else None
+            authorized_by = authorization.get("authorizedBy") if isinstance(authorization, dict) else None
+            if authority.get("authorityId") == authorized_by:
+                errors.append(
+                    "approvedContextSet approval authority must differ from the authorizing operator"
+                )
+
+    trusted_receipt_records: list[dict[str, Any]] | None = None
+    if ai_assisted:
+        if approval_receipts is None:
+            errors.append(
+                "approvedContextSet v2 validation requires the separately supplied trusted approval receipt set"
+            )
+        else:
+            receipt_errors = validate_approval_receipt_set(approval_receipts)
+            errors.extend(f"trustedApprovalReceipts: {error}" for error in receipt_errors)
+            if isinstance(approval_receipts, dict):
+                if isinstance(authority, dict) and (
+                    approval_receipts.get("authorityId") != authority.get("authorityId")
+                    or approval_receipts.get("receiptSetHash") != authority.get("receiptSetHash")
+                ):
+                    errors.append(
+                        "approvedContextSet approval authority binding does not match the separately supplied "
+                        "trusted receipt set"
+                    )
+                receipt_values = approval_receipts.get("receipts")
+                if isinstance(receipt_values, list):
+                    trusted_receipt_records = [
+                        receipt for receipt in receipt_values if isinstance(receipt, dict)
+                    ]
 
     questions = context_set.get("questions")
     if not isinstance(questions, list):
@@ -968,13 +1324,16 @@ def _validate_approved_question_context_set(context_set: Any, *, test_only: bool
         solution_ids: set[str] = set()
         for solution_index, solution in enumerate(solutions):
             solution_path = f"{path}.approvedSolutions[{solution_index}]"
+            solution_required = {
+                "solutionId", "title", "bodyMarkdown", "bodySha256", "sourceRef",
+                "modelEligibility", "approval",
+            }
+            if ai_assisted:
+                solution_required.add("candidateProvenance")
             errors.extend(
                 _strict_keys(
                     solution,
-                    required={
-                        "solutionId", "title", "bodyMarkdown", "bodySha256", "sourceRef",
-                        "modelEligibility", "approval",
-                    },
+                    required=solution_required,
                     path=solution_path,
                 )
             )
@@ -987,6 +1346,16 @@ def _validate_approved_question_context_set(context_set: Any, *, test_only: bool
                 errors.append(f"{solution_path}.solutionId is duplicated")
             else:
                 solution_ids.add(solution_id)
+            if ai_assisted:
+                errors.extend(_validate_candidate_provenance(
+                    solution.get("candidateProvenance"), f"{solution_path}.candidateProvenance"
+                ))
+                if (
+                    isinstance(solution.get("candidateProvenance"), dict)
+                    and solution["candidateProvenance"].get("origin") == "operator-original-supplement"
+                    and (not isinstance(solution_id, str) or _SUPPLEMENT_SOLUTION_ID_RE.fullmatch(solution_id) is None)
+                ):
+                    errors.append(f"{solution_path}.solutionId must use reserved solution-9NN for a supplement")
             errors.extend(_model_text_errors(
                 solution.get("title"), f"{solution_path}.title", maximum_bytes=MAX_MODEL_SOLUTION_TITLE_BYTES
             ))
@@ -1006,7 +1375,31 @@ def _validate_approved_question_context_set(context_set: Any, *, test_only: bool
             )
             if isinstance(solution_ref, dict):
                 safe_question_ref = source_ref if isinstance(source_ref, dict) else {}
-                if solution_ref.get("path") != safe_question_ref.get("path") or solution_ref.get("sha256") != safe_question_ref.get("sha256"):
+                provenance = solution.get("candidateProvenance")
+                is_supplement = (
+                    ai_assisted and isinstance(provenance, dict)
+                    and provenance.get("origin") == "operator-original-supplement"
+                )
+                if is_supplement:
+                    expected_path = f"protected-supplements/{provenance.get('supplementId')}.json"
+                    if (
+                        solution_ref.get("path") != expected_path
+                        or solution_ref.get("sha256") != provenance.get("supplementRecordHash")
+                    ):
+                        errors.append(f"{solution_path}.sourceRef does not match protected supplement provenance")
+                elif (
+                    ai_assisted and isinstance(provenance, dict)
+                    and provenance.get("origin") == "source-markdown"
+                    and (
+                        solution_ref.get("path") != provenance.get("sourcePath")
+                        or solution_ref.get("sha256") != provenance.get("sourceSha256")
+                    )
+                ):
+                    errors.append(f"{solution_path}.sourceRef does not match source candidate provenance")
+                elif (
+                    solution_ref.get("path") != safe_question_ref.get("path")
+                    or solution_ref.get("sha256") != safe_question_ref.get("sha256")
+                ):
                     errors.append(f"{solution_path}.sourceRef does not match question source")
                 heading = solution_ref.get("headingLine")
                 end = solution_ref.get("endLine")
@@ -1026,13 +1419,16 @@ def _validate_approved_question_context_set(context_set: Any, *, test_only: bool
             if isinstance(model_eligibility, dict) and model_eligibility != expected_eligibility:
                 errors.append(f"{solution_path}.modelEligibility does not match solution visual references")
             approval = solution.get("approval")
+            approval_required = {
+                "reviewerId", "reviewedAt", "rightsStatus", "qualityFlags", "methodTags",
+                "decisionRecordHash", "authorityReceipt",
+            }
+            if ai_assisted:
+                approval_required.update({"reviewMethod", "reviewModel", "operatorAuthorizationId"})
             errors.extend(
                 _strict_keys(
                     approval,
-                    required={
-                        "reviewerId", "reviewedAt", "rightsStatus", "qualityFlags", "methodTags",
-                        "decisionRecordHash", "authorityReceipt",
-                    },
+                    required=approval_required,
                     path=f"{solution_path}.approval",
                 )
             )
@@ -1046,6 +1442,34 @@ def _validate_approved_question_context_set(context_set: Any, *, test_only: bool
                     errors.append(f"{solution_path}.approval.rightsStatus is invalid")
                 errors.extend(_validate_tags(approval.get("qualityFlags"), f"{solution_path}.approval.qualityFlags", require_one=False))
                 errors.extend(_validate_tags(approval.get("methodTags"), f"{solution_path}.approval.methodTags", require_one=True))
+                if ai_assisted:
+                    if approval.get("reviewMethod") != AI_ASSISTED_REVIEW_METHOD:
+                        errors.append(f"{solution_path}.approval.reviewMethod must be {AI_ASSISTED_REVIEW_METHOD}")
+                    errors.extend(_validate_review_model(approval.get("reviewModel"), f"{solution_path}.approval.reviewModel"))
+                    governance = context_set.get("reviewGovernance")
+                    authorization = governance.get("operatorAuthorization") if isinstance(governance, dict) else None
+                    authorization_id = authorization.get("authorizationId") if isinstance(authorization, dict) else None
+                    authorized_by = authorization.get("authorizedBy") if isinstance(authorization, dict) else None
+                    if reviewer_id == authorized_by:
+                        errors.append(
+                            f"{solution_path}.approval.reviewerId must differ from the authorizing operator"
+                        )
+                    authority_id = authority.get("authorityId") if isinstance(authority, dict) else None
+                    if reviewer_id == authority_id:
+                        errors.append(
+                            f"{solution_path}.approval.reviewerId must differ from the receipt authority"
+                        )
+                    provenance = solution.get("candidateProvenance")
+                    if (
+                        isinstance(provenance, dict)
+                        and provenance.get("origin") == "operator-original-supplement"
+                        and reviewer_id == provenance.get("authorId")
+                    ):
+                        errors.append(
+                            f"{solution_path}.approval.reviewerId must differ from the supplement author"
+                        )
+                    if approval.get("operatorAuthorizationId") != authorization_id:
+                        errors.append(f"{solution_path}.approval.operatorAuthorizationId does not match review governance")
                 decision_projection = {
                     "approvalPolicyVersion": context_set.get("approvalPolicyVersion"),
                     "candidateSchemaVersion": form.get("candidateSchemaVersion") if isinstance(form, dict) else None,
@@ -1066,6 +1490,17 @@ def _validate_approved_question_context_set(context_set: Any, *, test_only: bool
                     "qualityFlags": approval.get("qualityFlags"),
                     "methodTags": approval.get("methodTags"),
                 }
+                if ai_assisted:
+                    decision_projection.update(
+                        {
+                            "reviewMethod": approval.get("reviewMethod"),
+                            "reviewModel": approval.get("reviewModel"),
+                            "operatorAuthorizationId": approval.get("operatorAuthorizationId"),
+                            "operatorAuthorization": authorization,
+                            "candidateProvenance": solution.get("candidateProvenance"),
+                            "questionContentHash": question.get("questionContentHash"),
+                        }
+                    )
                 expected_decision_hash = canonical_hash(decision_projection)
                 if approval.get("decisionRecordHash") != expected_decision_hash:
                     errors.append(f"{solution_path}.approval.decisionRecordHash does not match approval content")
@@ -1084,6 +1519,27 @@ def _validate_approved_question_context_set(context_set: Any, *, test_only: bool
                         errors.append(f"{solution_path}.approval.authorityReceipt.issuedAt is invalid")
                     if receipt.get("status") != "active":
                         errors.append(f"{solution_path}.approval.authorityReceipt.status must be active")
+                    if ai_assisted and trusted_receipt_records is not None:
+                        trusted_matches = [
+                            trusted
+                            for trusted in trusted_receipt_records
+                            if trusted.get("decisionRecordHash") == expected_decision_hash
+                        ]
+                        if len(trusted_matches) != 1 or trusted_matches[0].get("status") != "active":
+                            errors.append(
+                                f"{solution_path}.approval must have exactly one active receipt in the "
+                                "separately supplied trusted receipt set"
+                            )
+                        else:
+                            trusted_projection = {
+                                key: trusted_matches[0].get(key)
+                                for key in ("receiptId", "authorityId", "issuedAt", "status")
+                            }
+                            if receipt != trusted_projection:
+                                errors.append(
+                                    f"{solution_path}.approval.authorityReceipt does not match the separately "
+                                    "supplied trusted receipt"
+                                )
 
         eligible_count = sum(
             solution.get("modelEligibility", {}).get("eligible") is True
@@ -1165,30 +1621,43 @@ def _validate_approved_question_context_set(context_set: Any, *, test_only: bool
     return errors
 
 
-def validate_approved_archive_context_set(context_set: Any) -> list[str]:
-    """Strictly validate a selected-form wrapper compiled from the archive."""
+def validate_approved_archive_context_set(
+    context_set: Any,
+    *,
+    approval_receipts: Any | None = None,
+) -> list[str]:
+    """Validate an archive wrapper against separately supplied receipts for v2."""
 
     unicode_errors = _unicode_scalar_errors(context_set, "approvedArchiveContextSet")
     if unicode_errors:
         return unicode_errors
+    if not isinstance(context_set, dict):
+        return ["approvedArchiveContextSet must be an object"]
+    approval_policy = context_set.get("approvalPolicyVersion")
+    ai_assisted = approval_policy == AI_ASSISTED_APPROVAL_POLICY_VERSION
+    root_required = {
+        "schemaVersion", "audience", "approvalPolicyVersion", "candidateSetBinding",
+        "reviewDecisionBinding", "approvalAuthorityBinding", "summary", "forms", "disclaimer", "setHash",
+    }
+    if ai_assisted:
+        root_required.add("reviewGovernance")
     errors = _strict_keys(
         context_set,
-        required={
-            "schemaVersion", "audience", "approvalPolicyVersion", "candidateSetBinding",
-            "reviewDecisionBinding", "approvalAuthorityBinding", "summary", "forms", "disclaimer", "setHash",
-        },
+        required=root_required,
         path="approvedArchiveContextSet",
     )
-    if errors or not isinstance(context_set, dict):
-        return errors
-    if context_set.get("schemaVersion") != APPROVED_ARCHIVE_SET_SCHEMA:
-        errors.append(f"approvedArchiveContextSet.schemaVersion must be {APPROVED_ARCHIVE_SET_SCHEMA}")
+    if context_set.get("schemaVersion") != _approved_archive_schema_for_policy(approval_policy):
+        errors.append("approvedArchiveContextSet.schemaVersion/approvalPolicyVersion pairing is unsupported")
     if context_set.get("audience") != "private-ai-context-only":
         errors.append("approvedArchiveContextSet.audience must be private-ai-context-only")
-    if context_set.get("approvalPolicyVersion") != APPROVAL_POLICY_VERSION:
+    if approval_policy not in (APPROVAL_POLICY_VERSION, AI_ASSISTED_APPROVAL_POLICY_VERSION):
         errors.append("approvedArchiveContextSet.approvalPolicyVersion is unsupported")
     if not isinstance(context_set.get("disclaimer"), str) or not context_set["disclaimer"]:
         errors.append("approvedArchiveContextSet.disclaimer must be non-empty")
+    if ai_assisted:
+        errors.extend(_validate_review_governance(
+            context_set.get("reviewGovernance"), "approvedArchiveContextSet.reviewGovernance"
+        ))
     candidate_binding = context_set.get("candidateSetBinding")
     errors.extend(
         _strict_keys(
@@ -1198,7 +1667,11 @@ def validate_approved_archive_context_set(context_set: Any) -> list[str]:
         )
     )
     if isinstance(candidate_binding, dict):
-        if candidate_binding.get("schemaVersion") != "amc-question-context-archive-candidate-set-v1":
+        supported_archive_candidates = {"amc-question-context-archive-candidate-set-v1"}
+        if ai_assisted:
+            supported_archive_candidates.add(SUPPLEMENTED_ARCHIVE_CANDIDATE_SCHEMA)
+        candidate_schema = candidate_binding.get("schemaVersion")
+        if not isinstance(candidate_schema, str) or candidate_schema not in supported_archive_candidates:
             errors.append("approvedArchiveContextSet candidate schemaVersion is unsupported")
         hash_error = _sha256_error(candidate_binding.get("setHash"), "approvedArchiveContextSet.candidateSetBinding.setHash")
         if hash_error:
@@ -1229,7 +1702,7 @@ def validate_approved_archive_context_set(context_set: Any) -> list[str]:
         )
     )
     if isinstance(review_binding, dict):
-        if review_binding.get("schemaVersion") != REVIEW_DECISIONS_SCHEMA:
+        if review_binding.get("schemaVersion") != _review_schema_for_policy(approval_policy):
             errors.append("approvedArchiveContextSet review schemaVersion is unsupported")
         hash_error = _sha256_error(review_binding.get("decisionSetHash"), "approvedArchiveContextSet.reviewDecisionBinding.decisionSetHash")
         if hash_error:
@@ -1248,13 +1721,32 @@ def validate_approved_archive_context_set(context_set: Any) -> list[str]:
         hash_error = _sha256_error(authority_binding.get("receiptSetHash"), "approvedArchiveContextSet.approvalAuthorityBinding.receiptSetHash")
         if hash_error:
             errors.append(hash_error)
+    if ai_assisted:
+        if approval_receipts is None:
+            errors.append(
+                "approvedArchiveContextSet v2 validation requires the separately supplied trusted approval "
+                "receipt set"
+            )
+        else:
+            receipt_errors = validate_approval_receipt_set(approval_receipts)
+            errors.extend(f"trustedApprovalReceipts: {error}" for error in receipt_errors)
+            if isinstance(approval_receipts, dict) and isinstance(authority_binding, dict) and (
+                approval_receipts.get("authorityId") != authority_binding.get("authorityId")
+                or approval_receipts.get("receiptSetHash") != authority_binding.get("receiptSetHash")
+            ):
+                errors.append(
+                    "approvedArchiveContextSet authority binding does not match the separately supplied trusted "
+                    "receipt set"
+                )
     forms = context_set.get("forms")
     if not isinstance(forms, list) or not forms or len(forms) > 48:
         errors.append("approvedArchiveContextSet.forms must contain 1 through 48 form sets")
         forms = []
     seen: set[tuple[str, str]] = set()
     for index, form_set in enumerate(forms):
-        child_errors = validate_approved_question_context_set(form_set)
+        child_errors = validate_approved_question_context_set(
+            form_set, approval_receipts=approval_receipts
+        )
         errors.extend(f"approvedArchiveContextSet.forms[{index}]: {error}" for error in child_errors)
         if not isinstance(form_set, dict):
             continue
@@ -1276,6 +1768,8 @@ def validate_approved_archive_context_set(context_set: Any) -> list[str]:
             not isinstance(child_authority, dict) or child_authority != authority_binding
         ):
             errors.append(f"approvedArchiveContextSet.forms[{index}] approval authority binding does not match wrapper")
+        if ai_assisted and form_set.get("reviewGovernance") != context_set.get("reviewGovernance"):
+            errors.append(f"approvedArchiveContextSet.forms[{index}] review governance does not match wrapper")
         if form.get("releaseBinding") is None:
             errors.append(f"approvedArchiveContextSet.forms[{index}] must preserve archive release hashes")
     summary = context_set.get("summary")
@@ -1322,7 +1816,10 @@ def _literal_markdown(value: str) -> str:
 def approved_question_context_set_markdown(context_set: dict[str, Any]) -> str:
     """Render a private companion document with every supplied string inert."""
 
-    if context_set.get("schemaVersion") == APPROVED_ARCHIVE_SET_SCHEMA:
+    if context_set.get("schemaVersion") in (
+        APPROVED_ARCHIVE_SET_SCHEMA,
+        AI_ASSISTED_APPROVED_ARCHIVE_SET_SCHEMA,
+    ):
         lines = [
             "# Approved archive question context set", "",
             "> **PRIVATE AI CONTEXT ONLY.** No answer keys are present.", "",

@@ -36,6 +36,10 @@ from .question_context import (
     question_context_markdown,
     question_context_set_markdown,
 )
+from .supplement import (
+    compose_supplemented_archive_candidate_set,
+    supplemented_archive_candidate_set_markdown,
+)
 from .validator import (
     ARCHIVE_PRIVATE_MANIFEST_SCHEMA,
     validate_archive_private_manifest,
@@ -235,7 +239,34 @@ def _compile_approved_question_context(args: argparse.Namespace) -> int:
             approved_question_context_set_markdown(approved),
             replace=args.replace,
         )
-    print(f"compiled explicit human approvals: {json_output} and {markdown_output}")
+    print(f"compiled explicit reviewed approvals with independent authority receipts: {json_output} and {markdown_output}")
+    return 0
+
+
+def _compose_supplemented_archive_context(args: argparse.Namespace) -> int:
+    candidate_path = Path(os.path.abspath(args.archive_candidate_set))
+    supplement_path = Path(os.path.abspath(args.supplement_set))
+    private_root = _validate_private_context_root(args.private_output_root, source_root=_AMC_REPOSITORY_ROOT)
+    with _private_context_lock(private_root):
+        json_output, markdown_output = _resolve_private_context_outputs(
+            private_output_root=args.private_output_root,
+            json_output=args.json_output,
+            markdown_output=args.markdown_output,
+            source_root=_AMC_REPOSITORY_ROOT,
+            protected_inputs={candidate_path, supplement_path},
+            replace=args.replace,
+        )
+        archive_candidate = load_strict_json(candidate_path, require_protected=True)
+        supplement_set = load_strict_json(supplement_path, require_protected=True)
+        composed = compose_supplemented_archive_candidate_set(archive_candidate, supplement_set)
+        _write_context_output_pair_atomic(
+            json_output,
+            canonical_json(composed),
+            markdown_output,
+            supplemented_archive_candidate_set_markdown(composed),
+            replace=args.replace,
+        )
+    print(f"composed protected original supplements as unapproved candidates: {json_output} and {markdown_output}")
     return 0
 
 
@@ -461,7 +492,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     approved = subcommands.add_parser(
         "compile-approved-question-context",
-        help="compile exact human approvals into private AI context; never infers approval",
+        help="compile exact policy-bound reviews into private AI context; never infers approval",
     )
     approved.add_argument("--candidate-set", type=Path, required=True)
     approved.add_argument("--review-decisions", type=Path, required=True)
@@ -476,6 +507,18 @@ def build_parser() -> argparse.ArgumentParser:
     approved.add_argument("--markdown-output", type=Path, required=True)
     approved.add_argument("--replace", action="store_true", help="explicitly replace existing regular output files")
     approved.set_defaults(handler=_compile_approved_question_context)
+
+    supplemented = subcommands.add_parser(
+        "compose-supplemented-archive-context",
+        help="bind protected operator-original supplements into an unapproved archive candidate envelope",
+    )
+    supplemented.add_argument("--archive-candidate-set", type=Path, required=True)
+    supplemented.add_argument("--supplement-set", type=Path, required=True)
+    supplemented.add_argument("--private-output-root", type=Path, required=True)
+    supplemented.add_argument("--json-output", type=Path, required=True)
+    supplemented.add_argument("--markdown-output", type=Path, required=True)
+    supplemented.add_argument("--replace", action="store_true", help="explicitly replace existing regular output files")
+    supplemented.set_defaults(handler=_compose_supplemented_archive_context)
     return parser
 
 

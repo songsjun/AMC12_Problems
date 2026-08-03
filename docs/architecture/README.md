@@ -87,6 +87,9 @@ Each stage has its own tests, independent review, reflection, and Git commit.
   scoring snapshots and uses a drained, versioned provider-contract cutover.
 - `ADR-009`: Tutor v2 keeps Gateway context hashes separate from pinned
   analysis/report lineage and requires an explicit fork before history loss.
+- `ADR-011`: operator-delegated AI-assisted solution review is recorded as a
+  distinct v2 policy; protected original supplements remain hash-bound
+  candidates and still require an independent authority receipt.
 - `TUTOR_PERSISTENCE_DEPLOYMENT.md`: maintenance-window procedure and rollback
   boundary for migrations 011/012.
 - `reviews/phase-6c-tutor-store.md`: Store adapter, lease recovery, safe read

@@ -27,6 +27,13 @@ from amc_content.builder import ContentBuildError, load_source_form
 from amc_content.canonical import canonical_hash, canonical_json, sha256_text
 from amc_content.cli import main
 from amc_content.question_context import build_archive_question_context_set, build_question_context_set
+from amc_content.supplement import (
+    compose_supplemented_archive_candidate_set,
+    question_projection,
+    supplemental_candidate_index,
+    validate_original_solution_supplement_set,
+    validate_supplemented_archive_candidate_set,
+)
 
 
 CONTENT_ROOT = Path(__file__).resolve().parents[1]
@@ -105,6 +112,53 @@ class ApprovedQuestionContextTests(unittest.TestCase):
         value["decisionSetHash"] = canonical_hash(value)
         return value
 
+    def _ai_assisted_decisions(self, records: list[dict]) -> dict:
+        authorization = {
+            "authorizationId": "authorization:operator-001",
+            "authorizedBy": "operator:workspace-owner-001",
+            "authorizedAt": "2026-08-03T12:00:00Z",
+            "scope": "solution-correctness-pedagogy-and-rights-review",
+            "statement": "operator-delegates-ai-assisted-solution-review",
+            "rightsAttestation": "operator-attests-rights-for-reviewed-source-ai-use",
+        }
+        for index, record in enumerate(records, start=1):
+            record.update(
+                {
+                    "reviewMethod": "operator-delegated-ai-assisted",
+                    "reviewModel": {
+                        "provider": "openai-codex",
+                        "model": "gpt-5.6-codex",
+                        "runId": f"review-run-{index:03d}",
+                    },
+                    "operatorAuthorizationId": authorization["authorizationId"],
+                    "candidateProvenance": {
+                        "origin": "source-markdown",
+                        "sourcePath": record["sourceRef"]["path"],
+                        "sourceSha256": record["sourceRef"]["sha256"],
+                    },
+                    "questionContentHash": canonical_hash({
+                        key: self.candidate["questions"][record["questionNumber"] - 1]["question"][key]
+                        for key in ("number", "sourceRef", "promptMarkdown", "choices")
+                    }),
+                }
+            )
+        value = {
+            "schemaVersion": "amc-question-context-review-decisions-v2",
+            "audience": "private-operator-delegated-ai-assisted-review-input",
+            "approvalPolicyVersion": "amc-operator-delegated-ai-assisted-solution-approval-v1",
+            "candidateSetBinding": {
+                "schemaVersion": self.candidate["schemaVersion"],
+                "setHash": self.candidate["setHash"],
+                "forms": [{"id": self.candidate["form"]["id"], "version": self.candidate["form"]["version"]}],
+            },
+            "operatorAuthorization": authorization,
+            "decisions": records,
+        }
+        for record in records:
+            record["decisionRecordHash"] = decision_record_hash(record, value)
+        value["decisionSetHash"] = canonical_hash(value)
+        return value
+
     @staticmethod
     def _receipts(decisions: dict) -> dict:
         value = {
@@ -152,8 +206,172 @@ class ApprovedQuestionContextTests(unittest.TestCase):
         self.assertNotIn("answerKey", canonical_json(two))
         self.assertEqual(two["schemaVersion"], "amc-approved-question-context-test-set-v1")
         self.assertEqual(two["audience"], "private-test-only")
+        self.assertNotIn("reviewGovernance", two)
+        self.assertNotIn("reviewModel", two["questions"][0]["approvedSolutions"][0]["approval"])
+        self.assertNotIn("candidateProvenance", two["questions"][0]["approvedSolutions"][0])
         self.assertTrue(validate_approved_question_context_set(two))
         self.assertEqual(validate_approved_question_context_test_set(two), [])
+
+    def test_operator_delegated_ai_assisted_policy_is_explicit_and_not_human_v1(self) -> None:
+        decisions = self._ai_assisted_decisions(
+            [self._decision(), self._decision("solution-002")]
+        )
+        receipts = self._receipts(decisions)
+        approved = compile_approved_question_context_set(
+            self.candidate, decisions, receipts, allow_test_only=True
+        )
+
+        self.assertEqual(validate_review_decisions(decisions, candidate_set=self.candidate), [])
+        self.assertEqual(validate_approval_receipt_set(receipts, decisions=decisions), [])
+        self.assertEqual(
+            validate_approved_question_context_test_set(
+                approved, approval_receipts=receipts
+            ),
+            [],
+        )
+        self.assertEqual(approved["schemaVersion"], "amc-approved-question-context-test-set-v2")
+        self.assertEqual(
+            approved["approvalPolicyVersion"],
+            "amc-operator-delegated-ai-assisted-solution-approval-v1",
+        )
+        self.assertEqual(
+            approved["reviewGovernance"]["operatorAuthorization"],
+            decisions["operatorAuthorization"],
+        )
+        for solution in approved["questions"][0]["approvedSolutions"]:
+            approval = solution["approval"]
+            self.assertEqual(approval["reviewMethod"], "operator-delegated-ai-assisted")
+            self.assertEqual(approval["reviewModel"]["provider"], "openai-codex")
+            self.assertEqual(approval["reviewerId"], "reviewer:test-001")
+            self.assertEqual(
+                approval["operatorAuthorizationId"],
+                decisions["operatorAuthorization"]["authorizationId"],
+            )
+            self.assertEqual(approval["authorityReceipt"]["status"], "active")
+        self.assertNotIn("human-approved", approved["disclaimer"].casefold())
+
+    def test_ai_assisted_policy_tampering_and_v1_cross_policy_fields_fail_closed(self) -> None:
+        decisions = self._ai_assisted_decisions([self._decision()])
+        cases = {
+            "method": ("reviewMethod", "human", "reviewMethod"),
+            "authorization": ("operatorAuthorizationId", "authorization:other-001", "operatorAuthorizationId"),
+        }
+        for name, (field, value, expected) in cases.items():
+            with self.subTest(name=name):
+                malformed = copy.deepcopy(decisions)
+                malformed["decisions"][0][field] = value
+                malformed["decisionSetHash"] = canonical_hash(malformed, omit=("decisionSetHash",))
+                errors = validate_review_decisions(malformed, candidate_set=self.candidate)
+                self.assertTrue(any(expected in error for error in errors), errors)
+
+        model_tampered = copy.deepcopy(decisions)
+        model_tampered["decisions"][0]["reviewModel"]["model"] = "different-model"
+        model_tampered["decisionSetHash"] = canonical_hash(model_tampered, omit=("decisionSetHash",))
+        errors = validate_review_decisions(model_tampered, candidate_set=self.candidate)
+        self.assertTrue(any("decisionRecordHash" in error for error in errors), errors)
+
+        authorization_tampered = copy.deepcopy(decisions)
+        authorization_tampered["operatorAuthorization"]["authorizedBy"] = "operator:different-owner-001"
+        authorization_tampered["operatorAuthorization"]["authorizedAt"] = "2026-08-03T12:00:01Z"
+        authorization_tampered["decisionSetHash"] = canonical_hash(
+            authorization_tampered, omit=("decisionSetHash",)
+        )
+        errors = validate_review_decisions(authorization_tampered, candidate_set=self.candidate)
+        self.assertTrue(any("decisionRecordHash" in error for error in errors), errors)
+
+        receipts = self._receipts(decisions)
+        approved = compile_approved_question_context_set(
+            self.candidate, decisions, receipts, allow_test_only=True
+        )
+        compiled_authorization_tampered = copy.deepcopy(approved)
+        compiled_authorization_tampered["reviewGovernance"]["operatorAuthorization"][
+            "authorizedBy"
+        ] = "operator:different-owner-001"
+        compiled_authorization_tampered["reviewGovernance"]["operatorAuthorization"][
+            "authorizedAt"
+        ] = "2026-08-03T12:00:01Z"
+        attacker_decisions = copy.deepcopy(decisions)
+        attacker_decisions["operatorAuthorization"] = copy.deepcopy(
+            compiled_authorization_tampered["reviewGovernance"]["operatorAuthorization"]
+        )
+        for record in attacker_decisions["decisions"]:
+            record["decisionRecordHash"] = decision_record_hash(record, attacker_decisions)
+        attacker_decisions["decisionSetHash"] = canonical_hash(
+            attacker_decisions, omit=("decisionSetHash",)
+        )
+        attacker_hashes = {
+            (record["questionNumber"], record["solutionId"]): record["decisionRecordHash"]
+            for record in attacker_decisions["decisions"]
+        }
+        for question in compiled_authorization_tampered["questions"]:
+            for solution in question["approvedSolutions"]:
+                solution["approval"]["decisionRecordHash"] = attacker_hashes[
+                    (question["number"], solution["solutionId"])
+                ]
+        compiled_authorization_tampered["setHash"] = canonical_hash(
+            compiled_authorization_tampered, omit=("setHash",)
+        )
+        errors = validate_approved_question_context_test_set(
+            compiled_authorization_tampered, approval_receipts=receipts
+        )
+        self.assertTrue(any("trusted receipt" in error for error in errors), errors)
+
+        stale_stem = copy.deepcopy(decisions)
+        stale_stem["decisions"][0]["questionContentHash"] = "0" * 64
+        stale_stem["decisions"][0]["decisionRecordHash"] = decision_record_hash(
+            stale_stem["decisions"][0], stale_stem
+        )
+        stale_stem["decisionSetHash"] = canonical_hash(stale_stem, omit=("decisionSetHash",))
+        errors = validate_review_decisions(stale_stem, candidate_set=self.candidate)
+        self.assertTrue(any("exact candidate question" in error for error in errors), errors)
+
+        human_v1 = self._decisions([self._decision()])
+        human_v1["operatorAuthorization"] = decisions["operatorAuthorization"]
+        human_v1["decisionSetHash"] = canonical_hash(human_v1, omit=("decisionSetHash",))
+        errors = validate_review_decisions(human_v1, candidate_set=self.candidate)
+        self.assertTrue(any("unknown fields" in error for error in errors), errors)
+
+        missing_receipts = self._receipts(decisions)
+        missing_receipts["receipts"] = []
+        missing_receipts["receiptSetHash"] = canonical_hash(missing_receipts, omit=("receiptSetHash",))
+        with self.assertRaisesRegex(ContentBuildError, "exactly one active"):
+            compile_approved_question_context_set(
+                self.candidate, decisions, missing_receipts, allow_test_only=True
+            )
+
+        non_independent = self._receipts(decisions)
+        non_independent["authorityId"] = decisions["decisions"][0]["reviewerId"]
+        for receipt in non_independent["receipts"]:
+            receipt["authorityId"] = non_independent["authorityId"]
+        non_independent["receiptSetHash"] = canonical_hash(non_independent, omit=("receiptSetHash",))
+        errors = validate_approval_receipt_set(non_independent, decisions=decisions)
+        self.assertTrue(any("distinct" in error for error in errors), errors)
+
+        self_authorized = copy.deepcopy(decisions)
+        self_authorized["decisions"][0]["reviewerId"] = self_authorized["operatorAuthorization"]["authorizedBy"]
+        self_authorized["decisions"][0]["decisionRecordHash"] = decision_record_hash(
+            self_authorized["decisions"][0], self_authorized
+        )
+        self_authorized["decisionSetHash"] = canonical_hash(
+            self_authorized, omit=("decisionSetHash",)
+        )
+        self_authorized_receipts = self._receipts(self_authorized)
+        errors = validate_review_decisions(self_authorized, candidate_set=self.candidate)
+        self.assertTrue(any("authorizing operator" in error for error in errors), errors)
+        with self.assertRaisesRegex(ContentBuildError, "authorizing operator"):
+            compile_approved_question_context_set(
+                self.candidate, self_authorized, self_authorized_receipts, allow_test_only=True
+            )
+
+        operator_as_authority = self._receipts(decisions)
+        operator_as_authority["authorityId"] = decisions["operatorAuthorization"]["authorizedBy"]
+        for receipt in operator_as_authority["receipts"]:
+            receipt["authorityId"] = operator_as_authority["authorityId"]
+        operator_as_authority["receiptSetHash"] = canonical_hash(
+            operator_as_authority, omit=("receiptSetHash",)
+        )
+        errors = validate_approval_receipt_set(operator_as_authority, decisions=decisions)
+        self.assertTrue(any("distinct" in error for error in errors), errors)
 
     def test_visual_detector_covers_real_asymptote_and_aops_image_link_witnesses(self) -> None:
         asymptote = (AMC_ROOT / "2002_AMC_12A_Problems" / "Problem_23.md").read_text(encoding="utf-8")
@@ -199,6 +417,45 @@ class ApprovedQuestionContextTests(unittest.TestCase):
         malformed_approved = copy.deepcopy(approved)
         malformed_approved["formBinding"]["candidateSchemaVersion"] = {}
         self.assertTrue(validate_approved_question_context_test_set(malformed_approved))
+
+        ai_decisions = self._ai_assisted_decisions([self._decision(), self._decision("solution-002")])
+        ai_receipts = self._receipts(ai_decisions)
+        malformed_ai_decisions = copy.deepcopy(ai_decisions)
+        malformed_ai_decisions["decisions"][0]["reviewerId"] = []
+        malformed_ai_decisions["decisions"][0]["decisionRecordHash"] = decision_record_hash(
+            malformed_ai_decisions["decisions"][0], malformed_ai_decisions
+        )
+        malformed_ai_decisions["decisionSetHash"] = canonical_hash(
+            malformed_ai_decisions, omit=("decisionSetHash",)
+        )
+        self.assertTrue(validate_approval_receipt_set(ai_receipts, decisions=malformed_ai_decisions))
+
+        malformed_ai_receipts = copy.deepcopy(ai_receipts)
+        malformed_ai_receipts["authorityId"] = []
+        for receipt in malformed_ai_receipts["receipts"]:
+            receipt["authorityId"] = []
+        malformed_ai_receipts["receiptSetHash"] = canonical_hash(
+            malformed_ai_receipts, omit=("receiptSetHash",)
+        )
+        self.assertTrue(validate_approval_receipt_set(malformed_ai_receipts, decisions=ai_decisions))
+
+        for bad_identity in ([], {}):
+            malformed_ai_decisions = copy.deepcopy(ai_decisions)
+            malformed_ai_decisions["schemaVersion"] = bad_identity
+            self.assertTrue(validate_review_decisions(malformed_ai_decisions, candidate_set=self.candidate))
+
+            malformed_ai_approved = compile_approved_question_context_set(
+                self.candidate, ai_decisions, ai_receipts, allow_test_only=True
+            )
+            malformed_ai_approved["approvalPolicyVersion"] = bad_identity
+            self.assertTrue(validate_approved_question_context_test_set(malformed_ai_approved))
+
+            malformed_ai_archive = {
+                "schemaVersion": "amc-approved-question-context-archive-set-v2",
+                "audience": "private-ai-context-only",
+                "approvalPolicyVersion": bad_identity,
+            }
+            self.assertTrue(validate_approved_archive_context_set(malformed_ai_archive))
 
         surrogate_cases = (
             (validate_review_decisions, copy.deepcopy(decisions), ()),
@@ -549,10 +806,16 @@ class ApprovedQuestionContextTests(unittest.TestCase):
     def test_schema_documents_are_strict_and_strict_json_rejects_duplicate_keys(self) -> None:
         for name in (
             "question-context-review-decisions.schema.json",
+            "question-context-review-decisions-v2.schema.json",
             "solution-approval-receipt-set.schema.json",
             "approved-question-context-set.schema.json",
+            "approved-question-context-set-v2.schema.json",
             "approved-question-context-test-set.schema.json",
+            "approved-question-context-test-set-v2.schema.json",
             "approved-archive-question-context-set.schema.json",
+            "approved-archive-question-context-set-v2.schema.json",
+            "original-solution-supplement-set.schema.json",
+            "supplemented-archive-question-context-set.schema.json",
         ):
             schema = json.loads((CONTENT_ROOT / "schema" / name).read_text(encoding="utf-8"))
             self.assertFalse(schema["additionalProperties"])
@@ -681,6 +944,41 @@ class ApprovedQuestionContextTests(unittest.TestCase):
             self.assertEqual(decoded, {"kind": "opened-inode"})
             self.assertEqual(json.loads(target.read_text(encoding="utf-8")), {"kind": "replacement-path"})
 
+    def test_supplement_composition_cli_requires_protected_independent_inputs(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            root.chmod(0o700)
+            private = root / "private"
+            private.mkdir(mode=0o700)
+            candidate = root / "archive-candidate.json"
+            supplement = root / "supplements.json"
+            candidate.write_text("{}", encoding="utf-8")
+            supplement.write_text("{}", encoding="utf-8")
+            candidate.chmod(0o600)
+            supplement.chmod(0o644)
+            result = main([
+                "compose-supplemented-archive-context",
+                "--archive-candidate-set", str(candidate),
+                "--supplement-set", str(supplement),
+                "--private-output-root", str(private),
+                "--json-output", str(private / "composed.json"),
+                "--markdown-output", str(private / "composed.md"),
+            ])
+            self.assertEqual(result, 2)
+            self.assertFalse((private / "composed.json").exists())
+            self.assertFalse((private / "composed.md").exists())
+
+    def test_supplement_validators_are_total_and_reject_malformed_unicode(self) -> None:
+        for validator in (
+            validate_original_solution_supplement_set,
+            validate_supplemented_archive_candidate_set,
+        ):
+            for payload in (None, True, 1, "value", [], {}, {"value": "bad\ud800text"}):
+                with self.subTest(validator=validator.__name__, payload=repr(payload)):
+                    errors = validator(payload)
+                    self.assertIsInstance(errors, list)
+                    self.assertTrue(errors)
+
     def test_cli_private_atomic_no_clobber_and_concurrent_single_winner(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -783,6 +1081,18 @@ class ApprovedArchiveQuestionContextTests(unittest.TestCase):
     def test_selects_multiple_forms_and_preserves_exact_archive_bindings(self) -> None:
         approved, decisions, selected = self._compile_archive()
         self.assertEqual(approved["schemaVersion"], "amc-approved-question-context-archive-set-v1")
+        self.assertEqual(
+            approved["disclaimer"],
+            "Private archive AI context containing only explicitly approved solutions and no answer keys.",
+        )
+        self.assertEqual(
+            approved["setHash"],
+            "6ed38801f3d2e943d3eea669de468105c937a1f4ad6fb190bf0e062d16c755b8",
+        )
+        self.assertEqual(
+            sha256_text(canonical_json(approved)),
+            "de12fdf9bd53bacec7fdfba3e6ea37bbb6c8f4f43304f56d57f54c2cc93d8751",
+        )
         self.assertEqual(approved["summary"]["formCount"], 2)
         self.assertEqual(approved["summary"]["approvedSolutionCount"], 1)
         self.assertEqual(validate_approved_archive_context_set(approved), [])
@@ -834,6 +1144,190 @@ class ApprovedArchiveQuestionContextTests(unittest.TestCase):
         wrong_authority["setHash"] = canonical_hash(wrong_authority, omit=("setHash",))
         errors = validate_approved_archive_context_set(wrong_authority)
         self.assertTrue(any("authority" in error for error in errors), errors)
+
+    def test_protected_original_supplement_remains_candidate_and_uses_v2_review_plus_receipt(self) -> None:
+        form = next(item for item in self.candidate["forms"] if item["form"]["id"] == "amc12-2002-b")
+        context = form["questions"][6]
+        authorization = {
+            "authorizationId": "authorization:supplement-rights-001",
+            "authorizedBy": "operator:workspace-owner-001",
+            "authorizedAt": "2026-08-03T12:00:00Z",
+            "statement": "operator-attests-original-supplement-and-authorizes-ai-use",
+        }
+        record = {
+            "supplementId": "supplement-2002b-q7-alt",
+            "solutionId": "solution-900",
+            "formId": form["form"]["id"],
+            "formVersion": form["form"]["version"],
+            "questionNumber": 7,
+            "questionContentHash": canonical_hash(question_projection(context)),
+            "releaseBinding": {
+                key: form["form"][key]
+                for key in ("questionBundleHash", "contentHash", "manifestHash")
+            },
+            "title": "Synthetic original alternative",
+            "bodyMarkdown": "A separately authored synthetic derivation for governance testing.\n",
+            "provenance": {
+                "origin": "operator-commissioned-original",
+                "authorId": "codex:content-review-001",
+                "createdAt": "2026-08-03T12:05:00Z",
+                "rightsStatus": "operator-attested-original-and-authorized-for-ai-use",
+                "rightsAuthorizationId": authorization["authorizationId"],
+            },
+        }
+        record["bodySha256"] = sha256_text(record["bodyMarkdown"])
+        record["supplementRecordHash"] = canonical_hash(record)
+        supplement_set = {
+            "schemaVersion": "amc-original-solution-supplement-set-v1",
+            "audience": "private-candidate-supplement-input",
+            "provenancePolicyVersion": "amc-operator-original-solution-provenance-v1",
+            "operatorAuthorization": authorization,
+            "archiveCandidateBinding": {
+                "schemaVersion": self.candidate["schemaVersion"],
+                "setHash": self.candidate["setHash"],
+                "archiveRelease": self.candidate["archiveRelease"],
+            },
+            "supplements": [record],
+        }
+        supplement_set["supplementSetHash"] = canonical_hash(supplement_set)
+        self.assertEqual(
+            validate_original_solution_supplement_set(supplement_set, archive_candidate=self.candidate), []
+        )
+        for field in ("formId", "formVersion", "questionNumber"):
+            for malformed_value in ([], {}):
+                with self.subTest(field=field, malformed_value=type(malformed_value).__name__):
+                    malformed_supplement_set = copy.deepcopy(supplement_set)
+                    malformed_supplement_set["supplements"][0][field] = malformed_value
+                    errors = validate_original_solution_supplement_set(
+                        malformed_supplement_set, archive_candidate=self.candidate
+                    )
+                    self.assertIsInstance(errors, list)
+                    self.assertTrue(errors)
+        composed = compose_supplemented_archive_candidate_set(self.candidate, supplement_set)
+        self.assertEqual(validate_supplemented_archive_candidate_set(composed), [])
+        supplemental = supplemental_candidate_index(composed)[
+            (form["form"]["id"], form["form"]["version"], 7, "solution-900")
+        ]
+        self.assertEqual(supplemental["reviewStatus"], "candidate")
+        self.assertNotIn("approved", supplemental)
+
+        review_authorization = {
+            "authorizationId": "authorization:review-001",
+            "authorizedBy": "operator:workspace-owner-001",
+            "authorizedAt": "2026-08-03T12:10:00Z",
+            "scope": "solution-correctness-pedagogy-and-rights-review",
+            "statement": "operator-delegates-ai-assisted-solution-review",
+            "rightsAttestation": "operator-attests-rights-for-reviewed-source-ai-use",
+        }
+        decision = {
+            "formId": form["form"]["id"], "formVersion": form["form"]["version"],
+            "questionNumber": 7, "solutionId": supplemental["solutionId"], "decision": "approved",
+            "bodySha256": supplemental["bodySha256"],
+            "sourceRef": {key: supplemental["sourceRef"][key] for key in ("path", "sha256")},
+            "reviewerId": "reviewer:supplement-math-001", "reviewedAt": "2026-08-03T12:15:00Z",
+            "rightsStatus": "approved-for-ai-use", "qualityFlags": [], "methodTags": ["synthetic-test"],
+            "reviewMethod": "operator-delegated-ai-assisted",
+            "reviewModel": {"provider": "openai-codex", "model": "gpt-5.6-codex", "runId": "review-run-supplement-001"},
+            "operatorAuthorizationId": review_authorization["authorizationId"],
+            "candidateProvenance": supplemental["candidateProvenance"],
+            "questionContentHash": record["questionContentHash"],
+        }
+        decisions = {
+            "schemaVersion": "amc-question-context-review-decisions-v2",
+            "audience": "private-operator-delegated-ai-assisted-review-input",
+            "approvalPolicyVersion": "amc-operator-delegated-ai-assisted-solution-approval-v1",
+            "candidateSetBinding": {
+                "schemaVersion": composed["schemaVersion"], "setHash": composed["setHash"],
+                "forms": [{"id": form["form"]["id"], "version": form["form"]["version"]}],
+            },
+            "operatorAuthorization": review_authorization,
+            "decisions": [decision],
+        }
+        decision["decisionRecordHash"] = decision_record_hash(decision, decisions)
+        decisions["decisionSetHash"] = canonical_hash(decisions)
+        receipts = {
+            "schemaVersion": "amc-solution-approval-receipt-set-v1",
+            "audience": "private-approval-authority-allowlist",
+            "authorityId": "authority:supplement-001",
+            "receipts": [{
+                "receiptId": "receipt:supplement-001", "authorityId": "authority:supplement-001",
+                "decisionRecordHash": decision["decisionRecordHash"], "issuedAt": "2026-08-03T12:20:00Z",
+                "status": "active",
+            }],
+        }
+        receipts["receiptSetHash"] = canonical_hash(receipts)
+        approved = compile_approved_question_context_set(composed, decisions, receipts)
+        self.assertEqual(approved["schemaVersion"], "amc-approved-question-context-archive-set-v2")
+        self.assertEqual(
+            validate_approved_archive_context_set(
+                approved, approval_receipts=receipts
+            ),
+            [],
+        )
+        output = approved["forms"][0]["questions"][6]["approvedSolutions"][0]
+        self.assertEqual(output["candidateProvenance"]["origin"], "operator-original-supplement")
+        self.assertEqual(output["approval"]["authorityReceipt"]["status"], "active")
+        rendered = approved_question_context_set_markdown(approved)
+        self.assertIn("# Approved archive question context set", rendered)
+        self.assertIn(approved["setHash"], rendered)
+
+        with tempfile.TemporaryDirectory() as directory:
+            protected = Path(directory)
+            protected.chmod(0o700)
+            private = protected / "compiled"
+            private.mkdir(mode=0o700)
+            candidate_path = protected / "candidate.json"
+            decisions_path = protected / "decisions.json"
+            receipts_path = protected / "receipts.json"
+            for path, value in (
+                (candidate_path, composed), (decisions_path, decisions), (receipts_path, receipts)
+            ):
+                path.write_text(canonical_json(value), encoding="utf-8")
+                path.chmod(0o600)
+            result = main([
+                "compile-approved-question-context",
+                "--candidate-set", str(candidate_path),
+                "--review-decisions", str(decisions_path),
+                "--approval-receipts", str(receipts_path),
+                "--private-output-root", str(private),
+                "--json-output", str(private / "approved.json"),
+                "--markdown-output", str(private / "approved.md"),
+            ])
+            self.assertEqual(result, 0)
+            decoded = json.loads((private / "approved.json").read_text(encoding="utf-8"))
+            self.assertEqual(decoded["schemaVersion"], "amc-approved-question-context-archive-set-v2")
+            self.assertIn("# Approved archive question context set", (private / "approved.md").read_text(encoding="utf-8"))
+
+        self_reviewed = copy.deepcopy(decisions)
+        self_reviewed["decisions"][0]["reviewerId"] = self_reviewed["decisions"][0][
+            "candidateProvenance"
+        ]["authorId"]
+        self_reviewed["decisions"][0]["decisionRecordHash"] = decision_record_hash(
+            self_reviewed["decisions"][0], self_reviewed
+        )
+        self_reviewed["decisionSetHash"] = canonical_hash(
+            self_reviewed, omit=("decisionSetHash",)
+        )
+        self_reviewed_receipts = copy.deepcopy(receipts)
+        self_reviewed_receipts["receipts"][0]["decisionRecordHash"] = self_reviewed["decisions"][0][
+            "decisionRecordHash"
+        ]
+        self_reviewed_receipts["receiptSetHash"] = canonical_hash(
+            self_reviewed_receipts, omit=("receiptSetHash",)
+        )
+        errors = validate_review_decisions(self_reviewed, candidate_set=composed)
+        self.assertTrue(any("supplement author" in error for error in errors), errors)
+        with self.assertRaisesRegex(ContentBuildError, "supplement author"):
+            compile_approved_question_context_set(composed, self_reviewed, self_reviewed_receipts)
+
+        stale = copy.deepcopy(supplement_set)
+        stale["supplements"][0]["questionContentHash"] = "0" * 64
+        stale["supplements"][0]["supplementRecordHash"] = canonical_hash(
+            stale["supplements"][0], omit=("supplementRecordHash",)
+        )
+        stale["supplementSetHash"] = canonical_hash(stale, omit=("supplementSetHash",))
+        errors = validate_original_solution_supplement_set(stale, archive_candidate=self.candidate)
+        self.assertTrue(any("exact released question" in error for error in errors), errors)
 
 
 if __name__ == "__main__":

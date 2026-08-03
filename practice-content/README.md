@@ -16,8 +16,10 @@ An additional, isolated `build-question-context` command produces private
 candidates. It does not change either manifest above, and its output has no
 `approved` state. Obvious title warnings such as `cheese`, `fakesolve`,
 `does not actually work`, and `worst` are quarantined automatically; every
-other solution remains only a candidate until a human reviewer approves it in
-a later content-governance step.
+other solution remains only a candidate until one supported explicit review
+policy and an independent approval authority authorize it in a later
+content-governance step. Human review v1 and operator-delegated AI-assisted
+review v2 are separate contracts and must never be mislabeled as each other.
 
 The private artifact has the compatibility fields expected by the AMC backend:
 
@@ -146,6 +148,9 @@ The storage/API adapter contract is in [BACKEND_IMPORT_CONTRACT.md](BACKEND_IMPO
 It bridges this canonical `durationSeconds`/`publicationStatus`/`correct`
 format to the API's `durationMs`/`published`/`correctPoints` fields without
 changing content semantics.
+The separate [V2_APPROVED_CONTEXT_IMPORT_CONTRACT.md](V2_APPROVED_CONTEXT_IMPORT_CONTRACT.md)
+lists the fail-closed API validator, Memory/PostgreSQL projection, and migration
+work required before operator-delegated AI-assisted v2 artifacts can be imported.
 
 The source paths in a source form are relative to the `AMC12_Problems`
 repository root, not to this directory.
@@ -302,6 +307,77 @@ validator/importer rejects that contract; production
 binding. These fixtures are not review evidence. Real decisions and receipts
 belong in separately protected storage, not this repository or a public/static
 root.
+
+## Operator-delegated AI-assisted review v2
+
+The original human-review v1 contract remains supported without relaxed keys,
+audiences, hashes, or meanings. When the operator delegates review to Codex or
+another model-assisted reviewer, use
+`amc-question-context-review-decisions-v2` with policy
+`amc-operator-delegated-ai-assisted-solution-approval-v1`. Do not put such a
+decision in human-v1 or describe it as teacher/human approval.
+
+V2 requires a root `operatorAuthorization` and, on every decision, the exact
+`reviewMethod`, `reviewerId`, provider/model/run identity,
+`operatorAuthorizationId`, and `candidateProvenance`. Those fields participate
+in `decisionRecordHash`, as does the complete root `operatorAuthorization`;
+the complete authorization and per-solution review lineage are copied into the
+v2 compiled artifact. The same separately supplied
+v1 receipt allowlist remains mandatory. The reviewer/compiler cannot create a
+receipt or automatically approve a candidate. The authorizing operator,
+mathematical reviewer, and receipt authority must be three pairwise-distinct
+identities. For an operator-original supplement, its recorded author must also
+be distinct from the mathematical reviewer who approves that solution.
+The Python v2 approved-artifact validators require that receipt set as an
+explicit `approval_receipts=` input; validating an artifact without the
+separately protected authority evidence is deliberately an error. V1 artifact
+bytes and validation behavior remain unchanged.
+`rightsStatus` is supported by the operator's separately recorded
+`rightsAttestation`; it is not a claim that the reviewing model established
+copyright or licensing rights.
+
+The v2 production schemas are `amc-approved-question-context-set-v2` and
+`amc-approved-question-context-archive-set-v2`. Synthetic tests use the
+distinct non-importable `amc-approved-question-context-test-set-v2`. Existing
+importers that understand only approved-context v1 must reject v2 until their
+trusted schema allowlist and persistence projection are explicitly upgraded;
+never down-convert v2 to human-v1.
+
+Any prompt/choice repair changes the question context and candidate-set hash.
+Old decisions and their receipts then fail binding validation even when a
+solution body itself did not change. This is intentional: solution correctness
+must be reconsidered against the repaired problem.
+
+### Protected original supplement candidates
+
+Do not edit an already published archive form merely to add a second reference
+method. Put separately authored solutions in an owner-only
+`amc-original-solution-supplement-set-v1` file outside this repository. Each
+record binds the exact archive candidate/release, form id/version, release
+hashes, question content hash, body/record hashes, original author identity,
+creation time, and the operator's originality/AI-use rights attestation.
+
+Compose it with the base archive inventory under an existing `0700` private
+root:
+
+```sh
+python3 -m amc_content.cli compose-supplemented-archive-context \
+  --archive-candidate-set /protected/review/archive-candidates.json \
+  --supplement-set /protected/review/original-supplements.json \
+  --private-output-root /var/tmp/amc-approved-context \
+  --json-output /var/tmp/amc-approved-context/supplemented-candidates.json \
+  --markdown-output /var/tmp/amc-approved-context/supplemented-candidates.md
+```
+
+Both inputs must pass the same protected-file rules as review decisions. The
+resulting `amc-question-context-supplemented-archive-candidate-set-v1` hash
+covers the complete base and supplement sets. Reserved `solution-9NN`
+supplements remain unapproved candidates. They require an exact v2 review
+decision and exactly one active independent authority receipt before the
+compiler includes them. Their explicit original/rights provenance is preserved
+in the compiled v2 solution, and the supplement author cannot act as its
+mathematical reviewer. The composition changes no published form,
+source, `contentHash`, or `manifestHash`.
 
 `review` has no key input and never creates an importable private manifest.
 `build` verifies both artifacts after generation and is idempotent: canonical

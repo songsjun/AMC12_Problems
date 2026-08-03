@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kapy.local/schema/approved-question-context-test-set-v2.schema.json",
+  "title": "Synthetic-only operator-delegated AI-assisted AMC approved context",
+  "description": "A deliberately non-production-importable v2 contract for synthetic tests.",
+  "$comment": "Runtime validation enforces the same cross-record identity separation as the production v2 schema.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "audience", "approvalPolicyVersion", "reviewGovernance", "formBinding", "reviewDecisionBinding", "approvalAuthorityBinding", "summary", "questions", "disclaimer", "setHash"],
+  "properties": {
+    "schemaVersion": {"const": "amc-approved-question-context-test-set-v2"},
+    "audience": {"const": "private-test-only"},
+    "approvalPolicyVersion": {"const": "amc-operator-delegated-ai-assisted-solution-approval-v1"},
+    "reviewGovernance": {"$ref": "approved-question-context-set-v2.schema.json#/$defs/reviewGovernance"},
+    "formBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "version", "candidateSchemaVersion", "candidateSetHash", "contextContentHash", "releaseBinding"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1},
+        "candidateSchemaVersion": {"enum": ["amc-question-context-candidate-set-v1", "amc-question-context-archive-candidate-set-v1", "amc-question-context-supplemented-archive-candidate-set-v1"]},
+        "candidateSetHash": {"$ref": "approved-question-context-set.schema.json#/$defs/sha256"},
+        "contextContentHash": {"$ref": "approved-question-context-set.schema.json#/$defs/sha256"},
+        "releaseBinding": {"type": "null"}
+      }
+    },
+    "reviewDecisionBinding": {"$ref": "approved-question-context-set-v2.schema.json#/$defs/reviewBinding"},
+    "approvalAuthorityBinding": {"$ref": "approved-question-context-set.schema.json#/$defs/authorityBinding"},
+    "summary": {"$ref": "approved-question-context-set.schema.json#/$defs/summary"},
+    "questions": {"type": "array", "minItems": 25, "maxItems": 25, "items": {"$ref": "approved-question-context-set-v2.schema.json#/$defs/question"}},
+    "disclaimer": {"type": "string", "minLength": 1},
+    "setHash": {"$ref": "approved-question-context-set.schema.json#/$defs/sha256"}
+  }
+}

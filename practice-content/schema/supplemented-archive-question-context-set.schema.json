@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kapy.local/schema/supplemented-archive-question-context-set.schema.json",
+  "title": "Protected archive candidate set plus operator-original supplement candidates",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "audience", "baseCandidateSet", "supplementSet", "disclaimer", "setHash"],
+  "properties": {
+    "schemaVersion": {"const": "amc-question-context-supplemented-archive-candidate-set-v1"},
+    "audience": {"const": "private-review-only"},
+    "baseCandidateSet": {"$ref": "archive-question-context-set.schema.json"},
+    "supplementSet": {"$ref": "original-solution-supplement-set.schema.json"},
+    "disclaimer": {"type": "string", "minLength": 1},
+    "setHash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}
