@@ -41,6 +41,15 @@ test('synthetic/test-only manifests are normalized as test-only and default poli
   assert.notEqual(PHASES.TIMED, PHASES.FINALIZED);
 });
 
+test('generic manifests require contiguous question numbers', () => {
+  const gapped = structuredClone(fixtureManifest);
+  gapped.questions = [gapped.questions[0], { ...gapped.questions[1], number: 3 }];
+  assert.throws(
+    () => normalizeManifest(gapped),
+    (error) => error?.code === 'INVALID_MANIFEST' && /contiguous/.test(error.message)
+  );
+});
+
 test('archive scoring preserves accepted alternatives and excludes documented unscored items', () => {
   const form = {
     scoringPolicy: { id: 'archive-test', version: '1', correctPoints: 6, blankPoints: 1.5, incorrectPoints: 0 },

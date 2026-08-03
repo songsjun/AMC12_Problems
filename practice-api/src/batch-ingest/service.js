@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { ApiError, badRequest, conflict, notFound, tooManyRequests } from '../errors.js';
+import { BATCH_REVIEW_SOURCE_TYPE } from '../batch-review/domain.js';
 import {
   ASSET_STATUS,
   BATCH_DELETION_STATE,
@@ -577,31 +578,35 @@ export class BatchPracticeService {
   }
 
   async #commit(tx, bundle, confirmation, now, knownForm = null) {
-    const learning = await tx.getLearningSubmissionBundle();
-    const form = knownForm || await this.store.getForm(bundle.batch.formId, bundle.batch.formVersion);
-    if (!learning || !form) throw new Error('Pinned batch learning context is missing.');
-    const entitlement = await requireLearningEntitlement(tx, 'EXISTING_WORK');
-    const approvedContext = entitlement.sourceType === 'OPEN_REVIEW'
-      ? await tx.getApprovedContextSetById(entitlement.release.contextSetId)
-      : await tx.getApprovedContextSetForForm(bundle.batch.formId, bundle.batch.formVersion);
-    const aggregate = createBatchLearningAggregate({
-      batch: bundle.batch,
-      currentVersion: learning.version,
-      confirmation,
-      form,
-      approvedContext,
-      now
-    });
-    try {
-      return await tx.commitLearningBatch({
-        batchId: bundle.batch.id,
-        expectedMappingRevision: bundle.mapping.revision,
-        aggregate,
+    return tx.withApprovedContextFormLock(bundle.batch.formId, bundle.batch.formVersion, async () => {
+      const learning = await tx.getLearningSubmissionBundle();
+      const form = knownForm || await this.store.getForm(bundle.batch.formId, bundle.batch.formVersion);
+      if (!learning || !form) throw new Error('Pinned batch learning context is missing.');
+      const entitlement = await requireLearningEntitlement(tx, 'EXISTING_WORK');
+      const approvedContext = entitlement.sourceType === 'OPEN_REVIEW'
+        ? await tx.getApprovedContextSetById(entitlement.release.contextSetId)
+        : entitlement.sourceType === BATCH_REVIEW_SOURCE_TYPE
+          ? await tx.getCompleteApprovedContextSetForForm(bundle.batch.formId, bundle.batch.formVersion)
+          : await tx.getApprovedContextSetForForm(bundle.batch.formId, bundle.batch.formVersion);
+      const aggregate = createBatchLearningAggregate({
+        batch: bundle.batch,
+        currentVersion: learning.version,
+        confirmation,
+        form,
+        approvedContext,
         now
       });
-    } catch (error) {
-      throw storeConflict(error);
-    }
+      try {
+        return await tx.commitLearningBatch({
+          batchId: bundle.batch.id,
+          expectedMappingRevision: bundle.mapping.revision,
+          aggregate,
+          now
+        });
+      } catch (error) {
+        throw storeConflict(error);
+      }
+    });
   }
 
   async delete(studentId, attemptId, batchId, idempotencyKey) {

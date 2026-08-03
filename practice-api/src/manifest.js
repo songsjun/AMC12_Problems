@@ -509,6 +509,9 @@ export function normalizeManifest(input) {
       solutionMarkdown: asNonEmptyString(question.solutionMarkdown ?? question.solution, `Question ${number} solutionMarkdown`)
     };
   }).sort((a, b) => a.number - b.number);
+  if (questions.some((question, index) => question.number !== index + 1)) {
+    throw badRequest('INVALID_MANIFEST', 'Question numbers must be contiguous from 1 through the question count.');
+  }
   return {
     id,
     version,

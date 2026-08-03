@@ -7,7 +7,8 @@ export const PHASES = Object.freeze({
   OVERTIME: 'OVERTIME',
   FINALIZED: 'FINALIZED',
   RESET: 'RESET',
-  OPEN_REVIEW: 'OPEN_REVIEW'
+  OPEN_REVIEW: 'OPEN_REVIEW',
+  BATCH_REVIEW: 'BATCH_REVIEW'
 });
 export const CLOCK_STATES = Object.freeze({ RUNNING: 'RUNNING', PAUSED: 'PAUSED' });
 export const SUBMISSION_KINDS = Object.freeze({

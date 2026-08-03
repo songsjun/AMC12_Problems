@@ -130,6 +130,7 @@ async function memoryFixture({ batchConfirmed = false, openReview = false } = {}
   }
   store.approvedContextSets.set(contextSetId, {
     id: contextSetId, artifactSetHash: context.contextArtifactSha256,
+    sealed: true, declaredQuestionCount: 1, active: true,
     approvalAuthorityId, approvalReceiptSetHash, releaseBinding,
     formId: context.formId, formVersion: context.formVersion,
     questions: [{
@@ -159,6 +160,7 @@ async function memoryFixture({ batchConfirmed = false, openReview = false } = {}
   });
   store.forms.set(`${context.formId}\u0000${context.formVersion}`, {
     id: context.formId, version: context.formVersion,
+    contentSealed: true, declaredQuestionCount: 25,
     manifestHash: releaseBinding.manifestHash,
     contentHash: releaseBinding.contentHash,
     questionBundleHash: releaseBinding.questionBundleHash

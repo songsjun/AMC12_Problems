@@ -11,7 +11,10 @@ test('loopback proxy is the safe default for the loopback-only listener and can 
   assert.equal(loadConfig(base).tutorEnabled, false);
   assert.equal(loadConfig({ ...base, AMC12_TUTOR_ENABLED: 'true' }).tutorEnabled, true);
   assert.equal(loadConfig(base).batchIntakeEnabled, false);
+  assert.equal(loadConfig(base).batchReviewEnabled, false);
   assert.equal(loadConfig({ ...base, AMC12_BATCH_INTAKE_ENABLED: 'true' }).batchIntakeEnabled, true);
+  assert.equal(loadConfig({ ...base, AMC12_BATCH_REVIEW_ENABLED: 'true' }).batchReviewEnabled, true);
+  assert.equal(loadConfig({ ...base, AMC12_BATCH_REVIEW_ENABLED: 'TRUE' }).batchReviewEnabled, false);
   assert.equal(loadConfig({ ...base, AMC12_BATCH_INTAKE_ENABLED: 'TRUE' }).batchIntakeEnabled, false);
   assert.equal(loadConfig({ ...base, AMC12_BATCH_INTAKE_ENABLED: '1' }).batchIntakeEnabled, false);
   assert.equal(loadConfig(base).studentRequestsPerMinute, 120);
@@ -46,6 +49,7 @@ test('test-only import and publish flags are independent and production disables
   assert.equal(production.allowTestOnlyImport, false);
   assert.equal(production.allowTestOnlyPublish, false);
   assert.equal(production.batchIntakeEnabled, false);
+  assert.equal(production.batchReviewEnabled, false);
   assert.equal(loadConfig({
     ...base,
     NODE_ENV: 'production',

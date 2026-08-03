@@ -1,22 +1,55 @@
 import { createHash } from 'node:crypto';
 import { badRequest } from '../errors.js';
-import { canonicalHash } from './canonical.js';
+import { canonicalHash, canonicalJson } from './canonical.js';
 
 export const APPROVED_SET_SCHEMA = 'amc-approved-question-context-set-v1';
 export const APPROVED_TEST_SET_SCHEMA = 'amc-approved-question-context-test-set-v1';
 export const APPROVED_ARCHIVE_SCHEMA = 'amc-approved-question-context-archive-set-v1';
+export const APPROVED_SET_SCHEMA_V2 = 'amc-approved-question-context-set-v2';
+export const APPROVED_TEST_SET_SCHEMA_V2 = 'amc-approved-question-context-test-set-v2';
+export const APPROVED_ARCHIVE_SCHEMA_V2 = 'amc-approved-question-context-archive-set-v2';
 export const APPROVAL_RECEIPT_SET_SCHEMA = 'amc-solution-approval-receipt-set-v1';
 const SINGLE_CANDIDATE_SCHEMA = 'amc-question-context-candidate-set-v1';
 const ARCHIVE_CANDIDATE_SCHEMA = 'amc-question-context-archive-candidate-set-v1';
+const SUPPLEMENTED_ARCHIVE_CANDIDATE_SCHEMA = 'amc-question-context-supplemented-archive-candidate-set-v1';
 const APPROVAL_POLICY = 'amc-explicit-human-solution-approval-v1';
+const APPROVAL_POLICY_V2 = 'amc-operator-delegated-ai-assisted-solution-approval-v1';
 const REVIEW_SCHEMA = 'amc-question-context-review-decisions-v1';
+const REVIEW_SCHEMA_V2 = 'amc-question-context-review-decisions-v2';
+const REVIEW_METHOD_V2 = 'operator-delegated-ai-assisted';
 const HASH = /^[a-f0-9]{64}$/;
 const SOLUTION_ID = /^solution-[0-9]{3}$/;
+const SUPPLEMENT_SOLUTION_ID = /^solution-9[0-9]{2}$/;
+const SUPPLEMENT_ID = /^supplement-[a-z0-9][a-z0-9-]{2,63}$/;
 const OPAQUE_ID = /^[A-Za-z0-9][A-Za-z0-9._:@/-]{2,127}$/;
 const TAG = /^[a-z0-9][a-z0-9-]{0,63}$/;
 const UTC_TIMESTAMP = /^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})(?:\.[0-9]{1,6})?Z$/;
 const VISUAL_REFERENCE = /!\[[^\]]*\](?:\([^)]*\)|\[[^\]]*\])|<(?:img|picture|svg)\b|\\includegraphics\b|^[ \t]*(?:`{3,}|~{3,})[ \t]*asy\b|\[asy\]|\\begin[ \t]*\{asy\}|\[\[(?:File|Image):[^\]\n]+\]\]|\[[^\]\n]*\]\([^\)\n]*(?:\.(?:avif|bmp|gif|jpe?g|png|svg|webp)(?:[?#][^\)\s]*)?|[\/=?](?:File|Image):)[^\)\n]*\)|^[ \t]*\[[^\]\n]+\]:[ \t]*<?[^\s>]*(?:\.(?:avif|bmp|gif|jpe?g|png|svg|webp)(?:[?#][^\s>]*)?|[\/=?](?:File|Image):)[^\s>]*>?/imu;
 const INVALID_TEXT = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\uFFFD]/u;
+
+const POLICY_V1 = Object.freeze({
+  version: 1,
+  approvalPolicyVersion: APPROVAL_POLICY,
+  reviewSchemaVersion: REVIEW_SCHEMA,
+  singleSchemaVersion: APPROVED_SET_SCHEMA,
+  archiveSchemaVersion: APPROVED_ARCHIVE_SCHEMA,
+  testSchemaVersion: APPROVED_TEST_SET_SCHEMA
+});
+const POLICY_V2 = Object.freeze({
+  version: 2,
+  approvalPolicyVersion: APPROVAL_POLICY_V2,
+  reviewSchemaVersion: REVIEW_SCHEMA_V2,
+  singleSchemaVersion: APPROVED_SET_SCHEMA_V2,
+  archiveSchemaVersion: APPROVED_ARCHIVE_SCHEMA_V2,
+  testSchemaVersion: APPROVED_TEST_SET_SCHEMA_V2
+});
+
+// Parsed canonical JSON deliberately sorts object keys. Object member order is
+// not semantic, so every equality check at this trust boundary must use the
+// same order-independent representation as the signed/hash-bound artifacts.
+function semanticJsonEqual(left, right) {
+  return canonicalJson(left) === canonicalJson(right);
+}
 
 function hasUnpairedSurrogate(value) {
   for (let index = 0; index < value.length; index += 1) {
@@ -82,6 +115,75 @@ function safePath(value, path) {
   return value;
 }
 
+function validateReviewModel(value, path) {
+  record(value, path, ['provider', 'model', 'runId']);
+  text(value.provider, `${path}.provider`, 128);
+  text(value.model, `${path}.model`, 256);
+  text(value.runId, `${path}.runId`, 256);
+  return value;
+}
+
+function validateReviewGovernance(value, path, trustedReceipts) {
+  record(value, path, ['reviewMethod', 'operatorAuthorization']);
+  if (value.reviewMethod !== REVIEW_METHOD_V2) fail(`${path}.reviewMethod is unsupported.`);
+  const authorization = record(value.operatorAuthorization, `${path}.operatorAuthorization`, [
+    'authorizationId', 'authorizedBy', 'authorizedAt', 'scope', 'statement', 'rightsAttestation'
+  ]);
+  opaqueId(authorization.authorizationId, `${path}.operatorAuthorization.authorizationId`);
+  opaqueId(authorization.authorizedBy, `${path}.operatorAuthorization.authorizedBy`);
+  timestamp(authorization.authorizedAt, `${path}.operatorAuthorization.authorizedAt`);
+  if (authorization.scope !== 'solution-correctness-pedagogy-and-rights-review'
+      || authorization.statement !== 'operator-delegates-ai-assisted-solution-review'
+      || authorization.rightsAttestation !== 'operator-attests-rights-for-reviewed-source-ai-use') {
+    fail(`${path}.operatorAuthorization has unsupported delegated-review semantics.`);
+  }
+  if (authorization.authorizedBy === trustedReceipts.authorityId) {
+    fail(`${path}.operatorAuthorization.authorizedBy must be independent from the receipt authority.`);
+  }
+  return value;
+}
+
+function validateCandidateProvenance(value, path, { solution, questionSource, candidateSchemaVersion }) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) fail(`${path} must be an object.`);
+  if (value.origin === 'source-markdown') {
+    record(value, path, ['origin', 'sourcePath', 'sourceSha256']);
+    safePath(value.sourcePath, `${path}.sourcePath`);
+    hash(value.sourceSha256, `${path}.sourceSha256`);
+    if (value.sourcePath !== solution.sourceRef.path || value.sourceSha256 !== solution.sourceRef.sha256
+        || value.sourcePath !== questionSource.path || value.sourceSha256 !== questionSource.sha256) {
+      fail(`${path} does not match the solution and question source.`);
+    }
+    return value;
+  }
+  if (value.origin === 'operator-original-supplement') {
+    if (candidateSchemaVersion !== SUPPLEMENTED_ARCHIVE_CANDIDATE_SCHEMA) {
+      fail(`${path} supplement provenance requires the supplemented archive candidate schema.`);
+    }
+    record(value, path, [
+      'origin', 'supplementId', 'supplementSetHash', 'supplementRecordHash',
+      'authorId', 'createdAt', 'rightsStatus', 'rightsAuthorizationId'
+    ]);
+    if (typeof value.supplementId !== 'string' || !SUPPLEMENT_ID.test(value.supplementId)) {
+      fail(`${path}.supplementId is invalid.`);
+    }
+    hash(value.supplementSetHash, `${path}.supplementSetHash`);
+    hash(value.supplementRecordHash, `${path}.supplementRecordHash`);
+    opaqueId(value.authorId, `${path}.authorId`);
+    timestamp(value.createdAt, `${path}.createdAt`);
+    opaqueId(value.rightsAuthorizationId, `${path}.rightsAuthorizationId`);
+    if (value.rightsStatus !== 'operator-attested-original-and-authorized-for-ai-use') {
+      fail(`${path}.rightsStatus is invalid.`);
+    }
+    if (!SUPPLEMENT_SOLUTION_ID.test(solution.solutionId)
+        || solution.sourceRef.path !== `protected-supplements/${value.supplementId}.json`
+        || solution.sourceRef.sha256 !== value.supplementRecordHash) {
+      fail(`${path} does not satisfy reserved supplement id/path/hash invariants.`);
+    }
+    return value;
+  }
+  fail(`${path}.origin is unsupported.`);
+}
+
 function tags(value, path, { minimum = 0 } = {}) {
   if (!Array.isArray(value) || value.length < minimum || value.length > 32
       || value.some((item) => typeof item !== 'string' || !TAG.test(item))
@@ -143,8 +245,8 @@ function validateAuthorityBinding(value, path, trustedReceipts) {
   return value;
 }
 
-function decisionProjection({ artifact, form, question, solution, approval }) {
-  return {
+function decisionProjection({ artifact, form, question, solution, approval, policy }) {
+  const projection = {
     approvalPolicyVersion: artifact.approvalPolicyVersion,
     candidateSchemaVersion: form.candidateSchemaVersion,
     candidateSetHash: form.candidateSetHash,
@@ -161,12 +263,27 @@ function decisionProjection({ artifact, form, question, solution, approval }) {
     qualityFlags: approval.qualityFlags,
     methodTags: approval.methodTags
   };
+  if (policy.version === 2) {
+    Object.assign(projection, {
+      reviewMethod: approval.reviewMethod,
+      reviewModel: approval.reviewModel,
+      operatorAuthorizationId: approval.operatorAuthorizationId,
+      operatorAuthorization: artifact.reviewGovernance.operatorAuthorization,
+      candidateProvenance: solution.candidateProvenance,
+      questionContentHash: question.questionContentHash
+    });
+  }
+  return projection;
 }
 
-function validateSolution(solution, path, { artifact, form, question, questionSource, trustedReceipts }) {
-  record(solution, path, [
+function validateSolution(solution, path, {
+  artifact, form, question, questionSource, trustedReceipts, policy, reviewGovernance
+}) {
+  const solutionKeys = [
     'solutionId', 'title', 'bodyMarkdown', 'bodySha256', 'sourceRef', 'modelEligibility', 'approval'
-  ]);
+  ];
+  if (policy.version === 2) solutionKeys.push('candidateProvenance');
+  record(solution, path, solutionKeys);
   if (typeof solution.solutionId !== 'string' || !SOLUTION_ID.test(solution.solutionId)) fail(`${path}.solutionId is invalid.`);
   text(solution.title, `${path}.title`, 256);
   text(solution.bodyMarkdown, `${path}.bodyMarkdown`, 16_384);
@@ -176,30 +293,55 @@ function validateSolution(solution, path, { artifact, form, question, questionSo
   const source = record(solution.sourceRef, `${path}.sourceRef`, ['path', 'sha256', 'headingLine', 'endLine']);
   safePath(source.path, `${path}.sourceRef.path`);
   hash(source.sha256, `${path}.sourceRef.sha256`);
-  if (source.path !== questionSource.path || source.sha256 !== questionSource.sha256) {
-    fail(`${path}.sourceRef does not match its question.`);
-  }
   if (!Number.isSafeInteger(source.headingLine) || !Number.isSafeInteger(source.endLine)
       || source.headingLine < 1 || source.endLine < source.headingLine) fail(`${path}.sourceRef line range is invalid.`);
+  if (policy.version === 2) {
+    validateCandidateProvenance(solution.candidateProvenance, `${path}.candidateProvenance`, {
+      solution, questionSource, candidateSchemaVersion: form.candidateSchemaVersion
+    });
+  } else if (source.path !== questionSource.path || source.sha256 !== questionSource.sha256) {
+    fail(`${path}.sourceRef does not match its question.`);
+  }
   const modelEligibility = record(solution.modelEligibility, `${path}.modelEligibility`, ['eligible', 'reason']);
   const visual = hasVisualReference(solution.bodyMarkdown);
   const expectedEligibility = {
     eligible: !visual,
     reason: visual ? 'solution-visual-context-unavailable' : null
   };
-  if (JSON.stringify(modelEligibility) !== JSON.stringify(expectedEligibility)) {
+  if (!semanticJsonEqual(modelEligibility, expectedEligibility)) {
     fail(`${path}.modelEligibility does not match solution visual references.`);
   }
-  const approval = record(solution.approval, `${path}.approval`, [
+  const approvalKeys = [
     'reviewerId', 'reviewedAt', 'rightsStatus', 'qualityFlags', 'methodTags',
     'decisionRecordHash', 'authorityReceipt'
-  ]);
+  ];
+  if (policy.version === 2) approvalKeys.push('reviewMethod', 'reviewModel', 'operatorAuthorizationId');
+  const approval = record(solution.approval, `${path}.approval`, approvalKeys);
   opaqueId(approval.reviewerId, `${path}.approval.reviewerId`);
   timestamp(approval.reviewedAt, `${path}.approval.reviewedAt`);
   if (approval.rightsStatus !== 'approved-for-ai-use') fail(`${path}.approval.rightsStatus is invalid.`);
   tags(approval.qualityFlags, `${path}.approval.qualityFlags`);
   tags(approval.methodTags, `${path}.approval.methodTags`, { minimum: 1 });
-  const expectedDecisionHash = canonicalHash(decisionProjection({ artifact, form, question, solution, approval }));
+  if (policy.version === 2) {
+    if (approval.reviewMethod !== REVIEW_METHOD_V2) fail(`${path}.approval.reviewMethod is unsupported.`);
+    validateReviewModel(approval.reviewModel, `${path}.approval.reviewModel`);
+    opaqueId(approval.operatorAuthorizationId, `${path}.approval.operatorAuthorizationId`);
+    const authorization = reviewGovernance.operatorAuthorization;
+    if (approval.operatorAuthorizationId !== authorization.authorizationId) {
+      fail(`${path}.approval.operatorAuthorizationId does not match review governance.`);
+    }
+    if (approval.reviewerId === trustedReceipts.authorityId
+        || approval.reviewerId === authorization.authorizedBy) {
+      fail(`${path}.approval reviewer, operator, and receipt authority must be independent.`);
+    }
+    if (solution.candidateProvenance.origin === 'operator-original-supplement'
+        && approval.reviewerId === solution.candidateProvenance.authorId) {
+      fail(`${path}.approval reviewer must differ from the supplement author.`);
+    }
+  }
+  const expectedDecisionHash = canonicalHash(decisionProjection({
+    artifact, form, question, solution, approval, policy
+  }));
   if (hash(approval.decisionRecordHash, `${path}.approval.decisionRecordHash`) !== expectedDecisionHash) {
     fail(`${path}.approval.decisionRecordHash does not match the canonical approval decision.`);
   }
@@ -218,7 +360,9 @@ function validateSolution(solution, path, { artifact, form, question, questionSo
   return solution;
 }
 
-function validateQuestion(question, index, { artifact, form, trustedReceipts }) {
+function validateQuestion(question, index, {
+  artifact, form, trustedReceipts, policy, reviewGovernance
+}) {
   const path = `approvedSet.questions[${index}]`;
   record(question, path, [
     'number', 'sourceRef', 'promptMarkdown', 'choices', 'questionContentHash',
@@ -243,7 +387,7 @@ function validateQuestion(question, index, { artifact, form, trustedReceipts }) 
     modelAvailable: !questionVisual,
     reason: questionVisual ? 'question-visual-context-unavailable' : null
   };
-  if (JSON.stringify(visualContext) !== JSON.stringify(expectedVisual)) {
+  if (!semanticJsonEqual(visualContext, expectedVisual)) {
     fail(`${path}.visualContext does not match question visual references.`);
   }
   if (!Array.isArray(question.approvedSolutions) || question.approvedSolutions.length > 8) {
@@ -252,7 +396,7 @@ function validateQuestion(question, index, { artifact, form, trustedReceipts }) 
   const ids = new Set();
   question.approvedSolutions.forEach((solution, solutionIndex) => {
     validateSolution(solution, `${path}.approvedSolutions[${solutionIndex}]`, {
-      artifact, form, question, questionSource: source, trustedReceipts
+      artifact, form, question, questionSource: source, trustedReceipts, policy, reviewGovernance
     });
     if (ids.has(solution.solutionId)) fail(`${path} has duplicate solutionId.`);
     ids.add(solution.solutionId);
@@ -273,17 +417,24 @@ function validateQuestion(question, index, { artifact, form, trustedReceipts }) 
     requiredSolutionCount: 2,
     reason: expectedReason
   };
-  if (JSON.stringify(availability) !== JSON.stringify(expected)) fail(`${path}.availability is inconsistent.`);
+  if (!semanticJsonEqual(availability, expected)) fail(`${path}.availability is inconsistent.`);
   return question;
 }
 
-function validateSingle(value, trustedReceipts, expectedCandidateSchema) {
-  record(value, 'approvedSet', [
+function validateSingle(value, trustedReceipts, expectedCandidateSchema, policy) {
+  const rootKeys = [
     'schemaVersion', 'audience', 'approvalPolicyVersion', 'formBinding', 'reviewDecisionBinding',
     'approvalAuthorityBinding', 'summary', 'questions', 'disclaimer', 'setHash'
-  ]);
-  if (value.schemaVersion !== APPROVED_SET_SCHEMA || value.audience !== 'private-ai-context-only'
-      || value.approvalPolicyVersion !== APPROVAL_POLICY) fail('Approved set identity/policy is unsupported.');
+  ];
+  if (policy.version === 2) rootKeys.push('reviewGovernance');
+  record(value, 'approvedSet', rootKeys);
+  if (value.schemaVersion !== policy.singleSchemaVersion || value.audience !== 'private-ai-context-only'
+      || value.approvalPolicyVersion !== policy.approvalPolicyVersion) {
+    fail('Approved set identity/policy is unsupported.');
+  }
+  const reviewGovernance = policy.version === 2
+    ? validateReviewGovernance(value.reviewGovernance, 'approvedSet.reviewGovernance', trustedReceipts)
+    : null;
   const form = record(value.formBinding, 'approvedSet.formBinding', [
     'id', 'version', 'candidateSchemaVersion', 'candidateSetHash', 'contextContentHash', 'releaseBinding'
   ]);
@@ -301,12 +452,12 @@ function validateSingle(value, trustedReceipts, expectedCandidateSchema) {
   hash(release.contentHash, 'approvedSet release contentHash');
   hash(release.manifestHash, 'approvedSet release manifestHash');
   const review = record(value.reviewDecisionBinding, 'approvedSet.reviewDecisionBinding', ['schemaVersion', 'decisionSetHash']);
-  if (review.schemaVersion !== REVIEW_SCHEMA) fail('Approved set review schema is unsupported.');
+  if (review.schemaVersion !== policy.reviewSchemaVersion) fail('Approved set review schema is unsupported.');
   hash(review.decisionSetHash, 'approvedSet decisionSetHash');
   validateAuthorityBinding(value.approvalAuthorityBinding, 'approvedSet.approvalAuthorityBinding', trustedReceipts);
   if (!Array.isArray(value.questions) || value.questions.length !== 25) fail('Approved set must contain exactly 25 questions.');
   value.questions.forEach((question, index) => validateQuestion(question, index, {
-    artifact: value, form, trustedReceipts
+    artifact: value, form, trustedReceipts, policy, reviewGovernance
   }));
   const formProjection = {
     id: form.id,
@@ -328,35 +479,73 @@ function validateSingle(value, trustedReceipts, expectedCandidateSchema) {
     unavailableQuestionCount: 25 - ready,
     minimumApprovedSolutionsPerQuestion: 2
   };
-  if (JSON.stringify(summary) !== JSON.stringify(expectedSummary)) fail('Approved set summary is inconsistent.');
+  if (!semanticJsonEqual(summary, expectedSummary)) fail('Approved set summary is inconsistent.');
   text(value.disclaimer, 'approvedSet.disclaimer', 1_000);
   if (hash(value.setHash, 'approvedSet.setHash') !== canonicalHash(value, ['setHash'])) fail('Approved set setHash is stale.');
   return value;
 }
 
 export function validateApprovedContextArtifact(payload, { approvalReceipts, trustedAuthorityIds } = {}) {
-  if (payload?.schemaVersion === APPROVED_TEST_SET_SCHEMA || payload?.audience === 'private-test-only') {
+  if ([APPROVED_TEST_SET_SCHEMA, APPROVED_TEST_SET_SCHEMA_V2].includes(payload?.schemaVersion)
+      || payload?.audience === 'private-test-only') {
     fail('Test-only approved context is never production-importable.');
   }
+  let policy;
+  let envelope;
+  if (payload?.schemaVersion === APPROVED_SET_SCHEMA
+      && payload?.audience === 'private-ai-context-only'
+      && payload?.approvalPolicyVersion === APPROVAL_POLICY) {
+    policy = POLICY_V1;
+    envelope = 'single';
+  } else if (payload?.schemaVersion === APPROVED_ARCHIVE_SCHEMA
+      && payload?.audience === 'private-ai-context-only'
+      && payload?.approvalPolicyVersion === APPROVAL_POLICY) {
+    policy = POLICY_V1;
+    envelope = 'archive';
+  } else if (payload?.schemaVersion === APPROVED_SET_SCHEMA_V2
+      && payload?.audience === 'private-ai-context-only'
+      && payload?.approvalPolicyVersion === APPROVAL_POLICY_V2) {
+    policy = POLICY_V2;
+    envelope = 'single';
+  } else if (payload?.schemaVersion === APPROVED_ARCHIVE_SCHEMA_V2
+      && payload?.audience === 'private-ai-context-only'
+      && payload?.approvalPolicyVersion === APPROVAL_POLICY_V2) {
+    policy = POLICY_V2;
+    envelope = 'archive';
+  } else {
+    fail('Approved context schema, audience, and policy tuple is unsupported.');
+  }
   const trustedReceipts = validateApprovalReceiptSet(approvalReceipts, { trustedAuthorityIds });
-  if (payload?.schemaVersion === APPROVED_SET_SCHEMA) {
+  if (envelope === 'single') {
     return {
       archiveSetHash: null,
       authorityId: trustedReceipts.authorityId,
       receiptSetHash: trustedReceipts.receiptSetHash,
-      forms: [validateSingle(payload, trustedReceipts, SINGLE_CANDIDATE_SCHEMA)]
+      forms: [validateSingle(payload, trustedReceipts, SINGLE_CANDIDATE_SCHEMA, policy)]
     };
   }
-  record(payload, 'approvedArchive', [
+  const archiveKeys = [
     'schemaVersion', 'audience', 'approvalPolicyVersion', 'candidateSetBinding', 'reviewDecisionBinding',
     'approvalAuthorityBinding', 'summary', 'forms', 'disclaimer', 'setHash'
-  ]);
-  if (payload.schemaVersion !== APPROVED_ARCHIVE_SCHEMA || payload.audience !== 'private-ai-context-only'
-      || payload.approvalPolicyVersion !== APPROVAL_POLICY) fail('Approved archive identity/policy is unsupported.');
+  ];
+  if (policy.version === 2) archiveKeys.push('reviewGovernance');
+  record(payload, 'approvedArchive', archiveKeys);
+  if (payload.schemaVersion !== policy.archiveSchemaVersion || payload.audience !== 'private-ai-context-only'
+      || payload.approvalPolicyVersion !== policy.approvalPolicyVersion) {
+    fail('Approved archive identity/policy is unsupported.');
+  }
+  const wrapperGovernance = policy.version === 2
+    ? validateReviewGovernance(payload.reviewGovernance, 'approvedArchive.reviewGovernance', trustedReceipts)
+    : null;
   const candidate = record(payload.candidateSetBinding, 'approvedArchive.candidateSetBinding', [
     'schemaVersion', 'setHash', 'archiveRelease'
   ]);
-  if (candidate.schemaVersion !== ARCHIVE_CANDIDATE_SCHEMA) fail('Approved archive candidate schema is unsupported.');
+  const supportedCandidateSchemas = policy.version === 2
+    ? [ARCHIVE_CANDIDATE_SCHEMA, SUPPLEMENTED_ARCHIVE_CANDIDATE_SCHEMA]
+    : [ARCHIVE_CANDIDATE_SCHEMA];
+  if (!supportedCandidateSchemas.includes(candidate.schemaVersion)) {
+    fail('Approved archive candidate schema is unsupported.');
+  }
   hash(candidate.setHash, 'approvedArchive.candidateSetBinding.setHash');
   const release = record(candidate.archiveRelease, 'approvedArchive.archiveRelease', [
     'batchSchemaVersion', 'releaseVersion', 'sourcePath', 'sourceSha256'
@@ -366,13 +555,15 @@ export function validateApprovedContextArtifact(payload, { approvalReceipts, tru
   safePath(release.sourcePath, 'approvedArchive.sourcePath');
   hash(release.sourceSha256, 'approvedArchive.sourceSha256');
   const review = record(payload.reviewDecisionBinding, 'approvedArchive.reviewDecisionBinding', ['schemaVersion', 'decisionSetHash']);
-  if (review.schemaVersion !== REVIEW_SCHEMA) fail('Approved archive review schema is unsupported.');
+  if (review.schemaVersion !== policy.reviewSchemaVersion) fail('Approved archive review schema is unsupported.');
   hash(review.decisionSetHash, 'approvedArchive.decisionSetHash');
   validateAuthorityBinding(payload.approvalAuthorityBinding, 'approvedArchive.approvalAuthorityBinding', trustedReceipts);
   if (!Array.isArray(payload.forms) || payload.forms.length < 1 || payload.forms.length > 48) {
     fail('Approved archive must select 1-48 forms.');
   }
-  const forms = payload.forms.map((form) => validateSingle(form, trustedReceipts, ARCHIVE_CANDIDATE_SCHEMA));
+  const forms = payload.forms.map((form) => validateSingle(
+    form, trustedReceipts, candidate.schemaVersion, policy
+  ));
   const identities = new Set();
   for (const form of forms) {
     const identity = `${form.formBinding.id}\u0000${form.formBinding.version}`;
@@ -380,7 +571,9 @@ export function validateApprovedContextArtifact(payload, { approvalReceipts, tru
     identities.add(identity);
     if (form.formBinding.candidateSetHash !== candidate.setHash
         || form.reviewDecisionBinding.decisionSetHash !== review.decisionSetHash
-        || JSON.stringify(form.approvalAuthorityBinding) !== JSON.stringify(payload.approvalAuthorityBinding)) {
+        || !semanticJsonEqual(form.approvalAuthorityBinding, payload.approvalAuthorityBinding)
+        || (policy.version === 2
+          && !semanticJsonEqual(form.reviewGovernance, wrapperGovernance))) {
       fail('Approved archive child lineage does not match wrapper.');
     }
   }
@@ -394,7 +587,7 @@ export function validateApprovedContextArtifact(payload, { approvalReceipts, tru
     contextReadyQuestionCount: forms.reduce((sum, form) => sum + form.summary.contextReadyQuestionCount, 0),
     unavailableQuestionCount: forms.reduce((sum, form) => sum + form.summary.unavailableQuestionCount, 0)
   };
-  if (JSON.stringify(summary) !== JSON.stringify(expected)) fail('Approved archive summary is inconsistent.');
+  if (!semanticJsonEqual(summary, expected)) fail('Approved archive summary is inconsistent.');
   text(payload.disclaimer, 'approvedArchive.disclaimer', 1_000);
   if (hash(payload.setHash, 'approvedArchive.setHash') !== canonicalHash(payload, ['setHash'])) {
     fail('Approved archive setHash is stale.');

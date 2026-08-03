@@ -81,6 +81,9 @@ export function loadConfig(env = process.env) {
     // work. Keep it fail-closed in every environment until the supervised
     // Worker and dedicated Gateway have passed their coordinated canary.
     batchIntakeEnabled: explicitReleaseEnabled(env.AMC12_BATCH_INTAKE_ENABLED),
+    // A second, independently reversible gate controls the published-form
+    // workspace entrypoint. It never becomes true by implication.
+    batchReviewEnabled: explicitReleaseEnabled(env.AMC12_BATCH_REVIEW_ENABLED),
     batchUploadBytesPerHour: positiveInteger(
       env.AMC12_BATCH_UPLOAD_BYTES_PER_HOUR, 250 * 1024 * 1024,
       'AMC12_BATCH_UPLOAD_BYTES_PER_HOUR'

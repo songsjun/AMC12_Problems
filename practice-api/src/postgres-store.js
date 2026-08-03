@@ -9,6 +9,12 @@ import {
 } from './infrastructure/amc-inference-contract.js';
 import { ATTEMPT_MODE, OPEN_REVIEW_STATUS, openReviewReleaseHash } from './open-review/domain.js';
 import {
+  BATCH_REVIEW_ANCHOR_REASON,
+  BATCH_REVIEW_PHASE,
+  BATCH_REVIEW_SOURCE_TYPE,
+  batchReviewAnchorHash
+} from './batch-review/domain.js';
+import {
   TUTOR_MAX_ACTIVE_JOBS_PER_STUDENT,
   TutorStoreError,
   assertTutorLiveThreadCapacity,
@@ -267,11 +273,12 @@ async function assertPostgresTutorSource(queryable, snapshot, {
      FROM amc_practice.learning_submissions submission
      JOIN amc_practice.learning_submission_versions version
        ON version.id = $2 AND version.learning_submission_id = submission.id
-     JOIN amc_practice.approved_context_sets context ON context.id = $6
+     JOIN amc_practice.approved_context_sets context ON context.id = $6 AND context.sealed
      JOIN amc_practice.approved_context_questions question
        ON question.context_set_id = context.id AND question.question_number = $7
      JOIN amc_practice.form_revisions form
        ON form.form_id = submission.form_id AND form.version = submission.form_version
+       AND form.content_sealed
      JOIN amc_practice.learning_analysis_runs run ON run.id = $10
        AND run.learning_submission_version_id = version.id
      JOIN amc_practice.learning_question_analyses analysis
@@ -431,13 +438,15 @@ async function buildPostgresTutorRootSnapshot(client, input, createdAt) {
      FROM amc_practice.learning_submissions submission
      JOIN amc_practice.learning_submission_versions version
        ON version.learning_submission_id = submission.id AND version.version_number = $3
-     JOIN amc_practice.approved_context_sets context ON context.id = version.context_set_id
+     JOIN amc_practice.approved_context_sets context
+       ON context.id = version.context_set_id AND context.sealed
      JOIN amc_practice.approved_context_questions question
        ON question.context_set_id = context.id AND question.question_number = $4
        AND question.form_id = submission.form_id
        AND question.form_version = submission.form_version
      JOIN amc_practice.form_revisions form
        ON form.form_id = submission.form_id AND form.version = submission.form_version
+       AND form.content_sealed
        AND form.manifest_hash = context.release_manifest_hash
        AND form.content_hash = context.release_content_hash
        AND form.question_bundle_hash = context.release_question_bundle_hash
@@ -1166,7 +1175,9 @@ function mapLearningReport(row) {
 }
 
 async function loadApprovedContextSet(queryable, id) {
-  const header = await queryable.query('SELECT * FROM amc_practice.approved_context_sets WHERE id = $1', [id]);
+  const header = await queryable.query(
+    'SELECT * FROM amc_practice.approved_context_sets WHERE id = $1 AND sealed', [id]
+  );
   if (!header.rowCount) return null;
   const questions = await queryable.query(
     `SELECT * FROM amc_practice.approved_context_questions
@@ -1211,6 +1222,10 @@ async function loadApprovedContextSet(queryable, id) {
         reason: row.model_ineligibility_reason
       },
       decisionRecordHash: row.decision_record_hash,
+      candidateProvenance: row.candidate_provenance,
+      reviewMethod: row.review_method,
+      reviewModel: row.review_model,
+      operatorAuthorizationId: row.operator_authorization_id,
       authorityReceipt: {
         receiptId: row.authority_receipt_id,
         authorityId: row.authority_receipt_authority_id,
@@ -1228,6 +1243,11 @@ async function loadApprovedContextSet(queryable, id) {
     candidateSchemaVersion: row.candidate_schema_version,
     candidateSetHash: row.candidate_set_hash,
     decisionSetHash: row.decision_set_hash,
+    approvalPolicyVersion: row.approval_policy_version,
+    reviewSchemaVersion: row.review_schema_version,
+    reviewGovernance: row.review_governance,
+    sealed: row.sealed,
+    declaredQuestionCount: number(row.declared_question_count),
     approvalAuthorityId: row.approval_authority_id,
     approvalReceiptSetHash: row.approval_receipt_set_hash,
     formId: row.form_id,
@@ -1243,6 +1263,61 @@ async function loadApprovedContextSet(queryable, id) {
     supersededAt: row.superseded_at,
     questions: [...byQuestion.values()]
   };
+}
+
+async function repairBlockedLearningVersions(client, {
+  formId, formVersion, contextSetId, artifactSetHash, now
+}) {
+  const blocked = await client.query(
+    `SELECT v.id, v.version_number, v.evidence_hash,
+            w.id AS work_id, w.deletion_generation
+     FROM amc_practice.learning_submission_versions v
+     JOIN amc_practice.learning_submissions s ON s.id = v.learning_submission_id
+     JOIN amc_practice.learning_work_items w
+       ON w.learning_submission_version_id = v.id AND w.work_type = 'ANALYZE_SUBMISSION'
+     JOIN amc_practice.approved_context_sets context
+       ON context.id = $3 AND context.form_id = $1 AND context.form_version = $2
+      AND context.active AND context.sealed
+     WHERE v.form_id = $1 AND v.form_version = $2
+       AND v.context_status = 'CONTEXT_UNAVAILABLE'
+       AND s.lifecycle_status = 'COMMITTED' AND w.status = 'BLOCKED_CONTEXT'
+       AND NOT EXISTS (
+         SELECT 1 FROM amc_practice.learning_analysis_runs run
+         WHERE run.learning_submission_version_id = v.id
+       )
+       AND EXISTS (
+         SELECT 1 FROM amc_practice.approved_context_questions question
+         WHERE question.context_set_id = context.id
+       )
+       AND (s.source_type <> 'BATCH_REVIEW'
+         OR amc_practice.batch_review_context_is_complete($1, $2, context.id))
+     FOR UPDATE OF v, w`, [formId, formVersion, contextSetId]
+  );
+  for (const row of blocked.rows) {
+    const inputHash = analysisInputHash(row.evidence_hash, artifactSetHash);
+    const runId = randomUUID();
+    await client.query(
+      `UPDATE amc_practice.learning_submission_versions
+       SET context_status = 'CONTEXT_READY', context_set_id = $2 WHERE id = $1`,
+      [row.id, contextSetId]
+    );
+    await client.query(
+      `INSERT INTO amc_practice.learning_analysis_runs
+       (id, learning_submission_version_id, context_set_id, version_number, input_hash,
+        evidence_hash, deletion_generation, analysis_contract_version, status, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'QUEUED',$9)`,
+      [runId, row.id, contextSetId, row.version_number, inputHash, row.evidence_hash,
+        row.deletion_generation, ANALYSIS_CONTRACT_VERSION, now]
+    );
+    await client.query(
+      `UPDATE amc_practice.learning_work_items
+       SET status = 'QUEUED', input_hash = $2, analysis_run_id = $3, available_at = $4,
+           lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+           last_error_code = NULL, updated_at = $4
+       WHERE id = $1`, [row.work_id, inputHash, runId, now]
+    );
+  }
+  return blocked.rowCount;
 }
 
 async function lockTranscriptionAggregate(client, input, { activeRequired = true } = {}) {
@@ -1289,6 +1364,10 @@ function mapFormHeader(row) {
     durationMs: number(row.duration_ms),
     published: row.published,
     testOnly: row.test_only,
+    publishEligible: row.publish_eligible,
+    developmentPublishEligible: row.development_publish_eligible,
+    contentSealed: row.content_sealed,
+    declaredQuestionCount: number(row.declared_question_count),
     publishedAt: row.published_at,
     publicationStatus: row.publication_status,
     sourceSchemaVersion: row.source_schema_version,
@@ -1322,10 +1401,11 @@ async function getFormUsing(queryable, id, version = undefined) {
   const header = version === undefined
     ? await queryable.query(
       `SELECT * FROM amc_practice.form_revisions
-       WHERE form_id = $1
+       WHERE form_id = $1 AND content_sealed
        ORDER BY published DESC, published_at DESC NULLS LAST, imported_at DESC LIMIT 1`, [id])
     : await queryable.query(
-      'SELECT * FROM amc_practice.form_revisions WHERE form_id = $1 AND version = $2', [id, version]);
+      `SELECT * FROM amc_practice.form_revisions
+       WHERE form_id = $1 AND version = $2 AND content_sealed`, [id, version]);
   if (!header.rowCount) return null;
   const form = mapFormHeader(header.rows[0]);
   const questions = await queryable.query(
@@ -1340,11 +1420,17 @@ async function getFormUsing(queryable, id, version = undefined) {
 async function importFormUsing(client, form, { publish = false, allowTestOnlyPublish = false } = {}) {
   const shouldPublish = Boolean(publish && (form.publishEligible || (form.developmentPublishEligible && allowTestOnlyPublish)));
   const existingResult = await client.query(
-    'SELECT manifest_hash, published, published_at, imported_at FROM amc_practice.form_revisions WHERE form_id = $1 AND version = $2 FOR UPDATE',
+    `SELECT manifest_hash, published, published_at, imported_at, content_sealed
+     FROM amc_practice.form_revisions WHERE form_id = $1 AND version = $2 FOR UPDATE`,
     [form.id, form.version]
   );
   if (existingResult.rowCount) {
     const existing = existingResult.rows[0];
+    if (!existing.content_sealed) {
+      throw Object.assign(new Error('Form revision exists only as unsealed staging content.'), {
+        code: 'FORM_REVISION_NOT_SEALED'
+      });
+    }
     if (existing.manifest_hash !== form.manifestHash) {
       throw conflict('FORM_VERSION_IMMUTABLE', 'A form version cannot be changed after import.');
     }
@@ -1357,7 +1443,7 @@ async function importFormUsing(client, form, { publish = false, allowTestOnlyPub
     await client.query(
       `UPDATE amc_practice.form_revisions
        SET published = false
-       WHERE form_id = $1 AND version <> $2 AND published = true`,
+       WHERE form_id = $1 AND version <> $2 AND published = true AND content_sealed`,
       [form.id, form.version]
     );
   }
@@ -1365,19 +1451,26 @@ async function importFormUsing(client, form, { publish = false, allowTestOnlyPub
     const existing = existingResult.rows[0];
     if (shouldPublish && !existing.published) {
       await client.query(
-        'UPDATE amc_practice.form_revisions SET published = true, published_at = now() WHERE form_id = $1 AND version = $2',
+        `UPDATE amc_practice.form_revisions
+         SET published = true, published_at = COALESCE(published_at, now())
+         WHERE form_id = $1 AND version = $2`,
         [form.id, form.version]
       );
     }
   } else {
     await client.query(
       `INSERT INTO amc_practice.form_revisions
-       (form_id, version, title, duration_ms, published, test_only, published_at, publication_status,
-        source_schema_version, source_manifest_hash, content_hash, question_bundle_hash, provenance, scoring_policy, manifest_hash)
-       VALUES ($1, $2, $3, $4, $5, $6, CASE WHEN $5 THEN now() ELSE NULL END, $7, $8, $9, $10, $11, $12::jsonb, $13::jsonb, $14)`,
-      [form.id, form.version, form.title, form.durationMs, shouldPublish, form.testOnly, form.publicationStatus,
+       (form_id, version, title, duration_ms, published, test_only,
+        publish_eligible, development_publish_eligible, published_at, publication_status,
+        source_schema_version, source_manifest_hash, content_hash, question_bundle_hash,
+        provenance, scoring_policy, manifest_hash, content_sealed, declared_question_count)
+       VALUES ($1, $2, $3, $4, false, $5, $6, $7,
+        NULL, $8, $9, $10, $11, $12, $13::jsonb, $14::jsonb, $15, false, $16)`,
+      [form.id, form.version, form.title, form.durationMs, form.testOnly,
+        form.publishEligible, form.developmentPublishEligible, form.publicationStatus,
         form.sourceSchemaVersion, form.sourceManifestHash, form.contentHash, form.questionBundleHash,
-        form.provenance ? JSON.stringify(form.provenance) : null, JSON.stringify(form.scoringPolicy), form.manifestHash]
+        form.provenance ? JSON.stringify(form.provenance) : null, JSON.stringify(form.scoringPolicy),
+        form.manifestHash, form.questions.length]
     );
     for (const question of form.questions) {
       await client.query(
@@ -1388,6 +1481,18 @@ async function importFormUsing(client, form, { publish = false, allowTestOnlyPub
           JSON.stringify(question.acceptedOptions || (question.correctOption ? [question.correctOption] : [])),
           question.isScored !== false, question.solutionMarkdown]
       );
+    }
+    const sealed = await client.query(
+      `UPDATE amc_practice.form_revisions
+       SET content_sealed = true, published = $3,
+           published_at = CASE WHEN $3 THEN now() ELSE NULL END
+       WHERE form_id = $1 AND version = $2 AND NOT content_sealed
+       RETURNING form_id`, [form.id, form.version, shouldPublish]
+    );
+    if (sealed.rowCount !== 1) {
+      throw Object.assign(new Error('Form revision could not be atomically sealed.'), {
+        code: 'FORM_REVISION_SEAL_FAILED'
+      });
     }
   }
   return getFormUsing(client, form.id, form.version);
@@ -1496,6 +1601,14 @@ export class PostgresStore {
           [formId]
         );
       }
+      const exactForms = [...new Set(forms.map((form) => `${form.id}\u0000${form.version}`))]
+        .map((identity) => identity.split('\u0000')).sort(([leftId, leftVersion], [rightId, rightVersion]) =>
+          leftId.localeCompare(rightId) || leftVersion.localeCompare(rightVersion));
+      for (const [formId, formVersion] of exactForms) {
+        await client.query(
+          'SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))', [formId, formVersion]
+        );
+      }
       const stored = [];
       for (const form of forms) {
         stored.push(await importFormUsing(client, form, { publish, allowTestOnlyPublish }));
@@ -1525,7 +1638,8 @@ export class PostgresStore {
         const binding = artifact.formBinding;
         const form = await client.query(
           `SELECT question_bundle_hash, content_hash, manifest_hash
-           FROM amc_practice.form_revisions WHERE form_id = $1 AND version = $2 FOR SHARE`,
+           FROM amc_practice.form_revisions
+           WHERE form_id = $1 AND version = $2 AND content_sealed FOR SHARE`,
           [binding.id, binding.version]
         );
         if (!form.rowCount) throw Object.assign(new Error('Approved context form revision is not imported.'), { code: 'FORM_REVISION_NOT_FOUND' });
@@ -1547,42 +1661,55 @@ export class PostgresStore {
             throw Object.assign(new Error('Approved context prompt/choices do not match the form revision.'), { code: 'CONTEXT_CONTENT_MISMATCH' });
           }
         }
+        const readyQuestions = artifact.questions.filter((question) => question.contextReady
+          && question.approvedSolutions.filter((solution) => solution.modelEligibility.eligible).length >= 2);
         const duplicate = await client.query(
-          `SELECT id, archive_wrapper_set_hash FROM amc_practice.approved_context_sets
+          `SELECT id, archive_wrapper_set_hash, active, sealed
+           FROM amc_practice.approved_context_sets
            WHERE artifact_set_hash = $1 FOR UPDATE`, [artifact.setHash]
         );
         if (duplicate.rowCount) {
-          if (archiveSetHash && duplicate.rows[0].archive_wrapper_set_hash === null) {
-            await client.query(
-              'UPDATE amc_practice.approved_context_sets SET archive_wrapper_set_hash = $2 WHERE id = $1',
-              [duplicate.rows[0].id, archiveSetHash]
-            );
-          } else if (archiveSetHash && duplicate.rows[0].archive_wrapper_set_hash !== archiveSetHash) {
+          if (!duplicate.rows[0].sealed) {
+            throw Object.assign(new Error('Approved context artifact exists only as an unsealed staging row.'), {
+              code: 'CONTEXT_NOT_SEALED'
+            });
+          }
+          if ((archiveSetHash || null) !== duplicate.rows[0].archive_wrapper_set_hash) {
             throw Object.assign(new Error('Approved context artifact is already bound to a different archive wrapper.'), {
               code: 'CONTEXT_ARCHIVE_LINEAGE_CONFLICT'
             });
           }
-          imported.push(await loadApprovedContextSet(client, duplicate.rows[0].id));
+          const existing = await loadApprovedContextSet(client, duplicate.rows[0].id);
+          imported.push(existing);
+          if (duplicate.rows[0].active) {
+            await repairBlockedLearningVersions(client, {
+              formId: binding.id,
+              formVersion: binding.version,
+              contextSetId: duplicate.rows[0].id,
+              artifactSetHash: artifact.setHash,
+              now: importedAt
+            });
+          }
           continue;
         }
-        await client.query(
-          `UPDATE amc_practice.approved_context_sets SET active = false, superseded_at = $3
-           WHERE form_id = $1 AND form_version = $2 AND active`, [binding.id, binding.version, importedAt]
-        );
         const contextSetId = randomUUID();
         await client.query(
           `INSERT INTO amc_practice.approved_context_sets
            (id, schema_version, artifact_set_hash, archive_wrapper_set_hash, candidate_schema_version, candidate_set_hash,
             decision_set_hash, approval_authority_id, approval_receipt_set_hash, form_id, form_version, context_content_hash,
-            release_question_bundle_hash, release_content_hash, release_manifest_hash, active, imported_at)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,true,$16)`,
+            release_question_bundle_hash, release_content_hash, release_manifest_hash,
+            approval_policy_version, review_schema_version, review_governance,
+            sealed, declared_question_count, active, imported_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18::jsonb,
+             false,$19,false,$20)`,
           [contextSetId, artifact.schemaVersion, artifact.setHash, archiveSetHash, binding.candidateSchemaVersion,
             binding.candidateSetHash, artifact.reviewDecisionBinding.decisionSetHash, authorityId, receiptSetHash,
             binding.id, binding.version, binding.contextContentHash,
-            release.questionBundleHash, release.contentHash, release.manifestHash, importedAt]
+            release.questionBundleHash, release.contentHash, release.manifestHash,
+            artifact.approvalPolicyVersion, artifact.reviewDecisionBinding.schemaVersion,
+            artifact.reviewGovernance ? JSON.stringify(artifact.reviewGovernance) : null,
+            readyQuestions.length, importedAt]
         );
-        const readyQuestions = artifact.questions.filter((question) => question.contextReady
-          && question.approvedSolutions.filter((solution) => solution.modelEligibility.eligible).length >= 2);
         for (const question of readyQuestions) {
           await client.query(
             `INSERT INTO amc_practice.approved_context_questions
@@ -1601,9 +1728,10 @@ export class PostgresStore {
                 source_end_line, reviewer_id, reviewed_at, rights_status, quality_flags, method_tags,
                 model_eligible, model_ineligibility_reason, decision_record_hash,
                 authority_receipt_id, authority_receipt_authority_id,
-                authority_receipt_issued_at, authority_receipt_status)
+                authority_receipt_issued_at, authority_receipt_status, context_schema_version,
+                candidate_provenance, review_method, review_model, operator_authorization_id)
                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::jsonb,$16::jsonb,
-                 $17,$18,$19,$20,$21,$22,$23)`,
+                 $17,$18,$19,$20,$21,$22,$23,$24,$25::jsonb,$26,$27::jsonb,$28)`,
               [contextSetId, question.number, index + 1, solution.solutionId, solution.title,
                 solution.bodyMarkdown, solution.bodySha256, solution.sourceRef.path, solution.sourceRef.sha256,
                 solution.sourceRef.headingLine, solution.sourceRef.endLine, solution.approval.reviewerId,
@@ -1612,45 +1740,36 @@ export class PostgresStore {
                 solution.modelEligibility.eligible, solution.modelEligibility.reason, solution.approval.decisionRecordHash,
                 solution.approval.authorityReceipt.receiptId, solution.approval.authorityReceipt.authorityId,
                 solution.approval.authorityReceipt.issuedAt,
-                solution.approval.authorityReceipt.status]
+                solution.approval.authorityReceipt.status, artifact.schemaVersion,
+                solution.candidateProvenance ? JSON.stringify(solution.candidateProvenance) : null,
+                solution.approval.reviewMethod || null,
+                solution.approval.reviewModel ? JSON.stringify(solution.approval.reviewModel) : null,
+                solution.approval.operatorAuthorizationId || null]
             );
           }
         }
-        if (readyQuestions.length) {
-          const blocked = await client.query(
-            `SELECT v.id, v.learning_submission_id, v.version_number, v.evidence_hash,
-                    w.id AS work_id, w.deletion_generation
-             FROM amc_practice.learning_submission_versions v
-             JOIN amc_practice.learning_submissions s ON s.id = v.learning_submission_id
-             JOIN amc_practice.learning_work_items w
-               ON w.learning_submission_version_id = v.id AND w.work_type = 'ANALYZE_SUBMISSION'
-             WHERE v.form_id = $1 AND v.form_version = $2 AND v.context_status = 'CONTEXT_UNAVAILABLE'
-               AND s.lifecycle_status = 'COMMITTED' AND w.status = 'BLOCKED_CONTEXT'
-             FOR UPDATE OF v, w`, [binding.id, binding.version]
-          );
-          for (const row of blocked.rows) {
-            const inputHash = analysisInputHash(row.evidence_hash, artifact.setHash);
-            const runId = randomUUID();
-            await client.query(
-              `UPDATE amc_practice.learning_submission_versions
-               SET context_status = 'CONTEXT_READY', context_set_id = $2 WHERE id = $1`, [row.id, contextSetId]
-            );
-            await client.query(
-              `INSERT INTO amc_practice.learning_analysis_runs
-               (id, learning_submission_version_id, context_set_id, version_number, input_hash,
-                evidence_hash, deletion_generation, analysis_contract_version, status, created_at)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'QUEUED',$9)`,
-              [runId, row.id, contextSetId, row.version_number, inputHash, row.evidence_hash,
-                row.deletion_generation, ANALYSIS_CONTRACT_VERSION, importedAt]
-            );
-            await client.query(
-              `UPDATE amc_practice.learning_work_items
-               SET status = 'QUEUED', input_hash = $2, analysis_run_id = $3, available_at = $4,
-                   last_error_code = NULL, updated_at = $4
-               WHERE id = $1`, [row.work_id, inputHash, runId, importedAt]
-            );
-          }
+        await client.query(
+          `UPDATE amc_practice.approved_context_sets SET active = false, superseded_at = $3
+           WHERE form_id = $1 AND form_version = $2 AND active`, [binding.id, binding.version, importedAt]
+        );
+        const sealed = await client.query(
+          `UPDATE amc_practice.approved_context_sets
+           SET sealed = true, active = true
+           WHERE id = $1 AND NOT sealed AND NOT active AND superseded_at IS NULL
+           RETURNING id`, [contextSetId]
+        );
+        if (sealed.rowCount !== 1) {
+          throw Object.assign(new Error('Approved context could not be atomically sealed.'), {
+            code: 'CONTEXT_SEAL_FAILED'
+          });
         }
+        await repairBlockedLearningVersions(client, {
+          formId: binding.id,
+          formVersion: binding.version,
+          contextSetId,
+          artifactSetHash: artifact.setHash,
+          now: importedAt
+        });
         imported.push(await loadApprovedContextSet(client, contextSetId));
       }
       await client.query('COMMIT');
@@ -1718,6 +1837,8 @@ export class PostgresStore {
            FROM amc_practice.learning_work_items w
            JOIN amc_practice.learning_analysis_runs r ON r.id = w.analysis_run_id
            JOIN amc_practice.learning_submission_versions v ON v.id = w.learning_submission_version_id
+           JOIN amc_practice.approved_context_sets context
+             ON context.id = v.context_set_id AND context.sealed
            JOIN amc_practice.learning_submissions s ON s.id = v.learning_submission_id
            JOIN amc_practice.attempts a ON a.id = s.attempt_id AND a.student_id = s.student_id
              AND a.attempt_mode = s.attempt_mode
@@ -3894,12 +4015,15 @@ export class PostgresStore {
          FROM amc_practice.learning_work_items w
          JOIN amc_practice.learning_analysis_runs r ON r.id = w.analysis_run_id
          JOIN amc_practice.learning_submission_versions v ON v.id = w.learning_submission_version_id
+         JOIN amc_practice.approved_context_sets context
+           ON context.id = v.context_set_id AND context.sealed
          JOIN amc_practice.learning_submissions s ON s.id = v.learning_submission_id
          JOIN amc_practice.attempts a
            ON a.id = s.attempt_id AND a.student_id = s.student_id
           AND a.form_id = s.form_id AND a.form_version = s.form_version
           AND a.attempt_mode = s.attempt_mode
-         JOIN amc_practice.form_revisions fr ON fr.form_id = v.form_id AND fr.version = v.form_version
+         JOIN amc_practice.form_revisions fr
+           ON fr.form_id = v.form_id AND fr.version = v.form_version AND fr.content_sealed
          JOIN amc_practice.learning_question_responses q
            ON q.learning_submission_version_id = v.id AND q.question_number = $14
          LEFT JOIN amc_practice.learning_batches b ON b.id = v.batch_id
@@ -4134,7 +4258,7 @@ export class PostgresStore {
       `WITH current_revisions AS (
          SELECT DISTINCT ON (form_id) *
          FROM amc_practice.form_revisions
-         ${includeUnpublished ? '' : 'WHERE published = true'}
+         WHERE content_sealed ${includeUnpublished ? '' : 'AND published = true'}
          ORDER BY form_id, published DESC, published_at DESC NULLS LAST, imported_at DESC
        )
        SELECT f.*, (
@@ -4440,6 +4564,39 @@ export class PostgresStore {
     }));
   }
 
+  async listBatchReviewWorkspaces(studentId) {
+    const result = await this.pool.query(
+      `SELECT to_jsonb(attempt.*) AS attempt, to_jsonb(submission.*) AS submission,
+              CASE WHEN version.creation_reason = 'BATCH_REVIEW_ANCHOR' THEN 'AWAITING_BATCH'
+                ELSE COALESCE(work.status, 'BLOCKED_CONTEXT') END AS analysis_status,
+              CASE WHEN EXISTS (
+                SELECT 1 FROM amc_practice.approved_context_sets context
+                WHERE context.form_id = attempt.form_id
+                  AND context.form_version = attempt.form_version
+                  AND context.active AND context.sealed
+                  AND amc_practice.batch_review_context_is_complete(
+                    attempt.form_id, attempt.form_version, context.id
+                  )
+              ) THEN 'READY' ELSE 'UNAVAILABLE' END AS analysis_context_status
+       FROM amc_practice.attempts attempt
+       JOIN amc_practice.learning_submissions submission ON submission.attempt_id = attempt.id
+       JOIN amc_practice.learning_submission_versions version
+         ON version.learning_submission_id = submission.id
+        AND version.version_number = submission.current_version
+       LEFT JOIN amc_practice.learning_work_items work
+         ON work.learning_submission_version_id = version.id
+        AND work.work_type = 'ANALYZE_SUBMISSION'
+       WHERE attempt.student_id = $1 AND attempt.attempt_mode = 'BATCH_REVIEW'
+       ORDER BY attempt.created_at DESC`, [studentId]
+    );
+    return result.rows.map((row) => ({
+      attempt: mapAttempt(row.attempt),
+      learningSubmission: mapLearningSubmission(row.submission),
+      analysisStatus: row.analysis_status,
+      analysisContextStatus: row.analysis_context_status
+    }));
+  }
+
   async listLearningHistoryRecords(studentId, { limit, cursor = null }) {
     const client = await this.pool.connect();
     try {
@@ -4476,6 +4633,7 @@ export class PostgresStore {
          ON attempt.id = submission.attempt_id AND attempt.student_id = submission.student_id
        JOIN amc_practice.form_revisions form
          ON form.form_id = submission.form_id AND form.version = submission.form_version
+        AND form.content_sealed
        JOIN amc_practice.learning_submission_versions current_version
          ON current_version.learning_submission_id = submission.id
         AND current_version.version_number = submission.current_version
@@ -4839,6 +4997,165 @@ export class PostgresStore {
       }
       const attempt = mapAttempt(aggregate.rows[0].attempt);
       const submission = mapLearningSubmission(aggregate.rows[0].submission);
+      await client.query(
+        `INSERT INTO amc_practice.idempotency_records
+         (student_id, scope, key, request_hash, response_status, response_body, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7)`,
+        [studentId, scope, idempotencyKey, requestHash, created ? 201 : 200,
+          JSON.stringify({ attemptId: attempt.id }), now]
+      );
+      await client.query('COMMIT');
+      return { attempt, learningSubmission: submission, created };
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async findOrCreateBatchReviewWorkspace({
+    studentId, formId, formVersion, idempotencyKey, requestHash, now
+  }) {
+    const client = await this.pool.connect();
+    const scope = `batch-review-form:${formId}:${formVersion}:workspace`;
+    try {
+      await client.query('BEGIN');
+      const replay = await client.query(
+        `SELECT request_hash, response_body FROM amc_practice.idempotency_records
+         WHERE student_id = $1 AND scope = $2 AND key = $3 FOR UPDATE`,
+        [studentId, scope, idempotencyKey]
+      );
+      if (replay.rowCount) {
+        if (replay.rows[0].request_hash !== requestHash) {
+          throw Object.assign(new Error('Idempotency key was reused.'), { code: 'IDEMPOTENCY_KEY_REUSED' });
+        }
+        const bundle = await client.query(
+          `SELECT to_jsonb(attempt.*) AS attempt, to_jsonb(submission.*) AS submission
+           FROM amc_practice.attempts attempt
+           JOIN amc_practice.learning_submissions submission ON submission.attempt_id = attempt.id
+           WHERE attempt.id = $1 AND attempt.student_id = $2
+             AND attempt.attempt_mode = 'BATCH_REVIEW'`,
+          [replay.rows[0].response_body.attemptId, studentId]
+        );
+        if (!bundle.rowCount) throw new Error('Batch review idempotency record lost its aggregate.');
+        await client.query('COMMIT');
+        return {
+          attempt: mapAttempt(bundle.rows[0].attempt),
+          learningSubmission: mapLearningSubmission(bundle.rows[0].submission),
+          created: false
+        };
+      }
+      await client.query('SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))',
+        [studentId, `batch-review:${formId}:${formVersion}`]);
+      const serializedReplay = await client.query(
+        `SELECT request_hash, response_body FROM amc_practice.idempotency_records
+         WHERE student_id = $1 AND scope = $2 AND key = $3 FOR UPDATE`,
+        [studentId, scope, idempotencyKey]
+      );
+      if (serializedReplay.rowCount) {
+        if (serializedReplay.rows[0].request_hash !== requestHash) {
+          throw Object.assign(new Error('Idempotency key was reused.'), { code: 'IDEMPOTENCY_KEY_REUSED' });
+        }
+        const bundle = await client.query(
+          `SELECT to_jsonb(attempt.*) AS attempt, to_jsonb(submission.*) AS submission
+           FROM amc_practice.attempts attempt
+           JOIN amc_practice.learning_submissions submission ON submission.attempt_id = attempt.id
+           WHERE attempt.id = $1 AND attempt.student_id = $2
+             AND attempt.attempt_mode = 'BATCH_REVIEW'`,
+          [serializedReplay.rows[0].response_body.attemptId, studentId]
+        );
+        if (!bundle.rowCount) throw new Error('Batch review idempotency record lost its aggregate.');
+        await client.query('COMMIT');
+        return {
+          attempt: mapAttempt(bundle.rows[0].attempt),
+          learningSubmission: mapLearningSubmission(bundle.rows[0].submission),
+          created: false
+        };
+      }
+      const deliveryIdentity = await client.query(
+        `SELECT question_bundle_hash FROM amc_practice.form_revisions
+         WHERE form_id = $1 AND version = $2 AND content_sealed`,
+        [formId, formVersion]
+      );
+      if (!deliveryIdentity.rowCount) {
+        await client.query('COMMIT');
+        return null;
+      }
+      await client.query(
+        "SELECT pg_advisory_xact_lock(hashtext('amc_open_delivery_bundle'), hashtext($1))",
+        [deliveryIdentity.rows[0].question_bundle_hash]
+      );
+      const formIdentity = await client.query(
+        `SELECT * FROM amc_practice.form_revisions
+         WHERE form_id = $1 AND version = $2 AND content_sealed AND published = true FOR SHARE`,
+        [formId, formVersion]
+      );
+      if (!formIdentity.rowCount) {
+        await client.query('COMMIT');
+        return null;
+      }
+      let aggregate = await client.query(
+        `SELECT to_jsonb(attempt.*) AS attempt, to_jsonb(submission.*) AS submission
+         FROM amc_practice.attempts attempt
+         JOIN amc_practice.learning_submissions submission ON submission.attempt_id = attempt.id
+         WHERE attempt.student_id = $1 AND attempt.form_id = $2 AND attempt.form_version = $3
+           AND attempt.attempt_mode = 'BATCH_REVIEW' FOR UPDATE OF attempt, submission`,
+        [studentId, formId, formVersion]
+      );
+      const created = !aggregate.rowCount;
+      if (!aggregate.rowCount) {
+        const form = await getFormUsing(client, formId, formVersion);
+        const attemptId = randomUUID();
+        const submissionId = randomUUID();
+        const versionId = randomUUID();
+        const evidenceHash = batchReviewAnchorHash({ studentId, form });
+        const attempt = await client.query(
+          `INSERT INTO amc_practice.attempts
+           (id, student_id, form_id, form_version, duration_ms, attempt_mode, phase, clock_state,
+            active_elapsed_ms, clock_started_at, answers_revision, reasoning_revision, state_revision,
+            limit_reached_at, finalized_at, reset_at, created_at, updated_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$6,'PAUSED',0,NULL,0,0,0,NULL,NULL,NULL,$7,$7)
+           RETURNING *`,
+          [attemptId, studentId, formId, formVersion, form.durationMs, BATCH_REVIEW_PHASE, now]
+        );
+        const submission = await client.query(
+          `INSERT INTO amc_practice.learning_submissions
+           (id, student_id, attempt_id, official_submission_id, official_submission_kind,
+            form_id, form_version, source_type, lifecycle_status, current_version,
+            attempt_mode, open_review_release_id, deletion_generation, deleted_at,
+            created_at, updated_at)
+           VALUES ($1,$2,$3,NULL,NULL,$4,$5,$6,'COMMITTED',1,$6,NULL,0,NULL,$7,$7)
+           RETURNING *`,
+          [submissionId, studentId, attemptId, formId, formVersion,
+            BATCH_REVIEW_SOURCE_TYPE, now]
+        );
+        await client.query(
+          `INSERT INTO amc_practice.learning_submission_versions
+           (id, learning_submission_id, version_number, form_id, form_version,
+            answers_revision, reasoning_revision, creation_reason, batch_id,
+            context_status, context_set_id, evidence_hash, created_at)
+           VALUES ($1,$2,1,$3,$4,0,0,$5,NULL,'CONTEXT_UNAVAILABLE',NULL,$6,$7)`,
+          [versionId, submissionId, formId, formVersion,
+            BATCH_REVIEW_ANCHOR_REASON, evidenceHash, now]
+        );
+        await client.query(
+          `INSERT INTO amc_practice.learning_question_responses
+           (learning_submission_version_id, form_id, form_version, question_number,
+            selected_option, answer_origin, reasoning_text, reasoning_origin, created_at)
+           SELECT $1, form_id, form_version, question_number,
+                  NULL, 'BATCH_REVIEW_BLANK', '', 'NONE', $4
+           FROM amc_practice.form_questions
+           WHERE form_id = $2 AND form_version = $3 ORDER BY question_number`,
+          [versionId, formId, formVersion, now]
+        );
+        aggregate = { rows: [{ attempt: attempt.rows[0], submission: submission.rows[0] }] };
+      }
+      const attempt = mapAttempt(aggregate.rows[0].attempt);
+      const submission = mapLearningSubmission(aggregate.rows[0].submission);
+      if (submission.sourceType !== BATCH_REVIEW_SOURCE_TYPE) {
+        throw new Error('Batch review workspace lost its learning anchor.');
+      }
       await client.query(
         `INSERT INTO amc_practice.idempotency_records
          (student_id, scope, key, request_hash, response_status, response_body, created_at)
@@ -6569,11 +6886,32 @@ class PostgresAttemptTransaction {
   async getApprovedContextSetForForm(formId, formVersion) {
     const result = await this.client.query(
       `SELECT id FROM amc_practice.approved_context_sets
-       WHERE form_id = $1 AND form_version = $2 AND active
+       WHERE form_id = $1 AND form_version = $2 AND active AND sealed
          AND EXISTS (SELECT 1 FROM amc_practice.approved_context_questions q WHERE q.context_set_id = approved_context_sets.id)
        LIMIT 1`, [formId, formVersion]
     );
     return result.rowCount ? loadApprovedContextSet(this.client, result.rows[0].id) : null;
+  }
+
+  async getCompleteApprovedContextSetForForm(formId, formVersion) {
+    const result = await this.client.query(
+      `SELECT id FROM amc_practice.approved_context_sets
+       WHERE form_id = $1 AND form_version = $2 AND active AND sealed
+         AND amc_practice.batch_review_context_is_complete($1, $2, id)
+       LIMIT 1`, [formId, formVersion]
+    );
+    return result.rowCount ? loadApprovedContextSet(this.client, result.rows[0].id) : null;
+  }
+
+  async withApprovedContextFormLock(formId, formVersion, work) {
+    // Approved-context import takes this same exact-form lock before reading
+    // the form or repairing blocked work. It closes the confirm/import missed-
+    // wakeup window while keeping provider work outside the transaction.
+    await this.client.query(
+      'SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))',
+      [formId, formVersion]
+    );
+    return work();
   }
 
   async getApprovedContextSetById(contextSetId) {
@@ -6592,7 +6930,13 @@ class PostgresAttemptTransaction {
     if (!result.rowCount) return null;
     const submission = mapLearningSubmission(result.rows[0]);
     const release = submission.openReviewReleaseId ? mapOpenReviewRelease(result.rows[0].release) : null;
-    return { allowed: result.rows[0].allowed, sourceType: submission.sourceType, release, submission };
+    return {
+      allowed: result.rows[0].allowed,
+      sourceType: submission.sourceType,
+      release,
+      contextSetId: release?.contextSetId || null,
+      submission
+    };
   }
 
   async getLearningReportBundle() {

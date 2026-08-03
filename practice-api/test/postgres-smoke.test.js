@@ -26,10 +26,11 @@ import {
   tutorSha256
 } from '../src/question-tutor/domain.js';
 import { archiveReleaseFixture } from './archive-fixture.js';
+import { runBatchReviewPostgresEvidence } from './batch-review-postgres-evidence.js';
 import { fixtureManifest } from './helpers.js';
 import {
   approvedContextArtifact, approvalReceiptsForArtifact, FakeInferenceClient, learningReviewForm,
-  TRUSTED_APPROVAL_AUTHORITIES
+  pythonV2ApprovedArchiveFixture, TRUSTED_APPROVAL_AUTHORITIES
 } from './learning-review-fixture.js';
 
 const execFileAsync = promisify(execFile);
@@ -111,6 +112,92 @@ function batchGatewayRunMetadata(plan) {
   }));
 }
 
+async function verifyZeroChildV1Upgrade(pool) {
+  const schema = `amc_zero_child_${randomUUID().replaceAll('-', '')}`;
+  const migrationNames = [
+    '001_initial.sql',
+    '002_pipeline_audit_metadata.sql',
+    '003_archive_practice_scoring.sql',
+    '004_one_published_form_revision.sql',
+    '005_learning_submission_core.sql',
+    '006_approved_context_learning_reports.sql',
+    '007_batch_ingest.sql',
+    '008_open_review.sql',
+    '009_learning_history_read_model.sql',
+    '010_analysis_contract_v2.sql',
+    '011_question_tutor_persistence.sql',
+    '012_tutor_expired_lease_recovery.sql',
+    '013_ai_dispatch_fairness.sql',
+    '014_batch_review_workspace.sql',
+    '015_approved_context_v2.sql'
+  ];
+  try {
+    for (const name of migrationNames.slice(0, -1)) {
+      const sql = await readFile(new URL(`../migrations/${name}`, import.meta.url), 'utf8');
+      await pool.query(sql.replaceAll('amc_practice', schema));
+    }
+    const contextId = randomUUID();
+    await pool.query(
+      `INSERT INTO ${schema}.form_revisions
+        (form_id, version, title, duration_ms, published, test_only, published_at,
+         publication_status, source_schema_version, source_manifest_hash,
+         content_hash, question_bundle_hash, provenance, scoring_policy,
+         manifest_hash, imported_at)
+       VALUES ('legacy-zero-child', 'v1', 'Legacy zero-child context', 4500000,
+         false, true, NULL, 'approved', 'amc-form-private-v1', $1, $2, $3,
+         '{}'::jsonb, '{}'::jsonb, $4, '2026-08-01T00:00:00Z')`,
+      ['1'.repeat(64), '2'.repeat(64), '3'.repeat(64), '4'.repeat(64)]
+    );
+    await pool.query(
+      `INSERT INTO ${schema}.form_questions
+        (form_id, form_version, question_number, prompt_markdown, choices,
+         correct_option, solution_markdown, is_scored, accepted_options)
+       SELECT 'legacy-zero-child', 'v1', number,
+              'Legacy prompt ' || number,
+              jsonb_build_array(
+                jsonb_build_object('option','A','textMarkdown','A'),
+                jsonb_build_object('option','B','textMarkdown','B'),
+                jsonb_build_object('option','C','textMarkdown','C'),
+                jsonb_build_object('option','D','textMarkdown','D'),
+                jsonb_build_object('option','E','textMarkdown','E')
+              ),
+              'A', 'Legacy solution ' || number, true, '["A"]'::jsonb
+       FROM generate_series(1, 25) number`
+    );
+    await pool.query(
+      `INSERT INTO ${schema}.approved_context_sets
+        (id, schema_version, artifact_set_hash, archive_wrapper_set_hash,
+         candidate_schema_version, candidate_set_hash, decision_set_hash,
+         approval_authority_id, approval_receipt_set_hash, form_id, form_version,
+         context_content_hash, release_question_bundle_hash, release_content_hash,
+         release_manifest_hash, active, imported_at, superseded_at)
+       VALUES ($1, 'amc-approved-question-context-set-v1', $2, NULL,
+         'amc-question-context-candidate-set-v1', $3, $4,
+         'approval-authority:legacy-upgrade', $5, 'legacy-zero-child', 'v1',
+         $6, $7, $8, $9, true, '2026-08-01T00:00:00Z', NULL)`,
+      [contextId, 'a'.repeat(64), 'b'.repeat(64), 'c'.repeat(64), 'd'.repeat(64),
+        'e'.repeat(64), '3'.repeat(64), '2'.repeat(64), '4'.repeat(64)]
+    );
+    const migration = await readFile(
+      new URL('../migrations/015_approved_context_v2.sql', import.meta.url), 'utf8'
+    );
+    await pool.query(migration.replaceAll('amc_practice', schema));
+    assert.deepEqual((await pool.query(
+      `SELECT sealed, declared_question_count, active, superseded_at
+       FROM ${schema}.approved_context_sets WHERE id = $1`, [contextId]
+    )).rows, [{
+      sealed: true, declared_question_count: 0, active: true, superseded_at: null
+    }]);
+    assert.deepEqual((await pool.query(
+      `SELECT content_sealed, declared_question_count
+       FROM ${schema}.form_revisions
+       WHERE form_id = 'legacy-zero-child' AND version = 'v1'`
+    )).rows, [{ content_sealed: true, declared_question_count: 25 }]);
+  } finally {
+    await pool.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);
+  }
+}
+
 test('PostgreSQL migration rerun plus private/archive import and publication-concurrency smoke test', { skip: !connectionString }, async (t) => {
   const store = new PostgresStore({ connectionString, max: 12 });
   const secondStore = new PostgresStore({ connectionString, max: 4 });
@@ -144,8 +231,11 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     '010_analysis_contract_v2.sql',
     '011_question_tutor_persistence.sql',
     '012_tutor_expired_lease_recovery.sql',
-    '013_ai_dispatch_fairness.sql'
+    '013_ai_dispatch_fairness.sql',
+    '014_batch_review_workspace.sql',
+    '015_approved_context_v2.sql'
   ]);
+  await verifyZeroChildV1Upgrade(store.pool);
   assert.deepEqual((await store.pool.query(
     `SELECT last_claimed_kind, revision
      FROM amc_practice.ai_dispatch_fairness_state WHERE singleton = true`
@@ -677,6 +767,9 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
   const importedArchive = await service.importArchiveRelease(archiveRelease, { publish: false });
   assert.equal(importedArchive.length, 48);
   assert.equal(importedArchive.every((form) => form.published === false && form.practiceKind === 'archive'), true);
+  assert.equal(importedArchive.every((form) => form.publishEligible === true
+    && form.developmentPublishEligible === false), true,
+  'PostgreSQL round trips the same immutable publication eligibility contract as MemoryStore');
   const archive = archiveRelease.forms.find((form) => form.id === 'amc12-2025-a');
   assert.ok(archive);
   const archiveAudit = await store.pool.query(
@@ -715,6 +808,682 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     question_number: 12, correct_option: 'D', accepted_options: ['D', 'E'], is_scored: true
   });
 
+  const republishBase = {
+    ...learningReviewForm(), id: `pg-republish-${randomUUID()}`, version: 'eligibility-v1',
+    contentHash: createHash('sha256').update(randomUUID()).digest('hex'),
+    questionBundleHash: createHash('sha256').update(randomUUID()).digest('hex'),
+    manifestHash: createHash('sha256').update(randomUUID()).digest('hex')
+  };
+  republishBase.sourceManifestHash = republishBase.manifestHash;
+  const firstPublished = await store.importForm(
+    republishBase, { publish: true, allowTestOnlyPublish: true }
+  );
+  assert.deepEqual({
+    publishEligible: firstPublished.publishEligible,
+    developmentPublishEligible: firstPublished.developmentPublishEligible
+  }, { publishEligible: false, developmentPublishEligible: true });
+  const republishSuccessor = {
+    ...republishBase, version: 'eligibility-v2',
+    contentHash: createHash('sha256').update(randomUUID()).digest('hex'),
+    manifestHash: createHash('sha256').update(randomUUID()).digest('hex')
+  };
+  republishSuccessor.sourceManifestHash = republishSuccessor.manifestHash;
+  await store.importForm(republishSuccessor, { publish: true, allowTestOnlyPublish: true });
+  const republished = await store.importForm(
+    republishBase, { publish: true, allowTestOnlyPublish: true }
+  );
+  assert.equal(republished.publishedAt.toISOString(), firstPublished.publishedAt.toISOString(),
+    're-publishing retains the first publication timestamp');
+
+  // Generate via practice-content's production compiler, then verify the API
+  // store does not flatten any delegated-review audit lineage on round-trip.
+  // Commit before import so this same real v2 artifact also proves the full
+  // PostgreSQL context-late repair path rather than only a table insert.
+  const v2Fixture = pythonV2ApprovedArchiveFixture(archiveRelease);
+  const v2StoredForm = importedArchive.find((form) => form.id === alternativeArchive.id);
+  await store.importForm(v2StoredForm, { publish: true, allowTestOnlyPublish: false });
+  const v2Now = new Date('2026-08-03T12:30:00.000Z');
+  const v2BatchService = new PracticeService({
+    store, privateUploadStore,
+    authPepper: 'postgres-v2-batch-pepper-that-is-long-enough-for-tests',
+    sessionTtlMs: 60 * 60 * 1000,
+    allowTestOnlyImport: true,
+    allowTestOnlyPublish: true,
+    batchIntakeEnabled: true,
+    batchReviewEnabled: true,
+    clock: () => new Date(v2Now)
+  });
+  const v2Code = `pg-v2-batch-${randomUUID()}`;
+  const v2Student = await v2BatchService.seedAccessCode({
+    code: v2Code, displayName: 'Postgres v2 batch student'
+  });
+  const v2Workspace = await v2BatchService.createBatchReviewWorkspace(
+    v2Student.id, alternativeArchive.id, alternativeArchive.version, 'pg-v2-workspace'
+  );
+  const pinnedV2Form = await store.getForm(alternativeArchive.id, alternativeArchive.version);
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.form_revisions SET title = title || ' tampered'
+       WHERE form_id = $1 AND version = $2`,
+      [alternativeArchive.id, alternativeArchive.version]
+    ),
+    (error) => error.code === 'P0001' && /form revision content identity is immutable/.test(error.message)
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.form_revisions SET content_hash = $3
+       WHERE form_id = $1 AND version = $2`,
+      [alternativeArchive.id, alternativeArchive.version, '0'.repeat(64)]
+    ),
+    (error) => error.code === 'P0001' && /form revision content identity is immutable/.test(error.message)
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.form_revisions SET publish_eligible = false
+       WHERE form_id = $1 AND version = $2`,
+      [alternativeArchive.id, alternativeArchive.version]
+    ),
+    (error) => error.code === 'P0001' && /form revision content identity is immutable/.test(error.message)
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.form_revisions SET published_at = published_at + interval '1 second'
+       WHERE form_id = $1 AND version = $2`,
+      [alternativeArchive.id, alternativeArchive.version]
+    ),
+    (error) => error.code === 'P0001'
+      && /publication timestamp is immutable after first publication/.test(error.message)
+  );
+  const pinnedSuccessor = {
+    ...v2StoredForm,
+    version: `${alternativeArchive.version}-successor`,
+    title: `${v2StoredForm.title} successor`,
+    contentHash: createHash('sha256').update(randomUUID()).digest('hex'),
+    manifestHash: createHash('sha256').update(randomUUID()).digest('hex')
+  };
+  pinnedSuccessor.sourceManifestHash = pinnedSuccessor.manifestHash;
+  await store.importForm(pinnedSuccessor, { publish: true, allowTestOnlyPublish: false });
+  assert.equal((await store.getForm(
+    alternativeArchive.id, alternativeArchive.version
+  )).published, false);
+  const republishedPinnedV2 = await store.importForm(
+    v2StoredForm, { publish: true, allowTestOnlyPublish: false }
+  );
+  assert.equal(republishedPinnedV2.published, true);
+  assert.equal(republishedPinnedV2.publishedAt.toISOString(), pinnedV2Form.publishedAt.toISOString());
+  const v2Text = 'Question 1: A. I used an algebraic invariant.';
+  const v2Batch = await v2BatchService.createLearningBatch(
+    v2Student.id, v2Workspace.workspace.id, 'pg-v2-batch-create', {
+      files: [{
+        displayName: 'answers.md', kind: 'TEXT', contentType: 'text/markdown',
+        declaredBytes: Buffer.byteLength(v2Text)
+      }]
+    }
+  );
+  await v2BatchService.uploadLearningBatchAsset(
+    v2Student.id, v2Workspace.workspace.id, v2Batch.batch.id, v2Batch.batch.assets[0].id,
+    'pg-v2-batch-upload', Readable.from([v2Text]), Buffer.byteLength(v2Text)
+  );
+  await v2BatchService.submitLearningBatch(
+    v2Student.id, v2Workspace.workspace.id, v2Batch.batch.id, 'pg-v2-batch-submit'
+  );
+  const v2Extraction = await store.claimNextAiWork({
+    workerId: 'pg-v2-extractor', now: v2Now, leaseMs: 120_000,
+    acceptedKinds: ['BATCH_EXTRACTION']
+  });
+  const v2Prepared = await v2BatchService.prepareLearningBatchDecomposition(
+    v2Student.id, v2Workspace.workspace.id, v2Batch.batch.id
+  );
+  const v2Mapped = await v2BatchService.recordLearningBatchDecomposition(
+    v2Student.id, v2Workspace.workspace.id, v2Batch.batch.id, {
+      masterPlanHash: v2Prepared.plan.masterPlanHash,
+      outputs: batchGatewayOutputs(v2Prepared.plan),
+      runMetadata: batchGatewayRunMetadata(v2Prepared.plan),
+      workerFence: {
+        workerId: v2Extraction.job.workItem.leaseOwner,
+        leaseToken: v2Extraction.job.workItem.leaseToken,
+        inputHash: v2Extraction.job.workItem.inputHash,
+        deletionGeneration: v2Extraction.job.workItem.deletionGeneration
+      }
+    }
+  );
+  const v2Item = v2Mapped.batch.mapping.items.find((item) => !item.unmapped);
+  await v2BatchService.confirmLearningBatch(
+    v2Student.id, v2Workspace.workspace.id, v2Batch.batch.id, 'pg-v2-batch-confirm', {
+      mappingRevision: v2Mapped.batch.mapping.revision,
+      responses: [{
+        questionNumber: 1, selectedOption: 'A', reasoningText: v2Item.evidenceText,
+        sourceItemIds: [v2Item.id]
+      }],
+      discardedItemIds: v2Mapped.batch.mapping.items
+        .filter((item) => item.unmapped).map((item) => item.id)
+    }
+  );
+  assert.equal((await v2BatchService.getLearningReport(
+    v2Student.id, v2Workspace.workspace.id
+  )).status, 'BLOCKED_CONTEXT');
+  const v2Importer = new ApprovedContextImporter({
+    store, clock: () => new Date(v2Now), trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
+  });
+  const [v2Context] = await v2Importer.import(v2Fixture.artifact, v2Fixture.approvalReceipts);
+  const [v2Replay] = await v2Importer.import(v2Fixture.artifact, v2Fixture.approvalReceipts);
+  assert.equal(v2Replay.id, v2Context.id);
+  assert.equal(v2Context.schemaVersion, 'amc-approved-question-context-set-v2');
+  assert.equal(v2Context.sealed, true);
+  assert.equal(v2Context.declaredQuestionCount, 25);
+  assert.equal(v2Context.candidateSchemaVersion,
+    'amc-question-context-supplemented-archive-candidate-set-v1');
+  assert.deepEqual(v2Context.reviewGovernance, v2Fixture.artifact.reviewGovernance);
+  assert.equal(v2Context.questions.length, 25);
+  assert.ok(v2Context.questions.every((question) => question.solutions.length === 2));
+  const expectedV2Solution = v2Fixture.artifact.forms[0].questions[0].approvedSolutions[0];
+  assert.deepEqual(v2Context.questions[0].solutions[0].candidateProvenance,
+    expectedV2Solution.candidateProvenance);
+  assert.equal(v2Context.questions[0].solutions[0].reviewMethod,
+    expectedV2Solution.approval.reviewMethod);
+  assert.deepEqual(v2Context.questions[0].solutions[0].reviewModel,
+    expectedV2Solution.approval.reviewModel);
+  assert.equal(v2Context.questions[0].solutions[0].operatorAuthorizationId,
+    expectedV2Solution.approval.operatorAuthorizationId);
+  const v2Supplement = v2Context.questions[0].solutions.find((solution) =>
+    solution.candidateProvenance.origin === 'operator-original-supplement');
+  assert.equal(v2Supplement.artifactSolutionId, 'solution-900');
+  assert.equal(v2Supplement.sourceRef.sha256, v2Supplement.candidateProvenance.supplementRecordHash);
+  const v2Audit = await store.pool.query(
+    `SELECT context.schema_version, context.approval_policy_version,
+            context.review_schema_version, context.review_governance,
+            solution.candidate_provenance, solution.review_method,
+            solution.review_model, solution.operator_authorization_id
+     FROM amc_practice.approved_context_sets context
+     JOIN amc_practice.approved_context_solutions solution
+       ON solution.context_set_id = context.id
+     WHERE context.id = $1 AND solution.question_number = 1
+     ORDER BY solution.solution_position LIMIT 1`, [v2Context.id]
+  );
+  assert.deepEqual(v2Audit.rows[0], {
+    schema_version: 'amc-approved-question-context-set-v2',
+    approval_policy_version: 'amc-operator-delegated-ai-assisted-solution-approval-v1',
+    review_schema_version: 'amc-question-context-review-decisions-v2',
+    review_governance: v2Fixture.artifact.reviewGovernance,
+    candidate_provenance: expectedV2Solution.candidateProvenance,
+    review_method: expectedV2Solution.approval.reviewMethod,
+    review_model: expectedV2Solution.approval.reviewModel,
+    operator_authorization_id: expectedV2Solution.approval.operatorAuthorizationId
+  });
+  assert.equal((await store.pool.query(
+    `SELECT count(*)::integer AS count
+     FROM amc_practice.approved_context_solutions
+     WHERE context_set_id = $1
+       AND candidate_provenance->>'origin' = 'operator-original-supplement'
+       AND artifact_solution_id ~ '^solution-9[0-9]{2}$'
+       AND source_sha256 = candidate_provenance->>'supplementRecordHash'`,
+    [v2Context.id]
+  )).rows[0].count, 1);
+  assert.equal((await v2BatchService.getLearningReport(
+    v2Student.id, v2Workspace.workspace.id
+  )).status, 'QUEUED');
+  const v2AnalysisClaim = await store.claimLearningAnalysisWork({
+    workerId: 'pg-v2-analysis', now: v2Now, leaseMs: 120_000
+  });
+  assert.equal(v2AnalysisClaim.submission.attemptId, v2Workspace.workspace.id);
+  const v2Worker = new LearningReviewWorker({
+    store, inferenceClient: new FakeInferenceClient(),
+    workerId: 'pg-v2-analysis', clock: () => new Date(v2Now)
+  });
+  assert.deepEqual(await v2Worker.processClaimed(v2AnalysisClaim), {
+    processed: true, status: 'COMPLETE', providerCalls: 1
+  });
+  assert.equal((await v2BatchService.getLearningReport(
+    v2Student.id, v2Workspace.workspace.id
+  )).status, 'COMPLETE');
+  const v2Session = await v2BatchService.login(v2Code);
+  const v2Tutor = await v2BatchService.createTutorRootThread(
+    v2Student.id, v2Session.session.id, v2Workspace.workspace.learningSubmissionId,
+    '2', '1', 'pg-v2-tutor-root'
+  );
+  assert.equal(v2Tutor.thread.question.solutionReferences.length, 2);
+
+  // A second v2 aggregate proves sealing is global governance, independent of
+  // whether a runtime submission or open-review release has pinned the row.
+  const unpinnedFixture = pythonV2ApprovedArchiveFixture(
+    archiveRelease, { targetId: 'amc12-2013-a' }
+  );
+  const [unpinnedContext] = await v2Importer.import(
+    unpinnedFixture.artifact, unpinnedFixture.approvalReceipts
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.approved_context_sets
+       SET review_governance = jsonb_set(
+         review_governance, '{operatorAuthorization,authorizedAt}',
+         '"2026-08-03T12:00:01Z"'::jsonb)
+       WHERE id = $1`, [unpinnedContext.id]
+    ),
+    (error) => error.code === 'P0001' && /audit lineage is immutable after import/.test(error.message)
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.approved_context_solutions
+       SET reviewer_id = candidate_provenance->>'authorId'
+       WHERE context_set_id = $1
+         AND candidate_provenance->>'origin' = 'operator-original-supplement'`,
+      [unpinnedContext.id]
+    ),
+    (error) => error.code === 'P0001' && /context content is immutable after insert/.test(error.message)
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.approved_context_solutions
+       SET candidate_provenance = jsonb_set(
+         candidate_provenance, '{authorId}', to_jsonb(reviewer_id))
+       WHERE context_set_id = $1
+         AND candidate_provenance->>'origin' = 'operator-original-supplement'`,
+      [unpinnedContext.id]
+    ),
+    (error) => error.code === 'P0001' && /context content is immutable after insert/.test(error.message)
+  );
+  for (const statement of [
+    {
+      sql: `UPDATE amc_practice.approved_context_questions
+            SET prompt_markdown = prompt_markdown || ' tampered'
+            WHERE context_set_id = $1 AND question_number = 1`,
+      message: /context content is immutable after insert/
+    },
+    {
+      sql: `DELETE FROM amc_practice.approved_context_questions
+            WHERE context_set_id = $1 AND question_number = 1`,
+      message: /context content is immutable after insert/
+    },
+    {
+      sql: `INSERT INTO amc_practice.approved_context_questions
+            SELECT * FROM amc_practice.approved_context_questions
+            WHERE context_set_id = $1 AND question_number = 1`,
+      message: /sealed approved context content is immutable/
+    },
+    {
+      sql: `UPDATE amc_practice.approved_context_solutions
+            SET body_markdown = body_markdown || ' tampered'
+            WHERE context_set_id = $1 AND question_number = 1 AND solution_position = 1`,
+      message: /context content is immutable after insert/
+    },
+    {
+      sql: `DELETE FROM amc_practice.approved_context_solutions
+            WHERE context_set_id = $1 AND question_number = 1 AND solution_position = 1`,
+      message: /context content is immutable after insert/
+    },
+    {
+      sql: `INSERT INTO amc_practice.approved_context_solutions
+            SELECT * FROM amc_practice.approved_context_solutions
+            WHERE context_set_id = $1 AND question_number = 1 AND solution_position = 1`,
+      message: /sealed approved context content is immutable/
+    }
+  ]) {
+    await assert.rejects(
+      () => store.pool.query(statement.sql, [unpinnedContext.id]),
+      (error) => error.code === 'P0001' && statement.message.test(error.message)
+    );
+  }
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.approved_context_sets
+       SET archive_wrapper_set_hash = $2 WHERE id = $1`,
+      [unpinnedContext.id, '0'.repeat(64)]
+    ),
+    (error) => error.code === 'P0001' && /audit lineage is immutable after import/.test(error.message)
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.approved_context_sets
+       SET sealed = false, active = false, superseded_at = NULL WHERE id = $1`,
+      [unpinnedContext.id]
+    ),
+    (error) => error.code === 'P0001' && /lifecycle transition is invalid/.test(error.message)
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.approved_context_sets
+       SET active = false, superseded_at = '1999-01-01T00:00:00Z' WHERE id = $1`,
+      [unpinnedContext.id]
+    ),
+    (error) => error.code === 'P0001' && /lifecycle transition is invalid/.test(error.message)
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      'DELETE FROM amc_practice.approved_context_sets WHERE id = $1',
+      [unpinnedContext.id]
+    ),
+    (error) => error.code === 'P0001' && /header is immutable after insert/.test(error.message)
+  );
+
+  const stagingContextId = randomUUID();
+  await store.pool.query(
+    `INSERT INTO amc_practice.approved_context_sets
+      (id, schema_version, artifact_set_hash, archive_wrapper_set_hash,
+       candidate_schema_version, candidate_set_hash, decision_set_hash,
+       approval_authority_id, approval_receipt_set_hash, form_id, form_version,
+       context_content_hash, release_question_bundle_hash, release_content_hash,
+       release_manifest_hash, approval_policy_version, review_schema_version,
+       review_governance, sealed, declared_question_count, active, imported_at, superseded_at)
+     SELECT $2, schema_version, $3, archive_wrapper_set_hash,
+            candidate_schema_version, candidate_set_hash, decision_set_hash,
+            approval_authority_id, approval_receipt_set_hash, form_id, form_version,
+            context_content_hash, release_question_bundle_hash, release_content_hash,
+            release_manifest_hash, approval_policy_version, review_schema_version,
+            review_governance, false, 1, false, imported_at, NULL
+     FROM amc_practice.approved_context_sets WHERE id = $1`,
+    [unpinnedContext.id, stagingContextId,
+      createHash('sha256').update(`staging:${stagingContextId}`).digest('hex')]
+  );
+  await store.pool.query(
+    `INSERT INTO amc_practice.approved_context_questions
+     SELECT $2, form_id, form_version, question_number, question_content_hash,
+            prompt_markdown, choices, approved_solution_count,
+            model_eligible_solution_count, visual_context
+     FROM amc_practice.approved_context_questions
+     WHERE context_set_id = $1 AND question_number = 1`,
+    [unpinnedContext.id, stagingContextId]
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `INSERT INTO amc_practice.approved_context_solutions
+        (context_set_id, question_number, solution_position, artifact_solution_id,
+         title, body_markdown, body_sha256, source_path, source_sha256,
+         source_heading_line, source_end_line, reviewer_id, reviewed_at,
+         rights_status, quality_flags, method_tags, model_eligible,
+         model_ineligibility_reason, decision_record_hash, authority_receipt_id,
+         authority_receipt_authority_id, authority_receipt_issued_at,
+         authority_receipt_status, context_schema_version, candidate_provenance,
+         review_method, review_model, operator_authorization_id)
+       SELECT $2, question_number, solution_position, artifact_solution_id,
+              title, body_markdown, body_sha256, source_path, source_sha256,
+              source_heading_line, source_end_line, candidate_provenance->>'authorId', reviewed_at,
+              rights_status, quality_flags, method_tags, model_eligible,
+              model_ineligibility_reason, decision_record_hash, authority_receipt_id,
+              authority_receipt_authority_id, authority_receipt_issued_at,
+              authority_receipt_status, context_schema_version, candidate_provenance,
+              review_method, review_model, operator_authorization_id
+       FROM amc_practice.approved_context_solutions
+       WHERE context_set_id = $1 AND question_number = 1
+         AND candidate_provenance->>'origin' = 'operator-original-supplement'`,
+      [unpinnedContext.id, stagingContextId]
+    ),
+    (error) => error.code === 'P0001' && /reviewer must differ from supplement author/.test(error.message)
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.approved_context_sets
+       SET sealed = true, active = true WHERE id = $1`, [stagingContextId]
+    ),
+    (error) => error.code === 'P0001' && /child counts are inconsistent/.test(error.message)
+  );
+  assert.deepEqual((await store.pool.query(
+    `SELECT sealed, active,
+            amc_practice.batch_review_context_is_complete(form_id, form_version, id) AS runtime_visible
+     FROM amc_practice.approved_context_sets WHERE id = $1`, [stagingContextId]
+  )).rows, [{ sealed: false, active: false, runtime_visible: false }]);
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.learning_submission_versions
+       SET context_set_id = $2 WHERE id = $1`, [v2AnalysisClaim.version.id, stagingContextId]
+    ),
+    (error) => error.code === 'P0001' && /requires a sealed context/.test(error.message)
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      'DELETE FROM amc_practice.approved_context_sets WHERE id = $1', [stagingContextId]
+    ),
+    (error) => error.code === 'P0001' && /header is immutable after insert/.test(error.message)
+  );
+
+  const stagingFormId = `pg-unsealed-form-${randomUUID()}`;
+  const stagingFormVersion = 'staging-v1';
+  await store.pool.query(
+    `INSERT INTO amc_practice.form_revisions
+      (form_id, version, title, duration_ms, published, test_only,
+       publish_eligible, development_publish_eligible, published_at,
+       publication_status, source_schema_version, source_manifest_hash,
+       content_hash, question_bundle_hash, provenance, scoring_policy,
+       manifest_hash, imported_at, content_sealed, declared_question_count)
+     SELECT $3, $4, title, duration_ms, false, test_only,
+            publish_eligible, development_publish_eligible, NULL,
+            publication_status, source_schema_version, source_manifest_hash,
+            content_hash, question_bundle_hash, provenance, scoring_policy,
+            manifest_hash, imported_at, false, 1
+     FROM amc_practice.form_revisions WHERE form_id = $1 AND version = $2`,
+    [unpinnedContext.formId, unpinnedContext.formVersion, stagingFormId, stagingFormVersion]
+  );
+  await assert.rejects(
+    () => store.importForm({
+      ...learningReviewForm(), id: stagingFormId, version: stagingFormVersion
+    }, { publish: false, allowTestOnlyPublish: true }),
+    (error) => error?.code === 'FORM_REVISION_NOT_SEALED'
+  );
+  assert.equal(await store.getForm(stagingFormId, stagingFormVersion), null);
+  assert.equal((await store.listForms({ includeUnpublished: true }))
+    .some((form) => form.id === stagingFormId), false);
+  await store.pool.query(
+    `INSERT INTO amc_practice.form_questions
+      (form_id, form_version, question_number, prompt_markdown, choices,
+       correct_option, accepted_options, is_scored, solution_markdown)
+     VALUES ($1,$2,1,'Malformed staging prompt',
+       '[{"option":"A"},{"option":"B","textMarkdown":"   "},{"option":"C","textMarkdown":"C"},{"option":"D","textMarkdown":"D"},{"option":"E","textMarkdown":"E"}]'::jsonb,
+       'A','["A"]'::jsonb,true,'Malformed staging solution')`,
+    [stagingFormId, stagingFormVersion]
+  );
+  for (const statement of [
+    `UPDATE amc_practice.form_questions SET prompt_markdown = 'repaired'
+     WHERE form_id = $1 AND form_version = $2 AND question_number = 1`,
+    `DELETE FROM amc_practice.form_questions
+     WHERE form_id = $1 AND form_version = $2 AND question_number = 1`
+  ]) {
+    await assert.rejects(
+      () => store.pool.query(statement, [stagingFormId, stagingFormVersion]),
+      (error) => error.code === 'P0001' && /form questions are immutable after insert/.test(error.message)
+    );
+  }
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.form_revisions SET content_sealed = true
+       WHERE form_id = $1 AND version = $2`, [stagingFormId, stagingFormVersion]
+    ),
+    (error) => error.code === 'P0001' && /seal contains malformed choices/.test(error.message)
+  );
+
+  const sourceStagingQuestion = (await store.pool.query(
+    `SELECT prompt_markdown, choices, correct_option, accepted_options, is_scored,
+            solution_markdown
+     FROM amc_practice.form_questions
+     WHERE form_id = $1 AND form_version = $2 AND question_number = 1`,
+    [unpinnedContext.formId, unpinnedContext.formVersion]
+  )).rows[0];
+  const stageDirectForm = async ({
+    label, declaredQuestionCount, positions,
+    promptFor = () => sourceStagingQuestion.prompt_markdown,
+    choicesFor = () => sourceStagingQuestion.choices,
+    solutionFor = () => sourceStagingQuestion.solution_markdown
+  }) => {
+    const id = `pg-staged-${label}-${randomUUID()}`;
+    const version = 'staging-v1';
+    await store.pool.query(
+      `INSERT INTO amc_practice.form_revisions
+        (form_id, version, title, duration_ms, published, test_only,
+         publish_eligible, development_publish_eligible, published_at,
+         publication_status, source_schema_version, source_manifest_hash,
+         content_hash, question_bundle_hash, provenance, scoring_policy,
+         manifest_hash, imported_at, content_sealed, declared_question_count)
+       SELECT $3, $4, title, duration_ms, false, test_only,
+              publish_eligible, development_publish_eligible, NULL,
+              publication_status, source_schema_version, source_manifest_hash,
+              content_hash, question_bundle_hash, provenance, scoring_policy,
+              manifest_hash, imported_at, false, $5
+       FROM amc_practice.form_revisions WHERE form_id = $1 AND version = $2`,
+      [unpinnedContext.formId, unpinnedContext.formVersion, id, version, declaredQuestionCount]
+    );
+    for (const position of positions) {
+      await store.pool.query(
+        `INSERT INTO amc_practice.form_questions
+          (form_id, form_version, question_number, prompt_markdown, choices,
+           correct_option, accepted_options, is_scored, solution_markdown)
+         VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7::jsonb,$8,$9)`,
+        [id, version, position, promptFor(position), JSON.stringify(choicesFor(position)),
+          sourceStagingQuestion.correct_option,
+          JSON.stringify(sourceStagingQuestion.accepted_options),
+          sourceStagingQuestion.is_scored, solutionFor(position)]
+      );
+    }
+    return { id, version };
+  };
+  const sealDirectForm = (form) => store.pool.query(
+    `UPDATE amc_practice.form_revisions SET content_sealed = true
+     WHERE form_id = $1 AND version = $2`, [form.id, form.version]
+  );
+
+  const whitespaceOnly = ' \t\n\r ';
+  const whitespaceCases = [
+    { label: 'prompt-whitespace', promptFor: () => whitespaceOnly },
+    { label: 'solution-whitespace', solutionFor: () => whitespaceOnly },
+    {
+      label: 'choice-whitespace',
+      choicesFor: () => sourceStagingQuestion.choices.map((choice, index) =>
+        index === 0 ? { ...choice, textMarkdown: whitespaceOnly } : choice)
+    }
+  ];
+  for (const whitespaceCase of whitespaceCases) {
+    const staged = await stageDirectForm({
+      ...whitespaceCase, declaredQuestionCount: 1, positions: [1]
+    });
+    await assert.rejects(
+      () => sealDirectForm(staged),
+      (error) => error.code === 'P0001' && /seal contains malformed choices/.test(error.message)
+    );
+  }
+
+  for (const malformedShape of [
+    { label: 'count-mismatch', declaredQuestionCount: 3, positions: [1, 2] },
+    { label: 'position-gap', declaredQuestionCount: 3, positions: [1, 2, 4] }
+  ]) {
+    const staged = await stageDirectForm(malformedShape);
+    await assert.rejects(
+      () => sealDirectForm(staged),
+      (error) => error.code === 'P0001' && /seal question count mismatch/.test(error.message)
+    );
+  }
+  const genericThreeQuestionForm = await stageDirectForm({
+    label: 'generic-three', declaredQuestionCount: 3, positions: [1, 2, 3]
+  });
+  await sealDirectForm(genericThreeQuestionForm);
+  assert.deepEqual((await store.pool.query(
+    `SELECT content_sealed, declared_question_count,
+            (SELECT count(*)::integer FROM amc_practice.form_questions question
+             WHERE question.form_id = revision.form_id
+               AND question.form_version = revision.version) AS actual_question_count
+     FROM amc_practice.form_revisions revision
+     WHERE form_id = $1 AND version = $2`,
+    [genericThreeQuestionForm.id, genericThreeQuestionForm.version]
+  )).rows, [{ content_sealed: true, declared_question_count: 3, actual_question_count: 3 }]);
+
+  for (const directHeader of [
+    { label: 'presealed', published: false, contentSealed: true, publishedAt: null },
+    { label: 'prepublished', published: true, contentSealed: false, publishedAt: new Date() }
+  ]) {
+    await assert.rejects(
+      () => store.pool.query(
+        `INSERT INTO amc_practice.form_revisions
+          (form_id, version, title, duration_ms, published, test_only,
+           publish_eligible, development_publish_eligible, published_at,
+           publication_status, source_schema_version, source_manifest_hash,
+           content_hash, question_bundle_hash, provenance, scoring_policy,
+           manifest_hash, imported_at, content_sealed, declared_question_count)
+         SELECT $3, 'direct-v1', title, duration_ms, $4, test_only,
+                publish_eligible, development_publish_eligible, $5,
+                publication_status, source_schema_version, source_manifest_hash,
+                content_hash, question_bundle_hash, provenance, scoring_policy,
+                manifest_hash, imported_at, $6, 1
+         FROM amc_practice.form_revisions WHERE form_id = $1 AND version = $2`,
+        [unpinnedContext.formId, unpinnedContext.formVersion,
+          `pg-direct-${directHeader.label}-${randomUUID()}`,
+          directHeader.published, directHeader.publishedAt, directHeader.contentSealed]
+      ),
+      (error) => error.code === 'P0001'
+        && /must begin as unsealed unpublished staging/.test(error.message)
+    );
+  }
+
+  await assert.rejects(
+    () => store.pool.query(
+      `INSERT INTO amc_practice.attempts
+        (id, student_id, form_id, form_version, duration_ms, attempt_mode, phase,
+         clock_state, active_elapsed_ms, clock_started_at, answers_revision,
+         reasoning_revision, state_revision, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,4500000,'TIMED','TIMED','RUNNING',0,now(),0,0,0,now(),now())`,
+      [randomUUID(), v2Student.id, stagingFormId, stagingFormVersion]
+    ),
+    (error) => error.code === 'P0001' && /requires a sealed form revision/.test(error.message)
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `INSERT INTO amc_practice.open_review_releases
+        (id, schema_version, form_id, form_version, context_set_id, release_hash,
+         manifest_hash, content_hash, question_bundle_hash, context_artifact_set_hash,
+         approval_authority_id, status, transition_authority_id, transition_reason_code,
+         published_at, state_revision, created_at, updated_at)
+       SELECT $2, 'amc-open-review-release-v1', $3, $4, id, $5,
+              release_manifest_hash, release_content_hash, release_question_bundle_hash,
+              artifact_set_hash, approval_authority_id, 'ACTIVE',
+              'operator:postgres-seal-test', 'UNSEALED_FORM_REJECT', $6, 0, $6, $6
+       FROM amc_practice.approved_context_sets WHERE id = $1`,
+      [unpinnedContext.id, randomUUID(), stagingFormId, stagingFormVersion,
+        createHash('sha256').update(randomUUID()).digest('hex'), new Date()]
+    ),
+    (error) => error.code === 'P0001' && /requires a sealed form revision/.test(error.message)
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.form_revisions SET title = title || ' tampered'
+       WHERE form_id = $1 AND version = $2`, [stagingFormId, stagingFormVersion]
+    ),
+    (error) => error.code === 'P0001' && /content identity is immutable/.test(error.message)
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `DELETE FROM amc_practice.form_revisions WHERE form_id = $1 AND version = $2`,
+      [stagingFormId, stagingFormVersion]
+    ),
+    (error) => error.code === 'P0001' && /header is immutable after insert/.test(error.message)
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `INSERT INTO amc_practice.approved_context_sets
+        (id, schema_version, artifact_set_hash, archive_wrapper_set_hash,
+         candidate_schema_version, candidate_set_hash, decision_set_hash,
+         approval_authority_id, approval_receipt_set_hash, form_id, form_version,
+         context_content_hash, release_question_bundle_hash, release_content_hash,
+         release_manifest_hash, approval_policy_version, review_schema_version,
+         review_governance, sealed, declared_question_count, active, imported_at, superseded_at)
+       SELECT $2, schema_version, $3, archive_wrapper_set_hash,
+              candidate_schema_version, candidate_set_hash, decision_set_hash,
+              approval_authority_id, approval_receipt_set_hash, $4, $5,
+              context_content_hash, release_question_bundle_hash, release_content_hash,
+              release_manifest_hash, approval_policy_version, review_schema_version,
+              review_governance, false, 1, false, imported_at, NULL
+       FROM amc_practice.approved_context_sets WHERE id = $1`,
+      [unpinnedContext.id, randomUUID(), createHash('sha256').update(randomUUID()).digest('hex'),
+        stagingFormId, stagingFormVersion]
+    ),
+    (error) => error.code === 'P0001' && /requires a sealed form revision/.test(error.message)
+  );
+  const unpinnedAudit = await store.pool.query(
+    `SELECT review_governance FROM amc_practice.approved_context_sets WHERE id = $1`,
+    [unpinnedContext.id]
+  );
+  assert.deepEqual(unpinnedAudit.rows[0].review_governance,
+    unpinnedFixture.artifact.reviewGovernance);
+
+  const mixedV2 = structuredClone(v2Fixture.artifact);
+  mixedV2.approvalPolicyVersion = 'amc-explicit-human-solution-approval-v1';
+  await assert.rejects(() => v2Importer.import(mixedV2, v2Fixture.approvalReceipts),
+    (error) => error?.code === 'INVALID_APPROVED_CONTEXT');
+
   // Exercise the real catalog SQL, not just the in-memory adapter. A CTE does
   // not retain PostgreSQL's base-table functional-dependency shortcut, so the
   // question count must be computed without an under-specified GROUP BY.
@@ -729,7 +1498,8 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     practiceKind: 'standard',
     archiveNotice: null,
     scoredQuestionCount: 25,
-    batchIntakeAvailable: true
+    batchIntakeAvailable: true,
+    batchReviewAvailable: false
   });
 
   const student = await service.seedAccessCode({
@@ -1116,11 +1886,14 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     `SELECT * FROM amc_practice.submission_answers
      WHERE submission_id = $1 ORDER BY question_number`, [reviewFinal.submission.id]
   );
-  await store.pool.query(
-    `UPDATE amc_practice.form_questions
-     SET correct_option = 'D', accepted_options = '["D", "E"]'::jsonb
-     WHERE form_id = $1 AND form_version = $2 AND question_number = 1`,
-    [reviewForm.id, reviewForm.version]
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.form_questions
+       SET correct_option = 'D', accepted_options = '["D", "E"]'::jsonb
+       WHERE form_id = $1 AND form_version = $2 AND question_number = 1`,
+      [reviewForm.id, reviewForm.version]
+    ),
+    (error) => error.code === 'P0001' && /form questions are immutable/.test(error.message)
   );
 
   const approvedArtifact = approvedContextArtifact(reviewForm, { readyNumbers: [1] });
@@ -1217,11 +1990,14 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     is_scored: true, canonical_answer: 'A', accepted_options: ['A']
   });
   assert.equal(fakeInference.calls[0].question.student_answer_status, 'BLANK');
-  await store.pool.query(
-    `UPDATE amc_practice.form_questions
-     SET correct_option = 'A', accepted_options = '["A"]'::jsonb
-     WHERE form_id = $1 AND form_version = $2 AND question_number = 1`,
-    [reviewForm.id, reviewForm.version]
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.form_questions
+       SET correct_option = 'A', accepted_options = '["A"]'::jsonb
+       WHERE form_id = $1 AND form_version = $2 AND question_number = 1`,
+      [reviewForm.id, reviewForm.version]
+    ),
+    (error) => error.code === 'P0001' && /form questions are immutable/.test(error.message)
   );
   const learningReport = await service.getLearningReport(reviewStudent.id, reviewAttempt.attempt.id);
   assert.equal(learningReport.status, 'PARTIAL');
@@ -2176,11 +2952,14 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     /append-only/
   );
 
-  await store.pool.query(
-    `UPDATE amc_practice.form_questions
-     SET correct_option = 'D', accepted_options = '["D", "E"]'::jsonb
-     WHERE form_id = $1 AND form_version = $2 AND question_number = 1`,
-    [reviewForm.id, reviewForm.version]
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.form_questions
+       SET correct_option = 'D', accepted_options = '["D", "E"]'::jsonb
+       WHERE form_id = $1 AND form_version = $2 AND question_number = 1`,
+      [reviewForm.id, reviewForm.version]
+    ),
+    (error) => error.code === 'P0001' && /form questions are immutable/.test(error.message)
   );
 
   const batchReviewAt = new Date(batchClaimAt.getTime() + 1_000);
@@ -2213,11 +2992,14 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     is_scored: true, canonical_answer: 'A', accepted_options: ['A']
   }, 'PostgreSQL batch analysis uses its exact committed result item instead of form_questions');
   assert.equal(fakeInference.calls[1].question.student_answer_status, 'ACCEPTED');
-  await store.pool.query(
-    `UPDATE amc_practice.form_questions
-     SET correct_option = 'A', accepted_options = '["A"]'::jsonb
-     WHERE form_id = $1 AND form_version = $2 AND question_number = 1`,
-    [reviewForm.id, reviewForm.version]
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.form_questions
+       SET correct_option = 'A', accepted_options = '["A"]'::jsonb
+       WHERE form_id = $1 AND form_version = $2 AND question_number = 1`,
+      [reviewForm.id, reviewForm.version]
+    ),
+    (error) => error.code === 'P0001' && /form questions are immutable/.test(error.message)
   );
   const batchLearning = await service.getLearningSubmission(reviewStudent.id, reviewAttempt.attempt.id);
   assert.equal(batchLearning.version, 2);
@@ -2697,10 +3479,560 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     return { form, context };
   };
 
+  const formSealRace = {
+    ...learningReviewForm(), id: `pg-form-seal-race-${randomUUID()}`, version: 'form-seal-v1',
+    contentHash: createHash('sha256').update(`form-seal-content:${randomUUID()}`).digest('hex'),
+    questionBundleHash: createHash('sha256').update(`form-seal-bundle:${randomUUID()}`).digest('hex'),
+    manifestHash: createHash('sha256').update(`form-seal-manifest:${randomUUID()}`).digest('hex')
+  };
+  formSealRace.sourceManifestHash = formSealRace.manifestHash;
+  let releaseFormSeal;
+  let signalFormSeal;
+  let formSealPaused = false;
+  const formSealHold = new Promise((resolve) => { releaseFormSeal = resolve; });
+  const formSealReached = new Promise((resolve) => { signalFormSeal = resolve; });
+  const formSealStore = new PostgresStore({
+    pool: {
+      connect: async () => {
+        const client = await store.pool.connect();
+        return {
+          query: async (...args) => {
+            const result = await client.query(...args);
+            if (!formSealPaused && typeof args[0] === 'string'
+                && args[0].includes('SET content_sealed = true')) {
+              formSealPaused = true;
+              signalFormSeal();
+              await formSealHold;
+            }
+            return result;
+          },
+          release: () => client.release()
+        };
+      }
+    }
+  });
+  const formSealImport = formSealStore.importForm(
+    formSealRace, { publish: false, allowTestOnlyPublish: true }
+  );
+  let formSealInsert;
+  try {
+    await Promise.race([
+      formSealReached,
+      formSealImport.then(() => { throw new Error('Form seal committed before the test barrier.'); })
+    ]);
+    let formSealInsertSettled = false;
+    formSealInsert = secondStore.pool.query(
+      `INSERT INTO amc_practice.form_questions
+        (form_id, form_version, question_number, prompt_markdown, choices,
+         correct_option, accepted_options, is_scored, solution_markdown)
+       SELECT $1, $2, 26, prompt_markdown, choices, correct_option,
+              accepted_options, is_scored, solution_markdown
+       FROM amc_practice.form_questions
+       WHERE form_id = $3 AND form_version = $4 AND question_number = 1`,
+      [formSealRace.id, formSealRace.version, reviewForm.id, reviewForm.version]
+    ).then(
+      () => ({ status: 'fulfilled' }),
+      (error) => ({ status: 'rejected', error })
+    ).finally(() => { formSealInsertSettled = true; });
+    await new Promise((resolve) => setTimeout(resolve, 75));
+    assert.equal(formSealInsertSettled, false,
+      'extra form question INSERT waits while the form seal is uncommitted');
+  } finally {
+    releaseFormSeal();
+  }
+  const sealedFormRace = await formSealImport;
+  assert.equal(sealedFormRace.contentSealed, true);
+  assert.equal(sealedFormRace.declaredQuestionCount, 25);
+  const formSealInsertOutcome = await formSealInsert;
+  assert.equal(formSealInsertOutcome.status, 'rejected');
+  assert.equal(formSealInsertOutcome.error.code, 'P0001');
+  assert.match(formSealInsertOutcome.error.message, /sealed form questions are immutable/);
+
+  // Reverse the ordering: a committed staging form accepts one append inside
+  // an open transaction first. Its exact-form advisory lock makes sealing
+  // wait; after the child commits, the seal revalidates the new count and
+  // fails closed, leaving the aggregate visibly unsealed.
+  const formChildFirst = await stageDirectForm({
+    label: 'form-child-first', declaredQuestionCount: 2, positions: [1, 2]
+  });
+  const formChildClient = await store.pool.connect();
+  let formChildFirstSeal;
+  try {
+    await formChildClient.query('BEGIN');
+    await formChildClient.query(
+      `INSERT INTO amc_practice.form_questions
+        (form_id, form_version, question_number, prompt_markdown, choices,
+         correct_option, accepted_options, is_scored, solution_markdown)
+       SELECT $1, $2, 3, prompt_markdown, choices, correct_option,
+              accepted_options, is_scored, solution_markdown
+       FROM amc_practice.form_questions
+       WHERE form_id = $1 AND form_version = $2 AND question_number = 1`,
+      [formChildFirst.id, formChildFirst.version]
+    );
+    let formChildFirstSealSettled = false;
+    formChildFirstSeal = secondStore.pool.query(
+      `UPDATE amc_practice.form_revisions SET content_sealed = true
+       WHERE form_id = $1 AND version = $2`,
+      [formChildFirst.id, formChildFirst.version]
+    ).then(
+      () => ({ status: 'fulfilled' }),
+      (error) => ({ status: 'rejected', error })
+    ).finally(() => { formChildFirstSealSettled = true; });
+    await new Promise((resolve) => setTimeout(resolve, 75));
+    assert.equal(formChildFirstSealSettled, false,
+      'form seal waits while a staging child append is uncommitted');
+    await formChildClient.query('COMMIT');
+  } catch (error) {
+    await formChildClient.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    formChildClient.release();
+  }
+  const formChildFirstSealOutcome = await formChildFirstSeal;
+  assert.equal(formChildFirstSealOutcome.status, 'rejected');
+  assert.equal(formChildFirstSealOutcome.error.code, 'P0001');
+  assert.match(formChildFirstSealOutcome.error.message, /seal question count mismatch/);
+  assert.deepEqual((await store.pool.query(
+    `SELECT revision.content_sealed,
+            count(question.*)::integer AS actual_question_count
+     FROM amc_practice.form_revisions revision
+     JOIN amc_practice.form_questions question
+       ON question.form_id = revision.form_id AND question.form_version = revision.version
+     WHERE revision.form_id = $1 AND revision.version = $2
+     GROUP BY revision.form_id, revision.version`,
+    [formChildFirst.id, formChildFirst.version]
+  )).rows, [{ content_sealed: false, actual_question_count: 3 }]);
+
+  // Pause one real import after its seal UPDATE but before COMMIT. A direct
+  // form-question writer on another connection must wait on the exact-form
+  // advisory lock, then reject after the committed seal becomes visible.
+  const sealRaceForm = {
+    ...learningReviewForm(), id: `pg-seal-race-${randomUUID()}`, version: 'seal-race-v1',
+    contentHash: createHash('sha256').update(`seal-race-content:${randomUUID()}`).digest('hex'),
+    questionBundleHash: createHash('sha256').update(`seal-race-bundle:${randomUUID()}`).digest('hex'),
+    manifestHash: createHash('sha256').update(`seal-race-manifest:${randomUUID()}`).digest('hex')
+  };
+  sealRaceForm.sourceManifestHash = sealRaceForm.manifestHash;
+  await store.importForm(sealRaceForm, { publish: false, allowTestOnlyPublish: true });
+  const sealRaceArtifact = approvedContextArtifact(sealRaceForm, {
+    readyNumbers: Array.from({ length: 25 }, (_, index) => index + 1)
+  });
+  let releaseSealHold;
+  let signalSealReached;
+  let sealPaused = false;
+  let sealRaceContextId = null;
+  const sealHold = new Promise((resolve) => { releaseSealHold = resolve; });
+  const sealReached = new Promise((resolve) => { signalSealReached = resolve; });
+  const pausingPool = {
+    connect: async () => {
+      const client = await store.pool.connect();
+      return {
+        query: async (...args) => {
+          const result = await client.query(...args);
+          if (typeof args[0] === 'string'
+              && args[0].includes('INSERT INTO amc_practice.approved_context_sets')) {
+            sealRaceContextId = args[1][0];
+          }
+          if (!sealPaused && typeof args[0] === 'string'
+              && args[0].includes('SET sealed = true, active = true')) {
+            sealPaused = true;
+            signalSealReached();
+            await sealHold;
+          }
+          return result;
+        },
+        release: () => client.release()
+      };
+    }
+  };
+  const pausingStore = new PostgresStore({ pool: pausingPool });
+  const sealRaceImport = new ApprovedContextImporter({
+    store: pausingStore, trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
+  }).import(sealRaceArtifact, approvalReceiptsForArtifact(sealRaceArtifact));
+  let sealRaceMutation;
+  let sealRaceChildInsert;
+  try {
+    await Promise.race([
+      sealReached,
+      sealRaceImport.then(() => { throw new Error('Seal-race import committed before the test barrier.'); })
+    ]);
+    let mutationSettled = false;
+    sealRaceMutation = secondStore.pool.query(
+      `UPDATE amc_practice.form_questions SET prompt_markdown = prompt_markdown || ' raced'
+       WHERE form_id = $1 AND form_version = $2 AND question_number = 1`,
+      [sealRaceForm.id, sealRaceForm.version]
+    ).then(
+      () => ({ status: 'fulfilled' }),
+      (error) => ({ status: 'rejected', error })
+    ).finally(() => { mutationSettled = true; });
+    sealRaceChildInsert = secondStore.pool.query(
+      `INSERT INTO amc_practice.approved_context_solutions
+        (context_set_id, question_number, solution_position, artifact_solution_id,
+         title, body_markdown, body_sha256, source_path, source_sha256,
+         source_heading_line, source_end_line, reviewer_id, reviewed_at,
+         rights_status, quality_flags, method_tags, model_eligible,
+         model_ineligibility_reason, decision_record_hash, authority_receipt_id,
+         authority_receipt_authority_id, authority_receipt_issued_at,
+         authority_receipt_status, context_schema_version, candidate_provenance,
+         review_method, review_model, operator_authorization_id)
+       SELECT $2, question_number, 3, $3, title, body_markdown, body_sha256,
+              source_path, source_sha256, source_heading_line, source_end_line,
+              reviewer_id, reviewed_at, rights_status, quality_flags, method_tags,
+              model_eligible, model_ineligibility_reason, decision_record_hash, $4,
+              authority_receipt_authority_id, authority_receipt_issued_at,
+              authority_receipt_status, context_schema_version, candidate_provenance,
+              review_method, review_model, operator_authorization_id
+       FROM amc_practice.approved_context_solutions
+       WHERE context_set_id = $1 AND question_number = 1 AND solution_position = 1`,
+      [importedContext[0].id, sealRaceContextId,
+        `seal-race-solution-${randomUUID()}`, `seal-race-receipt-${randomUUID()}`]
+    ).then(
+      () => ({ status: 'fulfilled' }),
+      (error) => ({ status: 'rejected', error })
+    );
+    await new Promise((resolve) => setTimeout(resolve, 75));
+    assert.equal(mutationSettled, false, 'question DML waits while context seal is uncommitted');
+  } finally {
+    releaseSealHold();
+  }
+  const [sealRaceContext] = await sealRaceImport;
+  assert.equal(sealRaceContext.sealed, true);
+  const sealRaceMutationOutcome = await sealRaceMutation;
+  assert.equal(sealRaceMutationOutcome.status, 'rejected');
+  assert.equal(sealRaceMutationOutcome.error.code, 'P0001');
+  assert.match(sealRaceMutationOutcome.error.message, /form questions are immutable/);
+  const sealRaceChildOutcome = await sealRaceChildInsert;
+  assert.equal(sealRaceChildOutcome.status, 'rejected');
+  assert.equal(sealRaceChildOutcome.error.code, 'P0001');
+  assert.match(sealRaceChildOutcome.error.message,
+    /approved context child header is missing|sealed approved context content is immutable/);
+  assert.deepEqual((await store.pool.query(
+    `SELECT approved_solution_count,
+            (SELECT count(*)::integer FROM amc_practice.approved_context_solutions solution
+             WHERE solution.context_set_id = question.context_set_id
+               AND solution.question_number = question.question_number) AS actual_solution_count
+     FROM amc_practice.approved_context_questions question
+     WHERE context_set_id = $1 AND question_number = 1`, [sealRaceContext.id]
+  )).rows, [{ approved_solution_count: 2, actual_solution_count: 2 }]);
+
+  // A committed staging header is visible to both transactions. Sealing takes
+  // its row lock before validation; a concurrent extra child INSERT must wait,
+  // then re-read the committed sealed state and fail without changing counts.
+  const committedRaceSeed = await openCandidate('committed-context-seal-race');
+  const committedStagingContextId = randomUUID();
+  await store.pool.query(
+    `INSERT INTO amc_practice.approved_context_sets
+      (id, schema_version, artifact_set_hash, archive_wrapper_set_hash,
+       candidate_schema_version, candidate_set_hash, decision_set_hash,
+       approval_authority_id, approval_receipt_set_hash, form_id, form_version,
+       context_content_hash, release_question_bundle_hash, release_content_hash,
+       release_manifest_hash, approval_policy_version, review_schema_version,
+       review_governance, sealed, declared_question_count, active, imported_at, superseded_at)
+     SELECT $2, schema_version, $3, archive_wrapper_set_hash,
+            candidate_schema_version, candidate_set_hash, decision_set_hash,
+            approval_authority_id, approval_receipt_set_hash, form_id, form_version,
+            context_content_hash, release_question_bundle_hash, release_content_hash,
+            release_manifest_hash, approval_policy_version, review_schema_version,
+            review_governance, false, declared_question_count, false, imported_at, NULL
+     FROM amc_practice.approved_context_sets WHERE id = $1`,
+    [committedRaceSeed.context.id, committedStagingContextId,
+      createHash('sha256').update(`committed-stage:${committedStagingContextId}`).digest('hex')]
+  );
+  await store.pool.query(
+    `INSERT INTO amc_practice.approved_context_questions
+     SELECT $2, form_id, form_version, question_number, question_content_hash,
+            prompt_markdown, choices, approved_solution_count,
+            model_eligible_solution_count, visual_context
+     FROM amc_practice.approved_context_questions WHERE context_set_id = $1`,
+    [committedRaceSeed.context.id, committedStagingContextId]
+  );
+  await store.pool.query(
+    `INSERT INTO amc_practice.approved_context_solutions
+      (context_set_id, question_number, solution_position, artifact_solution_id,
+       title, body_markdown, body_sha256, source_path, source_sha256,
+       source_heading_line, source_end_line, reviewer_id, reviewed_at,
+       rights_status, quality_flags, method_tags, model_eligible,
+       model_ineligibility_reason, decision_record_hash, authority_receipt_id,
+       authority_receipt_authority_id, authority_receipt_issued_at,
+       authority_receipt_status, context_schema_version, candidate_provenance,
+       review_method, review_model, operator_authorization_id)
+     SELECT $2, question_number, solution_position, artifact_solution_id,
+            title, body_markdown, body_sha256, source_path, source_sha256,
+            source_heading_line, source_end_line, reviewer_id, reviewed_at,
+            rights_status, quality_flags, method_tags, model_eligible,
+            model_ineligibility_reason, decision_record_hash, authority_receipt_id,
+            authority_receipt_authority_id, authority_receipt_issued_at,
+            authority_receipt_status, context_schema_version, candidate_provenance,
+            review_method, review_model, operator_authorization_id
+     FROM amc_practice.approved_context_solutions WHERE context_set_id = $1`,
+    [committedRaceSeed.context.id, committedStagingContextId]
+  );
+  const committedSealClient = await store.pool.connect();
+  let committedRaceChild;
+  try {
+    await committedSealClient.query('BEGIN');
+    await committedSealClient.query(
+      `UPDATE amc_practice.approved_context_sets
+       SET active = false, superseded_at = GREATEST(now(), imported_at)
+       WHERE id = $1`, [committedRaceSeed.context.id]
+    );
+    await committedSealClient.query(
+      `UPDATE amc_practice.approved_context_sets SET sealed = true, active = true
+       WHERE id = $1`, [committedStagingContextId]
+    );
+    let committedRaceChildSettled = false;
+    committedRaceChild = secondStore.pool.query(
+      `INSERT INTO amc_practice.approved_context_solutions
+        (context_set_id, question_number, solution_position, artifact_solution_id,
+         title, body_markdown, body_sha256, source_path, source_sha256,
+         source_heading_line, source_end_line, reviewer_id, reviewed_at,
+         rights_status, quality_flags, method_tags, model_eligible,
+         model_ineligibility_reason, decision_record_hash, authority_receipt_id,
+         authority_receipt_authority_id, authority_receipt_issued_at,
+         authority_receipt_status, context_schema_version, candidate_provenance,
+         review_method, review_model, operator_authorization_id)
+       SELECT $2, question_number, 3, $3, title, body_markdown, body_sha256,
+              source_path, source_sha256, source_heading_line, source_end_line,
+              reviewer_id, reviewed_at, rights_status, quality_flags, method_tags,
+              model_eligible, model_ineligibility_reason, decision_record_hash, $4,
+              authority_receipt_authority_id, authority_receipt_issued_at,
+              authority_receipt_status, context_schema_version, candidate_provenance,
+              review_method, review_model, operator_authorization_id
+       FROM amc_practice.approved_context_solutions
+       WHERE context_set_id = $1 AND question_number = 1 AND solution_position = 1`,
+      [committedRaceSeed.context.id, committedStagingContextId,
+        `committed-race-solution-${randomUUID()}`, `committed-race-receipt-${randomUUID()}`]
+    ).then(
+      () => ({ status: 'fulfilled' }),
+      (error) => ({ status: 'rejected', error })
+    ).finally(() => { committedRaceChildSettled = true; });
+    await new Promise((resolve) => setTimeout(resolve, 75));
+    assert.equal(committedRaceChildSettled, false,
+      'visible staging child INSERT waits on the header seal row lock');
+    await committedSealClient.query('COMMIT');
+  } catch (error) {
+    await committedSealClient.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    committedSealClient.release();
+  }
+  const committedRaceChildOutcome = await committedRaceChild;
+  assert.equal(committedRaceChildOutcome.status, 'rejected');
+  assert.equal(committedRaceChildOutcome.error.code, 'P0001');
+  assert.match(committedRaceChildOutcome.error.message, /sealed approved context content is immutable/);
+  assert.deepEqual((await store.pool.query(
+    `SELECT context.sealed, context.active, question.approved_solution_count,
+            count(solution.*)::integer AS actual_solution_count
+     FROM amc_practice.approved_context_sets context
+     JOIN amc_practice.approved_context_questions question
+       ON question.context_set_id = context.id AND question.question_number = 1
+     JOIN amc_practice.approved_context_solutions solution
+       ON solution.context_set_id = question.context_set_id
+      AND solution.question_number = question.question_number
+     WHERE context.id = $1
+     GROUP BY context.id, question.question_number, question.approved_solution_count`,
+    [committedStagingContextId]
+  )).rows, [{ sealed: true, active: true, approved_solution_count: 2, actual_solution_count: 2 }]);
+
+  // Reverse the committed-context ordering as well. The child INSERT locks
+  // the staging header first; seal must wait, then validate the committed
+  // extra child and roll back its attempted active-context replacement.
+  const contextChildFirstSeed = await openCandidate('context-child-first');
+  const contextChildFirstId = randomUUID();
+  await store.pool.query(
+    `INSERT INTO amc_practice.approved_context_sets
+      (id, schema_version, artifact_set_hash, archive_wrapper_set_hash,
+       candidate_schema_version, candidate_set_hash, decision_set_hash,
+       approval_authority_id, approval_receipt_set_hash, form_id, form_version,
+       context_content_hash, release_question_bundle_hash, release_content_hash,
+       release_manifest_hash, approval_policy_version, review_schema_version,
+       review_governance, sealed, declared_question_count, active, imported_at, superseded_at)
+     SELECT $2, schema_version, $3, archive_wrapper_set_hash,
+            candidate_schema_version, candidate_set_hash, decision_set_hash,
+            approval_authority_id, approval_receipt_set_hash, form_id, form_version,
+            context_content_hash, release_question_bundle_hash, release_content_hash,
+            release_manifest_hash, approval_policy_version, review_schema_version,
+            review_governance, false, declared_question_count, false, imported_at, NULL
+     FROM amc_practice.approved_context_sets WHERE id = $1`,
+    [contextChildFirstSeed.context.id, contextChildFirstId,
+      createHash('sha256').update(`child-first-stage:${contextChildFirstId}`).digest('hex')]
+  );
+  await store.pool.query(
+    `INSERT INTO amc_practice.approved_context_questions
+     SELECT $2, form_id, form_version, question_number, question_content_hash,
+            prompt_markdown, choices, approved_solution_count,
+            model_eligible_solution_count, visual_context
+     FROM amc_practice.approved_context_questions WHERE context_set_id = $1`,
+    [contextChildFirstSeed.context.id, contextChildFirstId]
+  );
+  await store.pool.query(
+    `INSERT INTO amc_practice.approved_context_solutions
+      (context_set_id, question_number, solution_position, artifact_solution_id,
+       title, body_markdown, body_sha256, source_path, source_sha256,
+       source_heading_line, source_end_line, reviewer_id, reviewed_at,
+       rights_status, quality_flags, method_tags, model_eligible,
+       model_ineligibility_reason, decision_record_hash, authority_receipt_id,
+       authority_receipt_authority_id, authority_receipt_issued_at,
+       authority_receipt_status, context_schema_version, candidate_provenance,
+       review_method, review_model, operator_authorization_id)
+     SELECT $2, question_number, solution_position, artifact_solution_id,
+            title, body_markdown, body_sha256, source_path, source_sha256,
+            source_heading_line, source_end_line, reviewer_id, reviewed_at,
+            rights_status, quality_flags, method_tags, model_eligible,
+            model_ineligibility_reason, decision_record_hash, authority_receipt_id,
+            authority_receipt_authority_id, authority_receipt_issued_at,
+            authority_receipt_status, context_schema_version, candidate_provenance,
+            review_method, review_model, operator_authorization_id
+     FROM amc_practice.approved_context_solutions WHERE context_set_id = $1`,
+    [contextChildFirstSeed.context.id, contextChildFirstId]
+  );
+  const contextChildClient = await store.pool.connect();
+  let contextChildFirstSeal;
+  try {
+    await contextChildClient.query('BEGIN');
+    await contextChildClient.query(
+      `INSERT INTO amc_practice.approved_context_solutions
+        (context_set_id, question_number, solution_position, artifact_solution_id,
+         title, body_markdown, body_sha256, source_path, source_sha256,
+         source_heading_line, source_end_line, reviewer_id, reviewed_at,
+         rights_status, quality_flags, method_tags, model_eligible,
+         model_ineligibility_reason, decision_record_hash, authority_receipt_id,
+         authority_receipt_authority_id, authority_receipt_issued_at,
+         authority_receipt_status, context_schema_version, candidate_provenance,
+         review_method, review_model, operator_authorization_id)
+       SELECT $2, question_number, 3, $3, title, body_markdown, body_sha256,
+              source_path, source_sha256, source_heading_line, source_end_line,
+              reviewer_id, reviewed_at, rights_status, quality_flags, method_tags,
+              model_eligible, model_ineligibility_reason, decision_record_hash, $4,
+              authority_receipt_authority_id, authority_receipt_issued_at,
+              authority_receipt_status, context_schema_version, candidate_provenance,
+              review_method, review_model, operator_authorization_id
+       FROM amc_practice.approved_context_solutions
+       WHERE context_set_id = $1 AND question_number = 1 AND solution_position = 1`,
+      [contextChildFirstSeed.context.id, contextChildFirstId,
+        `context-child-first-solution-${randomUUID()}`,
+        `context-child-first-receipt-${randomUUID()}`]
+    );
+    let contextChildFirstSealSettled = false;
+    contextChildFirstSeal = (async () => {
+      const client = await secondStore.pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query(
+          `UPDATE amc_practice.approved_context_sets
+           SET active = false, superseded_at = GREATEST(now(), imported_at)
+           WHERE id = $1`, [contextChildFirstSeed.context.id]
+        );
+        await client.query(
+          `UPDATE amc_practice.approved_context_sets SET sealed = true, active = true
+           WHERE id = $1`, [contextChildFirstId]
+        );
+        await client.query('COMMIT');
+        return { status: 'fulfilled' };
+      } catch (error) {
+        await client.query('ROLLBACK').catch(() => {});
+        return { status: 'rejected', error };
+      } finally {
+        contextChildFirstSealSettled = true;
+        client.release();
+      }
+    })();
+    await new Promise((resolve) => setTimeout(resolve, 75));
+    assert.equal(contextChildFirstSealSettled, false,
+      'context seal waits while a staging child append holds the header lock');
+    await contextChildClient.query('COMMIT');
+  } catch (error) {
+    await contextChildClient.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    contextChildClient.release();
+  }
+  const contextChildFirstSealOutcome = await contextChildFirstSeal;
+  assert.equal(contextChildFirstSealOutcome.status, 'rejected');
+  assert.equal(contextChildFirstSealOutcome.error.code, 'P0001');
+  assert.match(contextChildFirstSealOutcome.error.message, /child counts are inconsistent/);
+  assert.deepEqual((await store.pool.query(
+    `SELECT context.sealed, context.active,
+            (SELECT active FROM amc_practice.approved_context_sets
+             WHERE id = $2) AS seed_active,
+            count(solution.*)::integer AS actual_solution_count
+     FROM amc_practice.approved_context_sets context
+     JOIN amc_practice.approved_context_solutions solution
+       ON solution.context_set_id = context.id AND solution.question_number = 1
+     WHERE context.id = $1
+     GROUP BY context.id`,
+    [contextChildFirstId, contextChildFirstSeed.context.id]
+  )).rows, [{ sealed: false, active: false, seed_active: true, actual_solution_count: 3 }]);
+
   // OPEN_REVIEW v1 is created atomically by two independent API processes.
   // It contains no official/timer/work rows, and a missing idempotency row is
   // re-read after the no-row advisory lock so both same-key calls succeed.
   const open = await openCandidate('workspace');
+  assert.deepEqual((await store.pool.query(
+    `SELECT
+       (SELECT count(*)::integer FROM amc_practice.open_review_releases
+        WHERE form_id = $1 AND form_version = $2) AS release_count,
+       (SELECT count(*)::integer FROM amc_practice.learning_submissions
+        WHERE form_id = $1 AND form_version = $2) AS submission_count,
+       (SELECT sealed FROM amc_practice.approved_context_sets WHERE id = $3) AS sealed`,
+    [open.form.id, open.form.version, open.context.id]
+  )).rows, [{ release_count: 0, submission_count: 0, sealed: true }]);
+  for (const statement of [
+    `UPDATE amc_practice.form_questions
+     SET correct_option = 'B', accepted_options = '["B"]'::jsonb,
+         solution_markdown = solution_markdown || ' tampered'
+     WHERE form_id = $1 AND form_version = $2 AND question_number = 1`,
+    `DELETE FROM amc_practice.form_questions
+     WHERE form_id = $1 AND form_version = $2 AND question_number = 1`,
+    `INSERT INTO amc_practice.form_questions
+     SELECT * FROM amc_practice.form_questions
+     WHERE form_id = $1 AND form_version = $2 AND question_number = 1`
+  ]) {
+    await assert.rejects(
+      () => store.pool.query(statement, [open.form.id, open.form.version]),
+      (error) => error.code === 'P0001' && /form questions are immutable/.test(error.message)
+    );
+  }
+  for (const statement of [
+    `UPDATE amc_practice.form_revisions SET title = title || ' tampered'
+     WHERE form_id = $1 AND version = $2`,
+    `UPDATE amc_practice.form_revisions SET content_hash = '${'0'.repeat(64)}'
+     WHERE form_id = $1 AND version = $2`,
+    `UPDATE amc_practice.form_revisions SET development_publish_eligible = false
+     WHERE form_id = $1 AND version = $2`
+  ]) {
+    await assert.rejects(
+      () => store.pool.query(statement, [open.form.id, open.form.version]),
+      (error) => error.code === 'P0001' && /form revision content identity is immutable/.test(error.message)
+    );
+  }
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.form_revisions SET published = true
+       WHERE form_id = $1 AND version = $2`, [open.form.id, open.form.version]
+    ),
+    (error) => error.code === '23514'
+      && error.constraint === 'amc_published_form_has_timestamp'
+  );
+  const firstSealedPublication = await store.importForm(
+    open.form, { publish: true, allowTestOnlyPublish: true }
+  );
+  assert.equal(firstSealedPublication.published, true);
+  assert.ok(firstSealedPublication.publishedAt);
+  await store.pool.query(
+    `UPDATE amc_practice.form_revisions SET published = false
+     WHERE form_id = $1 AND version = $2`, [open.form.id, open.form.version]
+  );
+  const republishedSealed = await store.importForm(
+    open.form, { publish: true, allowTestOnlyPublish: true }
+  );
+  assert.equal(republishedSealed.published, true);
+  assert.equal(republishedSealed.publishedAt.toISOString(),
+    firstSealedPublication.publishedAt.toISOString());
+  await store.pool.query(
+    `UPDATE amc_practice.form_revisions SET published = false
+     WHERE form_id = $1 AND version = $2`, [open.form.id, open.form.version]
+  );
   const openRelease = await store.publishOpenReviewRelease({
     releaseId: randomUUID(), formId: open.form.id, formVersion: open.form.version,
     contextSetId: open.context.id, authorityId: 'operator:postgres-open-review',
@@ -2805,7 +4137,7 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
       `UPDATE amc_practice.form_revisions SET title = title || ' mutated'
        WHERE form_id = $1 AND version = $2`, [open.form.id, open.form.version]
     ),
-    (error) => error.code === 'P0001' && /form revision is immutable/.test(error.message)
+    (error) => error.code === 'P0001' && /form revision content identity is immutable/.test(error.message)
   );
 
   // Child immutability must guard the OLD lineage as well as NEW. Otherwise
@@ -3346,4 +4678,5 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
 
   await service.reset(reviewStudent.id, reviewAttempt.attempt.id, 'pg-review-reset-1');
   assert.equal((await service.getLearningReport(reviewStudent.id, reviewAttempt.attempt.id)).status, 'COMPLETE');
+  await runBatchReviewPostgresEvidence({ connectionString, t });
 });

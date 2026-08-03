@@ -1,4 +1,6 @@
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { canonicalHash } from '../src/learning-review/canonical.js';
 
 const H = {
@@ -17,7 +19,7 @@ export function learningReviewForm() {
     sourceSchemaVersion: 'amc-practice-private-form-v1', sourceManifestHash: H.manifest,
     contentHash: H.content, questionBundleHash: H.bundle, provenance: { fixture: true },
     scoringPolicy: { id: 'fixture', version: '1', correctPoints: 6, blankPoints: 1.5, incorrectPoints: 0 },
-    manifestHash: H.manifest, publishEligible: true, developmentPublishEligible: true,
+    manifestHash: H.manifest, publishEligible: false, developmentPublishEligible: true,
     questions: Array.from({ length: 25 }, (_, index) => ({
       number: index + 1,
       promptMarkdown: `Safe fixture prompt ${index + 1}.`,
@@ -202,9 +204,20 @@ export function approvedContextArtifact(form, options = {}) {
 }
 
 export function approvalReceiptsForArtifact(artifact) {
-  const forms = artifact.schemaVersion === 'amc-approved-question-context-archive-set-v1'
+  const forms = [
+    'amc-approved-question-context-archive-set-v1',
+    'amc-approved-question-context-archive-set-v2'
+  ].includes(artifact.schemaVersion)
     ? artifact.forms : [artifact];
   return receiptSet(receiptsFromForms(forms));
+}
+
+/** Build a production v2 wrapper with the real practice-content Python compiler. */
+export function pythonV2ApprovedArchiveFixture(release, { targetId = 'amc12-2012-b' } = {}) {
+  const script = fileURLToPath(new URL('./support/generate-v2-approved-archive.py', import.meta.url));
+  return JSON.parse(execFileSync('python3', [script, targetId], {
+    input: JSON.stringify(release), encoding: 'utf8', maxBuffer: 16 * 1024 * 1024
+  }));
 }
 
 export function approvedArchiveContextArtifact(forms) {

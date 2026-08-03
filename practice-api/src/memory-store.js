@@ -7,6 +7,14 @@ import {
 } from './infrastructure/amc-inference-contract.js';
 import { ATTEMPT_MODE, OPEN_REVIEW_STATUS, openReviewReleaseHash } from './open-review/domain.js';
 import {
+  BATCH_REVIEW_ANCHOR_REASON,
+  BATCH_REVIEW_BLANK_ORIGIN,
+  BATCH_REVIEW_PHASE,
+  BATCH_REVIEW_SOURCE_TYPE,
+  batchReviewAnchorHash,
+  isCompleteBatchReviewContext
+} from './batch-review/domain.js';
+import {
   TUTOR_MAX_ACTIVE_JOBS_PER_STUDENT,
   TutorStoreError,
   assertTutorLiveThreadCapacity,
@@ -66,6 +74,15 @@ function validLearningEntitlement(store, learning, { cleanup = false } = {}) {
       && learning.officialSubmissionKind === 'FINAL'
       && official?.attemptId === attempt.id && official.kind === 'FINAL');
   }
+  if (learning.sourceType === BATCH_REVIEW_SOURCE_TYPE) {
+    const form = store.forms.get(formKey(learning.formId, learning.formVersion));
+    return Boolean(attempt.attemptMode === ATTEMPT_MODE.BATCH_REVIEW
+      && attempt.phase === BATCH_REVIEW_PHASE
+      && learning.attemptMode === ATTEMPT_MODE.BATCH_REVIEW
+      && learning.officialSubmissionId === null && learning.officialSubmissionKind === null
+      && learning.openReviewReleaseId === null
+      && Boolean(form?.publishedAt));
+  }
   if (learning.sourceType !== 'OPEN_REVIEW' || attempt.attemptMode !== ATTEMPT_MODE.OPEN_REVIEW
       || attempt.phase !== 'OPEN_REVIEW' || learning.attemptMode !== ATTEMPT_MODE.OPEN_REVIEW
       || learning.officialSubmissionId !== null || learning.officialSubmissionKind !== null) return false;
@@ -88,7 +105,8 @@ function memoryTutorSource(store, snapshot) {
   const response = (store.learningResponses.get(snapshot.learningSubmissionVersionId) || [])
     .find((candidate) => candidate.questionNumber === snapshot.questionNumber
       && candidate.answerOrigin === snapshot.scoringOrigin);
-  const context = store.approvedContextSets.get(snapshot.contextSetId);
+  const storedContext = store.approvedContextSets.get(snapshot.contextSetId);
+  const context = storedContext?.sealed ? storedContext : null;
   const question = context?.questions
     .find((candidate) => candidate.questionNumber === snapshot.questionNumber);
   const form = version && store.forms.get(formKey(version.formId, version.formVersion));
@@ -237,7 +255,8 @@ function buildMemoryTutorRootSnapshot(store, input, createdAt) {
   const response = version && (store.learningResponses.get(version.id) || [])
     .find((candidate) => candidate.questionNumber === input.questionNumber
       && ['OFFICIAL_FINAL', 'BATCH_CONFIRMED'].includes(candidate.answerOrigin));
-  const context = version && store.approvedContextSets.get(version.contextSetId);
+  const storedContext = version && store.approvedContextSets.get(version.contextSetId);
+  const context = storedContext?.sealed ? storedContext : null;
   const question = context?.questions
     .find((candidate) => candidate.questionNumber === input.questionNumber);
   const form = version && store.forms.get(formKey(version.formId, version.formVersion));
@@ -673,6 +692,11 @@ export class MemoryStore {
   async #importFormUnlocked(form, { publish = false, allowTestOnlyPublish = false } = {}) {
     const key = formKey(form.id, form.version);
     const existing = this.forms.get(key);
+    if (existing && !existing.contentSealed) {
+      throw Object.assign(new Error('Form revision exists only as unsealed staging content.'), {
+        code: 'FORM_REVISION_NOT_SEALED'
+      });
+    }
     if (existing && existing.manifestHash !== form.manifestHash) {
       const error = new Error('A form version cannot be changed after import.');
       error.code = 'FORM_VERSION_IMMUTABLE';
@@ -698,6 +722,8 @@ export class MemoryStore {
     }
     const stored = {
       ...clone(form),
+      contentSealed: true,
+      declaredQuestionCount: form.questions.length,
       published: Boolean(existing?.published || shouldPublish),
       importedAt: existing?.importedAt || new Date(),
       publishedAt: existing?.publishedAt || (shouldPublish ? new Date() : null)
@@ -709,9 +735,10 @@ export class MemoryStore {
   async getForm(id, version = undefined) {
     if (version !== undefined) {
       const form = this.forms.get(formKey(id, version));
-      return form ? clone(form) : null;
+      return form?.contentSealed ? clone(form) : null;
     }
-    const candidates = [...this.forms.values()].filter((form) => form.id === id);
+    const candidates = [...this.forms.values()]
+      .filter((form) => form.id === id && form.contentSealed);
     candidates.sort((left, right) => {
       if (left.published !== right.published) return left.published ? -1 : 1;
       const rightTime = new Date(right.publishedAt || right.importedAt || 0).getTime();
@@ -724,6 +751,7 @@ export class MemoryStore {
   async listForms({ includeUnpublished = false } = {}) {
     const currentById = new Map();
     for (const form of this.forms.values()) {
+      if (!form.contentSealed) continue;
       if (!includeUnpublished && !form.published) continue;
       const current = currentById.get(form.id);
       if (!current
@@ -740,6 +768,7 @@ export class MemoryStore {
 
   async findOrCreateActiveAttempt({ studentId, form, now }) {
     return this.#withGlobalLock(async () => {
+      if (!form?.contentSealed) return null;
       if ([...this.openReviewReleases.values()].some((release) =>
         (release.formId === form.id && release.formVersion === form.version)
           || release.questionBundleHash === form.questionBundleHash)) {
@@ -834,7 +863,7 @@ export class MemoryStore {
       }
       const form = this.forms.get(formKey(formId, formVersion));
       const context = this.approvedContextSets.get(contextSetId);
-      if (!form) throw Object.assign(new Error('Open review form revision is missing.'), { code: 'FORM_REVISION_NOT_FOUND' });
+      if (!form?.contentSealed) throw Object.assign(new Error('Open review form revision is missing.'), { code: 'FORM_REVISION_NOT_FOUND' });
       if (!context) throw Object.assign(new Error('Approved context set is missing.'), { code: 'OPEN_REVIEW_CONTEXT_INVALID' });
       const exact = [...this.openReviewReleases.values()].find((release) =>
         release.formId === formId && release.formVersion === formVersion);
@@ -852,7 +881,7 @@ export class MemoryStore {
         code: 'OPEN_REVIEW_TIMED_CONFLICT'
       });
       }
-      if (!context.active || context.formId !== formId || context.formVersion !== formVersion
+      if (!context.sealed || !context.active || context.formId !== formId || context.formVersion !== formVersion
           || context.releaseBinding?.manifestHash !== form.manifestHash
           || context.releaseBinding?.contentHash !== form.contentHash
           || context.releaseBinding?.questionBundleHash !== form.questionBundleHash
@@ -1028,13 +1057,42 @@ export class MemoryStore {
       });
   }
 
+  async listBatchReviewWorkspaces(studentId) {
+    return [...this.attempts.values()]
+      .filter((attempt) => attempt.studentId === studentId
+        && attempt.attemptMode === ATTEMPT_MODE.BATCH_REVIEW)
+      .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))
+      .map((attempt) => {
+        const learningSubmission = this.learningSubmissions.get(attempt.id);
+        const version = (this.learningVersions.get(learningSubmission.id) || [])
+          .find((candidate) => candidate.versionNumber === learningSubmission.currentVersion);
+        const analysis = (this.learningWorkItems.get(version?.id) || [])
+          .find((item) => item.workType === 'ANALYZE_SUBMISSION');
+        const activeContextId = this.activeContextSetByForm.get(
+          formKey(attempt.formId, attempt.formVersion)
+        );
+        const activeContext = activeContextId
+          ? this.approvedContextSets.get(activeContextId) : null;
+        const form = this.forms.get(formKey(attempt.formId, attempt.formVersion));
+        const contextReady = form?.contentSealed
+          ? isCompleteBatchReviewContext(form, activeContext) : false;
+        return {
+          attempt: clone(attempt),
+          learningSubmission: clone(learningSubmission),
+          analysisStatus: version?.creationReason === BATCH_REVIEW_ANCHOR_REASON
+            ? 'AWAITING_BATCH' : (analysis?.status || 'BLOCKED_CONTEXT'),
+          analysisContextStatus: contextReady ? 'READY' : 'UNAVAILABLE'
+        };
+      });
+  }
+
   async listLearningHistoryRecords(studentId, { limit, cursor = null }) {
     const records = [];
     for (const submission of this.learningSubmissions.values()) {
       if (submission.studentId !== studentId) continue;
       const attempt = this.attempts.get(submission.attemptId);
       const form = this.forms.get(formKey(submission.formId, submission.formVersion));
-      if (!attempt || !form) continue;
+      if (!attempt || !form?.contentSealed) continue;
       const versions = [...(this.learningVersions.get(submission.id) || [])]
         .sort((left, right) => left.versionNumber - right.versionNumber);
       const currentVersion = versions.find((item) => item.versionNumber === submission.currentVersion);
@@ -1185,6 +1243,80 @@ export class MemoryStore {
     });
   }
 
+  async findOrCreateBatchReviewWorkspace({
+    studentId, formId, formVersion, idempotencyKey: key, requestHash, now
+  }) {
+    return this.#withGlobalLock(async () => {
+      const scope = `batch-review-form:${formId}:${formVersion}:workspace`;
+      const storedIdempotency = this.idempotency.get(idempotencyKey(studentId, scope, key));
+      if (storedIdempotency) {
+        if (storedIdempotency.requestHash !== requestHash) {
+          throw Object.assign(new Error('Idempotency key was reused.'), { code: 'IDEMPOTENCY_KEY_REUSED' });
+        }
+        const attempt = this.attempts.get(storedIdempotency.responseBody.attemptId);
+        const learningSubmission = attempt && this.learningSubmissions.get(attempt.id);
+        if (!attempt || !learningSubmission || attempt.studentId !== studentId
+            || attempt.attemptMode !== ATTEMPT_MODE.BATCH_REVIEW) {
+          throw new Error('Batch review idempotency record lost its aggregate.');
+        }
+        return { attempt: clone(attempt), learningSubmission: clone(learningSubmission), created: false };
+      }
+      const form = this.forms.get(formKey(formId, formVersion));
+      if (!form?.contentSealed || form.published !== true) return null;
+      let attempt = [...this.attempts.values()].find((candidate) => candidate.studentId === studentId
+        && candidate.formId === formId && candidate.formVersion === formVersion
+        && candidate.attemptMode === ATTEMPT_MODE.BATCH_REVIEW);
+      let learningSubmission = attempt && this.learningSubmissions.get(attempt.id);
+      const created = !attempt;
+      if (!attempt) {
+        attempt = {
+          id: randomUUID(), studentId, attemptMode: ATTEMPT_MODE.BATCH_REVIEW,
+          formId, formVersion, durationMs: form.durationMs,
+          phase: BATCH_REVIEW_PHASE, clockState: 'PAUSED', activeElapsedMs: 0,
+          clockStartedAt: null, answersRevision: 0, reasoningRevision: 0, stateRevision: 0,
+          limitReachedAt: null, finalizedAt: null, resetAt: null, createdAt: now, updatedAt: now
+        };
+        const version = {
+          id: randomUUID(), learningSubmissionId: randomUUID(), versionNumber: 1,
+          formId, formVersion, answersRevision: 0, reasoningRevision: 0,
+          creationReason: BATCH_REVIEW_ANCHOR_REASON, batchId: null,
+          contextStatus: 'CONTEXT_UNAVAILABLE', contextSetId: null,
+          evidenceHash: batchReviewAnchorHash({ studentId, form }), createdAt: now
+        };
+        learningSubmission = {
+          id: version.learningSubmissionId, studentId, attemptId: attempt.id,
+          officialSubmissionId: null, officialSubmissionKind: null, openReviewReleaseId: null,
+          attemptMode: ATTEMPT_MODE.BATCH_REVIEW, formId, formVersion,
+          sourceType: BATCH_REVIEW_SOURCE_TYPE,
+          lifecycleStatus: 'COMMITTED', currentVersion: 1, deletionGeneration: 0,
+          deletedAt: null, createdAt: now, updatedAt: now
+        };
+        this.attempts.set(attempt.id, attempt);
+        this.answers.set(attempt.id, []);
+        this.reasoningNotes.set(attempt.id, []);
+        this.submissions.set(attempt.id, []);
+        this.events.set(attempt.id, []);
+        this.learningSubmissions.set(attempt.id, learningSubmission);
+        this.learningVersions.set(learningSubmission.id, [version]);
+        this.learningResponses.set(version.id, form.questions.map((question) => ({
+          learningSubmissionVersionId: version.id, formId, formVersion,
+          questionNumber: question.number, selectedOption: null,
+          answerOrigin: BATCH_REVIEW_BLANK_ORIGIN,
+          reasoningText: '', reasoningOrigin: 'NONE', createdAt: now
+        })));
+        this.learningWorkItems.set(version.id, []);
+      }
+      if (!learningSubmission || learningSubmission.sourceType !== BATCH_REVIEW_SOURCE_TYPE) {
+        throw new Error('Batch review workspace lost its learning anchor.');
+      }
+      this.idempotency.set(idempotencyKey(studentId, scope, key), {
+        studentId, scope, key, requestHash, responseStatus: created ? 201 : 200,
+        responseBody: { attemptId: attempt.id }, createdAt: now
+      });
+      return { attempt: clone(attempt), learningSubmission: clone(learningSubmission), created };
+    });
+  }
+
   async importApprovedContextSets({ forms, archiveSetHash, authorityId, receiptSetHash, importedAt }) {
     return this.#withGlobalLock(async () => {
       const checkpoint = this.#transactionCheckpoint();
@@ -1193,7 +1325,7 @@ export class MemoryStore {
         for (const artifact of forms) {
           const binding = artifact.formBinding;
           const storedForm = this.forms.get(formKey(binding.id, binding.version));
-          if (!storedForm) throw Object.assign(new Error('Approved context form revision is not imported.'), { code: 'FORM_REVISION_NOT_FOUND' });
+          if (!storedForm?.contentSealed) throw Object.assign(new Error('Approved context form revision is not imported.'), { code: 'FORM_REVISION_NOT_FOUND' });
           const release = binding.releaseBinding;
           if (!release || release.questionBundleHash !== storedForm.questionBundleHash
               || release.contentHash !== storedForm.contentHash || release.manifestHash !== storedForm.manifestHash) {
@@ -1215,14 +1347,20 @@ export class MemoryStore {
           }
           const existing = [...this.approvedContextSets.values()].find((item) => item.artifactSetHash === artifact.setHash);
           if (existing) {
-            if (archiveSetHash && existing.archiveWrapperSetHash === null) {
-              existing.archiveWrapperSetHash = archiveSetHash;
-            } else if (archiveSetHash && existing.archiveWrapperSetHash !== archiveSetHash) {
+            if (!existing.sealed) {
+              throw Object.assign(new Error('Approved context artifact exists only as an unsealed staging row.'), {
+                code: 'CONTEXT_NOT_SEALED'
+              });
+            }
+            if ((archiveSetHash || null) !== existing.archiveWrapperSetHash) {
               throw Object.assign(new Error('Approved context artifact is already bound to a different archive wrapper.'), {
                 code: 'CONTEXT_ARCHIVE_LINEAGE_CONFLICT'
               });
             }
             imported.push(clone(existing));
+            if (existing.active && existing.questions.length) {
+              this.#repairBlockedForContext(existing, importedAt);
+            }
             continue;
           }
           const currentId = this.activeContextSetByForm.get(formKey(binding.id, binding.version));
@@ -1239,6 +1377,10 @@ export class MemoryStore {
             candidateSchemaVersion: binding.candidateSchemaVersion,
             candidateSetHash: binding.candidateSetHash,
             decisionSetHash: artifact.reviewDecisionBinding.decisionSetHash,
+            approvalPolicyVersion: artifact.approvalPolicyVersion,
+            reviewSchemaVersion: artifact.reviewDecisionBinding.schemaVersion,
+            reviewGovernance: clone(artifact.reviewGovernance || null),
+            sealed: true,
             approvalAuthorityId: authorityId,
             approvalReceiptSetHash: receiptSetHash,
             formId: binding.id,
@@ -1271,10 +1413,15 @@ export class MemoryStore {
                   methodTags: clone(solution.approval.methodTags),
                   modelEligibility: clone(solution.modelEligibility),
                   decisionRecordHash: solution.approval.decisionRecordHash,
+                  candidateProvenance: clone(solution.candidateProvenance || null),
+                  reviewMethod: solution.approval.reviewMethod || null,
+                  reviewModel: clone(solution.approval.reviewModel || null),
+                  operatorAuthorizationId: solution.approval.operatorAuthorizationId || null,
                   authorityReceipt: clone(solution.approval.authorityReceipt)
                 }))
               }))
           };
+          contextSet.declaredQuestionCount = contextSet.questions.length;
           this.approvedContextSets.set(contextSet.id, clone(contextSet));
           this.activeContextSetByForm.set(formKey(binding.id, binding.version), contextSet.id);
           imported.push(clone(contextSet));
@@ -1289,9 +1436,13 @@ export class MemoryStore {
   }
 
   #repairBlockedForContext(contextSet, now) {
+    if (!contextSet.sealed) return;
+    const form = this.forms.get(formKey(contextSet.formId, contextSet.formVersion));
+    const batchContextReady = isCompleteBatchReviewContext(form, contextSet);
     for (const submission of this.learningSubmissions.values()) {
       if (submission.formId !== contextSet.formId || submission.formVersion !== contextSet.formVersion
           || submission.lifecycleStatus !== 'COMMITTED') continue;
+      if (submission.sourceType === BATCH_REVIEW_SOURCE_TYPE && !batchContextReady) continue;
       for (const version of this.learningVersions.get(submission.id) || []) {
         if (version.contextStatus !== 'CONTEXT_UNAVAILABLE' || this.analysisRuns.has(version.id)) continue;
         const workItem = (this.learningWorkItems.get(version.id) || [])
@@ -2749,10 +2900,12 @@ export class MemoryStore {
       const submission = version && [...this.learningSubmissions.values()]
         .find((candidate) => candidate.id === version.learningSubmissionId);
       const attempt = submission && this.attempts.get(submission.attemptId);
-      const contextSet = version && this.approvedContextSets.get(version.contextSetId);
+      const storedContextSet = version && this.approvedContextSets.get(version.contextSetId);
+      const contextSet = storedContextSet?.sealed ? storedContextSet : null;
       const contextQuestion = contextSet?.questions
         .find((candidate) => candidate.questionNumber === input.questionNumber);
-      const form = version && this.forms.get(formKey(version.formId, version.formVersion));
+      const storedForm = version && this.forms.get(formKey(version.formId, version.formVersion));
+      const form = storedForm?.contentSealed ? storedForm : null;
       const response = version && (this.learningResponses.get(version.id) || [])
         .find((candidate) => candidate.questionNumber === input.questionNumber);
       const scoring = version && submission
@@ -3977,12 +4130,25 @@ class MemoryAttemptTransaction {
   async getApprovedContextSetForForm(formId, formVersion) {
     const id = this.store.activeContextSetByForm.get(formKey(formId, formVersion));
     const context = id ? this.store.approvedContextSets.get(id) : null;
-    return context?.questions?.length ? clone(context) : null;
+    return context?.sealed && context.questions?.length ? clone(context) : null;
+  }
+
+  async getCompleteApprovedContextSetForForm(formId, formVersion) {
+    const form = this.store.forms.get(formKey(formId, formVersion));
+    const id = this.store.activeContextSetByForm.get(formKey(formId, formVersion));
+    const context = id ? this.store.approvedContextSets.get(id) : null;
+    return context?.sealed && isCompleteBatchReviewContext(form, context) ? clone(context) : null;
+  }
+
+  async withApprovedContextFormLock(_formId, _formVersion, work) {
+    // withAttemptLock already owns the adapter's global transaction mutex, so
+    // context import and confirmation cannot interleave in memory.
+    return work();
   }
 
   async getApprovedContextSetById(contextSetId) {
     const context = this.store.approvedContextSets.get(contextSetId);
-    return context?.questions?.length ? clone(context) : null;
+    return context?.sealed && context.questions?.length ? clone(context) : null;
   }
 
   async getLearningEntitlement({ purpose = 'EXISTING_WORK' } = {}) {
@@ -3998,7 +4164,13 @@ class MemoryAttemptTransaction {
           || (purpose === 'NEW_BATCH'
           ? release?.status === OPEN_REVIEW_STATUS.ACTIVE
           : [OPEN_REVIEW_STATUS.ACTIVE, OPEN_REVIEW_STATUS.SUPERSEDED_VALID].includes(release?.status))));
-    return clone({ allowed, sourceType: submission.sourceType, release: release || null, submission });
+    return clone({
+      allowed,
+      sourceType: submission.sourceType,
+      release: release || null,
+      contextSetId: release?.contextSetId || null,
+      submission
+    });
   }
 
   async getLearningReportBundle() {
@@ -4251,6 +4423,9 @@ class MemoryAttemptTransaction {
         || aggregate.version.learningSubmissionId !== learning.id
         || aggregate.version.versionNumber !== learning.currentVersion + 1
         || aggregate.version.formId !== batch.formId || aggregate.version.formVersion !== batch.formVersion
+        || (learning.sourceType === 'OPEN_REVIEW'
+          && aggregate.version.contextSetId
+            !== this.store.openReviewReleases.get(learning.openReviewReleaseId)?.contextSetId)
         || aggregate.responses.some((response) => response.learningSubmissionVersionId !== aggregate.version.id
           || response.formId !== batch.formId || response.formVersion !== batch.formVersion)
         || aggregate.confirmation?.batchId !== batch.id

@@ -1,6 +1,10 @@
 import { canonicalHash } from '../learning-review/canonical.js';
 
-export const ATTEMPT_MODE = Object.freeze({ TIMED: 'TIMED', OPEN_REVIEW: 'OPEN_REVIEW' });
+export const ATTEMPT_MODE = Object.freeze({
+  TIMED: 'TIMED',
+  OPEN_REVIEW: 'OPEN_REVIEW',
+  BATCH_REVIEW: 'BATCH_REVIEW'
+});
 export const OPEN_REVIEW_STATUS = Object.freeze({
   ACTIVE: 'ACTIVE',
   SUPERSEDED_VALID: 'SUPERSEDED_VALID',

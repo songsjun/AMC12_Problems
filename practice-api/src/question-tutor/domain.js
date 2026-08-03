@@ -29,7 +29,7 @@ const REVIEWER_ID = /^[A-Za-z0-9][A-Za-z0-9._:@/-]{2,127}$/;
 const TAG = /^[a-z0-9][a-z0-9-]{0,63}$/;
 const INVALID_LINEAGE_TEXT = /[\u0000-\u001F\u007F\uFFFD]/u;
 const OPTIONS = ['A', 'B', 'C', 'D', 'E'];
-const SOURCE_TYPES = new Set(['INTERACTIVE_FINAL', 'OPEN_REVIEW']);
+const SOURCE_TYPES = new Set(['INTERACTIVE_FINAL', 'OPEN_REVIEW', 'BATCH_REVIEW']);
 const SCORING_ORIGINS = new Set(['OFFICIAL_FINAL', 'BATCH_CONFIRMED']);
 const ANALYSIS_CONTRACTS = new Set(['amc-analysis-contract-v1', 'amc-analysis-contract-v2']);
 const JOB_STATUSES = new Set([
@@ -182,7 +182,7 @@ export function computeTutorContextReleaseHash(lineage) {
       || typeof lineage.approvalAuthorityId !== 'string' || !REVIEWER_ID.test(lineage.approvalAuthorityId)
       || !validHash(lineage.approvalReceiptSetHash)
       || (lineage.sourceType === 'OPEN_REVIEW' && !validHash(lineage.openReviewReleaseHash))
-      || (lineage.sourceType === 'INTERACTIVE_FINAL' && lineage.openReviewReleaseHash !== null)) {
+      || (lineage.sourceType !== 'OPEN_REVIEW' && lineage.openReviewReleaseHash !== null)) {
     throw new TutorDomainError('INVALID_CONTEXT_RELEASE_LINEAGE');
   }
   return inferenceSha256(canonicalInferenceJson({

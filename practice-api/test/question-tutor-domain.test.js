@@ -141,6 +141,12 @@ test('context release and internal thread lineage are separate frozen hash domai
     () => computeTutorContextReleaseHash({ ...releaseLineage, openReviewReleaseHash: '9'.repeat(64) }),
     (error) => error instanceof TutorDomainError && error.code === 'INVALID_CONTEXT_RELEASE_LINEAGE'
   );
+  const batchReviewHash = computeTutorContextReleaseHash({
+    ...releaseLineage,
+    sourceType: 'BATCH_REVIEW'
+  });
+  assert.match(batchReviewHash, /^[0-9a-f]{64}$/);
+  assert.notEqual(batchReviewHash, contextReleaseHash);
 });
 
 test('turns one through nine carry complete history and turn ten requires an explicit fork', async () => {

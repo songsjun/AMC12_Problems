@@ -20,7 +20,7 @@ import {
   PRIVATE_MANIFEST_SCHEMA,
   validateArchiveReleaseBatch
 } from './manifest.js';
-import { badRequest, conflict, forbidden, notFound, tooManyRequests, unauthorized } from './errors.js';
+import { ApiError, badRequest, conflict, forbidden, notFound, tooManyRequests, unauthorized } from './errors.js';
 import { newOpaqueToken } from './config.js';
 import { analysisInputHash } from './learning-review/canonical.js';
 import { ANALYSIS_CONTRACT_VERSION } from './infrastructure/amc-inference-contract.js';
@@ -33,6 +33,12 @@ import {
   publicOpenReviewRelease,
   publicOpenReviewWorkspace
 } from './open-review/domain.js';
+import {
+  BATCH_REVIEW_ANCHOR_REASON,
+  BATCH_REVIEW_SOURCE_TYPE,
+  isCompleteBatchReviewContext,
+  publicBatchReviewWorkspace
+} from './batch-review/domain.js';
 
 const PRELIMINARY_SLOT = 'PRELIMINARY';
 const FINAL_SLOT = 'FINAL';
@@ -41,6 +47,7 @@ const CANONICAL_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab]
 const ARCHIVE_RELEASE_FORM_ID_SET = new Set(ARCHIVE_RELEASE_FORM_IDS);
 const MAX_REASONING_NOTE_BYTES = 8_000;
 const MAX_REASONING_REQUEST_BYTES = 48_000;
+const REVIEW_ANCHOR_REASONS = new Set(['OPEN_REVIEW_ANCHOR', BATCH_REVIEW_ANCHOR_REASON]);
 
 function asDate(value) {
   return value instanceof Date ? value : new Date(value);
@@ -160,7 +167,7 @@ function learningProtectedAccess(submission, release) {
 function learningAnalysisStatus(versionRecord, access) {
   if (access.deleted) return 'TOMBSTONED';
   if (!access.allowed) return 'WITHHELD';
-  if (versionRecord.version.creationReason === 'OPEN_REVIEW_ANCHOR') return 'AWAITING_BATCH';
+  if (REVIEW_ANCHOR_REASONS.has(versionRecord.version.creationReason)) return 'AWAITING_BATCH';
   return versionRecord.workItems.find((item) => item.workType === 'ANALYZE_SUBMISSION')?.status
     || (versionRecord.version.contextStatus === 'CONTEXT_READY' ? 'QUEUED' : 'BLOCKED_CONTEXT');
 }
@@ -179,6 +186,15 @@ function publicQuestionAnalysis(analysis) {
     })),
     confidence: analysis.confidence
   };
+}
+
+function publicSourceAwareLearningReport(bundle) {
+  const report = publicLearningReport(bundle);
+  if (bundle.submission.sourceType === BATCH_REVIEW_SOURCE_TYPE
+      && bundle.workItem?.status === 'BLOCKED_CONTEXT') {
+    report.status = 'BLOCKED_CONTEXT';
+  }
+  return report;
 }
 
 function versionActivityAt(record) {
@@ -208,7 +224,7 @@ function publicLearningVersionSummary(item, access) {
     contextStatus: item.version.contextStatus,
     responseCount,
     mappedQuestionCount: item.version.creationReason === 'BATCH_COMMIT'
-      ? responseCount : (item.version.creationReason === 'OPEN_REVIEW_ANCHOR' ? 0 : null),
+      ? responseCount : (REVIEW_ANCHOR_REASONS.has(item.version.creationReason) ? 0 : null),
     questionNumbers,
     batchLineage: item.batch ? {
       batchId: item.batch.id,
@@ -337,6 +353,12 @@ function assertTimedAttempt(attempt) {
       'This timed-practice operation is not available in an open review workspace.'
     );
   }
+  if (attempt.attemptMode !== ATTEMPT_MODE.TIMED || attempt.phase === PHASES.BATCH_REVIEW) {
+    throw conflict(
+      'BATCH_REVIEW_OPERATION_NOT_ALLOWED',
+      'This timed-practice operation is not available in a batch review workspace.'
+    );
+  }
 }
 
 function userStudent(student) {
@@ -356,6 +378,7 @@ export class PracticeService {
     batchGlobalQuotaBytes,
     batchActiveLimit,
     batchIntakeEnabled = false,
+    batchReviewEnabled = false,
     batchRequestLimitPerMinute = 120,
     batchUploadByteBudget,
     batchProviderWorkBudget,
@@ -372,6 +395,7 @@ export class PracticeService {
     this.allowGenericManifestImport = allowGenericManifestImport;
     this.clock = clock;
     this.batchIntakeEnabled = batchIntakeEnabled === true;
+    this.batchReviewEnabled = batchReviewEnabled === true;
     this.batchRequestLimitPerMinute = batchRequestLimitPerMinute;
     this.batchPractice = new BatchPracticeService({
       store,
@@ -595,14 +619,20 @@ export class PracticeService {
     const forms = await this.store.listForms({ includeUnpublished });
     return forms.map((form) => ({
       ...publicFormSummary(form),
-      batchIntakeAvailable: this.batchIntakeEnabled
+      batchIntakeAvailable: this.batchIntakeEnabled,
+      batchReviewAvailable: form.published === true
+        && this.batchIntakeEnabled && this.batchReviewEnabled
     }));
   }
 
   async getPublicForm(formId) {
     const form = await this.store.getForm(formId);
     if (!form || !form.published) throw notFound('FORM_NOT_FOUND', 'The requested practice form was not found.');
-    return publicForm(form);
+    return {
+      ...publicForm(form),
+      batchIntakeAvailable: this.batchIntakeEnabled,
+      batchReviewAvailable: this.batchIntakeEnabled && this.batchReviewEnabled
+    };
   }
 
   async getPublicFormVersion(formId, version) {
@@ -610,7 +640,11 @@ export class PracticeService {
     ensureString(version, 'version', { min: 1, max: 100 });
     const form = await this.store.getForm(formId, version);
     if (!form || !form.published) throw notFound('FORM_NOT_FOUND', 'The requested practice form was not found.');
-    return publicForm(form);
+    return {
+      ...publicForm(form),
+      batchIntakeAvailable: this.batchIntakeEnabled,
+      batchReviewAvailable: this.batchIntakeEnabled && this.batchReviewEnabled
+    };
   }
 
   async listOpenReviews() {
@@ -701,6 +735,94 @@ export class PracticeService {
     });
   }
 
+  async #batchReviewContextStatus(tx, form) {
+    const context = await tx.getApprovedContextSetForForm(form.id, form.version);
+    return isCompleteBatchReviewContext(form, context) ? 'READY' : 'UNAVAILABLE';
+  }
+
+  async createBatchReviewWorkspace(studentId, formId, formVersion, idempotencyKey) {
+    if (!this.batchReviewEnabled || !this.batchIntakeEnabled) {
+      throw new ApiError(
+        503,
+        'BATCH_REVIEW_UNAVAILABLE',
+        'Batch review workspace creation is temporarily unavailable.'
+      );
+    }
+    ensureString(formId, 'formId', { min: 1, max: 160 });
+    ensureString(formVersion, 'version', { min: 1, max: 100 });
+    const key = normalizeIdempotencyKey(idempotencyKey);
+    const hash = requestHash('create-batch-review-workspace', { formId, formVersion });
+    let result;
+    try {
+      result = await this.store.findOrCreateBatchReviewWorkspace({
+        studentId,
+        formId,
+        formVersion,
+        idempotencyKey: key,
+        requestHash: hash,
+        now: this.now()
+      });
+    } catch (error) {
+      if (error?.code === 'IDEMPOTENCY_KEY_REUSED') {
+        throw conflict('IDEMPOTENCY_KEY_REUSED', 'Idempotency key was reused with a different request.');
+      }
+      throw error;
+    }
+    if (!result) {
+      throw notFound('BATCH_REVIEW_NOT_FOUND', 'The requested published form revision was not found.');
+    }
+    if (!result.created) {
+      return {
+        created: false,
+        workspace: await this.getBatchReviewWorkspace(studentId, result.attempt.id)
+      };
+    }
+    return {
+      created: true,
+      workspace: await this.getBatchReviewWorkspace(studentId, result.attempt.id)
+    };
+  }
+
+  async listBatchReviewWorkspaces(studentId) {
+    const records = await this.store.listBatchReviewWorkspaces(studentId);
+    const workspaces = [];
+    for (const { attempt, learningSubmission, analysisStatus, analysisContextStatus } of records) {
+      workspaces.push(publicBatchReviewWorkspace(attempt, learningSubmission, null, {
+        analysisStatus,
+        analysisContextStatus,
+        batchIntakeAvailable: this.batchIntakeEnabled,
+        batchReviewAvailable: this.batchIntakeEnabled && this.batchReviewEnabled
+      }));
+    }
+    return workspaces;
+  }
+
+  async getBatchReviewWorkspace(studentId, attemptId) {
+    ensureAttemptId(attemptId);
+    return this.store.withAttemptLock(attemptId, async (tx) => {
+      const attempt = await tx?.getAttempt();
+      assertOwned(attempt, studentId);
+      if (attempt.attemptMode !== ATTEMPT_MODE.BATCH_REVIEW) {
+        throw notFound('BATCH_REVIEW_WORKSPACE_NOT_FOUND', 'The batch review workspace was not found.');
+      }
+      const bundle = await tx.getLearningSubmissionBundle();
+      if (!bundle || bundle.submission.sourceType !== BATCH_REVIEW_SOURCE_TYPE) {
+        throw new Error('Batch review workspace lost its learning anchor.');
+      }
+      const form = await this.store.getForm(attempt.formId, attempt.formVersion);
+      if (!form?.publishedAt) throw new Error('Batch review workspace lost its published exact form lineage.');
+      const analysis = bundle.workItems.find((item) => item.workType === 'ANALYZE_SUBMISSION');
+      const analysisStatus = bundle.version.creationReason === BATCH_REVIEW_ANCHOR_REASON
+        ? 'AWAITING_BATCH' : (analysis?.status || 'BLOCKED_CONTEXT');
+      return publicBatchReviewWorkspace(attempt, bundle.submission, form, {
+        analysisStatus,
+        analysisContextStatus: await this.#batchReviewContextStatus(tx, form),
+        batchIntakeAvailable: this.batchIntakeEnabled,
+        batchReviewAvailable: this.batchIntakeEnabled && this.batchReviewEnabled
+      });
+    });
+  }
+
   async listLearningHistory(studentId, query = {}) {
     const { limit, cursor } = parseLearningHistoryQuery(query);
     const records = await this.store.listLearningHistoryRecords(studentId, { limit, cursor });
@@ -766,13 +888,17 @@ export class PracticeService {
       throw conflict('LEARNING_HISTORY_DELETED', 'The learning history record has been deleted.');
     }
     const versionRecord = record.versions.find((item) => item.version.versionNumber === versionNumber);
+    if (versionRecord?.version.creationReason === BATCH_REVIEW_ANCHOR_REASON) {
+      throw notFound('LEARNING_HISTORY_QUESTION_NOT_FOUND', 'The learning history question was not found.');
+    }
     const response = versionRecord?.responses.find((item) => item.questionNumber === questionNumber);
     const question = record.form.questions.find((item) => item.number === questionNumber);
-    if (!versionRecord || !response || !question) {
+    const result = versionRecord?.resultItems.find((item) => item.questionNumber === questionNumber) || null;
+    if (!versionRecord || !response || !question
+        || (versionRecord.version.creationReason === 'BATCH_COMMIT' && !result)) {
       throw notFound('LEARNING_HISTORY_QUESTION_NOT_FOUND', 'The learning history question was not found.');
     }
     const analysis = versionRecord.analyses.find((item) => item.questionNumber === questionNumber) || null;
-    const result = versionRecord.resultItems.find((item) => item.questionNumber === questionNumber) || null;
     return {
       submissionId: record.submission.id,
       versionNumber,
@@ -822,14 +948,14 @@ export class PracticeService {
     }
     const versionRecord = record.versions.find((item) => item.version.versionNumber === versionNumber);
     if (!versionRecord) throw notFound('LEARNING_HISTORY_VERSION_NOT_FOUND', 'The learning history version was not found.');
-    if (versionRecord.version.creationReason === 'OPEN_REVIEW_ANCHOR') {
-      throw conflict('LEARNING_HISTORY_REPORT_UNAVAILABLE', 'The blank open review anchor has no report.');
+    if (REVIEW_ANCHOR_REASONS.has(versionRecord.version.creationReason)) {
+      throw conflict('LEARNING_HISTORY_REPORT_UNAVAILABLE', 'A blank review anchor has no report.');
     }
     if (!access.allowed) {
       throw conflict('OPEN_REVIEW_REVOKED',
         'Protected open review analysis is no longer available.');
     }
-    return publicLearningReport({
+    return publicSourceAwareLearningReport({
       submission: record.submission,
       version: versionRecord.version,
       responses: versionRecord.responses,
@@ -1263,10 +1389,10 @@ export class PracticeService {
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwned(attempt, studentId);
-      if (attempt.attemptMode === ATTEMPT_MODE.OPEN_REVIEW) {
+      if ([ATTEMPT_MODE.OPEN_REVIEW, ATTEMPT_MODE.BATCH_REVIEW].includes(attempt.attemptMode)) {
         const learning = await tx.getLearningSubmissionBundle();
-        if (!learning || learning.submission.sourceType !== 'OPEN_REVIEW') {
-          throw conflict('LEARNING_SUBMISSION_NOT_AVAILABLE', 'The open review learning anchor is unavailable.');
+        if (!learning || learning.submission.sourceType !== attempt.attemptMode) {
+          throw conflict('LEARNING_SUBMISSION_NOT_AVAILABLE', 'The review learning anchor is unavailable.');
         }
         return this.#publicLearningSubmission(learning);
       }
@@ -1291,16 +1417,19 @@ export class PracticeService {
     return this.store.withAttemptLock(attemptId, async (tx) => {
       const attempt = await tx?.getAttempt();
       assertOwned(attempt, studentId);
-      if (attempt.attemptMode === ATTEMPT_MODE.OPEN_REVIEW) {
+      if ([ATTEMPT_MODE.OPEN_REVIEW, ATTEMPT_MODE.BATCH_REVIEW].includes(attempt.attemptMode)) {
         const entitlement = await tx.getLearningEntitlement({ purpose: 'EXISTING_WORK' });
         if (!entitlement?.allowed) {
-          throw conflict('OPEN_REVIEW_REVOKED', 'Protected open review analysis is no longer available.');
+          if (attempt.attemptMode === ATTEMPT_MODE.OPEN_REVIEW) {
+            throw conflict('OPEN_REVIEW_REVOKED', 'Protected open review analysis is no longer available.');
+          }
+          throw conflict('LEARNING_REPORT_NOT_AVAILABLE', 'Batch review analysis is not available.');
         }
         const bundle = await tx.getLearningReportBundle();
-        if (!bundle || bundle.version.creationReason === 'OPEN_REVIEW_ANCHOR') {
+        if (!bundle || REVIEW_ANCHOR_REASONS.has(bundle.version.creationReason)) {
           throw conflict('LEARNING_REPORT_AWAITING_BATCH', 'Submit and confirm a batch before requesting a report.');
         }
-        return publicLearningReport({
+        return publicSourceAwareLearningReport({
           ...bundle,
           workItem: bundle.workItems.find((item) => item.workType === 'ANALYZE_SUBMISSION') || null
         });
@@ -1314,7 +1443,7 @@ export class PracticeService {
       if (!bundle) {
         throw conflict('LEARNING_SUBMISSION_REPAIR_PENDING', 'This final is awaiting learning-submission reconciliation.');
       }
-      return publicLearningReport({
+      return publicSourceAwareLearningReport({
         ...bundle,
         workItem: bundle.workItems.find((item) => item.workType === 'ANALYZE_SUBMISSION') || null
       });
@@ -1669,7 +1798,7 @@ export class PracticeService {
       status: bundle.version.contextStatus,
       officialSubmissionId: bundle.submission.officialSubmissionId,
       evidenceHash: bundle.version.evidenceHash,
-      analysisStatus: bundle.version.creationReason === 'OPEN_REVIEW_ANCHOR'
+      analysisStatus: REVIEW_ANCHOR_REASONS.has(bundle.version.creationReason)
         ? 'AWAITING_BATCH' : (analysis?.status || 'BLOCKED_CONTEXT')
     };
   }

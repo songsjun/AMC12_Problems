@@ -242,6 +242,29 @@ export async function buildApp({ service, config, logger = false }) {
     return { workspace: await service.getOpenReviewWorkspace(auth.student.id, request.params.attemptId) };
   });
 
+  app.post(`${base}/forms/:formId/versions/:version/batch-review-workspace`, async (request, reply) => {
+    const auth = await requireCsrf(request);
+    emptyBody(request.body);
+    const result = await service.createBatchReviewWorkspace(
+      auth.student.id,
+      request.params.formId,
+      request.params.version,
+      idempotencyKey(request)
+    );
+    reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+    return reply.status(result.created ? 201 : 200).send({ workspace: result.workspace });
+  });
+  app.get(`${base}/batch-review-workspaces`, async (request, reply) => {
+    const auth = await requireAuth(request);
+    reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+    return { workspaces: await service.listBatchReviewWorkspaces(auth.student.id) };
+  });
+  app.get(`${base}/batch-review-workspaces/:attemptId`, async (request, reply) => {
+    const auth = await requireAuth(request);
+    reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+    return { workspace: await service.getBatchReviewWorkspace(auth.student.id, request.params.attemptId) };
+  });
+
   app.get(`${base}/learning-history`, async (request, reply) => {
     reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
     const auth = await requireAuth(request);
