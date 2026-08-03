@@ -164,3 +164,14 @@ Schema validation, hashes, and multiple approved solutions improve traceability,
 not mathematical correctness. Low-confidence mappings must stay confirmable,
 reports must retain fallibility language, and quality evaluation must measure
 pedagogical usefulness rather than only job completion.
+
+Append-only staging deliberately trades repair convenience for provenance. A
+malformed child inserted by direct SQL cannot be edited or deleted and an
+unsealed header cannot be overwritten by a later importer; it stays invisible
+and fails with `FORM_REVISION_NOT_SEALED`. Normal imports avoid this state by
+building and sealing in one transaction, but an over-privileged direct writer
+could still squat on a future form identity and create an operational denial of
+service. Production roles should therefore deny table DML outside the importer,
+alert on committed unsealed rows, and recover by an audited replacement identity
+or explicit follow-up migration rather than silently blessing or rewriting the
+staged evidence.

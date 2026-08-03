@@ -135,6 +135,18 @@ test('approved context validator rejects tamper, answer-key fields, and stale re
   }
 });
 
+test('approved context import treats JSON object member order as non-semantic', async () => {
+  const context = await setup();
+  const artifact = approvedContextArtifact(context.form, { readyNumbers: [1, 2] });
+  for (const question of artifact.questions) {
+    question.choices = Object.fromEntries(Object.entries(question.choices).reverse());
+  }
+  assert.equal(validateArtifact(artifact).forms.length, 1);
+  const imported = await importArtifact(context, artifact);
+  assert.equal(imported.length, 1);
+  assert.equal(imported[0].questions.length, 2);
+});
+
 test('independent approval authority receipts cannot be forged, revoked, duplicated, or replaced by test-only context', async () => {
   const { form } = await setup();
   const valid = approvedContextArtifact(form, { readyNumbers: [1] });

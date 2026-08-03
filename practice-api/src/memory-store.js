@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { providerRetentionNotBefore } from './infrastructure/assemblyai-retention-profile.js';
-import { analysisInputHash, canonicalHash } from './learning-review/canonical.js';
+import { analysisInputHash, canonicalHash, canonicalJson } from './learning-review/canonical.js';
 import {
   ANALYSIS_CONTRACT_VERSION,
   isValidAnalysisScoringSnapshot
@@ -1341,7 +1341,7 @@ export class MemoryStore {
             }
             const choices = Object.fromEntries(storedQuestion.choices.map((choice) => [choice.option, choice.textMarkdown]));
             if (storedQuestion.promptMarkdown !== question.promptMarkdown
-                || JSON.stringify(choices) !== JSON.stringify(question.choices)) {
+                || canonicalJson(choices) !== canonicalJson(question.choices)) {
               throw Object.assign(new Error('Approved context prompt/choices do not match the form revision.'), { code: 'CONTEXT_CONTENT_MISMATCH' });
             }
           }

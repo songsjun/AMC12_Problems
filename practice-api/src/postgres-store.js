@@ -2,7 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import pg from 'pg';
 import { conflict } from './errors.js';
 import { providerRetentionNotBefore } from './infrastructure/assemblyai-retention-profile.js';
-import { analysisInputHash, canonicalHash } from './learning-review/canonical.js';
+import { analysisInputHash, canonicalHash, canonicalJson } from './learning-review/canonical.js';
 import {
   ANALYSIS_CONTRACT_VERSION,
   isValidAnalysisScoringSnapshot
@@ -1657,7 +1657,7 @@ export class PostgresStore {
           const stored = storedQuestions.rows.find((row) => row.question_number === question.number);
           const choices = stored && Object.fromEntries(stored.choices.map((choice) => [choice.option, choice.textMarkdown]));
           if (!stored || stored.prompt_markdown !== question.promptMarkdown
-              || JSON.stringify(choices) !== JSON.stringify(question.choices)) {
+              || canonicalJson(choices) !== canonicalJson(question.choices)) {
             throw Object.assign(new Error('Approved context prompt/choices do not match the form revision.'), { code: 'CONTEXT_CONTENT_MISMATCH' });
           }
         }
