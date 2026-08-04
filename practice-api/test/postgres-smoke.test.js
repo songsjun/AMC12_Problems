@@ -847,7 +847,7 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
   const v2Fixture = pythonV2ApprovedArchiveFixture(archiveRelease);
   const v2StoredForm = importedArchive.find((form) => form.id === alternativeArchive.id);
   await store.importForm(v2StoredForm, { publish: true, allowTestOnlyPublish: false });
-  const v2Now = new Date('2026-08-03T12:30:00.000Z');
+  const v2Now = (await store.pool.query('SELECT clock_timestamp() AS now')).rows[0].now;
   const v2Importer = new ApprovedContextImporter({
     store, clock: () => new Date(v2Now), trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
   });
@@ -1042,6 +1042,9 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     v2Student.id, v2Workspace.workspace.id
   )).status, 'COMPLETE');
   const v2Session = await v2BatchService.login(v2Code);
+  const tutorSessionClock = (await store.pool.query('SELECT clock_timestamp() AS now')).rows[0].now;
+  assert.ok(v2Session.session.expiresAt > tutorSessionClock,
+    'the database-authoritative test clock keeps the Tutor session live');
   const v2Tutor = await v2BatchService.createTutorRootThread(
     v2Student.id, v2Session.session.id, v2Workspace.workspace.learningSubmissionId,
     '2', '1', 'pg-v2-tutor-root'
