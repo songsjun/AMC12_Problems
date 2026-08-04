@@ -505,6 +505,7 @@ test('ready published exact form creates a context-pinned batch workspace and en
   assert.equal(workspace.attemptMode, 'BATCH_REVIEW');
   assert.equal(workspace.formId, context.form.id);
   assert.equal(workspace.formVersion, context.form.version);
+  assert.equal(workspace.lifecycleStatus, 'COMMITTED');
   assert.equal(workspace.protectedAccessStatus, 'AVAILABLE');
   assert.equal(workspace.analysisStatus, 'AWAITING_BATCH');
   assert.equal(workspace.analysisContextStatus, 'READY');

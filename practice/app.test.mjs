@@ -824,7 +824,7 @@ test('independent batch-review capability, path, and workspace identity fail clo
 
   const workspace = {
     id: 'workspace-1', attemptMode: 'BATCH_REVIEW', formId: form.id, formVersion: form.version,
-    lifecycleStatus: 'ACTIVE', protectedAccessStatus: 'AVAILABLE', analysisContextStatus: 'READY',
+    lifecycleStatus: 'COMMITTED', protectedAccessStatus: 'AVAILABLE', analysisContextStatus: 'READY',
     batchReviewAvailable: true, batchIntakeAvailable: true
   };
   assert.equal(normalizeBatchReviewWorkspace({ workspace }, form), workspace,
@@ -835,6 +835,7 @@ test('independent batch-review capability, path, and workspace identity fail clo
     { ...workspace, formVersion: 'reviewed-v3' },
     { ...workspace, protectedAccessStatus: 'RECORD_DELETED' },
     { ...workspace, lifecycleStatus: undefined },
+    { ...workspace, lifecycleStatus: 'ACTIVE' },
     { ...workspace, lifecycleStatus: 'DELETED' },
     { ...workspace, analysisContextStatus: 'UNAVAILABLE' },
     { ...workspace, batchReviewAvailable: false },
@@ -855,7 +856,7 @@ test('superseded historical batch-review workspaces remain viewable but cannot r
   const historical = {
     id: 'workspace-history', attemptMode: 'BATCH_REVIEW',
     formId: 'amc12-2002-b', formVersion: 'r2',
-    lifecycleStatus: 'ACTIVE', protectedAccessStatus: 'AVAILABLE',
+    lifecycleStatus: 'COMMITTED', protectedAccessStatus: 'AVAILABLE',
     analysisStatus: 'COMPLETE', analysisContextStatus: 'READY',
     batchReviewAvailable: false, batchIntakeAvailable: false
   };
@@ -870,7 +871,7 @@ test('batch-review create-or-resume retries one empty-body POST with one caller-
   const calls = [];
   const workspace = {
     id: 'workspace-7', attemptMode: 'BATCH_REVIEW', formId: form.id, formVersion: form.version,
-    lifecycleStatus: 'ACTIVE', protectedAccessStatus: 'AVAILABLE', analysisContextStatus: 'READY',
+    lifecycleStatus: 'COMMITTED', protectedAccessStatus: 'AVAILABLE', analysisContextStatus: 'READY',
     batchReviewAvailable: true, batchIntakeAvailable: true
   };
   const fakeApi = {
@@ -909,7 +910,7 @@ test('delayed attempt history keeps context-gated batch intake separate from tim
   const form = { id: 'amc12-2025-a', version: 4, batchReviewAvailable: true };
   const contextUnavailableWorkspace = {
     id: 'workspace-4', attemptMode: 'BATCH_REVIEW', formId: form.id, formVersion: form.version,
-    lifecycleStatus: 'ACTIVE', protectedAccessStatus: 'AVAILABLE', analysisContextStatus: 'UNAVAILABLE',
+    lifecycleStatus: 'COMMITTED', protectedAccessStatus: 'AVAILABLE', analysisContextStatus: 'UNAVAILABLE',
     batchReviewAvailable: false, batchIntakeAvailable: true
   };
   assert.equal(batchReviewWorkspaceIntakeAvailable(contextUnavailableWorkspace), false,

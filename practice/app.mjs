@@ -588,7 +588,7 @@ export function normalizeBatchReviewWorkspace(payload, form) {
       || expectedFormVersion === null || expectedFormVersion === undefined
       || String(workspace.formVersion ?? '') !== String(expectedFormVersion)
       || workspace.protectedAccessStatus !== 'AVAILABLE'
-      || workspace.lifecycleStatus !== 'ACTIVE'
+      || workspace.lifecycleStatus !== 'COMMITTED'
       || workspace.analysisContextStatus !== 'READY'
       || workspace.batchReviewAvailable !== true
       || workspace.batchIntakeAvailable !== true) {
