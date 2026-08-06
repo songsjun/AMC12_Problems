@@ -39,6 +39,15 @@ weaknesses from correctness or blank totals and never displays unavailable
 system context as a student deficit. Confidence is explicitly labelled as AI
 synthesis confidence, not a probability that the student possesses a trait.
 
+Production acceptance exposed one cross-field assumption that unit fixtures
+had missed: `answerOnlyCount` includes a selected answer even when that
+question's model context is unavailable, while `analyzedCount` correctly does
+not. Those coverage dimensions intentionally overlap. The browser now requires
+only `reasoningAnalyzedCount <= analyzedCount`; it no longer hides a valid
+whole-test report by adding `answerOnlyCount` to that bound. A production-shaped
+fixture freezes this distinction, and the actual 2025A public projection is
+accepted end to end by the browser normalizer.
+
 The current design displays ten coverage counters because the distinctions are
 pedagogically important. On a narrow screen they collapse to a single column;
 future usability evidence may justify grouping them, but hiding context/failure

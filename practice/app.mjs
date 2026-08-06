@@ -1410,8 +1410,9 @@ function normalizeLearningReportSummary(value, questions) {
   const assessment = normalizeWholeTestAssessment(value.wholeTestAssessment, questions);
   if (assessment && assessment.evidenceCoverage.totalQuestions === summary.totalQuestions
       && assessment.evidenceCoverage.failedCount === summary.failedCount
-      && assessment.evidenceCoverage.reasoningAnalyzedCount + assessment.evidenceCoverage.answerOnlyCount
-        <= summary.analyzedCount) summary.wholeTestAssessment = assessment;
+      && assessment.evidenceCoverage.reasoningAnalyzedCount <= summary.analyzedCount) {
+    summary.wholeTestAssessment = assessment;
+  }
   return summary;
 }
 

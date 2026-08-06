@@ -804,6 +804,24 @@ test('whole-test assessments normalize a bounded evidence-linked contract and fa
   assert.equal(assessment.providerInvoked, undefined);
   assert.equal(assessment.outcomeCode, undefined);
 
+  const overlappingCoverage = structuredClone(report);
+  overlappingCoverage.questions.push({
+    questionNumber: 4, status: 'UNASSESSABLE', evidenceMode: 'NONE',
+    availabilityReason: 'VISUAL_CONTEXT_UNAVAILABLE'
+  });
+  Object.assign(overlappingCoverage.summary, {
+    totalQuestions: 4, analyzedCount: 2, unassessableCount: 2
+  });
+  Object.assign(overlappingCoverage.summary.wholeTestAssessment.evidenceCoverage, {
+    totalQuestions: 4, answeredCount: 3, correctCount: 2, incorrectCount: 1,
+    blankCount: 1, answerOnlyCount: 2, contextUnavailableCount: 1
+  });
+  assert.equal(
+    normalizeLearningReport(overlappingCoverage).summary.wholeTestAssessment.status,
+    'SUCCEEDED',
+    'answer-only and unavailable-context coverage may overlap without inflating analyzedCount'
+  );
+
   const rejectsAssessment = (mutate) => {
     const candidate = structuredClone(report);
     mutate(candidate.summary.wholeTestAssessment, candidate);
@@ -829,6 +847,7 @@ test('whole-test assessments normalize a bounded evidence-linked contract and fa
   });
   rejectsAssessment((whole) => { whole.priorityActions[0].priority = 2; });
   rejectsAssessment((whole) => { whole.evidenceCoverage.blankCount = 0; });
+  rejectsAssessment((whole) => { whole.evidenceCoverage.reasoningAnalyzedCount = 3; });
   rejectsAssessment((whole, candidate) => { candidate.questions[0].evidenceMode = 'UNTRUSTED'; });
 
   const failed = structuredClone(report);
