@@ -164,7 +164,8 @@
             <h2 id="analysis-summary-title">AI learning analysis</h2>
             <p id="analysis-meta" class="muted"></p>
           </div>
-          <button id="refresh-analysis-button" class="button button-secondary" type="button">Refresh analysis</button>
+          <button id="refresh-analysis-button" class="button button-secondary" type="button"
+            aria-describedby="analysis-status analysis-reanalysis-status">Analyze again</button>
         </div>
         <p id="analysis-status" class="muted" role="status" aria-live="polite"></p>
         <div id="analysis-report-summary" class="analysis-report-summary"></div>
@@ -189,10 +190,9 @@
               <p id="analysis-reanalysis-bytes" class="muted">0 / 8000 UTF-8 bytes</p>
             </div>
           </div>
-          <p id="analysis-reanalysis-help" class="muted">Save a changed approach to create a new version, or restart with the current evidence when you only want a fresh analysis.</p>
+          <p id="analysis-reanalysis-help" class="muted">Save a changed approach to create a new version. To analyze the unchanged saved evidence again, use “Analyze again” above.</p>
           <div class="analysis-reanalysis-actions">
             <button id="analysis-reanalysis-save" class="button button-primary" type="button">Save approach and restart analysis</button>
-            <button id="analysis-reanalysis-rerun" class="button button-secondary" type="button">Restart analysis without changes</button>
             <button id="analysis-reanalysis-reload" class="button button-secondary" type="button">Reload saved approach</button>
           </div>
           <p id="analysis-reanalysis-status" class="muted" role="status" aria-live="polite" aria-atomic="true"></p>

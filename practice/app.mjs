@@ -796,6 +796,74 @@ export async function submitLearningReanalysisRequest(apiClient, attempt, expect
   );
 }
 
+export async function submitAuthoritativeLearningReanalysis(apiClient, attempt, expectedProjection, notes = [], {
+  generateKey = idempotencyKey,
+  isCurrent = () => true
+} = {}) {
+  const currentPath = learningSubmissionEndpointForAttempt(attempt);
+  if (!currentPath || !expectedProjection?.id || !Number.isSafeInteger(expectedProjection.version)) {
+    throw new ApiError('The current analysis version is unavailable. Reopen the Final results first.', {
+      status: 409, code: 'LEARNING_VERSION_MISSING'
+    });
+  }
+  if (!isCurrent()) {
+    throw new ApiError('The analysis page changed before the request started.', {
+      code: 'STALE_LEARNING_REANALYSIS'
+    });
+  }
+  const preflight = learningAnalysisProjection(await apiClient.get(currentPath));
+  if (!isCurrent()) {
+    throw new ApiError('The analysis page changed while its current version was checked.', {
+      code: 'STALE_LEARNING_REANALYSIS'
+    });
+  }
+  if (!preflight || preflight.id !== expectedProjection.id || !Number.isSafeInteger(preflight.version)) {
+    throw new ApiError('The current analysis did not match this Final submission.', {
+      code: 'INVALID_LEARNING_REANALYSIS_PREFLIGHT', payload: { learningSubmission: preflight }
+    });
+  }
+  if (preflight.version !== expectedProjection.version) {
+    throw new ApiError('A newer reasoning or analysis version already exists.', {
+      status: 409, code: 'LEARNING_VERSION_CONFLICT', payload: { learningSubmission: preflight }
+    });
+  }
+  if (learningAnalysisIsPending(preflight)) {
+    throw new ApiError('The current analysis is already queued or running.', {
+      status: 409, code: 'LEARNING_ANALYSIS_IN_PROGRESS', payload: { learningSubmission: preflight }
+    });
+  }
+  if (preflight.reanalysisAvailable !== true) {
+    throw new ApiError('Post-final reasoning and reanalysis are not currently available.', {
+      status: 503, code: 'LEARNING_REANALYSIS_DISABLED', payload: { learningSubmission: preflight }
+    });
+  }
+  const response = await submitLearningReanalysisRequest(
+    apiClient, attempt, preflight.version, notes, { generateKey }
+  );
+  const created = learningAnalysisProjection(response);
+  if (!created || created.id !== preflight.id || created.version !== preflight.version + 1) {
+    throw new ApiError('The new analysis version response was invalid.', {
+      code: 'INVALID_LEARNING_REANALYSIS', payload: response
+    });
+  }
+  // Always reconcile a successful POST with the attempt-scoped authoritative
+  // head. This GET is deliberately performed even if the user navigated after
+  // the POST; its result is returned only when the caller's stale fence holds.
+  const current = learningAnalysisProjection(await apiClient.get(currentPath));
+  if (!current || current.id !== created.id || !Number.isSafeInteger(current.version)
+      || current.version < created.version) {
+    throw new ApiError('The new analysis version could not be confirmed.', {
+      code: 'INVALID_LEARNING_REANALYSIS_POSTFLIGHT', payload: { learningSubmission: current }
+    });
+  }
+  if (!isCurrent()) {
+    throw new ApiError('The analysis page changed while the new version was confirmed.', {
+      code: 'STALE_LEARNING_REANALYSIS'
+    });
+  }
+  return { preflight, created, current };
+}
+
 export function currentLearningQuestionReasoning(payload, identity) {
   const root = unwrapData(payload);
   if (!isRecord(root) || !isRecord(root.question) || !isRecord(root.response)
@@ -1124,7 +1192,7 @@ export function learningReanalysisMutationContextMatches(context, current) {
     && context.attemptEpoch === current.attemptEpoch
     && context.submissionId === String(current.submissionId || '')
     && context.versionNumber === current.versionNumber
-    && context.questionNumber === current.questionNumber
+    && (context.questionNumber === null || context.questionNumber === current.questionNumber)
     && current.resultsVisible === true;
 }
 
@@ -1134,8 +1202,73 @@ export function learningAnalysisDisplayStatus(projection) {
   return contextStatus === 'CONTEXT_UNAVAILABLE' ? contextStatus : (analysisStatus || contextStatus);
 }
 
+export function normalizeLearningAnalysisStatus(status) {
+  return ({
+    BLOCKED_CONTEXT: 'CONTEXT_UNAVAILABLE',
+    CONTEXT_UNAVAILABLE: 'CONTEXT_UNAVAILABLE',
+    PENDING: 'QUEUED',
+    QUEUED: 'QUEUED',
+    PROCESSING: 'RUNNING',
+    RUNNING: 'RUNNING',
+    COMPLETED: 'COMPLETE',
+    SUCCEEDED: 'COMPLETE',
+    COMPLETE: 'COMPLETE',
+    PARTIAL: 'PARTIAL',
+    UNASSESSABLE: 'UNASSESSABLE',
+    FAILED: 'FAILED',
+    CANCELLED: 'CANCELLED'
+  })[String(status || '').toUpperCase()] || '';
+}
+
+function learningReportMatchesProjection(projection, report) {
+  return Boolean(projection?.id && Number.isSafeInteger(projection?.version)
+    && report?.learningSubmissionId === projection.id
+    && report?.version === projection.version);
+}
+
+export function learningAnalysisEffectiveStatus(projection, report = null) {
+  const projectedStatus = normalizeLearningAnalysisStatus(learningAnalysisDisplayStatus(projection));
+  const reportStatus = learningReportMatchesProjection(projection, report)
+    ? normalizeLearningAnalysisStatus(report.status) : '';
+  // A stale terminal report must never make an authoritatively pending
+  // projection look restartable. Conversely, a still-pending exact report is
+  // a fail-closed fence until both reads agree that this version is terminal.
+  if (['QUEUED', 'RUNNING', 'CONTEXT_UNAVAILABLE'].includes(projectedStatus)) return projectedStatus;
+  if (['QUEUED', 'RUNNING'].includes(reportStatus)) return reportStatus;
+  return reportStatus || projectedStatus;
+}
+
+export function learningAnalysisIsPending(projection, report = null) {
+  return ['QUEUED', 'RUNNING'].includes(learningAnalysisEffectiveStatus(projection, report));
+}
+
+export function learningReportReadFailureMessage(status, pollCount) {
+  const normalizedStatus = normalizeLearningAnalysisStatus(status);
+  const prefix = `${learningReportStatusMessage(normalizedStatus)} The latest status could not be refreshed.`;
+  const retrying = ['QUEUED', 'RUNNING'].includes(normalizedStatus)
+    || (Number.isSafeInteger(pollCount) && pollCount < MAX_LEARNING_REPORT_POLLS);
+  return retrying
+    ? `${prefix} Retrying automatically; your objective score and answer review are unaffected.`
+    : `${prefix} Automatic retries are paused; switch away and return to this tab, or reopen Final results, to check again. Your objective score and answer review are unaffected.`;
+}
+
+export function learningReanalysisActionModel({
+  available = false, projection = null, report = null, coordinating = false, draftDirty = false
+} = {}) {
+  const status = learningAnalysisEffectiveStatus(projection, report);
+  if (coordinating) return { disabled: true, label: 'Checking current analysis…', status };
+  if (status === 'QUEUED') return { disabled: true, label: 'Analysis queued…', status };
+  if (status === 'RUNNING') return { disabled: true, label: 'Analysis in progress…', status };
+  if (!available) return { disabled: true, label: 'Analyze again', status };
+  if (status === 'CONTEXT_UNAVAILABLE') {
+    return { disabled: true, label: 'Waiting for approved solutions', status };
+  }
+  if (draftDirty) return { disabled: true, label: 'Save or discard draft', status };
+  return { disabled: false, label: 'Analyze again', status };
+}
+
 const LEARNING_REPORT_STATUSES = new Set([
-  'CONTEXT_UNAVAILABLE', 'QUEUED', 'RUNNING', 'COMPLETE', 'PARTIAL', 'UNASSESSABLE', 'FAILED'
+  'CONTEXT_UNAVAILABLE', 'QUEUED', 'RUNNING', 'COMPLETE', 'PARTIAL', 'UNASSESSABLE', 'FAILED', 'CANCELLED'
 ]);
 const LEARNING_QUESTION_STATUSES = new Set(['SUCCEEDED', 'UNASSESSABLE', 'FAILED']);
 
@@ -1234,8 +1367,9 @@ export function learningReportStatusMessage(status) {
     RUNNING: 'Your learning analysis is in progress. Your objective score is already final.',
     COMPLETE: 'Your learning analysis is complete.',
     PARTIAL: 'A partial learning analysis is available. Some questions could not be assessed.',
-    UNASSESSABLE: 'There was not enough written reasoning to assess your approach reliably. Add more detail about what you tried on a future attempt.',
-    FAILED: 'The learning analysis could not be completed. Refresh only checks its current status and does not restart AI processing.'
+    UNASSESSABLE: 'No saved approach was detailed enough to analyze reliably. Add or revise an approach below, then save it and analyze again. Re-running unchanged evidence is unlikely to improve the report.',
+    FAILED: 'The learning analysis could not be completed. You can use Analyze again after checking or updating your saved approach.',
+    CANCELLED: 'The previous learning analysis was cancelled. You can analyze the current saved evidence again.'
   })[String(status || '').toUpperCase()] || 'Checking for your learning analysis…';
 }
 
@@ -1605,7 +1739,7 @@ function getElements() {
     analysisReanalysis: byId('analysis-reanalysis'), analysisReanalysisVersion: byId('analysis-reanalysis-version'),
     analysisReanalysisQuestion: byId('analysis-reanalysis-question'), analysisReanalysisReasoning: byId('analysis-reanalysis-reasoning'),
     analysisReanalysisBytes: byId('analysis-reanalysis-bytes'), analysisReanalysisSave: byId('analysis-reanalysis-save'),
-    analysisReanalysisRerun: byId('analysis-reanalysis-rerun'), analysisReanalysisReload: byId('analysis-reanalysis-reload'),
+    analysisReanalysisReload: byId('analysis-reanalysis-reload'),
     analysisReanalysisHistory: byId('analysis-reanalysis-history'),
     analysisReanalysisStatus: byId('analysis-reanalysis-status'),
     submissionHistory: byId('submission-history'), resultsQuestions: byId('results-questions'), solutionsList: byId('solutions-list'),
@@ -3735,21 +3869,22 @@ function renderResults(resultPayload, solutionsPayload) {
 
 function renderLearningAnalysisStatus() {
   if (!elements?.analysisSummary) return;
-  const displayStatus = learningAnalysisDisplayStatus(state.learningSubmission);
-  const projectedStatus = ({
-    BLOCKED_CONTEXT: 'CONTEXT_UNAVAILABLE',
-    PENDING: 'QUEUED',
-    PROCESSING: 'RUNNING',
-    COMPLETED: 'COMPLETE'
-  })[displayStatus] || displayStatus;
   const report = state.learningReport;
-  const status = report?.status || projectedStatus || '';
+  const status = learningAnalysisEffectiveStatus(state.learningSubmission, report);
   elements.analysisSummary.hidden = false;
   elements.analysisStatus.textContent = state.learningReportLoadError
-    ? 'The report status could not be refreshed. Your objective score and answer review above are unaffected.'
+    ? learningReportReadFailureMessage(status, state.learningReportPollCount)
     : learningReportStatusMessage(status);
-  elements.refreshAnalysisButton.disabled = state.learningReportRequestInFlight;
-  elements.refreshAnalysisButton.textContent = state.learningReportRequestInFlight ? 'Refreshing…' : 'Refresh analysis';
+  const action = learningReanalysisActionModel({
+    available: learningReanalysisAvailable(),
+    projection: state.learningSubmission,
+    report,
+    coordinating: state.learningReportRequestInFlight || state.learningReanalysisRequestInFlight
+      || state.learningReanalysisLoadInFlight,
+    draftDirty: learningReanalysisDraftIsDirty()
+  });
+  elements.refreshAnalysisButton.disabled = action.disabled;
+  elements.refreshAnalysisButton.textContent = action.label;
   clearNode(elements.analysisReportSummary);
   clearNode(elements.analysisQuestions);
 
@@ -3765,7 +3900,7 @@ function renderLearningAnalysisStatus() {
   if (report.generatedAt) meta.push(`Generated ${formatDateTime(report.generatedAt)}`);
   elements.analysisMeta.textContent = meta.join(' · ');
 
-  if (['COMPLETE', 'PARTIAL', 'UNASSESSABLE', 'FAILED'].includes(report.status)) {
+  if (['COMPLETE', 'PARTIAL', 'UNASSESSABLE', 'FAILED', 'CANCELLED'].includes(report.status)) {
     const summary = report.summary;
     elements.analysisReportSummary.textContent = [
       `${summary.analyzedCount} analyzed`,
@@ -3972,20 +4107,19 @@ function renderLearningReanalysisControls() {
   const dirty = loaded && (state.learningReanalysisOriginalText === null
     || draft !== state.learningReanalysisOriginalText);
   const busy = state.learningReanalysisLoadInFlight || state.learningReanalysisRequestInFlight;
+  const mutationBlocked = busy || state.learningReportRequestInFlight
+    || learningAnalysisIsPending(state.learningSubmission, state.learningReport);
   elements.analysisReanalysisVersion.textContent = `Editing analysis version ${projection.version}.`;
   elements.analysisReanalysisBytes.textContent = `${bytes} / ${MAX_REASONING_NOTE_BYTES} UTF-8 bytes`;
   elements.analysisReanalysisBytes.classList.toggle('is-error', bytes > MAX_REASONING_NOTE_BYTES);
   elements.analysisReanalysisQuestion.disabled = busy;
   elements.analysisReanalysisReasoning.disabled = busy || !loaded;
-  elements.analysisReanalysisSave.disabled = busy || !dirty || bytes > MAX_REASONING_NOTE_BYTES;
-  elements.analysisReanalysisRerun.disabled = busy || !loaded || dirty;
+  elements.analysisReanalysisSave.disabled = mutationBlocked || !dirty || bytes > MAX_REASONING_NOTE_BYTES;
   elements.analysisReanalysisReload.disabled = busy;
   elements.analysisReanalysisReload.textContent = dirty ? 'Discard draft and reload' : 'Reload saved approach';
   elements.analysisReanalysisHistory.disabled = state.learningReanalysisRequestInFlight;
   elements.analysisReanalysisSave.textContent = state.learningReanalysisRequestInFlight
     ? 'Creating new version…' : 'Save approach and restart analysis';
-  elements.analysisReanalysisRerun.textContent = state.learningReanalysisRequestInFlight
-    ? 'Creating new version…' : 'Restart analysis without changes';
 }
 
 function learningReanalysisDraftIsDirty() {
@@ -4019,14 +4153,16 @@ function navigateAfterReanalysisDraftDecision(action) {
   });
 }
 
-async function loadCurrentLearningReanalysisReasoning() {
+async function loadCurrentLearningReanalysisReasoning({ preserveDraft = null } = {}) {
   const identity = currentLearningReanalysisIdentity();
   if (!identity) return false;
+  const retainedDraft = typeof preserveDraft === 'string'
+    ? normalizedLearningReanalysisReasoning(preserveDraft) : null;
   const sequence = ++state.learningReanalysisLoadSequence;
   state.learningReanalysisLoadInFlight = true;
   state.learningReanalysisLoadedVersion = null;
   state.learningReanalysisOriginalText = '';
-  elements.analysisReanalysisReasoning.value = '';
+  elements.analysisReanalysisReasoning.value = retainedDraft === null ? '' : retainedDraft;
   setLearningReanalysisStatus(`Loading Question ${identity.questionNumber} from version ${identity.versionNumber}…`);
   renderLearningReanalysisControls();
   try {
@@ -4042,8 +4178,19 @@ async function loadCurrentLearningReanalysisReasoning() {
     }
     state.learningReanalysisLoadedVersion = identity.versionNumber;
     state.learningReanalysisOriginalText = reasoningText;
-    elements.analysisReanalysisReasoning.value = reasoningText;
-    setLearningReanalysisStatus(`Question ${identity.questionNumber} loaded from version ${identity.versionNumber}.`);
+    elements.analysisReanalysisReasoning.value = retainedDraft === null ? reasoningText : retainedDraft;
+    if (retainedDraft === null) {
+      setLearningReanalysisStatus(`Question ${identity.questionNumber} loaded from version ${identity.versionNumber}.`);
+    } else if (retainedDraft === reasoningText) {
+      setLearningReanalysisStatus(
+        `Version ${identity.versionNumber} already contains this approach; no additional version is needed.`, 'success'
+      );
+    } else {
+      setLearningReanalysisStatus(
+        `Version ${identity.versionNumber} contains a different saved approach. Your draft is preserved; save it after the current analysis finishes, or reload the saved approach to discard the draft.`,
+        'error'
+      );
+    }
     return true;
   } catch (error) {
     if (sequence !== state.learningReanalysisLoadSequence || !learningReanalysisIdentityMatches(identity)) return false;
@@ -4052,9 +4199,48 @@ async function loadCurrentLearningReanalysisReasoning() {
   } finally {
     if (sequence === state.learningReanalysisLoadSequence && learningReanalysisIdentityMatches(identity)) {
       state.learningReanalysisLoadInFlight = false;
+      renderLearningAnalysisStatus();
       renderLearningReanalysisControls();
     }
   }
+}
+
+function currentLearningReanalysisActionIdentity(reasoningChanged) {
+  if (reasoningChanged) return currentLearningReanalysisIdentity();
+  if (!learningReanalysisAvailable()) return null;
+  return {
+    attemptId: String(state.attempt.id),
+    attemptEpoch: state.attemptEpoch,
+    submissionId: state.learningSubmission.id,
+    versionNumber: state.learningSubmission.version,
+    questionNumber: null
+  };
+}
+
+function isCurrentLearningReanalysisLineage(context) {
+  return Boolean(context)
+    && context.mutationSequence === state.learningReanalysisMutationSequence
+    && context.attemptId === String(state.attempt?.id || '')
+    && context.attemptEpoch === state.attemptEpoch
+    && context.submissionId === String(state.learningSubmission?.id || '')
+    && Number(state.learningSubmission?.version) >= context.versionNumber
+    && (context.questionNumber === null || context.questionNumber === state.learningReanalysisQuestionNumber)
+    && Boolean(elements?.resultsView && !elements.resultsView.hidden);
+}
+
+function adoptLearningProjection(projection, { preserveDraft = null } = {}) {
+  stopLearningReportPolling();
+  state.learningReport = null;
+  state.learningReportLoadError = null;
+  state.learningReportPollCount = 0;
+  state.learningSubmission = projection;
+  state.learningReanalysisLoadSequence += 1;
+  state.learningReanalysisLoadInFlight = false;
+  state.learningReanalysisLoadedVersion = null;
+  state.learningReanalysisOriginalText = '';
+  renderLearningAnalysisStatus();
+  if (!learningReanalysisAvailable() || !syncLearningReanalysisQuestionOptions()) return Promise.resolve(false);
+  return loadCurrentLearningReanalysisReasoning({ preserveDraft });
 }
 
 async function refreshLearningProjectionAfterConflict(context, draft, reasoningChanged) {
@@ -4065,41 +4251,30 @@ async function refreshLearningProjectionAfterConflict(context, draft, reasoningC
     const projection = learningAnalysisProjection(await api.get(path));
     if (!isCurrentLearningReanalysisMutation(context)) return false;
     if (!projection || projection.id !== context.submissionId || !Number.isSafeInteger(projection.version)
-        || projection.version <= context.versionNumber) return false;
-    const questionIdentity = {
-      submissionId: projection.id,
-      versionNumber: projection.version,
-      questionNumber: context.questionNumber
-    };
-    const questionResponse = await api.get(learningHistoryQuestionPath(
-      questionIdentity.submissionId, questionIdentity.versionNumber, questionIdentity.questionNumber
-    ));
-    if (!isCurrentLearningReanalysisMutation(context)) return false;
-    const currentReasoning = currentLearningQuestionReasoning(questionResponse, questionIdentity);
-    if (currentReasoning === null) return false;
-    stopLearningReportPolling();
+        || projection.version < context.versionNumber) return false;
     state.learningReportRequestSequence += 1;
     state.learningReportRequestInFlight = false;
-    state.learningReport = null;
-    state.learningReportLoadError = null;
-    state.learningReportPollCount = 0;
-    state.learningSubmission = projection;
-    state.learningReanalysisLoadedVersion = projection.version;
-    state.learningReanalysisOriginalText = currentReasoning;
-    elements.analysisReanalysisReasoning.value = reasoningChanged ? draft : currentReasoning;
-    renderLearningAnalysisStatus();
-    if (reasoningChanged) {
-      const alreadySaved = draft === currentReasoning;
-      setLearningReanalysisStatus(alreadySaved
-        ? `Version ${projection.version} already contains this approach; no additional version is needed.`
-        : `Version ${projection.version} already exists and contains a different saved approach. Your draft is preserved; save it to replace that question in a new version, or reload the saved approach to discard the draft.`,
-      alreadySaved ? 'success' : 'error');
-      renderLearningReanalysisControls();
-    } else {
-      setLearningReanalysisStatus(`Version ${projection.version} already exists. The current approach was reloaded; restart again if needed.`, 'error');
-      renderLearningReanalysisControls();
+    const advanced = projection.version > context.versionNumber;
+    const reasoningLoad = adoptLearningProjection(projection, {
+      // A failed/ambiguous save never grants permission to replace local text.
+      // This includes same-version QUEUED/RUNNING reconciliation and a POST
+      // whose network result is unknown, not only a concurrent version advance.
+      preserveDraft: reasoningChanged ? draft : null
+    });
+    await Promise.all([reasoningLoad, loadLearningReport({ quiet: true })]);
+    if (!isCurrentLearningReanalysisLineage(context)) return false;
+    const pending = learningAnalysisIsPending(state.learningSubmission, state.learningReport);
+    if (!reasoningChanged || !advanced) {
+      setLearningReanalysisStatus(advanced
+        ? `Version ${projection.version} is already current. No request was replayed; analyze again after reviewing this version if needed.`
+        : pending
+          ? `Version ${projection.version} is already queued or running. No additional analysis version was created.`
+          : reasoningChanged
+            ? `Version ${projection.version} was reconciled without confirming your save. Your draft is preserved; choose Save approach and restart analysis to try again.`
+            : `Version ${projection.version} was reconciled. No request was replayed; choose Analyze again if you still want another version.`,
+      advanced || !pending ? 'error' : 'success');
     }
-    void loadLearningReport({ quiet: true });
+    renderLearningAnalysisStatus();
     return true;
   } catch {
     return false;
@@ -4107,9 +4282,11 @@ async function refreshLearningProjectionAfterConflict(context, draft, reasoningC
 }
 
 async function submitCurrentLearningReanalysis(reasoningChanged) {
-  const identity = currentLearningReanalysisIdentity();
-  if (!identity || state.learningReanalysisRequestInFlight
-      || state.learningReanalysisLoadedVersion !== identity.versionNumber) return false;
+  const identity = currentLearningReanalysisActionIdentity(reasoningChanged);
+  if (!identity || state.learningReanalysisRequestInFlight || state.learningReportRequestInFlight
+      || state.learningReanalysisLoadInFlight
+      || learningAnalysisIsPending(state.learningSubmission, state.learningReport)
+      || (reasoningChanged && state.learningReanalysisLoadedVersion !== identity.versionNumber)) return false;
   const draft = normalizedLearningReanalysisReasoning(elements.analysisReanalysisReasoning.value);
   const dirty = state.learningReanalysisOriginalText === null || draft !== state.learningReanalysisOriginalText;
   if (reasoningChanged && !dirty) return false;
@@ -4120,65 +4297,48 @@ async function submitCurrentLearningReanalysis(reasoningChanged) {
   const notes = reasoningChanged ? [{ questionNumber: identity.questionNumber, reasoningText: draft }] : [];
   const sequence = ++state.learningReanalysisMutationSequence;
   const context = { ...identity, mutationSequence: sequence };
+  stopLearningReportPolling();
+  state.learningReportRequestSequence += 1;
   state.learningReanalysisRequestInFlight = true;
   setLearningReanalysisStatus(reasoningChanged
     ? 'Saving the approach and creating a new analysis version…'
     : 'Creating a new analysis version with the current evidence…');
   renderLearningReanalysisControls();
   try {
-    const response = await submitLearningReanalysisRequest(
-      api, state.attempt, identity.versionNumber, notes
+    const outcome = await submitAuthoritativeLearningReanalysis(
+      api,
+      state.attempt,
+      { id: identity.submissionId, version: identity.versionNumber },
+      notes,
+      { isCurrent: () => isCurrentLearningReanalysisMutation(context) }
     );
     if (!isCurrentLearningReanalysisMutation(context)) return false;
-    let createdProjection = learningAnalysisProjection(response);
-    if (!createdProjection || createdProjection.id !== identity.submissionId
-        || createdProjection.version !== identity.versionNumber + 1) {
-      throw new ApiError('The new analysis version response was invalid.', { code: 'INVALID_LEARNING_REANALYSIS' });
-    }
-    createdProjection = { ...createdProjection, reanalysisAvailable: createdProjection.reanalysisAvailable
-      || state.learningSubmission.reanalysisAvailable === true };
-    let projection = createdProjection;
-    const currentPath = learningSubmissionEndpointForAttempt(state.attempt);
-    if (currentPath) {
-      try {
-        const authoritative = learningAnalysisProjection(await api.get(currentPath));
-        if (!isCurrentLearningReanalysisMutation(context)) return false;
-        if (authoritative?.id === projection.id && authoritative.version >= projection.version) {
-          projection = preferNewerLearningProjection(projection, authoritative, { replaceEqual: true });
-        }
-      } catch {
-        // The successful mutation response is sufficient; reopening results
-        // will reconcile from the authoritative current-version endpoint.
-      }
-    }
-    if (!isCurrentLearningReanalysisMutation(context)) return false;
-    stopLearningReportPolling();
     state.learningReportRequestSequence += 1;
     state.learningReportRequestInFlight = false;
-    state.learningReport = null;
-    state.learningReportLoadError = null;
-    state.learningReportPollCount = 0;
-    state.learningSubmission = projection;
-    state.learningReanalysisLoadSequence += 1;
-    state.learningReanalysisLoadInFlight = false;
-    state.learningReanalysisLoadedVersion = null;
-    state.learningReanalysisOriginalText = '';
-    renderLearningAnalysisStatus();
+    const projection = outcome.current;
+    const concurrentAdvance = projection.version > outcome.created.version;
     await Promise.all([
-      loadCurrentLearningReanalysisReasoning(),
+      adoptLearningProjection(projection, {
+        preserveDraft: concurrentAdvance && reasoningChanged ? draft : null
+      }),
       loadLearningReport({ quiet: true })
     ]);
-    const concurrentAdvance = projection.version > createdProjection.version;
-    const waitingForContext = projection.status === 'CONTEXT_UNAVAILABLE';
+    if (!isCurrentLearningReanalysisLineage(context)) return false;
+    const waitingForContext = learningAnalysisEffectiveStatus(projection) === 'CONTEXT_UNAVAILABLE';
     setLearningReanalysisStatus(concurrentAdvance
-      ? `Version ${createdProjection.version} was created and your Final score is unchanged. Another saved update advanced the current analysis to version ${projection.version}; both versions remain in Learning history.`
+      ? `Version ${outcome.created.version} was created and your Final score is unchanged. Another saved update advanced the current analysis to version ${projection.version}; no request was replayed and both versions remain in Learning history.`
       : waitingForContext
-        ? `Version ${createdProjection.version} was saved; your Final score is unchanged. Analysis is waiting for approved solutions.`
-        : `Version ${createdProjection.version} was created; your Final score is unchanged and the new analysis is queued.`, 'success');
+        ? `Version ${outcome.created.version} was saved; your Final score is unchanged. Analysis is waiting for approved solutions.`
+        : `Version ${outcome.created.version} was created; your Final score is unchanged and the new analysis is queued.`,
+    concurrentAdvance ? 'error' : 'success');
     return true;
   } catch (error) {
+    if (error instanceof ApiError && error.code === 'STALE_LEARNING_REANALYSIS') return false;
     if (!isCurrentLearningReanalysisMutation(context)) return false;
-    if (error instanceof ApiError && error.code === 'LEARNING_VERSION_CONFLICT') {
+    if (error instanceof ApiError && [
+      'LEARNING_VERSION_CONFLICT', 'LEARNING_ANALYSIS_IN_PROGRESS',
+      'NETWORK_ERROR', 'INVALID_LEARNING_REANALYSIS', 'INVALID_LEARNING_REANALYSIS_POSTFLIGHT'
+    ].includes(error.code)) {
       if (await refreshLearningProjectionAfterConflict(context, draft, reasoningChanged)) return false;
       if (!isCurrentLearningReanalysisMutation(context)) return false;
     }
@@ -4187,6 +4347,7 @@ async function submitCurrentLearningReanalysis(reasoningChanged) {
   } finally {
     if (sequence === state.learningReanalysisMutationSequence) {
       state.learningReanalysisRequestInFlight = false;
+      renderLearningAnalysisStatus();
       renderLearningReanalysisControls();
     }
   }
@@ -4213,14 +4374,25 @@ function isCurrentLearningReportContext(context) {
   );
 }
 
+function isCurrentLearningReportRequest(context, requestSequence) {
+  return requestSequence === state.learningReportRequestSequence
+    && isCurrentLearningReportContext(context);
+}
+
 function scheduleLearningReportPoll(context) {
   stopLearningReportPolling();
-  if (!isCurrentLearningReportContext(context)
-      || !learningReportShouldPoll(state.learningReport?.status)
-      || state.learningReportPollCount >= MAX_LEARNING_REPORT_POLLS) return;
+  if (!isCurrentLearningReportContext(context)) return;
+  const pending = learningAnalysisIsPending(state.learningSubmission, state.learningReport);
+  const retryingRead = Boolean(state.learningReportLoadError)
+    && state.learningReportPollCount < MAX_LEARNING_REPORT_POLLS;
+  // Pending AI work has no client-side poll ceiling. A ceiling here would
+  // leave the action disabled yet silently stop reconciling long provider
+  // jobs. Terminal read failures retain a bounded background retry budget.
+  if (!pending && !retryingRead) return;
   state.learningReportPollCount += 1;
   state.learningReportPollTimer = window.setTimeout(() => {
     state.learningReportPollTimer = null;
+    if (document.hidden) return;
     if (isCurrentLearningReportContext(context)) void loadLearningReport({ context, quiet: true });
   }, LEARNING_REPORT_POLL_MS);
 }
@@ -4228,31 +4400,53 @@ function scheduleLearningReportPoll(context) {
 async function loadLearningReport({ context = learningReportContext(), quiet = false } = {}) {
   if (!context || !isCurrentLearningReportContext(context) || state.learningReportRequestInFlight) return false;
   const requestSequence = ++state.learningReportRequestSequence;
+  let activeContext = context;
   state.learningReportRequestInFlight = true;
   renderLearningAnalysisStatus();
   try {
+    const currentPath = learningSubmissionEndpointForAttempt(state.attempt);
+    if (!currentPath) return false;
+    const projection = learningAnalysisProjection(await api.get(currentPath));
+    if (!isCurrentLearningReportRequest(activeContext, requestSequence)) return false;
+    if (!projection || projection.id !== activeContext.submissionId
+        || !Number.isSafeInteger(projection.version) || projection.version < activeContext.version) {
+      throw new ApiError('The current learning submission did not match this analysis report.', {
+        code: 'INVALID_LEARNING_SUBMISSION'
+      });
+    }
+    if (projection.version > activeContext.version) {
+      const preservedDraft = learningReanalysisDraftIsDirty()
+        ? normalizedLearningReanalysisReasoning(elements.analysisReanalysisReasoning.value) : null;
+      void adoptLearningProjection(projection, { preserveDraft: preservedDraft });
+      activeContext = learningReportContext();
+      if (!activeContext || !isCurrentLearningReportRequest(activeContext, requestSequence)) return false;
+    } else {
+      state.learningSubmission = preferNewerLearningProjection(
+        state.learningSubmission, projection, { replaceEqual: true }
+      );
+      renderLearningAnalysisStatus();
+    }
     const response = await fetchLearningReport(api, state.attempt);
-    if (!isCurrentLearningReportContext(context)) return false;
+    if (!isCurrentLearningReportRequest(activeContext, requestSequence)) return false;
     const report = normalizeLearningReport(response);
-    if (!report || report.learningSubmissionId !== context.submissionId
-        || report.version !== context.version) {
+    if (!report || report.learningSubmissionId !== activeContext.submissionId
+        || report.version !== activeContext.version) {
       throw new ApiError('The learning report response did not match the current analysis version.', {
         code: 'INVALID_LEARNING_REPORT'
       });
     }
     state.learningReport = report;
     state.learningReportLoadError = null;
-    if (learningReportShouldPoll(report.status)) scheduleLearningReportPoll(context);
+    if (learningAnalysisIsPending(state.learningSubmission, report)) scheduleLearningReportPoll(activeContext);
     else stopLearningReportPolling();
     return true;
   } catch (error) {
-    if (!isCurrentLearningReportContext(context)) return false;
+    if (!isCurrentLearningReportRequest(activeContext, requestSequence)) return false;
     state.learningReportLoadError = error;
-    if (learningReportShouldPoll(state.learningReport?.status)) scheduleLearningReportPoll(context);
-    else stopLearningReportPolling();
+    scheduleLearningReportPoll(activeContext);
     return false;
   } finally {
-    if (requestSequence === state.learningReportRequestSequence && isCurrentLearningReportContext(context)) {
+    if (isCurrentLearningReportRequest(activeContext, requestSequence)) {
       state.learningReportRequestInFlight = false;
       renderLearningAnalysisStatus();
       if (!quiet && state.learningReportLoadError) elements.refreshAnalysisButton.focus();
@@ -5998,7 +6192,7 @@ function bindEvents() {
   elements.saveReasoningButton.addEventListener('click', () => queueReasoningSave({ immediate: true }));
   elements.reloadReasoningButton.addEventListener('click', reloadReasoningNotes);
   elements.resetButton.addEventListener('click', () => navigateAfterReanalysisDraftDecision(confirmReset));
-  elements.refreshAnalysisButton.addEventListener('click', () => loadLearningReport());
+  elements.refreshAnalysisButton.addEventListener('click', () => submitCurrentLearningReanalysis(false));
   elements.analysisReanalysisQuestion.addEventListener('change', () => {
     const previousQuestionNumber = state.learningReanalysisQuestionNumber;
     const nextQuestionNumber = Number(elements.analysisReanalysisQuestion.value);
@@ -6009,9 +6203,11 @@ function bindEvents() {
       await loadCurrentLearningReanalysisReasoning();
     });
   });
-  elements.analysisReanalysisReasoning.addEventListener('input', renderLearningReanalysisControls);
+  elements.analysisReanalysisReasoning.addEventListener('input', () => {
+    renderLearningAnalysisStatus();
+    renderLearningReanalysisControls();
+  });
   elements.analysisReanalysisSave.addEventListener('click', () => submitCurrentLearningReanalysis(true));
-  elements.analysisReanalysisRerun.addEventListener('click', () => submitCurrentLearningReanalysis(false));
   elements.analysisReanalysisReload.addEventListener('click', () => loadCurrentLearningReanalysisReasoning());
   elements.analysisReanalysisHistory.addEventListener('click', () => navigateAfterReanalysisDraftDecision(
     () => showLearningHistory({ submissionId: state.learningSubmission?.id || null })
@@ -6054,6 +6250,12 @@ function bindEvents() {
   });
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && !elements.practiceView.hidden) refreshAttempt({ quiet: true });
+    if (!document.hidden && !elements.resultsView.hidden
+        && (learningAnalysisIsPending(state.learningSubmission, state.learningReport)
+          || state.learningReportLoadError)) {
+      stopLearningReportPolling();
+      void loadLearningReport({ quiet: true });
+    }
   });
 }
 

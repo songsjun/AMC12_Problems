@@ -53,6 +53,9 @@ import {
   maximumScoreFromSubmission,
   learningAnalysisProjection,
   learningAnalysisDisplayStatus,
+  learningAnalysisEffectiveStatus,
+  learningAnalysisIsPending,
+  learningReportReadFailureMessage,
   learningHistoryPath,
   learningHistoryQuestionPath,
   learningHistoryReportPath,
@@ -63,6 +66,7 @@ import {
   learningReanalysisEndpointForAttempt,
   learningReanalysisMutationContextMatches,
   learningReanalysisPayload,
+  learningReanalysisActionModel,
   learningReportApprovedSolutionCount,
   learningReportContextMatches,
   learningReportShouldPoll,
@@ -108,6 +112,7 @@ import {
   solutionEndpointForAttempt,
   submissionPrecondition,
   submitLearningBatchFiles,
+  submitAuthoritativeLearningReanalysis,
   submitLearningReanalysisRequest,
   tutorPollContextMatches,
   tutorBundleMatchesIdentity,
@@ -608,6 +613,57 @@ test('post-final reanalysis validates exact paths, UTF-8 limits, and partial rea
   assert.deepEqual(Object.keys(calls[0].body).sort(), ['expectedCurrentVersion', 'notes']);
 });
 
+test('reanalysis is fenced by authoritative GET, POST, GET and never posts a stale or pending version', async () => {
+  const finalized = { id: 'attempt-1', phase: 'FINALIZED' };
+  const projection = (version, analysisStatus) => ({ learningSubmission: {
+    id: 'learning-1', sourceKind: 'INTERACTIVE_FINAL', version,
+    status: 'CONTEXT_READY', analysisStatus, reanalysisAvailable: true
+  } });
+  const calls = [];
+  const responses = [projection(2, 'SUCCEEDED'), projection(3, 'QUEUED')];
+  const apiClient = {
+    async get(path) { calls.push(['GET', path]); return responses.shift(); },
+    async post(path, body, options) {
+      calls.push(['POST', path, body, options]);
+      return projection(3, 'QUEUED');
+    }
+  };
+  const result = await submitAuthoritativeLearningReanalysis(
+    apiClient, finalized, { id: 'learning-1', version: 2 }, [],
+    { generateKey: () => 'authoritative-key' }
+  );
+  assert.deepEqual(calls.map(([method]) => method), ['GET', 'POST', 'GET']);
+  assert.equal(result.preflight.version, 2);
+  assert.equal(result.created.version, 3);
+  assert.equal(result.current.version, 3);
+  assert.equal(calls[1][2].expectedCurrentVersion, 2);
+  assert.equal(calls[1][3].idempotency, 'authoritative-key');
+
+  for (const [candidate, expectedCode] of [
+    [projection(3, 'SUCCEEDED'), 'LEARNING_VERSION_CONFLICT'],
+    [projection(2, 'QUEUED'), 'LEARNING_ANALYSIS_IN_PROGRESS'],
+    [projection(2, 'RUNNING'), 'LEARNING_ANALYSIS_IN_PROGRESS']
+  ]) {
+    const methods = [];
+    await assert.rejects(() => submitAuthoritativeLearningReanalysis({
+      async get() { methods.push('GET'); return candidate; },
+      async post() { methods.push('POST'); return projection(3, 'QUEUED'); }
+    }, finalized, { id: 'learning-1', version: 2 }),
+    (error) => error instanceof ApiError && error.code === expectedCode);
+    assert.deepEqual(methods, ['GET'], `${expectedCode} must coordinate without replaying the POST`);
+  }
+
+  let fenceChecks = 0;
+  const staleMethods = [];
+  await assert.rejects(() => submitAuthoritativeLearningReanalysis({
+    async get() { staleMethods.push('GET'); return projection(2, 'SUCCEEDED'); },
+    async post() { staleMethods.push('POST'); return projection(3, 'QUEUED'); }
+  }, finalized, { id: 'learning-1', version: 2 }, [], {
+    isCurrent: () => ++fenceChecks === 1
+  }), (error) => error instanceof ApiError && error.code === 'STALE_LEARNING_REANALYSIS');
+  assert.deepEqual(staleMethods, ['GET'], 'navigation after preflight must fence the mutation');
+});
+
 test('post-final editor accepts reasoning only from the exact immutable question version', () => {
   const identity = { submissionId: 'learning-1', versionNumber: 4, questionNumber: 12 };
   const payload = { data: {
@@ -635,9 +691,20 @@ test('post-final mutation contexts fence delayed conflict recovery across naviga
     { submissionId: 'learning-2' }, { versionNumber: 3 }, { questionNumber: 8 },
     { resultsVisible: false }
   ]) assert.equal(learningReanalysisMutationContextMatches(context, { ...current, ...changed }), false);
+  assert.equal(learningReanalysisMutationContextMatches(
+    { ...context, questionNumber: null }, { ...current, questionNumber: 12 }
+  ), true, 'the submission-wide Analyze again action is not coupled to an editor selection');
   const client = readFileSync(new URL('app.mjs', practiceDirectory), 'utf8');
-  assert.match(client, /async function refreshLearningProjectionAfterConflict[\s\S]*?await api\.get\(path\)[\s\S]*?isCurrentLearningReanalysisMutation\(context\)[\s\S]*?learningHistoryQuestionPath/);
-  assert.match(client, /const currentReasoning = currentLearningQuestionReasoning[\s\S]*?draft === currentReasoning/);
+  assert.match(client, /async function refreshLearningProjectionAfterConflict[\s\S]*?await api\.get\(path\)[\s\S]*?isCurrentLearningReanalysisMutation\(context\)[\s\S]*?preserveDraft/);
+  const conflictRecovery = client.slice(client.indexOf('async function refreshLearningProjectionAfterConflict'),
+    client.indexOf('async function submitCurrentLearningReanalysis'));
+  assert.match(conflictRecovery, /preserveDraft: reasoningChanged \? draft : null/,
+    'same-version pending and ambiguous network reconciliation must preserve an unsaved draft');
+  assert.doesNotMatch(conflictRecovery, /preserveDraft: advanced && reasoningChanged/,
+    'draft preservation must not depend on the server version advancing');
+  assert.match(conflictRecovery, /without confirming your save[\s\S]*?Save approach and restart analysis/,
+    'ambiguous same-version saves direct the student to retry the preserved draft');
+  assert.match(client, /STALE_LEARNING_REANALYSIS/);
 });
 
 test('learning reports normalize bare and wrapped response contracts without render-only internals', () => {
@@ -679,18 +746,44 @@ test('learning reports normalize bare and wrapped response contracts without ren
 });
 
 test('learning report statuses distinguish missing context, partial work, weak evidence, and failure', () => {
-  for (const status of ['CONTEXT_UNAVAILABLE', 'QUEUED', 'RUNNING', 'COMPLETE', 'PARTIAL', 'UNASSESSABLE', 'FAILED']) {
+  for (const status of ['CONTEXT_UNAVAILABLE', 'QUEUED', 'RUNNING', 'COMPLETE', 'PARTIAL', 'UNASSESSABLE', 'FAILED', 'CANCELLED']) {
     assert.equal(normalizeLearningReport({ report: { status, questions: [] } }).status, status);
   }
   assert.equal(normalizeLearningReport({ report: { status: 'UNKNOWN', questions: [] } }), null);
   assert.match(learningReportStatusMessage('CONTEXT_UNAVAILABLE'), /reference solutions have not yet been approved/i);
-  assert.match(learningReportStatusMessage('UNASSESSABLE'), /not enough written reasoning/i);
-  assert.match(learningReportStatusMessage('FAILED'), /does not restart AI processing/i);
+  assert.match(learningReportStatusMessage('UNASSESSABLE'), /add or revise an approach/i);
+  assert.match(learningReportStatusMessage('FAILED'), /Analyze again/i);
   assert.equal(learningReportShouldPoll('QUEUED'), true);
   assert.equal(learningReportShouldPoll('RUNNING'), true);
   assert.equal(learningReportShouldPoll('PARTIAL'), false);
   assert.equal(LEARNING_REPORT_POLL_MS, 5_000);
   assert.equal(MAX_LEARNING_REPORT_POLLS > 0 && MAX_LEARNING_REPORT_POLLS <= 24, true);
+  assert.match(learningReportReadFailureMessage('QUEUED', MAX_LEARNING_REPORT_POLLS + 1), /Retrying automatically/i);
+  assert.match(learningReportReadFailureMessage('COMPLETE', MAX_LEARNING_REPORT_POLLS - 1), /Retrying automatically/i);
+  assert.match(learningReportReadFailureMessage('COMPLETE', MAX_LEARNING_REPORT_POLLS), /Automatic retries are paused/i);
+  assert.doesNotMatch(learningReportReadFailureMessage('COMPLETE', MAX_LEARNING_REPORT_POLLS), /Retrying automatically/i);
+
+  const projection = (analysisStatus) => ({
+    id: 'learning-1', version: 2, analysisStatus, status: 'CONTEXT_READY', reanalysisAvailable: true
+  });
+  const terminalReport = {
+    learningSubmissionId: 'learning-1', version: 2, status: 'COMPLETE'
+  };
+  assert.equal(learningAnalysisEffectiveStatus(projection('PENDING'), terminalReport), 'QUEUED');
+  assert.equal(learningAnalysisIsPending(projection('PROCESSING')), true);
+  assert.equal(learningAnalysisEffectiveStatus(projection('SUCCEEDED'), terminalReport), 'COMPLETE');
+  assert.deepEqual(learningReanalysisActionModel({
+    available: true, projection: projection('QUEUED'), report: terminalReport
+  }), { disabled: true, label: 'Analysis queued…', status: 'QUEUED' });
+  assert.deepEqual(learningReanalysisActionModel({
+    available: true, projection: projection('SUCCEEDED'), report: terminalReport
+  }), { disabled: false, label: 'Analyze again', status: 'COMPLETE' });
+  assert.equal(learningReanalysisActionModel({
+    available: true, projection: projection('SUCCEEDED'), report: terminalReport, coordinating: true
+  }).disabled, true);
+  assert.equal(learningReanalysisActionModel({
+    available: true, projection: projection('SUCCEEDED'), report: terminalReport, draftDirty: true
+  }).label, 'Save or discard draft');
 });
 
 test('report polling rejects stale attempts and stops when the results view is left', () => {
@@ -703,11 +796,15 @@ test('report polling rejects stale attempts and stops when the results view is l
   assert.equal(learningReportContextMatches(context, 'attempt-1', 9, true), false);
   assert.equal(learningReportContextMatches(context, 'attempt-1', 8, false), false);
   const client = readFileSync(new URL('app.mjs', practiceDirectory), 'utf8');
-  assert.match(client, /state\.learningReportPollCount >= MAX_LEARNING_REPORT_POLLS/);
+  const currentPoller = client.slice(client.indexOf('function scheduleLearningReportPoll'),
+    client.indexOf('function stopBatchPolling'));
+  assert.doesNotMatch(currentPoller, /pending[\s\S]*?learningReportPollCount >= MAX_LEARNING_REPORT_POLLS/,
+    'a still-pending current analysis cannot exhaust its polling budget');
   assert.match(client, /view !== elements\.resultsView\) stopLearningReportPolling\(\)/);
-  assert.match(client, /isCurrentLearningReportContext\(context\)[\s\S]*?loadLearningReport/);
-  assert.match(client, /requestSequence === state\.learningReportRequestSequence/);
-  assert.match(client, /report\.learningSubmissionId !== context\.submissionId[\s\S]*?report\.version !== context\.version/);
+  assert.match(currentPoller, /api\.get\(currentPath\)[\s\S]*?fetchLearningReport/,
+    'each report cycle reconciles the authoritative projection before the exact report');
+  assert.match(currentPoller, /isCurrentLearningReportRequest\(activeContext, requestSequence\)/);
+  assert.match(currentPoller, /report\.learningSubmissionId !== activeContext\.submissionId[\s\S]*?report\.version !== activeContext\.version/);
 });
 
 test('objective score renders before a read-only report refresh and report Markdown cannot activate links', async () => {
@@ -1684,16 +1781,21 @@ test('Final results expose an explicit versioned reanalysis workflow without cha
   const client = readFileSync(new URL('app.mjs', practiceDirectory), 'utf8');
   for (const id of [
     'analysis-reanalysis', 'analysis-reanalysis-question', 'analysis-reanalysis-reasoning',
-    'analysis-reanalysis-save', 'analysis-reanalysis-rerun', 'analysis-reanalysis-reload', 'analysis-reanalysis-history',
+    'analysis-reanalysis-save', 'analysis-reanalysis-reload', 'analysis-reanalysis-history',
     'analysis-reanalysis-status'
   ]) assert.match(html, new RegExp(`id=["']${id}["']`));
+  assert.doesNotMatch(html, /id=["']analysis-reanalysis-rerun["']/,
+    'the heading action is the only unchanged-evidence reanalysis entry');
+  assert.match(html, /id="refresh-analysis-button"[\s\S]*?Analyze again<\/button>/);
   assert.match(html, /official answers and score stay frozen/i);
   assert.match(html, /earlier approaches, reports, and Tutor chats remain in Learning history/i);
   assert.match(html, /id="analysis-reanalysis-status"[^>]*role="status"[^>]*aria-live="polite"[^>]*aria-atomic="true"/);
   assert.match(client, /projection\?\.reanalysisAvailable === true[\s\S]*?projection\.sourceKind === 'INTERACTIVE_FINAL'/);
   assert.match(client, /learningHistoryQuestionPath\([\s\S]*?identity\.submissionId, identity\.versionNumber, identity\.questionNumber/);
   assert.match(client, /submitCurrentLearningReanalysis\(true\)/);
-  assert.match(client, /submitCurrentLearningReanalysis\(false\)/);
+  assert.match(client, /refreshAnalysisButton\.addEventListener\('click', \(\) => submitCurrentLearningReanalysis\(false\)\)/);
+  assert.doesNotMatch(client, /analysisReanalysisRerun/);
+  assert.match(client, /submitAuthoritativeLearningReanalysis\([\s\S]*?isCurrent:[\s\S]*?isCurrentLearningReanalysisMutation/);
   assert.match(client, /another saved update advanced the current analysis to version/i);
   assert.match(client, /state\.learningReport = null;[\s\S]*?state\.learningSubmission = projection;[\s\S]*?loadLearningReport/);
   assert.match(client, /invalidateLearningReanalysisRequests\(\{ clearDraft: true \}\)/,
