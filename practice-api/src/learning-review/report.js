@@ -20,12 +20,16 @@ export function reportSummary(outcomes) {
 }
 
 export function reportHash({ learningSubmissionVersionId, status, generatedAt, summary, outcomes }) {
+  // PostgreSQL adds one transaction timestamp when semantic outcomes are
+  // persisted. Keep the append-only report hash reproducible from either the
+  // pre-persistence Worker objects or their mapped durable representation.
+  const semanticOutcomes = outcomes.map(({ createdAt: _persistenceTimestamp, ...outcome }) => outcome);
   return canonicalHash({
     learningSubmissionVersionId,
     status,
     generatedAt: new Date(generatedAt).toISOString(),
     summary,
-    outcomes
+    outcomes: semanticOutcomes
   });
 }
 

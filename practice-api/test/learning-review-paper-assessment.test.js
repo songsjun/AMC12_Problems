@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ApprovedContextImporter } from '../src/learning-review/artifact.js';
+import { reportHash } from '../src/learning-review/report.js';
 import { LearningReviewWorker } from '../src/learning-review/worker.js';
 import {
   approvedContextArtifact,
@@ -13,6 +14,24 @@ import { makeService } from './helpers.js';
 
 const QUESTION_NUMBERS = Array.from({ length: 25 }, (_, index) => index + 1);
 const UNAVAILABLE_REASONING_CANARY = 'UNAVAILABLE_REASONING_CANARY_6f35c7d9';
+
+test('report hash is stable after persistence adds an outcome transaction timestamp', () => {
+  const input = {
+    learningSubmissionVersionId: 'version-1',
+    status: 'PARTIAL',
+    generatedAt: new Date('2026-08-06T14:05:08.881Z'),
+    summary: { totalQuestions: 1 },
+    outcomes: [{ questionNumber: 1, status: 'UNASSESSABLE', outcomeCode: 'NO_ATTEMPT' }]
+  };
+  const beforePersistence = reportHash(input);
+  const afterPersistence = reportHash({
+    ...input,
+    outcomes: input.outcomes.map((outcome) => ({
+      ...outcome, createdAt: new Date('2026-08-06T14:05:08.881Z')
+    }))
+  });
+  assert.equal(afterPersistence, beforePersistence);
+});
 
 function precondition(attempt) {
   return {
