@@ -815,6 +815,10 @@ test('unscored questions bypass blank-reasoning and missing-context checks with 
   assert.equal(await context.store.authorizeLearningAnalysisProviderCall(
     providerAuthorizationInput(claimed, claimed.questions[0], workerId, context.clock.now())
   ), false, 'the provider authorization boundary itself rejects unscored snapshots');
+  assert.equal(await context.store.authorizeLearningAnalysisProviderCall({
+    ...providerAuthorizationInput(claimed, claimed.questions[0], workerId, context.clock.now()),
+    allowUnscoredContext: true
+  }), true, 'whole-test synthesis may explicitly authorize governed context for an unscored item');
   claimed.questions[2].context = null;
   const client = new FakeInferenceClient();
   const result = await new LearningReviewWorker({

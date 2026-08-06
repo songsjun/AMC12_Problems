@@ -12,6 +12,10 @@ import {
   isValidAnalysisScoringSnapshot,
   isBoundedInferenceInputText
 } from '../infrastructure/amc-inference-contract.js';
+import {
+  PAPER_REQUEST_SCHEMA, PAPER_SAFETY_PROFILE, PAPER_TASK, computePaperContextHash,
+  computePaperInputHash
+} from '../infrastructure/amc-paper-assessment-contract.js';
 
 function canonicalScoringEvidence(scoring) {
   if (!scoring || typeof scoring !== 'object' || Array.isArray(scoring)) {
@@ -180,6 +184,182 @@ function failedOutcome(question, request, error) {
   };
 }
 
+function paperContextFor(question) {
+  const eligibleSolutions = question.context?.solutions
+    .filter((solution) => solution.modelEligibility?.eligible === true) || [];
+  const available = Boolean(question.context
+    && question.context.visualContext?.modelAvailable !== false && eligibleSolutions.length >= 2);
+  const unavailableOutcome = question.context?.visualContext?.modelAvailable === false
+    ? {
+      outcome_code: 'VISUAL_CONTEXT_UNAVAILABLE',
+      summary: 'This question depends on visual context that is not available in a model-safe form.'
+    }
+    : question.context && eligibleSolutions.length < 2
+      ? {
+        outcome_code: 'APPROVED_SOLUTIONS_UNAVAILABLE',
+        summary: 'Approved comparison context is unavailable for this question.'
+      }
+      : {
+        outcome_code: 'CONTEXT_UNAVAILABLE',
+        summary: 'Approved comparison context is unavailable for this question.'
+      };
+  return {
+    available,
+    eligibleSolutions,
+    unavailableAnalysis: available ? null : {
+      status: 'UNASSESSABLE',
+      ...unavailableOutcome,
+      reasoning_verdict: null,
+      strengths: [],
+      gaps: [],
+      suggestions: []
+    },
+    context: available ? {
+      context_status: 'AVAILABLE',
+      prompt_markdown: question.context.promptMarkdown,
+      choices: ['A', 'B', 'C', 'D', 'E'].map((label) => ({
+        label, text_markdown: question.context.choices[label]
+      })),
+      solutions: eligibleSolutions.map((solution) => ({
+        solution_id: solution.artifactSolutionId,
+        approval_status: 'APPROVED',
+        title: solution.title,
+        markdown: solution.bodyMarkdown,
+        body_sha256: solution.bodySha256,
+        source_sha256: solution.sourceRef.sha256,
+        reviewer_id: solution.reviewerId,
+        reviewed_at: solution.reviewedAt,
+        rights_status: solution.rightsStatus,
+        method_tags: solution.methodTags,
+        quality_flags: solution.qualityFlags
+      }))
+    } : {
+      context_status: 'UNAVAILABLE', prompt_markdown: null, choices: [], solutions: []
+    }
+  };
+}
+
+function paperRequestFor(job, outcomes) {
+  const outcomeMap = new Map(outcomes.map((outcome) => [outcome.questionNumber, outcome]));
+  const request = {
+    schema: PAPER_REQUEST_SCHEMA,
+    task: PAPER_TASK,
+    correlation_id: `paper:${job.run.id}`,
+    input_hash: '0'.repeat(64),
+    context_hash: '0'.repeat(64),
+    safety_id: PAPER_SAFETY_PROFILE,
+    paper: {
+      form_id: job.version.formId,
+      form_version: job.version.formVersion,
+      questions: job.questions.map((question) => {
+        const outcome = outcomeMap.get(question.questionNumber);
+        const paperContext = paperContextFor(question);
+        const context = paperContext.context;
+        const reasoning = typeof question.reasoningText === 'string' ? question.reasoningText : '';
+        const scoring = question.scoring;
+        const studentReasoning = paperContext.available && reasoning.trim() ? reasoning : '';
+        const evidenceMode = paperContext.available && studentReasoning
+          ? 'REASONING' : question.selectedOption === null ? 'NONE' : 'ANSWER_ONLY';
+        return {
+          question_number: question.questionNumber,
+          ...context,
+          scoring: {
+            is_scored: scoring.isScored,
+            canonical_answer: paperContext.available ? scoring.canonicalAnswer : null,
+            accepted_options: paperContext.available ? scoring.acceptedOptions : [],
+            student_answer: question.selectedOption,
+            student_answer_status: scoring.isScored
+              ? question.selectedOption === null ? 'BLANK'
+                : scoring.studentAnswerIsCorrect ? 'ACCEPTED' : 'NOT_ACCEPTED'
+              : 'UNSCORED'
+          },
+          evidence_mode: evidenceMode,
+          student_reasoning: studentReasoning,
+          question_analysis: paperContext.unavailableAnalysis || {
+            status: outcome.status,
+            outcome_code: outcome.outcomeCode,
+            reasoning_verdict: outcome.reasoningVerdict,
+            summary: outcome.summaryMarkdown,
+            strengths: outcome.strengths,
+            gaps: outcome.gaps,
+            suggestions: outcome.suggestions
+          }
+        };
+      })
+    }
+  };
+  request.context_hash = computePaperContextHash(request);
+  request.input_hash = computePaperInputHash(request);
+  return request;
+}
+
+function paperCoverage(job, outcomes) {
+  return {
+    totalQuestions: job.questions.length,
+    answeredCount: job.questions.filter((question) => question.scoring?.isScored
+      && question.selectedOption !== null).length,
+    correctCount: job.questions.filter((question) => question.scoring?.isScored
+      && question.scoring.studentAnswerIsCorrect === true).length,
+    incorrectCount: job.questions.filter((question) => question.scoring?.isScored
+      && question.scoring.studentAnswerIsCorrect === false).length,
+    blankCount: job.questions.filter((question) => question.scoring?.isScored
+      && question.selectedOption === null).length,
+    unscoredCount: job.questions.filter((question) => question.scoring?.isScored === false).length,
+    reasoningAnalyzedCount: job.questions.filter((question, index) =>
+      typeof question.reasoningText === 'string' && question.reasoningText.trim().length > 0
+        && outcomes[index]?.status === 'SUCCEEDED').length,
+    answerOnlyCount: job.questions.filter((question) => question.scoring?.isScored
+      && question.selectedOption !== null
+      && (!paperContextFor(question).available
+        || typeof question.reasoningText !== 'string' || !question.reasoningText.trim())).length,
+    contextUnavailableCount: job.questions.filter((question) => !paperContextFor(question).available).length,
+    failedCount: outcomes.filter((outcome) => outcome.status === 'FAILED').length
+  };
+}
+
+function publicPaperAssessment(result, coverage) {
+  return {
+    status: 'SUCCEEDED', providerInvoked: true, outcomeCode: null, evidenceCoverage: coverage,
+    summaryMarkdown: result.summary,
+    strengths: result.strengths.map((item) => ({
+      title: item.title, analysisMarkdown: item.analysis, evidenceBasis: item.evidence_basis,
+      evidenceQuestionNumbers: item.evidence_question_numbers
+    })),
+    growthAreas: result.growth_areas.map((item) => ({
+      title: item.title, analysisMarkdown: item.analysis, evidenceBasis: item.evidence_basis,
+      evidenceQuestionNumbers: item.evidence_question_numbers
+    })),
+    priorityActions: result.priority_actions.map((item) => ({
+      priority: item.priority, title: item.title, rationaleMarkdown: item.rationale,
+      nextStepMarkdown: item.next_step, evidenceBasis: item.evidence_basis,
+      evidenceQuestionNumbers: item.evidence_question_numbers
+    })),
+    limitations: result.limitations,
+    confidence: result.confidence
+  };
+}
+
+function failedPaperAssessment(error, coverage) {
+  return {
+    status: 'FAILED', providerInvoked: error?.code !== 'INVALID_LOCAL_REQUEST',
+    outcomeCode: typeof error?.code === 'string' ? error.code : 'PAPER_ASSESSMENT_FAILED',
+    evidenceCoverage: coverage,
+    summaryMarkdown: 'Whole-test synthesis is temporarily unavailable; the objective score and question-by-question report are unaffected.',
+    strengths: [], growthAreas: [], priorityActions: [],
+    limitations: ['No whole-test conclusions were generated from this analysis run.'], confidence: null
+  };
+}
+
+function unavailablePaperAssessment(coverage) {
+  return {
+    status: 'NOT_AVAILABLE', providerInvoked: false, outcomeCode: 'CLIENT_NOT_SUPPORTED',
+    evidenceCoverage: coverage,
+    summaryMarkdown: 'Whole-test synthesis is not available for this analysis contract.',
+    strengths: [], growthAreas: [], priorityActions: [],
+    limitations: ['Question-by-question analysis remains available.'], confidence: null
+  };
+}
+
 export class LearningReviewWorker {
   constructor({
     store, inferenceClient, workerId, leaseMs = 120_000, clock = () => new Date(),
@@ -291,6 +471,73 @@ export class LearningReviewWorker {
     return analysis;
   }
 
+  async #assessPaperWithHeartbeat(job, outcomes, request, shutdownSignal) {
+    const requestController = new AbortController();
+    const heartbeatController = new AbortController();
+    const abortForShutdown = () => requestController.abort(shutdownSignal?.reason);
+    if (shutdownSignal?.aborted) abortForShutdown();
+    else shutdownSignal?.addEventListener('abort', abortForShutdown, { once: true });
+    let leaseLost = false;
+    const heartbeatLoop = (async () => {
+      while (!heartbeatController.signal.aborted) {
+        try { await delay(this.heartbeatMs, undefined, { signal: heartbeatController.signal }); } catch { return; }
+        let heartbeat = false;
+        try {
+          heartbeat = await this.store.heartbeatLearningAnalysisWork({
+            workItemId: job.workItem.id, workerId: this.workerId,
+            leaseToken: job.workItem.leaseToken, now: this.clock(), leaseMs: this.leaseMs
+          });
+        } catch { heartbeat = false; }
+        if (!heartbeat) { leaseLost = true; requestController.abort(); return; }
+      }
+    })();
+    let result;
+    let inferenceError;
+    try {
+      for (const question of job.questions) {
+        const { available, eligibleSolutions } = paperContextFor(question);
+        if (!available) continue;
+        const authorized = await this.store.authorizeLearningAnalysisProviderCall({
+          workItemId: job.workItem.id, analysisRunId: job.run.id,
+          workerId: this.workerId, leaseToken: job.workItem.leaseToken,
+          inputHash: job.workItem.inputHash, deletionGeneration: job.workItem.deletionGeneration,
+          versionId: job.version.id, versionNumber: job.version.versionNumber,
+          evidenceHash: job.version.evidenceHash, expectedStudentId: job.submission.studentId,
+          expectedSubmissionCurrentVersion: job.submission.currentVersion,
+          expectedContextSetId: job.version.contextSetId,
+          expectedAnalysisContractVersion: job.run.analysisContractVersion,
+          questionNumber: question.questionNumber,
+          questionResponseHash: canonicalHash({
+            questionNumber: question.questionNumber, selectedOption: question.selectedOption,
+            reasoningText: question.reasoningText, answerOrigin: question.answerOrigin
+          }),
+          questionContextHash: question.context.questionContentHash,
+          allowUnscoredContext: question.scoring.isScored === false,
+          isScored: question.scoring.isScored, canonicalAnswer: question.scoring.canonicalAnswer,
+          acceptedOptions: question.scoring.acceptedOptions,
+          studentAnswerIsCorrect: question.scoring.studentAnswerIsCorrect,
+          selectedOption: question.scoring.selectedOption,
+          eligibleSolutions: eligibleSolutions.map(solutionAuthorization), now: this.clock()
+        });
+        if (!authorized) {
+          leaseLost = true;
+          requestController.abort();
+          throw Object.assign(new Error('Paper assessment authorization was lost.'), { code: 'LEASE_LOST' });
+        }
+      }
+      result = await this.inferenceClient.assessPaper(request, { signal: requestController.signal });
+    } catch (error) { inferenceError = error; }
+    finally {
+      shutdownSignal?.removeEventListener('abort', abortForShutdown);
+      heartbeatController.abort();
+      await heartbeatLoop;
+    }
+    if (shutdownSignal?.aborted) throw Object.assign(new Error('Paper assessment stopped.'), { code: 'WORKER_SHUTDOWN' });
+    if (leaseLost) throw Object.assign(new Error('Learning analysis lease was lost.'), { code: 'LEASE_LOST' });
+    if (inferenceError) throw inferenceError;
+    return result;
+  }
+
   async runOnce() {
     const job = await this.store.claimLearningAnalysisWork({
       workerId: this.workerId,
@@ -355,7 +602,14 @@ export class LearningReviewWorker {
       }
       const eligibleSolutions = question.context?.solutions.filter((solution) => solution.modelEligibility?.eligible !== false) || [];
       if (!question.context || question.context.visualContext?.modelAvailable === false || eligibleSolutions.length < 2) {
-        outcomes.push(deterministicUnassessable(question, 'CONTEXT_UNAVAILABLE', 'Approved comparison context is unavailable for this question.'));
+        const visualUnavailable = question.context?.visualContext?.modelAvailable === false;
+        const code = visualUnavailable ? 'VISUAL_CONTEXT_UNAVAILABLE'
+          : eligibleSolutions.length < 2 && question.context ? 'APPROVED_SOLUTIONS_UNAVAILABLE'
+            : 'CONTEXT_UNAVAILABLE';
+        const summary = visualUnavailable
+          ? 'This question depends on visual context that is not available in a model-safe form.'
+          : 'Approved comparison context is unavailable for this question.';
+        outcomes.push(deterministicUnassessable(question, code, summary));
         continue;
       }
       const request = requestFor(job, question, eligibleSolutions);
@@ -397,7 +651,27 @@ export class LearningReviewWorker {
         : { processed: false, staleWrite: true };
     }
     const status = aggregateReportStatus(outcomes);
-    const summary = reportSummary(outcomes);
+    const coverage = paperCoverage(job, outcomes);
+    let wholeTestAssessment;
+    if (job.run.analysisContractVersion !== ANALYSIS_CONTRACT_VERSION
+        || typeof this.inferenceClient.assessPaper !== 'function') {
+      wholeTestAssessment = unavailablePaperAssessment(coverage);
+    } else if (job.questions.some((question) => question.scoringSnapshotValid !== true)) {
+      wholeTestAssessment = failedPaperAssessment({ code: 'SCORING_SNAPSHOT_INVALID' }, coverage);
+    } else {
+      const paperRequest = paperRequestFor(job, outcomes);
+      try {
+        const paperResult = await this.#assessPaperWithHeartbeat(job, outcomes, paperRequest, signal);
+        wholeTestAssessment = publicPaperAssessment(paperResult.assessment, coverage);
+      } catch (error) {
+        if (error?.code === 'WORKER_SHUTDOWN' || signal?.aborted) {
+          return { processed: false, shuttingDown: true };
+        }
+        if (error?.code === 'LEASE_LOST') return { processed: false, staleLease: true };
+        wholeTestAssessment = failedPaperAssessment(error, coverage);
+      }
+    }
+    const summary = { ...reportSummary(outcomes), wholeTestAssessment };
     const report = {
       status,
       generatedAt: now,
@@ -424,7 +698,9 @@ export class LearningReviewWorker {
       report,
       now
     });
-    return completed ? { processed: true, status, providerCalls: outcomes.filter((item) => item.providerInvoked).length }
+    return completed ? { processed: true, status,
+      providerCalls: outcomes.filter((item) => item.providerInvoked).length
+        + (wholeTestAssessment.providerInvoked ? 1 : 0) }
       : { processed: false, staleWrite: true };
   }
 }

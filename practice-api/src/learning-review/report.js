@@ -29,6 +29,34 @@ export function reportHash({ learningSubmissionVersionId, status, generatedAt, s
   });
 }
 
+function publicWholeTestAssessment(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return {
+    status: value.status,
+    evidenceCoverage: value.evidenceCoverage,
+    summaryMarkdown: value.summaryMarkdown,
+    strengths: value.strengths,
+    growthAreas: value.growthAreas,
+    priorityActions: value.priorityActions,
+    limitations: value.limitations,
+    confidence: value.confidence
+  };
+}
+
+function publicAvailabilityReason(analysis) {
+  if (analysis.status === 'FAILED') return 'ANALYSIS_FAILED';
+  switch (analysis.outcomeCode) {
+    case 'BLANK_REASONING': return 'NO_ATTEMPT';
+    case 'QUESTION_UNSCORED': return 'UNSCORED';
+    case 'VISUAL_CONTEXT_UNAVAILABLE': return 'VISUAL_CONTEXT_UNAVAILABLE';
+    case 'APPROVED_SOLUTIONS_UNAVAILABLE': return 'APPROVED_SOLUTIONS_UNAVAILABLE';
+    case 'CONTEXT_UNAVAILABLE': return 'CONTEXT_UNAVAILABLE';
+    case 'SCORING_SNAPSHOT_INVALID':
+    case 'REASONING_FORMAT_UNSUPPORTED': return 'INVALID_EVIDENCE';
+    default: return null;
+  }
+}
+
 export function publicLearningReport(bundle) {
   const { submission, version, workItem, report, analyses = [] } = bundle;
   const workStatus = workItem?.status;
@@ -41,17 +69,27 @@ export function publicLearningReport(bundle) {
     version: version.versionNumber,
     status,
     generatedAt: report?.generatedAt || null,
-    summary: report?.summary || {
+    summary: report ? {
+      totalQuestions: report.summary.totalQuestions,
+      analyzedCount: report.summary.analyzedCount,
+      unassessableCount: report.summary.unassessableCount,
+      failedCount: report.summary.failedCount,
+      wholeTestAssessment: publicWholeTestAssessment(report.summary.wholeTestAssessment)
+    } : {
       totalQuestions: analyses.length || bundle.responses?.length || 0,
       analyzedCount: 0,
       unassessableCount: 0,
-      failedCount: 0
+      failedCount: 0,
+      wholeTestAssessment: null
     },
     questions: analyses
       .sort((left, right) => left.questionNumber - right.questionNumber)
       .map((analysis) => ({
         questionNumber: analysis.questionNumber,
         status: analysis.status,
+        evidenceMode: analysis.status === 'SUCCEEDED'
+          ? (analysis.reasoningVerdict === 'ANSWER_ONLY' ? 'ANSWER_ONLY' : 'REASONING') : 'NONE',
+        availabilityReason: publicAvailabilityReason(analysis),
         reasoningVerdict: analysis.reasoningVerdict,
         summaryMarkdown: analysis.summaryMarkdown,
         strengths: analysis.strengths,

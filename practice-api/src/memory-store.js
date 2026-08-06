@@ -3031,7 +3031,8 @@ export class MemoryStore {
         && contextSet.releaseBinding?.manifestHash === form.manifestHash
         && contextQuestion.questionContentHash === input.questionContextHash
         && isValidAnalysisScoringSnapshot(scoring, response.selectedOption)
-        && input.isScored === true && scoring.isScored === true
+        && ((input.isScored === true && scoring.isScored === true)
+          || (input.allowUnscoredContext === true && input.isScored === false && scoring.isScored === false))
         && scoring.isScored === input.isScored
         && scoring.canonicalAnswer === input.canonicalAnswer
         && JSON.stringify(scoring.acceptedOptions) === JSON.stringify(input.acceptedOptions)

@@ -12,6 +12,10 @@ import {
   isBoundedInferenceInputText,
   isRestrictedInferenceOutputText
 } from './amc-inference-contract.js';
+import {
+  PAPER_PATH, PAPER_PROMPT_VERSION, PAPER_RESPONSE_SCHEMA, validatePaperAssessment,
+  validatePaperRequest
+} from './amc-paper-assessment-contract.js';
 
 const HASH = /^[a-f0-9]{64}$/;
 const ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,95}$/;
@@ -333,5 +337,35 @@ export class AmcInferenceClient {
       throw new InferenceClientError('GATEWAY_PROTOCOL_ERROR');
     }
     return { analysis: payload.analysis, runMetadata: payload.runMetadata };
+  }
+
+  async assessPaper(request, { signal } = {}) {
+    if (!validatePaperRequest(request)) throw new InferenceClientError('INVALID_LOCAL_REQUEST');
+    const timeout = AbortSignal.timeout(this.timeoutMs);
+    const combined = signal ? AbortSignal.any([signal, timeout]) : timeout;
+    let response;
+    try {
+      response = await this.fetchImpl(new URL(PAPER_PATH, this.origin).href, {
+        method: 'POST', redirect: 'manual',
+        headers: {
+          authorization: `Bearer ${this.#token}`, 'content-type': 'application/json', accept: 'application/json'
+        },
+        body: JSON.stringify(request), signal: combined
+      });
+    } catch {
+      if (signal?.aborted) throw new InferenceClientError('REQUEST_ABORTED', { retryable: true, errorClass: 'transient' });
+      if (timeout.aborted) throw new InferenceClientError('GATEWAY_TIMEOUT', { retryable: true, errorClass: 'transient' });
+      throw new InferenceClientError('GATEWAY_UNAVAILABLE', { retryable: true, errorClass: 'transient' });
+    }
+    if (response.status >= 300 && response.status < 400) throw new InferenceClientError('GATEWAY_REDIRECT_REJECTED');
+    const payload = await boundedJson(response, this.maxResponseBytes);
+    if (!response.ok) throw gatewayFailure(payload, response.status);
+    const contract = { promptVersion: PAPER_PROMPT_VERSION, responseSchema: PAPER_RESPONSE_SCHEMA };
+    if (!exactRecord(payload, ['ok', 'assessment', 'runMetadata']) || payload.ok !== true
+        || !validatePaperAssessment(payload.assessment, request)
+        || !validateRunMetadata(payload.runMetadata, contract)) {
+      throw new InferenceClientError('GATEWAY_PROTOCOL_ERROR');
+    }
+    return { assessment: payload.assessment, runMetadata: payload.runMetadata };
   }
 }

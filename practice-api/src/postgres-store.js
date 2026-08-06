@@ -4120,7 +4120,8 @@ export class PostgresStore {
         && contextSet.releaseBinding?.manifestHash === row.manifest_hash
         && question.questionContentHash === input.questionContextHash
         && isValidAnalysisScoringSnapshot(scoring, row.selected_option)
-        && input.isScored === true && scoring.isScored === true
+        && ((input.isScored === true && scoring.isScored === true)
+          || (input.allowUnscoredContext === true && input.isScored === false && scoring.isScored === false))
         && scoring.isScored === input.isScored
         && scoring.canonicalAnswer === input.canonicalAnswer
         && JSON.stringify(scoring.acceptedOptions) === JSON.stringify(input.acceptedOptions)
