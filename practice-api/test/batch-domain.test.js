@@ -309,6 +309,16 @@ test('student confirmation is a complete canonical decision over every decomposi
   }, { mappingRevision: 3, mappingItems, formQuestionNumbers: [1, 2, 3] });
   assert.equal(exact.responses[0].reasoningOrigin, 'BATCH_CONFIRMED_EVIDENCE');
   assert.match(exact.sourceEvidenceHash, /^[a-f0-9]{64}$/);
+  const answerOnly = normalizeMappingConfirmation({
+    mappingRevision: 3,
+    responses: [{ questionNumber: 2, selectedOption: 'C', reasoningText: ' \t\n ',
+      sourceItemIds: [mappingItems[0].id] }],
+    discardedItemIds: [mappingItems[1].id]
+  }, { mappingRevision: 3, mappingItems, formQuestionNumbers: [1, 2, 3] });
+  assert.equal(answerOnly.responses[0].reasoningText, '',
+    'whitespace-only batch reasoning is canonical answer-only evidence');
+  assert.equal(answerOnly.responses[0].confirmedReasoningHash, batchSha256(''));
+  assert.equal(answerOnly.responses[0].reasoningOrigin, 'BATCH_CONFIRMATION_EDIT');
   const canonicalOrder = normalizeMappingConfirmation({
     mappingRevision: 3,
     responses: [{

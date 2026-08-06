@@ -42,9 +42,14 @@ prompt experiments over one evidence snapshot.
 The mutation is owner-scoped, CSRF protected, idempotent, and guarded by the expected
 current version. A durable per-student and global daily budget plus a hard per-submission
 version ceiling bounds cost and storage. A non-terminal batch intake blocks reanalysis so
-its `baseVersion` cannot be invalidated. Any older unleased `BLOCKED_CONTEXT` or `QUEUED`
-analysis is cancelled with a lease fence before the new version is queued; a `RUNNING`
-analysis rejects the restart. Completed reports remain immutable and readable.
+its `baseVersion` cannot be invalidated. An active `QUEUED` or `RUNNING`
+analysis rejects every restart before budget consumption or writes. This
+deliberately applies even to a changed-reasoning patch: one current learning
+version has at most one visible active analysis, and a student waits for it to
+finish before creating a successor. A `BLOCKED_CONTEXT` version may still
+accept changed reasoning because no provider work can start; a pure rerun
+remains unavailable without approved context. Completed reports remain
+immutable and readable.
 
 The approved-context read and version commit share the exact-form advisory lock used by
 context import. Import therefore either commits first and is observed by the reanalysis,

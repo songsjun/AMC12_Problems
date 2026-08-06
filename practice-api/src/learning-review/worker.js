@@ -2,9 +2,10 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { canonicalHash } from './canonical.js';
 import { aggregateReportStatus, reportHash, reportSummary } from './report.js';
 import {
-  INFERENCE_REQUEST_SCHEMA,
+  ANALYSIS_CONTRACT_VERSION,
   INFERENCE_SAFETY_PROFILE,
-  INFERENCE_TASK,
+  STUDENT_RESPONSE_MODES,
+  analysisContractForVersion,
   computeInferenceContextHash,
   computeInferenceInputHash,
   deriveStudentAnswerStatus,
@@ -65,9 +66,17 @@ function deterministicUnassessable(question, code, summary) {
 }
 
 function requestFor(job, question, eligibleSolutions) {
+  const contract = analysisContractForVersion(job.run.analysisContractVersion);
+  if (!contract) throw new Error('Claimed analysis run has an unsupported inference contract.');
+  const originalReasoning = typeof question.reasoningText === 'string' ? question.reasoningText : '';
+  // The v3 ANSWER_ONLY contract deliberately distinguishes an exact empty
+  // string from reasoning. Normalize legacy/batch whitespace defensively at
+  // the last trusted boundary so a selected answer cannot fail before the
+  // Gateway transport merely because old durable evidence contains spaces.
+  const studentReasoning = originalReasoning.trim() === '' ? '' : originalReasoning;
   const request = {
-    schema: INFERENCE_REQUEST_SCHEMA,
-    task: INFERENCE_TASK,
+    schema: contract.requestSchema,
+    task: contract.task,
     correlation_id: `lr:${job.run.id}:${question.questionNumber}`,
     input_hash: '0'.repeat(64),
     context_hash: '0'.repeat(64),
@@ -88,7 +97,7 @@ function requestFor(job, question, eligibleSolutions) {
       student_answer_status: deriveStudentAnswerStatus(
         question.selectedOption, question.scoring.acceptedOptions
       ),
-      student_reasoning: question.reasoningText,
+      student_reasoning: studentReasoning,
       solutions: eligibleSolutions.map((solution) => ({
         solution_id: solution.artifactSolutionId,
         approval_status: 'APPROVED',
@@ -104,6 +113,10 @@ function requestFor(job, question, eligibleSolutions) {
       }))
     }
   };
+  if (contract.analysisContractVersion === ANALYSIS_CONTRACT_VERSION) {
+    request.question.student_response_mode = studentReasoning.trim()
+      ? STUDENT_RESPONSE_MODES.REASONING : STUDENT_RESPONSE_MODES.ANSWER_ONLY;
+  }
   request.context_hash = computeInferenceContextHash(request);
   request.input_hash = computeInferenceInputHash(request);
   return request;
@@ -150,7 +163,7 @@ function failedOutcome(question, request, error) {
   return {
     questionNumber: question.questionNumber,
     status: 'FAILED',
-    providerInvoked: true,
+    providerInvoked: error?.code !== 'INVALID_LOCAL_REQUEST',
     reasoningVerdict: null,
     summaryMarkdown: 'Analysis is temporarily unavailable for this question.',
     strengths: [],
@@ -238,6 +251,7 @@ export class LearningReviewWorker {
         expectedStudentId: job.submission.studentId,
         expectedSubmissionCurrentVersion: job.submission.currentVersion,
         expectedContextSetId: job.version.contextSetId,
+        expectedAnalysisContractVersion: job.run.analysisContractVersion,
         questionNumber: question.questionNumber,
         questionResponseHash: canonicalHash({
           questionNumber: question.questionNumber,
@@ -316,11 +330,22 @@ export class LearningReviewWorker {
         ));
         continue;
       }
-      if (!question.reasoningText?.trim()) {
+      if (typeof question.reasoningText !== 'string') {
+        outcomes.push(deterministicUnassessable(
+          question,
+          'REASONING_FORMAT_UNSUPPORTED',
+          'The submitted reasoning is invalid or exceeds the supported size.'
+        ));
+        continue;
+      }
+      const reasoningPresent = question.reasoningText.trim() !== '';
+      if (!reasoningPresent
+          && (job.run.analysisContractVersion !== ANALYSIS_CONTRACT_VERSION
+            || question.selectedOption === null)) {
         outcomes.push(deterministicUnassessable(question, 'BLANK_REASONING', 'No written reasoning was submitted for this question.'));
         continue;
       }
-      if (!isBoundedInferenceInputText(question.reasoningText, 1, 12_000)) {
+      if (reasoningPresent && !isBoundedInferenceInputText(question.reasoningText, 1, 12_000)) {
         outcomes.push(deterministicUnassessable(
           question,
           'REASONING_FORMAT_UNSUPPORTED',

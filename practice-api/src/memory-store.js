@@ -3,6 +3,7 @@ import { providerRetentionNotBefore } from './infrastructure/assemblyai-retentio
 import { analysisInputHash, canonicalHash, canonicalJson } from './learning-review/canonical.js';
 import {
   ANALYSIS_CONTRACT_VERSION,
+  SUPPORTED_ANALYSIS_CONTRACT_VERSIONS,
   isValidAnalysisScoringSnapshot
 } from './infrastructure/amc-inference-contract.js';
 import { ATTEMPT_MODE, OPEN_REVIEW_STATUS, openReviewReleaseHash } from './open-review/domain.js';
@@ -1581,7 +1582,7 @@ export class MemoryStore {
           const run = [...this.analysisRuns.values()]
             .find((candidate) => candidate.id === item.analysisRunId);
           if (item.status === 'QUEUED' && new Date(item.availableAt).getTime() <= nowMs
-              && run?.analysisContractVersion === ANALYSIS_CONTRACT_VERSION) {
+              && SUPPORTED_ANALYSIS_CONTRACT_VERSIONS.includes(run?.analysisContractVersion)) {
             candidates.push({ kind: 'INTERACTIVE_ANALYSIS', item });
           }
         }
@@ -1647,7 +1648,7 @@ export class MemoryStore {
         if (!version || !submission || !attempt || !run || !contextSet
             || !validLearningEntitlement(this, submission)
             || version.contextStatus !== 'CONTEXT_READY' || version.contextSetId !== run.contextSetId
-            || run.analysisContractVersion !== ANALYSIS_CONTRACT_VERSION
+            || !SUPPORTED_ANALYSIS_CONTRACT_VERSIONS.includes(run.analysisContractVersion)
             || run.status !== 'QUEUED' || item.analysisRunId !== run.id
             || item.inputHash !== run.inputHash || item.deletionGeneration !== run.deletionGeneration) {
           Object.assign(item, {
@@ -3007,7 +3008,8 @@ export class MemoryStore {
         && item.leaseToken === input.leaseToken && item.analysisRunId === run.id
         && item.learningSubmissionVersionId === version.id
         && item.inputHash === input.inputHash && run.inputHash === input.inputHash
-        && run.analysisContractVersion === ANALYSIS_CONTRACT_VERSION
+        && SUPPORTED_ANALYSIS_CONTRACT_VERSIONS.includes(input.expectedAnalysisContractVersion)
+        && run.analysisContractVersion === input.expectedAnalysisContractVersion
         && item.deletionGeneration === input.deletionGeneration
         && run.deletionGeneration === input.deletionGeneration
         && new Date(item.leaseExpiresAt).getTime() > new Date(input.now).getTime()
@@ -4578,22 +4580,16 @@ class MemoryAttemptTransaction {
       error.code = 'LEARNING_VERSION_CONFLICT';
       throw error;
     }
-    if (oldWork?.status === 'RUNNING') {
+    if (['QUEUED', 'RUNNING'].includes(oldWork?.status)) {
       const error = new Error('Learning analysis is already running.');
       error.code = 'LEARNING_ANALYSIS_IN_PROGRESS';
       throw error;
     }
-    if (oldWork && ['BLOCKED_CONTEXT', 'QUEUED'].includes(oldWork.status)) {
+    if (oldWork?.status === 'BLOCKED_CONTEXT') {
       Object.assign(oldWork, {
         status: 'CANCELLED', leaseOwner: null, leaseToken: null, leaseExpiresAt: null,
         lastErrorCode: 'SUPERSEDED_BY_EVIDENCE_REVISION', updatedAt: now
       });
-      if (oldRun && oldRun.status === 'QUEUED') {
-        Object.assign(oldRun, {
-          status: 'CANCELLED', completedAt: now,
-          lastErrorCode: 'SUPERSEDED_BY_EVIDENCE_REVISION'
-        });
-      }
     }
     versions.push(clone(version));
     this.store.learningVersions.set(learning.id, versions);

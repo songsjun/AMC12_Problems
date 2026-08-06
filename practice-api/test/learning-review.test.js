@@ -66,6 +66,7 @@ function providerAuthorizationInput(claimed, question, workerId, now) {
     expectedStudentId: claimed.submission.studentId,
     expectedSubmissionCurrentVersion: claimed.submission.currentVersion,
     expectedContextSetId: claimed.version.contextSetId,
+    expectedAnalysisContractVersion: claimed.run.analysisContractVersion,
     questionNumber: question.questionNumber,
     questionResponseHash: canonicalHash({
       questionNumber: question.questionNumber,
@@ -233,7 +234,7 @@ test('import stores only ready questions, queues new finals, analyzes independen
   const analyses = [...context.store.questionAnalyses.values()][0];
   assert.equal(analyses.length, 25);
   assert.equal(analyses[0].status, 'SUCCEEDED');
-  assert.equal(analyses[0].runMetadata.promptVersion, 'amc-question-analysis-prompt-v2');
+  assert.equal(analyses[0].runMetadata.promptVersion, 'amc-question-analysis-prompt-v3');
   assert.equal(analyses[0].errorClass, null);
   assert.equal(analyses[1].outcomeCode, 'CONTEXT_UNAVAILABLE');
   assert.equal(analyses[1].providerInvoked, false);
@@ -287,6 +288,11 @@ test('post-final reasoning and pure reruns append immutable versions without cha
   const v1 = context.store.learningVersions.get(finalized.learningSubmission.id)[0];
   const v1Run = context.store.analysisRuns.get(v1.id);
   assert.equal(context.store.learningWorkItems.get(v1.id)[0].status, 'QUEUED');
+  await new LearningReviewWorker({
+    store: context.store, inferenceClient: new FakeInferenceClient(),
+    workerId: 'post-final-v1-worker', clock: context.clock.now
+  }).runOnce();
+  assert.equal(context.store.learningWorkItems.get(v1.id)[0].status, 'PARTIAL');
 
   const v2Result = await context.service.reanalyzeLearningSubmission(
     context.student.id, attemptId, 'reanalyze-version-0002', {
@@ -300,8 +306,8 @@ test('post-final reasoning and pure reruns append immutable versions without cha
   assert.equal(v2Result.learningSubmission.version, 2);
   assert.equal(v2Result.learningSubmission.analysisStatus, 'QUEUED');
   assert.equal(v2Result.reasoningChanged, true);
-  assert.equal(context.store.learningWorkItems.get(v1.id)[0].status, 'CANCELLED');
-  assert.equal(context.store.analysisRuns.get(v1.id).status, 'CANCELLED');
+  assert.equal(context.store.learningWorkItems.get(v1.id)[0].status, 'PARTIAL');
+  assert.equal(context.store.analysisRuns.get(v1.id).status, 'PARTIAL');
   assert.equal(context.store.analysisRuns.get(v1.id).id, v1Run.id);
   const versions = context.store.learningVersions.get(finalized.learningSubmission.id);
   const v2 = versions[1];
@@ -340,6 +346,12 @@ test('post-final reasoning and pure reruns append immutable versions without cha
     }
   ), (error) => error instanceof ApiError && error.code === 'LEARNING_VERSION_CONFLICT');
 
+  await new LearningReviewWorker({
+    store: context.store, inferenceClient: new FakeInferenceClient(),
+    workerId: 'post-final-v2-worker', clock: context.clock.now
+  }).runOnce();
+  assert.equal(context.store.learningWorkItems.get(v2.id)[0].status, 'PARTIAL');
+
   const v3Result = await context.service.reanalyzeLearningSubmission(
     context.student.id, attemptId, 'reanalyze-version-0003', {
       expectedCurrentVersion: 2, notes: []
@@ -351,7 +363,7 @@ test('post-final reasoning and pure reruns append immutable versions without cha
   assert.equal(v3.creationReason, 'MANUAL_REANALYSIS_COMMIT');
   assert.equal(v3.evidenceHash, v2.evidenceHash);
   assert.equal(v3.reasoningRevision, v2.reasoningRevision);
-  assert.equal(context.store.learningWorkItems.get(v2.id)[0].status, 'CANCELLED');
+  assert.equal(context.store.learningWorkItems.get(v2.id)[0].status, 'PARTIAL');
 
   const history = await context.service.getLearningHistory(
     context.student.id, finalized.learningSubmission.id
@@ -399,11 +411,27 @@ test('post-final reasoning persists without context while pure rerun and in-prov
   ), (error) => error instanceof ApiError && error.code === 'ANALYSIS_CONTEXT_UNAVAILABLE');
   assert.equal(blocked.store.learningVersions.get(saved.learningSubmission.id).length, 2);
 
-  const running = await setup(() => {}, { reanalysisEnabled: true });
+  const running = await setup(() => {}, {
+    reanalysisEnabled: true, reanalysisPerStudentPerDay: 1, reanalysisGlobalPerDay: 1
+  });
   await importArtifact(running, approvedContextArtifact(running.form, { readyNumbers: [1] }));
   const runningFinal = await finalizedWithReasoning(running, [
     { questionNumber: 1, reasoningText: 'Provider-bound reasoning.' }
   ], []);
+  const queuedAttempts = await Promise.allSettled(Array.from({ length: 12 }, (_, index) =>
+    running.service.reanalyzeLearningSubmission(
+      running.student.id, runningFinal.attemptId, `queued-reanalysis-${String(index).padStart(2, '0')}`, {
+        expectedCurrentVersion: 1,
+        notes: [{ questionNumber: 1, reasoningText: `Queued edit ${index}.` }]
+      }
+    )));
+  assert.equal(queuedAttempts.every((result) => result.status === 'rejected'
+    && result.reason instanceof ApiError
+    && result.reason.code === 'LEARNING_ANALYSIS_IN_PROGRESS'), true);
+  assert.equal(running.store.learningVersions.get(runningFinal.finalized.learningSubmission.id).length, 1);
+  assert.equal(running.store.learningWorkItems.get(
+    running.store.learningVersions.get(runningFinal.finalized.learningSubmission.id)[0].id
+  )[0].status, 'QUEUED');
   const claimed = await running.store.claimLearningAnalysisWork({
     workerId: 'running-reanalysis-fence', now: running.clock.now(), leaseMs: 60_000
   });
@@ -415,6 +443,18 @@ test('post-final reasoning persists without context while pure rerun and in-prov
     }
   ), (error) => error instanceof ApiError && error.code === 'LEARNING_ANALYSIS_IN_PROGRESS');
   assert.equal(running.store.learningVersions.get(runningFinal.finalized.learningSubmission.id).length, 1);
+  await new LearningReviewWorker({
+    store: running.store, inferenceClient: new FakeInferenceClient(),
+    workerId: 'running-reanalysis-fence', clock: running.clock.now
+  }).processClaimed(claimed);
+  const afterTerminal = await running.service.reanalyzeLearningSubmission(
+    running.student.id, runningFinal.attemptId, 'after-terminal-reanalysis', {
+      expectedCurrentVersion: 1,
+      notes: [{ questionNumber: 1, reasoningText: 'The one real budget unit is still available.' }]
+    }
+  );
+  assert.equal(afterTerminal.learningSubmission.version, 2,
+    'queued and running conflicts must not consume durable reanalysis budget');
 
   const quota = await setup(() => {}, {
     reanalysisEnabled: true,
@@ -663,7 +703,7 @@ test('per-question provider authorization rejects post-claim lineage and solutio
   }
 });
 
-test('v2 requests derive accepted-alternative, nonaccepted, and blank answer status from the immutable final snapshot', async () => {
+test('v3 requests derive accepted-alternative, nonaccepted, and blank answer status from the immutable final snapshot', async () => {
   const context = await setup((form) => {
     Object.assign(form.questions[0], { correctOption: 'D', acceptedOptions: ['D', 'E'], isScored: true });
   });
@@ -689,21 +729,40 @@ test('v2 requests derive accepted-alternative, nonaccepted, and blank answer sta
     status: request.question.student_answer_status
   })), [
     {
-      schema: 'amc-inference-request-v2', task: 'question_analysis_v2',
+      schema: 'amc-inference-request-v3', task: 'question_analysis_v3',
       scoring: { is_scored: true, canonical_answer: 'D', accepted_options: ['D', 'E'] },
       answer: 'E', status: 'ACCEPTED'
     },
     {
-      schema: 'amc-inference-request-v2', task: 'question_analysis_v2',
+      schema: 'amc-inference-request-v3', task: 'question_analysis_v3',
       scoring: { is_scored: true, canonical_answer: 'B', accepted_options: ['B'] },
       answer: 'A', status: 'NOT_ACCEPTED'
     },
     {
-      schema: 'amc-inference-request-v2', task: 'question_analysis_v2',
+      schema: 'amc-inference-request-v3', task: 'question_analysis_v3',
       scoring: { is_scored: true, canonical_answer: 'C', accepted_options: ['C'] },
       answer: null, status: 'BLANK'
     }
   ]);
+});
+
+test('dual-stack worker claims and authorizes frozen v2 work without adding v3 mode fields', async () => {
+  const context = await setup();
+  await importArtifact(context, approvedContextArtifact(context.form, { readyNumbers: [1] }));
+  const { finalized } = await finalizedWithReasoning(context, [
+    { questionNumber: 1, reasoningText: 'Preserve the frozen v2 request.' }
+  ]);
+  const version = context.store.learningVersions.get(finalized.learningSubmission.id)[0];
+  context.store.analysisRuns.get(version.id).analysisContractVersion = 'amc-analysis-contract-v2';
+  const client = new FakeInferenceClient();
+  const result = await new LearningReviewWorker({
+    store: context.store, inferenceClient: client,
+    workerId: 'dual-stack-v2-worker', clock: context.clock.now
+  }).runOnce();
+  assert.equal(result.providerCalls, 1);
+  assert.equal(client.calls[0].schema, 'amc-inference-request-v2');
+  assert.equal(client.calls[0].task, 'question_analysis_v2');
+  assert.equal(Object.hasOwn(client.calls[0].question, 'student_response_mode'), false);
 });
 
 test('unscored questions bypass blank-reasoning and missing-context checks with zero provider calls', async () => {
@@ -827,25 +886,65 @@ test('provider authorization re-reads and rejects drift in every final scoring f
   }
 });
 
-test('blank reasoning is deterministic UNASSESSABLE while rich student markup remains valid input', async () => {
+test('v3 sends selected answer-only responses while a fully blank response remains deterministic', async () => {
   const context = await setup();
   await importArtifact(context, approvedContextArtifact(context.form, {
     readyNumbers: Array.from({ length: 25 }, (_, index) => index + 1)
   }));
   const { attemptId } = await finalizedWithReasoning(context, [
     { questionNumber: 1, reasoningText: '<custom-tag>unsupported</custom-tag>' }
+  ], [
+    { questionNumber: 2, selectedOption: 'B' },
+    { questionNumber: 3, selectedOption: 'A' }
   ]);
+  const learning = context.store.learningSubmissions.get(attemptId);
+  const currentVersion = context.store.learningVersions.get(learning.id)[0];
+  context.store.learningResponses.get(currentVersion.id)
+    .find((response) => response.questionNumber === 2).reasoningText = ' \t\n ';
   const client = new FakeInferenceClient();
   const worker = new LearningReviewWorker({
     store: context.store, inferenceClient: client, workerId: 'memory-worker-003', clock: context.clock.now
   });
   assert.equal((await worker.runOnce()).status, 'PARTIAL');
-  assert.equal(client.calls.length, 1);
+  assert.equal(client.calls.length, 3);
+  assert.deepEqual(client.calls.map((request) => request.question.student_response_mode), [
+    'REASONING', 'ANSWER_ONLY', 'ANSWER_ONLY'
+  ]);
+  assert.deepEqual(client.calls.slice(1).map((request) => request.question.student_reasoning), ['', '']);
+  assert.deepEqual(client.calls.slice(1).map((request) => request.question.student_answer_status), [
+    'ACCEPTED', 'NOT_ACCEPTED'
+  ]);
   const internal = [...context.store.questionAnalyses.values()][0];
   assert.equal(internal[0].status, 'SUCCEEDED');
-  assert.equal(internal[1].outcomeCode, 'BLANK_REASONING');
+  assert.equal(internal[1].reasoningVerdict, 'ANSWER_ONLY');
+  assert.equal(internal[2].reasoningVerdict, 'ANSWER_ONLY');
+  assert.equal(internal[3].outcomeCode, 'BLANK_REASONING');
   const report = await context.service.getLearningReport(context.student.id, attemptId);
   assert.equal(report.status, 'PARTIAL');
+});
+
+test('a pre-transport local rejection is never audited as a provider invocation', async () => {
+  const context = await setup();
+  await importArtifact(context, approvedContextArtifact(context.form, { readyNumbers: [1] }));
+  await finalizedWithReasoning(context, [], [{ questionNumber: 1, selectedOption: 'A' }]);
+  const client = {
+    calls: [],
+    async analyze(request) {
+      this.calls.push(request);
+      throw Object.assign(new Error('trusted client rejected before transport'), {
+        code: 'INVALID_LOCAL_REQUEST', errorClass: 'permanent', retryable: false
+      });
+    }
+  };
+  const result = await new LearningReviewWorker({
+    store: context.store, inferenceClient: client,
+    workerId: 'local-rejection-audit-worker', clock: context.clock.now
+  }).runOnce();
+  assert.equal(client.calls.length, 1, 'the worker attempted its trusted client boundary');
+  assert.equal(result.providerCalls, 0, 'no provider transport was counted');
+  const outcome = [...context.store.questionAnalyses.values()][0][0];
+  assert.equal(outcome.outcomeCode, 'INVALID_LOCAL_REQUEST');
+  assert.equal(outcome.providerInvoked, false);
 });
 
 test('all assessable questions reach COMPLETE/PARTIAL/FAILED without changing official score', async () => {

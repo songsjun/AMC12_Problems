@@ -1,0 +1,114 @@
+{
+  "request": {
+    "schema": "amc-inference-request-v3",
+    "task": "question_analysis_v3",
+    "correlation_id": "corr-v3-test-0001",
+    "input_hash": "df84d99295492b53b1a50d416db450e522ff5fe76d61ac0c15947bee2c820d2b",
+    "context_hash": "a08f4eeb7d3511ba10da64c7378f79e5cb630f61c9af62049e1668a20677a902",
+    "safety_id": "amc-math-safe-v1",
+    "question": {
+      "question_id": "2024-AMC12A-01",
+      "prompt_markdown": "If $x+2=5$, what is $x$?",
+      "choices": [
+        { "label": "A", "text_markdown": "$1$" },
+        { "label": "B", "text_markdown": "$2$" },
+        { "label": "C", "text_markdown": "$3$" },
+        { "label": "D", "text_markdown": "$4$" },
+        { "label": "E", "text_markdown": "$5$" }
+      ],
+      "scoring": {
+        "is_scored": true,
+        "canonical_answer": "C",
+        "accepted_options": ["C"]
+      },
+      "student_answer": "C",
+      "student_answer_status": "ACCEPTED",
+      "student_reasoning": "",
+      "solutions": [
+        {
+          "solution_id": "solution-1",
+          "approval_status": "APPROVED",
+          "title": "Direct algebra",
+          "markdown": "Subtract $2$ from both sides to get $x=3$.",
+          "body_sha256": "46a7d3ec1f1171b69cdbeaa0ef2d7df2b600fca4c4e5a79f6b1f4f7fbfa451ac",
+          "source_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+          "reviewer_id": "reviewer-1",
+          "reviewed_at": "2026-07-31T12:00:00.000Z",
+          "rights_status": "approved-for-ai-use",
+          "method_tags": ["algebra"],
+          "quality_flags": []
+        },
+        {
+          "solution_id": "solution-2",
+          "approval_status": "APPROVED",
+          "title": "Choice verification",
+          "markdown": "Check each choice; only $3+2=5$.",
+          "body_sha256": "5de3698f9e452213bf57fa8faf60067abca308ca0195d8d70f8b1df27ae27392",
+          "source_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+          "reviewer_id": "reviewer-2",
+          "reviewed_at": "2026-07-31T13:00:00Z",
+          "rights_status": "approved-for-ai-use",
+          "method_tags": ["choice-check"],
+          "quality_flags": ["concise"]
+        }
+      ],
+      "student_response_mode": "ANSWER_ONLY"
+    }
+  },
+  "modelOutput": {
+    "schema": "amc-question-analysis-v3",
+    "correlation_id": "corr-v3-test-0001",
+    "input_hash": "df84d99295492b53b1a50d416db450e522ff5fe76d61ac0c15947bee2c820d2b",
+    "context_hash": "a08f4eeb7d3511ba10da64c7378f79e5cb630f61c9af62049e1668a20677a902",
+    "assessability": {
+      "status": "PARTIALLY_ASSESSABLE",
+      "reasons": ["Only the selected answer is available; no student reasoning was provided."]
+    },
+    "classification": "ANSWER_ONLY",
+    "summary": "The selected answer is accepted, but no student reasoning was provided to evaluate.",
+    "strengths": [],
+    "gaps": ["No student reasoning was provided, so the student's method cannot be evaluated."],
+    "suggestions": ["Write the steps that led to the selected answer, then compare them with the approved methods below."],
+    "solution_comparisons": [
+      {
+        "solution_id": "solution-1",
+        "alignment": "NOT_COMPARABLE",
+        "observation": "No student reasoning was provided, so alignment with this solution cannot be assessed. Approved solution 1 includes reviewed method tags such as: algebra."
+      },
+      {
+        "solution_id": "solution-2",
+        "alignment": "NOT_COMPARABLE",
+        "observation": "No student reasoning was provided, so alignment with this solution cannot be assessed. Approved solution 2 includes reviewed method tags such as: choice-check."
+      }
+    ],
+    "confidence": 1
+  },
+  "expectedOutput": {
+    "schema": "amc-question-analysis-v3",
+    "correlation_id": "corr-v3-test-0001",
+    "input_hash": "df84d99295492b53b1a50d416db450e522ff5fe76d61ac0c15947bee2c820d2b",
+    "context_hash": "a08f4eeb7d3511ba10da64c7378f79e5cb630f61c9af62049e1668a20677a902",
+    "assessability": {
+      "status": "PARTIALLY_ASSESSABLE",
+      "reasons": ["Only the selected answer is available; no student reasoning was provided."]
+    },
+    "classification": "ANSWER_ONLY",
+    "summary": "The selected answer is accepted, but no student reasoning was provided to evaluate.",
+    "strengths": [],
+    "gaps": ["No student reasoning was provided, so the student's method cannot be evaluated."],
+    "suggestions": ["Write the steps that led to the selected answer, then compare them with the approved methods below."],
+    "solution_comparisons": [
+      {
+        "solution_id": "solution-1",
+        "alignment": "NOT_COMPARABLE",
+        "observation": "No student reasoning was provided, so alignment with this solution cannot be assessed. Approved solution 1 includes reviewed method tags such as: algebra."
+      },
+      {
+        "solution_id": "solution-2",
+        "alignment": "NOT_COMPARABLE",
+        "observation": "No student reasoning was provided, so alignment with this solution cannot be assessed. Approved solution 2 includes reviewed method tags such as: choice-check."
+      }
+    ],
+    "confidence": 1
+  }
+}

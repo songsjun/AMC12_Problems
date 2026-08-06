@@ -2,12 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
+  ANSWER_ONLY_NOT_ACCEPTED_SUMMARY,
   INFERENCE_CONTEXT_HASH_SCHEMA,
   INFERENCE_INPUT_HASH_SCHEMA,
   INFERENCE_PROMPT_VERSION,
   INFERENCE_REQUEST_SCHEMA,
   INFERENCE_RESPONSE_SCHEMA,
   INFERENCE_TASK,
+  buildAnswerOnlyAnalysis,
   computeInferenceContextHash,
   computeInferenceInputHash,
   inferenceSha256
@@ -19,8 +21,8 @@ const TOKEN = 'gateway-token-that-is-long-enough-1234567890';
 export function requestFixture() {
   const bodies = ['Use direct algebra.', 'Check the choices.'];
   const request = {
-    schema: 'amc-inference-request-v2',
-    task: 'question_analysis_v2',
+    schema: 'amc-inference-request-v3',
+    task: 'question_analysis_v3',
     correlation_id: 'corr-client-0001',
     input_hash: '0'.repeat(64),
     context_hash: '0'.repeat(64),
@@ -33,6 +35,7 @@ export function requestFixture() {
       student_answer: 'C',
       student_answer_status: 'ACCEPTED',
       student_reasoning: 'Subtract two from both sides.',
+      student_response_mode: 'REASONING',
       solutions: bodies.map((markdown, index) => ({
         solution_id: `solution-${index + 1}`,
         approval_status: 'APPROVED',
@@ -54,8 +57,11 @@ export function requestFixture() {
 }
 
 function analysisFixture(request) {
+  if (request.question.student_response_mode === 'ANSWER_ONLY') {
+    return buildAnswerOnlyAnalysis(request);
+  }
   return {
-    schema: 'amc-question-analysis-v2',
+    schema: 'amc-question-analysis-v3',
     correlation_id: request.correlation_id,
     input_hash: request.input_hash,
     context_hash: request.context_hash,
@@ -82,28 +88,28 @@ function successResponse(request) {
       provider: 'openai',
       requestedModel: 'gpt-5.6-terra',
       responseModel: 'gpt-5.6-terra-2026-07-15',
-      promptVersion: 'amc-question-analysis-prompt-v2',
-      schemaVersion: 'amc-question-analysis-v2',
+      promptVersion: 'amc-question-analysis-prompt-v3',
+      schemaVersion: 'amc-question-analysis-v3',
       usage: { inputTokens: 800, cachedInputTokens: 120, outputTokens: 200, totalTokens: 1000, reasoningTokens: 50 }
     }
   }), { status: 200, headers: { 'content-type': 'application/json' } });
 }
 
-test('inference v2 IDs and hash canonicalization match the frozen gateway algorithm', () => {
+test('inference v3 IDs and hash canonicalization match the frozen gateway algorithm', () => {
   assert.deepEqual([
     INFERENCE_REQUEST_SCHEMA, INFERENCE_TASK, INFERENCE_RESPONSE_SCHEMA,
     INFERENCE_PROMPT_VERSION, INFERENCE_CONTEXT_HASH_SCHEMA, INFERENCE_INPUT_HASH_SCHEMA
   ], [
-    'amc-inference-request-v2', 'question_analysis_v2', 'amc-question-analysis-v2',
-    'amc-question-analysis-prompt-v2', 'amc-question-context-hash-v2', 'amc-student-input-hash-v2'
+    'amc-inference-request-v3', 'question_analysis_v3', 'amc-question-analysis-v3',
+    'amc-question-analysis-prompt-v3', 'amc-question-context-hash-v3', 'amc-student-input-hash-v3'
   ]);
   assert.equal(
     computeInferenceContextHash(requestFixture()),
-    '60af9d3cdc050a79bb41dbe77ebb2c324163f0803fb4474f1cb83573230ce6b1'
+    'e9f724de57fe449323ccfea766151df6fa12c65b0d4054458e431d552872e734'
   );
   assert.equal(
     computeInferenceInputHash(requestFixture()),
-    '212468805e0560268d0f6855d8a41a38a7a08a00c3b3cfb6abe484f7f2ca0811'
+    'cb9542bff73fa78fe532a357371e04a8a0245c4a625b99895001cd7e6c85093f'
   );
 });
 
@@ -116,23 +122,60 @@ test('checked-in analysis v2 golden freezes the exact request, model output, and
   assert.deepEqual(fixture.modelOutput, JSON.parse(JSON.stringify(fixture.modelOutput)));
   assert.equal(computeInferenceContextHash(fixture.request), fixture.request.context_hash);
   assert.equal(computeInferenceInputHash(fixture.request), fixture.request.input_hash);
+  const calls = [];
   const client = new AmcInferenceClient({
     token: TOKEN,
-    fetchImpl: async () => new Response(JSON.stringify({
+    fetchImpl: async (...args) => {
+      calls.push(args);
+      return new Response(JSON.stringify({
       ok: true,
       analysis: fixture.modelOutput,
       runMetadata: {
         provider: 'openai', requestedModel: 'gpt-5.6-terra',
         responseModel: 'gpt-5.6-terra-2026-07-15',
-        promptVersion: INFERENCE_PROMPT_VERSION, schemaVersion: INFERENCE_RESPONSE_SCHEMA,
+        promptVersion: 'amc-question-analysis-prompt-v2', schemaVersion: 'amc-question-analysis-v2',
         usage: { inputTokens: 800, cachedInputTokens: 100, outputTokens: 200, totalTokens: 1000 }
       }
-    }), { status: 200 })
+      }), { status: 200 });
+    }
   });
   assert.deepEqual((await client.analyze(fixture.request)).analysis, fixture.expectedOutput);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], 'http://127.0.0.1:4110/v2/analyze-question');
 });
 
-test('client rejects v1, unscored, empty-reasoning, and scoring-contradictory requests before transport', async () => {
+test('checked-in analysis v3 golden is byte-identical to Gateway semantics and accepted end to end', async () => {
+  const local = await readFile(new URL('./fixtures/analysis-contract-v3.json', import.meta.url));
+  assert.equal(inferenceSha256(local), 'f387a99360ebf4e34e7b9649f45ebbb76182a614a52be46b8716cc279023f548');
+  const fixture = JSON.parse(local.toString('utf8'));
+  assert.deepEqual(Object.keys(fixture).sort(), ['expectedOutput', 'modelOutput', 'request']);
+  assert.equal(computeInferenceContextHash(fixture.request), fixture.request.context_hash);
+  assert.equal(computeInferenceInputHash(fixture.request), fixture.request.input_hash);
+  assert.deepEqual(buildAnswerOnlyAnalysis(fixture.request), fixture.expectedOutput);
+  assert.deepEqual(fixture.modelOutput, fixture.expectedOutput);
+  const calls = [];
+  const client = new AmcInferenceClient({
+    token: TOKEN,
+    fetchImpl: async (...args) => {
+      calls.push(args);
+      return new Response(JSON.stringify({
+        ok: true,
+        analysis: fixture.modelOutput,
+        runMetadata: {
+          provider: 'openai', requestedModel: 'gpt-5.6-terra',
+          responseModel: 'gpt-5.6-terra-2026-07-15',
+          promptVersion: 'amc-question-analysis-prompt-v3', schemaVersion: 'amc-question-analysis-v3',
+          usage: { inputTokens: 800, cachedInputTokens: 100, outputTokens: 200, totalTokens: 1000 }
+        }
+      }), { status: 200 });
+    }
+  });
+  assert.deepEqual((await client.analyze(fixture.request)).analysis, fixture.expectedOutput);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], 'http://127.0.0.1:4110/v3/analyze-question');
+});
+
+test('client rejects v1, invalid response modes, unscored, and scoring-contradictory requests before transport', async () => {
   let calls = 0;
   const client = new AmcInferenceClient({
     token: TOKEN,
@@ -141,8 +184,17 @@ test('client rejects v1, unscored, empty-reasoning, and scoring-contradictory re
   const cases = [
     ['v1 schema', (request) => { request.schema = 'amc-inference-request-v1'; }],
     ['v1 task', (request) => { request.task = 'question_analysis_v1'; }],
-    ['empty reasoning', (request) => { request.question.student_reasoning = ''; }],
+    ['empty reasoning mode', (request) => { request.question.student_reasoning = ''; }],
     ['whitespace reasoning', (request) => { request.question.student_reasoning = ' \t\n '; }],
+    ['answer-only without answer', (request) => {
+      request.question.student_response_mode = 'ANSWER_ONLY';
+      request.question.student_reasoning = '';
+      request.question.student_answer = null;
+      request.question.student_answer_status = 'BLANK';
+    }],
+    ['answer-only with reasoning', (request) => {
+      request.question.student_response_mode = 'ANSWER_ONLY';
+    }],
     ['unscored', (request) => {
       request.question.scoring = { is_scored: false, canonical_answer: null, accepted_options: [] };
       request.question.student_answer_status = 'BLANK';
@@ -155,8 +207,12 @@ test('client rejects v1, unscored, empty-reasoning, and scoring-contradictory re
   for (const [name, mutate] of cases) {
     const request = requestFixture();
     mutate(request);
-    request.context_hash = computeInferenceContextHash(request);
-    request.input_hash = computeInferenceInputHash(request);
+    try {
+      request.context_hash = computeInferenceContextHash(request);
+      request.input_hash = computeInferenceInputHash(request);
+    } catch {
+      // Unknown schema/task identifiers are themselves the local rejection.
+    }
     await assert.rejects(
       () => client.analyze(request),
       (error) => error.code === 'INVALID_LOCAL_REQUEST',
@@ -166,12 +222,73 @@ test('client rejects v1, unscored, empty-reasoning, and scoring-contradictory re
   assert.equal(calls, 0);
 });
 
-test('client rejects v1 and answer-semantics-contradictory model outputs', async () => {
+test('v3 accepts selected answer-only input and requires an ANSWER_ONLY output', async () => {
+  const request = requestFixture();
+  request.question.student_reasoning = '';
+  request.question.student_response_mode = 'ANSWER_ONLY';
+  request.input_hash = computeInferenceInputHash(request);
+  let calls = 0;
+  const client = new AmcInferenceClient({
+    token: TOKEN,
+    fetchImpl: async () => { calls += 1; return successResponse(request); }
+  });
+  const result = await client.analyze(request);
+  assert.equal(result.analysis.classification, 'ANSWER_ONLY');
+  assert.equal(calls, 1);
+
+  const invalidCases = [
+    ['classification', (analysis) => { analysis.classification = 'CORRECT_WITH_REASONING_GAPS'; }],
+    ['invented suggestion', (analysis) => { analysis.suggestions = ['Continue using the algebra method you applied.']; }],
+    ['generic duplicate comparisons', (analysis) => {
+      analysis.solution_comparisons.forEach((comparison) => {
+        comparison.observation = 'No student reasoning was provided, so alignment with this solution cannot be assessed. This solution is a useful reference.';
+      });
+    }],
+    ['fabricated strength', (analysis) => { analysis.strengths = ['The student used algebra well.']; }],
+    ['model-chosen confidence', (analysis) => { analysis.confidence = 0.99; }]
+  ];
+  for (const [name, mutate] of invalidCases) {
+    const contradictory = new AmcInferenceClient({
+      token: TOKEN,
+      fetchImpl: async () => {
+        const payload = JSON.parse(await successResponse(request).text());
+        mutate(payload.analysis);
+        return new Response(JSON.stringify(payload), { status: 200 });
+      }
+    });
+    await assert.rejects(() => contradictory.analyze(request),
+      (error) => error.code === 'GATEWAY_PROTOCOL_ERROR', name);
+  }
+
+  const notAccepted = structuredClone(request);
+  notAccepted.question.student_answer = 'A';
+  notAccepted.question.student_answer_status = 'NOT_ACCEPTED';
+  notAccepted.input_hash = computeInferenceInputHash(notAccepted);
+  const wrongAnswerClient = new AmcInferenceClient({
+    token: TOKEN,
+    fetchImpl: async () => successResponse(notAccepted)
+  });
+  assert.equal((await wrongAnswerClient.analyze(notAccepted)).analysis.summary,
+    ANSWER_ONLY_NOT_ACCEPTED_SUMMARY);
+
+  const wrongSummaryClient = new AmcInferenceClient({
+    token: TOKEN,
+    fetchImpl: async () => {
+      const payload = JSON.parse(await successResponse(notAccepted).text());
+      payload.analysis.summary = 'The selected answer is accepted, but no student reasoning was provided to evaluate.';
+      return new Response(JSON.stringify(payload), { status: 200 });
+    }
+  });
+  await assert.rejects(() => wrongSummaryClient.analyze(notAccepted),
+    (error) => error.code === 'GATEWAY_PROTOCOL_ERROR');
+});
+
+test('client rejects v1, mode, and answer-semantics-contradictory model outputs', async () => {
   const cases = [
     ['v1 schema', 'ACCEPTED', 'C', (analysis) => { analysis.schema = 'amc-question-analysis-v1'; }],
     ['accepted answer marked incorrect', 'ACCEPTED', 'C', (analysis) => { analysis.classification = 'INCORRECT_EXECUTION'; }],
     ['nonaccepted answer marked correct', 'NOT_ACCEPTED', 'A', () => {}],
-    ['removed answer-only classification', 'ACCEPTED', 'C', (analysis) => { analysis.classification = 'ANSWER_ONLY'; }],
+    ['answer-only classification in reasoning mode', 'ACCEPTED', 'C', (analysis) => { analysis.classification = 'ANSWER_ONLY'; }],
     ['removed no-attempt classification', 'BLANK', null, (analysis) => { analysis.classification = 'NO_ATTEMPT'; }]
   ];
   for (const [name, status, answer, mutate] of cases) {
@@ -205,9 +322,9 @@ test('client makes one fixed loopback call and accepts only the frozen success e
   assert.equal(JSON.stringify(client).includes(TOKEN), false);
   const result = await client.analyze(request);
   assert.deepEqual(result.analysis, analysisFixture(request));
-  assert.equal(result.runMetadata.promptVersion, 'amc-question-analysis-prompt-v2');
+  assert.equal(result.runMetadata.promptVersion, 'amc-question-analysis-prompt-v3');
   assert.equal(calls.length, 1);
-  assert.equal(calls[0][0], 'http://127.0.0.1:4110/v2/analyze-question');
+  assert.equal(calls[0][0], 'http://127.0.0.1:4110/v3/analyze-question');
   assert.equal(calls[0][1].method, 'POST');
   assert.equal(calls[0][1].redirect, 'manual');
   assert.equal(calls[0][1].headers.authorization, `Bearer ${TOKEN}`);

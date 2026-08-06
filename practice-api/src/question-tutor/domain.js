@@ -31,7 +31,9 @@ const INVALID_LINEAGE_TEXT = /[\u0000-\u001F\u007F\uFFFD]/u;
 const OPTIONS = ['A', 'B', 'C', 'D', 'E'];
 const SOURCE_TYPES = new Set(['INTERACTIVE_FINAL', 'OPEN_REVIEW', 'BATCH_REVIEW']);
 const SCORING_ORIGINS = new Set(['OFFICIAL_FINAL', 'BATCH_CONFIRMED']);
-const ANALYSIS_CONTRACTS = new Set(['amc-analysis-contract-v1', 'amc-analysis-contract-v2']);
+const ANALYSIS_CONTRACTS = new Set([
+  'amc-analysis-contract-v1', 'amc-analysis-contract-v2', 'amc-analysis-contract-v3'
+]);
 const JOB_STATUSES = new Set([
   'QUEUED', 'RUNNING', 'RETRY_WAIT', 'SUCCEEDED', 'FAILED', 'DELIVERY_UNKNOWN', 'CANCELLED'
 ]);

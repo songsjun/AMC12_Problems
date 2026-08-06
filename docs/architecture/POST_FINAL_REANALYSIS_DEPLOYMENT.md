@@ -1,10 +1,13 @@
 # Post-final reanalysis deployment runbook
 
-Migration 018 changes constraints and installs append-only triggers on core
-learning tables. It is transactional, but its `ALTER TABLE` and trigger work
-take strong locks. Deploy it in a maintenance window with the old API and
-learning worker stopped; the migration runner has no `lock_timeout`, so an
-unreviewed live rollout can wait indefinitely.
+Migrations 018 and 019 change constraints on core learning tables; 018 also
+installs append-only triggers. They are transactional, but their `ALTER TABLE`
+and trigger work take strong locks. Deploy them in a maintenance window with
+the old API and learning worker stopped; the migration runner has no
+`lock_timeout`, so an unreviewed live rollout can wait indefinitely. For the
+v3 analysis-contract rollout, deploy the additive Gateway `/v3` route before
+any API or worker that can create v3 runs, and retain `/v2` until durable v2
+work is drained.
 
 ## Preconditions
 
@@ -33,8 +36,8 @@ unreviewed live rollout can wait indefinitely.
    leases are resolved, both old PIDs exited, and no supervisor can restart an
    old binary.
 3. Start only the new API with the reanalysis gate still false. It runs
-   migrations through 018 before binding. Verify migration 018 is recorded
-   exactly once and `/api/amc12/health` is healthy.
+   migrations through 019 before binding. Verify migrations 018 and 019 are
+   each recorded exactly once and `/api/amc12/health` is healthy.
 4. Start the new worker and verify database connectivity, the dedicated
    loopback Gateway returns HTTP 200 from `http://127.0.0.1:4110/healthz`,
    queue progress, and absence of crash loops. A health response alone is not
@@ -43,12 +46,14 @@ unreviewed live rollout can wait indefinitely.
    history, Tutor, batch upload/confirm, cleanup, and score-regression canaries.
 6. Enable `AMC12_REANALYSIS_ENABLED=true` in the protected API environment and
    restart only the API. Use one controlled final submission with approved
-   context. Save changed reasoning as v2 and wait for its report; record its
-   report hash and open a v2 Tutor thread. Only then request an unchanged v3,
-   wait for its report, and open a v3 Tutor thread. Verify v1 history, v2, and
-   v3 remain readable, the v2/v3 Gateway response model/prompt/schema match the
-   reviewed 4110 contract, and the official score/submission JSON and hash did
-   not change.
+   context. Save changed reasoning as learning version 2 and wait for its
+   report; record its report hash and open a version-2 Tutor thread. Only then
+   request unchanged evidence as learning version 3, wait for its report, and
+   open a version-3 Tutor thread. New analysis runs use contract v3 in both
+   cases. Verify learning versions 1, 2, and 3 remain readable, v3 Gateway
+   model/prompt/schema match the reviewed 4110 contract, any preexisting v2
+   contract run remains readable/claimable during drain, and the official
+   score/submission JSON and hash did not change.
 7. Verify stale-version, repeated idempotency key, cross-owner, CSRF, running-
    worker conflict, quota, and no-context paths return their stable errors and
    create no unexpected provider calls.
@@ -79,11 +84,12 @@ and non-exact paths remain capped at 64 KiB.
 
 Set `AMC12_REANALYSIS_ENABLED=false` and restart the API to stop new versions.
 Do not stop the worker merely to roll back intake: durable queued/running work
-must drain or recover. Migration 018 and already-created immutable versions
-remain in place; reversing them would remove integrity protections and is not
-the application rollback. Once migration 018 or either new creation/reasoning
-origin has been written, an old API/worker binary and a down-migration are both
-forbidden; recover by disabling intake and deploying a forward fix.
+must drain or recover. Migrations 018/019 and already-created immutable
+versions remain in place; reversing them would remove integrity protections
+and contract history and is not the application rollback. Once migration
+018/019 or either new creation/reasoning origin has been written, an old
+API/worker binary and a down-migration are both forbidden; recover by disabling
+intake and deploying a forward fix.
 
 Monitor version creation rate, daily student/global budget denials, queued and
 running analysis age, report outcomes, Gateway errors, database growth, and
@@ -95,8 +101,9 @@ student reaches the hard limit.
 
 ## Critical limitations
 
-- AI output is nondeterministic and advisory. Reanalysis never changes the
-  official answer snapshot or AMC score.
+- Reasoning-mode AI output is nondeterministic and advisory. Answer-only v3
+  accepts only its exact deterministic report invariant. Neither mode changes
+  the official answer snapshot or AMC score.
 - Partial approved context yields a partial report; missing questions remain
   `UNASSESSABLE` until reviewed context is imported and a later analysis is
   requested or repaired.

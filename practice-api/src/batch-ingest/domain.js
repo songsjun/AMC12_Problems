@@ -661,6 +661,7 @@ export function normalizeMappingConfirmation(input, { mappingRevision, mappingIt
         || new Set(response.sourceItemIds).size !== response.sourceItemIds.length) {
       throw badRequest('INVALID_MAPPING_CONFIRMATION', 'Each confirmed response needs bounded reasoning and unique source item IDs.');
     }
+    const reasoningText = response.reasoningText.trim() === '' ? '' : response.reasoningText;
     for (const id of response.sourceItemIds) {
       if (!UUID.test(id) || !itemIds.has(id) || seenItems.has(id)) {
         throw badRequest('INVALID_MAPPING_CONFIRMATION', 'Every source item must be assigned exactly once or discarded.');
@@ -704,10 +705,10 @@ export function normalizeMappingConfirmation(input, { mappingRevision, mappingIt
     return {
       questionNumber: response.questionNumber,
       selectedOption: response.selectedOption,
-      reasoningText: response.reasoningText,
-      reasoningOrigin: response.reasoningText === sourceEvidenceText
+      reasoningText,
+      reasoningOrigin: reasoningText === sourceEvidenceText
         ? 'BATCH_CONFIRMED_EVIDENCE' : 'BATCH_CONFIRMATION_EDIT',
-      confirmedReasoningHash: batchSha256(response.reasoningText),
+      confirmedReasoningHash: batchSha256(reasoningText),
       sourceItemIds,
       sourceDescriptors,
       sourceEvidenceText,

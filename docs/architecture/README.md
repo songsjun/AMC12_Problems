@@ -93,6 +93,8 @@ Each stage has its own tests, independent review, reflection, and Git commit.
 - `ADR-012`: post-final reasoning and manual reruns append immutable learning
   versions while the official FINAL score and old report/Tutor lineage remain
   frozen.
+- `ADR-013`: answer-only evidence uses a separate analysis v3 contract, while
+  authoritative queue state and transaction-level deduplication govern reruns.
 - `POST_FINAL_REANALYSIS_DEPLOYMENT.md`: migration-018 maintenance window,
   default-off gate, canary, rollback, and capacity procedure.
 - `TUTOR_PERSISTENCE_DEPLOYMENT.md`: maintenance-window procedure and rollback

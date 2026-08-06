@@ -132,7 +132,8 @@ async function verifyZeroChildV1Upgrade(pool) {
     '015_approved_context_v2.sql',
     '016_batch_review_readiness_gate.sql',
     '017_batch_review_historical_access.sql',
-    '018_post_final_reanalysis.sql'
+    '018_post_final_reanalysis.sql',
+    '019_analysis_contract_v3.sql'
   ];
   try {
     const approvedContextV2Index = migrationNames.indexOf('015_approved_context_v2.sql');
@@ -222,7 +223,8 @@ async function verifyHistoricalUnboundBatchAnchorUpgrade(pool) {
     '015_approved_context_v2.sql',
     '016_batch_review_readiness_gate.sql',
     '017_batch_review_historical_access.sql',
-    '018_post_final_reanalysis.sql'
+    '018_post_final_reanalysis.sql',
+    '019_analysis_contract_v3.sql'
   ];
   const approvedContextV2Index = migrationNames.indexOf('015_approved_context_v2.sql');
   const studentId = randomUUID();
@@ -377,7 +379,8 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     '015_approved_context_v2.sql',
     '016_batch_review_readiness_gate.sql',
     '017_batch_review_historical_access.sql',
-    '018_post_final_reanalysis.sql'
+    '018_post_final_reanalysis.sql',
+    '019_analysis_contract_v3.sql'
   ]);
   await verifyZeroChildV1Upgrade(store.pool);
   await verifyHistoricalUnboundBatchAnchorUpgrade(store.pool);
@@ -445,7 +448,7 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
   );
   assert.equal(analysisV2Schema.rowCount, 1);
   assert.equal(analysisV2Schema.rows[0].is_nullable, 'NO');
-  assert.match(analysisV2Schema.rows[0].column_default, /amc-analysis-contract-v2/);
+  assert.match(analysisV2Schema.rows[0].column_default, /amc-analysis-contract-v3/);
   const analysisV2Constraints = await store.pool.query(
     `SELECT conname, convalidated FROM pg_constraint
      WHERE connamespace = 'amc_practice'::regnamespace
@@ -1217,6 +1220,16 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
       expectedStateRevision: readyReanalysisAttemptWithAnswer.stateRevision
     }
   );
+  const readyInitialClaimAt = new Date(Date.now() + 15_000);
+  const readyInitialClaim = await store.claimLearningAnalysisWork({
+    workerId: 'pg-ready-reanalysis-initial-worker', now: readyInitialClaimAt, leaseMs: 120_000
+  });
+  assert.equal(readyInitialClaim.submission.attemptId, readyReanalysisAttempt.attempt.id);
+  const readyInitialWorker = new LearningReviewWorker({
+    store, inferenceClient: new FakeInferenceClient(),
+    workerId: 'pg-ready-reanalysis-initial-worker', clock: () => new Date(readyInitialClaimAt)
+  });
+  assert.equal((await readyInitialWorker.processClaimed(readyInitialClaim)).processed, true);
   const readyReanalysisV2 = await service.reanalyzeLearningSubmission(
     readyReanalysisStudent.id, readyReanalysisAttempt.attempt.id,
     'pg-ready-reanalysis-v2', {
@@ -1225,6 +1238,16 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     }
   );
   assert.equal(readyReanalysisV2.learningSubmission.analysisStatus, 'QUEUED');
+  const readyV2ClaimAt = new Date(Date.now() + 30_000);
+  const readyV2Claim = await store.claimLearningAnalysisWork({
+    workerId: 'pg-ready-reanalysis-v2-worker', now: readyV2ClaimAt, leaseMs: 120_000
+  });
+  assert.equal(readyV2Claim.submission.attemptId, readyReanalysisAttempt.attempt.id);
+  const readyV2Worker = new LearningReviewWorker({
+    store, inferenceClient: new FakeInferenceClient(),
+    workerId: 'pg-ready-reanalysis-v2-worker', clock: () => new Date(readyV2ClaimAt)
+  });
+  assert.equal((await readyV2Worker.processClaimed(readyV2Claim)).processed, true);
   const readyReanalysisV3 = await service.reanalyzeLearningSubmission(
     readyReanalysisStudent.id, readyReanalysisAttempt.attempt.id,
     'pg-ready-reanalysis-v3', { expectedCurrentVersion: 2, notes: [] }
@@ -1365,7 +1388,7 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     clock: () => new Date(reanalysisClaimAt),
     trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
   });
-  const [contextLockReanalysis] = await Promise.all([
+  const [contextLockReanalysisOutcome, contextLockImportOutcome] = await Promise.allSettled([
     service.reanalyzeLearningSubmission(
       contextLockStudent.id, contextLockAttempt.attempt.id, 'pg-context-lock-reanalysis', {
         expectedCurrentVersion: 1,
@@ -1376,7 +1399,13 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
       contextLockArtifact, approvalReceiptsForArtifact(contextLockArtifact)
     )
   ]);
-  assert.equal(contextLockReanalysis.learningSubmission.version, 2);
+  assert.equal(contextLockImportOutcome.status, 'fulfilled');
+  const contextLockExpectedVersion = contextLockReanalysisOutcome.status === 'fulfilled' ? 2 : 1;
+  if (contextLockReanalysisOutcome.status === 'fulfilled') {
+    assert.equal(contextLockReanalysisOutcome.value.learningSubmission.version, 2);
+  } else {
+    assert.equal(contextLockReanalysisOutcome.reason.code, 'LEARNING_ANALYSIS_IN_PROGRESS');
+  }
   const contextLockState = (await store.pool.query(
     `SELECT version.context_status, version.context_set_id,
             work.status AS work_status, run.status AS run_status
@@ -1385,8 +1414,8 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
        ON work.learning_submission_version_id = version.id
       AND work.work_type = 'ANALYZE_SUBMISSION'
      JOIN amc_practice.learning_analysis_runs run ON run.id = work.analysis_run_id
-     WHERE version.learning_submission_id = $1 AND version.version_number = 2`,
-    [contextLockFinal.learningSubmission.id]
+     WHERE version.learning_submission_id = $1 AND version.version_number = $2`,
+    [contextLockFinal.learningSubmission.id, contextLockExpectedVersion]
   )).rows[0];
   assert.equal(contextLockState.context_status, 'CONTEXT_READY');
   assert.ok(contextLockState.context_set_id);
@@ -2379,7 +2408,7 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     workerId: 'pg-worker-shared', now: reclaimAt, leaseMs: 120_000
   });
   assert.ok(reclaimed);
-  assert.equal(reclaimed.run.analysisContractVersion, 'amc-analysis-contract-v2');
+  assert.equal(reclaimed.run.analysisContractVersion, 'amc-analysis-contract-v3');
   assert.deepEqual(reclaimed.questions[0].scoring, {
     isScored: true, canonicalAnswer: 'A', acceptedOptions: ['A'],
     studentAnswerIsCorrect: null, selectedOption: null
@@ -2465,7 +2494,7 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     provider_invoked: true,
     run_metadata: {
       provider: 'openai', requestedModel: 'gpt-5.6-terra', responseModel: 'gpt-5.6-terra-2026-07-15',
-      promptVersion: 'amc-question-analysis-prompt-v2', schemaVersion: 'amc-question-analysis-v2',
+      promptVersion: 'amc-question-analysis-prompt-v3', schemaVersion: 'amc-question-analysis-v3',
       usage: { inputTokens: 800, cachedInputTokens: 120, outputTokens: 200, totalTokens: 1000, reasoningTokens: 50 }
     },
     error_class: null,

@@ -1,13 +1,62 @@
 import { createHash } from 'node:crypto';
 
-export const ANALYSIS_CONTRACT_VERSION = 'amc-analysis-contract-v2';
-export const INFERENCE_REQUEST_SCHEMA = 'amc-inference-request-v2';
-export const INFERENCE_TASK = 'question_analysis_v2';
-export const INFERENCE_RESPONSE_SCHEMA = 'amc-question-analysis-v2';
-export const INFERENCE_PROMPT_VERSION = 'amc-question-analysis-prompt-v2';
-export const INFERENCE_CONTEXT_HASH_SCHEMA = 'amc-question-context-hash-v2';
-export const INFERENCE_INPUT_HASH_SCHEMA = 'amc-student-input-hash-v2';
+export const ANALYSIS_CONTRACT_VERSION = 'amc-analysis-contract-v3';
+export const INFERENCE_REQUEST_SCHEMA = 'amc-inference-request-v3';
+export const INFERENCE_TASK = 'question_analysis_v3';
+export const INFERENCE_RESPONSE_SCHEMA = 'amc-question-analysis-v3';
+export const INFERENCE_PROMPT_VERSION = 'amc-question-analysis-prompt-v3';
+export const INFERENCE_CONTEXT_HASH_SCHEMA = 'amc-question-context-hash-v3';
+export const INFERENCE_INPUT_HASH_SCHEMA = 'amc-student-input-hash-v3';
 export const INFERENCE_SAFETY_PROFILE = 'amc-math-safe-v1';
+export const STUDENT_RESPONSE_MODES = Object.freeze({
+  ANSWER_ONLY: 'ANSWER_ONLY',
+  REASONING: 'REASONING'
+});
+export const ANSWER_ONLY_ASSESSABILITY_REASON =
+  'Only the selected answer is available; no student reasoning was provided.';
+export const ANSWER_ONLY_ACCEPTED_SUMMARY =
+  'The selected answer is accepted, but no student reasoning was provided to evaluate.';
+export const ANSWER_ONLY_NOT_ACCEPTED_SUMMARY =
+  'The selected answer is not accepted, and no student reasoning was provided to evaluate.';
+export const ANSWER_ONLY_GAP =
+  "No student reasoning was provided, so the student's method cannot be evaluated.";
+export const ANSWER_ONLY_COMPARISON_PREFIX =
+  'No student reasoning was provided, so alignment with this solution cannot be assessed.';
+export const ANSWER_ONLY_SUGGESTION =
+  'Write the steps that led to the selected answer, then compare them with the approved methods below.';
+
+export const ANALYSIS_CONTRACTS = Object.freeze({
+  'amc-analysis-contract-v2': Object.freeze({
+    analysisContractVersion: 'amc-analysis-contract-v2',
+    requestSchema: 'amc-inference-request-v2',
+    task: 'question_analysis_v2',
+    responseSchema: 'amc-question-analysis-v2',
+    promptVersion: 'amc-question-analysis-prompt-v2',
+    contextHashSchema: 'amc-question-context-hash-v2',
+    inputHashSchema: 'amc-student-input-hash-v2',
+    path: '/v2/analyze-question'
+  }),
+  [ANALYSIS_CONTRACT_VERSION]: Object.freeze({
+    analysisContractVersion: ANALYSIS_CONTRACT_VERSION,
+    requestSchema: INFERENCE_REQUEST_SCHEMA,
+    task: INFERENCE_TASK,
+    responseSchema: INFERENCE_RESPONSE_SCHEMA,
+    promptVersion: INFERENCE_PROMPT_VERSION,
+    contextHashSchema: INFERENCE_CONTEXT_HASH_SCHEMA,
+    inputHashSchema: INFERENCE_INPUT_HASH_SCHEMA,
+    path: '/v3/analyze-question'
+  })
+});
+export const SUPPORTED_ANALYSIS_CONTRACT_VERSIONS = Object.freeze(Object.keys(ANALYSIS_CONTRACTS));
+
+export function analysisContractForVersion(version) {
+  return ANALYSIS_CONTRACTS[version] || null;
+}
+
+export function analysisContractForRequest(request) {
+  return Object.values(ANALYSIS_CONTRACTS).find((contract) =>
+    request?.schema === contract.requestSchema && request?.task === contract.task) || null;
+}
 
 const OPTIONS = ['A', 'B', 'C', 'D', 'E'];
 const ACTIVE_MARKDOWN_OR_LINK = /(?:!\[[^\]]*\]\s*(?:\(|\[)|\[[^\]]+\]\s*(?:\(|\[)|^\s*\[[^\]]+\]:|\b[a-z][a-z0-9+.-]{0,31}:\S|www\.|<[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+>)/imu;
@@ -68,6 +117,35 @@ export function deriveStudentAnswerStatus(studentAnswer, acceptedOptions) {
   return acceptedOptions.includes(studentAnswer) ? 'ACCEPTED' : 'NOT_ACCEPTED';
 }
 
+/** Mirrors the Gateway's mechanically constrained ANSWER_ONLY result. */
+export function buildAnswerOnlyAnalysis(request) {
+  if (request?.question?.student_response_mode !== STUDENT_RESPONSE_MODES.ANSWER_ONLY) {
+    throw new TypeError('Answer-only analysis requires ANSWER_ONLY response mode.');
+  }
+  return {
+    schema: INFERENCE_RESPONSE_SCHEMA,
+    correlation_id: request.correlation_id,
+    input_hash: request.input_hash,
+    context_hash: request.context_hash,
+    assessability: {
+      status: 'PARTIALLY_ASSESSABLE',
+      reasons: [ANSWER_ONLY_ASSESSABILITY_REASON]
+    },
+    classification: 'ANSWER_ONLY',
+    summary: request.question.student_answer_status === 'ACCEPTED'
+      ? ANSWER_ONLY_ACCEPTED_SUMMARY : ANSWER_ONLY_NOT_ACCEPTED_SUMMARY,
+    strengths: [],
+    gaps: [ANSWER_ONLY_GAP],
+    suggestions: [ANSWER_ONLY_SUGGESTION],
+    solution_comparisons: request.question.solutions.map((solution, index) => ({
+      solution_id: solution.solution_id,
+      alignment: 'NOT_COMPARABLE',
+      observation: `${ANSWER_ONLY_COMPARISON_PREFIX} Approved solution ${index + 1} includes reviewed method tags such as: ${solution.method_tags.slice(0, 3).join(', ')}.`
+    })),
+    confidence: 1
+  };
+}
+
 export function isValidAnalysisScoringSnapshot(value, responseSelectedOption) {
   if (!value || typeof value !== 'object' || Array.isArray(value)
       || Object.keys(value).sort().join(',') !== [
@@ -95,9 +173,11 @@ export function isValidAnalysisScoringSnapshot(value, responseSelectedOption) {
 }
 
 export function computeInferenceContextHash(request) {
+  const contract = analysisContractForRequest(request);
+  if (!contract) throw new TypeError('Unknown analysis inference contract.');
   const question = request.question;
   return inferenceSha256(canonicalInferenceJson({
-    schema: INFERENCE_CONTEXT_HASH_SCHEMA,
+    schema: contract.contextHashSchema,
     question_id: question.question_id,
     prompt_markdown: question.prompt_markdown,
     choices: question.choices,
@@ -107,11 +187,17 @@ export function computeInferenceContextHash(request) {
 }
 
 export function computeInferenceInputHash(request) {
-  return inferenceSha256(canonicalInferenceJson({
-    schema: INFERENCE_INPUT_HASH_SCHEMA,
+  const contract = analysisContractForRequest(request);
+  if (!contract) throw new TypeError('Unknown analysis inference contract.');
+  const input = {
+    schema: contract.inputHashSchema,
     context_hash: request.context_hash,
     student_answer: request.question.student_answer,
     student_answer_status: request.question.student_answer_status,
     student_reasoning: request.question.student_reasoning
-  }));
+  };
+  if (contract.analysisContractVersion === ANALYSIS_CONTRACT_VERSION) {
+    input.student_response_mode = request.question.student_response_mode;
+  }
+  return inferenceSha256(canonicalInferenceJson(input));
 }

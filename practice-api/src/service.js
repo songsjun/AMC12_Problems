@@ -1528,6 +1528,11 @@ export class PracticeService {
           throw conflict('LEARNING_REANALYSIS_SOURCE_UNSUPPORTED',
             'This final contains batch-confirmed evidence and cannot be restarted as an official-answer analysis.');
         }
+        const currentWork = current.workItems.find((item) => item.workType === 'ANALYZE_SUBMISSION');
+        if (['QUEUED', 'RUNNING'].includes(currentWork?.status)) {
+          throw conflict('LEARNING_ANALYSIS_IN_PROGRESS',
+            'The current analysis is already queued or running. Wait for it to finish before restarting.');
+        }
         if (current.submission.currentVersion >= this.reanalysisMaxVersions) {
           throw conflict('LEARNING_VERSION_LIMIT_REACHED',
             'This submission has reached its reanalysis history limit.', {
@@ -1539,11 +1544,6 @@ export class PracticeService {
             && !TERMINAL_BATCH_STATUSES.has(bundle.batch.status))) {
           throw conflict('LEARNING_BATCH_ACTIVE',
             'Finish or delete the active batch submission before restarting analysis.');
-        }
-        const currentWork = current.workItems.find((item) => item.workType === 'ANALYZE_SUBMISSION');
-        if (currentWork?.status === 'RUNNING') {
-          throw conflict('LEARNING_ANALYSIS_IN_PROGRESS',
-            'The current analysis has already reached the AI provider. Wait for it to finish before restarting.');
         }
         const validNumbers = new Set(form.questions.map((question) => question.number));
         if (normalized.notes.some((note) => !validNumbers.has(note.questionNumber))) {
@@ -1671,7 +1671,7 @@ export class PracticeService {
             }
             if (error.code === 'LEARNING_ANALYSIS_IN_PROGRESS') {
               throw conflict('LEARNING_ANALYSIS_IN_PROGRESS',
-                'The current analysis has already reached the AI provider. Wait for it to finish before restarting.');
+                'The current analysis is already queued or running. Wait for it to finish before restarting.');
             }
             if (error.code === 'LEARNING_BATCH_ACTIVE') {
               throw conflict('LEARNING_BATCH_ACTIVE',

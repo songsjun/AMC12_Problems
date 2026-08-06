@@ -1,9 +1,10 @@
 import {
-  INFERENCE_PROMPT_VERSION,
-  INFERENCE_REQUEST_SCHEMA,
-  INFERENCE_RESPONSE_SCHEMA,
+  ANALYSIS_CONTRACT_VERSION,
   INFERENCE_SAFETY_PROFILE,
-  INFERENCE_TASK,
+  STUDENT_RESPONSE_MODES,
+  analysisContractForRequest,
+  buildAnswerOnlyAnalysis,
+  canonicalInferenceJson,
   computeInferenceContextHash,
   computeInferenceInputHash,
   deriveStudentAnswerStatus,
@@ -12,12 +13,11 @@ import {
   isRestrictedInferenceOutputText
 } from './amc-inference-contract.js';
 
-const FIXED_PATH = '/v2/analyze-question';
 const HASH = /^[a-f0-9]{64}$/;
 const ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,95}$/;
 const REVIEWER_ID = /^[A-Za-z0-9][A-Za-z0-9._:@/-]{2,127}$/;
 const TAG = /^[a-z0-9][a-z0-9-]{0,63}$/;
-const CLASSIFICATIONS = new Set([
+const REASONING_CLASSIFICATIONS = new Set([
   'CORRECT_AND_WELL_JUSTIFIED', 'CORRECT_WITH_REASONING_GAPS', 'INCORRECT_CONCEPTUAL',
   'INCORRECT_EXECUTION', 'INCORRECT_UNCLASSIFIED'
 ]);
@@ -34,7 +34,7 @@ export class InferenceClientError extends Error {
   }
 }
 
-function fixedLoopbackEndpoint(origin) {
+function fixedLoopbackOrigin(origin) {
   let parsed;
   try {
     parsed = new URL(origin);
@@ -45,7 +45,7 @@ function fixedLoopbackEndpoint(origin) {
       || parsed.username || parsed.password || parsed.search || parsed.hash || !['', '/'].includes(parsed.pathname)) {
     throw new Error('AMC12_INFERENCE_ORIGIN must be a loopback HTTP origin.');
   }
-  return new URL(FIXED_PATH, parsed).href;
+  return parsed.origin;
 }
 
 async function boundedJson(response, maximumBytes) {
@@ -112,21 +112,32 @@ function validateLocalRequest(request) {
   } catch {
     return false;
   }
-  if (!exactRecord(request, ['schema', 'task', 'correlation_id', 'input_hash', 'context_hash', 'safety_id', 'question'])
-      || request.schema !== INFERENCE_REQUEST_SCHEMA || request.task !== INFERENCE_TASK
+  const contract = analysisContractForRequest(request);
+  const v3 = contract?.analysisContractVersion === ANALYSIS_CONTRACT_VERSION;
+  const questionKeys = [
+    'question_id', 'prompt_markdown', 'choices', 'scoring', 'student_answer',
+    'student_answer_status', 'student_reasoning', 'solutions'
+  ];
+  if (v3) questionKeys.push('student_response_mode');
+  if (!contract
+      || !exactRecord(request, ['schema', 'task', 'correlation_id', 'input_hash', 'context_hash', 'safety_id', 'question'])
       || request.safety_id !== INFERENCE_SAFETY_PROFILE || !ID.test(request.correlation_id)
       || !HASH.test(request.input_hash) || !HASH.test(request.context_hash)
-      || !exactRecord(request.question, [
-        'question_id', 'prompt_markdown', 'choices', 'scoring', 'student_answer',
-        'student_answer_status', 'student_reasoning', 'solutions'
-      ]) || !ID.test(request.question.question_id)
+      || !exactRecord(request.question, questionKeys) || !ID.test(request.question.question_id)
       || !(request.question.student_answer === null || ['A', 'B', 'C', 'D', 'E'].includes(request.question.student_answer))
       || !isBoundedInferenceInputText(request.question.prompt_markdown, 1, 16_384)
-      || !isBoundedInferenceInputText(request.question.student_reasoning, 1, 12_000)
-      || request.question.student_reasoning.trim() === ''
       || !Array.isArray(request.question.choices) || request.question.choices.length !== 5
       || !Array.isArray(request.question.solutions) || request.question.solutions.length < 2
       || request.question.solutions.length > 8) return false;
+  if (v3) {
+    const answerOnly = request.question.student_response_mode === STUDENT_RESPONSE_MODES.ANSWER_ONLY;
+    const reasoning = request.question.student_response_mode === STUDENT_RESPONSE_MODES.REASONING;
+    if ((!answerOnly && !reasoning)
+        || !isBoundedInferenceInputText(request.question.student_reasoning, 0, 12_000)
+        || (answerOnly && (request.question.student_answer === null || request.question.student_reasoning !== ''))
+        || (reasoning && request.question.student_reasoning.trim() === '')) return false;
+  } else if (!isBoundedInferenceInputText(request.question.student_reasoning, 1, 12_000)
+      || request.question.student_reasoning.trim() === '') return false;
   const labels = ['A', 'B', 'C', 'D', 'E'];
   const scoring = request.question.scoring;
   if (!exactRecord(scoring, ['is_scored', 'canonical_answer', 'accepted_options'])
@@ -169,17 +180,23 @@ function validateLocalRequest(request) {
   }
 }
 
-function validateAnalysis(value, request) {
+function validateAnalysis(value, request, contract) {
   if (!exactRecord(value, [
     'schema', 'correlation_id', 'input_hash', 'context_hash', 'assessability', 'classification',
     'summary', 'strengths', 'gaps', 'suggestions', 'solution_comparisons', 'confidence'
   ])) return false;
-  if (value.schema !== INFERENCE_RESPONSE_SCHEMA || value.correlation_id !== request.correlation_id
+  if (value.schema !== contract.responseSchema || value.correlation_id !== request.correlation_id
       || value.input_hash !== request.input_hash || value.context_hash !== request.context_hash
-      || !CLASSIFICATIONS.has(value.classification) || !isRestrictedInferenceOutputText(value.summary, 1, 1_200)
+      || !(REASONING_CLASSIFICATIONS.has(value.classification)
+        || (contract.analysisContractVersion === ANALYSIS_CONTRACT_VERSION && value.classification === 'ANSWER_ONLY'))
+      || !isRestrictedInferenceOutputText(value.summary, 1, 1_200)
       || !stringArray(value.strengths, 0, 5, 600) || !stringArray(value.gaps, 0, 5, 600)
       || !stringArray(value.suggestions, 1, 5, 600) || !Number.isFinite(value.confidence)
       || value.confidence < 0 || value.confidence > 1) return false;
+  if (contract.analysisContractVersion === ANALYSIS_CONTRACT_VERSION
+      && (request.question.student_response_mode === STUDENT_RESPONSE_MODES.ANSWER_ONLY
+      ? value.classification !== 'ANSWER_ONLY'
+      : value.classification === 'ANSWER_ONLY')) return false;
   if (request.question.student_answer_status === 'ACCEPTED' && value.classification.startsWith('INCORRECT_')) return false;
   if (request.question.student_answer_status === 'NOT_ACCEPTED' && value.classification.startsWith('CORRECT_')) return false;
   if (!exactRecord(value.assessability, ['status', 'reasons'])
@@ -194,6 +211,14 @@ function validateAnalysis(value, request) {
         || !ALIGNMENTS.has(comparison.alignment) || !isRestrictedInferenceOutputText(comparison.observation, 1, 600)) return false;
     comparedIds.add(comparison.solution_id);
   }
+  if (contract.analysisContractVersion === ANALYSIS_CONTRACT_VERSION
+      && request.question.student_response_mode === STUDENT_RESPONSE_MODES.ANSWER_ONLY) {
+    try {
+      return canonicalInferenceJson(value) === canonicalInferenceJson(buildAnswerOnlyAnalysis(request));
+    } catch {
+      return false;
+    }
+  }
   return true;
 }
 
@@ -207,14 +232,14 @@ function fallbackStatusCode(status) {
   return 'GATEWAY_HTTP_ERROR';
 }
 
-function validateRunMetadata(value) {
+function validateRunMetadata(value, contract) {
   if (!exactRecord(value, ['provider', 'requestedModel', 'responseModel', 'promptVersion', 'schemaVersion', 'usage'])
       || value.provider !== 'openai'
       || typeof value.requestedModel !== 'string' || typeof value.responseModel !== 'string'
       || !/^[A-Za-z0-9][A-Za-z0-9._-]{1,127}$/.test(value.requestedModel)
       || !/^[A-Za-z0-9][A-Za-z0-9._:-]{1,127}$/.test(value.responseModel)
-      || value.promptVersion !== INFERENCE_PROMPT_VERSION
-      || value.schemaVersion !== INFERENCE_RESPONSE_SCHEMA) return false;
+      || value.promptVersion !== contract.promptVersion
+      || value.schemaVersion !== contract.responseSchema) return false;
   if (!value.usage || typeof value.usage !== 'object' || Array.isArray(value.usage)) return false;
   const allowedUsageKeys = ['cachedInputTokens', 'inputTokens', 'outputTokens', 'totalTokens'];
   if (Object.hasOwn(value.usage, 'cacheWriteTokens')) allowedUsageKeys.push('cacheWriteTokens');
@@ -263,7 +288,7 @@ export class AmcInferenceClient {
   }) {
     if (typeof token !== 'string' || token.length < 32) throw new Error('AMC12_INFERENCE_TOKEN must contain at least 32 characters.');
     if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1_000 || timeoutMs > 180_000) throw new Error('Invalid inference timeout.');
-    this.endpoint = fixedLoopbackEndpoint(origin);
+    this.origin = fixedLoopbackOrigin(origin);
     this.#token = token;
     this.timeoutMs = timeoutMs;
     if (!Number.isSafeInteger(maxResponseBytes) || maxResponseBytes < 2_048 || maxResponseBytes > 1024 * 1024) {
@@ -275,14 +300,15 @@ export class AmcInferenceClient {
   }
 
   async analyze(request, { signal } = {}) {
-    if (!validateLocalRequest(request)) {
+    const contract = analysisContractForRequest(request);
+    if (!contract || !validateLocalRequest(request)) {
       throw new InferenceClientError('INVALID_LOCAL_REQUEST');
     }
     const timeout = AbortSignal.timeout(this.timeoutMs);
     const combined = signal ? AbortSignal.any([signal, timeout]) : timeout;
     let response;
     try {
-      response = await this.fetchImpl(this.endpoint, {
+      response = await this.fetchImpl(new URL(contract.path, this.origin).href, {
         method: 'POST',
         redirect: 'manual',
         headers: {
@@ -302,7 +328,8 @@ export class AmcInferenceClient {
     const payload = await boundedJson(response, this.maxResponseBytes);
     if (!response.ok) throw gatewayFailure(payload, response.status);
     if (!exactRecord(payload, ['ok', 'analysis', 'runMetadata']) || payload.ok !== true
-        || !validateAnalysis(payload.analysis, request) || !validateRunMetadata(payload.runMetadata)) {
+        || !validateAnalysis(payload.analysis, request, contract)
+        || !validateRunMetadata(payload.runMetadata, contract)) {
       throw new InferenceClientError('GATEWAY_PROTOCOL_ERROR');
     }
     return { analysis: payload.analysis, runMetadata: payload.runMetadata };

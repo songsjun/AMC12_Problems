@@ -5,6 +5,7 @@ import { providerRetentionNotBefore } from './infrastructure/assemblyai-retentio
 import { analysisInputHash, canonicalHash, canonicalJson } from './learning-review/canonical.js';
 import {
   ANALYSIS_CONTRACT_VERSION,
+  SUPPORTED_ANALYSIS_CONTRACT_VERSIONS,
   isValidAnalysisScoringSnapshot
 } from './infrastructure/amc-inference-contract.js';
 import { ATTEMPT_MODE, OPEN_REVIEW_STATUS, openReviewReleaseHash } from './open-review/domain.js';
@@ -1864,7 +1865,7 @@ export class PostgresStore {
            WHERE $2::boolean AND w.status = 'QUEUED' AND w.available_at <= $1
              AND amc_practice.learning_entitlement_allows(s.id, 'EXISTING_WORK')
              AND r.status = 'QUEUED' AND v.context_status = 'CONTEXT_READY'
-             AND r.analysis_contract_version = $5
+             AND r.analysis_contract_version = ANY($5::text[])
              AND v.context_set_id = r.context_set_id AND w.input_hash = r.input_hash
              AND w.deletion_generation = r.deletion_generation
            UNION ALL
@@ -1911,7 +1912,7 @@ export class PostgresStore {
                   WHEN kind IS DISTINCT FROM $6::text THEN 0 ELSE 1 END,
                   available_at, created_at, priority DESC, id LIMIT 1`,
         [now, accepted.has('INTERACTIVE_ANALYSIS'), accepted.has('BATCH_EXTRACTION'),
-          maxBatchConcurrent, ANALYSIS_CONTRACT_VERSION, lastClaimedKind,
+          maxBatchConcurrent, SUPPORTED_ANALYSIS_CONTRACT_VERSIONS, lastClaimedKind,
           AI_PRIORITY_STARVATION_MAX_WAIT_MS]
       );
       if (!selected.rowCount) {
@@ -4028,6 +4029,7 @@ export class PostgresStore {
   }
 
   async authorizeLearningAnalysisProviderCall(input) {
+    if (!SUPPORTED_ANALYSIS_CONTRACT_VERSIONS.includes(input.expectedAnalysisContractVersion)) return false;
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
@@ -4067,7 +4069,7 @@ export class PostgresStore {
         [input.workItemId, input.analysisRunId, input.workerId, input.leaseToken,
           input.inputHash, input.deletionGeneration, input.versionId, input.versionNumber,
           input.evidenceHash, input.expectedStudentId, input.expectedSubmissionCurrentVersion,
-          input.expectedContextSetId, input.now, input.questionNumber, ANALYSIS_CONTRACT_VERSION]
+          input.expectedContextSetId, input.now, input.questionNumber, input.expectedAnalysisContractVersion]
       );
       const row = core.rows[0];
       if (!row) {
@@ -7145,26 +7147,18 @@ class PostgresAttemptTransaction {
        WHERE current.learning_submission_id = $1 AND current.version_number = $2
        FOR UPDATE OF work`, [row.id, expectedCurrentVersion]
     );
-    if (!old.rowCount || old.rows[0].status === 'RUNNING') {
+    if (!old.rowCount || ['QUEUED', 'RUNNING'].includes(old.rows[0].status)) {
       throw Object.assign(new Error('Learning analysis is already running.'), {
         code: old.rowCount ? 'LEARNING_ANALYSIS_IN_PROGRESS' : 'LEARNING_VERSION_CONFLICT'
       });
     }
-    if (['BLOCKED_CONTEXT', 'QUEUED'].includes(old.rows[0].status)) {
+    if (old.rows[0].status === 'BLOCKED_CONTEXT') {
       await this.client.query(
         `UPDATE amc_practice.learning_work_items
          SET status = 'CANCELLED', lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
              last_error_code = 'SUPERSEDED_BY_EVIDENCE_REVISION', updated_at = $2
          WHERE id = $1`, [old.rows[0].id, now]
       );
-      if (old.rows[0].analysis_run_id && old.rows[0].run_status === 'QUEUED') {
-        await this.client.query(
-          `UPDATE amc_practice.learning_analysis_runs
-           SET status = 'CANCELLED', completed_at = $2,
-               last_error_code = 'SUPERSEDED_BY_EVIDENCE_REVISION'
-           WHERE id = $1`, [old.rows[0].analysis_run_id, now]
-        );
-      }
     }
     await this.client.query(
       `INSERT INTO amc_practice.learning_submission_versions
