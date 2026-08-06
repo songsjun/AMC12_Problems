@@ -1271,6 +1271,13 @@ const LEARNING_REPORT_STATUSES = new Set([
   'CONTEXT_UNAVAILABLE', 'QUEUED', 'RUNNING', 'COMPLETE', 'PARTIAL', 'UNASSESSABLE', 'FAILED', 'CANCELLED'
 ]);
 const LEARNING_QUESTION_STATUSES = new Set(['SUCCEEDED', 'UNASSESSABLE', 'FAILED']);
+const LEARNING_EVIDENCE_MODES = new Set(['REASONING', 'ANSWER_ONLY', 'NONE']);
+const LEARNING_AVAILABILITY_REASONS = new Set([
+  'NO_ATTEMPT', 'UNSCORED', 'CONTEXT_UNAVAILABLE', 'VISUAL_CONTEXT_UNAVAILABLE',
+  'APPROVED_SOLUTIONS_UNAVAILABLE', 'INVALID_EVIDENCE', 'ANALYSIS_FAILED'
+]);
+const WHOLE_TEST_ASSESSMENT_STATUSES = new Set(['SUCCEEDED', 'FAILED', 'NOT_AVAILABLE']);
+const WHOLE_TEST_EVIDENCE_BASES = new Set(['METHOD', 'ANSWER_PATTERN', 'COVERAGE_PATTERN']);
 
 function reportString(value, maximumLength = 20_000) {
   return typeof value === 'string' ? value.slice(0, maximumLength) : '';
@@ -1286,20 +1293,125 @@ function reportCount(value) {
   return Number.isSafeInteger(value) && value >= 0 && value <= 100 ? value : 0;
 }
 
-function normalizeLearningReportSummary(value) {
+function strictReportText(value, minimumBytes, maximumBytes) {
+  if (typeof value !== 'string'
+      || /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\uFFFD]/u.test(value)) return null;
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index);
+    if (code >= 0xD800 && code <= 0xDBFF) {
+      const next = value.charCodeAt(index + 1);
+      if (!(next >= 0xDC00 && next <= 0xDFFF)) return null;
+      index += 1;
+    } else if (code >= 0xDC00 && code <= 0xDFFF) return null;
+  }
+  const bytes = new TextEncoder().encode(value).byteLength;
+  return bytes >= minimumBytes && bytes <= maximumBytes ? value : null;
+}
+
+function strictEvidenceQuestionNumbers(value, questionMap) {
+  if (!Array.isArray(value) || value.length < 1 || value.length > 25) return null;
+  const result = [];
+  for (const number of value) {
+    if (!Number.isSafeInteger(number) || number < 1 || number > 100 || !questionMap.has(number)
+        || (result.length && number <= result[result.length - 1])) return null;
+    result.push(number);
+  }
+  return result;
+}
+
+function normalizeWholeTestInsight(value, questionMap, { priority = false } = {}) {
+  if (!isRecord(value)) return null;
+  const evidenceBasis = String(value.evidenceBasis || '').toUpperCase();
+  if (!WHOLE_TEST_EVIDENCE_BASES.has(evidenceBasis) || (!priority && evidenceBasis === 'COVERAGE_PATTERN')) return null;
+  const evidenceQuestionNumbers = strictEvidenceQuestionNumbers(value.evidenceQuestionNumbers, questionMap);
+  const title = strictReportText(value.title, 1, 180);
+  const analysisMarkdown = priority ? null : strictReportText(value.analysisMarkdown, 1, 800);
+  const rationaleMarkdown = priority ? strictReportText(value.rationaleMarkdown, 1, 800) : null;
+  const nextStepMarkdown = priority ? strictReportText(value.nextStepMarkdown, 1, 800) : null;
+  if (!title || !evidenceQuestionNumbers || (priority ? !rationaleMarkdown || !nextStepMarkdown : !analysisMarkdown)) return null;
+  if (evidenceBasis === 'METHOD' && evidenceQuestionNumbers.some((number) => {
+    const question = questionMap.get(number);
+    return question.status !== 'SUCCEEDED' || question.evidenceMode !== 'REASONING';
+  })) return null;
+  if (evidenceBasis === 'ANSWER_PATTERN' && evidenceQuestionNumbers.some((number) => {
+    const question = questionMap.get(number);
+    return question.status !== 'SUCCEEDED' || !['REASONING', 'ANSWER_ONLY'].includes(question.evidenceMode);
+  })) return null;
+  if (!priority) return { title, analysisMarkdown, evidenceBasis, evidenceQuestionNumbers };
+  if (!Number.isSafeInteger(value.priority) || value.priority < 1 || value.priority > 4) return null;
+  return {
+    priority: value.priority, title, rationaleMarkdown, nextStepMarkdown, evidenceBasis, evidenceQuestionNumbers
+  };
+}
+
+function normalizeWholeTestAssessment(value, questions) {
+  if (!isRecord(value)) return null;
+  const status = String(value.status || '').toUpperCase();
+  if (!WHOLE_TEST_ASSESSMENT_STATUSES.has(status) || !isRecord(value.evidenceCoverage)) return null;
+  const coverageKeys = [
+    'totalQuestions', 'answeredCount', 'correctCount', 'incorrectCount', 'blankCount', 'unscoredCount',
+    'reasoningAnalyzedCount', 'answerOnlyCount', 'contextUnavailableCount', 'failedCount'
+  ];
+  const evidenceCoverage = {};
+  for (const key of coverageKeys) {
+    const count = value.evidenceCoverage[key];
+    if (!Number.isSafeInteger(count) || count < 0 || count > 100) return null;
+    evidenceCoverage[key] = count;
+  }
+  if (evidenceCoverage.answeredCount + evidenceCoverage.blankCount + evidenceCoverage.unscoredCount
+      !== evidenceCoverage.totalQuestions
+      || evidenceCoverage.correctCount + evidenceCoverage.incorrectCount !== evidenceCoverage.answeredCount
+      || evidenceCoverage.reasoningAnalyzedCount > evidenceCoverage.totalQuestions
+      || evidenceCoverage.answerOnlyCount > evidenceCoverage.answeredCount
+      || evidenceCoverage.contextUnavailableCount > evidenceCoverage.totalQuestions
+      || evidenceCoverage.failedCount > evidenceCoverage.totalQuestions) return null;
+  const questionMap = new Map(questions.map((question) => [question.questionNumber, question]));
+  if (questionMap.size !== questions.length || evidenceCoverage.totalQuestions !== questionMap.size) return null;
+  const summaryMarkdown = strictReportText(value.summaryMarkdown, 1, 1_600);
+  if (!summaryMarkdown || !Array.isArray(value.strengths) || value.strengths.length > 5
+      || !Array.isArray(value.growthAreas) || value.growthAreas.length > 5
+      || !Array.isArray(value.priorityActions) || value.priorityActions.length > 4
+      || !Array.isArray(value.limitations) || value.limitations.length < 1 || value.limitations.length > 8) return null;
+  const strengths = value.strengths.map((item) => normalizeWholeTestInsight(item, questionMap));
+  const growthAreas = value.growthAreas.map((item) => normalizeWholeTestInsight(item, questionMap));
+  const priorityActions = value.priorityActions.map((item) => normalizeWholeTestInsight(item, questionMap, { priority: true }));
+  const limitations = value.limitations.map((item) => strictReportText(item, 1, 600));
+  if ([...strengths, ...growthAreas, ...priorityActions, ...limitations].some((item) => item === null)
+      || priorityActions.some((item, index) => item.priority !== index + 1)) return null;
+  if (status === 'SUCCEEDED') {
+    if (priorityActions.length < 1 || typeof value.confidence !== 'number'
+        || !Number.isFinite(value.confidence) || value.confidence < 0 || value.confidence > 1) return null;
+  } else if (strengths.length || growthAreas.length || priorityActions.length || value.confidence !== null) return null;
+  return {
+    status, evidenceCoverage, summaryMarkdown, strengths, growthAreas, priorityActions, limitations,
+    confidence: status === 'SUCCEEDED' ? value.confidence : null
+  };
+}
+
+function normalizeLearningReportSummary(value, questions) {
   if (!isRecord(value)) {
-    return { totalQuestions: 0, analyzedCount: 0, unassessableCount: 0, failedCount: 0 };
+    return {
+      totalQuestions: 0, analyzedCount: 0, unassessableCount: 0, failedCount: 0, wholeTestAssessment: null
+    };
   }
   const summary = {
     totalQuestions: reportCount(value.totalQuestions),
     analyzedCount: reportCount(value.analyzedCount),
     unassessableCount: reportCount(value.unassessableCount),
-    failedCount: reportCount(value.failedCount)
+    failedCount: reportCount(value.failedCount),
+    wholeTestAssessment: null
   };
   const classified = summary.analyzedCount + summary.unassessableCount + summary.failedCount;
   if (classified > summary.totalQuestions) {
-    return { totalQuestions: 0, analyzedCount: 0, unassessableCount: 0, failedCount: 0 };
+    return {
+      totalQuestions: 0, analyzedCount: 0, unassessableCount: 0, failedCount: 0, wholeTestAssessment: null
+    };
   }
+  const assessment = normalizeWholeTestAssessment(value.wholeTestAssessment, questions);
+  if (assessment && assessment.evidenceCoverage.totalQuestions === summary.totalQuestions
+      && assessment.evidenceCoverage.failedCount === summary.failedCount
+      && assessment.evidenceCoverage.reasoningAnalyzedCount + assessment.evidenceCoverage.answerOnlyCount
+        <= summary.analyzedCount) summary.wholeTestAssessment = assessment;
   return summary;
 }
 
@@ -1310,6 +1422,46 @@ export function normalizeLearningReport(payload) {
   const rawStatus = String(root.status || '').toUpperCase();
   if (!LEARNING_REPORT_STATUSES.has(rawStatus)) return null;
   const questions = Array.isArray(root.questions) ? root.questions : [];
+  const normalizedQuestions = questions.slice(0, 50).map((question) => {
+    const questionNumber = finiteNumber(question?.questionNumber);
+    if (!Number.isSafeInteger(questionNumber) || questionNumber < 1 || questionNumber > 100) return null;
+    const questionStatus = String(question?.status || '').toUpperCase();
+    const normalizedStatus = LEARNING_QUESTION_STATUSES.has(questionStatus) ? questionStatus : 'UNASSESSABLE';
+    const rawEvidenceMode = String(question?.evidenceMode || '').toUpperCase();
+    const evidenceMode = LEARNING_EVIDENCE_MODES.has(rawEvidenceMode) ? rawEvidenceMode : 'NONE';
+    const rawAvailabilityReason = question?.availabilityReason == null
+      ? null : String(question.availabilityReason).toUpperCase();
+    let availabilityReason = rawAvailabilityReason === null || LEARNING_AVAILABILITY_REASONS.has(rawAvailabilityReason)
+      ? rawAvailabilityReason : null;
+    const safeStatus = normalizedStatus === 'SUCCEEDED' && !['REASONING', 'ANSWER_ONLY'].includes(evidenceMode)
+      ? 'UNASSESSABLE' : normalizedStatus;
+    if (safeStatus !== normalizedStatus) availabilityReason = 'INVALID_EVIDENCE';
+    const comparisons = Array.isArray(question?.solutionComparisons) ? question.solutionComparisons : [];
+    return {
+      questionNumber,
+      status: safeStatus,
+      evidenceMode: safeStatus === 'SUCCEEDED' ? evidenceMode : 'NONE',
+      availabilityReason,
+      reasoningVerdict: reportString(question?.reasoningVerdict, 2_000),
+      summaryMarkdown: reportString(question?.summaryMarkdown),
+      strengths: reportStringList(question?.strengths),
+      gaps: reportStringList(question?.gaps),
+      suggestions: reportStringList(question?.suggestions),
+      solutionComparisons: comparisons.slice(0, 25).map((comparison) => ({
+        // solutionId is deliberately omitted: ordinal labels are sufficient
+        // for students and do not expose an internal content identifier.
+        methodTags: reportStringList(comparison?.methodTags),
+        alignment: reportString(comparison?.alignment, 1_000),
+        analysisMarkdown: reportString(comparison?.analysisMarkdown)
+      })),
+      confidence: typeof question?.confidence === 'number'
+        && Number.isFinite(question.confidence)
+        && question.confidence >= 0
+        && question.confidence <= 1
+        ? question.confidence
+        : null
+    };
+  }).filter(Boolean).sort((left, right) => left.questionNumber - right.questionNumber);
   return {
     // Identity and pin values are retained only for response validation and
     // diagnostics. Rendering uses the explicit pedagogical fields below.
@@ -1317,37 +1469,31 @@ export function normalizeLearningReport(payload) {
     version: Number.isSafeInteger(finiteNumber(root.version)) ? finiteNumber(root.version) : null,
     status: rawStatus,
     generatedAt: root.generatedAt || null,
-    summary: normalizeLearningReportSummary(root.summary),
+    summary: normalizeLearningReportSummary(root.summary, normalizedQuestions),
     pins: isRecord(root.pins) ? root.pins : null,
-    questions: questions.slice(0, 50).map((question) => {
-      const questionNumber = finiteNumber(question?.questionNumber);
-      if (!Number.isSafeInteger(questionNumber) || questionNumber < 1) return null;
-      const questionStatus = String(question?.status || '').toUpperCase();
-      const comparisons = Array.isArray(question?.solutionComparisons) ? question.solutionComparisons : [];
-      return {
-        questionNumber,
-        status: LEARNING_QUESTION_STATUSES.has(questionStatus) ? questionStatus : 'UNASSESSABLE',
-        reasoningVerdict: reportString(question?.reasoningVerdict, 2_000),
-        summaryMarkdown: reportString(question?.summaryMarkdown),
-        strengths: reportStringList(question?.strengths),
-        gaps: reportStringList(question?.gaps),
-        suggestions: reportStringList(question?.suggestions),
-        solutionComparisons: comparisons.slice(0, 25).map((comparison) => ({
-          // solutionId is deliberately omitted: ordinal labels are sufficient
-          // for students and do not expose an internal content identifier.
-          methodTags: reportStringList(comparison?.methodTags),
-          alignment: reportString(comparison?.alignment, 1_000),
-          analysisMarkdown: reportString(comparison?.analysisMarkdown)
-        })),
-        confidence: typeof question?.confidence === 'number'
-          && Number.isFinite(question.confidence)
-          && question.confidence >= 0
-          && question.confidence <= 1
-          ? question.confidence
-          : null
-      };
-    }).filter(Boolean).sort((left, right) => left.questionNumber - right.questionNumber)
+    questions: normalizedQuestions
   };
+}
+
+export function learningQuestionAvailabilityMessage(question) {
+  return ({
+    NO_ATTEMPT: 'No answer or approach was submitted for this question. Missing evidence is not treated as evidence that you do not understand the topic.',
+    UNSCORED: 'This question was not scored, so no learning conclusion was drawn from it.',
+    CONTEXT_UNAVAILABLE: 'The approved reference material or required visual context was unavailable, so this question was not analyzed.',
+    VISUAL_CONTEXT_UNAVAILABLE: 'Required diagram or other visual context was unavailable, so this question was not analyzed. No conclusion about your ability was made.',
+    APPROVED_SOLUTIONS_UNAVAILABLE: 'Reviewed solution references were not available, so this question was not analyzed. Your submitted response and objective score are unaffected.',
+    INVALID_EVIDENCE: 'The submitted evidence could not be interpreted reliably, so no learning conclusion was drawn from it.',
+    ANALYSIS_FAILED: 'AI analysis was unavailable for this question. Your submitted response and objective score are unaffected.'
+  })[question?.availabilityReason] || (question?.status === 'FAILED'
+    ? 'AI analysis was unavailable for this question. Your submitted response and objective score are unaffected.'
+    : 'There was not enough reliable evidence to assess this question. No conclusion about your ability was made.');
+}
+
+export function learningQuestionStatusLabel(question) {
+  if (question?.status === 'SUCCEEDED' && question?.evidenceMode === 'REASONING') return 'Approach analyzed';
+  if (question?.status === 'SUCCEEDED' && question?.evidenceMode === 'ANSWER_ONLY') return 'Answer reviewed';
+  if (question?.status === 'FAILED' || question?.availabilityReason === 'ANALYSIS_FAILED') return 'Analysis unavailable';
+  return 'Not analyzed';
 }
 
 export function learningReportApprovedSolutionCount(report) {
@@ -1367,8 +1513,8 @@ export function learningReportStatusMessage(status) {
     RUNNING: 'Your learning analysis is in progress. Your objective score is already final.',
     COMPLETE: 'Your learning analysis is complete.',
     PARTIAL: 'A partial learning analysis is available. Some questions could not be assessed.',
-    UNASSESSABLE: 'No saved approach was detailed enough to analyze reliably. Add or revise an approach below, then save it and analyze again. Re-running unchanged evidence is unlikely to improve the report.',
-    FAILED: 'The learning analysis could not be completed. You can use Analyze again after checking or updating your saved approach.',
+    UNASSESSABLE: 'No questions had enough reliable submitted evidence and reference context for AI analysis. Review the question-specific reasons below; this status is not an assessment of your ability.',
+    FAILED: 'The learning analysis could not be completed. Your submitted responses and objective score are unaffected; you can use Analyze again.',
     CANCELLED: 'The previous learning analysis was cancelled. You can analyze the current saved evidence again.'
   })[String(status || '').toUpperCase()] || 'Checking for your learning analysis…';
 }
@@ -1735,7 +1881,8 @@ function getElements() {
     timedResultOnly: [...document.querySelectorAll('[data-timed-result-only]')],
     finalScore: byId('final-score'), scoreDetails: byId('score-details'),
     analysisSummary: byId('analysis-summary'), analysisStatus: byId('analysis-status'), analysisMeta: byId('analysis-meta'),
-    analysisReportSummary: byId('analysis-report-summary'), analysisQuestions: byId('analysis-questions'), refreshAnalysisButton: byId('refresh-analysis-button'),
+    analysisWholeTest: byId('analysis-whole-test'), analysisReportSummary: byId('analysis-report-summary'),
+    analysisQuestions: byId('analysis-questions'), refreshAnalysisButton: byId('refresh-analysis-button'),
     analysisReanalysis: byId('analysis-reanalysis'), analysisReanalysisVersion: byId('analysis-reanalysis-version'),
     analysisReanalysisQuestion: byId('analysis-reanalysis-question'), analysisReanalysisReasoning: byId('analysis-reanalysis-reasoning'),
     analysisReanalysisBytes: byId('analysis-reanalysis-bytes'), analysisReanalysisSave: byId('analysis-reanalysis-save'),
@@ -1754,6 +1901,7 @@ function getElements() {
     learningHistoryDetailSource: byId('learning-history-detail-source'), closeLearningHistoryDetail: byId('close-learning-history-detail'),
     learningHistoryVersions: byId('learning-history-versions'), learningVersionReport: byId('learning-version-report'),
     learningVersionReportMeta: byId('learning-version-report-meta'), learningVersionReportStatus: byId('learning-version-report-status'),
+    learningVersionWholeTest: byId('learning-version-whole-test'),
     learningVersionReportSummary: byId('learning-version-report-summary'), learningVersionQuestions: byId('learning-version-questions'),
     closeLearningVersionReport: byId('close-learning-version-report'), learningQuestionDetail: byId('learning-question-detail'),
     learningQuestionMeta: byId('learning-question-meta'), learningQuestionTitle: byId('learning-question-title'),
@@ -1881,9 +2029,10 @@ function clearSensitiveDom() {
   for (const node of [
     elements.formsList, elements.questionNav, elements.questionContent, elements.answerOptions,
     elements.submissionHistory, elements.resultsQuestions, elements.solutionsList,
-    elements.analysisReportSummary, elements.analysisQuestions, elements.analysisReanalysisQuestion,
+    elements.analysisWholeTest, elements.analysisReportSummary, elements.analysisQuestions, elements.analysisReanalysisQuestion,
     elements.batchSelectedFiles, elements.batchWorkspace,
-    elements.learningHistoryList, elements.learningHistoryVersions, elements.learningVersionReportSummary,
+    elements.learningHistoryList, elements.learningHistoryVersions, elements.learningVersionWholeTest,
+    elements.learningVersionReportSummary,
     elements.learningVersionQuestions, elements.learningQuestionPrompt, elements.learningQuestionChoices,
     elements.learningQuestionResponse, elements.learningQuestionAnalysis, elements.tutorThreadList,
     elements.tutorMessages, elements.tutorRequests, elements.modalMessage, elements.modalActions
@@ -2660,8 +2809,10 @@ function typesetVisiblePracticeMath() {
     elements.answerOptions,
     elements.resultsQuestions,
     elements.solutionsList,
+    elements.analysisWholeTest,
     elements.analysisReportSummary,
     elements.analysisQuestions,
+    elements.learningVersionWholeTest,
     elements.learningVersionReportSummary,
     elements.learningVersionQuestions,
     elements.learningQuestionPrompt,
@@ -3867,6 +4018,158 @@ function renderResults(resultPayload, solutionsPayload) {
   renderLearningAnalysisStatus();
 }
 
+function appendWholeTestMarkdown(container, markdown, className = '') {
+  const body = document.createElement('div');
+  body.className = className;
+  renderMarkdown(body, markdown, { allowExternalResources: false });
+  container.appendChild(body);
+}
+
+function appendWholeTestEvidence(container, item, onEvidenceQuestion) {
+  const evidence = document.createElement('div');
+  evidence.className = 'whole-test-evidence';
+  const label = document.createElement('span');
+  label.textContent = ({
+    METHOD: 'Method evidence:', ANSWER_PATTERN: 'Answer-pattern evidence:', COVERAGE_PATTERN: 'Coverage evidence:'
+  })[item.evidenceBasis] || 'Evidence:';
+  evidence.appendChild(label);
+  for (const questionNumber of item.evidenceQuestionNumbers) {
+    if (typeof onEvidenceQuestion === 'function') {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'whole-test-evidence-link';
+      button.textContent = `Q${questionNumber}`;
+      button.setAttribute('aria-label', `Open evidence from question ${questionNumber}`);
+      button.addEventListener('click', () => onEvidenceQuestion(questionNumber));
+      evidence.appendChild(button);
+    } else {
+      const number = document.createElement('span');
+      number.textContent = `Q${questionNumber}`;
+      evidence.appendChild(number);
+    }
+  }
+  container.appendChild(evidence);
+}
+
+function appendWholeTestInsights(container, title, items, { priority = false, onEvidenceQuestion = null } = {}) {
+  if (!items.length) return;
+  const section = document.createElement('section');
+  section.className = 'whole-test-insight-section';
+  const heading = document.createElement('h4');
+  heading.textContent = title;
+  const list = document.createElement(priority ? 'ol' : 'ul');
+  list.className = 'whole-test-insight-list';
+  for (const item of items) {
+    const row = document.createElement('li');
+    row.className = 'whole-test-insight';
+    const itemTitle = document.createElement('h5');
+    itemTitle.textContent = priority ? `${item.priority}. ${item.title}` : item.title;
+    row.appendChild(itemTitle);
+    if (priority) {
+      const rationaleLabel = document.createElement('p');
+      rationaleLabel.className = 'whole-test-insight-label';
+      rationaleLabel.textContent = 'Why this matters';
+      row.appendChild(rationaleLabel);
+      appendWholeTestMarkdown(row, item.rationaleMarkdown);
+      const nextStepLabel = document.createElement('p');
+      nextStepLabel.className = 'whole-test-insight-label';
+      nextStepLabel.textContent = 'Next step';
+      row.appendChild(nextStepLabel);
+      appendWholeTestMarkdown(row, item.nextStepMarkdown);
+    } else appendWholeTestMarkdown(row, item.analysisMarkdown);
+    appendWholeTestEvidence(row, item, onEvidenceQuestion);
+    list.appendChild(row);
+  }
+  section.append(heading, list);
+  container.appendChild(section);
+}
+
+function renderWholeTestAssessment(container, report, { onEvidenceQuestion = null } = {}) {
+  clearNode(container);
+  const assessment = report?.summary?.wholeTestAssessment;
+  const terminal = ['COMPLETE', 'PARTIAL', 'UNASSESSABLE', 'FAILED'].includes(report?.status);
+  if (!assessment) {
+    if (!terminal) return;
+    const unavailable = document.createElement('section');
+    unavailable.className = 'whole-test-card whole-test-card-unavailable';
+    const heading = document.createElement('h3');
+    heading.textContent = 'Whole-test overview';
+    const note = document.createElement('p');
+    note.className = 'muted';
+    note.textContent = 'A whole-test overview is not available for this report version. Question-by-question analysis remains below.';
+    unavailable.append(heading, note);
+    container.appendChild(unavailable);
+    return;
+  }
+  const card = document.createElement('section');
+  card.className = 'whole-test-card';
+  const header = document.createElement('div');
+  header.className = 'whole-test-heading';
+  const heading = document.createElement('h3');
+  heading.textContent = 'Whole-test overview';
+  const status = document.createElement('span');
+  status.className = 'status-pill';
+  status.dataset.status = assessment.status;
+  status.textContent = ({
+    SUCCEEDED: 'Overview ready', FAILED: 'Overview unavailable', NOT_AVAILABLE: 'Not available for this version'
+  })[assessment.status];
+  header.append(heading, status);
+  card.appendChild(header);
+  appendWholeTestMarkdown(card, assessment.summaryMarkdown, 'whole-test-summary');
+  if (assessment.status === 'SUCCEEDED') {
+    const confidence = document.createElement('p');
+    confidence.className = 'whole-test-confidence muted';
+    confidence.textContent = `AI synthesis confidence: ${Math.round(assessment.confidence * 100)}%`;
+    card.appendChild(confidence);
+  }
+  const coverageSection = document.createElement('section');
+  coverageSection.className = 'whole-test-coverage-section';
+  const coverageHeading = document.createElement('h4');
+  coverageHeading.textContent = 'Evidence coverage';
+  const coverageNote = document.createElement('p');
+  coverageNote.className = 'muted';
+  coverageNote.textContent = 'Unanswered or unavailable evidence is shown as coverage, not as proof of a learning weakness.';
+  const coverage = document.createElement('dl');
+  coverage.className = 'whole-test-coverage';
+  for (const [label, key] of [
+    ['Questions', 'totalQuestions'], ['Answered', 'answeredCount'], ['Correct', 'correctCount'],
+    ['Incorrect', 'incorrectCount'], ['Unanswered', 'blankCount'], ['Not scored', 'unscoredCount'],
+    ['Approaches analyzed', 'reasoningAnalyzedCount'], ['Answer only', 'answerOnlyCount'],
+    ['Context unavailable', 'contextUnavailableCount'], ['Analysis failed', 'failedCount']
+  ]) {
+    const item = document.createElement('div');
+    const term = document.createElement('dt'); term.textContent = label;
+    const description = document.createElement('dd'); description.textContent = String(assessment.evidenceCoverage[key]);
+    item.append(term, description); coverage.appendChild(item);
+  }
+  coverageSection.append(coverageHeading, coverageNote, coverage);
+  card.appendChild(coverageSection);
+  if (assessment.status === 'SUCCEEDED') {
+    appendWholeTestInsights(card, 'Observed strengths', assessment.strengths, { onEvidenceQuestion });
+    appendWholeTestInsights(card, 'Growth areas', assessment.growthAreas, { onEvidenceQuestion });
+    appendWholeTestInsights(card, 'Highest-impact next steps', assessment.priorityActions,
+      { priority: true, onEvidenceQuestion });
+  }
+  const limitations = document.createElement('section');
+  limitations.className = 'whole-test-limitations';
+  const limitationsHeading = document.createElement('h4');
+  limitationsHeading.textContent = 'Limits of this analysis';
+  const limitationsList = document.createElement('ul');
+  for (const item of assessment.limitations) {
+    const row = document.createElement('li'); row.textContent = item; limitationsList.appendChild(row);
+  }
+  limitations.append(limitationsHeading, limitationsList);
+  card.appendChild(limitations);
+  container.appendChild(card);
+}
+
+function focusFinalAnalysisQuestion(questionNumber) {
+  const target = document.getElementById(`analysis-question-${questionNumber}`);
+  if (!target) return;
+  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  target.focus({ preventScroll: true });
+}
+
 function renderLearningAnalysisStatus() {
   if (!elements?.analysisSummary) return;
   const report = state.learningReport;
@@ -3885,6 +4188,7 @@ function renderLearningAnalysisStatus() {
   });
   elements.refreshAnalysisButton.disabled = action.disabled;
   elements.refreshAnalysisButton.textContent = action.label;
+  clearNode(elements.analysisWholeTest);
   clearNode(elements.analysisReportSummary);
   clearNode(elements.analysisQuestions);
 
@@ -3909,10 +4213,12 @@ function renderLearningAnalysisStatus() {
       `${summary.totalQuestions} total`
     ].join(' · ');
   }
+  renderWholeTestAssessment(elements.analysisWholeTest, report, { onEvidenceQuestion: focusFinalAnalysisQuestion });
   renderLearningReanalysisControls();
-  if (!['COMPLETE', 'PARTIAL', 'UNASSESSABLE'].includes(report.status)) return;
-  for (const question of report.questions) renderLearningReportQuestion(question);
-  typesetMath([elements.analysisReportSummary, elements.analysisQuestions]);
+  if (['COMPLETE', 'PARTIAL', 'UNASSESSABLE'].includes(report.status)) {
+    for (const question of report.questions) renderLearningReportQuestion(question);
+  }
+  typesetMath([elements.analysisWholeTest, elements.analysisReportSummary, elements.analysisQuestions]);
 }
 
 function appendLearningFeedbackList(container, title, items) {
@@ -3933,39 +4239,49 @@ function appendLearningFeedbackList(container, title, items) {
 function renderLearningReportQuestion(question) {
   const card = document.createElement('article');
   card.className = 'analysis-question';
+  card.id = `analysis-question-${question.questionNumber}`;
+  card.tabIndex = -1;
   const heading = document.createElement('div');
   heading.className = 'analysis-question-heading';
   const title = document.createElement('h3');
   title.textContent = `Question ${question.questionNumber}`;
   const status = document.createElement('span');
   status.className = 'analysis-question-status';
-  status.textContent = question.status.toLowerCase().replaceAll('_', ' ');
+  status.dataset.status = question.status;
+  status.textContent = learningQuestionStatusLabel(question);
   heading.append(title, status);
   card.appendChild(heading);
 
-  if (question.status === 'UNASSESSABLE') {
+  if (question.status !== 'SUCCEEDED') {
     const notice = document.createElement('p');
     notice.className = 'muted';
-    notice.textContent = 'The submitted reasoning did not contain enough detail for a reliable approach assessment.';
+    notice.textContent = learningQuestionAvailabilityMessage(question);
+    card.appendChild(notice);
+  } else if (question.evidenceMode === 'ANSWER_ONLY') {
+    const notice = document.createElement('p');
+    notice.className = 'muted';
+    notice.textContent = 'Only the selected answer was available. The answer outcome was reviewed, but no solution method was inferred.';
     card.appendChild(notice);
   }
-  if (question.reasoningVerdict) {
+  if (question.status === 'SUCCEEDED' && question.reasoningVerdict && question.reasoningVerdict !== 'ANSWER_ONLY') {
     const verdict = document.createElement('p');
     verdict.className = 'analysis-verdict';
     verdict.textContent = question.reasoningVerdict;
     card.appendChild(verdict);
   }
-  if (question.summaryMarkdown) {
+  if (question.status === 'SUCCEEDED' && question.summaryMarkdown) {
     const summary = document.createElement('div');
     summary.className = 'analysis-question-summary';
     renderMarkdown(summary, question.summaryMarkdown, { allowExternalResources: false });
     card.appendChild(summary);
   }
-  appendLearningFeedbackList(card, 'What worked', question.strengths);
-  appendLearningFeedbackList(card, 'Gaps to address', question.gaps);
-  appendLearningFeedbackList(card, 'Suggestions', question.suggestions);
+  if (question.status === 'SUCCEEDED') {
+    appendLearningFeedbackList(card, 'What worked', question.strengths);
+    appendLearningFeedbackList(card, 'Gaps to address', question.gaps);
+    appendLearningFeedbackList(card, 'Suggestions', question.suggestions);
+  }
 
-  if (question.solutionComparisons.length) {
+  if (question.status === 'SUCCEEDED' && question.solutionComparisons.length) {
     const comparisons = document.createElement('section');
     comparisons.className = 'analysis-comparisons';
     const comparisonsHeading = document.createElement('h4');
@@ -5276,6 +5592,7 @@ async function openLearningHistorySubmission(submissionId) {
 function renderHistoryReport(report, version) {
   elements.learningVersionReportMeta.textContent = `Version ${version.versionNumber} · ${humanVersionReason(version.creationReason)}`;
   elements.learningVersionReportStatus.textContent = learningReportStatusMessage(report.status);
+  clearNode(elements.learningVersionWholeTest);
   clearNode(elements.learningVersionReportSummary);
   clearNode(elements.learningVersionQuestions);
   const summary = document.createElement('p');
@@ -5284,20 +5601,38 @@ function renderHistoryReport(report, version) {
     `${report.summary.failedCount} failed`, `${report.summary.totalQuestions} total`
   ].join(' · ');
   elements.learningVersionReportSummary.appendChild(summary);
+  renderWholeTestAssessment(elements.learningVersionWholeTest, report, {
+    onEvidenceQuestion: (questionNumber) => { void openLearningHistoryQuestion(questionNumber); }
+  });
   const analyses = new Map(report.questions.map((question) => [question.questionNumber, question]));
   for (const questionNumber of learningVersionQuestionNumbers(version)) {
     const question = analyses.get(questionNumber);
     const card = document.createElement('article');
     card.className = 'analysis-question';
+    card.id = `learning-version-question-${questionNumber}`;
+    card.tabIndex = -1;
     const header = document.createElement('div');
     header.className = 'analysis-question-heading';
     const title = document.createElement('h3'); title.textContent = `Question ${questionNumber}`;
-    header.append(title, statusPill(question?.status || report.status));
+    const questionStatus = statusPill(question?.status || report.status);
+    if (question) questionStatus.textContent = learningQuestionStatusLabel(question);
+    header.append(title, questionStatus);
     card.appendChild(header);
-    if (question?.reasoningVerdict) {
+    if (question && question.status !== 'SUCCEEDED') {
+      const notice = document.createElement('p'); notice.className = 'muted';
+      notice.textContent = learningQuestionAvailabilityMessage(question); card.appendChild(notice);
+    } else if (question?.evidenceMode === 'ANSWER_ONLY') {
+      const notice = document.createElement('p'); notice.className = 'muted';
+      notice.textContent = 'Only the selected answer was available. The answer outcome was reviewed, but no solution method was inferred.';
+      card.appendChild(notice);
+    } else if (!question && !learningReportShouldPoll(report.status)) {
+      const notice = document.createElement('p'); notice.className = 'muted';
+      notice.textContent = 'Question analysis is not available in this report version.'; card.appendChild(notice);
+    }
+    if (question?.status === 'SUCCEEDED' && question.reasoningVerdict && question.reasoningVerdict !== 'ANSWER_ONLY') {
       const verdict = document.createElement('p'); verdict.className = 'analysis-verdict'; verdict.textContent = question.reasoningVerdict; card.appendChild(verdict);
     }
-    if (question?.summaryMarkdown) {
+    if (question?.status === 'SUCCEEDED' && question.summaryMarkdown) {
       const body = document.createElement('div');
       renderMarkdown(body, question.summaryMarkdown, { allowExternalResources: false });
       card.appendChild(body);
@@ -5308,13 +5643,15 @@ function renderHistoryReport(report, version) {
     card.appendChild(open);
     elements.learningVersionQuestions.appendChild(card);
   }
-  typesetMath([elements.learningVersionReportSummary, elements.learningVersionQuestions]);
+  typesetMath([elements.learningVersionWholeTest, elements.learningVersionReportSummary, elements.learningVersionQuestions]);
 }
 
 function scheduleHistoryReportPoll(context) {
   if (state.learningHistoryReportPollTimer) window.clearTimeout(state.learningHistoryReportPollTimer);
-  if (!historyContextMatches(context) || !learningReportShouldPoll(state.learningHistoryReport?.status)
-      || state.learningHistoryReportPollCount >= MAX_LEARNING_REPORT_POLLS) return;
+  if (!historyContextMatches(context) || !learningReportShouldPoll(state.learningHistoryReport?.status)) return;
+  // A queued or running historical version is still authoritative active
+  // work. It has no client-side polling ceiling; visibility recovery below
+  // resumes reconciliation after a background tab suspends its timer.
   state.learningHistoryReportPollCount += 1;
   state.learningHistoryReportPollTimer = window.setTimeout(() => {
     state.learningHistoryReportPollTimer = null;
@@ -6255,6 +6592,12 @@ function bindEvents() {
           || state.learningReportLoadError)) {
       stopLearningReportPolling();
       void loadLearningReport({ quiet: true });
+    }
+    if (!document.hidden && !elements.learningVersionReport.hidden
+        && learningReportShouldPoll(state.learningHistoryReport?.status)) {
+      stopLearningHistoryReportPolling();
+      const context = historyContext();
+      if (context) void loadHistoryReport(context);
     }
   });
 }

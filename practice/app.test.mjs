@@ -55,6 +55,8 @@ import {
   learningAnalysisDisplayStatus,
   learningAnalysisEffectiveStatus,
   learningAnalysisIsPending,
+  learningQuestionAvailabilityMessage,
+  learningQuestionStatusLabel,
   learningReportReadFailureMessage,
   learningHistoryPath,
   learningHistoryQuestionPath,
@@ -719,6 +721,8 @@ test('learning reports normalize bare and wrapped response contracts without ren
     questions: [{
       questionNumber: 2,
       status: 'SUCCEEDED',
+      evidenceMode: 'REASONING',
+      availabilityReason: null,
       reasoningVerdict: 'Promising setup',
       summaryMarkdown: 'Use **parity**. <img src=x onerror=alert(1)> [outside](https://evil.example)',
       strengths: ['Correct invariant'], gaps: ['Missed an edge case'], suggestions: ['Check endpoints'],
@@ -735,7 +739,11 @@ test('learning reports normalize bare and wrapped response contracts without ren
   assert.equal(wrapped.status, 'PARTIAL');
   assert.equal(wrapped.questions[0].questionNumber, 2);
   assert.equal(wrapped.questions[0].status, 'SUCCEEDED');
-  assert.deepEqual(wrapped.summary, { totalQuestions: 1, analyzedCount: 1, unassessableCount: 0, failedCount: 0 });
+  assert.deepEqual(wrapped.summary, {
+    totalQuestions: 1, analyzedCount: 1, unassessableCount: 0, failedCount: 0, wholeTestAssessment: null
+  });
+  assert.equal(wrapped.questions[0].evidenceMode, 'REASONING');
+  assert.equal(wrapped.questions[0].availabilityReason, null);
   assert.equal(wrapped.questions[0].solutionComparisons[0].solutionId, undefined);
   assert.equal(wrapped.questions[0].providerInvoked, undefined);
   assert.equal(wrapped.provider, undefined);
@@ -745,13 +753,130 @@ test('learning reports normalize bare and wrapped response contracts without ren
   assert.equal(learningReportApprovedSolutionCount(wrapped), 1);
 });
 
+test('whole-test assessments normalize a bounded evidence-linked contract and fail closed', () => {
+  const report = {
+    learningSubmissionId: 'learning-1', version: 4, status: 'PARTIAL',
+    questions: [
+      { questionNumber: 1, status: 'SUCCEEDED', evidenceMode: 'REASONING', availabilityReason: null,
+        reasoningVerdict: 'SOUND' },
+      { questionNumber: 2, status: 'SUCCEEDED', evidenceMode: 'ANSWER_ONLY', availabilityReason: null,
+        reasoningVerdict: 'ANSWER_ONLY' },
+      { questionNumber: 3, status: 'UNASSESSABLE', evidenceMode: 'NONE', availabilityReason: 'NO_ATTEMPT' }
+    ],
+    summary: {
+      totalQuestions: 3, analyzedCount: 2, unassessableCount: 1, failedCount: 0,
+      wholeTestAssessment: {
+        status: 'SUCCEEDED',
+        evidenceCoverage: {
+          totalQuestions: 3, answeredCount: 2, correctCount: 1, incorrectCount: 1, blankCount: 1,
+          unscoredCount: 0, reasoningAnalyzedCount: 1, answerOnlyCount: 1,
+          contextUnavailableCount: 0, failedCount: 0
+        },
+        summaryMarkdown: 'The submitted evidence shows one explained method and one answer-only result.',
+        strengths: [{
+          title: 'Clear algebraic setup', analysisMarkdown: 'The setup is visible in the submitted approach.',
+          evidenceBasis: 'METHOD', evidenceQuestionNumbers: [1]
+        }],
+        growthAreas: [{
+          title: 'Check answer patterns', analysisMarkdown: 'The answer pattern needs another verification pass.',
+          evidenceBasis: 'ANSWER_PATTERN', evidenceQuestionNumbers: [2]
+        }],
+        priorityActions: [{
+          priority: 1, title: 'Show the verification step', rationaleMarkdown: 'This makes the conclusion auditable.',
+          nextStepMarkdown: 'Add one substitution check.', evidenceBasis: 'METHOD', evidenceQuestionNumbers: [1]
+        }, {
+          priority: 2, title: 'Submit evidence for blanks', rationaleMarkdown: 'One question has no submitted evidence.',
+          nextStepMarkdown: 'Write the first attempted step.', evidenceBasis: 'COVERAGE_PATTERN',
+          evidenceQuestionNumbers: [3]
+        }],
+        limitations: ['An unanswered question is coverage information, not evidence of inability.'],
+        confidence: 0.75,
+        providerInvoked: true, outcomeCode: 'must-not-render'
+      }
+    }
+  };
+  const normalized = normalizeLearningReport({ report });
+  const assessment = normalized.summary.wholeTestAssessment;
+  assert.equal(assessment.status, 'SUCCEEDED');
+  assert.equal(assessment.confidence, 0.75);
+  assert.deepEqual(assessment.strengths[0].evidenceQuestionNumbers, [1]);
+  assert.equal(assessment.priorityActions[1].evidenceBasis, 'COVERAGE_PATTERN');
+  assert.equal(assessment.providerInvoked, undefined);
+  assert.equal(assessment.outcomeCode, undefined);
+
+  const rejectsAssessment = (mutate) => {
+    const candidate = structuredClone(report);
+    mutate(candidate.summary.wholeTestAssessment, candidate);
+    const result = normalizeLearningReport(candidate);
+    assert.equal(result.summary.wholeTestAssessment, null);
+  };
+  rejectsAssessment((whole) => { whole.status = 'READY'; });
+  rejectsAssessment((whole) => { whole.summaryMarkdown = 'x'.repeat(1_601); });
+  rejectsAssessment((whole) => { whole.summaryMarkdown = 'unsafe\uFFFDtext'; });
+  rejectsAssessment((whole) => { whole.strengths[0].evidenceQuestionNumbers = [1, 1]; });
+  rejectsAssessment((whole) => { whole.strengths[0].evidenceQuestionNumbers = [4]; });
+  rejectsAssessment((whole) => { whole.strengths[0].evidenceBasis = 'GUESS'; });
+  rejectsAssessment((whole) => { whole.strengths[0].evidenceQuestionNumbers = [2]; });
+  rejectsAssessment((whole, candidate) => {
+    candidate.questions[1].status = 'UNASSESSABLE';
+    candidate.questions[1].evidenceMode = 'NONE';
+    candidate.questions[1].availabilityReason = 'VISUAL_CONTEXT_UNAVAILABLE';
+  });
+  rejectsAssessment((whole, candidate) => {
+    candidate.questions[1].status = 'FAILED';
+    candidate.questions[1].evidenceMode = 'NONE';
+    candidate.questions[1].availabilityReason = 'ANALYSIS_FAILED';
+  });
+  rejectsAssessment((whole) => { whole.priorityActions[0].priority = 2; });
+  rejectsAssessment((whole) => { whole.evidenceCoverage.blankCount = 0; });
+  rejectsAssessment((whole, candidate) => { candidate.questions[0].evidenceMode = 'UNTRUSTED'; });
+
+  const failed = structuredClone(report);
+  Object.assign(failed.summary.wholeTestAssessment, {
+    status: 'FAILED', strengths: [], growthAreas: [], priorityActions: [], confidence: null
+  });
+  assert.equal(normalizeLearningReport(failed).summary.wholeTestAssessment.status, 'FAILED');
+  failed.summary.wholeTestAssessment.strengths = report.summary.wholeTestAssessment.strengths;
+  assert.equal(normalizeLearningReport(failed).summary.wholeTestAssessment, null,
+    'a failed synthesis cannot smuggle a student-level conclusion into the UI');
+});
+
+test('question availability presentation distinguishes evidence gaps without blaming the student', () => {
+  const expected = [
+    ['NO_ATTEMPT', /not treated as evidence that you do not understand/i],
+    ['UNSCORED', /not scored/i],
+    ['CONTEXT_UNAVAILABLE', /reference material or required visual context/i],
+    ['VISUAL_CONTEXT_UNAVAILABLE', /diagram or other visual context/i],
+    ['APPROVED_SOLUTIONS_UNAVAILABLE', /reviewed solution references/i],
+    ['INVALID_EVIDENCE', /could not be interpreted reliably/i],
+    ['ANALYSIS_FAILED', /objective score are unaffected/i]
+  ];
+  for (const [availabilityReason, pattern] of expected) {
+    const report = normalizeLearningReport({ status: 'PARTIAL', questions: [{
+      questionNumber: 1, status: availabilityReason === 'ANALYSIS_FAILED' ? 'FAILED' : 'UNASSESSABLE',
+      evidenceMode: 'NONE', availabilityReason
+    }] });
+    assert.equal(report.questions[0].availabilityReason, availabilityReason);
+    assert.match(learningQuestionAvailabilityMessage(report.questions[0]), pattern);
+  }
+  assert.equal(learningQuestionStatusLabel({ status: 'SUCCEEDED', evidenceMode: 'REASONING' }), 'Approach analyzed');
+  assert.equal(learningQuestionStatusLabel({ status: 'SUCCEEDED', evidenceMode: 'ANSWER_ONLY' }), 'Answer reviewed');
+  assert.equal(learningQuestionStatusLabel({ status: 'FAILED', evidenceMode: 'NONE' }), 'Analysis unavailable');
+  const unsafe = normalizeLearningReport({ status: 'COMPLETE', questions: [{
+    questionNumber: 1, status: 'SUCCEEDED', evidenceMode: 'MODEL_GUESS', availabilityReason: 'INTERNAL_ERROR'
+  }] }).questions[0];
+  assert.deepEqual({ status: unsafe.status, evidenceMode: unsafe.evidenceMode, availabilityReason: unsafe.availabilityReason }, {
+    status: 'UNASSESSABLE', evidenceMode: 'NONE', availabilityReason: 'INVALID_EVIDENCE'
+  });
+});
+
 test('learning report statuses distinguish missing context, partial work, weak evidence, and failure', () => {
   for (const status of ['CONTEXT_UNAVAILABLE', 'QUEUED', 'RUNNING', 'COMPLETE', 'PARTIAL', 'UNASSESSABLE', 'FAILED', 'CANCELLED']) {
     assert.equal(normalizeLearningReport({ report: { status, questions: [] } }).status, status);
   }
   assert.equal(normalizeLearningReport({ report: { status: 'UNKNOWN', questions: [] } }), null);
   assert.match(learningReportStatusMessage('CONTEXT_UNAVAILABLE'), /reference solutions have not yet been approved/i);
-  assert.match(learningReportStatusMessage('UNASSESSABLE'), /add or revise an approach/i);
+  assert.match(learningReportStatusMessage('UNASSESSABLE'), /not an assessment of your ability/i);
   assert.match(learningReportStatusMessage('FAILED'), /Analyze again/i);
   assert.equal(learningReportShouldPoll('QUEUED'), true);
   assert.equal(learningReportShouldPoll('RUNNING'), true);
@@ -805,6 +930,12 @@ test('report polling rejects stale attempts and stops when the results view is l
     'each report cycle reconciles the authoritative projection before the exact report');
   assert.match(currentPoller, /isCurrentLearningReportRequest\(activeContext, requestSequence\)/);
   assert.match(currentPoller, /report\.learningSubmissionId !== activeContext\.submissionId[\s\S]*?report\.version !== activeContext\.version/);
+  const historyPoller = client.slice(client.indexOf('function scheduleHistoryReportPoll'),
+    client.indexOf('async function loadHistoryReport'));
+  assert.doesNotMatch(historyPoller, /learningHistoryReportPollCount >= MAX_LEARNING_REPORT_POLLS/,
+    'a queued or running historical report cannot exhaust its polling budget');
+  assert.match(client, /visibilitychange[\s\S]*?learningVersionReport\.hidden[\s\S]*?loadHistoryReport\(context\)/,
+    'returning to a pending historical report resumes authoritative polling');
 });
 
 test('objective score renders before a read-only report refresh and report Markdown cannot activate links', async () => {
@@ -1660,7 +1791,8 @@ test('batch, history, report, and Tutor DOM contracts are accessible and keep AI
   for (const id of [
     'learning-history-button', 'batch-upload-form', 'batch-files', 'batch-workspace',
     'learning-history-view', 'learning-history-list', 'learning-history-load-more', 'learning-history-versions',
-    'learning-version-report', 'learning-question-detail', 'tutor-workspace',
+    'analysis-whole-test', 'learning-version-report', 'learning-version-whole-test',
+    'learning-question-detail', 'tutor-workspace',
     'tutor-thread-list', 'tutor-load-more', 'tutor-message-form', 'fork-tutor-thread'
   ]) assert.match(html, new RegExp(`id=["']${id}["']`), id);
   assert.match(html, /id="batch-files"[^>]*multiple[^>]*aria-describedby="batch-file-help"/);
@@ -1671,6 +1803,16 @@ test('batch, history, report, and Tutor DOM contracts are accessible and keep AI
   assert.doesNotMatch(client, /\.innerHTML\s*=/);
   assert.match(client, /renderMarkdown\(body, message\.contentMarkdown, \{ allowExternalResources: false \}\)/);
   assert.match(client, /renderMarkdown\(body, markdown \|\| 'Not provided\.', \{ allowExternalResources: false \}\)/);
+  assert.match(client, /renderWholeTestAssessment\(elements\.analysisWholeTest, report/,
+    'Final results use the shared whole-test renderer');
+  assert.match(client, /renderWholeTestAssessment\(elements\.learningVersionWholeTest, report/,
+    'History uses the same whole-test renderer for an immutable version');
+  assert.match(client, /card\.id = `analysis-question-\$\{question\.questionNumber\}`;[\s\S]*?card\.tabIndex = -1/,
+    'Final evidence links have a programmatically focusable question target');
+  assert.match(client, /onEvidenceQuestion: \(questionNumber\) => \{ void openLearningHistoryQuestion\(questionNumber\); \}/,
+    'History evidence links open the exact question context');
+  assert.doesNotMatch(client, /submitted reasoning did not contain enough detail for a reliable approach assessment/i,
+    'unassessable causes are not collapsed into a student-blaming explanation');
   assert.match(client, /evidence\.textContent = String\(item\.evidenceText/);
   assert.match(client, /sendTutorMessageRequest\(api, identity, threadId, message\)/,
     'the browser sends a Tutor message, not server-owned question/solution/scoring context');
