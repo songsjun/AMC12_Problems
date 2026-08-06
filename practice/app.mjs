@@ -722,6 +722,89 @@ export function learningReportEndpointForAttempt(attempt) {
   return `${API_BASE}/attempts/${encodeURIComponent(String(attempt.id))}/learning-report`;
 }
 
+export function learningReanalysisEndpointForAttempt(attempt) {
+  if (!canAccessFinalReview(attempt) || !attempt?.id) return null;
+  return `${API_BASE}/attempts/${encodeURIComponent(String(attempt.id))}/learning-reanalyses`;
+}
+
+export function normalizedLearningReanalysisReasoning(value) {
+  return typeof value === 'string' && value.trim() !== '' ? value : '';
+}
+
+export function learningReanalysisPayload(expectedCurrentVersion, notes = []) {
+  if (!Number.isSafeInteger(expectedCurrentVersion) || expectedCurrentVersion < 1) {
+    throw new ApiError('The current analysis version is unavailable. Refresh the results first.', {
+      code: 'LEARNING_VERSION_MISSING'
+    });
+  }
+  if (!Array.isArray(notes) || notes.length > 25) {
+    throw new ApiError('At most 25 question approaches may be updated at once.', {
+      code: 'INVALID_LEARNING_REANALYSIS'
+    });
+  }
+  const seen = new Set();
+  let totalReasoningBytes = 0;
+  const normalized = notes.map((note) => {
+    if (!isRecord(note)
+        || Object.keys(note).some((key) => !['questionNumber', 'reasoningText'].includes(key))
+        || !(typeof note.reasoningText === 'string' || note.reasoningText === null)) {
+      throw new ApiError('The selected question approach is invalid.', {
+        code: 'INVALID_LEARNING_REANALYSIS'
+      });
+    }
+    const questionNumber = note.questionNumber;
+    const reasoningText = normalizedLearningReanalysisReasoning(note.reasoningText);
+    if (!Number.isSafeInteger(questionNumber) || questionNumber < 1 || questionNumber > 100
+        || seen.has(questionNumber) || reasoningText.includes('\u0000')) {
+      throw new ApiError('The selected question approach is invalid.', {
+        code: 'INVALID_LEARNING_REANALYSIS'
+      });
+    }
+    seen.add(questionNumber);
+    const reasoningBytes = utf8ByteLength(reasoningText);
+    if (reasoningBytes > MAX_REASONING_NOTE_BYTES) {
+      throw new ApiError(`Question ${questionNumber}'s approach exceeds 8000 UTF-8 bytes.`, {
+        code: 'REASONING_NOTE_TOO_LARGE'
+      });
+    }
+    totalReasoningBytes += reasoningBytes;
+    return { questionNumber, reasoningText };
+  });
+  if (totalReasoningBytes > MAX_REASONING_BATCH_TEXT_BYTES) {
+    throw new ApiError('The combined approaches exceed 48000 UTF-8 bytes.', {
+      code: 'REASONING_REQUEST_TOO_LARGE'
+    });
+  }
+  if (utf8ByteLength(JSON.stringify({ expectedCurrentVersion, notes: normalized })) > MAX_REASONING_REQUEST_BYTES) {
+    throw new ApiError('The reanalysis request is too large.', { code: 'INVALID_LEARNING_REANALYSIS' });
+  }
+  return { expectedCurrentVersion, notes: normalized };
+}
+
+export async function submitLearningReanalysisRequest(apiClient, attempt, expectedCurrentVersion, notes = [],
+  { generateKey = idempotencyKey } = {}) {
+  const path = learningReanalysisEndpointForAttempt(attempt);
+  if (!path) {
+    throw new ApiError('Reanalysis is available only after final submission.', {
+      status: 409, code: 'FINAL_REVIEW_NOT_AVAILABLE'
+    });
+  }
+  const payload = learningReanalysisPayload(expectedCurrentVersion, notes);
+  const key = generateKey();
+  return retryIdempotentNetworkMutation(
+    () => apiClient.post(path, payload, { idempotency: key })
+  );
+}
+
+export function currentLearningQuestionReasoning(payload, identity) {
+  const root = unwrapData(payload);
+  if (!isRecord(root) || !isRecord(root.question) || !isRecord(root.response)
+      || String(root.submissionId || '') !== String(identity?.submissionId || '')
+      || Number(root.versionNumber) !== Number(identity?.versionNumber)
+      || Number(root.question.questionNumber) !== Number(identity?.questionNumber)) return null;
+  return root.response.reasoningText == null ? '' : String(root.response.reasoningText);
+}
+
 export async function fetchLearningReport(api, attempt) {
   const path = learningReportEndpointForAttempt(attempt);
   if (!path) {
@@ -1011,7 +1094,38 @@ export function learningAnalysisProjection(payload) {
   const analysisStatus = String(firstDefined(projection.analysisStatus, projection.analysis?.status, '')).toUpperCase();
   const status = String(firstDefined(projection.status, '')).toUpperCase();
   if (!analysisStatus && !status) return null;
-  return { analysisStatus, status };
+  const version = finiteNumber(projection.version);
+  return {
+    id: projection.id == null ? null : String(projection.id),
+    sourceKind: String(firstDefined(projection.sourceKind, projection.sourceType, '')).toUpperCase(),
+    version: Number.isSafeInteger(version) && version > 0 ? version : null,
+    status,
+    analysisStatus,
+    reanalysisAvailable: projection.reanalysisAvailable === true
+  };
+}
+
+export function preferNewerLearningProjection(current, candidate, { replaceEqual = false } = {}) {
+  if (!candidate) return current || null;
+  if (!current) return candidate;
+  const currentHasLineage = Boolean(current.id) && Number.isSafeInteger(current.version) && current.version > 0;
+  const candidateHasLineage = Boolean(candidate.id) && Number.isSafeInteger(candidate.version) && candidate.version > 0;
+  if (currentHasLineage) {
+    if (!candidateHasLineage || candidate.id !== current.id || candidate.version < current.version) return current;
+    if (candidate.version === current.version && !replaceEqual) return current;
+  }
+  return candidate;
+}
+
+export function learningReanalysisMutationContextMatches(context, current) {
+  return Boolean(context && current)
+    && context.mutationSequence === current.mutationSequence
+    && context.attemptId === String(current.attemptId || '')
+    && context.attemptEpoch === current.attemptEpoch
+    && context.submissionId === String(current.submissionId || '')
+    && context.versionNumber === current.versionNumber
+    && context.questionNumber === current.questionNumber
+    && current.resultsVisible === true;
 }
 
 export function learningAnalysisDisplayStatus(projection) {
@@ -1125,11 +1239,14 @@ export function learningReportStatusMessage(status) {
   })[String(status || '').toUpperCase()] || 'Checking for your learning analysis…';
 }
 
-export function learningReportContextMatches(context, attemptId, attemptEpoch, resultsVisible = true) {
+export function learningReportContextMatches(context, attemptId, attemptEpoch, resultsVisible = true,
+  currentVersion = null, currentSubmissionId = null) {
   return Boolean(context)
     && Boolean(attemptId)
     && context.id === String(attemptId)
     && context.epoch === attemptEpoch
+    && (currentVersion === null || Number(context.version) === Number(currentVersion))
+    && (currentSubmissionId === null || String(context.submissionId) === String(currentSubmissionId))
     && resultsVisible === true;
 }
 
@@ -1421,6 +1538,14 @@ const state = {
   learningReportPollTimer: null,
   learningReportPollCount: 0,
   learningReportRequestInFlight: false,
+  learningReportRequestSequence: 0,
+  learningReanalysisQuestionNumber: null,
+  learningReanalysisLoadedVersion: null,
+  learningReanalysisOriginalText: '',
+  learningReanalysisLoadSequence: 0,
+  learningReanalysisLoadInFlight: false,
+  learningReanalysisMutationSequence: 0,
+  learningReanalysisRequestInFlight: false,
   resultsViewMode: null,
   batchReviewWorkspace: null,
   batchReviewOpenSequence: 0,
@@ -1477,6 +1602,12 @@ function getElements() {
     finalScore: byId('final-score'), scoreDetails: byId('score-details'),
     analysisSummary: byId('analysis-summary'), analysisStatus: byId('analysis-status'), analysisMeta: byId('analysis-meta'),
     analysisReportSummary: byId('analysis-report-summary'), analysisQuestions: byId('analysis-questions'), refreshAnalysisButton: byId('refresh-analysis-button'),
+    analysisReanalysis: byId('analysis-reanalysis'), analysisReanalysisVersion: byId('analysis-reanalysis-version'),
+    analysisReanalysisQuestion: byId('analysis-reanalysis-question'), analysisReanalysisReasoning: byId('analysis-reanalysis-reasoning'),
+    analysisReanalysisBytes: byId('analysis-reanalysis-bytes'), analysisReanalysisSave: byId('analysis-reanalysis-save'),
+    analysisReanalysisRerun: byId('analysis-reanalysis-rerun'), analysisReanalysisReload: byId('analysis-reanalysis-reload'),
+    analysisReanalysisHistory: byId('analysis-reanalysis-history'),
+    analysisReanalysisStatus: byId('analysis-reanalysis-status'),
     submissionHistory: byId('submission-history'), resultsQuestions: byId('results-questions'), solutionsList: byId('solutions-list'),
     expandSolutions: byId('expand-solutions-button'), resetButton: byId('reset-button'), resultsDashboardButton: byId('results-dashboard-button'),
     batchLearningSection: byId('batch-learning-section'), batchUploadForm: byId('batch-upload-form'),
@@ -1511,6 +1642,7 @@ function showOnly(view) {
   views.forEach((candidate) => { candidate.hidden = candidate !== view; });
   if (view !== elements.practiceView) stopAttemptSync();
   if (view !== elements.resultsView) stopLearningReportPolling();
+  if (view !== elements.resultsView) invalidateLearningReanalysisRequests({ clearDraft: true });
   if (view !== elements.resultsView) stopBatchPolling();
   if (view !== elements.learningHistoryView) purgeTutorWorkspace({ clearSummaries: true });
 }
@@ -1615,7 +1747,8 @@ function clearSensitiveDom() {
   for (const node of [
     elements.formsList, elements.questionNav, elements.questionContent, elements.answerOptions,
     elements.submissionHistory, elements.resultsQuestions, elements.solutionsList,
-    elements.analysisReportSummary, elements.analysisQuestions, elements.batchSelectedFiles, elements.batchWorkspace,
+    elements.analysisReportSummary, elements.analysisQuestions, elements.analysisReanalysisQuestion,
+    elements.batchSelectedFiles, elements.batchWorkspace,
     elements.learningHistoryList, elements.learningHistoryVersions, elements.learningVersionReportSummary,
     elements.learningVersionQuestions, elements.learningQuestionPrompt, elements.learningQuestionChoices,
     elements.learningQuestionResponse, elements.learningQuestionAnalysis, elements.tutorThreadList,
@@ -1627,7 +1760,8 @@ function clearSensitiveDom() {
     elements.formLabel, elements.attemptTitle, elements.attemptState, elements.saveStatus,
     elements.questionPosition, elements.questionSaveIndicator, elements.reasoningSaveStatus,
     elements.resultsEyebrow, elements.resultsTitle, elements.resultsSummary, elements.finalScore, elements.scoreDetails, elements.analysisStatus,
-    elements.analysisMeta, elements.batchStatus, elements.learningHistoryStatus,
+    elements.analysisMeta, elements.analysisReanalysisVersion, elements.analysisReanalysisBytes,
+    elements.analysisReanalysisStatus, elements.batchStatus, elements.learningHistoryStatus,
     elements.learningHistoryDetailSource, elements.learningVersionReportMeta,
     elements.learningVersionReportStatus, elements.learningQuestionMeta, elements.tutorStatus,
     elements.learningHistoryDetailTitle, elements.learningQuestionTitle, elements.modalTitle
@@ -1635,6 +1769,7 @@ function clearSensitiveDom() {
     if (node) node.textContent = '';
   }
   elements.reasoningInput.value = '';
+  elements.analysisReanalysisReasoning.value = '';
   elements.batchUploadForm.reset();
   elements.tutorMessageForm.reset();
   elements.loginForm.reset();
@@ -1644,6 +1779,7 @@ function clearSensitiveDom() {
   setButtonBusy(elements.sendTutorMessage, false);
   setButtonBusy(elements.forkTutorThread, false);
   elements.analysisSummary.hidden = true;
+  elements.analysisReanalysis.hidden = true;
   elements.tutorThread.hidden = true;
   elements.learningHistoryDetail.hidden = true;
   elements.learningVersionReport.hidden = true;
@@ -1711,6 +1847,14 @@ function clearAttemptState() {
   state.learningReportLoadError = null;
   state.learningReportPollCount = 0;
   state.learningReportRequestInFlight = false;
+  state.learningReportRequestSequence += 1;
+  state.learningReanalysisQuestionNumber = null;
+  state.learningReanalysisLoadedVersion = null;
+  state.learningReanalysisOriginalText = '';
+  state.learningReanalysisLoadSequence += 1;
+  state.learningReanalysisLoadInFlight = false;
+  state.learningReanalysisMutationSequence += 1;
+  state.learningReanalysisRequestInFlight = false;
   state.batchReviewOpenSequence += 1;
   state.batchReviewWorkspace = null;
   state.resultsViewMode = null;
@@ -3564,7 +3708,10 @@ function normalizeSolutionRows(payload) {
 
 function renderResults(resultPayload, solutionsPayload) {
   const result = normalizedResult(resultPayload);
-  state.learningSubmission = learningAnalysisProjection(resultPayload) || state.learningSubmission;
+  state.learningSubmission = preferNewerLearningProjection(
+    state.learningSubmission,
+    learningAnalysisProjection(resultPayload)
+  );
   const finalSubmission = firstDefined(result.finalSubmission, result.submission, null);
   const score = firstDefined(scoreFromSubmission(finalSubmission), result.score, result.totalScore, result.points, null);
   const total = firstDefined(maximumScoreFromSubmission(finalSubmission), result.maxScore, result.maximumScore, result.totalPossible, null);
@@ -3588,12 +3735,13 @@ function renderResults(resultPayload, solutionsPayload) {
 
 function renderLearningAnalysisStatus() {
   if (!elements?.analysisSummary) return;
+  const displayStatus = learningAnalysisDisplayStatus(state.learningSubmission);
   const projectedStatus = ({
     BLOCKED_CONTEXT: 'CONTEXT_UNAVAILABLE',
     PENDING: 'QUEUED',
     PROCESSING: 'RUNNING',
     COMPLETED: 'COMPLETE'
-  })[learningAnalysisDisplayStatus(state.learningSubmission)];
+  })[displayStatus] || displayStatus;
   const report = state.learningReport;
   const status = report?.status || projectedStatus || '';
   elements.analysisSummary.hidden = false;
@@ -3606,11 +3754,14 @@ function renderLearningAnalysisStatus() {
   clearNode(elements.analysisQuestions);
 
   if (!report) {
-    elements.analysisMeta.textContent = '';
+    elements.analysisMeta.textContent = Number.isSafeInteger(state.learningSubmission?.version)
+      ? `Analysis version ${state.learningSubmission.version}` : '';
+    renderLearningReanalysisControls();
     return;
   }
   const approvedCount = learningReportApprovedSolutionCount(report);
-  const meta = [`${approvedCount} approved solution reference${approvedCount === 1 ? '' : 's'} reviewed`];
+  const meta = [Number.isSafeInteger(report.version) ? `Analysis version ${report.version}` : '',
+    `${approvedCount} approved solution reference${approvedCount === 1 ? '' : 's'} reviewed`].filter(Boolean);
   if (report.generatedAt) meta.push(`Generated ${formatDateTime(report.generatedAt)}`);
   elements.analysisMeta.textContent = meta.join(' · ');
 
@@ -3623,6 +3774,7 @@ function renderLearningAnalysisStatus() {
       `${summary.totalQuestions} total`
     ].join(' · ');
   }
+  renderLearningReanalysisControls();
   if (!['COMPLETE', 'PARTIAL', 'UNASSESSABLE'].includes(report.status)) return;
   for (const question of report.questions) renderLearningReportQuestion(question);
   typesetMath([elements.analysisReportSummary, elements.analysisQuestions]);
@@ -3707,9 +3859,347 @@ function renderLearningReportQuestion(question) {
   elements.analysisQuestions.appendChild(card);
 }
 
+function learningReanalysisAvailable() {
+  const projection = state.learningSubmission;
+  return state.resultsViewMode === 'TIMED_RESULT'
+    && canAccessFinalReview(state.attempt)
+    && projection?.reanalysisAvailable === true
+    && projection.sourceKind === 'INTERACTIVE_FINAL'
+    && Boolean(projection.id)
+    && Number.isSafeInteger(projection.version)
+    && projection.version > 0;
+}
+
+function learningReanalysisQuestionNumbers() {
+  const result = normalizedResult(state.resultPayload);
+  const finalSubmission = firstDefined(result.finalSubmission, result.submission, null);
+  const candidates = state.questions.length ? state.questions : resultQuestionRows(finalSubmission || result);
+  return [...new Set(candidates.map((question) => finiteNumber(firstDefined(
+    question?.number, question?.questionNumber, question?.question?.number
+  ))).filter((number) => Number.isSafeInteger(number) && number > 0 && number <= 100))]
+    .sort((left, right) => left - right);
+}
+
+function setLearningReanalysisStatus(message = '', kind = '') {
+  if (!elements?.analysisReanalysisStatus) return;
+  elements.analysisReanalysisStatus.textContent = message;
+  elements.analysisReanalysisStatus.classList.toggle('is-error', kind === 'error');
+  elements.analysisReanalysisStatus.classList.toggle('is-success', kind === 'success');
+}
+
+function invalidateLearningReanalysisRequests({ clearDraft = false } = {}) {
+  state.learningReanalysisLoadSequence += 1;
+  state.learningReanalysisMutationSequence += 1;
+  state.learningReanalysisLoadInFlight = false;
+  state.learningReanalysisRequestInFlight = false;
+  state.learningReanalysisLoadedVersion = null;
+  state.learningReanalysisOriginalText = '';
+  if (clearDraft) {
+    state.learningReanalysisQuestionNumber = null;
+    if (elements?.analysisReanalysisReasoning) elements.analysisReanalysisReasoning.value = '';
+    if (elements?.analysisReanalysisQuestion) clearNode(elements.analysisReanalysisQuestion);
+    setLearningReanalysisStatus();
+  }
+}
+
+function syncLearningReanalysisQuestionOptions() {
+  if (!elements?.analysisReanalysisQuestion) return false;
+  const numbers = learningReanalysisQuestionNumbers();
+  if (!numbers.length) return false;
+  if (!numbers.includes(state.learningReanalysisQuestionNumber)) {
+    state.learningReanalysisQuestionNumber = numbers[0];
+  }
+  const existing = [...elements.analysisReanalysisQuestion.options].map((option) => Number(option.value));
+  if (existing.length !== numbers.length || existing.some((number, index) => number !== numbers[index])) {
+    clearNode(elements.analysisReanalysisQuestion);
+    for (const number of numbers) {
+      const option = document.createElement('option');
+      option.value = String(number);
+      option.textContent = `Question ${number}`;
+      elements.analysisReanalysisQuestion.appendChild(option);
+    }
+  }
+  elements.analysisReanalysisQuestion.value = String(state.learningReanalysisQuestionNumber);
+  return true;
+}
+
+function currentLearningReanalysisIdentity() {
+  if (!learningReanalysisAvailable() || !Number.isSafeInteger(state.learningReanalysisQuestionNumber)) return null;
+  return {
+    attemptId: String(state.attempt.id),
+    attemptEpoch: state.attemptEpoch,
+    submissionId: state.learningSubmission.id,
+    versionNumber: state.learningSubmission.version,
+    questionNumber: state.learningReanalysisQuestionNumber
+  };
+}
+
+function learningReanalysisIdentityMatches(identity) {
+  const current = currentLearningReanalysisIdentity();
+  return Boolean(current && identity)
+    && current.attemptId === identity.attemptId
+    && current.attemptEpoch === identity.attemptEpoch
+    && current.submissionId === identity.submissionId
+    && current.versionNumber === identity.versionNumber
+    && current.questionNumber === identity.questionNumber
+    && Boolean(elements?.resultsView && !elements.resultsView.hidden);
+}
+
+function isCurrentLearningReanalysisMutation(context) {
+  return learningReanalysisMutationContextMatches(context, {
+    mutationSequence: state.learningReanalysisMutationSequence,
+    attemptId: state.attempt?.id,
+    attemptEpoch: state.attemptEpoch,
+    submissionId: state.learningSubmission?.id,
+    versionNumber: state.learningSubmission?.version,
+    questionNumber: state.learningReanalysisQuestionNumber,
+    resultsVisible: Boolean(elements?.resultsView && !elements.resultsView.hidden)
+  });
+}
+
+function renderLearningReanalysisControls() {
+  if (!elements?.analysisReanalysis) return;
+  const available = learningReanalysisAvailable() && syncLearningReanalysisQuestionOptions();
+  elements.analysisReanalysis.hidden = !available;
+  elements.analysisReanalysis.setAttribute('aria-busy', available
+    && (state.learningReanalysisLoadInFlight || state.learningReanalysisRequestInFlight) ? 'true' : 'false');
+  if (!available) return;
+  const projection = state.learningSubmission;
+  const loaded = state.learningReanalysisLoadedVersion === projection.version
+    && Number(elements.analysisReanalysisQuestion.value) === state.learningReanalysisQuestionNumber;
+  const draft = normalizedLearningReanalysisReasoning(elements.analysisReanalysisReasoning.value);
+  const bytes = utf8ByteLength(draft);
+  const dirty = loaded && (state.learningReanalysisOriginalText === null
+    || draft !== state.learningReanalysisOriginalText);
+  const busy = state.learningReanalysisLoadInFlight || state.learningReanalysisRequestInFlight;
+  elements.analysisReanalysisVersion.textContent = `Editing analysis version ${projection.version}.`;
+  elements.analysisReanalysisBytes.textContent = `${bytes} / ${MAX_REASONING_NOTE_BYTES} UTF-8 bytes`;
+  elements.analysisReanalysisBytes.classList.toggle('is-error', bytes > MAX_REASONING_NOTE_BYTES);
+  elements.analysisReanalysisQuestion.disabled = busy;
+  elements.analysisReanalysisReasoning.disabled = busy || !loaded;
+  elements.analysisReanalysisSave.disabled = busy || !dirty || bytes > MAX_REASONING_NOTE_BYTES;
+  elements.analysisReanalysisRerun.disabled = busy || !loaded || dirty;
+  elements.analysisReanalysisReload.disabled = busy;
+  elements.analysisReanalysisReload.textContent = dirty ? 'Discard draft and reload' : 'Reload saved approach';
+  elements.analysisReanalysisHistory.disabled = state.learningReanalysisRequestInFlight;
+  elements.analysisReanalysisSave.textContent = state.learningReanalysisRequestInFlight
+    ? 'Creating new version…' : 'Save approach and restart analysis';
+  elements.analysisReanalysisRerun.textContent = state.learningReanalysisRequestInFlight
+    ? 'Creating new version…' : 'Restart analysis without changes';
+}
+
+function learningReanalysisDraftIsDirty() {
+  return learningReanalysisAvailable()
+    && state.learningReanalysisLoadedVersion === state.learningSubmission?.version
+    && (state.learningReanalysisOriginalText === null
+      || normalizedLearningReanalysisReasoning(elements.analysisReanalysisReasoning.value)
+        !== state.learningReanalysisOriginalText);
+}
+
+function navigateAfterReanalysisDraftDecision(action) {
+  if (!learningReanalysisDraftIsDirty()) {
+    void action();
+    return;
+  }
+  openModal({
+    title: 'Discard the unsaved approach?',
+    paragraphs: [
+      'This edited approach has not been saved as a new analysis version.',
+      'Your existing Final score, saved versions, reports, and Tutor chats will not be changed.'
+    ],
+    actions: [
+      { label: 'Keep editing', className: 'button button-secondary', close: true },
+      {
+        label: 'Discard and continue', className: 'button button-danger', handler: async () => {
+          hideModal({ force: true });
+          await action();
+        }
+      }
+    ]
+  });
+}
+
+async function loadCurrentLearningReanalysisReasoning() {
+  const identity = currentLearningReanalysisIdentity();
+  if (!identity) return false;
+  const sequence = ++state.learningReanalysisLoadSequence;
+  state.learningReanalysisLoadInFlight = true;
+  state.learningReanalysisLoadedVersion = null;
+  state.learningReanalysisOriginalText = '';
+  elements.analysisReanalysisReasoning.value = '';
+  setLearningReanalysisStatus(`Loading Question ${identity.questionNumber} from version ${identity.versionNumber}…`);
+  renderLearningReanalysisControls();
+  try {
+    const response = await api.get(learningHistoryQuestionPath(
+      identity.submissionId, identity.versionNumber, identity.questionNumber
+    ));
+    if (sequence !== state.learningReanalysisLoadSequence || !learningReanalysisIdentityMatches(identity)) return false;
+    const reasoningText = currentLearningQuestionReasoning(response, identity);
+    if (reasoningText === null) {
+      throw new ApiError('The saved approach did not match the selected analysis version.', {
+        code: 'INVALID_LEARNING_HISTORY_RESPONSE'
+      });
+    }
+    state.learningReanalysisLoadedVersion = identity.versionNumber;
+    state.learningReanalysisOriginalText = reasoningText;
+    elements.analysisReanalysisReasoning.value = reasoningText;
+    setLearningReanalysisStatus(`Question ${identity.questionNumber} loaded from version ${identity.versionNumber}.`);
+    return true;
+  } catch (error) {
+    if (sequence !== state.learningReanalysisLoadSequence || !learningReanalysisIdentityMatches(identity)) return false;
+    setLearningReanalysisStatus(error instanceof ApiError ? error.message : 'Could not load the saved approach.', 'error');
+    return false;
+  } finally {
+    if (sequence === state.learningReanalysisLoadSequence && learningReanalysisIdentityMatches(identity)) {
+      state.learningReanalysisLoadInFlight = false;
+      renderLearningReanalysisControls();
+    }
+  }
+}
+
+async function refreshLearningProjectionAfterConflict(context, draft, reasoningChanged) {
+  if (!isCurrentLearningReanalysisMutation(context)) return false;
+  const path = learningSubmissionEndpointForAttempt(state.attempt);
+  if (!path) return false;
+  try {
+    const projection = learningAnalysisProjection(await api.get(path));
+    if (!isCurrentLearningReanalysisMutation(context)) return false;
+    if (!projection || projection.id !== context.submissionId || !Number.isSafeInteger(projection.version)
+        || projection.version <= context.versionNumber) return false;
+    const questionIdentity = {
+      submissionId: projection.id,
+      versionNumber: projection.version,
+      questionNumber: context.questionNumber
+    };
+    const questionResponse = await api.get(learningHistoryQuestionPath(
+      questionIdentity.submissionId, questionIdentity.versionNumber, questionIdentity.questionNumber
+    ));
+    if (!isCurrentLearningReanalysisMutation(context)) return false;
+    const currentReasoning = currentLearningQuestionReasoning(questionResponse, questionIdentity);
+    if (currentReasoning === null) return false;
+    stopLearningReportPolling();
+    state.learningReportRequestSequence += 1;
+    state.learningReportRequestInFlight = false;
+    state.learningReport = null;
+    state.learningReportLoadError = null;
+    state.learningReportPollCount = 0;
+    state.learningSubmission = projection;
+    state.learningReanalysisLoadedVersion = projection.version;
+    state.learningReanalysisOriginalText = currentReasoning;
+    elements.analysisReanalysisReasoning.value = reasoningChanged ? draft : currentReasoning;
+    renderLearningAnalysisStatus();
+    if (reasoningChanged) {
+      const alreadySaved = draft === currentReasoning;
+      setLearningReanalysisStatus(alreadySaved
+        ? `Version ${projection.version} already contains this approach; no additional version is needed.`
+        : `Version ${projection.version} already exists and contains a different saved approach. Your draft is preserved; save it to replace that question in a new version, or reload the saved approach to discard the draft.`,
+      alreadySaved ? 'success' : 'error');
+      renderLearningReanalysisControls();
+    } else {
+      setLearningReanalysisStatus(`Version ${projection.version} already exists. The current approach was reloaded; restart again if needed.`, 'error');
+      renderLearningReanalysisControls();
+    }
+    void loadLearningReport({ quiet: true });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function submitCurrentLearningReanalysis(reasoningChanged) {
+  const identity = currentLearningReanalysisIdentity();
+  if (!identity || state.learningReanalysisRequestInFlight
+      || state.learningReanalysisLoadedVersion !== identity.versionNumber) return false;
+  const draft = normalizedLearningReanalysisReasoning(elements.analysisReanalysisReasoning.value);
+  const dirty = state.learningReanalysisOriginalText === null || draft !== state.learningReanalysisOriginalText;
+  if (reasoningChanged && !dirty) return false;
+  if (!reasoningChanged && dirty) {
+    setLearningReanalysisStatus('Save or discard the edited approach before restarting without changes.', 'error');
+    return false;
+  }
+  const notes = reasoningChanged ? [{ questionNumber: identity.questionNumber, reasoningText: draft }] : [];
+  const sequence = ++state.learningReanalysisMutationSequence;
+  const context = { ...identity, mutationSequence: sequence };
+  state.learningReanalysisRequestInFlight = true;
+  setLearningReanalysisStatus(reasoningChanged
+    ? 'Saving the approach and creating a new analysis version…'
+    : 'Creating a new analysis version with the current evidence…');
+  renderLearningReanalysisControls();
+  try {
+    const response = await submitLearningReanalysisRequest(
+      api, state.attempt, identity.versionNumber, notes
+    );
+    if (!isCurrentLearningReanalysisMutation(context)) return false;
+    let createdProjection = learningAnalysisProjection(response);
+    if (!createdProjection || createdProjection.id !== identity.submissionId
+        || createdProjection.version !== identity.versionNumber + 1) {
+      throw new ApiError('The new analysis version response was invalid.', { code: 'INVALID_LEARNING_REANALYSIS' });
+    }
+    createdProjection = { ...createdProjection, reanalysisAvailable: createdProjection.reanalysisAvailable
+      || state.learningSubmission.reanalysisAvailable === true };
+    let projection = createdProjection;
+    const currentPath = learningSubmissionEndpointForAttempt(state.attempt);
+    if (currentPath) {
+      try {
+        const authoritative = learningAnalysisProjection(await api.get(currentPath));
+        if (!isCurrentLearningReanalysisMutation(context)) return false;
+        if (authoritative?.id === projection.id && authoritative.version >= projection.version) {
+          projection = preferNewerLearningProjection(projection, authoritative, { replaceEqual: true });
+        }
+      } catch {
+        // The successful mutation response is sufficient; reopening results
+        // will reconcile from the authoritative current-version endpoint.
+      }
+    }
+    if (!isCurrentLearningReanalysisMutation(context)) return false;
+    stopLearningReportPolling();
+    state.learningReportRequestSequence += 1;
+    state.learningReportRequestInFlight = false;
+    state.learningReport = null;
+    state.learningReportLoadError = null;
+    state.learningReportPollCount = 0;
+    state.learningSubmission = projection;
+    state.learningReanalysisLoadSequence += 1;
+    state.learningReanalysisLoadInFlight = false;
+    state.learningReanalysisLoadedVersion = null;
+    state.learningReanalysisOriginalText = '';
+    renderLearningAnalysisStatus();
+    await Promise.all([
+      loadCurrentLearningReanalysisReasoning(),
+      loadLearningReport({ quiet: true })
+    ]);
+    const concurrentAdvance = projection.version > createdProjection.version;
+    const waitingForContext = projection.status === 'CONTEXT_UNAVAILABLE';
+    setLearningReanalysisStatus(concurrentAdvance
+      ? `Version ${createdProjection.version} was created and your Final score is unchanged. Another saved update advanced the current analysis to version ${projection.version}; both versions remain in Learning history.`
+      : waitingForContext
+        ? `Version ${createdProjection.version} was saved; your Final score is unchanged. Analysis is waiting for approved solutions.`
+        : `Version ${createdProjection.version} was created; your Final score is unchanged and the new analysis is queued.`, 'success');
+    return true;
+  } catch (error) {
+    if (!isCurrentLearningReanalysisMutation(context)) return false;
+    if (error instanceof ApiError && error.code === 'LEARNING_VERSION_CONFLICT') {
+      if (await refreshLearningProjectionAfterConflict(context, draft, reasoningChanged)) return false;
+      if (!isCurrentLearningReanalysisMutation(context)) return false;
+    }
+    setLearningReanalysisStatus(error instanceof ApiError ? error.message : 'Could not create a new analysis version.', 'error');
+    return false;
+  } finally {
+    if (sequence === state.learningReanalysisMutationSequence) {
+      state.learningReanalysisRequestInFlight = false;
+      renderLearningReanalysisControls();
+    }
+  }
+}
+
 function learningReportContext() {
   if (!canAccessFinalReview(state.attempt) || !state.attempt?.id) return null;
-  return { id: String(state.attempt.id), epoch: state.attemptEpoch };
+  const projection = state.learningSubmission;
+  if (!projection?.id || !Number.isSafeInteger(projection.version)) return null;
+  return {
+    id: String(state.attempt.id), epoch: state.attemptEpoch,
+    submissionId: projection.id, version: projection.version
+  };
 }
 
 function isCurrentLearningReportContext(context) {
@@ -3717,7 +4207,9 @@ function isCurrentLearningReportContext(context) {
     context,
     state.attempt?.id,
     state.attemptEpoch,
-    Boolean(elements?.resultsView && !elements.resultsView.hidden)
+    Boolean(elements?.resultsView && !elements.resultsView.hidden),
+    state.learningSubmission?.version,
+    state.learningSubmission?.id
   );
 }
 
@@ -3735,13 +4227,19 @@ function scheduleLearningReportPoll(context) {
 
 async function loadLearningReport({ context = learningReportContext(), quiet = false } = {}) {
   if (!context || !isCurrentLearningReportContext(context) || state.learningReportRequestInFlight) return false;
+  const requestSequence = ++state.learningReportRequestSequence;
   state.learningReportRequestInFlight = true;
   renderLearningAnalysisStatus();
   try {
     const response = await fetchLearningReport(api, state.attempt);
     if (!isCurrentLearningReportContext(context)) return false;
     const report = normalizeLearningReport(response);
-    if (!report) throw new ApiError('The learning report response was invalid.', { code: 'INVALID_LEARNING_REPORT' });
+    if (!report || report.learningSubmissionId !== context.submissionId
+        || report.version !== context.version) {
+      throw new ApiError('The learning report response did not match the current analysis version.', {
+        code: 'INVALID_LEARNING_REPORT'
+      });
+    }
     state.learningReport = report;
     state.learningReportLoadError = null;
     if (learningReportShouldPoll(report.status)) scheduleLearningReportPoll(context);
@@ -3754,7 +4252,7 @@ async function loadLearningReport({ context = learningReportContext(), quiet = f
     else stopLearningReportPolling();
     return false;
   } finally {
-    if (isCurrentLearningReportContext(context)) {
+    if (requestSequence === state.learningReportRequestSequence && isCurrentLearningReportContext(context)) {
       state.learningReportRequestInFlight = false;
       renderLearningAnalysisStatus();
       if (!quiet && state.learningReportLoadError) elements.refreshAnalysisButton.focus();
@@ -4401,7 +4899,12 @@ function humanSourceType(value) {
 }
 
 function humanVersionReason(value) {
-  return ({ FINAL_SUBMISSION: 'Interactive final', BACKFILL: 'Interactive final', BATCH_COMMIT: 'Confirmed file batch', OPEN_REVIEW_ANCHOR: 'Open-review workspace' })[String(value || '').toUpperCase()]
+  return ({
+    FINAL_SUBMISSION: 'Interactive final', FINAL_COMMIT: 'Interactive final', BACKFILL: 'Interactive final',
+    POST_FINAL_REASONING_COMMIT: 'Post-final reasoning update',
+    MANUAL_REANALYSIS_COMMIT: 'Manual AI reanalysis',
+    BATCH_COMMIT: 'Confirmed file batch', OPEN_REVIEW_ANCHOR: 'Open-review workspace'
+  })[String(value || '').toUpperCase()]
     || String(value || 'Version').toLowerCase().replaceAll('_', ' ');
 }
 
@@ -5236,8 +5739,12 @@ async function showResults() {
   }
   stopAttemptSync();
   stopLearningReportPolling();
+  state.learningReport = null;
   state.learningReportPollCount = 0;
   state.learningReportLoadError = null;
+  state.learningReportRequestSequence += 1;
+  state.learningReportRequestInFlight = false;
+  invalidateLearningReanalysisRequests({ clearDraft: true });
   state.batchReviewOpenSequence += 1;
   state.batchReviewWorkspace = null;
   configureResultsView('TIMED_RESULT');
@@ -5262,13 +5769,17 @@ async function showResults() {
     const [review, learningResponse] = await Promise.all([fetchFinalReview(api, state.attempt), learningRequest]);
     state.resultPayload = review.results;
     state.solutionsPayload = review.solutions;
-    state.learningSubmission = learningAnalysisProjection(learningResponse)
-      || learningAnalysisProjection(review.results)
-      || state.learningSubmission;
+    const currentProjection = learningAnalysisProjection(learningResponse);
+    state.learningSubmission = currentProjection
+      ? preferNewerLearningProjection(state.learningSubmission, currentProjection, { replaceEqual: true })
+      : preferNewerLearningProjection(state.learningSubmission, learningAnalysisProjection(review.results));
     // Objective grading is authoritative and renders before the optional AI
     // report request starts. A report outage can therefore never replace or
     // delay the student's score, answer review, or approved solutions.
     renderResults(review.results, review.solutions);
+    if (learningReanalysisAvailable() && syncLearningReanalysisQuestionOptions()) {
+      void loadCurrentLearningReanalysisReasoning();
+    }
     void loadLearningReport({ quiet: true });
     void loadLatestLearningBatch();
     document.getElementById('main-content').focus();
@@ -5440,9 +5951,9 @@ function bindEvents() {
       setButtonBusy(elements.loginSubmit, false);
     }
   });
-  elements.dashboardButton.addEventListener('click', () => showDashboard());
-  elements.resultsDashboardButton.addEventListener('click', () => showDashboard());
-  elements.learningHistoryButton.addEventListener('click', () => showLearningHistory());
+  elements.dashboardButton.addEventListener('click', () => navigateAfterReanalysisDraftDecision(showDashboard));
+  elements.resultsDashboardButton.addEventListener('click', () => navigateAfterReanalysisDraftDecision(showDashboard));
+  elements.learningHistoryButton.addEventListener('click', () => navigateAfterReanalysisDraftDecision(showLearningHistory));
   elements.learningHistoryBackButton.addEventListener('click', () => showDashboard());
   elements.refreshLearningHistoryButton.addEventListener('click', () => showLearningHistory({
     submissionId: state.learningHistorySubmission?.submissionId || null
@@ -5486,8 +5997,25 @@ function bindEvents() {
   elements.reasoningInput.addEventListener('blur', () => queueReasoningSave({ immediate: true }));
   elements.saveReasoningButton.addEventListener('click', () => queueReasoningSave({ immediate: true }));
   elements.reloadReasoningButton.addEventListener('click', reloadReasoningNotes);
-  elements.resetButton.addEventListener('click', confirmReset);
+  elements.resetButton.addEventListener('click', () => navigateAfterReanalysisDraftDecision(confirmReset));
   elements.refreshAnalysisButton.addEventListener('click', () => loadLearningReport());
+  elements.analysisReanalysisQuestion.addEventListener('change', () => {
+    const previousQuestionNumber = state.learningReanalysisQuestionNumber;
+    const nextQuestionNumber = Number(elements.analysisReanalysisQuestion.value);
+    elements.analysisReanalysisQuestion.value = String(previousQuestionNumber);
+    navigateAfterReanalysisDraftDecision(async () => {
+      state.learningReanalysisQuestionNumber = nextQuestionNumber;
+      elements.analysisReanalysisQuestion.value = String(nextQuestionNumber);
+      await loadCurrentLearningReanalysisReasoning();
+    });
+  });
+  elements.analysisReanalysisReasoning.addEventListener('input', renderLearningReanalysisControls);
+  elements.analysisReanalysisSave.addEventListener('click', () => submitCurrentLearningReanalysis(true));
+  elements.analysisReanalysisRerun.addEventListener('click', () => submitCurrentLearningReanalysis(false));
+  elements.analysisReanalysisReload.addEventListener('click', () => loadCurrentLearningReanalysisReasoning());
+  elements.analysisReanalysisHistory.addEventListener('click', () => navigateAfterReanalysisDraftDecision(
+    () => showLearningHistory({ submissionId: state.learningSubmission?.id || null })
+  ));
   elements.batchFiles.addEventListener('change', renderSelectedBatchFiles);
   elements.batchUploadForm.addEventListener('submit', submitBatchUpload);
   elements.createTutorThread.addEventListener('click', createTutorThread);

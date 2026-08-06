@@ -118,6 +118,7 @@ test('partial reasoning updates are versioned, idempotent, strict, and snapshott
     status: 'CONTEXT_UNAVAILABLE',
     officialSubmissionId: finalized.submission.id,
     evidenceHash: finalized.learningSubmission.evidenceHash,
+    reanalysisAvailable: false,
     analysisStatus: 'BLOCKED_CONTEXT'
   });
   assert.match(finalized.learningSubmission.evidenceHash, /^[0-9a-f]{64}$/);
@@ -395,7 +396,8 @@ test('reasoning and learning-status HTTP routes require CSRF/ownership semantics
   }));
   assert.equal(response.statusCode, 200);
   assert.deepEqual(Object.keys(response.json().learningSubmission).sort(), [
-    'analysisStatus', 'evidenceHash', 'id', 'officialSubmissionId', 'sourceKind', 'status', 'version'
+    'analysisStatus', 'evidenceHash', 'id', 'officialSubmissionId', 'reanalysisAvailable',
+    'sourceKind', 'status', 'version'
   ].sort());
   response = await app.inject(authenticated(session, {
     method: 'GET', url: `/api/amc12/attempts/${attempt.id}/learning-submission`
@@ -473,6 +475,12 @@ test('post-final reanalysis HTTP route is gated, CSRF-protected, idempotent, own
     payload: precondition(attempt)
   }));
   assert.equal(response.statusCode, 200);
+  assert.equal(response.json().learningSubmission.reanalysisAvailable, true);
+  response = await context.app.inject(authenticated(owner, {
+    method: 'GET', url: `/api/amc12/attempts/${attempt.id}/learning-submission`
+  }));
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.json().learningSubmission.reanalysisAvailable, true);
 
   response = await context.app.inject(authenticated(owner, {
     method: 'POST', url: `/api/amc12/attempts/${attempt.id}/learning-reanalyses`,

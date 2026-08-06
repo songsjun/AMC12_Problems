@@ -169,6 +169,34 @@
         <p id="analysis-status" class="muted" role="status" aria-live="polite"></p>
         <div id="analysis-report-summary" class="analysis-report-summary"></div>
         <div id="analysis-questions" class="analysis-questions"></div>
+        <section id="analysis-reanalysis" class="analysis-reanalysis" aria-labelledby="analysis-reanalysis-title" hidden>
+          <div class="section-heading-row">
+            <div>
+              <h3 id="analysis-reanalysis-title">Add to your approach and analyze again</h3>
+              <p id="analysis-reanalysis-version" class="muted"></p>
+            </div>
+            <button id="analysis-reanalysis-history" class="button button-secondary" type="button">View all versions</button>
+          </div>
+          <p class="muted">Your official answers and score stay frozen. Saving creates a new analysis version; earlier approaches, reports, and Tutor chats remain in Learning history.</p>
+          <div class="analysis-reanalysis-editor">
+            <div class="field analysis-reanalysis-question-field">
+              <label for="analysis-reanalysis-question">Question</label>
+              <select id="analysis-reanalysis-question"></select>
+            </div>
+            <div class="field analysis-reanalysis-reasoning-field">
+              <label for="analysis-reanalysis-reasoning">Your approach for this question</label>
+              <textarea id="analysis-reanalysis-reasoning" rows="7" maxlength="8000" spellcheck="true" aria-describedby="analysis-reanalysis-bytes analysis-reanalysis-help"></textarea>
+              <p id="analysis-reanalysis-bytes" class="muted">0 / 8000 UTF-8 bytes</p>
+            </div>
+          </div>
+          <p id="analysis-reanalysis-help" class="muted">Save a changed approach to create a new version, or restart with the current evidence when you only want a fresh analysis.</p>
+          <div class="analysis-reanalysis-actions">
+            <button id="analysis-reanalysis-save" class="button button-primary" type="button">Save approach and restart analysis</button>
+            <button id="analysis-reanalysis-rerun" class="button button-secondary" type="button">Restart analysis without changes</button>
+            <button id="analysis-reanalysis-reload" class="button button-secondary" type="button">Reload saved approach</button>
+          </div>
+          <p id="analysis-reanalysis-status" class="muted" role="status" aria-live="polite" aria-atomic="true"></p>
+        </section>
       </section>
 
       <section id="batch-learning-section" class="content-section" aria-labelledby="batch-learning-title">

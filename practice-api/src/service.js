@@ -2128,6 +2128,9 @@ export class PracticeService {
       status: bundle.version.contextStatus,
       officialSubmissionId: bundle.submission.officialSubmissionId,
       evidenceHash: bundle.version.evidenceHash,
+      reanalysisAvailable: this.reanalysisEnabled
+        && bundle.submission.sourceType === 'INTERACTIVE_FINAL'
+        && bundle.version.creationReason !== 'BATCH_COMMIT',
       analysisStatus: REVIEW_ANCHOR_REASONS.has(bundle.version.creationReason)
         ? 'AWAITING_BATCH' : (analysis?.status || 'BLOCKED_CONTEXT')
     };

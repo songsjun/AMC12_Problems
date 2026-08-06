@@ -15,6 +15,8 @@ import {
   MAX_AUDIO_FILE_BYTES,
   MAX_BATCH_FILES,
   MAX_LEARNING_REPORT_POLLS,
+  MAX_REASONING_BATCH_TEXT_BYTES,
+  MAX_REASONING_NOTE_BYTES,
   MAX_REASONING_REQUEST_BYTES,
   MAX_TEXT_FILE_BYTES,
   apiBaseForModuleUrl,
@@ -39,6 +41,7 @@ import {
   createBatchReviewWorkspaceRequest,
   createTimedAttemptRequest,
   createTutorThreadRequest,
+  currentLearningQuestionReasoning,
   deleteTutorThreadRequest,
   extractAttempt,
   fetchFinalReview,
@@ -57,6 +60,9 @@ import {
   learningVersionQuestionNumbers,
   learningSubmissionEndpointForAttempt,
   learningReportEndpointForAttempt,
+  learningReanalysisEndpointForAttempt,
+  learningReanalysisMutationContextMatches,
+  learningReanalysisPayload,
   learningReportApprovedSolutionCount,
   learningReportContextMatches,
   learningReportShouldPoll,
@@ -65,11 +71,13 @@ import {
   normalizeBatchReviewWorkspace,
   normalizeLegacyInlineTeX,
   normalizeLearningHistory,
+  normalizedLearningReanalysisReasoning,
   normalizeTutorThreadSummary,
   numberedBatchMappingItems,
   normalizeReasoningNotes,
   normalizeLearningReport,
   preserveDirtyReasoningNotes,
+  preferNewerLearningProjection,
   parsePracticeEntryIntent,
   reasoningEnvelopeMatchesAttempt,
   publicFormPath,
@@ -100,6 +108,7 @@ import {
   solutionEndpointForAttempt,
   submissionPrecondition,
   submitLearningBatchFiles,
+  submitLearningReanalysisRequest,
   tutorPollContextMatches,
   tutorBundleMatchesIdentity,
   tutorFullGetSourceUnavailable,
@@ -503,16 +512,132 @@ test('attempt switches flush local approaches before clear and expose explicit r
 
 test('final learning projections expose analysis state without replacing the objective score', () => {
   assert.deepEqual(learningAnalysisProjection({ learningSubmission: {
-    id: 'learning-1', status: 'COMMITTED', analysisStatus: 'PENDING', ignored: '<b>unsafe</b>'
-  } }), { status: 'COMMITTED', analysisStatus: 'PENDING' });
+    id: 'learning-1', sourceKind: 'interactive_final', version: 3,
+    status: 'COMMITTED', analysisStatus: 'PENDING', reanalysisAvailable: true,
+    officialSubmissionId: 'must-not-enter-ui-state', evidenceHash: 'must-not-enter-ui-state', ignored: '<b>unsafe</b>'
+  } }), {
+    id: 'learning-1', sourceKind: 'INTERACTIVE_FINAL', version: 3,
+    status: 'COMMITTED', analysisStatus: 'PENDING', reanalysisAvailable: true
+  });
+  assert.deepEqual(preferNewerLearningProjection(
+    { id: 'learning-1', version: 3, analysisStatus: 'RUNNING' },
+    { id: 'learning-1', version: 1, analysisStatus: 'PENDING' }
+  ), { id: 'learning-1', version: 3, analysisStatus: 'RUNNING' },
+  'a stale Final response cannot regress the current analysis version');
+  assert.deepEqual(preferNewerLearningProjection(
+    { id: 'learning-1', version: 3, analysisStatus: 'RUNNING' },
+    { id: null, version: null, analysisStatus: 'PENDING' }
+  ), { id: 'learning-1', version: 3, analysisStatus: 'RUNNING' });
+  assert.deepEqual(preferNewerLearningProjection(
+    { id: 'learning-1', version: 3, analysisStatus: 'RUNNING' },
+    { id: 'other-learning', version: 4, analysisStatus: 'PENDING' }
+  ), { id: 'learning-1', version: 3, analysisStatus: 'RUNNING' });
+  assert.deepEqual(preferNewerLearningProjection(
+    { id: 'learning-1', version: 3, analysisStatus: 'RUNNING' },
+    { id: 'learning-1', version: 3, analysisStatus: 'COMPLETE' },
+    { replaceEqual: true }
+  ), { id: 'learning-1', version: 3, analysisStatus: 'COMPLETE' });
   assert.equal(learningAnalysisDisplayStatus({
     status: 'CONTEXT_UNAVAILABLE', analysisStatus: 'BLOCKED_CONTEXT'
   }), 'CONTEXT_UNAVAILABLE');
+  assert.match(learningReportStatusMessage(learningAnalysisDisplayStatus({
+    status: 'CONTEXT_UNAVAILABLE', analysisStatus: 'BLOCKED_CONTEXT'
+  })), /reference solutions have not yet been approved/i);
   assert.equal(learningAnalysisDisplayStatus({ status: 'READY', analysisStatus: 'PENDING' }), 'PENDING');
   assert.equal(learningAnalysisProjection({ result: {} }), null);
   const html = readFileSync(new URL('index.html', practiceDirectory), 'utf8');
   assert.match(html, /id="final-score"/);
   assert.match(html, /id="analysis-summary"[^>]*hidden/);
+});
+
+test('post-final reanalysis validates exact paths, UTF-8 limits, and partial reasoning patches', async () => {
+  const finalized = { id: 'attempt/with space', phase: 'FINALIZED' };
+  assert.equal(learningReanalysisEndpointForAttempt({ id: 'active', phase: 'TIMED' }), null);
+  assert.equal(learningReanalysisEndpointForAttempt(finalized),
+    '/api/amc12/attempts/attempt%2Fwith%20space/learning-reanalyses');
+  assert.deepEqual(learningReanalysisPayload(2, []), { expectedCurrentVersion: 2, notes: [] });
+  assert.deepEqual(learningReanalysisPayload(2, [{ questionNumber: 7, reasoningText: '设 x 为所求。' }]), {
+    expectedCurrentVersion: 2, notes: [{ questionNumber: 7, reasoningText: '设 x 为所求。' }]
+  });
+  const exactEmojiLimit = '🙂'.repeat(MAX_REASONING_NOTE_BYTES / 4);
+  assert.equal(learningReanalysisPayload(1, [{ questionNumber: 1, reasoningText: exactEmojiLimit }])
+    .notes[0].reasoningText, exactEmojiLimit);
+  assert.throws(() => learningReanalysisPayload(1, [{ questionNumber: 1, reasoningText: `${exactEmojiLimit}a` }]),
+    (error) => error instanceof ApiError && error.code === 'REASONING_NOTE_TOO_LARGE');
+  assert.throws(() => learningReanalysisPayload(1, [
+    { questionNumber: 1, reasoningText: 'first' }, { questionNumber: 1, reasoningText: 'duplicate' }
+  ]), (error) => error instanceof ApiError && error.code === 'INVALID_LEARNING_REANALYSIS');
+  assert.throws(() => learningReanalysisPayload(1, [{ questionNumber: 1, reasoningText: 'bad\0text' }]),
+    (error) => error instanceof ApiError && error.code === 'INVALID_LEARNING_REANALYSIS');
+  assert.throws(() => learningReanalysisPayload(1, [{ questionNumber: '1', reasoningText: 'not canonical' }]),
+    (error) => error instanceof ApiError && error.code === 'INVALID_LEARNING_REANALYSIS');
+  assert.throws(() => learningReanalysisPayload(1, [{ questionNumber: 1, reasoningText: 7 }]),
+    (error) => error instanceof ApiError && error.code === 'INVALID_LEARNING_REANALYSIS');
+  assert.throws(() => learningReanalysisPayload(1, [{ questionNumber: 1, reasoningText: 'safe', answer: 'A' }]),
+    (error) => error instanceof ApiError && error.code === 'INVALID_LEARNING_REANALYSIS');
+  assert.equal(learningReanalysisPayload(1, [{ questionNumber: 1, reasoningText: '   ' }])
+    .notes[0].reasoningText, '');
+  assert.equal(normalizedLearningReanalysisReasoning('   '), '');
+  assert.equal(normalizedLearningReanalysisReasoning('\n\t'), '');
+  assert.equal(normalizedLearningReanalysisReasoning('  keep internal intent  '), '  keep internal intent  ');
+  const exactCombinedLimit = Array.from({ length: 6 }, (_, index) => ({
+    questionNumber: index + 1, reasoningText: 'a'.repeat(MAX_REASONING_NOTE_BYTES)
+  }));
+  assert.equal(exactCombinedLimit.reduce((sum, note) => sum + Buffer.byteLength(note.reasoningText), 0),
+    MAX_REASONING_BATCH_TEXT_BYTES);
+  assert.equal(learningReanalysisPayload(1, exactCombinedLimit).notes.length, 6);
+  assert.throws(() => learningReanalysisPayload(1, [
+    ...exactCombinedLimit, { questionNumber: 7, reasoningText: 'a' }
+  ]), (error) => error instanceof ApiError && error.code === 'REASONING_REQUEST_TOO_LARGE');
+
+  const calls = [];
+  const response = { learningSubmission: { id: 'learning-1', version: 3, status: 'CONTEXT_READY', analysisStatus: 'QUEUED' } };
+  const apiClient = {
+    async post(path, body, options) {
+      calls.push({ path, body, options });
+      if (calls.length === 1) throw new ApiError('lost response', { code: 'NETWORK_ERROR' });
+      return response;
+    }
+  };
+  assert.equal(await submitLearningReanalysisRequest(apiClient, finalized, 2, [], {
+    generateKey: () => 'fixed-reanalysis-key'
+  }), response);
+  assert.equal(calls.length, 2);
+  assert.deepEqual(calls[0], calls[1], 'network retry must reuse the exact mutation and idempotency key');
+  assert.equal(calls[0].options.idempotency, 'fixed-reanalysis-key');
+  assert.deepEqual(Object.keys(calls[0].body).sort(), ['expectedCurrentVersion', 'notes']);
+});
+
+test('post-final editor accepts reasoning only from the exact immutable question version', () => {
+  const identity = { submissionId: 'learning-1', versionNumber: 4, questionNumber: 12 };
+  const payload = { data: {
+    submissionId: 'learning-1', versionNumber: 4,
+    question: { questionNumber: 12 }, response: { reasoningText: 'Use similar triangles.' }
+  } };
+  assert.equal(currentLearningQuestionReasoning(payload, identity), 'Use similar triangles.');
+  assert.equal(currentLearningQuestionReasoning(payload, { ...identity, submissionId: 'other' }), null);
+  assert.equal(currentLearningQuestionReasoning(payload, { ...identity, versionNumber: 5 }), null);
+  assert.equal(currentLearningQuestionReasoning(payload, { ...identity, questionNumber: 13 }), null);
+});
+
+test('post-final mutation contexts fence delayed conflict recovery across navigation and versions', () => {
+  const context = {
+    mutationSequence: 9, attemptId: 'attempt-1', attemptEpoch: 4,
+    submissionId: 'learning-1', versionNumber: 2, questionNumber: 7
+  };
+  const current = {
+    mutationSequence: 9, attemptId: 'attempt-1', attemptEpoch: 4,
+    submissionId: 'learning-1', versionNumber: 2, questionNumber: 7, resultsVisible: true
+  };
+  assert.equal(learningReanalysisMutationContextMatches(context, current), true);
+  for (const changed of [
+    { mutationSequence: 10 }, { attemptId: 'attempt-2' }, { attemptEpoch: 5 },
+    { submissionId: 'learning-2' }, { versionNumber: 3 }, { questionNumber: 8 },
+    { resultsVisible: false }
+  ]) assert.equal(learningReanalysisMutationContextMatches(context, { ...current, ...changed }), false);
+  const client = readFileSync(new URL('app.mjs', practiceDirectory), 'utf8');
+  assert.match(client, /async function refreshLearningProjectionAfterConflict[\s\S]*?await api\.get\(path\)[\s\S]*?isCurrentLearningReanalysisMutation\(context\)[\s\S]*?learningHistoryQuestionPath/);
+  assert.match(client, /const currentReasoning = currentLearningQuestionReasoning[\s\S]*?draft === currentReasoning/);
 });
 
 test('learning reports normalize bare and wrapped response contracts without render-only internals', () => {
@@ -569,8 +694,11 @@ test('learning report statuses distinguish missing context, partial work, weak e
 });
 
 test('report polling rejects stale attempts and stops when the results view is left', () => {
-  const context = { id: 'attempt-1', epoch: 8 };
+  const context = { id: 'attempt-1', epoch: 8, submissionId: 'learning-1', version: 3 };
   assert.equal(learningReportContextMatches(context, 'attempt-1', 8, true), true);
+  assert.equal(learningReportContextMatches(context, 'attempt-1', 8, true, 3, 'learning-1'), true);
+  assert.equal(learningReportContextMatches(context, 'attempt-1', 8, true, 2, 'learning-1'), false);
+  assert.equal(learningReportContextMatches(context, 'attempt-1', 8, true, 3, 'learning-2'), false);
   assert.equal(learningReportContextMatches(context, 'attempt-2', 8, true), false);
   assert.equal(learningReportContextMatches(context, 'attempt-1', 9, true), false);
   assert.equal(learningReportContextMatches(context, 'attempt-1', 8, false), false);
@@ -578,6 +706,8 @@ test('report polling rejects stale attempts and stops when the results view is l
   assert.match(client, /state\.learningReportPollCount >= MAX_LEARNING_REPORT_POLLS/);
   assert.match(client, /view !== elements\.resultsView\) stopLearningReportPolling\(\)/);
   assert.match(client, /isCurrentLearningReportContext\(context\)[\s\S]*?loadLearningReport/);
+  assert.match(client, /requestSequence === state\.learningReportRequestSequence/);
+  assert.match(client, /report\.learningSubmissionId !== context\.submissionId[\s\S]*?report\.version !== context\.version/);
 });
 
 test('objective score renders before a read-only report refresh and report Markdown cannot activate links', async () => {
@@ -1544,7 +1674,34 @@ test('every queried workflow control has one unique DOM target', () => {
   const available = new Set(ids);
   const queried = [...client.matchAll(/byId\('([^']+)'\)/g)].map((match) => match[1]);
   assert.deepEqual(queried.filter((id) => !available.has(id)), []);
-  for (const controlId of ['batch-files', 'tutor-message']) {
+  for (const controlId of ['batch-files', 'tutor-message', 'analysis-reanalysis-question', 'analysis-reanalysis-reasoning']) {
     assert.match(html, new RegExp(`<label[^>]+for=["']${controlId}["']`));
   }
+});
+
+test('Final results expose an explicit versioned reanalysis workflow without changing score controls', () => {
+  const html = readFileSync(new URL('index.html', practiceDirectory), 'utf8');
+  const client = readFileSync(new URL('app.mjs', practiceDirectory), 'utf8');
+  for (const id of [
+    'analysis-reanalysis', 'analysis-reanalysis-question', 'analysis-reanalysis-reasoning',
+    'analysis-reanalysis-save', 'analysis-reanalysis-rerun', 'analysis-reanalysis-reload', 'analysis-reanalysis-history',
+    'analysis-reanalysis-status'
+  ]) assert.match(html, new RegExp(`id=["']${id}["']`));
+  assert.match(html, /official answers and score stay frozen/i);
+  assert.match(html, /earlier approaches, reports, and Tutor chats remain in Learning history/i);
+  assert.match(html, /id="analysis-reanalysis-status"[^>]*role="status"[^>]*aria-live="polite"[^>]*aria-atomic="true"/);
+  assert.match(client, /projection\?\.reanalysisAvailable === true[\s\S]*?projection\.sourceKind === 'INTERACTIVE_FINAL'/);
+  assert.match(client, /learningHistoryQuestionPath\([\s\S]*?identity\.submissionId, identity\.versionNumber, identity\.questionNumber/);
+  assert.match(client, /submitCurrentLearningReanalysis\(true\)/);
+  assert.match(client, /submitCurrentLearningReanalysis\(false\)/);
+  assert.match(client, /another saved update advanced the current analysis to version/i);
+  assert.match(client, /state\.learningReport = null;[\s\S]*?state\.learningSubmission = projection;[\s\S]*?loadLearningReport/);
+  assert.match(client, /invalidateLearningReanalysisRequests\(\{ clearDraft: true \}\)/,
+    'leaving or replacing a result invalidates delayed editor requests and clears private draft text');
+  assert.match(client, /POST_FINAL_REASONING_COMMIT: 'Post-final reasoning update'/);
+  assert.match(client, /MANUAL_REANALYSIS_COMMIT: 'Manual AI reanalysis'/);
+  assert.match(client, /function navigateAfterReanalysisDraftDecision[\s\S]*?Discard the unsaved approach\?[\s\S]*?Discard and continue/);
+  assert.match(client, /analysisReanalysisQuestion\.addEventListener\('change'[\s\S]*?previousQuestionNumber[\s\S]*?navigateAfterReanalysisDraftDecision[\s\S]*?learningReanalysisQuestionNumber = nextQuestionNumber/);
+  assert.match(client, /resetButton\.addEventListener\('click', \(\) => navigateAfterReanalysisDraftDecision\(confirmReset\)\)/);
+  assert.match(client, /analysisReanalysis\.setAttribute\('aria-busy'/);
 });
