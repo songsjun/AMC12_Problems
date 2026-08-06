@@ -60,6 +60,16 @@ export function loadConfig(env = process.env) {
     reasoningWritesPerMinute: positiveInteger(
       env.AMC12_REASONING_WRITES_PER_MINUTE, 30, 'AMC12_REASONING_WRITES_PER_MINUTE'
     ),
+    reanalysisEnabled: explicitReleaseEnabled(env.AMC12_REANALYSIS_ENABLED),
+    reanalysisPerStudentPerDay: positiveInteger(
+      env.AMC12_REANALYSIS_PER_STUDENT_PER_DAY, 10, 'AMC12_REANALYSIS_PER_STUDENT_PER_DAY'
+    ),
+    reanalysisGlobalPerDay: positiveInteger(
+      env.AMC12_REANALYSIS_GLOBAL_PER_DAY, 1_000, 'AMC12_REANALYSIS_GLOBAL_PER_DAY'
+    ),
+    reanalysisMaxVersions: positiveInteger(
+      env.AMC12_REANALYSIS_MAX_VERSIONS, 25, 'AMC12_REANALYSIS_MAX_VERSIONS'
+    ),
     // Keep the HTTP surface dark until the API and provider worker for the
     // same release have both passed their crash-window gates.
     tutorEnabled: bool(env.AMC12_TUTOR_ENABLED, false),

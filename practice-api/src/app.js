@@ -68,7 +68,8 @@ export async function buildApp({ service, config, logger = false }) {
   app.addHook('onSend', async (request, reply, payload) => {
     const path = request.raw.url?.split('?', 1)[0] || '';
     if (path === learningHistoryPrefix || path.startsWith(`${learningHistoryPrefix}/`)
-        || path === formsPrefix || path.startsWith(`${formsPrefix}/`)) {
+        || path === formsPrefix || path.startsWith(`${formsPrefix}/`)
+        || path.endsWith('/learning-reanalyses')) {
       reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
     }
     return payload;
@@ -436,6 +437,18 @@ export async function buildApp({ service, config, logger = false }) {
     const auth = await requireAuth(request);
     reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
     return { learningSubmission: await service.getLearningSubmission(auth.student.id, request.params.attemptId) };
+  });
+  app.post(`${base}/attempts/:attemptId/learning-reanalyses`, async (request, reply) => {
+    const auth = await requireCsrf(request);
+    enforceReasoningWriteRate(auth.student.id);
+    reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache');
+    const result = await service.reanalyzeLearningSubmission(
+      auth.student.id,
+      request.params.attemptId,
+      idempotencyKey(request),
+      bodyObject(request.body)
+    );
+    return reply.status(202).send(result);
   });
   app.get(`${base}/attempts/:attemptId/learning-report`, async (request, reply) => {
     const auth = await requireAuth(request);

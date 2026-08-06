@@ -1143,7 +1143,8 @@ export class MemoryStore {
       const versionRecords = versions.map((version) => {
         const batch = version.batchId ? this.learningBatches.get(version.batchId) || null : null;
         const batchResult = version.batchId ? this.learningBatchResults.get(version.batchId) || null : null;
-        const officialItems = !version.batchId && version.versionNumber === 1 && submission.officialSubmissionId
+        const officialItems = !version.batchId && submission.sourceType === 'INTERACTIVE_FINAL'
+          && submission.officialSubmissionId
           ? this.submissionAnswers.get(submission.officialSubmissionId) || [] : [];
         return {
           version: clone(version),
@@ -1196,7 +1197,8 @@ export class MemoryStore {
       .map((version) => {
         const analysisRun = this.analysisRuns.get(version.id) || null;
         const batchResult = version.batchId ? this.learningBatchResults.get(version.batchId) || null : null;
-        const officialItems = !version.batchId && version.versionNumber === 1 && submission.officialSubmissionId
+        const officialItems = !version.batchId && submission.sourceType === 'INTERACTIVE_FINAL'
+          && submission.officialSubmissionId
           ? this.submissionAnswers.get(submission.officialSubmissionId) || [] : [];
         return {
           version: clone(version),
@@ -4534,6 +4536,72 @@ class MemoryAttemptTransaction {
       }
     }
     return this.#learningBatchBundle(batch.id);
+  }
+
+  async commitLearningReanalysis({
+    expectedCurrentVersion, version, responses, workItem, analysisRun = null, now
+  }) {
+    const learning = this.store.learningSubmissions.get(this.attemptId);
+    const versions = learning ? this.store.learningVersions.get(learning.id) || [] : [];
+    const current = versions.find((candidate) => candidate.versionNumber === expectedCurrentVersion);
+    const currentResponses = current ? this.store.learningResponses.get(current.id) || [] : [];
+    if (!learning || !current || learning.sourceType !== 'INTERACTIVE_FINAL'
+        || learning.lifecycleStatus !== 'COMMITTED'
+        || learning.currentVersion !== expectedCurrentVersion
+        || version.learningSubmissionId !== learning.id
+        || version.versionNumber !== expectedCurrentVersion + 1
+        || version.formId !== learning.formId || version.formVersion !== learning.formVersion
+        || responses.length !== currentResponses.length
+        || responses.some((response) => response.learningSubmissionVersionId !== version.id
+          || response.formId !== learning.formId || response.formVersion !== learning.formVersion)
+        || workItem.learningSubmissionVersionId !== version.id
+        || (analysisRun && (analysisRun.learningSubmissionVersionId !== version.id
+          || workItem.analysisRunId !== analysisRun.id))) {
+      const error = new Error('Learning reanalysis version conflict.');
+      error.code = 'LEARNING_VERSION_CONFLICT';
+      throw error;
+    }
+    if (current.batchId || current.creationReason === 'BATCH_COMMIT'
+        || currentResponses.some((response) => response.answerOrigin !== 'OFFICIAL_FINAL')) {
+      const error = new Error('Learning reanalysis source is unsupported.');
+      error.code = 'LEARNING_REANALYSIS_SOURCE_UNSUPPORTED';
+      throw error;
+    }
+    const oldWorks = (this.store.learningWorkItems.get(current.id) || [])
+      .filter((item) => item.workType === 'ANALYZE_SUBMISSION');
+    const oldWork = oldWorks[0];
+    const oldRun = this.store.analysisRuns.get(current.id) || null;
+    if (oldWorks.length !== 1
+        || Boolean(oldWork.analysisRunId) !== Boolean(oldRun)
+        || (oldRun && oldWork.analysisRunId !== oldRun.id)) {
+      const error = new Error('Learning reanalysis version conflict.');
+      error.code = 'LEARNING_VERSION_CONFLICT';
+      throw error;
+    }
+    if (oldWork?.status === 'RUNNING') {
+      const error = new Error('Learning analysis is already running.');
+      error.code = 'LEARNING_ANALYSIS_IN_PROGRESS';
+      throw error;
+    }
+    if (oldWork && ['BLOCKED_CONTEXT', 'QUEUED'].includes(oldWork.status)) {
+      Object.assign(oldWork, {
+        status: 'CANCELLED', leaseOwner: null, leaseToken: null, leaseExpiresAt: null,
+        lastErrorCode: 'SUPERSEDED_BY_EVIDENCE_REVISION', updatedAt: now
+      });
+      if (oldRun && oldRun.status === 'QUEUED') {
+        Object.assign(oldRun, {
+          status: 'CANCELLED', completedAt: now,
+          lastErrorCode: 'SUPERSEDED_BY_EVIDENCE_REVISION'
+        });
+      }
+    }
+    versions.push(clone(version));
+    this.store.learningVersions.set(learning.id, versions);
+    this.store.learningResponses.set(version.id, clone(responses));
+    this.store.learningWorkItems.set(version.id, [clone(workItem)]);
+    if (analysisRun) this.store.analysisRuns.set(version.id, clone(analysisRun));
+    Object.assign(learning, { currentVersion: version.versionNumber, updatedAt: now });
+    return this.getLearningSubmissionBundle();
   }
 
   async requestLearningBatchDeletion({ batchId, now }) {

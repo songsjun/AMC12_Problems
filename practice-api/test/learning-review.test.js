@@ -20,8 +20,8 @@ function precondition(attempt) {
   return { expectedAnswersRevision: attempt.answersRevision, expectedStateRevision: attempt.stateRevision };
 }
 
-async function setup(mutateForm = () => {}) {
-  const context = await makeService();
+async function setup(mutateForm = () => {}, serviceOptions = {}) {
+  const context = await makeService(serviceOptions);
   const form = learningReviewForm();
   mutateForm(form);
   await context.store.importForm(form, { publish: true, allowTestOnlyPublish: true });
@@ -266,6 +266,190 @@ test('import stores only ready questions, queues new finals, analyzes independen
     () => context.service.getLearningReport(other.id, attemptId),
     (error) => error instanceof ApiError && error.code === 'ATTEMPT_NOT_FOUND'
   );
+});
+
+test('post-final reasoning and pure reruns append immutable versions without changing the official score', async () => {
+  const context = await setup(() => {}, {
+    reanalysisEnabled: true,
+    reanalysisPerStudentPerDay: 10,
+    reanalysisGlobalPerDay: 20,
+    reanalysisMaxVersions: 6
+  });
+  await importArtifact(context, approvedContextArtifact(context.form, {
+    readyNumbers: [1, 2, 3]
+  }));
+  const { attemptId, finalized } = await finalizedWithReasoning(context, [
+    { questionNumber: 1, reasoningText: 'Initial approach.' }
+  ], [{ questionNumber: 1, selectedOption: 'A' }]);
+  const officialBefore = structuredClone(
+    await context.service.getResults(context.student.id, attemptId)
+  );
+  const v1 = context.store.learningVersions.get(finalized.learningSubmission.id)[0];
+  const v1Run = context.store.analysisRuns.get(v1.id);
+  assert.equal(context.store.learningWorkItems.get(v1.id)[0].status, 'QUEUED');
+
+  const v2Result = await context.service.reanalyzeLearningSubmission(
+    context.student.id, attemptId, 'reanalyze-version-0002', {
+      expectedCurrentVersion: 1,
+      notes: [
+        { questionNumber: 1, reasoningText: 'A stronger post-final argument.' },
+        { questionNumber: 2, reasoningText: 'I would factor first.' }
+      ]
+    }
+  );
+  assert.equal(v2Result.learningSubmission.version, 2);
+  assert.equal(v2Result.learningSubmission.analysisStatus, 'QUEUED');
+  assert.equal(v2Result.reasoningChanged, true);
+  assert.equal(context.store.learningWorkItems.get(v1.id)[0].status, 'CANCELLED');
+  assert.equal(context.store.analysisRuns.get(v1.id).status, 'CANCELLED');
+  assert.equal(context.store.analysisRuns.get(v1.id).id, v1Run.id);
+  const versions = context.store.learningVersions.get(finalized.learningSubmission.id);
+  const v2 = versions[1];
+  assert.equal(v2.creationReason, 'POST_FINAL_REASONING_COMMIT');
+  assert.equal(v2.reasoningRevision, v1.reasoningRevision + 1);
+  assert.notEqual(v2.evidenceHash, v1.evidenceHash);
+  assert.equal(context.store.learningResponses.get(v2.id).length, 25);
+  assert.deepEqual(context.store.learningResponses.get(v2.id).slice(0, 3)
+    .map((item) => [item.questionNumber, item.selectedOption, item.reasoningText, item.reasoningOrigin]), [
+      [1, 'A', 'A stronger post-final argument.', 'POST_FINAL_UPDATE'],
+      [2, null, 'I would factor first.', 'POST_FINAL_UPDATE'],
+      [3, null, '', 'NONE']
+    ]);
+  assert.deepEqual(await context.service.getResults(context.student.id, attemptId), officialBefore,
+    'reanalyzing must not mutate the official result projection');
+
+  const replay = await context.service.reanalyzeLearningSubmission(
+    context.student.id, attemptId, 'reanalyze-version-0002', {
+      expectedCurrentVersion: 1,
+      notes: [
+        { questionNumber: 1, reasoningText: 'A stronger post-final argument.' },
+        { questionNumber: 2, reasoningText: 'I would factor first.' }
+      ]
+    }
+  );
+  assert.deepEqual(replay, v2Result);
+  assert.equal(context.store.learningVersions.get(finalized.learningSubmission.id).length, 2);
+  await assert.rejects(() => context.service.reanalyzeLearningSubmission(
+    context.student.id, attemptId, 'reanalyze-version-0002', {
+      expectedCurrentVersion: 2, notes: []
+    }
+  ), (error) => error instanceof ApiError && error.code === 'IDEMPOTENCY_KEY_REUSED');
+  await assert.rejects(() => context.service.reanalyzeLearningSubmission(
+    context.student.id, attemptId, 'reanalyze-stale-version', {
+      expectedCurrentVersion: 1, notes: []
+    }
+  ), (error) => error instanceof ApiError && error.code === 'LEARNING_VERSION_CONFLICT');
+
+  const v3Result = await context.service.reanalyzeLearningSubmission(
+    context.student.id, attemptId, 'reanalyze-version-0003', {
+      expectedCurrentVersion: 2, notes: []
+    }
+  );
+  assert.equal(v3Result.learningSubmission.version, 3);
+  assert.equal(v3Result.reasoningChanged, false);
+  const v3 = context.store.learningVersions.get(finalized.learningSubmission.id)[2];
+  assert.equal(v3.creationReason, 'MANUAL_REANALYSIS_COMMIT');
+  assert.equal(v3.evidenceHash, v2.evidenceHash);
+  assert.equal(v3.reasoningRevision, v2.reasoningRevision);
+  assert.equal(context.store.learningWorkItems.get(v2.id)[0].status, 'CANCELLED');
+
+  const history = await context.service.getLearningHistory(
+    context.student.id, finalized.learningSubmission.id
+  );
+  assert.deepEqual(history.versions.map((item) => [item.versionNumber, item.resultStatus]), [
+    [1, 'AVAILABLE'], [2, 'AVAILABLE'], [3, 'AVAILABLE']
+  ]);
+  for (const versionNumber of [1, 2, 3]) {
+    const question = await context.service.getLearningHistoryQuestion(
+      context.student.id, finalized.learningSubmission.id, String(versionNumber), '1'
+    );
+    assert.equal(question.protected.result.selectedOption, 'A');
+    assert.equal(question.protected.result.points, officialBefore.finalSubmission.answers[0].points);
+  }
+
+  const other = await context.service.seedAccessCode({
+    code: 'post-final-other-student', displayName: 'Other student'
+  });
+  await assert.rejects(() => context.service.reanalyzeLearningSubmission(
+    other.id, attemptId, 'reanalyze-cross-owner', {
+      expectedCurrentVersion: 3,
+      notes: [{ questionNumber: 1, reasoningText: 'stolen' }]
+    }
+  ), (error) => error instanceof ApiError && error.code === 'ATTEMPT_NOT_FOUND');
+});
+
+test('post-final reasoning persists without context while pure rerun and in-provider restart fail closed', async () => {
+  const blocked = await setup(() => {}, { reanalysisEnabled: true });
+  const blockedFinal = await finalizedWithReasoning(blocked, [], []);
+  const saved = await blocked.service.reanalyzeLearningSubmission(
+    blocked.student.id, blockedFinal.attemptId, 'blocked-reasoning-v2', {
+      expectedCurrentVersion: 1,
+      notes: [{ questionNumber: 1, reasoningText: 'Save this until solutions are reviewed.' }]
+    }
+  );
+  assert.equal(saved.learningSubmission.version, 2);
+  assert.equal(saved.learningSubmission.status, 'CONTEXT_UNAVAILABLE');
+  assert.equal(saved.learningSubmission.analysisStatus, 'BLOCKED_CONTEXT');
+  const blockedV2 = blocked.store.learningVersions.get(saved.learningSubmission.id)[1];
+  assert.equal(blocked.store.analysisRuns.has(blockedV2.id), false);
+  await assert.rejects(() => blocked.service.reanalyzeLearningSubmission(
+    blocked.student.id, blockedFinal.attemptId, 'blocked-pure-rerun', {
+      expectedCurrentVersion: 2, notes: []
+    }
+  ), (error) => error instanceof ApiError && error.code === 'ANALYSIS_CONTEXT_UNAVAILABLE');
+  assert.equal(blocked.store.learningVersions.get(saved.learningSubmission.id).length, 2);
+
+  const running = await setup(() => {}, { reanalysisEnabled: true });
+  await importArtifact(running, approvedContextArtifact(running.form, { readyNumbers: [1] }));
+  const runningFinal = await finalizedWithReasoning(running, [
+    { questionNumber: 1, reasoningText: 'Provider-bound reasoning.' }
+  ], []);
+  const claimed = await running.store.claimLearningAnalysisWork({
+    workerId: 'running-reanalysis-fence', now: running.clock.now(), leaseMs: 60_000
+  });
+  assert.equal(claimed.workItem.status, 'RUNNING');
+  await assert.rejects(() => running.service.reanalyzeLearningSubmission(
+    running.student.id, runningFinal.attemptId, 'running-reanalysis-v2', {
+      expectedCurrentVersion: 1,
+      notes: [{ questionNumber: 1, reasoningText: 'Do not race this into the provider.' }]
+    }
+  ), (error) => error instanceof ApiError && error.code === 'LEARNING_ANALYSIS_IN_PROGRESS');
+  assert.equal(running.store.learningVersions.get(runningFinal.finalized.learningSubmission.id).length, 1);
+
+  const quota = await setup(() => {}, {
+    reanalysisEnabled: true,
+    reanalysisPerStudentPerDay: 1,
+    reanalysisGlobalPerDay: 2,
+    reanalysisMaxVersions: 5
+  });
+  const quotaFinal = await finalizedWithReasoning(quota, [], []);
+  await quota.service.reanalyzeLearningSubmission(
+    quota.student.id, quotaFinal.attemptId, 'quota-reanalysis-v2', {
+      expectedCurrentVersion: 1,
+      notes: [{ questionNumber: 1, reasoningText: 'First daily revision.' }]
+    }
+  );
+  await assert.rejects(() => quota.service.reanalyzeLearningSubmission(
+    quota.student.id, quotaFinal.attemptId, 'quota-reanalysis-v3', {
+      expectedCurrentVersion: 2,
+      notes: [{ questionNumber: 2, reasoningText: 'Second daily revision.' }]
+    }
+  ), (error) => error instanceof ApiError && error.code === 'LEARNING_REANALYSIS_RATE_LIMITED');
+  assert.equal(quota.store.learningVersions.get(quotaFinal.finalized.learningSubmission.id).length, 2);
+
+  const corrupt = await setup(() => {}, { reanalysisEnabled: true });
+  const corruptFinal = await finalizedWithReasoning(corrupt, [], []);
+  const corruptVersion = corrupt.store.learningVersions
+    .get(corruptFinal.finalized.learningSubmission.id)[0];
+  corrupt.store.learningWorkItems.set(corruptVersion.id, []);
+  await assert.rejects(() => corrupt.service.reanalyzeLearningSubmission(
+    corrupt.student.id, corruptFinal.attemptId, 'missing-current-analysis-work', {
+      expectedCurrentVersion: 1,
+      notes: [{ questionNumber: 1, reasoningText: 'Do not fork a damaged aggregate.' }]
+    }
+  ), (error) => error instanceof ApiError && error.code === 'LEARNING_VERSION_CONFLICT');
+  assert.equal(corrupt.store.learningVersions.get(corruptFinal.finalized.learningSubmission.id).length, 1,
+    'the memory adapter matches PostgreSQL and refuses a missing current analysis work row');
 });
 
 test('visual context gates provider calls and a mixed context sends only model-eligible solutions', async () => {

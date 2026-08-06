@@ -104,6 +104,10 @@ AMC12_SECURE_COOKIES=true
 AMC12_BATCH_INTAKE_ENABLED=false
 AMC12_BATCH_REVIEW_ENABLED=false
 AMC12_TUTOR_ENABLED=true
+AMC12_REANALYSIS_ENABLED=false
+AMC12_REANALYSIS_PER_STUDENT_PER_DAY=10
+AMC12_REANALYSIS_GLOBAL_PER_DAY=1000
+AMC12_REANALYSIS_MAX_VERSIONS=25
 ```
 
 It must not contain `AMC12_ASSEMBLYAI_API_KEY`, `AMC12_INFERENCE_TOKEN`, or
@@ -138,6 +142,14 @@ false; then enable the API flag only after the worker can claim a synthetic
 Tutor job. The worker's model value does not let the browser or job choose a
 model: it binds completion metadata to the operator-pinned Gateway model and
 fails closed if the two deployments drift.
+
+Post-final reanalysis is a separate API-only, literal-`true` release gate. The
+worker needs no matching flag: it processes the same durable analysis work
+contract, and disabling the API gate only prevents new reanalysis versions.
+Already queued or running work continues to drain. Follow the maintenance and
+canary sequence in
+[`POST_FINAL_REANALYSIS_DEPLOYMENT.md`](../../docs/architecture/POST_FINAL_REANALYSIS_DEPLOYMENT.md);
+do not enable the flag merely because migration 018 is present.
 
 Batch intake has a separate coordinated API release gate. It is disabled in
 development and production unless the API environment contains the literal
@@ -282,8 +294,23 @@ GROUP BY status ORDER BY status;
 
 SELECT budget_kind, window_started_at, window_ms, used_units
 FROM amc_practice.global_resource_budget_windows
-WHERE budget_kind = 'PROVIDER_WORK'
-ORDER BY window_started_at DESC LIMIT 2;
+WHERE budget_kind IN ('PROVIDER_WORK', 'LEARNING_REANALYSIS')
+ORDER BY window_started_at DESC LIMIT 4;
+
+SELECT student_id, window_started_at, used_units
+FROM amc_practice.student_resource_budget_windows
+WHERE budget_kind = 'LEARNING_REANALYSIS'
+ORDER BY window_started_at DESC, used_units DESC LIMIT 20;
+
+SELECT version.learning_submission_id,
+       count(*) FILTER (WHERE version.creation_reason IN (
+         'POST_FINAL_REASONING_COMMIT','MANUAL_REANALYSIS_COMMIT')) AS reanalysis_versions,
+       max(version.created_at) AS latest_reanalysis
+FROM amc_practice.learning_submission_versions version
+GROUP BY version.learning_submission_id
+HAVING count(*) FILTER (WHERE version.creation_reason IN (
+  'POST_FINAL_REASONING_COMMIT','MANUAL_REANALYSIS_COMMIT')) > 0
+ORDER BY reanalysis_versions DESC, latest_reanalysis DESC LIMIT 20;
 
 SELECT last_claimed_kind, revision, updated_at
 FROM amc_practice.ai_dispatch_fairness_state

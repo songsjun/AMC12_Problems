@@ -59,6 +59,10 @@ export async function makeService({
   allowTestOnlyImport = false,
   allowTestOnlyPublish = false,
   batchIntakeEnabled = false,
+  reanalysisEnabled = false,
+  reanalysisPerStudentPerDay,
+  reanalysisGlobalPerDay,
+  reanalysisMaxVersions,
   // Generic test fixtures are deliberately opt-in at the service boundary;
   // this helper makes that intent explicit for non-production unit tests.
   allowGenericManifestImport = true
@@ -72,6 +76,10 @@ export async function makeService({
     allowTestOnlyPublish,
     allowGenericManifestImport,
     batchIntakeEnabled,
+    reanalysisEnabled,
+    ...(reanalysisPerStudentPerDay === undefined ? {} : { reanalysisPerStudentPerDay }),
+    ...(reanalysisGlobalPerDay === undefined ? {} : { reanalysisGlobalPerDay }),
+    ...(reanalysisMaxVersions === undefined ? {} : { reanalysisMaxVersions }),
     clock: clock.now
   });
   await service.importManifest(manifest, { publish: true });

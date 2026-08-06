@@ -505,19 +505,10 @@ test('PostgresStore atomically creates a Tutor root from path identity and repla
       expiresAt: new Date(liveClock.getTime() + 3_600_000), revokedAt: null
     });
 
-    const originalReportStatus = (await store.pool.query(
-      'SELECT status FROM amc_practice.learning_reports WHERE id = $1',
-      [fixture.snapshot.reportId]
-    )).rows[0].status;
-    await store.pool.query(
+    await assert.rejects(() => store.pool.query(
       "UPDATE amc_practice.learning_reports SET status = 'FAILED' WHERE id = $1",
       [fixture.snapshot.reportId]
-    );
-    await assertUnavailableWithoutRows(rootInput({ sessionId: liveSessionId }));
-    await store.pool.query(
-      'UPDATE amc_practice.learning_reports SET status = $2 WHERE id = $1',
-      [fixture.snapshot.reportId, originalReportStatus]
-    );
+    ), (error) => error.code === '55000');
 
     await store.pool.query(
       `UPDATE amc_practice.learning_submissions

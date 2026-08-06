@@ -333,7 +333,7 @@ export async function runBatchReviewPostgresEvidence({ connectionString, t }) {
          AND version.version_number = 1`,
       [first.workspace.id]
     ),
-    /batch review anchor context lineage is immutable|violates check constraint/
+    /batch review anchor context lineage is immutable|learning versions are immutable|violates check constraint/
   );
 
   const prepared = await prepareBatch(

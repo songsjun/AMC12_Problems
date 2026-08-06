@@ -434,6 +434,102 @@ test('reasoning and learning-status HTTP routes require CSRF/ownership semantics
   assert.equal(response.json().error.code, 'ATTEMPT_NOT_FOUND');
 });
 
+test('post-final reanalysis HTTP route is gated, CSRF-protected, idempotent, owner-scoped, and no-store', async (t) => {
+  const disabled = await makeApp();
+  t.after(() => disabled.app.close());
+  const disabledSession = await login(disabled.app);
+  let response = await disabled.app.inject(authenticated(disabledSession, {
+    method: 'POST', url: '/api/amc12/attempts',
+    headers: { 'x-csrf-token': disabledSession.csrf },
+    payload: { formId: fixtureManifest.id }
+  }));
+  const disabledAttempt = response.json().attempt;
+  response = await disabled.app.inject(authenticated(disabledSession, {
+    method: 'POST', url: `/api/amc12/attempts/${disabledAttempt.id}/final`,
+    headers: { 'x-csrf-token': disabledSession.csrf, 'idempotency-key': 'disabled-final-submit' },
+    payload: precondition(disabledAttempt)
+  }));
+  assert.equal(response.statusCode, 200);
+  response = await disabled.app.inject(authenticated(disabledSession, {
+    method: 'POST', url: `/api/amc12/attempts/${disabledAttempt.id}/learning-reanalyses`,
+    headers: { 'x-csrf-token': disabledSession.csrf, 'idempotency-key': 'disabled-reanalysis' },
+    payload: { expectedCurrentVersion: 1, notes: [{ questionNumber: 1, reasoningText: 'later' }] }
+  }));
+  assert.equal(response.statusCode, 503);
+  assert.equal(response.json().error.code, 'LEARNING_REANALYSIS_DISABLED');
+  assert.equal(response.headers['cache-control'], 'no-store');
+
+  const context = await makeApp({ reanalysisEnabled: true });
+  t.after(() => context.app.close());
+  const owner = await login(context.app);
+  response = await context.app.inject(authenticated(owner, {
+    method: 'POST', url: '/api/amc12/attempts',
+    headers: { 'x-csrf-token': owner.csrf }, payload: { formId: fixtureManifest.id }
+  }));
+  const attempt = response.json().attempt;
+  response = await context.app.inject(authenticated(owner, {
+    method: 'POST', url: `/api/amc12/attempts/${attempt.id}/final`,
+    headers: { 'x-csrf-token': owner.csrf, 'idempotency-key': 'reanalysis-http-final' },
+    payload: precondition(attempt)
+  }));
+  assert.equal(response.statusCode, 200);
+
+  response = await context.app.inject(authenticated(owner, {
+    method: 'POST', url: `/api/amc12/attempts/${attempt.id}/learning-reanalyses`,
+    headers: { 'idempotency-key': 'reanalysis-http-v2' },
+    payload: { expectedCurrentVersion: 1, notes: [{ questionNumber: 1, reasoningText: 'post-final' }] }
+  }));
+  assert.equal(response.statusCode, 403);
+  assert.equal(response.headers['cache-control'], 'no-store');
+
+  const request = {
+    method: 'POST', url: `/api/amc12/attempts/${attempt.id}/learning-reanalyses`,
+    headers: { 'x-csrf-token': owner.csrf, 'idempotency-key': 'reanalysis-http-v2' },
+    payload: {
+      expectedCurrentVersion: 1,
+      notes: [{ questionNumber: 1, reasoningText: 'A post-final explanation.' }]
+    }
+  };
+  response = await context.app.inject(authenticated(owner, request));
+  assert.equal(response.statusCode, 202);
+  assert.equal(response.headers['cache-control'], 'no-store');
+  assert.equal(response.json().learningSubmission.version, 2);
+  assert.equal(response.json().learningSubmission.analysisStatus, 'BLOCKED_CONTEXT');
+  assert.equal(JSON.stringify(response.json()).includes('A post-final explanation.'), false);
+  const replay = await context.app.inject(authenticated(owner, request));
+  assert.equal(replay.statusCode, 202);
+  assert.deepEqual(replay.json(), response.json());
+  assert.equal([...context.store.idempotency.values()]
+    .filter((item) => item.scope.endsWith(':learning-reanalysis')).length, 1);
+  assert.equal(JSON.stringify([...context.store.idempotency.values()]
+    .find((item) => item.scope.endsWith(':learning-reanalysis')).responseBody)
+    .includes('A post-final explanation.'), false);
+
+  response = await context.app.inject(authenticated(owner, {
+    ...request,
+    payload: { expectedCurrentVersion: 2, notes: [] }
+  }));
+  assert.equal(response.statusCode, 409);
+  assert.equal(response.json().error.code, 'IDEMPOTENCY_KEY_REUSED');
+
+  const otherStudent = await context.service.seedAccessCode({
+    code: 'reanalysis-http-other-code', displayName: 'HTTP Other'
+  });
+  assert.ok(otherStudent.id);
+  const other = await login(context.app, 'reanalysis-http-other-code');
+  response = await context.app.inject(authenticated(other, {
+    method: 'POST', url: `/api/amc12/attempts/${attempt.id}/learning-reanalyses`,
+    headers: { 'x-csrf-token': other.csrf, 'idempotency-key': 'reanalysis-http-bola' },
+    payload: {
+      expectedCurrentVersion: 2,
+      notes: [{ questionNumber: 1, reasoningText: 'cross-owner' }]
+    }
+  }));
+  assert.equal(response.statusCode, 404);
+  assert.equal(response.json().error.code, 'ATTEMPT_NOT_FOUND');
+  assert.equal(response.headers['cache-control'], 'no-store');
+});
+
 test('reasoning writes have an authenticated-student rate limit independent of the IP-wide limit', async (t) => {
   const { app, service } = await makeApp({ reasoningWritesPerMinute: 2 });
   t.after(() => app.close());

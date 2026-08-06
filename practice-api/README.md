@@ -29,6 +29,11 @@ keys and solutions in PostgreSQL until a student has made a final submission.
   explicitly `BLOCKED_CONTEXT` until reviewed multi-solution context is loaded;
   a leased PostgreSQL worker then produces independent per-question outcomes
   and a durable report. No external provider call can affect official scoring.
+- Optional post-final reasoning and manual reanalysis. Each request appends an
+  immutable learning version, reloads answers from the frozen official final,
+  and preserves every old report/Tutor snapshot. Changed reasoning is saved as
+  `BLOCKED_CONTEXT` when approved solutions are unavailable; a pure rerun then
+  fails without creating provider work.
 - Operator-published, untimed `OPEN_REVIEW` workspaces for separately released
   unpublished form revisions. Their blank v1 anchor has no timer, mutable
   answers, official submission, or AI work; a confirmed batch creates v2 and
@@ -51,6 +56,14 @@ npm start
 `127.0.0.1:8090`. Set `AMC12_DATABASE_URL` first. For a local access code, set
 `AMC12_DEV_ACCESS_CODE` and optionally `AMC12_DEV_STUDENT_NAME`; production
 does not permit this bootstrap behavior.
+
+Post-final reanalysis is an independently reversible release gate. Set
+`AMC12_REANALYSIS_ENABLED=true` only after the API and learning worker for the
+same release have passed their coordinated canary. Its durable limits default
+to 10 requests per student per day, 1,000 globally per day, and 25 total
+versions per submission; override them with
+`AMC12_REANALYSIS_PER_STUDENT_PER_DAY`, `AMC12_REANALYSIS_GLOBAL_PER_DAY`, and
+`AMC12_REANALYSIS_MAX_VERSIONS`.
 
 Create durable access codes with:
 
@@ -324,6 +337,7 @@ credentials on every authenticated state-changing request.
 | `POST /attempts/:id/reset` | Preserve old history and return a new `TIMED` attempt |
 | `GET /attempts/:id/results`, `/solutions` | Owner-only after a final submission (also for reset history) |
 | `GET /attempts/:id/learning-submission` | Read-only owner status after final; never performs historical repair while polling |
+| `POST /attempts/:id/learning-reanalyses` | Append a post-final reasoning snapshot or pure rerun; requires CSRF, `Idempotency-Key`, and `expectedCurrentVersion` |
 | `GET /attempts/:id/learning-report` | Read-only owner report/status after final, including reset history; never enqueues analysis |
 | `GET /learning-history` | Bounded owner-only keyset page across timed, batch, and open-review lineages, including every immutable version summary |
 | `GET /learning-history/:submissionId` | Exact owner-only lineage detail; deleted records return only minimal tombstone metadata |
@@ -346,7 +360,22 @@ Tutor routes are absent unless `AMC12_TUTOR_ENABLED=true`; the same flag must be
 enabled in the independently configured learning worker only after the Gateway
 and durable crash-window checks pass.
 
-`reasoning-notes` PUT, `pause`, `resume`, `checkpoint`, `final`, `deadline-decision`, and `reset`
+The reanalysis route is absent in effect unless
+`AMC12_REANALYSIS_ENABLED=true`. Its `notes` array is a replacement patch, not
+a server-side append operation; an empty array deliberately asks for a pure
+rerun. A non-terminal batch blocks the mutation, and an analysis already
+leased to the provider must finish before the student can restart it.
+The current learning version must be an `OFFICIAL_FINAL` snapshot. A version
+created from batch-confirmed evidence returns the stable 409 code
+`LEARNING_REANALYSIS_SOURCE_UNSUPPORTED`; combining these two evidence models
+would otherwise corrupt both provenance and scoring semantics. If only some
+questions have approved context, the version is context-ready and the worker
+produces deterministic `UNASSESSABLE` outcomes for questions without two
+eligible approved solutions. The UI must label that report as partial rather
+than imply that every question reached the model.
+
+`reasoning-notes` PUT, `learning-reanalyses`, `pause`, `resume`, `checkpoint`,
+`final`, `deadline-decision`, and `reset`
 require an `Idempotency-Key` (8–128 opaque characters). Replaying the same key
 and request does not repeat its mutation; reusing it with different input is a
 409 conflict. Reasoning-note replays rebuild the current owner-scoped envelope

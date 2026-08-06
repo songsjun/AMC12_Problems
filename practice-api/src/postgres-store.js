@@ -4694,7 +4694,8 @@ export class PostgresStore {
                 WHEN version.batch_id IS NOT NULL THEN EXISTS (
                   SELECT 1 FROM amc_practice.learning_batch_results batch_result
                    WHERE batch_result.learning_submission_version_id = version.id)
-                WHEN version.version_number = 1 AND submission.official_submission_id IS NOT NULL THEN EXISTS (
+                WHEN submission.source_type = 'INTERACTIVE_FINAL'
+                  AND submission.official_submission_id IS NOT NULL THEN EXISTS (
                   SELECT 1 FROM amc_practice.submission_answers answer
                    WHERE answer.submission_id = submission.official_submission_id)
                 ELSE false
@@ -4876,7 +4877,7 @@ export class PostgresStore {
             analyses: analysesByVersion.get(version.id) || [],
             resultItems: version.batchId
               ? batchResultsByVersion.get(version.id) || []
-              : (version.versionNumber === 1 ? officialResultItems : []),
+              : (submission.sourceType === 'INTERACTIVE_FINAL' ? officialResultItems : []),
             report: reportByVersion.get(version.id) || null,
             batch: version.batchId ? batchById.get(version.batchId) || null : null
           };
@@ -7083,6 +7084,147 @@ class PostgresAttemptTransaction {
         workItem.availableAt, workItem.leaseOwner, workItem.leaseToken, workItem.leaseExpiresAt, workItem.lastErrorCode,
         workItem.createdAt, workItem.updatedAt, workItem.analysisRunId || null]
     );
+    return this.getLearningSubmissionBundle();
+  }
+
+  async commitLearningReanalysis({
+    expectedCurrentVersion, version, responses, workItem, analysisRun = null, now
+  }) {
+    // Serialize with the dispatcher before inspecting the old work row. Once
+    // a provider lease is RUNNING the API fails closed instead of pretending
+    // that an already-delivered call can be cancelled exactly once.
+    await this.client.query("SELECT pg_advisory_xact_lock(hashtext('amc_ai_dispatcher'), 0)");
+    const parent = await this.client.query(
+      `SELECT submission.*
+       FROM amc_practice.learning_submissions submission
+       WHERE submission.attempt_id = $1 AND submission.source_type = 'INTERACTIVE_FINAL'
+         AND submission.lifecycle_status = 'COMMITTED'
+       FOR UPDATE`, [this.attempt.id]
+    );
+    const row = parent.rows[0];
+    if (!row || row.current_version !== expectedCurrentVersion
+        || version.learningSubmissionId !== row.id
+        || version.versionNumber !== expectedCurrentVersion + 1
+        || version.formId !== row.form_id || version.formVersion !== row.form_version) {
+      throw Object.assign(new Error('Learning reanalysis version conflict.'), {
+        code: 'LEARNING_VERSION_CONFLICT'
+      });
+    }
+    const currentSource = await this.client.query(
+      `SELECT version.creation_reason, version.batch_id,
+              count(response.*)::integer AS response_count,
+              COALESCE(bool_and(response.answer_origin = 'OFFICIAL_FINAL'), false) AS official_only
+       FROM amc_practice.learning_submission_versions version
+       LEFT JOIN amc_practice.learning_question_responses response
+         ON response.learning_submission_version_id = version.id
+       WHERE version.learning_submission_id = $1 AND version.version_number = $2
+       GROUP BY version.id`, [row.id, expectedCurrentVersion]
+    );
+    if (!currentSource.rowCount || currentSource.rows[0].batch_id
+        || currentSource.rows[0].creation_reason === 'BATCH_COMMIT'
+        || !currentSource.rows[0].official_only) {
+      throw Object.assign(new Error('Learning reanalysis source is unsupported.'), {
+        code: 'LEARNING_REANALYSIS_SOURCE_UNSUPPORTED'
+      });
+    }
+    const activeBatch = await this.client.query(
+      `SELECT 1 FROM amc_practice.learning_batches
+       WHERE learning_submission_id = $1 AND deletion_state = 'ACTIVE'
+         AND status NOT IN ('COMMITTED', 'FAILED') LIMIT 1`, [row.id]
+    );
+    if (activeBatch.rowCount) {
+      throw Object.assign(new Error('An active learning batch exists.'), { code: 'LEARNING_BATCH_ACTIVE' });
+    }
+    const old = await this.client.query(
+      `SELECT work.*, run.status AS run_status
+       FROM amc_practice.learning_submission_versions current
+       JOIN amc_practice.learning_work_items work
+         ON work.learning_submission_version_id = current.id
+        AND work.work_type = 'ANALYZE_SUBMISSION'
+       LEFT JOIN amc_practice.learning_analysis_runs run ON run.id = work.analysis_run_id
+       WHERE current.learning_submission_id = $1 AND current.version_number = $2
+       FOR UPDATE OF work`, [row.id, expectedCurrentVersion]
+    );
+    if (!old.rowCount || old.rows[0].status === 'RUNNING') {
+      throw Object.assign(new Error('Learning analysis is already running.'), {
+        code: old.rowCount ? 'LEARNING_ANALYSIS_IN_PROGRESS' : 'LEARNING_VERSION_CONFLICT'
+      });
+    }
+    if (['BLOCKED_CONTEXT', 'QUEUED'].includes(old.rows[0].status)) {
+      await this.client.query(
+        `UPDATE amc_practice.learning_work_items
+         SET status = 'CANCELLED', lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
+             last_error_code = 'SUPERSEDED_BY_EVIDENCE_REVISION', updated_at = $2
+         WHERE id = $1`, [old.rows[0].id, now]
+      );
+      if (old.rows[0].analysis_run_id && old.rows[0].run_status === 'QUEUED') {
+        await this.client.query(
+          `UPDATE amc_practice.learning_analysis_runs
+           SET status = 'CANCELLED', completed_at = $2,
+               last_error_code = 'SUPERSEDED_BY_EVIDENCE_REVISION'
+           WHERE id = $1`, [old.rows[0].analysis_run_id, now]
+        );
+      }
+    }
+    await this.client.query(
+      `INSERT INTO amc_practice.learning_submission_versions
+       (id, learning_submission_id, version_number, form_id, form_version,
+        answers_revision, reasoning_revision, creation_reason, context_status,
+        context_set_id, evidence_hash, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+      [version.id, version.learningSubmissionId, version.versionNumber,
+        version.formId, version.formVersion, version.answersRevision,
+        version.reasoningRevision, version.creationReason, version.contextStatus,
+        version.contextSetId, version.evidenceHash, version.createdAt]
+    );
+    for (const response of responses) {
+      await this.client.query(
+        `INSERT INTO amc_practice.learning_question_responses
+         (learning_submission_version_id, form_id, form_version, question_number,
+          selected_option, answer_origin, reasoning_text, reasoning_origin, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [response.learningSubmissionVersionId, response.formId, response.formVersion,
+          response.questionNumber, response.selectedOption, response.answerOrigin,
+          response.reasoningText, response.reasoningOrigin, response.createdAt]
+      );
+    }
+    if (analysisRun) {
+      await this.client.query(
+        `INSERT INTO amc_practice.learning_analysis_runs
+         (id, learning_submission_version_id, context_set_id, version_number, input_hash,
+          evidence_hash, deletion_generation, analysis_contract_version, status,
+          created_at, started_at, completed_at, last_error_code)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+        [analysisRun.id, analysisRun.learningSubmissionVersionId, analysisRun.contextSetId,
+          analysisRun.versionNumber, analysisRun.inputHash, analysisRun.evidenceHash,
+          analysisRun.deletionGeneration, analysisRun.analysisContractVersion,
+          analysisRun.status, analysisRun.createdAt, analysisRun.startedAt,
+          analysisRun.completedAt, analysisRun.lastErrorCode]
+      );
+    }
+    await this.client.query(
+      `INSERT INTO amc_practice.learning_work_items
+       (id, learning_submission_version_id, work_type, status, priority, attempt_count,
+        input_hash, deletion_generation, available_at, lease_owner, lease_token, lease_expires_at,
+        last_error_code, created_at, updated_at, analysis_run_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
+      [workItem.id, workItem.learningSubmissionVersionId, workItem.workType,
+        workItem.status, workItem.priority, workItem.attemptCount, workItem.inputHash,
+        workItem.deletionGeneration, workItem.availableAt, workItem.leaseOwner,
+        workItem.leaseToken, workItem.leaseExpiresAt, workItem.lastErrorCode,
+        workItem.createdAt, workItem.updatedAt, workItem.analysisRunId || null]
+    );
+    const advanced = await this.client.query(
+      `UPDATE amc_practice.learning_submissions
+       SET current_version = $3, updated_at = $4
+       WHERE id = $1 AND current_version = $2 RETURNING id`,
+      [row.id, expectedCurrentVersion, version.versionNumber, now]
+    );
+    if (!advanced.rowCount) {
+      throw Object.assign(new Error('Learning reanalysis version conflict.'), {
+        code: 'LEARNING_VERSION_CONFLICT'
+      });
+    }
     return this.getLearningSubmissionBundle();
   }
 

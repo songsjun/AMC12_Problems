@@ -47,6 +47,8 @@ const CANONICAL_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab]
 const ARCHIVE_RELEASE_FORM_ID_SET = new Set(ARCHIVE_RELEASE_FORM_IDS);
 const MAX_REASONING_NOTE_BYTES = 8_000;
 const MAX_REASONING_REQUEST_BYTES = 48_000;
+const REANALYSIS_BUDGET_WINDOW_MS = 24 * 60 * 60 * 1_000;
+const TERMINAL_BATCH_STATUSES = new Set(['COMMITTED', 'FAILED']);
 const REVIEW_ANCHOR_REASONS = new Set(['OPEN_REVIEW_ANCHOR', BATCH_REVIEW_ANCHOR_REASON]);
 
 function asDate(value) {
@@ -296,6 +298,52 @@ function normalizeReasoningUpdate(input) {
   return { revision: input.revision, notes };
 }
 
+function normalizeLearningReanalysis(input) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    throw badRequest('VALIDATION_ERROR', 'Request body must be an object.');
+  }
+  assertOnlyKeys(input, new Set(['expectedCurrentVersion', 'notes']), 'Request body');
+  if (!Number.isSafeInteger(input.expectedCurrentVersion) || input.expectedCurrentVersion < 1) {
+    throw badRequest('VALIDATION_ERROR', 'expectedCurrentVersion must be a positive integer.');
+  }
+  const notesInput = input.notes === undefined ? [] : input.notes;
+  if (!Array.isArray(notesInput) || notesInput.length > 25) {
+    throw badRequest('VALIDATION_ERROR', 'notes must contain at most 25 partial reasoning updates.');
+  }
+  const seen = new Set();
+  let totalBytes = 0;
+  const notes = notesInput.map((note) => {
+    if (!note || typeof note !== 'object' || Array.isArray(note)) {
+      throw badRequest('VALIDATION_ERROR', 'Each reasoning note must be an object.');
+    }
+    assertOnlyKeys(note, new Set(['questionNumber', 'reasoningText']), 'Reasoning note');
+    if (!Number.isSafeInteger(note.questionNumber) || note.questionNumber < 1 || note.questionNumber > 100) {
+      throw badRequest('VALIDATION_ERROR', 'Each reasoning note must name an integer questionNumber.');
+    }
+    if (seen.has(note.questionNumber)) {
+      throw badRequest('VALIDATION_ERROR', 'Each question may appear only once per reanalysis request.');
+    }
+    seen.add(note.questionNumber);
+    if (note.reasoningText !== null && typeof note.reasoningText !== 'string') {
+      throw badRequest('VALIDATION_ERROR', 'reasoningText must be a string or null.');
+    }
+    if (typeof note.reasoningText === 'string' && note.reasoningText.includes('\u0000')) {
+      throw badRequest('VALIDATION_ERROR', 'reasoningText cannot contain NUL characters.');
+    }
+    const reasoningText = note.reasoningText === null || note.reasoningText.trim() === '' ? '' : note.reasoningText;
+    const byteLength = Buffer.byteLength(reasoningText, 'utf8');
+    if (byteLength > MAX_REASONING_NOTE_BYTES) {
+      throw badRequest('VALIDATION_ERROR', `Each reasoningText is limited to ${MAX_REASONING_NOTE_BYTES} UTF-8 bytes.`);
+    }
+    totalBytes += byteLength;
+    return { questionNumber: note.questionNumber, reasoningText };
+  });
+  if (totalBytes > MAX_REASONING_REQUEST_BYTES) {
+    throw badRequest('VALIDATION_ERROR', `A reanalysis request is limited to ${MAX_REASONING_REQUEST_BYTES} UTF-8 bytes.`);
+  }
+  return { expectedCurrentVersion: input.expectedCurrentVersion, notes };
+}
+
 function markAttemptChanged(attempt, now) {
   const previous = Number.isSafeInteger(attempt.stateRevision) && attempt.stateRevision >= 0
     ? attempt.stateRevision
@@ -385,6 +433,10 @@ export class PracticeService {
     batchProviderAudioByteBudget,
     batchGlobalProviderWorkBudget,
     batchGlobalProviderAudioByteBudget,
+    reanalysisEnabled = false,
+    reanalysisPerStudentPerDay = 10,
+    reanalysisGlobalPerDay = 1_000,
+    reanalysisMaxVersions = 25,
     clock = () => new Date()
   }) {
     this.store = store;
@@ -396,6 +448,10 @@ export class PracticeService {
     this.clock = clock;
     this.batchIntakeEnabled = batchIntakeEnabled === true;
     this.batchReviewEnabled = batchReviewEnabled === true;
+    this.reanalysisEnabled = reanalysisEnabled === true;
+    this.reanalysisPerStudentPerDay = reanalysisPerStudentPerDay;
+    this.reanalysisGlobalPerDay = reanalysisGlobalPerDay;
+    this.reanalysisMaxVersions = reanalysisMaxVersions;
     this.batchRequestLimitPerMinute = batchRequestLimitPerMinute;
     this.batchPractice = new BatchPracticeService({
       store,
@@ -1432,6 +1488,258 @@ export class PracticeService {
       }
       return this.#publicLearningSubmission(learning);
     });
+  }
+
+  async reanalyzeLearningSubmission(studentId, attemptId, idempotencyKey, input) {
+    if (!this.reanalysisEnabled) {
+      throw new ApiError(503, 'LEARNING_REANALYSIS_DISABLED',
+        'Post-final reasoning and reanalysis are not enabled.');
+    }
+    const normalized = normalizeLearningReanalysis(input);
+    return this.#idempotentAttemptMutation(
+      studentId,
+      attemptId,
+      'learning-reanalysis',
+      idempotencyKey,
+      normalized,
+      async (tx, attempt, form, now) => {
+        const submissions = await tx.listSubmissions();
+        const finalSubmission = submissions.find((submission) => submission.kind === SUBMISSION_KINDS.FINAL);
+        if (!finalSubmission || ![PHASES.FINALIZED, PHASES.RESET].includes(attempt.phase)) {
+          throw conflict('LEARNING_REANALYSIS_NOT_AVAILABLE',
+            'Post-final analysis is available only after Final submit.');
+        }
+        const current = await tx.getLearningSubmissionBundle();
+        if (!current || current.submission.sourceType !== 'INTERACTIVE_FINAL'
+            || current.submission.lifecycleStatus !== 'COMMITTED'
+            || current.submission.officialSubmissionId !== finalSubmission.id) {
+          throw conflict('LEARNING_SUBMISSION_REPAIR_PENDING',
+            'This final is awaiting learning-submission reconciliation.');
+        }
+        if (normalized.expectedCurrentVersion !== current.submission.currentVersion) {
+          throw conflict('LEARNING_VERSION_CONFLICT',
+            'A newer reasoning or analysis version already exists. Refresh before restarting.', {
+              expectedCurrentVersion: normalized.expectedCurrentVersion,
+              currentVersion: current.submission.currentVersion
+            });
+        }
+        if (current.version.batchId || current.version.creationReason === 'BATCH_COMMIT'
+            || current.responses.some((response) => response.answerOrigin !== 'OFFICIAL_FINAL')) {
+          throw conflict('LEARNING_REANALYSIS_SOURCE_UNSUPPORTED',
+            'This final contains batch-confirmed evidence and cannot be restarted as an official-answer analysis.');
+        }
+        if (current.submission.currentVersion >= this.reanalysisMaxVersions) {
+          throw conflict('LEARNING_VERSION_LIMIT_REACHED',
+            'This submission has reached its reanalysis history limit.', {
+              maximumVersions: this.reanalysisMaxVersions
+            });
+        }
+        const batches = await tx.listLearningBatchBundles();
+        if (batches.some((bundle) => bundle.batch?.deletionState === 'ACTIVE'
+            && !TERMINAL_BATCH_STATUSES.has(bundle.batch.status))) {
+          throw conflict('LEARNING_BATCH_ACTIVE',
+            'Finish or delete the active batch submission before restarting analysis.');
+        }
+        const currentWork = current.workItems.find((item) => item.workType === 'ANALYZE_SUBMISSION');
+        if (currentWork?.status === 'RUNNING') {
+          throw conflict('LEARNING_ANALYSIS_IN_PROGRESS',
+            'The current analysis has already reached the AI provider. Wait for it to finish before restarting.');
+        }
+        const validNumbers = new Set(form.questions.map((question) => question.number));
+        if (normalized.notes.some((note) => !validNumbers.has(note.questionNumber))) {
+          throw badRequest('VALIDATION_ERROR', 'Each reasoning note must name a question in this form.');
+        }
+        const officialAnswers = await tx.getSubmissionAnswers(finalSubmission.id);
+        if (officialAnswers.length !== form.questions.length || current.responses.length !== form.questions.length) {
+          throw new Error('Post-final reanalysis requires a complete immutable official snapshot.');
+        }
+        const officialByNumber = new Map(officialAnswers.map((answer) =>
+          [answer.questionNumber, answer.selectedOption]));
+        const currentByNumber = new Map(current.responses.map((response) =>
+          [response.questionNumber, response]));
+        const patchByNumber = new Map(normalized.notes.map((note) =>
+          [note.questionNumber, note.reasoningText]));
+        let reasoningChanged = false;
+        const evidence = form.questions.map((question) => {
+          const previous = currentByNumber.get(question.number);
+          if (!previous || previous.selectedOption !== (officialByNumber.get(question.number) ?? null)
+              || previous.answerOrigin !== 'OFFICIAL_FINAL') {
+            throw new Error('Learning evidence no longer matches the immutable official final.');
+          }
+          const patched = patchByNumber.has(question.number);
+          const reasoningText = patched ? patchByNumber.get(question.number) : previous.reasoningText;
+          const valueChanged = reasoningText !== previous.reasoningText;
+          if (valueChanged) reasoningChanged = true;
+          return {
+            questionNumber: question.number,
+            selectedOption: officialByNumber.get(question.number) ?? null,
+            reasoningText,
+            reasoningOrigin: valueChanged
+              ? (reasoningText ? 'POST_FINAL_UPDATE' : 'NONE')
+              : previous.reasoningOrigin
+          };
+        });
+        return tx.withApprovedContextFormLock(form.id, form.version, async () => {
+          const approvedContext = await tx.getApprovedContextSetForForm(form.id, form.version);
+          const contextReady = Boolean(approvedContext?.questions?.length);
+          if (!reasoningChanged && !contextReady) {
+            throw conflict('ANALYSIS_CONTEXT_UNAVAILABLE',
+              'Approved solutions for this exact test are not available yet; no analysis was started.');
+          }
+          const studentBudget = await tx.consumeStudentResourceBudget({
+            studentId,
+            budgetKind: 'LEARNING_REANALYSIS',
+            units: 1,
+            limit: this.reanalysisPerStudentPerDay,
+            windowMs: REANALYSIS_BUDGET_WINDOW_MS,
+            now
+          });
+          const globalBudget = await tx.consumeGlobalResourceBudget({
+            budgetKind: 'LEARNING_REANALYSIS',
+            units: 1,
+            limit: this.reanalysisGlobalPerDay,
+            windowMs: REANALYSIS_BUDGET_WINDOW_MS,
+            now
+          });
+          if (!studentBudget.allowed || !globalBudget.allowed) {
+            throw tooManyRequests('LEARNING_REANALYSIS_RATE_LIMITED',
+              'The daily reanalysis limit has been reached. Try again later.',
+              Math.max(studentBudget.retryAfterSeconds || 1, globalBudget.retryAfterSeconds || 1));
+          }
+          const reasoningRevision = current.version.reasoningRevision + (reasoningChanged ? 1 : 0);
+          const evidenceHash = reasoningChanged ? createHash('sha256').update(stableJson({
+            sourceKind: 'INTERACTIVE_FINAL',
+            formId: form.id,
+            formVersion: form.version,
+            officialSubmissionId: finalSubmission.id,
+            answersRevision: current.version.answersRevision,
+            reasoningRevision,
+            responses: evidence
+          })).digest('hex') : current.version.evidenceHash;
+          const inputHash = contextReady
+            ? analysisInputHash(evidenceHash, approvedContext.artifactSetHash)
+            : evidenceHash;
+          const version = {
+            id: randomUUID(),
+            learningSubmissionId: current.submission.id,
+            versionNumber: current.submission.currentVersion + 1,
+            formId: form.id,
+            formVersion: form.version,
+            answersRevision: current.version.answersRevision,
+            reasoningRevision,
+            creationReason: reasoningChanged ? 'POST_FINAL_REASONING_COMMIT' : 'MANUAL_REANALYSIS_COMMIT',
+            contextStatus: contextReady ? 'CONTEXT_READY' : 'CONTEXT_UNAVAILABLE',
+            contextSetId: contextReady ? approvedContext.id : null,
+            evidenceHash,
+            createdAt: now
+          };
+          const responses = evidence.map((response) => ({
+            learningSubmissionVersionId: version.id,
+            formId: form.id,
+            formVersion: form.version,
+            ...response,
+            answerOrigin: 'OFFICIAL_FINAL',
+            createdAt: now
+          }));
+          const workItem = {
+            id: randomUUID(), learningSubmissionVersionId: version.id,
+            workType: 'ANALYZE_SUBMISSION', status: contextReady ? 'QUEUED' : 'BLOCKED_CONTEXT',
+            priority: 50, attemptCount: 0, inputHash,
+            deletionGeneration: current.submission.deletionGeneration,
+            availableAt: now, leaseOwner: null, leaseToken: null, leaseExpiresAt: null,
+            lastErrorCode: contextReady ? null : 'QUESTION_CONTEXT_UNAVAILABLE',
+            createdAt: now, updatedAt: now
+          };
+          const analysisRun = contextReady ? {
+            id: randomUUID(), learningSubmissionVersionId: version.id,
+            contextSetId: approvedContext.id, versionNumber: version.versionNumber,
+            inputHash, evidenceHash, deletionGeneration: workItem.deletionGeneration,
+            analysisContractVersion: ANALYSIS_CONTRACT_VERSION,
+            status: 'QUEUED', createdAt: now, startedAt: null, completedAt: null, lastErrorCode: null
+          } : null;
+          if (analysisRun) workItem.analysisRunId = analysisRun.id;
+          let committed;
+          try {
+            committed = await tx.commitLearningReanalysis({
+              expectedCurrentVersion: normalized.expectedCurrentVersion,
+              version, responses, workItem, analysisRun, now
+            });
+          } catch (error) {
+            if (error.code === 'LEARNING_VERSION_CONFLICT') {
+              throw conflict('LEARNING_VERSION_CONFLICT',
+                'A newer reasoning or analysis version already exists. Refresh before restarting.');
+            }
+            if (error.code === 'LEARNING_ANALYSIS_IN_PROGRESS') {
+              throw conflict('LEARNING_ANALYSIS_IN_PROGRESS',
+                'The current analysis has already reached the AI provider. Wait for it to finish before restarting.');
+            }
+            if (error.code === 'LEARNING_BATCH_ACTIVE') {
+              throw conflict('LEARNING_BATCH_ACTIVE',
+                'Finish or delete the active batch submission before restarting analysis.');
+            }
+            if (error.code === 'LEARNING_REANALYSIS_SOURCE_UNSUPPORTED') {
+              throw conflict('LEARNING_REANALYSIS_SOURCE_UNSUPPORTED',
+                'This final contains batch-confirmed evidence and cannot be restarted as an official-answer analysis.');
+            }
+            throw error;
+          }
+          await tx.addTimerEvent({
+            type: 'LEARNING_REANALYSIS_COMMIT', occurredAt: now,
+            metadata: {
+              learningSubmissionId: current.submission.id,
+              previousVersion: normalized.expectedCurrentVersion,
+              version: version.versionNumber,
+              creationReason: version.creationReason
+            }
+          });
+          return {
+            learningSubmission: this.#publicLearningSubmission(committed),
+            supersededVersion: normalized.expectedCurrentVersion,
+            reasoningChanged
+          };
+        });
+      },
+      {
+        responseForStorage: (result) => ({
+          responseKind: 'CURRENT_LEARNING_REANALYSIS',
+          learningSubmissionId: result.learningSubmission.id,
+          version: result.learningSubmission.version,
+          supersededVersion: result.supersededVersion,
+          reasoningChanged: result.reasoningChanged
+        }),
+        replay: async (tx, _attempt, stored) => {
+          if (stored.responseKind !== 'CURRENT_LEARNING_REANALYSIS') {
+            throw new Error('Stored reanalysis idempotency response is invalid.');
+          }
+          const bundle = await tx.getLearningSubmissionBundle();
+          if (!bundle || bundle.submission.id !== stored.learningSubmissionId
+              || bundle.submission.currentVersion < stored.version) {
+            throw new Error('Stored reanalysis version is no longer available.');
+          }
+          if (bundle.submission.currentVersion !== stored.version) {
+            const record = await this.store.getLearningHistoryRecord(studentId, stored.learningSubmissionId);
+            const exact = record?.versions.find((item) => item.version.versionNumber === stored.version);
+            if (!exact) throw new Error('Stored reanalysis version is no longer available.');
+            return {
+              learningSubmission: {
+                id: record.submission.id, sourceKind: record.submission.sourceType,
+                version: exact.version.versionNumber, status: exact.version.contextStatus,
+                officialSubmissionId: record.submission.officialSubmissionId,
+                evidenceHash: exact.version.evidenceHash,
+                analysisStatus: learningAnalysisStatus(exact, learningProtectedAccess(record.submission, record.release))
+              },
+              supersededVersion: stored.supersededVersion,
+              reasoningChanged: stored.reasoningChanged
+            };
+          }
+          return {
+            learningSubmission: this.#publicLearningSubmission(bundle),
+            supersededVersion: stored.supersededVersion,
+            reasoningChanged: stored.reasoningChanged
+          };
+        }
+      }
+    );
   }
 
   async getLearningReport(studentId, attemptId) {

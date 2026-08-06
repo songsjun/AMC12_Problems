@@ -131,7 +131,8 @@ async function verifyZeroChildV1Upgrade(pool) {
     '014_batch_review_workspace.sql',
     '015_approved_context_v2.sql',
     '016_batch_review_readiness_gate.sql',
-    '017_batch_review_historical_access.sql'
+    '017_batch_review_historical_access.sql',
+    '018_post_final_reanalysis.sql'
   ];
   try {
     const approvedContextV2Index = migrationNames.indexOf('015_approved_context_v2.sql');
@@ -201,6 +202,143 @@ async function verifyZeroChildV1Upgrade(pool) {
   }
 }
 
+async function verifyHistoricalUnboundBatchAnchorUpgrade(pool) {
+  const schema = `amc_unbound_anchor_${randomUUID().replaceAll('-', '')}`;
+  const migrationNames = [
+    '001_initial.sql',
+    '002_pipeline_audit_metadata.sql',
+    '003_archive_practice_scoring.sql',
+    '004_one_published_form_revision.sql',
+    '005_learning_submission_core.sql',
+    '006_approved_context_learning_reports.sql',
+    '007_batch_ingest.sql',
+    '008_open_review.sql',
+    '009_learning_history_read_model.sql',
+    '010_analysis_contract_v2.sql',
+    '011_question_tutor_persistence.sql',
+    '012_tutor_expired_lease_recovery.sql',
+    '013_ai_dispatch_fairness.sql',
+    '014_batch_review_workspace.sql',
+    '015_approved_context_v2.sql',
+    '016_batch_review_readiness_gate.sql',
+    '017_batch_review_historical_access.sql',
+    '018_post_final_reanalysis.sql'
+  ];
+  const approvedContextV2Index = migrationNames.indexOf('015_approved_context_v2.sql');
+  const studentId = randomUUID();
+  const attemptId = randomUUID();
+  const learningSubmissionId = randomUUID();
+  const versionId = randomUUID();
+  const formId = 'legacy-unbound-batch-anchor';
+  const formVersion = 'v1';
+  try {
+    for (const name of migrationNames.slice(0, approvedContextV2Index)) {
+      const migration = await readFile(new URL(`../migrations/${name}`, import.meta.url), 'utf8');
+      await pool.query(migration.replaceAll('amc_practice', schema));
+    }
+    await pool.query('BEGIN');
+    try {
+      await pool.query(
+        `INSERT INTO ${schema}.form_revisions
+          (form_id, version, title, duration_ms, published, test_only, published_at,
+           publication_status, source_schema_version, source_manifest_hash,
+           content_hash, question_bundle_hash, provenance, scoring_policy,
+           manifest_hash, imported_at)
+         VALUES ($1,$2,'Legacy unavailable batch anchor',4500000,true,true,$3,
+           'approved','amc-form-private-v1',$4,$5,$6,'{}'::jsonb,$7::jsonb,$8,$3)`,
+        [formId, formVersion, new Date('2026-07-01T00:00:00Z'),
+          '1'.repeat(64), '2'.repeat(64), '3'.repeat(64),
+          JSON.stringify({
+            id: 'amc-legacy', version: '1', correctPoints: 6,
+            blankPoints: 1.5, incorrectPoints: 0
+          }), '4'.repeat(64)]
+      );
+      await pool.query(
+        `INSERT INTO ${schema}.form_questions
+          (form_id, form_version, question_number, prompt_markdown, choices,
+           correct_option, solution_markdown, is_scored, accepted_options)
+         SELECT $1,$2,number,'Legacy prompt ' || number,
+           jsonb_build_array(
+             jsonb_build_object('option','A','textMarkdown','A'),
+             jsonb_build_object('option','B','textMarkdown','B'),
+             jsonb_build_object('option','C','textMarkdown','C'),
+             jsonb_build_object('option','D','textMarkdown','D'),
+             jsonb_build_object('option','E','textMarkdown','E')
+           ),'A','Legacy solution ' || number,true,'["A"]'::jsonb
+         FROM generate_series(1,25) number`, [formId, formVersion]
+      );
+      await pool.query(
+        `INSERT INTO ${schema}.students (id, display_name, created_at)
+         VALUES ($1,'Historical batch student',$2)`,
+        [studentId, new Date('2026-07-02T00:00:00Z')]
+      );
+      await pool.query(
+        `INSERT INTO ${schema}.attempts
+          (id, student_id, form_id, form_version, duration_ms, attempt_mode, phase,
+           clock_state, active_elapsed_ms, clock_started_at, answers_revision,
+           reasoning_revision, state_revision, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,4500000,'BATCH_REVIEW','BATCH_REVIEW',
+           'PAUSED',0,NULL,0,0,0,$5,$5)`,
+        [attemptId, studentId, formId, formVersion, new Date('2026-07-02T00:00:00Z')]
+      );
+      await pool.query(
+        `INSERT INTO ${schema}.learning_submissions
+          (id, student_id, attempt_id, official_submission_id, official_submission_kind,
+           form_id, form_version, source_type, lifecycle_status, current_version,
+           created_at, updated_at, attempt_mode, open_review_release_id)
+         VALUES ($1,$2,$3,NULL,NULL,$4,$5,'BATCH_REVIEW','COMMITTED',1,$6,$6,
+           'BATCH_REVIEW',NULL)`,
+        [learningSubmissionId, studentId, attemptId, formId, formVersion,
+          new Date('2026-07-02T00:00:00Z')]
+      );
+      await pool.query(
+        `INSERT INTO ${schema}.learning_submission_versions
+          (id, learning_submission_id, version_number, form_id, form_version,
+           answers_revision, reasoning_revision, creation_reason, context_status,
+           context_set_id, evidence_hash, created_at)
+         VALUES ($1,$2,1,$3,$4,0,0,'BATCH_REVIEW_ANCHOR',
+           'CONTEXT_UNAVAILABLE',NULL,$5,$6)`,
+        [versionId, learningSubmissionId, formId, formVersion,
+          '5'.repeat(64), new Date('2026-07-02T00:00:00Z')]
+      );
+      await pool.query(
+        `INSERT INTO ${schema}.learning_question_responses
+          (learning_submission_version_id, form_id, form_version, question_number,
+           selected_option, answer_origin, reasoning_text, reasoning_origin, created_at)
+         SELECT $1,$2,$3,number,NULL,'BATCH_REVIEW_BLANK','','NONE',$4
+         FROM generate_series(1,25) number`,
+        [versionId, formId, formVersion, new Date('2026-07-02T00:00:00Z')]
+      );
+      await pool.query('COMMIT');
+    } catch (error) {
+      await pool.query('ROLLBACK').catch(() => {});
+      throw error;
+    }
+
+    for (const name of migrationNames.slice(approvedContextV2Index)) {
+      const migration = await readFile(new URL(`../migrations/${name}`, import.meta.url), 'utf8');
+      await pool.query(migration.replaceAll('amc_practice', schema));
+    }
+    assert.deepEqual((await pool.query(
+      `SELECT creation_reason, context_status, context_set_id,
+              (SELECT count(*)::integer FROM ${schema}.learning_question_responses response
+               WHERE response.learning_submission_version_id = version.id) AS response_count,
+              ${schema}.learning_entitlement_allows(
+                version.learning_submission_id, 'EXISTING_WORK') AS historically_readable
+       FROM ${schema}.learning_submission_versions version WHERE version.id = $1`,
+      [versionId]
+    )).rows, [{
+      creation_reason: 'BATCH_REVIEW_ANCHOR',
+      context_status: 'CONTEXT_UNAVAILABLE',
+      context_set_id: null,
+      response_count: 25,
+      historically_readable: true
+    }]);
+  } finally {
+    await pool.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);
+  }
+}
+
 test('PostgreSQL migration rerun plus private/archive import and publication-concurrency smoke test', { skip: !connectionString }, async (t) => {
   const store = new PostgresStore({ connectionString, max: 12 });
   const secondStore = new PostgresStore({ connectionString, max: 4 });
@@ -238,9 +376,11 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     '014_batch_review_workspace.sql',
     '015_approved_context_v2.sql',
     '016_batch_review_readiness_gate.sql',
-    '017_batch_review_historical_access.sql'
+    '017_batch_review_historical_access.sql',
+    '018_post_final_reanalysis.sql'
   ]);
   await verifyZeroChildV1Upgrade(store.pool);
+  await verifyHistoricalUnboundBatchAnchorUpgrade(store.pool);
   assert.deepEqual((await store.pool.query(
     `SELECT last_claimed_kind, revision
      FROM amc_practice.ai_dispatch_fairness_state WHERE singleton = true`
@@ -738,7 +878,8 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     sessionTtlMs: 60 * 60 * 1000,
     allowTestOnlyImport: true,
     allowTestOnlyPublish: true,
-    batchIntakeEnabled: true
+    batchIntakeEnabled: true,
+    reanalysisEnabled: true
   });
   const secondService = new PracticeService({
     store: secondStore, privateUploadStore,
@@ -746,7 +887,8 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     sessionTtlMs: 60 * 60 * 1000,
     allowTestOnlyImport: true,
     allowTestOnlyPublish: true,
-    batchIntakeEnabled: true
+    batchIntakeEnabled: true,
+    reanalysisEnabled: true
   });
   // The source fixture has a stable revision; importing it repeatedly is safe
   // because the canonical source manifest hash is immutable.
@@ -1050,6 +1192,217 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     '2', '1', 'pg-v2-tutor-root'
   );
   assert.equal(v2Tutor.thread.question.solutionReferences.length, 2);
+
+  // Exact approved context makes both post-final evidence replacement and a
+  // pure rerun legal. The latter deliberately copies POST_FINAL_UPDATE
+  // provenance and therefore exercises migration 018's database trigger.
+  const readyReanalysisCode = `pg-ready-reanalysis-${randomUUID()}`;
+  const readyReanalysisStudent = await service.seedAccessCode({
+    code: readyReanalysisCode,
+    displayName: 'Postgres ready-context reanalysis student'
+  });
+  const readyReanalysisAttempt = await service.createAttempt(
+    readyReanalysisStudent.id, alternativeArchive.id
+  );
+  await service.putAnswers(readyReanalysisStudent.id, readyReanalysisAttempt.attempt.id, {
+    revision: 0, answers: [{ questionNumber: 1, selectedOption: 'A' }]
+  });
+  const readyReanalysisAttemptWithAnswer = await service.getAttempt(
+    readyReanalysisStudent.id, readyReanalysisAttempt.attempt.id
+  );
+  const readyReanalysisFinal = await service.final(
+    readyReanalysisStudent.id, readyReanalysisAttempt.attempt.id,
+    'pg-ready-reanalysis-final', {
+      expectedAnswersRevision: readyReanalysisAttemptWithAnswer.answersRevision,
+      expectedStateRevision: readyReanalysisAttemptWithAnswer.stateRevision
+    }
+  );
+  const readyReanalysisV2 = await service.reanalyzeLearningSubmission(
+    readyReanalysisStudent.id, readyReanalysisAttempt.attempt.id,
+    'pg-ready-reanalysis-v2', {
+      expectedCurrentVersion: 1,
+      notes: [{ questionNumber: 1, reasoningText: 'A PostgreSQL-persisted improved argument.' }]
+    }
+  );
+  assert.equal(readyReanalysisV2.learningSubmission.analysisStatus, 'QUEUED');
+  const readyReanalysisV3 = await service.reanalyzeLearningSubmission(
+    readyReanalysisStudent.id, readyReanalysisAttempt.attempt.id,
+    'pg-ready-reanalysis-v3', { expectedCurrentVersion: 2, notes: [] }
+  );
+  assert.equal(readyReanalysisV3.learningSubmission.version, 3);
+  assert.equal(readyReanalysisV3.reasoningChanged, false);
+  const readyVersions = await store.pool.query(
+    `SELECT version_number, creation_reason, reasoning_revision, evidence_hash
+     FROM amc_practice.learning_submission_versions
+     WHERE learning_submission_id = $1 ORDER BY version_number`,
+    [readyReanalysisFinal.learningSubmission.id]
+  );
+  assert.equal(readyVersions.rows[1].creation_reason, 'POST_FINAL_REASONING_COMMIT');
+  assert.equal(readyVersions.rows[2].creation_reason, 'MANUAL_REANALYSIS_COMMIT');
+  assert.equal(readyVersions.rows[2].reasoning_revision, readyVersions.rows[1].reasoning_revision);
+  assert.equal(readyVersions.rows[2].evidence_hash, readyVersions.rows[1].evidence_hash);
+  const reanalysisClaimAt = new Date(Date.now() + 60_000);
+  const readyClaim = await store.claimLearningAnalysisWork({
+    workerId: 'pg-ready-reanalysis-worker', now: reanalysisClaimAt, leaseMs: 120_000
+  });
+  assert.equal(readyClaim.submission.attemptId, readyReanalysisAttempt.attempt.id);
+  const readyWorker = new LearningReviewWorker({
+    store, inferenceClient: new FakeInferenceClient(),
+    workerId: 'pg-ready-reanalysis-worker', clock: () => new Date(reanalysisClaimAt)
+  });
+  assert.equal((await readyWorker.processClaimed(readyClaim)).processed, true);
+  const readyTutorSession = await service.login(readyReanalysisCode);
+  const readyTutor = await service.createTutorRootThread(
+    readyReanalysisStudent.id, readyTutorSession.session.id,
+    readyReanalysisFinal.learningSubmission.id, '3', '1', 'pg-ready-reanalysis-tutor'
+  );
+  assert.equal(readyTutor.thread.thread.versionNumber, 3);
+  assert.equal(readyTutor.thread.question.studentAnswer, 'A');
+  assert.equal(readyTutor.thread.question.studentReasoning,
+    'A PostgreSQL-persisted improved argument.');
+  assert.equal(readyTutor.thread.question.officialAnswer,
+    v2StoredForm.questions.find((question) => question.number === 1).correctOption);
+  assert.equal(readyTutor.thread.question.solutionReferences.length, 2);
+  const immutableAnalysisRows = (await store.pool.query(
+    `SELECT report.id AS report_id, analysis.analysis_run_id,
+            analysis.question_number, version.id AS version_id
+     FROM amc_practice.learning_submission_versions version
+     JOIN amc_practice.learning_analysis_runs run
+       ON run.learning_submission_version_id = version.id
+     JOIN amc_practice.learning_reports report
+       ON report.learning_submission_version_id = version.id
+     JOIN amc_practice.learning_question_analyses analysis
+       ON analysis.analysis_run_id = run.id
+     WHERE version.learning_submission_id = $1 AND version.version_number = 3
+     ORDER BY analysis.question_number LIMIT 1`,
+    [readyReanalysisFinal.learningSubmission.id]
+  )).rows[0];
+  await assert.rejects(
+    () => store.pool.query(
+      "UPDATE amc_practice.learning_reports SET status = 'FAILED' WHERE id = $1",
+      [immutableAnalysisRows.report_id]
+    ), (error) => error.code === '55000'
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `DELETE FROM amc_practice.learning_question_analyses
+       WHERE analysis_run_id = $1 AND question_number = $2`,
+      [immutableAnalysisRows.analysis_run_id, immutableAnalysisRows.question_number]
+    ), (error) => error.code === '55000'
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      'DELETE FROM amc_practice.learning_submission_versions WHERE id = $1',
+      [immutableAnalysisRows.version_id]
+    ), (error) => error.code === '55000'
+  );
+
+  // Dispatcher/attempt lock ordering is exercised rather than asserted from
+  // source: either the worker leases v1 first and restart returns 409, or the
+  // restart commits v2 first and the worker leases v2. No provider-bound run
+  // is ever silently superseded.
+  const claimRaceStudent = await service.seedAccessCode({
+    code: `pg-reanalysis-claim-race-${randomUUID()}`,
+    displayName: 'Postgres claim race student'
+  });
+  const claimRaceAttempt = await service.createAttempt(claimRaceStudent.id, alternativeArchive.id);
+  await service.final(claimRaceStudent.id, claimRaceAttempt.attempt.id, 'pg-claim-race-final', {
+    expectedAnswersRevision: 0, expectedStateRevision: 0
+  });
+  const [restartOutcome, claimOutcome] = await Promise.allSettled([
+    service.reanalyzeLearningSubmission(
+      claimRaceStudent.id, claimRaceAttempt.attempt.id, 'pg-claim-race-reanalysis', {
+        expectedCurrentVersion: 1,
+        notes: [{ questionNumber: 1, reasoningText: 'Race-safe post-final evidence.' }]
+      }
+    ),
+    secondStore.claimLearningAnalysisWork({
+      workerId: 'pg-reanalysis-claim-race-worker', now: reanalysisClaimAt, leaseMs: 120_000
+    })
+  ]);
+  assert.equal(claimOutcome.status, 'fulfilled');
+  assert.equal(claimOutcome.value.submission.attemptId, claimRaceAttempt.attempt.id);
+  if (restartOutcome.status === 'fulfilled') {
+    assert.equal(restartOutcome.value.learningSubmission.version, 2);
+    assert.equal(claimOutcome.value.version.versionNumber, 2);
+  } else {
+    assert.equal(restartOutcome.reason.code, 'LEARNING_ANALYSIS_IN_PROGRESS');
+    assert.equal(claimOutcome.value.version.versionNumber, 1);
+  }
+  const raceWorker = new LearningReviewWorker({
+    store: secondStore, inferenceClient: new FakeInferenceClient(),
+    workerId: 'pg-reanalysis-claim-race-worker', clock: () => new Date(reanalysisClaimAt)
+  });
+  assert.equal((await raceWorker.processClaimed(claimOutcome.value)).processed, true);
+
+  // Context import and a post-final reasoning commit take the same exact-form
+  // advisory lock. Regardless of which transaction wins, the new version is
+  // either born ready or repaired by the importer; it cannot remain a missed
+  // BLOCKED_CONTEXT wake-up.
+  const contextLockSuffix = randomUUID();
+  const contextLockForm = {
+    ...learningReviewForm(),
+    id: `pg-context-lock-${contextLockSuffix}`,
+    version: 'context-lock-v1',
+    sourceManifestHash: canonicalHash({ contextLockSuffix, field: 'source' }),
+    contentHash: canonicalHash({ contextLockSuffix, field: 'content' }),
+    questionBundleHash: canonicalHash({ contextLockSuffix, field: 'questions' }),
+    manifestHash: canonicalHash({ contextLockSuffix, field: 'manifest' })
+  };
+  await store.importForm(contextLockForm, { publish: true, allowTestOnlyPublish: true });
+  const contextLockStudent = await service.seedAccessCode({
+    code: `pg-context-lock-${randomUUID()}`, displayName: 'Postgres context lock student'
+  });
+  const contextLockAttempt = await service.createAttempt(contextLockStudent.id, contextLockForm.id);
+  const contextLockFinal = await service.final(
+    contextLockStudent.id, contextLockAttempt.attempt.id, 'pg-context-lock-final', {
+      expectedAnswersRevision: 0, expectedStateRevision: 0
+    }
+  );
+  const contextLockArtifact = approvedContextArtifact(contextLockForm, { readyNumbers: [1] });
+  const contextLockImporter = new ApprovedContextImporter({
+    store: secondStore,
+    clock: () => new Date(reanalysisClaimAt),
+    trustedAuthorityIds: TRUSTED_APPROVAL_AUTHORITIES
+  });
+  const [contextLockReanalysis] = await Promise.all([
+    service.reanalyzeLearningSubmission(
+      contextLockStudent.id, contextLockAttempt.attempt.id, 'pg-context-lock-reanalysis', {
+        expectedCurrentVersion: 1,
+        notes: [{ questionNumber: 1, reasoningText: 'This evidence must not miss context import.' }]
+      }
+    ),
+    contextLockImporter.import(
+      contextLockArtifact, approvalReceiptsForArtifact(contextLockArtifact)
+    )
+  ]);
+  assert.equal(contextLockReanalysis.learningSubmission.version, 2);
+  const contextLockState = (await store.pool.query(
+    `SELECT version.context_status, version.context_set_id,
+            work.status AS work_status, run.status AS run_status
+     FROM amc_practice.learning_submission_versions version
+     JOIN amc_practice.learning_work_items work
+       ON work.learning_submission_version_id = version.id
+      AND work.work_type = 'ANALYZE_SUBMISSION'
+     JOIN amc_practice.learning_analysis_runs run ON run.id = work.analysis_run_id
+     WHERE version.learning_submission_id = $1 AND version.version_number = 2`,
+    [contextLockFinal.learningSubmission.id]
+  )).rows[0];
+  assert.equal(contextLockState.context_status, 'CONTEXT_READY');
+  assert.ok(contextLockState.context_set_id);
+  assert.equal(contextLockState.work_status, 'QUEUED');
+  assert.equal(contextLockState.run_status, 'QUEUED');
+  const contextLockClaim = await secondStore.claimLearningAnalysisWork({
+    workerId: 'pg-context-lock-worker',
+    now: new Date(reanalysisClaimAt.getTime() + 1_000), leaseMs: 120_000
+  });
+  assert.equal(contextLockClaim.submission.attemptId, contextLockAttempt.attempt.id);
+  const contextLockWorker = new LearningReviewWorker({
+    store: secondStore, inferenceClient: new FakeInferenceClient(),
+    workerId: 'pg-context-lock-worker',
+    clock: () => new Date(reanalysisClaimAt.getTime() + 1_000)
+  });
+  assert.equal((await contextLockWorker.processClaimed(contextLockClaim)).processed, true);
 
   // A second v2 aggregate proves sealing is global governance, independent of
   // whether a runtime submission or open-review release has pinned the row.
@@ -1593,6 +1946,93 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
     analysis_status: 'BLOCKED_CONTEXT',
     input_hash: final.learningSubmission.evidenceHash
   });
+
+  const reanalysisStudent = await service.seedAccessCode({
+    code: `pg-reanalysis-${randomUUID()}`, displayName: 'Postgres reanalysis student'
+  });
+  const reanalysisAttempt = await service.createAttempt(reanalysisStudent.id, built.manifest.id);
+  const reanalysisFinal = await service.final(
+    reanalysisStudent.id, reanalysisAttempt.attempt.id, 'postgres-reanalysis-final', {
+      expectedAnswersRevision: 0, expectedStateRevision: 0
+    }
+  );
+  const officialSnapshotBefore = await store.pool.query(
+    `SELECT to_jsonb(submission.*) AS submission,
+            jsonb_agg(to_jsonb(answer.*) ORDER BY answer.question_number) AS answers
+     FROM amc_practice.submissions submission
+     JOIN amc_practice.submission_answers answer ON answer.submission_id = submission.id
+     WHERE submission.id = $1 GROUP BY submission.id`, [reanalysisFinal.submission.id]
+  );
+  const reanalysisV2 = await service.reanalyzeLearningSubmission(
+    reanalysisStudent.id, reanalysisAttempt.attempt.id, 'postgres-reanalysis-v2', {
+      expectedCurrentVersion: 1,
+      notes: [{ questionNumber: 1, reasoningText: 'A durable PostgreSQL post-final explanation.' }]
+    }
+  );
+  assert.equal(reanalysisV2.learningSubmission.version, 2);
+  assert.equal(reanalysisV2.learningSubmission.analysisStatus, 'BLOCKED_CONTEXT');
+  const reanalysisReplay = await service.reanalyzeLearningSubmission(
+    reanalysisStudent.id, reanalysisAttempt.attempt.id, 'postgres-reanalysis-v2', {
+      expectedCurrentVersion: 1,
+      notes: [{ questionNumber: 1, reasoningText: 'A durable PostgreSQL post-final explanation.' }]
+    }
+  );
+  assert.deepEqual(reanalysisReplay, reanalysisV2);
+  await assert.rejects(() => service.reanalyzeLearningSubmission(
+    reanalysisStudent.id, reanalysisAttempt.attempt.id, 'postgres-reanalysis-no-context', {
+      expectedCurrentVersion: 2, notes: []
+    }
+  ), (error) => error.code === 'ANALYSIS_CONTEXT_UNAVAILABLE');
+  const race = await Promise.allSettled([
+    service.reanalyzeLearningSubmission(
+      reanalysisStudent.id, reanalysisAttempt.attempt.id, 'postgres-reanalysis-race-a', {
+        expectedCurrentVersion: 2,
+        notes: [{ questionNumber: 2, reasoningText: 'Race A replacement.' }]
+      }
+    ),
+    secondService.reanalyzeLearningSubmission(
+      reanalysisStudent.id, reanalysisAttempt.attempt.id, 'postgres-reanalysis-race-b', {
+        expectedCurrentVersion: 2,
+        notes: [{ questionNumber: 2, reasoningText: 'Race B replacement.' }]
+      }
+    )
+  ]);
+  assert.equal(race.filter((item) => item.status === 'fulfilled').length, 1);
+  assert.equal(race.filter((item) => item.status === 'rejected'
+    && item.reason.code === 'LEARNING_VERSION_CONFLICT').length, 1);
+  const officialSnapshotAfter = await store.pool.query(
+    `SELECT to_jsonb(submission.*) AS submission,
+            jsonb_agg(to_jsonb(answer.*) ORDER BY answer.question_number) AS answers
+     FROM amc_practice.submissions submission
+     JOIN amc_practice.submission_answers answer ON answer.submission_id = submission.id
+     WHERE submission.id = $1 GROUP BY submission.id`, [reanalysisFinal.submission.id]
+  );
+  assert.deepEqual(officialSnapshotAfter.rows, officialSnapshotBefore.rows,
+    'PostgreSQL reanalysis cannot change the official submission or answer snapshots');
+  const reanalysisHistory = await service.getLearningHistory(
+    reanalysisStudent.id, reanalysisFinal.learningSubmission.id
+  );
+  assert.deepEqual(reanalysisHistory.versions.map((item) => [item.versionNumber, item.resultStatus]), [
+    [1, 'AVAILABLE'], [2, 'AVAILABLE'], [3, 'AVAILABLE']
+  ]);
+  await assert.rejects(
+    () => store.pool.query(
+      'UPDATE amc_practice.submissions SET total_points = total_points + 1 WHERE id = $1',
+      [reanalysisFinal.submission.id]
+    ),
+    (error) => error.code === '55000'
+  );
+  await assert.rejects(
+    () => store.pool.query(
+      `UPDATE amc_practice.learning_question_responses response
+       SET reasoning_text = 'tampered'
+       FROM amc_practice.learning_submission_versions version
+       WHERE response.learning_submission_version_id = version.id
+         AND version.learning_submission_id = $1 AND version.version_number = 2`,
+      [reanalysisFinal.learningSubmission.id]
+    ),
+    (error) => error.code === '55000'
+  );
 
   // The deferred parent->current-version FK is checked at COMMIT, not merely
   // by application convention.
@@ -2887,6 +3327,22 @@ test('PostgreSQL migration rerun plus private/archive import and publication-con
   assert.equal(batchConfirmed.batch.result.scoringScope, 'MAPPED_QUESTIONS_ONLY');
   assert.equal(batchConfirmed.batch.result.mappedQuestionCount, 1);
   assert.equal(batchRecorded.batch.mapping.items[0].proposedQuestionNumber, 1);
+  const batchVersionCountBeforeRestart = (await store.pool.query(
+    `SELECT count(*)::integer AS count
+     FROM amc_practice.learning_submission_versions WHERE learning_submission_id = $1`,
+    [reviewFinal.learningSubmission.id]
+  )).rows[0].count;
+  await assert.rejects(() => service.reanalyzeLearningSubmission(
+    reviewStudent.id, reviewAttempt.attempt.id, 'pg-reject-batch-derived-reanalysis', {
+      expectedCurrentVersion: 2,
+      notes: [{ questionNumber: 1, reasoningText: 'Must not rewrite batch evidence.' }]
+    }
+  ), (error) => error.code === 'LEARNING_REANALYSIS_SOURCE_UNSUPPORTED');
+  assert.equal((await store.pool.query(
+    `SELECT count(*)::integer AS count
+     FROM amc_practice.learning_submission_versions WHERE learning_submission_id = $1`,
+    [reviewFinal.learningSubmission.id]
+  )).rows[0].count, batchVersionCountBeforeRestart);
 
   const batchDurability = await store.pool.query(
     `SELECT b.status, b.base_version, b.committed_version_number,

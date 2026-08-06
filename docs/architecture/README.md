@@ -90,6 +90,11 @@ Each stage has its own tests, independent review, reflection, and Git commit.
 - `ADR-011`: operator-delegated AI-assisted solution review is recorded as a
   distinct v2 policy; protected original supplements remain hash-bound
   candidates and still require an independent authority receipt.
+- `ADR-012`: post-final reasoning and manual reruns append immutable learning
+  versions while the official FINAL score and old report/Tutor lineage remain
+  frozen.
+- `POST_FINAL_REANALYSIS_DEPLOYMENT.md`: migration-018 maintenance window,
+  default-off gate, canary, rollback, and capacity procedure.
 - `TUTOR_PERSISTENCE_DEPLOYMENT.md`: maintenance-window procedure and rollback
   boundary for migrations 011/012.
 - `reviews/phase-6c-tutor-store.md`: Store adapter, lease recovery, safe read

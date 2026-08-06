@@ -8,6 +8,12 @@ test('loopback proxy is the safe default for the loopback-only listener and can 
   assert.equal(loadConfig({ ...base, AMC12_TRUST_PROXY: 'false' }).trustedProxy, false);
   assert.equal(loadConfig({ ...base, AMC12_TRUST_PROXY: '10.0.0.0/8' }).trustedProxy, '10.0.0.0/8');
   assert.equal(loadConfig(base).reasoningWritesPerMinute, 30);
+  assert.equal(loadConfig(base).reanalysisEnabled, false);
+  assert.equal(loadConfig(base).reanalysisPerStudentPerDay, 10);
+  assert.equal(loadConfig(base).reanalysisGlobalPerDay, 1_000);
+  assert.equal(loadConfig(base).reanalysisMaxVersions, 25);
+  assert.equal(loadConfig({ ...base, AMC12_REANALYSIS_ENABLED: 'true' }).reanalysisEnabled, true);
+  assert.equal(loadConfig({ ...base, AMC12_REANALYSIS_ENABLED: 'TRUE' }).reanalysisEnabled, false);
   assert.equal(loadConfig(base).tutorEnabled, false);
   assert.equal(loadConfig({ ...base, AMC12_TUTOR_ENABLED: 'true' }).tutorEnabled, true);
   assert.equal(loadConfig(base).batchIntakeEnabled, false);
@@ -24,6 +30,9 @@ test('loopback proxy is the safe default for the loopback-only listener and can 
   assert.equal(loadConfig(base).batchGlobalProviderWorkPerDay, 1_000);
   assert.equal(loadConfig(base).batchGlobalProviderAudioBytesPerDay, 10 * 1024 * 1024 * 1024);
   assert.equal(loadConfig({ ...base, AMC12_REASONING_WRITES_PER_MINUTE: '12' }).reasoningWritesPerMinute, 12);
+  assert.equal(loadConfig({ ...base, AMC12_REANALYSIS_PER_STUDENT_PER_DAY: '4' }).reanalysisPerStudentPerDay, 4);
+  assert.equal(loadConfig({ ...base, AMC12_REANALYSIS_GLOBAL_PER_DAY: '40' }).reanalysisGlobalPerDay, 40);
+  assert.equal(loadConfig({ ...base, AMC12_REANALYSIS_MAX_VERSIONS: '8' }).reanalysisMaxVersions, 8);
   assert.equal(loadConfig({ ...base, AMC12_STUDENT_REQUESTS_PER_MINUTE: '7' }).studentRequestsPerMinute, 7);
   assert.equal(loadConfig({ ...base, AMC12_BATCH_UPLOAD_BYTES_PER_HOUR: '1234' }).batchUploadBytesPerHour, 1234);
   assert.equal(loadConfig({ ...base, AMC12_BATCH_PROVIDER_WORK_PER_DAY: '9' }).batchProviderWorkPerDay, 9);

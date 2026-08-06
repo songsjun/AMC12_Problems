@@ -109,7 +109,7 @@ async function claimBatchExtraction(context) {
   };
 }
 
-async function fixture(t) {
+async function fixture(t, serviceOptions = {}) {
   const root = await mkdtemp(join(tmpdir(), 'amc-batch-service-'));
   t.after(async () => { await rm(root, { recursive: true, force: true }); });
   const privateUploadStore = new PrivateUploadStore({ root, highWatermarkPercent: 100 });
@@ -120,8 +120,9 @@ async function fixture(t) {
     authPepper: 'test-pepper-that-is-long-enough-for-a-safe-local-test-suite',
     sessionTtlMs: 12 * 60 * 60 * 1000,
     allowTestOnlyImport: true, allowTestOnlyPublish: true,
-    batchIntakeEnabled: true,
-    clock: () => new Date('2026-08-01T12:00:00.000Z')
+    batchIntakeEnabled: true, reanalysisEnabled: true,
+    clock: () => new Date('2026-08-01T12:00:00.000Z'),
+    ...serviceOptions
   });
   const form = learningReviewForm();
   await store.importForm(form, { publish: true, allowTestOnlyPublish: true });
@@ -381,7 +382,7 @@ test('transcription claims are least-served per student instead of draining one 
 });
 
 test('text batch requires confirmation before creating an immutable learning version and mapped-question result', async (t) => {
-  const context = await fixture(t);
+  const context = await fixture(t, { reanalysisMaxVersions: 2 });
   const text = 'Question 1: A because the direct calculation gives one.';
   const created = await context.service.createLearningBatch(
     context.student.id, context.attemptId, 'create-auto-batch',
@@ -432,6 +433,22 @@ test('text batch requires confirmation before creating an immutable learning ver
   assert.equal(committedResponses.length, 1);
   assert.equal(committedResponses[0].answerOrigin, 'BATCH_CONFIRMED');
   assert.equal(committedResponses[0].reasoningOrigin, 'BATCH_CONFIRMED_EVIDENCE');
+  const budgetCountBeforeUnsupportedRestart =
+    context.store.studentResourceBudgetWindows.size + context.store.globalResourceBudgetWindows.size;
+  await assert.rejects(() => context.service.reanalyzeLearningSubmission(
+    context.student.id, context.attemptId, 'reject-batch-derived-reanalysis', {
+      expectedCurrentVersion: 2,
+      notes: [{ questionNumber: 1, reasoningText: 'This must not overwrite batch evidence.' }]
+    }
+  ), (error) => error instanceof ApiError
+    && error.statusCode === 409
+    && error.code === 'LEARNING_REANALYSIS_SOURCE_UNSUPPORTED');
+  assert.equal(versions.length, 2);
+  assert.equal(
+    context.store.studentResourceBudgetWindows.size + context.store.globalResourceBudgetWindows.size,
+    budgetCountBeforeUnsupportedRestart,
+    'unsupported lineage is rejected before consuming a reanalysis budget'
+  );
   assert.equal(confirmed.batch.confirmation.responses[0].reasoningText,
     recorded.batch.mapping.items[0].evidenceText);
   const official = await context.service.getResults(context.student.id, context.attemptId);
