@@ -53,6 +53,28 @@ unreviewed live rollout can wait indefinitely.
    worker conflict, quota, and no-context paths return their stable errors and
    create no unexpected provider calls.
 
+### Single-host ingress limitation
+
+The current workstation nginx supervises several education applications as
+one process and has no AMC-only maintenance switch. Do not stop the shared
+nginx process to simulate step 1: doing so also removes unrelated ports
+8081-8085. Until an AMC-only maintenance response is installed, the bounded
+host-specific procedure is to verify every work class idle, stop the AMC API
+first, confirm its upstream is unavailable, stop the AMC worker, and run the
+one-shot migration while both are absent. Restore the new API with every new
+intake gate still false, then the new worker and dedicated 4110 Gateway. This
+is a documented operational compromise, not equivalent to selective ingress:
+there is a short interval in which unrelated already-enabled AMC mutations
+could be accepted before worker verification. A future deployment should add
+an AMC-only maintenance location returning 503 so the canonical sequence can
+be followed without affecting sibling services.
+
+The host's live nginx file is outside this repository. Merge only the reviewed
+exact raw-upload locations from `deploy/nginx/` into that file; never replace
+the whole shared configuration. Require `nginx -t` before reload. Authenticated
+direct and portal uploads above 64 KiB must reach the API, while ordinary JSON
+and non-exact paths remain capped at 64 KiB.
+
 ## Rollback and observation
 
 Set `AMC12_REANALYSIS_ENABLED=false` and restart the API to stop new versions.
