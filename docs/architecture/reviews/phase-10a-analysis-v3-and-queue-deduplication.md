@@ -19,8 +19,11 @@ current immutable version.
 
 Gateway v3 is additive; v2 remains frozen for drain. The complete
 `ANSWER_ONLY` output is derived from the immutable answer status and ordered
-approved-solution method tags. Gateway and API require canonical equality with
-that object, so model text cannot fabricate a student method. The checked-in
+approved-solution method tags. The Gateway requires a complete, bounded
+provider response with exact schema/request identity and ordered solution
+references, then discards its feedback wording and emits the local canonical
+object. The API independently requires canonical equality with that object, so
+model text cannot fabricate a student method or enter storage. The checked-in
 Gateway/API golden fixture is byte-identical and has SHA-256
 `f387a99360ebf4e34e7b9649f45ebbb76182a614a52be46b8716cc279023f548`.
 
@@ -30,7 +33,7 @@ Gateway/API golden fixture is byte-identical and has SHA-256
   includes v2/v3 wrong-route rejection, complete answer-only tamper matrices,
   authentication, request/output secret canaries, body ceiling, shared rate
   and concurrency gates, caller abort, response close, and pre-abort.
-- Practice API: 268 passed, 11 PostgreSQL-conditional skipped, 0 failed in the
+- Practice API: 269 passed, 11 PostgreSQL-conditional skipped, 0 failed in the
   normal full suite after the final fixes.
 - Fresh, isolated PostgreSQL 17 runs: analysis migration 3/3, Tutor migration
   3/3, full migration/import/concurrency smoke 1/1, and Tutor
@@ -56,11 +59,11 @@ result. Final independent disposition: `GO`.
 ## Critical reflection
 
 Answer-only feedback is intentionally conservative. The provider is invoked,
-but the only accepted report states objective correctness, absence of reasoning,
-and reviewed reference-method tags. Personal diagnosis without reasoning would
-be invented evidence. Requiring the model to reproduce the exact invariant may
-raise fail-closed protocol errors, so live-provider acceptance and operational
-monitoring are mandatory.
+and must return a complete response bound to the exact request, but its feedback
+wording is discarded. The persisted report states only objective correctness,
+absence of reasoning, and reviewed reference-method tags. Personal diagnosis
+without reasoning would be invented evidence. Live-provider failures still
+fail closed; harmless wording variation no longer becomes a protocol error.
 
 Polling and transaction-level conflict do not cancel queued work when a student
 edits a draft. This can delay a newer analysis, but it avoids hidden cancellation

@@ -675,6 +675,35 @@ test('blocked finals make zero provider calls and approved import internally rep
   assert.equal(client.calls.length, 1);
 });
 
+test('approved context import repairs only the current blocked version', async () => {
+  const context = await setup(() => {}, { reanalysisEnabled: true });
+  const { attemptId, finalized } = await finalizedWithReasoning(context, [
+    { questionNumber: 1, reasoningText: 'Initial evidence.' }
+  ]);
+  const submissionId = finalized.learningSubmission.id;
+  const v1 = context.store.learningVersions.get(submissionId)[0];
+  await context.service.reanalyzeLearningSubmission(
+    context.student.id, attemptId, 'current-only-context-repair', {
+      expectedCurrentVersion: 1,
+      notes: [{ questionNumber: 1, reasoningText: 'Current replacement evidence.' }]
+    }
+  );
+  const v2 = context.store.learningVersions.get(submissionId)[1];
+  const staleWork = context.store.learningWorkItems.get(v1.id)[0];
+  assert.equal(staleWork.status, 'CANCELLED');
+  Object.assign(staleWork, { status: 'BLOCKED_CONTEXT', lastErrorCode: null });
+
+  await importArtifact(context, approvedContextArtifact(context.form, { readyNumbers: [1] }));
+
+  assert.equal(v1.contextStatus, 'CONTEXT_UNAVAILABLE');
+  assert.equal(staleWork.status, 'BLOCKED_CONTEXT');
+  assert.equal(context.store.analysisRuns.has(v1.id), false);
+  assert.equal(v2.contextStatus, 'CONTEXT_READY');
+  assert.equal(context.store.learningWorkItems.get(v2.id)[0].status, 'QUEUED');
+  assert.equal(context.store.analysisRuns.get(v2.id).analysisContractVersion,
+    'amc-analysis-contract-v3');
+});
+
 test('per-question provider authorization rejects post-claim lineage and solution-eligibility changes', async () => {
   for (const scenario of ['current-version', 'attempt-phase', 'solution-eligibility']) {
     const context = await setup();

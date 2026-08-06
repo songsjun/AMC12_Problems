@@ -1517,7 +1517,8 @@ export class MemoryStore {
           || submission.lifecycleStatus !== 'COMMITTED') continue;
       if (submission.sourceType === BATCH_REVIEW_SOURCE_TYPE && !batchContextReady) continue;
       for (const version of this.learningVersions.get(submission.id) || []) {
-        if (version.contextStatus !== 'CONTEXT_UNAVAILABLE' || this.analysisRuns.has(version.id)) continue;
+        if (version.versionNumber !== submission.currentVersion
+            || version.contextStatus !== 'CONTEXT_UNAVAILABLE' || this.analysisRuns.has(version.id)) continue;
         const workItem = (this.learningWorkItems.get(version.id) || [])
           .find((item) => item.workType === 'ANALYZE_SUBMISSION' && item.status === 'BLOCKED_CONTEXT');
         if (!workItem) continue;

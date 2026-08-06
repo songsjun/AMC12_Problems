@@ -14,14 +14,14 @@ if (!file || !receiptsFile || flags.length) {
     readProtectedJson(file),
     readProtectedJson(receiptsFile)
   ]);
+  const trustedAuthorityIds = new Set((process.env.AMC12_APPROVAL_AUTHORITY_IDS || '')
+    .split(',').map((value) => value.trim()).filter(Boolean));
+  if (!trustedAuthorityIds.size) throw new Error('AMC12_APPROVAL_AUTHORITY_IDS must list at least one trusted authority.');
   const config = loadConfig();
   if (!config.databaseUrl) throw new Error('AMC12_DATABASE_URL is required.');
   const store = new PostgresStore({ connectionString: config.databaseUrl });
   try {
     await runMigrations(store.pool);
-    const trustedAuthorityIds = new Set((process.env.AMC12_APPROVAL_AUTHORITY_IDS || '')
-      .split(',').map((value) => value.trim()).filter(Boolean));
-    if (!trustedAuthorityIds.size) throw new Error('AMC12_APPROVAL_AUTHORITY_IDS must list at least one trusted authority.');
     const imported = await new ApprovedContextImporter({ store, trustedAuthorityIds }).import(payload, approvalReceipts);
     console.log(JSON.stringify({
       imported: imported.map((context) => ({

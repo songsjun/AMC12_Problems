@@ -1280,6 +1280,7 @@ async function repairBlockedLearningVersions(client, {
        ON context.id = $3 AND context.form_id = $1 AND context.form_version = $2
       AND context.active AND context.sealed
      WHERE v.form_id = $1 AND v.form_version = $2
+       AND v.version_number = s.current_version
        AND v.context_status = 'CONTEXT_UNAVAILABLE'
        AND s.lifecycle_status = 'COMMITTED' AND w.status = 'BLOCKED_CONTEXT'
        AND NOT EXISTS (

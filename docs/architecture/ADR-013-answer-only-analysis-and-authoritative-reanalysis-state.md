@@ -32,13 +32,17 @@ endpoint. Its request carries an explicit `student_response_mode`:
 
 The mode is included in the input hash. An answer-only response must use the
 existing `ANSWER_ONLY` verdict. The Gateway still performs a provider call as
-requested, but the accepted response is a complete deterministic invariant:
-correctness comes only from the immutable scoring snapshot, no student method
-is attributed, and each ordered approved solution is named only with its
-reviewed method tags and a `NOT_COMPARABLE` alignment. Both the Gateway and API
-reject any model variation from that exact object. This deliberately prevents
-a fluent model from inventing a student step, strength, gap, or personalized
-suggestion from answer-only evidence. A response with neither an answer nor
+requested and requires a successful, complete v3 response whose schema,
+request identity, bounded fields, and ordered solution references all validate.
+Because there is no student method to assess, the Gateway discards the model's
+answer-only feedback wording after validation and constructs the sole accepted
+deterministic result locally. Correctness comes only from the immutable scoring
+snapshot, no student method is attributed, and each ordered approved solution
+is named only with its reviewed method tags and a `NOT_COMPARABLE` alignment.
+The API then requires canonical equality with that object. This deliberately
+prevents a fluent model from inventing a student step, strength, gap, or
+personalized suggestion from answer-only evidence while avoiding failures from
+harmless wording drift. A response with neither an answer nor
 reasoning remains a deterministic local no-attempt outcome. Invalid or
 unscored snapshots and questions without sufficient model-eligible context
 also remain local and make no provider call.
@@ -83,8 +87,9 @@ authoritative read.
 2. Allow model-written answer-only coaching behind semantic field checks.
    Rejected because field validation cannot prove that apparently helpful text
    did not fabricate a student's method. The accepted design still calls the
-   provider, but only an exact, metadata-derived response may cross the trust
-   boundary.
+   provider and validates its complete bound response, but only a locally
+   constructed, metadata-derived result may cross the trust boundary or be
+   persisted.
 3. Treat repeated active requests as successful no-ops. Rejected for the public
    mutation because a stable conflict makes accidental duplicate intent
    observable and prevents a caller from mistaking an old run for a newly
@@ -112,9 +117,11 @@ authoritative read.
   minimum comparison count.
 - Answer-only feedback is necessarily conservative: it confirms objective
   correctness and exposes reviewed reference-method tags, but personalized
-  diagnosis requires the student to provide reasoning. Requiring a provider to
-  echo an exact object may also increase fail-closed protocol errors; this is
-  preferred to accepting fabricated pedagogy and must be monitored.
+  diagnosis requires the student to provide reasoning. A successful provider
+  response is still required, but its prose is untrusted and discarded. The UI
+  must not claim that AI evaluated a student's method when no method was
+  submitted. `confidence=1` means confidence in this deterministic contract,
+  not confidence in the student's mathematical ability.
 - V3 adds a rolling-deploy compatibility burden: Gateway v2 must remain until
   durable v2 work is drained, and rollback stops v3 intake rather than deleting
   v3 rows.
