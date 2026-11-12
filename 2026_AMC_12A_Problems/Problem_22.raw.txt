@@ -1,0 +1,179 @@
+Title: 2026 AMC 12A Problems/Problem 22
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_22&oldid=298058&action=raw
+
+Published Time: 2026-11-11T21:55:45Z
+
+Markdown Content:
+==Problem==
+A flock of <imath>8</imath> birds is flying in formation, led by a single leader bird, which has exactly <imath>2</imath> followers immediately behind. Each non-leader bird follows exactly one bird, and has <imath>0,1,</imath> or <imath>2</imath> followers immediately behind. Two possible formations are shown in the figure below. (When a bird has two followers, swapping its left and right subflocks can produce a different formation, as shown in the figure).
+
+<center>
+<asy>
+size(300);
+pen e = black + dashed + linewidth(1);
+pen p = black + linewidth(5);
+
+pair A=(112,269), B=(29,186), C=(195,186);
+pair D=(29,103), E=(154,103), F=(229,103);
+pair G=(200,28), H=(258,28);
+
+draw(A--B,e);
+draw(A--C,e);
+draw(B--D,e);
+draw(C--E,e);
+draw(C--F,e);
+draw(F--G,e);
+draw(F--H,e);
+
+dot(A,p); dot(B,p); dot(C,p); dot(D,p);
+dot(E,p); dot(F,p); dot(G,p); dot(H,p);
+
+pair I=(486,269), J=(403,186), K=(569,186);
+pair L=(403,103), M=(535,103), N=(610,103);
+pair O=(506,28), Q=(565,28);
+
+draw(I--J,e);
+draw(I--K,e);
+draw(J--L,e);
+draw(K--M,e);
+draw(K--N,e);
+draw(M--O,e);
+draw(M--Q,e);
+
+dot(I,p); dot(J,p); dot(K,p); dot(L,p);
+dot(M,p); dot(N,p); dot(O,p); dot(Q,p);
+</asy>
+</center>
+
+What is the total number of possible formations?
+
+<imath>\textbf{(A) } 48\qquad\textbf{(B) } 52\qquad\textbf{(C) } 76\qquad\textbf{(D) } 132\qquad\textbf{(E) } 196</imath>
+
+==Solution 1==
+
+We temporarily remove every bird with exactly one follower, connecting its predecessor directly to its follower. This preserves the left-right order of every branch.
+
+If <imath>k</imath> birds remain with two followers, the reduced formation has <imath>2k</imath> links and hence <imath>2k+1</imath> birds. Thus <imath>k=1,2,3</imath>. There are respectively <imath>1,2,5</imath> reduced shapes, shown below.
+
+For <imath>k=3</imath>, the other two branching birds lie on opposite sides of the leader in one way, or on the same side in <imath>2\cdot2</imath> ways.
+
+<asy>
+size(520);
+defaultpen(fontsize(11pt));
+
+void reduced(pair P, int[] forks) {
+  pair[] v=new pair[16];
+  v[1]=P;
+  for(int j=1; j<8; ++j) {
+    real dx=(j==1 ? 0.8 : (j<4 ? 0.45 : 0.25));
+    v[2*j]=v[j]+(-dx,-0.8);
+    v[2*j+1]=v[j]+(dx,-0.8);
+  }
+  for(int i=0; i<forks.length; ++i) {
+    int j=forks[i];
+    draw(v[2*j]--v[j]--v[2*j+1],linewidth(0.8));
+  }
+  for(int i=0; i<forks.length; ++i) {
+    int j=forks[i];
+    dot(v[2*j]);
+    dot(v[2*j+1]);
+  }
+  dot(v[1],blue);
+}
+
+// One branching bird.
+label("$k=1$: 1 shape",(2,0.8));
+reduced((2,0),new int[]{1});
+
+// Two branching birds.
+label("$k=2$: 2 shapes",(8.5,0.8));
+reduced((7,0),new int[]{1,2});
+reduced((10,0),new int[]{1,3});
+
+draw((-1.7,-2.3)--(13.7,-2.3),gray(0.8));
+
+// Three branching birds: one balanced shape and four others.
+label("$k=3$: 5 shapes",(6,-2.9));
+reduced((0,-3.9),new int[]{1,2,3});
+reduced((3,-3.9),new int[]{1,2,4});
+reduced((6,-3.9),new int[]{1,2,5});
+reduced((9,-3.9),new int[]{1,3,6});
+reduced((12,-3.9),new int[]{1,3,7});
+
+label("Blue dots mark the leader.",(6,-7),S,blue);
+</asy>
+
+For each reduced shape, we reinsert the <imath>7-2k</imath> removed birds along its <imath>2k</imath> links. Choosing how many to place on each link is a stars-and-bars problem, giving
+<cmath>
+\binom{(7-2k)+(2k)-1}{2k-1}=\binom{6}{2k-1}
+</cmath>
+possibilities. No birds may be inserted above the leader, which must still have two immediate followers. Each original formation is recovered uniquely.
+
+Therefore the total is
+<cmath>
+1\binom61+2\binom63+5\binom65
+=6+40+30
+=\boxed{\text{(C)}\ 76}.
+</cmath>
+
+~SZ624
+
+==Solution 2==
+Let <imath>a_n</imath> denote the number of arrangements with <imath>n</imath> birds, except that the condition that the leader is followed by two followers is removed. We perform recursion; we have two cases:
+* When the leader is followed by one bird, then the follower and the rest of the birds form the case <imath>a_{n-1}</imath>.
+* When the leader is followed by two birds, then say that the set of the left follower and all birds “behind” the left bird (i.e. birds that, when following the path formed by the bird it follows, eventually leads to the left bird) has size <imath>k</imath>. Then, the left bird and the birds behind it form <imath>a_k</imath>, and the right bird and the birds behind it form <imath>a_{n-k-1}</imath>. We know that <imath>k</imath> ranges from <imath>1</imath> to <imath>n-2</imath> since the leader and right bird are not included in the set of birds on the left.
+
+We therefore conclude that
+<cmath>a_n=a_{n-1}+(a_{n-2}a_1+a_{n-3}a_2+a_{n-4}a_3+\cdots +a_1a_{n-2})</cmath>
+Now we may apply our recursion. It is easy to find that <imath>a_1=1</imath>, <imath>a_2=1</imath>, <imath>a_3=2</imath>. Then,
+<cmath>a_4=a_3+a_2a_1+a_1a_2=2+1\cdot 1+1\cdot 1=4</cmath>
+<cmath>a_5=a_4+a_3a_1+a_2a_2+a_1a_3=4+5=9</cmath>
+<cmath>a_6=a_5+a_4a_1+a_3a_2+a_2a_3+a_1a_4=9+12=21</cmath>
+Finally, our answer for <imath>n=8</imath> does not involve the first case above since the leader must be followed by two followers, so we subtract <imath>a_7</imath> from <imath>a_8</imath>, which yields our answer:
+<cmath>a_8-a_7=a_6a_1+a_5a_2+a_4a_3+a_3a_4+a_2a_5+a_1a_6=76\implies \boxed{\textbf{(C)}}</cmath>
+
+~ [https://artofproblemsolving.com/wiki/index.php/User:Eevee9406 eevee9406]
+
+==Solution 3==
+Let's solve this with recursion. Let <imath>f(n)</imath> be the possible of formations with <imath>n</imath> birds, where every bird can have <imath>0</imath>, <imath>1</imath>, or <imath>2</imath> followers. 
+
+For <imath>n\ge 2</imath>, there are two cases: the leader has one follower or two followers.
+
+If the leader has one follower, then the remaining <imath>n-1</imath> birds can form any valid formation, so there are <imath>f(n-1)</imath> possibilities.
+
+If the leader has two followers, then if the left subflock has <imath>k</imath> birds, the right subflock has <imath>n-1-k</imath> birds. The left and right subflocks are distinguishable, so there are <imath>f(k)f(n-1-k)</imath> possibilities. We will sum this for all possible valid <imath>k</imath> values. 
+
+Our recurrence is <cmath>f(n)=f(n-1)+\sum_{k-1}^{n-2} f(k)f(n-1-k).</cmath>
+
+Following this recurrence, we get the following table until <imath>n=6</imath>:
+<cmath>
+\begin{array}{c|l|c}
+n & f(n)\\ \hline
+1 & 1\\
+2 & 1\\
+3 & 2\\
+4 & 4\\
+5 & 9\\
+6 & 21
+\end{array}
+</cmath>
+
+We don't continue beyond <imath>n=6</imath> because <imath>n=8</imath> is different, since the leader must have exactly <imath>2</imath> followers. Therefore, we must exclude the case where the leader has exactly <imath>1</imath> follower. This means we need:
+
+<cmath>\sum_{k=1}^6 f(k)f(7-k) = (1)(21)+(1)(9)+(2)(4)+(4)(2)+(9)(1)+(21)(1) = 76.</cmath>
+
+Therefore, our answer is <imath>\boxed{76}</imath>.
+
+~lprado
+
+==Video Solution by SpreadTheMathLove==
+https://www.youtube.com/watch?v=yhG2JmJ0X3s
+
+==See Also==
+{{AMC12 box|year=2026|ab=A|num-b=21|num-a=23}}
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

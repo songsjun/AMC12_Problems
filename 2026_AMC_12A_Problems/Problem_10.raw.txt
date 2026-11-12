@@ -1,0 +1,301 @@
+Title: 2026 AMC 12A Problems/Problem 10
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_10&oldid=298088&action=raw
+
+Published Time: 2026-11-12T00:52:44Z
+
+Markdown Content:
+{{duplicate|[[2026 AMC 10A Problems/Problem 15|2026 AMC 10A #15]] and [[2026 AMC 12A Problems/Problem 10|2026 AMC 12A #10]]}}
+==Problem==
+The tree diagram below has nodes labeled with rational numbers. The top node, at level 0, is <imath>\frac{1}{2}</imath>. Each node <imath>\frac{a}{b}</imath> sprouts two nodes in the level below it, <imath>\frac{a}{a+b}</imath> and <imath>\frac{b}{a+b}</imath>. For example, level <imath>1</imath> has nodes <imath>\frac{1}{1+2} = \frac{1}{3}</imath> and <imath>\frac{2}{1+2} = \frac{2}{3}</imath>.
+
+<asy>
+unitsize(1.2cm);
+
+// ============================================================
+// 1. GEOMETRY PARAMETERS
+// ============================================================
+
+// Vertical distances.
+real edgeDrop      = 0.8;  // Length of ordinary branches.
+real labelGap      = 0.65; // Gap between branch tips and next label row.
+real finalEdgeDrop = 0.42; // Length of the final branches.
+
+// Horizontal distances between a parent and either child.
+// Index 0 corresponds to the first branching level.
+real[] branchOffset = {2.0, 1.0, 0.5, 0.28};
+
+// Drawing styles.
+pen branchPen = black + linewidth(1);
+pen textPen   = black;
+
+// ============================================================
+// 2. REUSABLE DRAWING FUNCTIONS
+// ============================================================
+
+// Draw two downward branches from each parent.
+//
+// Returns the x-coordinates of the children, ordered
+// left-to-right within each parent's pair.
+real[] drawChildren(real[] parentX, real parentY,
+                    real horizontalOffset, real verticalDrop) {
+
+    real[] childX = new real[2*parentX.length];
+
+    real childY = parentY - verticalDrop;
+
+    for (int i = 0; i < parentX.length; ++i) {
+
+        // Coordinates of the two children.
+        real leftX  = parentX[i] - horizontalOffset;
+        real rightX = parentX[i] + horizontalOffset;
+
+        childX[2*i]   = leftX;
+        childX[2*i+1] = rightX;
+
+        // Draw the two outgoing arrows.
+        draw((parentX[i], parentY)--(leftX, childY),
+             branchPen, arrow=Arrow(TeXHead));
+
+        draw((parentX[i], parentY)--(rightX, childY),
+             branchPen, arrow=Arrow(TeXHead));
+    }
+
+    return childX;
+}
+
+// Place a row of fraction labels.
+//
+// The x-coordinates and fraction labels must have
+// matching lengths and be listed from left to right.
+void labelLevel(real[] x, real y, string[] fractions) {
+
+    for (int i = 0; i < x.length; ++i) {
+        label("$" + fractions[i] + "$",
+              (x[i], y), N, textPen);
+    }
+}
+
+// ============================================================
+// 3. FRACTION LABELS
+// ============================================================
+
+// Each array corresponds to one level of the tree.
+// Children are ordered from left to right.
+
+string[] level0 = {
+    "\frac{1}{2}"
+};
+
+string[] level1 = {
+    "\frac{1}{3}",
+    "\frac{2}{3}"
+};
+
+string[] level2 = {
+    "\frac{1}{4}", "\frac{3}{4}",
+    "\frac{2}{5}", "\frac{3}{5}"
+};
+
+string[] level3 = {
+    "\frac{1}{5}", "\frac{4}{5}",
+    "\frac{3}{7}", "\frac{4}{7}",
+    "\frac{2}{7}", "\frac{5}{7}",
+    "\frac{3}{8}", "\frac{5}{8}"
+};
+
+// ============================================================
+// 4. VERTICAL POSITIONING
+// ============================================================
+
+// Distance between consecutive rows of fraction labels.
+real rowStep = edgeDrop + labelGap;
+
+// Vertical coordinates of the four labelled levels.
+real y0 = 0;
+real y1 = y0 - rowStep;
+real y2 = y1 - rowStep;
+real y3 = y2 - rowStep;
+
+// ============================================================
+// 5. GENERATE THE TREE
+// ============================================================
+
+// Level 0: Root.
+real[] x0 = {0};
+labelLevel(x0, y0, level0);
+
+// Level 1: Two children.
+real[] x1 = drawChildren(
+    x0, y0, branchOffset[0], edgeDrop
+);
+labelLevel(x1, y1, level1);
+
+// Level 2: Four children.
+real[] x2 = drawChildren(
+    x1, y1, branchOffset[1], edgeDrop
+);
+labelLevel(x2, y2, level2);
+
+// Level 3: Eight children.
+real[] x3 = drawChildren(
+    x2, y2, branchOffset[2], edgeDrop
+);
+labelLevel(x3, y3, level3);
+
+// ============================================================
+// 6. FINAL BRANCHES AND CONTINUATION MARKS
+// ============================================================
+
+// Draw the final, shorter pair of arrows from each level-3 node.
+for (int i = 0; i < x3.length; ++i) {
+
+    draw((x3[i], y3)--(x3[i]-branchOffset[3],
+                       y3-finalEdgeDrop),
+         branchPen, arrow=Arrow(TeXHead));
+
+    draw((x3[i], y3)--(x3[i]+branchOffset[3],
+                       y3-finalEdgeDrop),
+         branchPen, arrow=Arrow(TeXHead));
+}
+
+// Place vertical continuation marks below the final labelled row.
+real dotsY = y3 - finalEdgeDrop - labelGap;
+
+for (int i = 0; i < x3.length; ++i) {
+    label("$\vdots$", (x3[i], dotsY), N, textPen);
+}
+</asy>
+
+At what level does the node <imath>\frac{20}{27}</imath> appear in the diagram?
+
+<imath>
+	\textbf{(A)}\   5  \qquad
+	\textbf{(B)}\   8  \qquad
+	\textbf{(C)}\   12  \qquad
+	\textbf{(D)}\   26  \qquad
+	\textbf{(E)}\   \text{The node } \dfrac{20}{27} \text{ does not appear in the diagram.}  
+</imath>
+
+==Solution 1==
+We work backwards. <imath>\frac{20}{27}</imath> must be below <imath>\frac{7}{20},</imath> since <imath>\frac{7}{20}</imath> splits into <imath>\frac{7}{27}</imath> and <imath>\frac{20}{27}.</imath> Likewise, we have the chain 
+<cmath>\frac{20}{27}\implies\frac{7}{20}\implies\frac{7}{13}\implies\frac{6}{7}\implies\frac{1}{6}\implies\frac{1}{5},</cmath>
+where, in the diagram, <imath>\frac{1}{5}</imath> appears in level <imath>3.</imath> Thus, <imath>\frac{20}{27}</imath> appears in level <imath>\boxed{\text{(B) 8}}</imath> ~Arjun_Jetti
+
+Note: You could try to solve your way down, but it would take a lot of time and effort, which you don't want to waste on this competition ~ hellokindsir
+
+Other Note: However, if you work from left to right, the first node you would work on would be 1/5, so you get lucky there. ~Starlight_128
+
+==Solution 2==
+
+If <imath>\frac{a}{a+b}</imath> is emerged from a node, so is <imath>\frac{b}{a+b}</imath>.
+
+Hence, since <imath>\frac{20}{27}</imath> comes from a node, so does <imath>\frac{7}{27}</imath>. The result is <imath>\frac{7}{20}</imath>.
+
+Since <imath>\frac{7}{20}</imath> is a node, so is <imath>\frac{13}{20}</imath>, so it emerges from <imath>\frac{7}{13}</imath>.
+
+Since <imath>\frac{7}{13}</imath> is a node, so is <imath>\frac{6}{13}</imath>, so it emerges from <imath>\frac{6}{7}</imath>.
+
+Since <imath>\frac{6}{7}</imath> is a node, so is <imath>\frac{1}{7}</imath>, hence <imath>\frac{1}{6}</imath>.
+
+From here, it is easy to see we have <imath>\frac{1}{5}, \frac{1}{4}, \frac{1}{3},</imath> and finally <imath>\frac{1}{2}</imath>.
+
+Therefore, counting down from 0, it appears on layer <imath>\boxed{8}</imath>.
+
+~Pinotation
+
+==Solution 3==
+First, let's define neighboring fractions as fractions that have the same number above them (like <imath>1/3</imath> and <imath>2/3</imath>, or <imath>1/4</imath> and <imath>3/4</imath>). Each fraction <imath>\frac{a}{b}</imath> sprouts two fractions <imath>\frac{a}{a+b}</imath> and <imath>\frac{b}{a+b}</imath> that add up to <imath>\frac{a+b}{a+b}=1</imath>.
+
+From this, we see that the neighbor of <imath>\frac{20}{27}</imath> is <imath>\frac{7}{27}</imath>. Working backwards, the fraction above it is the ratio of the two fractions' numerators, <imath>\frac{7}{20}</imath>.
+
+We repeat this process:
+* <imath>7/20</imath>'s neighbor: <imath>13/20</imath>
+** The fraction above: <imath>7/13</imath>
+* <imath>7/13</imath>'s neighbor: <imath>6/13</imath>
+** The fraction above: <imath>6/7</imath>
+* <imath>6/7</imath>'s neighbor: <imath>1/7</imath>
+** The fraction above: <imath>1/6</imath>
+* <imath>1/6</imath>'s neighbor: <imath>5/6</imath>
+** The fraction above: <imath>1/5</imath>
+
+We see that <imath>1/5</imath> appears in our diagram in level 3.
+Therefore, working backwards, <imath>20/27</imath> appears in level 8, so the answer is <imath>\boxed{\text{(B) 8}}</imath>.
+
+~mehta0edu
+
+~[[User：Icosahedron0288#Created Pages|Icosahedron0288]]
+
+~minor edits by Squishy64
+
+==Solution 3.1==
+Each fraction has only one possible fraction it can originate from, so if we start with <imath>\dfrac{20}{27}</imath>, it can only come from <imath>\dfrac{7}{13}</imath>, and that comes from <imath>\dfrac{6}{7}</imath> which comes from <imath>\dfrac{1}{6}</imath> which comes from <imath>\dfrac{1}{5}</imath>. (This is just here because I felt the above solution was somewhat confusing)
+
+~ToxicWaste. Also lets be honest, all of the solutions except #4 are the same, just with different wording. 
+
+~minor edits by Squishy64, Remark: This should be a remark.
+
+==Solution 4 (Cheese)==
+Notice that answer choice <imath>B</imath> is exactly 3 more than <imath>A</imath>. The original problem had three pre-established "levels" in the branch, so we can imply that MAA (or ai or whoever made the test) was trying to trick the people who didn't add the original three "levels". Therefore, the answer is <imath>\boxed{\text{(B) 8}}</imath>.
+
+~N0lan
+
+~minor edits by Squishy64
+
+~Cheese approved by Bwn
+
+==Solution 5 (Analyzing Option Choices)==
+
+At level <imath>n</imath>, any node <imath>\frac{a}{b}</imath> satisfies the denominator bounds:
+<cmath>n + 2 \leq b \leq F_{n+3}</cmath>
+where <imath>F_3 = 2, F_4 = 3, F_5 = 5, \dots</imath> are the Fibonacci numbers. Testing <imath>b = 27</imath> against the options:
+
+* '''Eliminate (E):''' Since <imath>\gcd(20, 27) = 1</imath> and <imath>20 < 27</imath>, Euclidean subtraction reduces <imath>\frac{20}{27}</imath> to <imath>\frac{1}{2}</imath>, so it must appear in the tree.
+* '''Eliminate (D) <imath>26</imath>:''' The minimum denominator at level <imath>26</imath> is <imath>26 + 2 = 28 > 27</imath>.
+* '''Eliminate (A) <imath>5</imath>:''' The maximum denominator at level <imath>5</imath> is <imath>F_8 = 21 < 27</imath>.
+* '''Eliminate (C) <imath>12</imath>:''' Reaching <imath>b = 27</imath> at level <imath>12</imath> requires staying near the leftmost path (<imath>\frac{1}{14}</imath>), which keeps the numerator far below <imath>20</imath>.
+
+Thus, <imath>\boxed{8}</imath> is the only possible answer.
+
+~Horseneck3
+
+==Solution 6 (No more time left)==
+
+Using the established diagram, we figure the largest possible denominator in level 5 is 21. We immediately eliminate <imath>A</imath>. If we do understand how quickly this pattern moves forward, row 8 should probably cover <imath>\frac{20}{27}</imath>, so we can guess <imath>\boxed{\text{(B) 8}}</imath>. If you are skeptical, you may consider how inflated the numerator and denominator values may be in row 12 and that many AMC 10 questions won't have an answer like <imath>E</imath> be correct.
+
+~Gumbo_The_Fox
+
+~<imath>\LaTeX</imath> fixes hothost59
+
+~<imath>\LaTeX</imath> fixes by Squishy64
+
+==Remark==
+This setup is very similar to the [https://en.wikipedia.org/wiki/Calkin%E2%80%93Wilf_tree Calkin-Wilf Tree], which also contains all rational numbers, but rather than having <imath>\frac{b}{a+b}</imath>, it uses <imath>\frac{a+b}{b}</imath>.
+
+==Video Solution 1 by MathIsFun==
+https://youtu.be/JRWnRtZNW9o?si=SXu2kYb5y8BSmJ-b&t=1589
+
+==Video Solution 2 by MadMath==
+https://youtu.be/YuX-DZTXisI
+
+==Video Solution 3 by TechMath Thinker==
+https://youtu.be/7hBDU2LNWrs
+
+~midnight_rain
+
+==Video Solution 4 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=Jc2s489VKIQ
+
+==Video Solution 5 by MathWhile==
+https://youtu.be/PerJ4zD77ug?t=715
+
+==See Also==
+{{AMC10 box|year=2026|ab=A|num-b=14|num-a=16}}
+{{AMC12 box|year=2026|ab=A|num-b=9|num-a=11}}
+* [[AMC 10]]
+* [[AMC 10 Problems and Solutions]]
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

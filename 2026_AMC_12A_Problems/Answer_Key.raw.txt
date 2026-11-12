@@ -1,0 +1,40 @@
+Title: 2026 AMC 12A Answer Key
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Answer_Key&oldid=297613&action=raw
+
+Published Time: 2026-11-09T18:56:50Z
+
+Markdown Content:
+#A
+#D
+#A
+#C
+#A
+#C
+#A
+#C
+#E
+#B
+#D
+#E
+#C
+#C
+#A
+#C
+#A
+#D
+#D
+#D
+#D
+#C
+#D
+#D
+#B
+
+==See also==
+{{AMC12 box|year=2026|ab=A|before=[[2025 AMC 12B Problems]]|after=[[2026 AMC 12B Problems]]}}
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

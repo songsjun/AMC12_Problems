@@ -1,0 +1,53 @@
+Title: 2026 AMC 12A Problems/Problem 14
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_14&oldid=297116&action=raw
+
+Published Time: 2026-11-08T03:13:06Z
+
+Markdown Content:
+==Problem==
+Three identical boxes, each with one open face, are made from <imath>1</imath>-inch-thick wood. The outer dimensions of each box are <imath>a, b, </imath> and <imath>c</imath> inches, where <imath>a<b<c</imath>, and each open face appears on a face with outer dimensions <imath>b \times c</imath>.
+
+It happens that if the open faces of two of the boxes are held together, then the space inside can exactly contain the (rotated) third box, with no room to spare. What is <imath>a+b+c</imath>?
+
+<imath>\textbf{(A)}~20 \qquad \textbf{(B)}~22 \qquad \textbf{(C)}~24 \qquad \textbf{(D)}~26 \qquad \textbf{(E)}~28</imath>
+
+==Solution 1==
+Joining two of the boxes creates an enclosed space with dimensions <imath>b-2</imath>, <imath>c-2</imath>, and <imath>2(a-1)=2a-2</imath>, where <imath>b-2<c-2<2a-2</imath>. Because the third box with dimensions <imath>a</imath>, <imath>b</imath>, and <imath>c</imath> must fill this space perfectly, its largest dimension must equal the largest dimension of the enclosed space.
+<cmath>c=2a-2</cmath>
+
+The same reasoning applies to the smallest dimension, so
+<cmath>a=b-2</cmath>
+
+The remaining dimension of the box and the enclosed space must match, so
+<cmath>b=c-2</cmath>
+
+Solving the system of equations,
+<cmath>(a,b,c)=(6,8,10)\implies a+b+c=\boxed{\textbf{(C)}~24}</cmath>
+
+~ [[Logibyte]]
+
+==Solution 2==
+We can directly find that the dimensions of the inner space are <imath>b-2</imath>, <imath>c-2</imath>, and <imath>2(a-1)=2a-2</imath>. Hence, <imath>\{a,b,c\}=\{b-2,c-2,2a-2\}</imath>.
+
+Notice that <imath>b-2<c-2</imath>, hence the minimal element in the right set is either <imath>b-2</imath> or <imath>2(a-2)</imath>. In the first case, we have <imath>a=b-2</imath>. Then, either <imath>b=c-2</imath> or <imath>b=2a-2</imath>. The former yields <imath>a=b-2</imath>, <imath>b=c-2</imath>, and <imath>c=2a-2</imath>, so <imath>(a,b,c)=(6,8,10)</imath> upon solving. The latter yields <imath>a=b-2</imath> and <imath>b=2a-2</imath>, but <imath>c=c-2</imath>, impossible. Finally, the second case yields <imath>a=2(a-2)</imath>, so <imath>\{b,c\}=\{b-2,c-2\}</imath>, impossible. Therefore, <imath>(a,b,c)=(6,8,10)</imath>, so the answer is <imath>6+8+10=24</imath>, or <imath>\boxed{\textbf{(C)}}</imath>.
+
+~ [https://artofproblemsolving.com/wiki/index.php/User:Eevee9406 eevee9406]
+
+==Solution 3 (Cheese)==
+Since the rotated box, when chugged into the <imath>b \times c</imath> face of the boxes, must have at least 2 dimensions exactly 2 smaller than <imath>b</imath> and <imath>c</imath>. The 3 side lengths of the box will thus be 3 terms in an arithmetic sequence; the requested sum of the terms is simply thrice the middle term <imath>b</imath>.
+
+The only answer choice that is a multiple of 3 is <imath>\boxed{\textbf{(C)}~24}</imath>.
+
+~megaboy6679
+
+==Video Solution by SpreadTheMathLove==
+https://www.youtube.com/watch?v=Jc2s489VKIQ
+
+==See Also==
+{{AMC12 box|year=2026|ab=A|num-b=13|num-a=15}}
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

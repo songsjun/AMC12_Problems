@@ -132,6 +132,23 @@ or solutions.
 
 ## Layout
 
+The 2026 AMC 12A addition extends the collection to 49 forms. Its original
+AoPS revision sources, all community solution sections, video links, and local
+diagrams are saved in `../2026_AMC_12A_Problems/`. The practice API keeps its
+existing post-final first-solution projection. The public archive contains the
+complete source solutions.
+
+The release validator accepts either the complete legacy 48-form collection
+or that exact collection plus 2026A. The addition can use a new version and
+key/media provenance while the existing 48 immutable revisions stay intact.
+Do not replace those revisions with a newly rebuilt common version merely to
+add the new paper; existing attempts and approved contexts bind their hashes.
+
+`media/ingest_aops_snapshot.py` converts a saved MediaWiki revision API response
+without rewriting mathematics. It emits isolated diagram-renderer jobs and
+keeps every solution before the source navigation footer. The source manifest
+records the exact page revisions and hashes.
+
 ```text
 amc_content/             Standard-library parser, validator, and CLI
 historical-*.json        Auditable archive answer catalog and source repairs

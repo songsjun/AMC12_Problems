@@ -1,0 +1,162 @@
+Title: 2026 AMC 12A Problems/Problem 20
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_20&oldid=298023&action=raw
+
+Published Time: 2026-11-11T16:18:09Z
+
+Markdown Content:
+{{duplicate|[[2026 AMC 10A Problems/Problem 24|2026 AMC 10A #24]] and [[2026 AMC 12A Problems/Problem 20|2026 AMC 12A #20]]}}
+==Problem==
+How many polynomials <imath>f(x)</imath> of degree <imath>3</imath> satisfying<cmath>f\left( 3+\sqrt{5} \right) = f\left( 3 - \sqrt{5} \right)</cmath>are there that have leading coefficient equal to <imath>1</imath> and all of whose coefficients are integers between <imath>-10</imath> and <imath>10</imath>, inclusive?
+
+<imath>\textbf{(A)}\   21  \qquad 	\textbf{(B)}\   42  \qquad 	\textbf{(C)}\   63  \qquad 	\textbf{(D)}\   84  \qquad 	\textbf{(E)}\   105</imath>
+
+==Solution 1==
+Let the polynomial be <imath>f(x)=x^3+ax^2+bx+c</imath> as the leading coefficient is 1. Substituting yields
+<cmath>\left(3-\sqrt{5}\right)^3+a\left(3-\sqrt{5}\right)^2+b\left(3-\sqrt{5}\right)+c= \left(3+\sqrt{5}\right)^3+a\left(3+\sqrt{5}\right)^2+b\left(3+\sqrt{5}\right)+c</cmath>
+Expanding yields
+<cmath>(27-27\sqrt{5}+45-5\sqrt{5})+a(9-6\sqrt{5}+5)+b(3-\sqrt{5})+c</cmath>
+<cmath>=(27+27\sqrt{5}+45+5\sqrt{5})+a(9+6\sqrt{5}+5)+b(3+\sqrt{5})+c</cmath>
+Mass cancelling yields
+<cmath>32\sqrt{5}+6\sqrt{5}a+\sqrt{5}b=0\implies 6a+b=-32</cmath>
+Notice that since <imath>-10\le b\le 10</imath>, we get
+<cmath>-42= -32-10\le -32-b\le -32+10=-22</cmath>
+Hence,
+<cmath>-7\le a\le -\frac{11}{3}\implies -7\le a\le -4</cmath>
+Substituting yields the valid solutions <imath>(a,b)=(-4,-8),(-5,-2),(-6,4),(-7,10)</imath>. Noting that <imath>c</imath> cancels and can thus take on any of the <imath>21</imath> integers from <imath>-10</imath> to <imath>10</imath>, inclusive, our answer is <imath>21\cdot 4=84</imath>, or <imath>\boxed{\textbf{(D)}}</imath>.
+
+~ [https://artofproblemsolving.com/wiki/index.php/User:Eevee9406 eevee9406]
+~ Minor edit by Nioronean
+~chrislakee 
+~i_like_mashed_potatoes
+
+==Solution 2==
+Let <imath>f\left(3+\sqrt 5\right)=f\left(3-\sqrt 5\right)=c</imath>. Now define a new function <imath>g(x)\coloneqq f(x)-c</imath>. Clearly <imath>g</imath> is still a cubic, and the 2 of the roots of <imath>g</imath> will be <imath>r_1, r_2=3+\sqrt 5, 3-\sqrt 5</imath>. Hence <imath>g(x)=(x-d)(x-r_1)(x-r_2)+c</imath>. We work backwards to get 
+<cmath>x=3\pm\sqrt 5\implies x-3=\pm\sqrt 5\implies (x-3)^2=5\implies x^2-6x+9=5\implies x^2-6x+4=0.</cmath> So <imath>g(x)=(x-d)(x^2-6x+4)+c</imath>. 
+Now we just need to apply our given condition. Expanding we have that <imath>g(x)=x^3-(6+d)x^2+(4+6d)x-4d+c</imath>. The most restrictive inequality would be applied to the coefficient of <imath>x</imath>, to yield 
+<cmath>-10\le 4+6d\le 10\implies -14\le 6d\le 6\implies -\frac73\le d\le 1.</cmath>
+So <imath>d\in\{-2, -1, 0, 1\}</imath>. We can choose <imath>c</imath> freely as long as <imath>|-4d+c|\le 10</imath>, which gives 21 valid <imath>c</imath> for each case. Hence there are <imath>4\cdot 21=\boxed{84\hspace{1mm}\textbf{(D)}}</imath> such functions. 
+
+Also note that <imath>c</imath> can have 21 choices because it cancels out in the initial equality of <imath>f\left(3+\sqrt 5\right)=f\left(3-\sqrt 5\right)</imath>
+~Amon26
+
+Note: If you are stuck on which answer to choose, once you have gotten to the restrictions on <imath>d</imath>, you can clearly note that the answer has to be divisible by 4, in which <imath>\textbf{(D)}</imath> is the only option.
+
+~singularity1
+
+==Solution 3==
+
+First let <imath>x_1=3+\sqrt5</imath> and <imath>x_2=3-\sqrt5.</imath> 
+
+Next, let <imath>f(x)=x^3+ax^2+bx+c</imath> since <imath>f</imath> is monic. From the problem statement, <cmath>x_1^3+ax^2_1+bx_1+c=x_2^3+ax_2^2+bx_2+c.</cmath>
+
+Clearly, the value of <imath>c</imath> is irrelevent since subtracting <imath>c</imath> from both sides retains the equation. So, there are <imath>21</imath> choices. (A check is that the answer choices are multiples of <imath>21</imath>)
+
+Now, substitute for <imath>x_1</imath> and <imath>x_2.</imath>
+
+<imath>x_1^2=14+6\sqrt5</imath> and <imath>x_2^2=14-6\sqrt5</imath> next
+<imath>x_1^3=72+32\sqrt5</imath> and <imath>x_2^3=72-32\sqrt5</imath>.
+
+So, substituting one gets <cmath>(72+32\sqrt5)+a(14+6\sqrt5)+b(3+\sqrt5)=(72-32\sqrt5)+a(14-6\sqrt5)+b(3-\sqrt5).</cmath>
+
+Cancelling terms and rearranging gives 
+
+<cmath>\begin{align*}
+64\sqrt5+12a\sqrt5+2b\sqrt5&=0 \Rightarrow \\
+32+6a+b&=0.
+\end{align*}</cmath>
+
+Take the equation<imath>\pmod 6</imath> yields <imath>2+b\equiv 0 \pmod 6</imath> so <imath>b \equiv 4 \pmod 6</imath> and <imath>b=-8, -2, 4, 10.</imath>
+
+Substituting yields <imath>a=-4, -5, -6, -7</imath> respectively. 
+
+Thus, since there are only four pairs <imath>(a, b)</imath> and <imath>21</imath> choices of <imath>c</imath> for each pair there are <imath>4\cdot21=\boxed{84\hspace{1mm}\textbf{(D)}}</imath> total pairs.
+
+Note this solution follows similar to solution <imath>1</imath> but finishes with a quick modulo inspection.
+Some motivation of using the form <imath>x^3+ax^2+bx+c</imath> rather than a function like <imath>(x-r_1)(x-r_2)(x-r_3)</imath> is because the problem references the coefficients.
+
+~Soccerstar9
+~<imath>\LaTeX</imath> edits hothost59
+
+==Solution 4 (Similar to Solution 2)==
+Let <imath>f\left( 3+\sqrt{5}\right) = f\left( 3-\sqrt{5}\right) = c</imath> for some constant <imath>c</imath>. Consider the function <imath>f(x)-c</imath>. This function has roots at <imath>3 \pm \sqrt{5}</imath> and is monic (leading coefficient <imath>1</imath>), so it is divisible by the monic quadratic which also has these two roots.
+
+
+We rewrite <imath>3 \pm \sqrt{5}</imath> as <imath>\frac{6\pm \sqrt{20}}{2}</imath>. By the quadratic formula, the coefficient of the linear term is <imath>-6</imath> and the leading coefficient is <imath>1</imath>. We can then find that the constant is <imath>4</imath>. We can now set <imath>f(x)-c=(x^2-6x+4)(x-k)</imath>.
+
+
+We expand the right hand side and rearrange to get <imath>f(x)=x^3-(k+6)x^2+(6k+4)x-4k+c</imath>. We bound the linear coefficient <imath>6k+4</imath> between <imath>[-10, 10]</imath> to get <imath>k=-2, -1, 0, 1</imath>. For any of these four values of <imath>k</imath>, there are <imath>21</imath> values of <imath>c</imath> such that the constant is in <imath>[-10, 10]</imath>. Furthermore, the quadratic coefficient is always in this range for all choices of <imath>k</imath>. 
+
+
+To finish, we multiply the number of valid <imath>k</imath> by the number of valid <imath>c</imath> to get <imath>4 \cdot 21= \boxed{\textbf{(D) } 84}</imath>
+
+~joiceeliu
+
+===Note===
+
+You can also find the coefficients of the polynomial using Vietas Formulas. Because <imath>f</imath> is monic, the leading coefficient of this quadratic is 1. The sum of the values is <imath>6</imath>, and the product of the values is <imath>(3-\sqrt{5})(3+\sqrt{5})=3^2-(\sqrt{5})^2=9-5=4</imath>. Thus by Vietas, resulting in the same polynomial, <imath>x^2-6x+4</imath>, but just a little bit quicker. 
+~Voidling
+
+==Solution 5 (Quick Calculus)==
+Let the polynomial be <imath>f(x)=x^3+ax^2+bx+c</imath>. First, note that if a cubic polynomial <imath>f(x)</imath> has the same value at <imath>a-b</imath> and <imath>a+b</imath>, then the derivative of the polynomial is always equal to <imath>-b^2</imath>. We can then take the derivative of the polynomial and make it equal to <imath>-5</imath> at <imath>x=3</imath>.
+
+
+Taking the derivative yields <imath>f'(x)=3x^2+2ax+b=-5</imath>. Plugging in <imath>x=3</imath> gives <imath>f'(3)=3(3)^2+2a(3)+b=-5</imath> and this gives the equation <imath>27+6a+b=-5</imath>, and therefore, <imath>b=-6a-32</imath>. Plugging this value into the given inequality yields:
+
+<cmath>-10\le -6a-32\le 10\implies 22\le -6a\le 42\implies -7\le a\le -\frac{11}{3}</cmath>
+Therefore, <imath>a\in\{-7, -6, -5, -4\}</imath>. Notice that these values of <imath>a</imath> also satisfy the inequality. Then, we multiply the number of valid <imath>a</imath> by the number of valid <imath>c</imath> and this gives <imath>4 \cdot 21= \boxed{\textbf{(D) } 84}</imath> total polynomials.
+
+~mathperson0101
+
+~staygene: Question: Where are we getting this: "First, note that if a cubic polynomial <imath>f(x)</imath> has the same value at <imath>a-b</imath> and <imath>a+b</imath>, then the derivative of the polynomial is always equal to <imath>-b^2</imath>. "? I can prove it but is there a specific name for it and what else it's used for? Just kind of niche lol
+
+==Solution 6 (No Cubing Radicals)==
+
+Let <imath>f(x) = x^3 + ax^2 + bx + c</imath>, and let <imath>p = 3 + \sqrt{5}</imath> and <imath>q = 3 - \sqrt{5}</imath>. Note that <imath>p + q = 6</imath> and <imath>pq = 9 - 5 = 4</imath>.
+
+Substituting <imath>p</imath> and <imath>q</imath> has the condition <imath>f(p) = f(q)</imath> become
+<cmath>p^3 + ap^2 + bp + c = q^3 + aq^2 + bq + c,</cmath>
+so
+<cmath>(p^3 - q^3) + a(p^2 - q^2) + b(p - q) = 0.</cmath>
+
+Since <imath>p \neq q</imath>, we can divide by <imath>p - q</imath> to get
+<cmath>(p^2 + pq + q^2) + a(p + q) + b = 0.</cmath>
+
+We have <imath>p^2 + q^2 = (p + q)^2 - 2pq = 36 - 8 = 28</imath>, so <imath>p^2 + pq + q^2 = 28 + 4 = 32</imath>. The equation becomes
+<cmath>32 + 6a + b = 0, \quad\text{so}\quad b = -32 - 6a.</cmath>
+
+We need <imath>-10 \le b \le 10</imath>, which means <imath>-10 \le -32 - 6a \le 10</imath>. This gives <imath>-7 \le a \le -\tfrac{11}{3}</imath>, so <imath>a \in \{-7, -6, -5, -4\}</imath>, with corresponding <imath>b = 10, 4, -2, -8</imath>, and note that each pair is unique.
+
+Finally, since the constant <imath>c</imath> cancels out, <imath>c</imath> can be any of the <imath>21</imath> integers from <imath>-10</imath> to <imath>10</imath>. The number of polynomials is <imath>4 \cdot 21 = \boxed{\textbf{(D)}~84}</imath>.
+
+~ Aeioujyot
+
+
+===Note===
+If we solve for <imath>a</imath> in terms of <imath>b</imath> instead of solving for <imath>b</imath> in terms of <imath>a</imath> for the final inequality, we will get <imath>-10 \le \frac{-32 - b}{6} \le 10</imath>. Simplifying gives <imath>-92 \le b \le 28</imath>. This is entirely correct, however it is not useful in our situation given that <imath>-10 \le b \le 10</imath>. Aside from solving for <imath>a</imath> in terms of <imath>b</imath> being simpler, we also note that if we solve for <imath>a</imath> in terms of <imath>b</imath> and treat <imath>a</imath> as <imath>y</imath> and <imath>b</imath> as <imath>x</imath> in a graph, the slope will be <imath>-\frac{1}{6}</imath>. The boundaries the problem gives us are <imath>-10 \le a \le 10</imath>, so our slope that is close to <imath>0</imath> will make the line travel for a long distance on the <imath>b</imath> axis before reaching the other boundary, making it so that inequality will not provide much new information to us. If we do this quick check, we can realize that solving for <imath>b</imath> in terms of <imath>a</imath> is the correct thing to do.
+
+
+~BOTNATE
+
+===Another Note===
+Due to <imath>a</imath> and <imath>b</imath> being integers, once we found the values of <imath>a</imath> that work it is guaranteed that each value of <imath>a</imath> has a corresponding value of <imath>b</imath> which is just <imath>-32-6a</imath>, which is what we solved for, and that is an integer. We also know that <imath>-32-6a</imath> is between <imath>-10</imath> and <imath>10</imath> because by definition it is the same as <imath>b</imath> which has the same restriction.
+
+
+~BOTNATE
+
+==Video Solution 1 by MadMath==
+https://youtu.be/KehvvZiBGm4
+
+==Video Solution 2 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=Jc2s489VKIQ
+
+==See Also==
+{{AMC10 box|year=2026|ab=A|num-b=23|num-a=25}}
+{{AMC12 box|year=2026|ab=A|num-b=19|num-a=21}}
+* [[AMC 10]]
+* [[AMC 10 Problems and Solutions]]
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

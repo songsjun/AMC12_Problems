@@ -27,18 +27,18 @@ class HistoricalMediaPipelineTests(unittest.TestCase):
 
         self.assertEqual(manifest["schemaVersion"], media.SCHEMA_VERSION)
         self.assertEqual((output_root / "media-report.md").read_text(encoding="utf-8"), media.report_markdown(manifest))
-        self.assertEqual(manifest["sourceFormCount"], 48)
-        self.assertEqual(manifest["sourceQuestionCount"], 1200)
+        self.assertEqual(manifest["sourceFormCount"], 49)
+        self.assertEqual(manifest["sourceQuestionCount"], 1225)
         self.assertEqual(manifest["mediaInventory"], media_inventory)
         self.assertEqual(manifest["promptAsymptoteInventory"], media_inventory)
         self.assertEqual([asset["id"] for asset in manifest["assets"]], [asset["id"] for asset in discovered])
         self.assertEqual(len(manifest["assets"]), len(discovered))
-        self.assertEqual(len(manifest["assets"]), 345)
+        self.assertEqual(len(manifest["assets"]), 358)
         self.assertEqual(sum(asset["kind"] == "asymptote" for asset in manifest["assets"]), 283)
         self.assertEqual(sum(asset["kind"] == "aops-file" for asset in manifest["assets"]), 55)
-        self.assertEqual(sum(asset["kind"] == "local-image" for asset in manifest["assets"]), 7)
-        self.assertEqual(len({asset["output"] for asset in manifest["assets"]}), 344)
-        self.assertEqual(media_inventory["localImageCount"], 7)
+        self.assertEqual(sum(asset["kind"] == "local-image" for asset in manifest["assets"]), 20)
+        self.assertEqual(len({asset["output"] for asset in manifest["assets"]}), 357)
+        self.assertEqual(media_inventory["localImageCount"], 20)
         self.assertEqual(manifest["retiredManagedOutputs"], media.retired_managed_outputs_document())
         self.assertEqual(
             manifest["retiredManagedOutputs"],
@@ -71,8 +71,8 @@ class HistoricalMediaPipelineTests(unittest.TestCase):
             self.assertEqual(scope_inventory["closedAsymptoteFenceCount"], expected_fence_count)
             self.assertEqual(scope_inventory["renderedAsymptoteFenceCount"], expected_fence_count)
             self.assertFalse(scope_inventory["unresolvedAsymptoteFences"])
-        self.assertEqual(media_inventory["scopes"]["prompt"]["localImageCount"], 6)
-        self.assertEqual(media_inventory["scopes"]["solution"]["localImageCount"], 1)
+        self.assertEqual(media_inventory["scopes"]["prompt"]["localImageCount"], 14)
+        self.assertEqual(media_inventory["scopes"]["solution"]["localImageCount"], 6)
         self.assertEqual({asset["source"]["markdownScope"] for asset in manifest["assets"]}, {"prompt", "solution"})
 
         local_assets = [asset for asset in manifest["assets"] if asset["kind"] == "local-image"]
@@ -86,6 +86,19 @@ class HistoricalMediaPipelineTests(unittest.TestCase):
                 "2025-amc-12a-q14-local-01",
                 "2025-amc-12a-q20-local-01",
                 "2025-amc-12a-q24-local-01",
+                "2026-amc-12a-q02-local-01",
+                "2026-amc-12a-q10-local-01",
+                "2026-amc-12a-q16-local-01",
+                "2026-amc-12a-q16-solution-local-01",
+                "2026-amc-12a-q17-local-01",
+                "2026-amc-12a-q17-solution-local-01",
+                "2026-amc-12a-q18-local-01",
+                "2026-amc-12a-q18-local-02",
+                "2026-amc-12a-q21-solution-local-01",
+                "2026-amc-12a-q22-local-01",
+                "2026-amc-12a-q22-solution-local-01",
+                "2026-amc-12a-q24-local-01",
+                "2026-amc-12a-q24-solution-local-01",
             ],
         )
         expected_local_sources = {
@@ -96,6 +109,19 @@ class HistoricalMediaPipelineTests(unittest.TestCase):
             ("2025_AMC_12A_Problems/Problem_14.md", "prompt", "problem-14-tangent-ellipses.svg"),
             ("2025_AMC_12A_Problems/Problem_20.md", "prompt", "problem-20-pentahedron.svg"),
             ("2025_AMC_12A_Problems/Problem_24.md", "prompt", "problem-24-twelve-circles.svg"),
+            ("2026_AMC_12A_Problems/Problem_02.md", "prompt", "problem-02-diagram-01.svg"),
+            ("2026_AMC_12A_Problems/Problem_10.md", "prompt", "problem-10-diagram-01.svg"),
+            ("2026_AMC_12A_Problems/Problem_16.md", "prompt", "problem-16-diagram-01.svg"),
+            ("2026_AMC_12A_Problems/Problem_16.md", "solution", "problem-16-diagram-02.svg"),
+            ("2026_AMC_12A_Problems/Problem_17.md", "prompt", "problem-17-diagram-01.svg"),
+            ("2026_AMC_12A_Problems/Problem_17.md", "solution", "problem-17-diagram-02.svg"),
+            ("2026_AMC_12A_Problems/Problem_18.md", "prompt", "problem-18-diagram-01.svg"),
+            ("2026_AMC_12A_Problems/Problem_18.md", "prompt", "problem-18-diagram-02.svg"),
+            ("2026_AMC_12A_Problems/Problem_21.md", "solution", "problem-21-diagram-01.svg"),
+            ("2026_AMC_12A_Problems/Problem_22.md", "prompt", "problem-22-diagram-01.svg"),
+            ("2026_AMC_12A_Problems/Problem_22.md", "solution", "problem-22-diagram-02.svg"),
+            ("2026_AMC_12A_Problems/Problem_24.md", "prompt", "problem-24-diagram-01.svg"),
+            ("2026_AMC_12A_Problems/Problem_24.md", "solution", "problem-24-diagram-02.svg"),
         }
         self.assertEqual(
             {
@@ -215,7 +241,7 @@ class HistoricalMediaPipelineTests(unittest.TestCase):
                 for reference, _syntax in media.local_image_references_in_markdown(markdown):
                     expected.add((markdown_path, scope, reference))
         self.assertEqual(discovered, expected)
-        self.assertEqual(len(expected), 7)
+        self.assertEqual(len(expected), 20)
 
         valid = "../2025_AMC_12A_Problems/media/problem-05-nested-squares.svg"
         local_path, source = media.resolve_local_image_reference(

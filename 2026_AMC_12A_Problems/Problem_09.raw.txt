@@ -1,0 +1,82 @@
+Title: 2026 AMC 12A Problems/Problem 9
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_9&oldid=298008&action=raw
+
+Published Time: 2026-11-11T15:03:49Z
+
+Markdown Content:
+==Problem==
+
+How many ordered pairs <imath>(x,y)</imath> of real numbers satisfy the following system of equations?
+ 
+<imath>|x^2-y^2|=4\\
+\frac{16x}y=xy</imath>
+
+<imath>\textbf{(A)}\   2  \qquad 	\textbf{(B)}\   4  \qquad 	\textbf{(C)}\   6  \qquad 	\textbf{(D)}\   8  \qquad 	\textbf{(E)}\   10</imath>
+
+==Solution 1 (Algebra)==
+We get that <imath>\frac{16x}y=xy\implies 16x=xy^2\implies xy^2-16x=0\implies x(y^2-16)=0</imath>. So we have 3 cases to test out.
+*If <imath>x=0</imath>, then we have <imath>|-y^2|=|y^2|=4</imath>. Since <imath>y^2\ge 0</imath> by the Trivial Inequality, we must have <imath>y^2=4</imath> for <imath>y=\pm 2</imath>. This accounts for 2 cases.
+*If <imath>y^2-16=0</imath>, we have 2 sub-cases. For the positive case of <imath>y=4</imath>, we obtain <imath>|x^2-16|=4\implies x^2-16=\pm 4\implies x^2=16\pm 4=12, 20</imath> (if the first step is not clear, <imath>|x|=c</imath> means that <imath>x=c</imath> or <imath>x=-c</imath>, which is inherently <imath>\pm c</imath>). This provides 4 more cases (a negative and positive <imath>x</imath> for both numbers). Finally, when <imath>y=-4</imath> we have <imath>|x^2-16|=4</imath> which yields 4 more cases.
+
+Hence we have a total of <imath>2+4+4=\boxed{10\hspace{1mm}\textbf{(E)}}</imath> ordered pairs.
+
+~singularity1
+
+==Solution 2 (geometric interpretation)==
+
+<asy>
+size(200);
+import graph;
+
+xaxis("", -6, 6);
+yaxis("", -6, 6);
+
+real f1(real t) { return sqrt(t^2 + 4); }
+real f2(real t) { return -sqrt(t^2 + 4); }
+real ident(real t) { return t; }
+
+draw(graph(f1, -6, 6), blue+linewidth(1));
+draw(graph(f2, -6, 6), blue+linewidth(1));
+draw(graph(f1, ident, -6, 6), blue+linewidth(1));
+draw(graph(f2, ident, -6, 6), blue+linewidth(1));
+draw((-6, 4)--(6, 4), red);
+draw((-6, -4)--(6, -4), red);
+draw((0, -6)--(0, 6), red);
+filldraw(circle((0, 0), 0.15), white, red);
+
+label("$y=4$", (5, 3.5), E, red);
+label("$y=-4$", (5, -3.3), E, red);
+label("$x=0$", (0, -5.5), E, red);
+
+</asy>
+
+Note that <imath>\lvert x^2 - y^2 \rvert = 4</imath> plots two hyperbolae in the plane with vertices <imath>(0, \pm 2)</imath> and <imath>(\pm 2, 0)</imath>.
+
+Note that <imath>\frac{16x}{y} = xy</imath> has solution set <imath>x = 0</imath> or <imath>y \in \{\pm 4\}</imath> but not <imath>y = 0</imath> (not a concern).
+
+The vertical line <imath>x = 0</imath> has two points of intersection with the hyperbolae, and the horizontal lines <imath>y \in \{\pm 4\}</imath> have <imath>4</imath> points of intersection each with the hyperbolae.
+
+Hence, the number of real solutions is <imath>2 + 4 + 4 = \boxed{\textbf{(E) }10}</imath>.
+
+~Mqnic_ ~ssingh11(diagram)
+
+==Solution 3 (Logical Cheese)==
+
+Notice that after dividing both sides of the second equation by <imath>x</imath>, we exclude <imath>x=0</imath> and have two resulting solutions for <imath>y</imath>. Since there are two solutions for <imath>y</imath> but only one solution for <imath>y^2</imath>, logically, there are two solutions for <imath>x</imath> under each <imath>y</imath>. Adding back <imath>x=0</imath> gives us a total of <imath>1+2*2=5</imath> solutions. Yet, since <imath>x^2 - y^2</imath> is under an absolute value, we have twice the number of solutions and thus we have <imath>\boxed{\textbf{(E) }10}</imath>.
+
+~ Aeioujyot
+
+==Video Solution 1 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=Jc2s489VKIQ
+
+==Video Solution 2 by MathIsFun==
+https://youtu.be/JRWnRtZNW9o?si=fiKO53hLclLR4N-A&t=1360
+
+==See Also==
+{{AMC12 box|year=2026|ab=A|num-b=8|num-a=10}}
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

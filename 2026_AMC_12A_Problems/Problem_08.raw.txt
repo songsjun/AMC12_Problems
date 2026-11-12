@@ -1,0 +1,59 @@
+Title: 2026 AMC 12A Problems/Problem 8
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_8&oldid=297337&action=raw
+
+Published Time: 2026-11-08T18:55:53Z
+
+Markdown Content:
+==Problem==
+
+At Euclid High School, 25 students registered to take the AMC 10 and 75 students registered to take the AMC 12. (No student registered to take both.) However, not all 100 students showed up on test day. To compute the percentage of those students who actually took one of the exams, Euclid High School performed the following incorrect two-step process:
+* Step 1: The school computed both the percentage of AMC 10 registrants who actually took that exam and the percentage of AMC 12   registrants who actually took that exam.
+* Step 2: The school took the average of the previous two numbers to obtain a final percentage.
+
+Suppose that Euclid High School's process yielded an answer of <imath>60\%</imath>. What is the minimum number of students who might have actually taken one of the exams?
+
+<imath>\textbf{(A) } 30 \qquad\textbf{(B) } 35 \qquad\textbf{(C) } 40 \qquad\textbf{(D) } 50 \qquad\textbf{(E) } 60</imath>
+
+==Solution 1:==
+
+Let <imath>x</imath> be the amount of students who took the AMC 10, and <imath>y</imath> be the amount of students who took the AMC 12. Clearly, by performing steps one and two, we get <imath>\frac12\left(\frac{x}{25}+\frac{y}{75}\right)=0.6\implies 3x+y=90</imath>. So clearly we need to maximise <imath>x</imath> if we want to minimise <imath>x+y</imath>. We see that <imath>x\le 25</imath> by our problem condition, and so <imath>x=25</imath> yields <imath>y=15</imath> for a total of <imath>x+y=\boxed{40 \hspace{1mm}\textbf{(C)}}</imath>.
+
+~ singularity1
+
+===Solution 1a (skips reasoning of why <imath>x</imath> needs to be maximised):===
+Alternatively, if you really wanna be nitpicky about it, you can set <imath>x+y=k</imath>, then we'd have <imath>2x=90-k\implies x=\frac{90-k}2</imath>. We know that <imath>x\le 25</imath> so <imath>\frac{90-k}2\le 25\implies 90-k\le 50\implies k\ge 40</imath> for the answer of <imath>40</imath>.
+
+~ singularity1 (again)
+
+== Solution 2 (greedy): ==
+
+Since the two attendance percentages average to <imath>60\%</imath>, they must sum to <imath>120\%</imath>. To minimize the total number of attendees, we assign <imath>100\%</imath> to the smaller group and <imath>20\%</imath> to the larger group, since each percentage point represents fewer students in the smaller group.
+
+Therefore,
+
+<imath>1(25)+0.2(75)=\boxed{40 \hspace{1mm}\textbf{(C)}}</imath>
+
+~ eschan145
+
+==Solution 3==
+
+Continue Solution 1 until <imath>3x + y = 90</imath>. Divide by 3. Then, <imath>x + \frac{y}{3} = 30</imath>, and thus <imath>\frac{y}{3} \in \mathbb{Z}</imath>. so set <imath>y = 3y'</imath> and thus <imath>x + y' = 30</imath>.
+
+To maximize this, obviously, we want to maximize the number of students. Since <imath>3y' \leq 75 \implies y' \leq 25</imath> and <imath>x \leq 25</imath>, to minimize we want to minimize <imath>3y'</imath>. This occurs when <imath>x</imath> is maximized, hence set <imath>x = 25</imath> and <imath>y' = 5</imath> in which <imath>y = 15</imath>, hence the answer is <imath>\boxed{40}</imath>.
+
+~Pinotation
+
+==Video Solution 1 by MathIsFun==
+https://youtu.be/JRWnRtZNW9o?si=BgUQDUFIa81xb_se&t=1095
+
+==Video Solution by SpreadTheMathLove==
+https://www.youtube.com/watch?v=Jc2s489VKIQ
+
+==See Also==
+{{AMC12 box|year=2026|ab=A|num-b=7|num-a=9}}
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

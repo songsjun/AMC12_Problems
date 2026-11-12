@@ -10405,11 +10405,323 @@
         "sha256": "98c53e81bfec37e1767e3d1fe3d7c9bfb0f7567165aae4cb1f265ae7aed9103d"
       },
       "status": "success"
+    },
+    {
+      "id": "2026-amc-12a-q02-local-01",
+      "kind": "local-image",
+      "mimeType": "image/svg+xml",
+      "output": "assets/2026-amc-12a/problem-02-local-01.svg",
+      "outputSha256": "7009a623fed94d755c0890f4a76546f927dce840a49ff7e4558fdb7441b34f5e",
+      "replacement": {
+        "localPath": "historical-media/assets/2026-amc-12a/problem-02-local-01.svg",
+        "publicUrl": "/historical-media/assets/2026-amc-12a/problem-02-local-01.svg",
+        "sourceMarkdownUrl": "../historical-media/assets/2026-amc-12a/problem-02-local-01.svg"
+      },
+      "source": {
+        "localSourcePath": "2026_AMC_12A_Problems/media/problem-02-diagram-01.svg",
+        "markdownBlockIndex": 1,
+        "markdownPath": "2026_AMC_12A_Problems/Problem_02.md",
+        "markdownReference": "../2026_AMC_12A_Problems/media/problem-02-diagram-01.svg",
+        "markdownScope": "prompt",
+        "markdownSyntax": "markdown-image",
+        "placement": "markdown",
+        "rawPath": "2026_AMC_12A_Problems/Problem_02.raw.txt",
+        "sourceSha256": "7009a623fed94d755c0890f4a76546f927dce840a49ff7e4558fdb7441b34f5e"
+      },
+      "status": "success"
+    },
+    {
+      "id": "2026-amc-12a-q10-local-01",
+      "kind": "local-image",
+      "mimeType": "image/svg+xml",
+      "output": "assets/2026-amc-12a/problem-10-local-01.svg",
+      "outputSha256": "7d39884df9d19183f41f9cb3c97fb95bc3a05a47925810ac53777cc7c22f3efd",
+      "replacement": {
+        "localPath": "historical-media/assets/2026-amc-12a/problem-10-local-01.svg",
+        "publicUrl": "/historical-media/assets/2026-amc-12a/problem-10-local-01.svg",
+        "sourceMarkdownUrl": "../historical-media/assets/2026-amc-12a/problem-10-local-01.svg"
+      },
+      "source": {
+        "localSourcePath": "2026_AMC_12A_Problems/media/problem-10-diagram-01.svg",
+        "markdownBlockIndex": 1,
+        "markdownPath": "2026_AMC_12A_Problems/Problem_10.md",
+        "markdownReference": "../2026_AMC_12A_Problems/media/problem-10-diagram-01.svg",
+        "markdownScope": "prompt",
+        "markdownSyntax": "markdown-image",
+        "placement": "markdown",
+        "rawPath": "2026_AMC_12A_Problems/Problem_10.raw.txt",
+        "sourceSha256": "7d39884df9d19183f41f9cb3c97fb95bc3a05a47925810ac53777cc7c22f3efd"
+      },
+      "status": "success"
+    },
+    {
+      "id": "2026-amc-12a-q16-local-01",
+      "kind": "local-image",
+      "mimeType": "image/svg+xml",
+      "output": "assets/2026-amc-12a/problem-16-local-01.svg",
+      "outputSha256": "91202e8a03c637ba40cd2b8a13860902a6b863a27760ef8483d719baebc9d2b1",
+      "replacement": {
+        "localPath": "historical-media/assets/2026-amc-12a/problem-16-local-01.svg",
+        "publicUrl": "/historical-media/assets/2026-amc-12a/problem-16-local-01.svg",
+        "sourceMarkdownUrl": "../historical-media/assets/2026-amc-12a/problem-16-local-01.svg"
+      },
+      "source": {
+        "localSourcePath": "2026_AMC_12A_Problems/media/problem-16-diagram-01.svg",
+        "markdownBlockIndex": 1,
+        "markdownPath": "2026_AMC_12A_Problems/Problem_16.md",
+        "markdownReference": "../2026_AMC_12A_Problems/media/problem-16-diagram-01.svg",
+        "markdownScope": "prompt",
+        "markdownSyntax": "markdown-image",
+        "placement": "markdown",
+        "rawPath": "2026_AMC_12A_Problems/Problem_16.raw.txt",
+        "sourceSha256": "91202e8a03c637ba40cd2b8a13860902a6b863a27760ef8483d719baebc9d2b1"
+      },
+      "status": "success"
+    },
+    {
+      "id": "2026-amc-12a-q16-solution-local-01",
+      "kind": "local-image",
+      "mimeType": "image/svg+xml",
+      "output": "assets/2026-amc-12a/problem-16-solution-local-01.svg",
+      "outputSha256": "56042f0f2a6655d64f04103ca4f4d8cc20d3f56da554c7746d15de7e72c04c85",
+      "replacement": {
+        "localPath": "historical-media/assets/2026-amc-12a/problem-16-solution-local-01.svg",
+        "publicUrl": "/historical-media/assets/2026-amc-12a/problem-16-solution-local-01.svg",
+        "sourceMarkdownUrl": "../historical-media/assets/2026-amc-12a/problem-16-solution-local-01.svg"
+      },
+      "source": {
+        "localSourcePath": "2026_AMC_12A_Problems/media/problem-16-diagram-02.svg",
+        "markdownBlockIndex": 1,
+        "markdownPath": "2026_AMC_12A_Problems/Problem_16.md",
+        "markdownReference": "../2026_AMC_12A_Problems/media/problem-16-diagram-02.svg",
+        "markdownScope": "solution",
+        "markdownSyntax": "markdown-image",
+        "placement": "markdown",
+        "rawPath": "2026_AMC_12A_Problems/Problem_16.raw.txt",
+        "sourceSha256": "56042f0f2a6655d64f04103ca4f4d8cc20d3f56da554c7746d15de7e72c04c85"
+      },
+      "status": "success"
+    },
+    {
+      "id": "2026-amc-12a-q17-local-01",
+      "kind": "local-image",
+      "mimeType": "image/svg+xml",
+      "output": "assets/2026-amc-12a/problem-17-local-01.svg",
+      "outputSha256": "75b0eb15f66680d722cea5123e60da645b5a9e3657e86cea02078b54f1c223b4",
+      "replacement": {
+        "localPath": "historical-media/assets/2026-amc-12a/problem-17-local-01.svg",
+        "publicUrl": "/historical-media/assets/2026-amc-12a/problem-17-local-01.svg",
+        "sourceMarkdownUrl": "../historical-media/assets/2026-amc-12a/problem-17-local-01.svg"
+      },
+      "source": {
+        "localSourcePath": "2026_AMC_12A_Problems/media/problem-17-diagram-01.svg",
+        "markdownBlockIndex": 1,
+        "markdownPath": "2026_AMC_12A_Problems/Problem_17.md",
+        "markdownReference": "../2026_AMC_12A_Problems/media/problem-17-diagram-01.svg",
+        "markdownScope": "prompt",
+        "markdownSyntax": "markdown-image",
+        "placement": "markdown",
+        "rawPath": "2026_AMC_12A_Problems/Problem_17.raw.txt",
+        "sourceSha256": "75b0eb15f66680d722cea5123e60da645b5a9e3657e86cea02078b54f1c223b4"
+      },
+      "status": "success"
+    },
+    {
+      "id": "2026-amc-12a-q17-solution-local-01",
+      "kind": "local-image",
+      "mimeType": "image/svg+xml",
+      "output": "assets/2026-amc-12a/problem-17-solution-local-01.svg",
+      "outputSha256": "fcebfd6bbface1ef02286acc4795e934041be6671e6a3a256bfb166339865138",
+      "replacement": {
+        "localPath": "historical-media/assets/2026-amc-12a/problem-17-solution-local-01.svg",
+        "publicUrl": "/historical-media/assets/2026-amc-12a/problem-17-solution-local-01.svg",
+        "sourceMarkdownUrl": "../historical-media/assets/2026-amc-12a/problem-17-solution-local-01.svg"
+      },
+      "source": {
+        "localSourcePath": "2026_AMC_12A_Problems/media/problem-17-diagram-02.svg",
+        "markdownBlockIndex": 1,
+        "markdownPath": "2026_AMC_12A_Problems/Problem_17.md",
+        "markdownReference": "../2026_AMC_12A_Problems/media/problem-17-diagram-02.svg",
+        "markdownScope": "solution",
+        "markdownSyntax": "markdown-image",
+        "placement": "markdown",
+        "rawPath": "2026_AMC_12A_Problems/Problem_17.raw.txt",
+        "sourceSha256": "fcebfd6bbface1ef02286acc4795e934041be6671e6a3a256bfb166339865138"
+      },
+      "status": "success"
+    },
+    {
+      "id": "2026-amc-12a-q18-local-01",
+      "kind": "local-image",
+      "mimeType": "image/svg+xml",
+      "output": "assets/2026-amc-12a/problem-18-local-01.svg",
+      "outputSha256": "6f533d102999c1b45325ad8b834a5f2c368275aac26cae16ea7da0315ad14a00",
+      "replacement": {
+        "localPath": "historical-media/assets/2026-amc-12a/problem-18-local-01.svg",
+        "publicUrl": "/historical-media/assets/2026-amc-12a/problem-18-local-01.svg",
+        "sourceMarkdownUrl": "../historical-media/assets/2026-amc-12a/problem-18-local-01.svg"
+      },
+      "source": {
+        "localSourcePath": "2026_AMC_12A_Problems/media/problem-18-diagram-01.svg",
+        "markdownBlockIndex": 1,
+        "markdownPath": "2026_AMC_12A_Problems/Problem_18.md",
+        "markdownReference": "../2026_AMC_12A_Problems/media/problem-18-diagram-01.svg",
+        "markdownScope": "prompt",
+        "markdownSyntax": "markdown-image",
+        "placement": "markdown",
+        "rawPath": "2026_AMC_12A_Problems/Problem_18.raw.txt",
+        "sourceSha256": "6f533d102999c1b45325ad8b834a5f2c368275aac26cae16ea7da0315ad14a00"
+      },
+      "status": "success"
+    },
+    {
+      "id": "2026-amc-12a-q18-local-02",
+      "kind": "local-image",
+      "mimeType": "image/svg+xml",
+      "output": "assets/2026-amc-12a/problem-18-local-02.svg",
+      "outputSha256": "5b605b4ce56e93c3195b53b5d38bf02d07cdae1596c0c08644c9fb57ae1709cd",
+      "replacement": {
+        "localPath": "historical-media/assets/2026-amc-12a/problem-18-local-02.svg",
+        "publicUrl": "/historical-media/assets/2026-amc-12a/problem-18-local-02.svg",
+        "sourceMarkdownUrl": "../historical-media/assets/2026-amc-12a/problem-18-local-02.svg"
+      },
+      "source": {
+        "localSourcePath": "2026_AMC_12A_Problems/media/problem-18-diagram-02.svg",
+        "markdownBlockIndex": 2,
+        "markdownPath": "2026_AMC_12A_Problems/Problem_18.md",
+        "markdownReference": "../2026_AMC_12A_Problems/media/problem-18-diagram-02.svg",
+        "markdownScope": "prompt",
+        "markdownSyntax": "markdown-image",
+        "placement": "markdown",
+        "rawPath": "2026_AMC_12A_Problems/Problem_18.raw.txt",
+        "sourceSha256": "5b605b4ce56e93c3195b53b5d38bf02d07cdae1596c0c08644c9fb57ae1709cd"
+      },
+      "status": "success"
+    },
+    {
+      "id": "2026-amc-12a-q21-solution-local-01",
+      "kind": "local-image",
+      "mimeType": "image/svg+xml",
+      "output": "assets/2026-amc-12a/problem-21-solution-local-01.svg",
+      "outputSha256": "81e2f287de8c7d65ac7aa3a1552c488eb140d6cfdc91b3b590868beb72b17bb5",
+      "replacement": {
+        "localPath": "historical-media/assets/2026-amc-12a/problem-21-solution-local-01.svg",
+        "publicUrl": "/historical-media/assets/2026-amc-12a/problem-21-solution-local-01.svg",
+        "sourceMarkdownUrl": "../historical-media/assets/2026-amc-12a/problem-21-solution-local-01.svg"
+      },
+      "source": {
+        "localSourcePath": "2026_AMC_12A_Problems/media/problem-21-diagram-01.svg",
+        "markdownBlockIndex": 1,
+        "markdownPath": "2026_AMC_12A_Problems/Problem_21.md",
+        "markdownReference": "../2026_AMC_12A_Problems/media/problem-21-diagram-01.svg",
+        "markdownScope": "solution",
+        "markdownSyntax": "markdown-image",
+        "placement": "markdown",
+        "rawPath": "2026_AMC_12A_Problems/Problem_21.raw.txt",
+        "sourceSha256": "81e2f287de8c7d65ac7aa3a1552c488eb140d6cfdc91b3b590868beb72b17bb5"
+      },
+      "status": "success"
+    },
+    {
+      "id": "2026-amc-12a-q22-local-01",
+      "kind": "local-image",
+      "mimeType": "image/svg+xml",
+      "output": "assets/2026-amc-12a/problem-22-local-01.svg",
+      "outputSha256": "f5a9e28c5ffbfe671748aa86a619240383fef6004ecff22206e1aaa7e3960f90",
+      "replacement": {
+        "localPath": "historical-media/assets/2026-amc-12a/problem-22-local-01.svg",
+        "publicUrl": "/historical-media/assets/2026-amc-12a/problem-22-local-01.svg",
+        "sourceMarkdownUrl": "../historical-media/assets/2026-amc-12a/problem-22-local-01.svg"
+      },
+      "source": {
+        "localSourcePath": "2026_AMC_12A_Problems/media/problem-22-diagram-01.svg",
+        "markdownBlockIndex": 1,
+        "markdownPath": "2026_AMC_12A_Problems/Problem_22.md",
+        "markdownReference": "../2026_AMC_12A_Problems/media/problem-22-diagram-01.svg",
+        "markdownScope": "prompt",
+        "markdownSyntax": "markdown-image",
+        "placement": "markdown",
+        "rawPath": "2026_AMC_12A_Problems/Problem_22.raw.txt",
+        "sourceSha256": "f5a9e28c5ffbfe671748aa86a619240383fef6004ecff22206e1aaa7e3960f90"
+      },
+      "status": "success"
+    },
+    {
+      "id": "2026-amc-12a-q22-solution-local-01",
+      "kind": "local-image",
+      "mimeType": "image/svg+xml",
+      "output": "assets/2026-amc-12a/problem-22-solution-local-01.svg",
+      "outputSha256": "e713a95428be20f738d369d66ea3d5aad5abe66c29fb8f5e91bfdcee5f9e9add",
+      "replacement": {
+        "localPath": "historical-media/assets/2026-amc-12a/problem-22-solution-local-01.svg",
+        "publicUrl": "/historical-media/assets/2026-amc-12a/problem-22-solution-local-01.svg",
+        "sourceMarkdownUrl": "../historical-media/assets/2026-amc-12a/problem-22-solution-local-01.svg"
+      },
+      "source": {
+        "localSourcePath": "2026_AMC_12A_Problems/media/problem-22-diagram-02.svg",
+        "markdownBlockIndex": 1,
+        "markdownPath": "2026_AMC_12A_Problems/Problem_22.md",
+        "markdownReference": "../2026_AMC_12A_Problems/media/problem-22-diagram-02.svg",
+        "markdownScope": "solution",
+        "markdownSyntax": "markdown-image",
+        "placement": "markdown",
+        "rawPath": "2026_AMC_12A_Problems/Problem_22.raw.txt",
+        "sourceSha256": "e713a95428be20f738d369d66ea3d5aad5abe66c29fb8f5e91bfdcee5f9e9add"
+      },
+      "status": "success"
+    },
+    {
+      "id": "2026-amc-12a-q24-local-01",
+      "kind": "local-image",
+      "mimeType": "image/svg+xml",
+      "output": "assets/2026-amc-12a/problem-24-local-01.svg",
+      "outputSha256": "06467684d514e29d8cd164620c91346a46dd128084e70c0745f6c91a025cac1d",
+      "replacement": {
+        "localPath": "historical-media/assets/2026-amc-12a/problem-24-local-01.svg",
+        "publicUrl": "/historical-media/assets/2026-amc-12a/problem-24-local-01.svg",
+        "sourceMarkdownUrl": "../historical-media/assets/2026-amc-12a/problem-24-local-01.svg"
+      },
+      "source": {
+        "localSourcePath": "2026_AMC_12A_Problems/media/problem-24-diagram-01.svg",
+        "markdownBlockIndex": 1,
+        "markdownPath": "2026_AMC_12A_Problems/Problem_24.md",
+        "markdownReference": "../2026_AMC_12A_Problems/media/problem-24-diagram-01.svg",
+        "markdownScope": "prompt",
+        "markdownSyntax": "markdown-image",
+        "placement": "markdown",
+        "rawPath": "2026_AMC_12A_Problems/Problem_24.raw.txt",
+        "sourceSha256": "06467684d514e29d8cd164620c91346a46dd128084e70c0745f6c91a025cac1d"
+      },
+      "status": "success"
+    },
+    {
+      "id": "2026-amc-12a-q24-solution-local-01",
+      "kind": "local-image",
+      "mimeType": "image/svg+xml",
+      "output": "assets/2026-amc-12a/problem-24-solution-local-01.svg",
+      "outputSha256": "a0765a8ff0b1ed6baa2091532bf4d425842f3b8ec6c1baae5d3a7540ebb1fd66",
+      "replacement": {
+        "localPath": "historical-media/assets/2026-amc-12a/problem-24-solution-local-01.svg",
+        "publicUrl": "/historical-media/assets/2026-amc-12a/problem-24-solution-local-01.svg",
+        "sourceMarkdownUrl": "../historical-media/assets/2026-amc-12a/problem-24-solution-local-01.svg"
+      },
+      "source": {
+        "localSourcePath": "2026_AMC_12A_Problems/media/problem-24-diagram-02.svg",
+        "markdownBlockIndex": 1,
+        "markdownPath": "2026_AMC_12A_Problems/Problem_24.md",
+        "markdownReference": "../2026_AMC_12A_Problems/media/problem-24-diagram-02.svg",
+        "markdownScope": "solution",
+        "markdownSyntax": "markdown-image",
+        "placement": "markdown",
+        "rawPath": "2026_AMC_12A_Problems/Problem_24.raw.txt",
+        "sourceSha256": "a0765a8ff0b1ed6baa2091532bf4d425842f3b8ec6c1baae5d3a7540ebb1fd66"
+      },
+      "status": "success"
     }
   ],
   "mediaInventory": {
     "closedPromptAsymptoteFenceCount": 165,
-    "localImageCount": 7,
+    "localImageCount": 20,
     "promptAsymptoteFenceCount": 165,
     "renderedPromptAsymptoteFenceCount": 165,
     "resolvedWithoutMediaPromptAsymptoteFences": [],
@@ -10417,7 +10729,7 @@
       "prompt": {
         "asymptoteFenceCount": 165,
         "closedAsymptoteFenceCount": 165,
-        "localImageCount": 6,
+        "localImageCount": 14,
         "renderedAsymptoteFenceCount": 165,
         "resolvedWithoutMediaAsymptoteFences": [],
         "unclosedAsymptoteFences": [],
@@ -10426,7 +10738,7 @@
       "solution": {
         "asymptoteFenceCount": 197,
         "closedAsymptoteFenceCount": 197,
-        "localImageCount": 1,
+        "localImageCount": 6,
         "renderedAsymptoteFenceCount": 197,
         "resolvedWithoutMediaAsymptoteFences": [],
         "unclosedAsymptoteFences": [],
@@ -10438,7 +10750,7 @@
   },
   "promptAsymptoteInventory": {
     "closedPromptAsymptoteFenceCount": 165,
-    "localImageCount": 7,
+    "localImageCount": 20,
     "promptAsymptoteFenceCount": 165,
     "renderedPromptAsymptoteFenceCount": 165,
     "resolvedWithoutMediaPromptAsymptoteFences": [],
@@ -10446,7 +10758,7 @@
       "prompt": {
         "asymptoteFenceCount": 165,
         "closedAsymptoteFenceCount": 165,
-        "localImageCount": 6,
+        "localImageCount": 14,
         "renderedAsymptoteFenceCount": 165,
         "resolvedWithoutMediaAsymptoteFences": [],
         "unclosedAsymptoteFences": [],
@@ -10455,7 +10767,7 @@
       "solution": {
         "asymptoteFenceCount": 197,
         "closedAsymptoteFenceCount": 197,
-        "localImageCount": 1,
+        "localImageCount": 6,
         "renderedAsymptoteFenceCount": 197,
         "resolvedWithoutMediaAsymptoteFences": [],
         "unclosedAsymptoteFences": [],
@@ -10485,6 +10797,6 @@
     ]
   },
   "schemaVersion": "amc12-historical-media-v1",
-  "sourceFormCount": 48,
-  "sourceQuestionCount": 1200
+  "sourceFormCount": 49,
+  "sourceQuestionCount": 1225
 }

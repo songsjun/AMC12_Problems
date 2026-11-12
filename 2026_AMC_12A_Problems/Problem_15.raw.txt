@@ -1,0 +1,198 @@
+Title: 2026 AMC 12A Problems/Problem 15
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_15&oldid=297204&action=raw
+
+Published Time: 2026-11-08T06:06:36Z
+
+Markdown Content:
+==Problem==
+Suppose that <imath>\sin a = \tfrac{1}{4}</imath> and <imath>\sin b = \tfrac{1}{8}</imath> with <imath>0 \le b < a \le \tfrac{\pi}{2}</imath>. What is the greatest integer less than <imath>\log_2\bigl(\sin(a+b)\cdot\sin(a-b)\bigr)</imath>?
+
+<imath>\textbf{(A) } -5 \qquad
+\textbf{(B) } -4 \qquad
+\textbf{(C) } 0 \qquad
+\textbf{(D) } 1 \qquad
+\textbf{(E) } 5</imath>
+
+
+==Solution==
+We begin by expanding the product inside the logarithm using the sine angle addition and subtraction formulas:
+<cmath>
+\sin(a + b) = \sin a \cos b + \cos a \sin b
+</cmath>
+<cmath>
+\sin(a - b) = \sin a \cos b - \cos a \sin b
+</cmath>
+
+Applying the difference of squares identity, the product becomes:
+<cmath>
+\sin(a + b)\sin(a - b) = \sin^2 a \cos^2 b - \cos^2 a \sin^2 b
+</cmath>
+
+Using the fundamental Pythagorean identity <imath>\cos^2 x = 1 - \sin^2 x</imath>, we can rewrite the expression entirely in terms of sine:
+\begin{align*}
+\sin^2 a \cos^2 b - \cos^2 a \sin^2 b &= \sin^2 a (1 - \sin^2 b) - (1 - \sin^2 a)\sin^2 b \\
+&= \sin^2 a - \sin^2 a \sin^2 b - \sin^2 b + \sin^2 a \sin^2 b \\
+&= \sin^2 a - \sin^2 b
+\end{align*}
+
+
+Substituting the given values <imath>\sin a = \frac{1}{4}</imath> and <imath>\sin b = \frac{1}{8}</imath>, we find:
+<cmath>
+\sin^2 a = \left(\frac{1}{4}\right)^2 = \frac{1}{16}, \quad \sin^2 b = \left(\frac{1}{8}\right)^2 = \frac{1}{64}
+</cmath>
+
+Thus, the argument of the logarithm simplifies to:
+<cmath>
+\sin^2 a - \sin^2 b = \frac{1}{16} - \frac{1}{64} = \frac{4}{64} - \frac{1}{64} = \frac{3}{64}
+</cmath>
+
+The expression <imath>E</imath> is therefore:
+<cmath>
+E = \log_2 \left( \frac{3}{64} \right)
+</cmath>
+
+
+To find the maximum integer less than <imath>E</imath> (the floor of the expression, <imath>\lfloor E \rfloor</imath>), we bound the fraction <imath>\frac{3}{64}</imath> between two consecutive powers of <imath>2</imath>:
+<cmath>
+\frac{2}{64} < \frac{3}{64} < \frac{4}{64}
+</cmath>
+
+Simplifying these bounding fractions yields:
+<cmath>
+\frac{1}{32} < \frac{3}{64} < \frac{1}{16}
+</cmath>
+
+Since the base-2 logarithm <imath>\log_2(x)</imath> is a strictly increasing function, we apply it across the inequality:
+<cmath>
+\log_2 \left( \frac{1}{32} \right) < \log_2 \left( \frac{3}{64} \right) < \log_2 \left( \frac{1}{16} \right)
+</cmath>
+
+Recognizing that <imath>\frac{1}{32} = 2^{-5}</imath> and <imath>\frac{1}{16} = 2^{-4}</imath>, we have:
+<cmath>
+-5 < E < -4
+</cmath>
+
+
+The value of the expression lies strictly between <imath>-5</imath> and <imath>-4</imath>. Therefore, the maximum integer less than the expression is <imath>-5</imath>. 
+
+This corresponds to choice <imath>\boxed{\text{A}}</imath>.
+
+NM
+
+Note: Instead of finding the bounds like this, we can also use the property that <imath>\log_2 (\frac{3}{64}) = \log_2 (3) - \log_2(64) = \log_2 (3) - 6</imath>. We see that the floor of <imath>\log_2 (3)</imath> is <imath>1</imath>, so the answer is <imath>1-6=-5</imath>, or <imath>\boxed{\text{A}}</imath>.
+
+(And this is emotional damage, cuz at first I got <imath>-5</imath> for the wrong reason, then I redid it, but this time, I accidentally added them instead of subtracting them despite writing down subtraction and put <imath>-4</imath>)
+
+~ vaishnav
+
+==Solution 2 (fakesolve)==
+The Maclaurin series of <imath>\sin{x} = x - \frac{x^3}{6}...</imath> and <imath>\arcsin{x} = x + \frac{x^3}{6}...</imath>. For this problem, <imath>\sin{x} = x</imath> and <imath>\arcsin{x} = x</imath> suffice (explained at the end).
+
+Therefore:
+<cmath>
+\begin{align*}
+a = \frac{1}{4}\\
+b = \frac{1}{8}\\
+\end{align*}
+</cmath>
+
+<cmath>
+\begin{align*}
+\log_2\bigl(\sin(a+b)\cdot\sin(a-b)\bigr) = \log_2(\frac{3}{8} \cdot \frac{1}{8}) = \log_2(\frac{3}{64})
+\end{align*}
+</cmath>
+Note that <imath>-5 < \log_2(\frac{3}{64}) < -4</imath>.
+Given that the next term in the Maclaurin series expansion of <imath>\sin{x}</imath> is negative, our estimate for <imath>\sin(a+b)\cdot\sin(a-b)</imath> is too high. Given that there is only one answer that is less than -4, the answer is thus automatically <imath>\boxed{\textbf{(A) }-5}</imath>.
+
+Note on why <imath>\arcsin{x} = x</imath> suffices: We are at most underestimating the value of <imath>a</imath> by <imath>\frac{1}{384}</imath> due to the next term, and the value of <imath>b</imath> by <imath>\frac{1}{3072}</imath>, which would not significantly change the value of the fraction.
+
+~hi-person
+
+==Solution 3 (Engineering)==
+
+We will assume that <imath>\arcsin\frac{1}{4}</imath> is less than <imath>15</imath> degrees, and we will use the infamous approximation of <imath>\sin{x}={x}</imath> for small angles in our solution.
+
+Replace the expression of <imath>\log_2\bigl(\sin(a+b)\cdot\sin(a-b)\bigr)</imath> with <imath>\log_2\bigl((\frac{1}{4}+\frac{1}{8})\cdot(\frac{1}{4}-\frac{1}{8})\bigr)</imath> = <imath>\log_2\bigl(\frac{3}{64}\bigr)</imath>
+
+<imath>\log_2\bigl(\frac{3}{64}\bigr)=\log_2\bigl(3\bigr)-\log_2\bigl(64\bigr)</imath>, which is <imath>(</imath>a number between <imath>1</imath> and <imath>2)-6</imath>.
+
+Thus our answer choice is <imath>\boxed{\text{A}}</imath>.
+
+(Note: This is extremely similar to solution 2, except that we don't even consider the Maclaurin series and just make a bunch of assumptions)
+
+~bread782
+
+==Solution 4==
+
+Note that
+<cmath>
+\begin{align*}
+\cos(2a) &= 1 - 2\sin(a)^2 = 1 - \frac{2}{16} = \frac{7}{8}, \\
+\cos(2b) &= 1 - 2\sin(b)^2 = 1 - \frac{2}{64} = \frac{31}{32}.
+\end{align*}
+</cmath>
+By product-to-sum,
+<cmath>
+\sin(a + b)\sin(a - b) = \frac{1}{2}(\cos(2b) - \cos(2a)) = \frac{1}{2}\biggl(\frac{31}{32} - \frac{7}{8}\biggr) = \frac{3}{64}.
+</cmath>
+Then,
+<cmath>
+\log_2\bigl(\sin(a + b) \cdot \sin(a - b)\bigr) = \log_2\biggl(\frac{3}{64}\biggr) = \log_2(3) - \log_2(64) = \log_2(3) - 6,
+</cmath>
+which lies in <imath>(-5, -4)</imath> since <imath>\log_2(3) \in (1, 2)</imath>. Hence, the greatest integer less than <imath>\log_2\bigl(\sin(a + b) \cdot \sin(a - b)\bigr)</imath> is <imath>\boxed{\textbf{(A) }-5}</imath>.
+
+~Mqnic_
+
+==Solution 5==
+
+Note that if <imath>\sin a = \frac{1}{4}</imath>, then <imath>\cos a = \frac{\sqrt{15}}{4}</imath>. Similarly, if <imath>\sin b = \frac{1}{8}</imath>, then <imath>\cos b = \frac{\sqrt{63}}{8}</imath>
+
+The product inside the logarithm can be expanded using the sine angle addition and subtraction formulas:
+
+<cmath>
+\sin(a + b) = \sin a \cos b + \cos a \sin b
+</cmath>
+<cmath>
+\sin(a - b) = \sin a \cos b - \cos a \sin b
+</cmath>
+
+Their product can be expressed as a difference of squares: 
+<cmath>
+\sin^2 a \cos^2 b - \cos^2 a \sin^2 b
+</cmath>
+
+Using the given values <imath>\sin a = \frac{1}{4}</imath> and <imath>\sin b = \frac{1}{8}</imath>, as well as our previously obtained values of <imath>\cos a = \frac{\sqrt{15}}{4}</imath> and <imath>\cos b = \frac{\sqrt{63}}{8}</imath>, we can evaluate the difference of squares:
+
+<cmath>
+\left(\frac{1}{4}\right)^2 \cdot \left(\frac{\sqrt{63}}{8}\right)^2 - \left(\frac{\sqrt{15}}{4}\right)^2 \cdot \left(\frac{1}{8}\right)^2 = \frac{63}{1024} - \frac{15}{1024} = \frac{48}{1024} = \frac{3}{64}
+</cmath>
+
+Our desired value is now the greatest integer less than or equal to <imath>\log_2 \left( \frac{3}{64} \right)</imath>. Using the quotient rule of logarithms, this expression can be simplified to <imath>\log_2 3 - \log_2 64</imath>, and then to <imath>\log_2 3 - 6</imath> since <imath>2^6 = 64</imath>. 
+
+Since <imath>2 < 3 < 4</imath> and <imath>\log_2</imath> is increasing, <imath>\log_2 3 \in (1, 2)</imath>. It follows that <imath>(\log_2 3 - 6) \in (-5, -4)</imath>, and the greatest integer less than or equal to this is <imath>\boxed{\textbf{(A) }-5}</imath>.
+
+~sroyc
+
+==Solution 6==
+
+Recall the identity
+
+<cmath>
+\sin(a + b)\sin(a - b) = \sin^2 a - \sin^2 b.
+</cmath>
+
+Thus, we must evaluate <imath>\left\lfloor \log_2\left(\left(\tfrac{1}{4}\right)^2 - \left(\tfrac{1}{8}\right)^2\right) \right\rfloor = \left\lfloor \log_2 \tfrac{3}{64} \right\rfloor</imath>. Since <imath>\tfrac{1}{32} < \tfrac{3}{64} < \tfrac{1}{16}</imath>, we have <imath>-5 < \log_2 \tfrac{3}{64} < -4</imath>, so the answer is <imath>\boxed{\textbf{(A) }-5}</imath>.
+
+~ Aeioujyot
+
+==Video Solution 1 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=Jc2s489VKIQ
+
+==See Also==
+{{AMC12 box|year=2026|ab=A|num-b=14|num-a=16}}
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

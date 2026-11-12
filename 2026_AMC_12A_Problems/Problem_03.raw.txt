@@ -1,0 +1,67 @@
+Title: 2026 AMC 12A Problems/Problem 3
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_3&oldid=297110&action=raw
+
+Published Time: 2026-11-08T03:11:20Z
+
+Markdown Content:
+{{duplicate|[[2026 AMC 10A Problems/Problem 4|2026 AMC 10A #4]] and [[2026 AMC 12A Problems/Problem 3|2026 AMC 12A #3]]}}
+==Problem==
+
+Half of the internal angles of a polygon measure <imath>150^{\circ}</imath> each, and the other half of its internal angles measure <imath>190^{\circ}</imath> each. How many sides does the polygon have?
+
+<imath>\textbf{(A)}\   36  \qquad 	\textbf{(B)}\   40  \qquad 	\textbf{(C)}\   60  \qquad 	\textbf{(D)}\   72  \qquad 	\textbf{(E)}\   180</imath>
+
+==Solution 1==
+Let the polygon have n sides. The sum of the interior angles of this polygon is <imath>(n-2)\cdot 180</imath>. <imath>\frac{n}{2}</imath> of the angles are <imath>150</imath> and <imath>\frac{n}{2}</imath> of the angles are <imath>190</imath>, so
+<cmath>\frac{n}{2} \cdot 150 + \frac{n}{2} \cdot 190= (n-2)\cdot 180</cmath>
+<cmath>75n + 95n = 180n - 360</cmath>
+<cmath>10n = 360</cmath>
+<cmath>n = 36</cmath>
+Therefore, our answer is <imath>\boxed{\textbf{(A)}\hspace{1mm}36}</imath>
+<imath>\newline</imath>
+<imath>\sim</imath>cyrus825
+
+Slight <imath>\LaTeX</imath> corrections by ~singularity1
+
+==Solution 2==
+Because we know that half of the angles are <imath>190^c</imath> and the other half is <imath>150^c</imath>, the average angle is <imath>\frac{190^c+150^c}{2} = 170^c</imath> on average for each angle. If the average is <imath>170^c</imath>, then <cmath>\frac{180*(n-2)}{n} = 170</cmath>
+<cmath>170n=180*(n-2) \to 0 = 10n-360</cmath>
+<cmath>10n=360 \to n = \boxed{36}</cmath>
+
+~Horseneck3
+
+==Solution 3==
+<imath>\frac{lcm(340,360)}{360}=34 \Rightarrow 34+2= \boxed{\textbf{(A)}\hspace{1mm}36}</imath>
+
+The calculation is trivial using prime factors
+
+~SecretUser17
+
+==Solution 4==
+We can find the average exterior angle by doing <imath>180^\circ-150^\circ=30^\circ</imath> for the first angle and <imath>180^\circ-190^\circ=-10^\circ</imath> for the second. Since there are an equal amount of both exterior angles, we can find the average exterior angle:
+<cmath>\frac{30^\circ+\left(-10^\circ\right)}{2} = 10^\circ</cmath>
+Since the sum of the exterior angles of any polygon is <imath>360^\circ</imath>
+<cmath>\frac{360^\circ}{10^\circ}=\boxed{\textbf{(A)}\hspace{1mm}36}</cmath>
+
+~MC_HELLO
+
+
+==Video Solution 1==
+https://youtu.be/sNFSsL75LGE?t=428
+
+~MathisFun
+
+==Video Solution by SpreadTheMathLove==
+https://www.youtube.com/watch?v=Jc2s489VKIQ
+
+==See Also==
+{{AMC12 box|year=2026|ab=A|num-b=2|num-a=4}}
+{{AMC10 box|year=2026|ab=A|num-b=3|num-a=5}}
+* [[AMC 12]]
+* [[AMC 10]]
+* [[AMC 12 Problems and Solutions]]
+* [[AMC 10 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

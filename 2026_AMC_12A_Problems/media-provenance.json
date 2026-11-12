@@ -1,0 +1,172 @@
+{
+  "results": [
+    {
+      "id": "problem-02-diagram-01",
+      "mimeType": "image/svg+xml",
+      "output": "media/problem-02-diagram-01.svg",
+      "sha256": "7009a623fed94d755c0890f4a76546f927dce840a49ff7e4558fdb7441b34f5e",
+      "status": "success",
+      "rendererInputSha256": "73e6588232055d70ad3784e0b91563e92f853dd4f78ae54cd2ed9e6b97d7df70"
+    },
+    {
+      "id": "problem-17-diagram-01",
+      "mimeType": "image/svg+xml",
+      "output": "media/problem-17-diagram-01.svg",
+      "sha256": "75b0eb15f66680d722cea5123e60da645b5a9e3657e86cea02078b54f1c223b4",
+      "status": "success",
+      "rendererInputSha256": "7d6adf8a1d411d8b09319f0adab787873516fc87ed759eea10228679467a58c3"
+    },
+    {
+      "id": "problem-17-diagram-02",
+      "mimeType": "image/svg+xml",
+      "output": "media/problem-17-diagram-02.svg",
+      "sha256": "fcebfd6bbface1ef02286acc4795e934041be6671e6a3a256bfb166339865138",
+      "status": "success",
+      "rendererInputSha256": "307de7e1524217d859ed9acd1c67728814efa9e242759b028888570a057862af"
+    },
+    {
+      "id": "problem-17-diagram-03",
+      "mimeType": "image/svg+xml",
+      "output": "media/problem-17-diagram-03.svg",
+      "sha256": "b17713fe6d97c490224100e4e77911b657156f6b29426eb5fb4b6966b8dbf94a",
+      "status": "success",
+      "rendererInputSha256": "d17ba19e957cf4114ea83a10c09650a00f4c8f2e054cc11b315784319c0701ca"
+    },
+    {
+      "id": "problem-17-diagram-04",
+      "mimeType": "image/svg+xml",
+      "output": "media/problem-17-diagram-04.svg",
+      "sha256": "ca3950bffb3696b73a296b2c923dae60edcfd3999eaeef0b96087084b20cdc7c",
+      "status": "success",
+      "rendererInputSha256": "42d5983044ddbafe930f14611642132db6588e5f71e54d0e48f006942de4887a"
+    },
+    {
+      "id": "problem-17-diagram-05",
+      "mimeType": "image/svg+xml",
+      "output": "media/problem-17-diagram-05.svg",
+      "sha256": "8a95b24f784dda21131e29f3c76c4b6800357f8862260bb1c94ced8c9dd717af",
+      "status": "success",
+      "rendererInputSha256": "6c527d7e9343efc5598446983ab6acbee8a21a77a1d7ac73383f6804c9145f18"
+    },
+    {
+      "id": "problem-10-diagram-01",
+      "mimeType": "image/svg+xml",
+      "output": "media/problem-10-diagram-01.svg",
+      "sha256": "7d39884df9d19183f41f9cb3c97fb95bc3a05a47925810ac53777cc7c22f3efd",
+      "status": "success",
+      "rendererInputSha256": "bc5176020781089035dffdc43d5f5b7d2cb9d0533ad11f51289abcaf725d82b5"
+    },
+    {
+      "id": "problem-25-diagram-01",
+      "mimeType": "image/svg+xml",
+      "output": "media/problem-25-diagram-01.svg",
+      "sha256": "f342a5d0bd7887df1d62f4a9da7574de9b2fa157b1eba91e917cae5405c8e940",
+      "status": "success",
+      "rendererInputSha256": "bf5ee4ea3a9c503bd458ad627961b1bd5f0a436040b8d552ccec876e4bcff945"
+    },
+    {
+      "id": "problem-09-diagram-01",
+      "mimeType": "image/svg+xml",
+      "output": "media/problem-09-diagram-01.svg",
+      "sha256": "638568be2caab4cfa2136e378dc56892fa56a387bb3d7231afb6da3965a3f051",
+      "status": "success",
+      "rendererInputSha256": "1287888fbbf6377c669a8bdcaa690e9247fcdeba0f00fb9b4c489c98b2c2bd19"
+    },
+    {
+      "id": "problem-21-diagram-01",
+      "mimeType": "image/svg+xml",
+      "output": "media/problem-21-diagram-01.svg",
+      "sha256": "81e2f287de8c7d65ac7aa3a1552c488eb140d6cfdc91b3b590868beb72b17bb5",
+      "status": "success",
+      "rendererInputSha256": "b3ddb1a8821c9c3ed8dfc0ff1caa1f547825e33c6bc833199d5a0b3f4d393dd6"
+    },
+    {
+      "id": "problem-22-diagram-01",
+      "mimeType": "image/svg+xml",
+      "output": "media/problem-22-diagram-01.svg",
+      "sha256": "f5a9e28c5ffbfe671748aa86a619240383fef6004ecff22206e1aaa7e3960f90",
+      "status": "success",
+      "rendererInputSha256": "919062c6532971d4b0175a093319db1af97a612a6941428372dbd4cf22edf2ae"
+    },
+    {
+      "id": "problem-22-diagram-02",
+      "mimeType": "image/svg+xml",
+      "output": "media/problem-22-diagram-02.svg",
+      "sha256": "e713a95428be20f738d369d66ea3d5aad5abe66c29fb8f5e91bfdcee5f9e9add",
+      "status": "success",
+      "rendererInputSha256": "adec5ac36c98c91f874de68487cca1f69ae4fde4d7a9784dc29e453f1850eaa1"
+    },
+    {
+      "id": "problem-18-diagram-01",
+      "mimeType": "image/svg+xml",
+      "output": "media/problem-18-diagram-01.svg",
+      "sha256": "6f533d102999c1b45325ad8b834a5f2c368275aac26cae16ea7da0315ad14a00",
+      "status": "success",
+      "rendererInputSha256": "106b28e47258d61d45ef5462cfc3e39a2ad21f5f40d3647838615dd2bf283ea0"
+    },
+    {
+      "id": "problem-18-diagram-02",
+      "mimeType": "image/svg+xml",
+      "output": "media/problem-18-diagram-02.svg",
+      "sha256": "5b605b4ce56e93c3195b53b5d38bf02d07cdae1596c0c08644c9fb57ae1709cd",
+      "status": "success",
+      "rendererInputSha256": "9538c7f61736e55bed77efe6483e92fa060aea97a8d7d3d9c8903499488e11af"
+    },
+    {
+      "id": "problem-24-diagram-01",
+      "mimeType": "image/svg+xml",
+      "output": "media/problem-24-diagram-01.svg",
+      "sha256": "06467684d514e29d8cd164620c91346a46dd128084e70c0745f6c91a025cac1d",
+      "status": "success",
+      "rendererInputSha256": "65e8ab865708148f97400a801bde08f4b6b47699b8326a94e506c709d1ea6035"
+    },
+    {
+      "id": "problem-24-diagram-02",
+      "mimeType": "image/svg+xml",
+      "output": "media/problem-24-diagram-02.svg",
+      "sha256": "a0765a8ff0b1ed6baa2091532bf4d425842f3b8ec6c1baae5d3a7540ebb1fd66",
+      "status": "success",
+      "rendererInputSha256": "07af324013ace6808a939937090a392d7bc7db98b4089207b8e7806392216fcd"
+    },
+    {
+      "id": "problem-24-diagram-03",
+      "mimeType": "image/svg+xml",
+      "output": "media/problem-24-diagram-03.svg",
+      "sha256": "0a43e1a766ce3baf6857908f3fc295fbcb88b0629c4f9a5eca522fca58300f0b",
+      "status": "success",
+      "rendererInputSha256": "261da22eef7872abe52fb2ad9d4902221b3a19df6b33ec6230fa763ee1ebff66"
+    },
+    {
+      "id": "problem-16-diagram-01",
+      "mimeType": "image/svg+xml",
+      "output": "media/problem-16-diagram-01.svg",
+      "sha256": "91202e8a03c637ba40cd2b8a13860902a6b863a27760ef8483d719baebc9d2b1",
+      "status": "success",
+      "rendererInputSha256": "b459ca6f4b4b5ea663dfc7895af652e9771bf0481807b3732d6da02a53f1fc04"
+    },
+    {
+      "id": "problem-16-diagram-02",
+      "mimeType": "image/svg+xml",
+      "output": "media/problem-16-diagram-02.svg",
+      "sha256": "56042f0f2a6655d64f04103ca4f4d8cc20d3f56da554c7746d15de7e72c04c85",
+      "status": "success",
+      "rendererInputSha256": "b2ae28d49453eb9d9406abe485904e3ec709c683ea032adec117ccf58b4188d6"
+    },
+    {
+      "id": "2026_AMC12A_P19.PNG",
+      "status": "success",
+      "output": "media/2026_AMC12A_P19.PNG",
+      "sha256": "58c0f68d5842fa9a59315dc3a1334468fb4f241734edbe5f99eecb50754d14e6",
+      "sourceUrl": "https://artofproblemsolving.com/wiki/images/d/de/2026_AMC12A_P19.PNG"
+    }
+  ],
+  "schemaVersion": "amc12-media-render-results-v1",
+  "renderer": {
+    "debianSnapshot": "20251020T000000Z",
+    "dockerfileSha256": "1606deeb33b994cabb780cdec12b2b22b8a4a7891d6ef157ee12fa9bc7f1f8d0",
+    "imageId": "sha256:7c1a6c105748f2b183ac78f8b35cbdc332bc08deb8eec6abd402adf262b806c6",
+    "imageTag": "amc12-historical-media-renderer:bookworm",
+    "rendererScriptSha256": "5b709793c07c6afb0fbe9ca65f1bd914330c9a1ad74466ac5837fc6c84ad8d0e"
+  },
+  "converterSha256": "98211117078e2d9d53945777e0205012c66266efb5ac1a7b46884df9a35cb29e"
+}

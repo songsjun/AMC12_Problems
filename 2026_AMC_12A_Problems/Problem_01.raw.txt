@@ -1,0 +1,59 @@
+Title: 2026 AMC 12A Problems/Problem 1
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_1&oldid=298179&action=raw
+
+Published Time: 2026-11-12T13:59:48Z
+
+Markdown Content:
+{{duplicate|[[2026 AMC 10A Problems/Problem 2|2026 AMC 10A #2]] and [[2026 AMC 12A Problems/Problem 1|2026 AMC 12A #1]]}}
+
+==Problem==
+A sign in a parking lot states that the total price includes a <imath>27</imath>% tax. To the nearest whole number, what percentage of the amount a customer pays is this tax?
+
+<imath>\textbf{(A)}~21\% \qquad \textbf{(B)}~22\% \qquad \textbf{(C)}~27\% \qquad \textbf{(D)}~37\% \qquad \textbf{(E)}~73\%</imath>
+
+==Solution 1==
+Let the original ticket be <imath>\$100</imath>. Then the tax would be <imath>\$100 \cdot 27\% = \$27</imath>. The customer pays <imath>100+27=\$127</imath>, so the percentage is <imath>\frac{27}{127}=\fbox{\textbf{(A)}\ 21\%}</imath>.
+
+~MrThinker ~minor edits by Squishy64
+
+==Solution 2==
+
+Let <imath>a</imath> represent the cost of the ticket. Then, the total cost (with tax) is <imath>\frac{127}{100} a</imath>. The tax is <imath>\frac{27}{100}a</imath>. Thus tax takes up <imath>\frac{27}{127}</imath>. Through long division to three decimals, this is 0.213, or 21.3%, and so the answer is <imath>\fbox{\textbf{(A)}\ 21\%}</imath>.
+Note: in this problem, don't take the shortcut by estimating unless you're really good at it.
+
+~Pinotation
+~Rnady (minor fix) x2
+~Chessscott (note)
+~Squishy64 (minor fix)
+
+==Video Solution by Daily Dose of Math==
+
+https://youtu.be/OVdoxAxCZ1k
+
+~Thesmartgreekmathdude
+
+==Video Solution 1 by MadMath==
+https://youtu.be/Sv3pBnnoE7U (1:03~)
+
+==Video Solution 2 by MathisFun==
+https://youtu.be/sNFSsL75LGE?t=1
+
+==Video Solution 3 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=Jc2s489VKIQ
+
+==Video Solution by Ani_lytical (Step-by-step walkthrough 🎥🧠)==
+https://www.youtube.com/watch?v=Qi5Wu0zrpek
+
+~Ani_lytical
+
+==See Also==
+{{AMC10 box|year=2026|ab=A|num-b=1|num-a=3}}
+{{AMC12 box|year=2026|ab=A|before=First Problem|num-a=2}}
+* [[AMC 10]]
+* [[AMC 12]]
+* [[AMC 10 Problems and Solutions]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

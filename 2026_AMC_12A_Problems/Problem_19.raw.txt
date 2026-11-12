@@ -1,0 +1,103 @@
+Title: 2026 AMC 12A Problems/Problem 19
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_19&oldid=297271&action=raw
+
+Published Time: 2026-11-08T14:52:38Z
+
+Markdown Content:
+==Problem==
+How many values of <imath>x</imath> between <imath>0</imath> and <imath>2\pi</imath>, inclusive, satisfy the equation
+<cmath>\sin x +\sin(2x)+\sin(3x) = 1+\cos x+\cos(2x)?</cmath>
+
+<imath>\textbf{(A) } 1\qquad\textbf{(B) } 2\qquad\textbf{(C) } 4\qquad\textbf{(D) } 6\qquad\textbf{(E) } 8</imath>
+
+==Solution 1==
+Use the identity <imath>\sin(3x)=3\sin x-4\sin^3 x</imath> as well as the double-angle identities to get
+<cmath>4\sin x-4\sin^3x +2\sin x\cos x=1+\cos x+2\cos^2x-1=\cos x+2\cos^2 x </cmath>
+We know that <imath>4\sin x-4\sin^3x=4\sin x(1-\sin^2x)=4\sin x \cos^2 x</imath>. Therefore,
+<cmath>4\sin x\cos^2 x+2\sin x\cos x=\cos x+2\cos^2 x</cmath>
+We may then extract <imath>\cos x=0</imath>. Otherwise, dividing by <imath>\cos x</imath> yields
+<cmath>4\sin x\cos x+2\sin x=1+2\cos x\implies (2\cos x+1)(2\sin x-1)=0</cmath>
+which implies that <imath>\cos x=-\frac{1}{2}</imath> or <imath>\sin x=\frac{1}{2}</imath>. All three sets of solutions yield exactly two solutions each, all unique, hence there are <imath>6</imath> total solutions, or <imath>\boxed{\textbf{(D)}}</imath>.
+
+~ [https://artofproblemsolving.com/wiki/index.php/User:Eevee9406 eevee9406]
+
+==Solution (Complex Numbers)==
+
+Let <imath>z=e^{ix}</imath> and <imath>S=1+z+z^2</imath>. The given equation is
+<cmath>
+\operatorname{Im}(zS)=\operatorname{Re}(S).
+</cmath>
+Since <imath>|z|=1</imath>, we have <imath>\overline S=S/z^2</imath> and <imath>\overline{zS}=S/z^3</imath>. Hence
+<cmath>
+\frac{zS-S/z^3}{2i}=\frac{S+S/z^2}{2}.
+</cmath>
+Multiplying by <imath>2iz^3</imath> and factoring gives
+<cmath>
+0=S\bigl(z^4-1-iz(z^2+1)\bigr)
+=(z^2+z+1)(z^2+1)(z^2-iz-1).
+</cmath>
+The three factors give
+<cmath>
+z=\frac{-1\pm i\sqrt3}{2},
+\qquad
+z=\pm i,
+\qquad
+z=\frac{i\pm\sqrt3}{2}.
+</cmath>
+These are six distinct points on the unit circle, none equal to <imath>1</imath>. Each therefore gives exactly one <imath>x</imath> in <imath>[0,2\pi]</imath>, so the answer is <imath>\boxed{6}</imath>, we choose <imath>\boxed{\textbf{(D)}}</imath>.
+
+~SZ624
+
+
+==Solution 2==
+
+We can use the sum-to-product identity <cmath>\sin(a)+\sin(b)=2\sin\left(\frac{a+b}2\right)\cos\left(\frac{a-b}2\right)</cmath> on <imath>\sin(x)+\sin(3x)</imath> to obtain <imath>2\sin(2x)\cos(x)</imath> . Hence we have <cmath>2\sin(2x)\cos(x)+\sin(2x)=1+\cos(x)+\cos(2x)\implies \\ 
+\sin(2x)(2\cos(x)+1)=2\cos^2(x)+\cos(x)=\cos(x)(2\cos(x)+1).</cmath> At this point, we can see that the solutions to <imath>2\cos(x)+1=0</imath> satisfy this equation, which will yield 2 solutions on <imath>[0, 2\pi]</imath>. Now we cancel and get <imath>\sin(2x)=\cos(x)\implies 2\sin(x)\cos(x)=\cos(x)</imath>. So the solutions to <imath>\cos(x)=0</imath> also satisfy our original equation, which yields another 2 solutions. Finally, <imath>2\sin(x)=1</imath> yields another 2 solutions, for a total of <imath>2+2+2=\boxed{6\hspace{1mm}\textbf{(D)}}</imath> solutions.
+
+~singularity1
+
+==Solution 3 (Intuition)==
+
+Write <imath>\sin x = \sin(2x - x)</imath> and <imath>\sin 3x = \sin(2x + x)</imath>. Expanding gives
+<cmath>\sin(2x - x) = \sin 2x\cos x - \cos 2x\sin x,</cmath>
+<cmath>\sin(2x + x) = \sin 2x\cos x + \cos 2x\sin x.</cmath>
+Adding this has the <imath>\cos 2x\sin x</imath> terms cancel, so
+<cmath>\sin x + \sin 3x = 2\sin 2x\cos x.</cmath>
+The LHS therefore becomes
+<cmath>\sin 2x + 2\sin 2x\cos x = \sin 2x\,(1 + 2\cos x).</cmath>
+
+For the RHS, use <imath>\cos 2x = 2\cos^2 x - 1</imath> to get
+<cmath>1 + \cos x + 2\cos^2 x - 1 = \cos x\,(1 + 2\cos x).</cmath>
+
+Setting the two sides equal and factoring out <imath>1 + 2\cos x</imath> gives
+<cmath>(1 + 2\cos x)(\sin 2x - \cos x) = 0.</cmath>
+Since 
+<imath>\sin 2x - \cos x = 2\sin x\cos x - \cos x = \cos x\,(2\sin x - 1)</imath>, 
+the equation factors out into
+<cmath>(1 + 2\cos x)\cos x\,(2\sin x - 1) = 0.</cmath>
+
+Now all that’s left is to count solutions on <imath>[0, 2\pi]</imath>:
+* <imath>\cos x = -\tfrac{1}{2}</imath> gives <imath>x = \tfrac{2\pi}{3}, \tfrac{4\pi}{3}</imath>.
+* <imath>\cos x = 0</imath> gives <imath>x = \tfrac{\pi}{2}, \tfrac{3\pi}{2}</imath>.
+* <imath>\sin x = \tfrac{1}{2}</imath> gives <imath>x = \tfrac{\pi}{6}, \tfrac{5\pi}{6}</imath>.
+
+Thus the answer is <imath>\boxed{\textbf{(D)}~6}</imath>.
+
+~ Aeioujyot
+
+==Solution 4 (Graphing)==
+[[File:2026_AMC12A_P19.PNG|thumb|center|600px| ]]
+Instead of using identities or other tricks, we can simply graph the equations <imath>y=\sin x+\sin\left(2x\right)+\sin\left(3x\right)</imath> and <imath>y=1+\cos\left(x\right)+\cos\left(2x\right)</imath>. After counting the intersections  we get the answer <imath>\boxed{\textbf{(D)}~6}</imath>.
+
+~ IcySea123
+
+Note: Although we don't have Desmos on the test, graphing it using every theta value we know trig for ex: (<imath>\frac{\pi}{6}</imath>, <imath>\frac{\pi}{3}</imath>, is good enough for a reasonably accurate graph. ~AncientKarnivore
+
+==See Also==
+{{AMC12 box|year=2026|ab=A|num-b=18|num-a=20}}
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

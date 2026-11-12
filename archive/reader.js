@@ -6,9 +6,13 @@
  * allow-listed DocumentFragment, and this module only ever inserts DOM nodes.
  */
 
-const FIRST_YEAR = 2002;
-const LAST_YEAR = 2025;
-const VARIANTS = new Set(['A', 'B']);
+const ARCHIVE_PAPERS = Object.freeze([
+  ...Array.from({ length: 24 }, (_, offset) => 2002 + offset)
+    .flatMap((year) => [{ year, variant: 'A' }, { year, variant: 'B' }]),
+  { year: 2026, variant: 'A' }
+].map(Object.freeze));
+const ARCHIVE_YEARS = Object.freeze([...new Set(ARCHIVE_PAPERS.map((paper) => paper.year))]);
+const LAST_YEAR = ARCHIVE_YEARS.at(-1);
 const PRACTICE_MODES = new Set(['practice', 'batch']);
 const MATH_TOKEN_PREFIX = '\uE000AMC12_MATH_';
 const MATH_TOKEN_SUFFIX = '\uE001';
@@ -31,15 +35,25 @@ const SANITIZE_OPTIONS = Object.freeze({
 export function normalizeProblem(year, variant, number) {
   const parsedYear = Number(year);
   const parsedNumber = Number(number);
+  const safeYear = ARCHIVE_YEARS.includes(parsedYear) ? parsedYear : LAST_YEAR;
+  const paper = ARCHIVE_PAPERS.find((candidate) => candidate.year === safeYear && candidate.variant === variant)
+    ?? ARCHIVE_PAPERS.find((candidate) => candidate.year === safeYear);
   return {
-    year: Number.isInteger(parsedYear) && parsedYear >= FIRST_YEAR && parsedYear <= LAST_YEAR
-      ? parsedYear
-      : LAST_YEAR,
-    variant: VARIANTS.has(variant) ? variant : 'A',
+    year: paper.year,
+    variant: paper.variant,
     number: Number.isInteger(parsedNumber) && parsedNumber >= 1 && parsedNumber <= 25
       ? parsedNumber
       : 1
   };
+}
+
+export function adjacentProblem(year, variant, number, direction) {
+  if (direction !== -1 && direction !== 1) throw new TypeError('Navigation direction must be -1 or 1.');
+  const current = normalizeProblem(year, variant, number);
+  const paperIndex = ARCHIVE_PAPERS.findIndex((paper) => paper.year === current.year && paper.variant === current.variant);
+  const problemIndex = paperIndex * 25 + current.number - 1 + direction;
+  if (problemIndex < 0 || problemIndex >= ARCHIVE_PAPERS.length * 25) return null;
+  return { ...ARCHIVE_PAPERS[Math.floor(problemIndex / 25)], number: problemIndex % 25 + 1 };
 }
 
 export function problemPath(year, variant, number) {
@@ -336,11 +350,11 @@ function setStatus(status, year, variant, number, viewerMode) {
   );
 }
 
-function parseHash() {
-  const match = window.location.hash.match(/^#(\d{4})([AB])P(\d{1,2})$/);
+export function parseProblemHash(hash) {
+  const match = hash.match(/^#(\d{4})([AB])P(\d{1,2})$/);
   if (!match) return null;
   const value = normalizeProblem(match[1], match[2], match[3]);
-  return value.year === Number(match[1]) && value.number === Number(match[3]) ? value : null;
+  return value.year === Number(match[1]) && value.variant === match[2] && value.number === Number(match[3]) ? value : null;
 }
 
 /**
@@ -427,7 +441,7 @@ function bootstrap() {
     getCurrentPaper: () => current
   });
 
-  for (let year = LAST_YEAR; year >= FIRST_YEAR; year -= 1) {
+  for (const year of [...ARCHIVE_YEARS].reverse()) {
     const option = document.createElement('option');
     option.value = String(year);
     option.textContent = String(year);
@@ -444,7 +458,15 @@ function bootstrap() {
 
   const updateControls = () => {
     yearSelect.value = String(current.year);
+    variantSelect.replaceChildren(...ARCHIVE_PAPERS.filter((paper) => paper.year === current.year).map((paper) => {
+      const option = document.createElement('option');
+      option.value = paper.variant;
+      option.textContent = paper.variant;
+      return option;
+    }));
     variantSelect.value = current.variant;
+    previous.disabled = adjacentProblem(current.year, current.variant, current.number, -1) === null;
+    next.disabled = adjacentProblem(current.year, current.variant, current.number, 1) === null;
     refreshPracticeChooser();
     for (const [index, button] of [...problemNav.querySelectorAll('button')].entries()) {
       button.classList.toggle('active', index + 1 === current.number);
@@ -487,19 +509,13 @@ function bootstrap() {
     }
   };
 
-  const movePrevious = () => {
-    if (current.number > 1) return loadProblem(current.year, current.variant, current.number - 1);
-    if (current.variant === 'B') return loadProblem(current.year, 'A', 25);
-    if (current.year > FIRST_YEAR) return loadProblem(current.year - 1, 'B', 25);
+  const move = (direction) => {
+    const destination = adjacentProblem(current.year, current.variant, current.number, direction);
+    if (destination) return loadProblem(destination.year, destination.variant, destination.number);
     return undefined;
   };
-
-  const moveNext = () => {
-    if (current.number < 25) return loadProblem(current.year, current.variant, current.number + 1);
-    if (current.variant === 'A') return loadProblem(current.year, 'B', 1);
-    if (current.year < LAST_YEAR) return loadProblem(current.year + 1, 'A', 1);
-    return undefined;
-  };
+  const movePrevious = () => move(-1);
+  const moveNext = () => move(1);
 
   yearSelect.addEventListener('change', () => loadProblem(yearSelect.value, current.variant, current.number));
   variantSelect.addEventListener('change', () => loadProblem(current.year, variantSelect.value, current.number));
@@ -527,14 +543,14 @@ function bootstrap() {
     }
   });
   window.addEventListener('hashchange', () => {
-    const requested = parseHash();
+    const requested = parseProblemHash(window.location.hash);
     if (requested && (requested.year !== current.year || requested.variant !== current.variant || requested.number !== current.number)) {
       loadProblem(requested.year, requested.variant, requested.number);
     }
   });
   window.addEventListener('mathjax-ready', () => typesetMath(content));
 
-  const initial = parseHash() ?? current;
+  const initial = parseProblemHash(window.location.hash) ?? current;
   loadProblem(initial.year, initial.variant, initial.number);
 }
 

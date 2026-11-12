@@ -1,0 +1,64 @@
+Title: 2026 AMC 12A Problems/Problem 4
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_4&oldid=297841&action=raw
+
+Published Time: 2026-11-10T06:50:31Z
+
+Markdown Content:
+{{duplicate|[[2026 AMC 10A Problems/Problem 5|2026 AMC 10A #5]] and [[2026 AMC 12A Problems/Problem 4|2026 AMC 12A #4]]}}
+==Problem==
+Let <imath>a_{1}, a_{2}, a_{3}</imath>, <imath>\dots</imath> be a sequence with <imath>a_{1} = 94</imath>, <imath>a_{2} = 190</imath>, and <imath>a_{n}</imath> equal to the arithmetic mean of the previous <imath>n-1</imath> terms for <imath>n \ge 3</imath>. What is the value of <imath>a_{10}</imath>?
+
+<imath>\textbf{(A)}\   47  \qquad 	\textbf{(B)}\   95  \qquad 	\textbf{(C)}\   142  \qquad 	\textbf{(D)}\   284  \qquad 	\textbf{(E)}\   564</imath>
+
+==Solution 1==
+By the definition of the sequence, <imath>a_3 = \frac{94+190}{2} = 142</imath>, <imath>a_4 = \frac{94+190+142}{3} = 142</imath>, and so on. Trying a few more terms keeps giving us 142 and it never changes, so the answer is <imath>\boxed{\textbf{(C)}\hspace{1mm}142}</imath>
+<imath>\newline</imath>
+<imath>\sim</imath>cyrus825
+
+minor <imath>\LaTeX</imath> edits by ~singularity1
+
+==Solution 2==
+For <imath>n>3,</imath> we have <cmath>a_{n-1} = \dfrac{a_{n-2}+a_{n-3}+...+a_1}{n-2}\implies a_{n-2}+a_{n-3}+...+a_1=(n-2)a_{n-1}.</cmath>
+
+Then, <cmath>a_{n} = \dfrac{a_{n-1}+a_{n-2}+...+a_1}{n-1}=\dfrac{a_{n-1}+(n-2)a_{n-1}}{n-1}=a_{n-1}.</cmath>
+
+Since <imath>a_3 = \frac{94+190}{2}=142,</imath> we have 
+<cmath>a_{10}=a_9=a_8=...=a_3=\boxed{\textbf{(C) }142}</cmath>
+~Tacos_are_yummy_1
+
+==Solution 3 (Analyzing Option Choices)==
+One can see that the average of <imath>94</imath> and <imath>190</imath> will be between <imath>94</imath> and <imath>190</imath>, so <imath>a_10</imath> will obviously be between <imath>94</imath> and <imath>190</imath>. Looking at the option choices, we can see that only <imath>95</imath> and <imath>142</imath> are in between <imath>94</imath> and <imath>190</imath>, and the average is in between <imath>94</imath> and <imath>190</imath>, so cannot be <imath>95</imath>. Thus, the answer must be <imath>\boxed{142}</imath>
+
+~Horseneck3
+
+==Solution 4 (Understanding Arithmetic Mean)==
+It is known that adding a value equal to the arithmetic mean into a data set does not change the overall mean. A quick proof of the previous statement is as follows:
+
+Let the mean of a set of <imath>n</imath> numbers be <imath>\overline{x}</imath>. Adding <imath>\overline{x}</imath> to the set of <imath>n</imath> numbers yields the new sum: <imath>n \cdot \overline{x} \rightarrow (n+1)\cdot \overline{x}</imath>.
+
+See that the total number of values increases from <imath>n</imath> to <imath>n+1</imath>, and thus the new mean of the set of <imath>n+1</imath> values gives <imath>\frac{(n+1)\cdot \overline{x}}{n+1}= \overline{x}</imath>.
+
+Hence, in our problem, we need only find the arithmetic mean of the two initial values of the sequence. That is: <imath>\frac{a_{1} + a_{2}}{2} = \frac{94+190}{2} = \boxed{142}</imath>. 
+
+~MaxTensen ~minor edits by chillydogs
+
+==Video Solution 1==
+https://youtu.be/sNFSsL75LGE?t=535
+
+~MathisFun
+
+==Video Solution 2 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=Jc2s489VKIQ
+
+
+==See Also==
+{{AMC10 box|year=2026|ab=A|num-b=4|num-a=6}}
+{{AMC12 box|year=2026|ab=A|num-b=3|num-a=5}}
+* [[AMC 10]]
+* [[AMC 10 Problems and Solutions]]
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

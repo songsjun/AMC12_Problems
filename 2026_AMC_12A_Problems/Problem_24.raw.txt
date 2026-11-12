@@ -1,0 +1,283 @@
+Title: 2026 AMC 12A Problems/Problem 24
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_24&oldid=296937&action=raw
+
+Published Time: 2026-11-07T20:10:15Z
+
+Markdown Content:
+==Problem 24==
+
+Trapezoid <imath>ABCD</imath> has <imath>AB = 4</imath>, <imath>CD = 5</imath>, and <imath>\angle DAB = \angle ABC = 90^\circ</imath>. Circles <imath>\omega_1</imath> and <imath>\omega_2</imath> lie inside the trapezoid as follows: <imath>\omega_1</imath> is tangent to <imath>\overline{AB}</imath>, <imath>\overline{AD}</imath>, and <imath>\overline{DC}</imath>; <imath>\omega_2</imath> is tangent to <imath>\overline{AB}</imath>, <imath>\overline{BC}</imath>, and <imath>\overline{DC}</imath>; and <imath>\omega_1</imath> and <imath>\omega_2</imath> are externally tangent to each other. The distance between the centers of <imath>\omega_1</imath> and <imath>\omega_2</imath> is <imath>m - n\sqrt{p}</imath>, where <imath>m</imath>, <imath>n</imath>, and <imath>p</imath> are positive integers such that <imath>p</imath> is not divisible by the square of any prime. What is <imath>m + n + p</imath>?
+
+<imath>\textbf{(A)}\quad 30 \qquad\qquad \textbf{(B)}\quad 47 \qquad\qquad \textbf{(C)}\quad 53 \qquad\qquad \textbf{(D)}\quad 62 \qquad\qquad \textbf{(E)}\quad 74</imath>
+
+==Diagram==
+
+<asy>
+size(200);
+real h=42-12*sqrt(10);
+real r1=(2h-6)/3, r2=h/3;
+pair B=(0,0), A=(0,4), C=(h,0), D=(h-3,4);
+pair O1=(r1,4-r1), O2=(r2,r2);
+draw(A--B--C--D--cycle);
+draw(circle(O1,r1)); draw(circle(O2,r2));
+real s=0.12;
+draw((s,4)--(s,4-s)--(0,4-s)); draw((s,0)--(s,s)--(0,s));
+dot(A); dot(B); dot(C); dot(D);
+label("$A$",A,W); label("$B$",B,SW); label("$C$",C,SE); label("$D$",D,NE);
+label("$4$",(A+B)/2,W); label("$5$",D+0.7*(C-D),NE);
+label("$\omega_1$",O1); label("$\omega_2$",O2);
+</asy>
+
+~ Aeioujyot
+
+==Solution 1==
+
+Let the circles have centers <imath>O_1,O_2</imath> and radii <imath>r_1,r_2</imath>. We write <imath>d=O_1O_2</imath>. Since the circles are externally tangent,
+<cmath>
+d=r_1+r_2.
+</cmath>
+
+Let <imath>P,Q</imath> be the feet of the perpendiculars from <imath>O_1,O_2</imath> to <imath>AB</imath>. Tangency to <imath>AD</imath> and <imath>BC</imath> gives <imath>AP=r_1</imath> and <imath>QB=r_2</imath>. Thus
+<cmath>
+PQ=AB-AP-QB=4-r_1-r_2=4-d.
+</cmath>
+
+Extend <imath>AB</imath> and <imath>CD</imath> to meet at <imath>E</imath>, and let <imath>\theta=\angle DEB</imath>. Each center is equally distant from the lines <imath>AB</imath> and <imath>CD</imath>, so both centers lie on the same angle bisector. Therefore, <imath>O_1O_2</imath> makes an angle of <imath>\frac{\theta}{2}</imath> with <imath>AB</imath>.
+
+<asy>
+unitsize(1.3cm);
+defaultpen(fontsize(10pt));
+
+real r=26-8*sqrt(10), s=14-4*sqrt(10);
+real h=3*r/2;
+pair A=(0,0), B=(4,0), C=(4,h+3), D=(0,h);
+pair O1=(r,r), O2=(4-s,s);
+pair P=(r,0), Q=(4-s,0), H=(4-s,r);
+pair X=(-4*h/3,0);
+pen aux=gray(0.65)+dashed;
+pen centers=blue+linewidth(1.1);
+
+draw(X--A,aux);
+draw(X--D,aux);
+draw(X--O1,blue+dashed);
+draw(P--O1--H,aux);
+draw(Q--O2,aux);
+
+draw(A--B--C--D--cycle,linewidth(1));
+draw(circle(O1,r),linewidth(0.9));
+draw(circle(O2,s),linewidth(0.9));
+draw(O1--O2,centers);
+
+real e=0.12;
+draw((P+(0,e))--(P+(e,e))--(P+(e,0)),gray(0.5));
+draw((Q+(0,e))--(Q+(e,e))--(Q+(e,0)),gray(0.5));
+draw((H+(-e,0))--(H+(-e,e))--(H+(0,e)),gray(0.5));
+draw(arc(O1,0.42,0,atan(1.0/3)*180/pi),blue);
+
+dot(O1,blue);
+dot(O2,blue);
+dot(X);
+
+label("$A$",A,SW);
+label("$B$",B,SE);
+label("$C$",C,NE);
+label("$D$",D,NW);
+label("$E$",X,SW);
+label("$O_1$",O1,NW,blue);
+label("$O_2$",O2,NE,blue);
+label("$P$",P,S);
+label("$Q$",Q,S);
+label("$r_1$",(P+O1)/2,W);
+label("$r_2$",(Q+O2)/2,E);
+label("$d$",(O1+O2)/2,N,blue);
+label("$\theta/2$",O1+(1.15,0.11),(0,0),blue+fontsize(9pt));
+label("$PQ=4-d$",((P.x+Q.x)/2,-0.42),S);
+label("$AB=4$",(2,-0.95),S);
+label("$5$",(C+D)/2,NW);
+
+draw((-1.95,-1.55)--(4.65,4.55),invisible);
+</asy>
+
+Since <imath>AD</imath> and <imath>BC</imath> are perpendicular to <imath>AB</imath>, the projection of <imath>CD</imath> onto <imath>AB</imath> has length <imath>4</imath>. Hence
+<cmath>
+\cos\theta=\frac{4}{5},
+\qquad
+\cos\frac{\theta}{2}
+=\sqrt{\frac{1+\frac45}{2}}
+=\frac3{\sqrt{10}}.
+</cmath>
+
+Projecting <imath>O_1O_2</imath> onto <imath>AB</imath> gives
+<cmath>
+4-d=PQ=d\cos\frac{\theta}{2}
+=\frac{3d}{\sqrt{10}}.
+</cmath>
+Solving,
+<cmath>
+d=\frac{4\sqrt{10}}{\sqrt{10}+3}
+=40-12\sqrt{10}.
+</cmath>
+Thus <imath>m+n+p=40+12+10=\boxed{62}</imath>, we choose <imath>\boxed{\textbf{(D)}}</imath>.
+
+~SZ624
+
+==Solution 2 (Constructions)==
+
+===Diagram===
+
+<asy>
+size(240);
+real h=42-12*sqrt(10);
+real r1=(2h-6)/3, r2=h/3;
+pair B=(0,0), A=(0,4), C=(h,0), D=(h-3,4), X=(0,4h/3);
+pair O1=(r1,4-r1), O2=(r2,r2);
+pair F=(r1,r2), P=(h-3,0);
+pair T=O1+r1*unit(O2-O1);
+pair K=(4h/9,0);
+pair ft(pair p, pair a, pair b){ pair d=unit(b-a); return a+dot(p-a,d)*d; }
+real angd(pair v){ real t=degrees(v); if(t<0) t+=360; return t; }
+real tb=angd(O2-X), tc=angd(C-X);
+
+draw(A--B--C--D--cycle);
+draw(A--X--D);
+draw(circle(O1,r1)); draw(circle(O2,r2));
+draw(X--(X+1.55*(O2-X)), dashed);
+draw(D--P, dashed);
+draw(O1--(r1,0), dashed);
+draw((0,r2)--(h,r2), dashed);
+draw(O1--(0,4-r1), dashed); draw(O1--(r1,4), dashed); draw(O1--ft(O1,D,C), dashed);
+draw(O2--(0,r2), dashed); draw(O2--(r2,0), dashed); draw(O2--ft(O2,D,C), dashed);
+draw(O1--F--O2);
+draw(O1--O2, red);
+
+real s=0.12;
+draw((s,4)--(s,4-s)--(0,4-s)); draw((s,0)--(s,s)--(0,s));
+draw(F+(0,s)--F+(s,s)--F+(s,0));
+draw(P+(-s,0)--P+(-s,s)--P+(0,s));
+
+draw(arc(X,0.5,270,tb)); draw(arc(X,0.55,tb,tc));
+label("$\theta$", X+1.0*dir((270+tb)/2));
+label("$\theta$", X+1.05*dir((tb+tc)/2));
+draw(arc(O1,0.3,270,tb));
+label("$\theta$", O1+0.5*dir((270+tb)/2));
+
+dot(A); dot(B); dot(C); dot(D); dot(X); dot(O1); dot(O2); dot(F); dot(T); dot(P); dot(K);
+label("$A$",A,W); label("$B$",B,SW); label("$C$",C,SE); label("$D$",D,NE); label("$E$",X,N);
+label("$O_1$",O1,NW); label("$O_2$",O2,SE); label("$F$",F,SW); label("$T$",T+(0.38,-0.22)); label("$P$",P,S); label("$K$",K,SW);
+label("$\omega_1$",O1+0.6*r1*dir(225)); label("$\omega_2$",O2+0.65*r2*dir(325));
+</asy>
+
+===Solution===
+
+Let <imath>r_1</imath> and <imath>r_2</imath> be the radii of <imath>\omega_1</imath> and <imath>\omega_2</imath>, with centers <imath>O_1</imath> and <imath>O_2</imath>. Extend <imath>BA</imath> and <imath>CD</imath> to meet at <imath>E</imath>. Since both circles are tangent to <imath>EB</imath> and <imath>EC</imath>, both centers lie on the angle bisector of <imath>\angle BEC</imath>. Let this bisector meet <imath>BC</imath> at <imath>K</imath>, and let <imath>\angle BEK = \angle KEC = \theta</imath>.
+
+Now, drop the perpendicular from <imath>O_1</imath> to <imath>BC</imath>, and draw the line through <imath>O_2</imath> parallel to <imath>BC</imath>. Let these lines meet at <imath>F</imath>. Since the circles are externally tangent at <imath>T</imath>, and both are tangent to <imath>AB</imath>,
+<cmath>O_1O_2 = r_1 + r_2, \qquad O_2F = r_2 - r_1, \qquad O_1F = 4 - r_1 - r_2.</cmath>
+
+Let <imath>P</imath> be the projection of <imath>D</imath> onto <imath>BC</imath>. Then <imath>DP = AB = 4</imath> and <imath>DC = 5</imath>, so <imath>\triangle DPC</imath> is a <imath>3</imath>-<imath>4</imath>-<imath>5</imath> triangle with <imath>PC = 3</imath>. Since <imath>DP \parallel EB</imath>, we have <imath>\triangle EBC \sim \triangle DPC</imath>, so <imath>EB : BC : EC = 4 : 3 : 5</imath>.
+
+By the Angle Bisector Theorem on <imath>\triangle EBC</imath>,
+<cmath>\frac{BK}{KC} = \frac{EB}{EC} = \frac{4}{5}, \quad\text{so}\quad BK = \frac{4}{9}BC.</cmath>
+Then <imath>\frac{BK}{EB} = \frac{4}{9}\cdot\frac{3}{4} = \frac{1}{3}</imath>, so <imath>\triangle EBK</imath> is a <imath>1 : 3 : \sqrt{10}</imath> right triangle with <imath>BK : EB : EK = 1 : 3 : \sqrt{10}</imath>.
+
+Since <imath>O_1F \parallel EB</imath>, we have <imath>\angle FO_1O_2 = \angle BEK = \theta</imath>, so <imath>\triangle O_1FO_2 \sim \triangle EBK</imath>. Therefore
+<cmath>O_2F : O_1F : O_1O_2 = 1 : 3 : \sqrt{10}.</cmath>
+
+Let <imath>d = r_1 + r_2</imath>. Using <imath>O_1F : O_1O_2 = 3 : \sqrt{10}</imath>,
+<cmath>\frac{4 - d}{d} = \frac{3}{\sqrt{10}} \implies 4\sqrt{10} = d\left(\sqrt{10} + 3\right) \implies d = \frac{4\sqrt{10}}{\sqrt{10} + 3}.</cmath>
+Rationalizing the denominator,
+<cmath>d = 4\sqrt{10}\left(\sqrt{10} - 3\right) = 40 - 12\sqrt{10}.</cmath>
+
+Thus <imath>O_1O_2 = 40 - 12\sqrt{10}</imath>, so <imath>m + n + p = 40 + 12 + 10 = \boxed{\textbf{(D)}~62}</imath>.
+
+~ Aeioujyot
+
+===Remark===
+
+This was one of the coolest geo problems I've seen on the AMCs in a good while. The solution above was my solution during the actual test. Eww coordinates :D
+
+~I agree, this felt more like an AIME geo.
+
+==Solution 3==
+Let <imath>A=(0,0)</imath>, <imath>B=(4,0)</imath>, <imath>D=(0,h)</imath>, and <imath>C=(4,h+3)</imath>.
+
+Since <imath>AB=4</imath> and <imath>CD=5</imath>, the Pythagorean theorem gives the vertical difference between <imath>C</imath> and <imath>D</imath> as <imath>3</imath>.
+
+The equation of line <imath>DC</imath> is
+<cmath> 3x-4y+4h=0. </cmath>
+
+Let the radii of <imath>\omega_1</imath> and <imath>\omega_2</imath> be <imath>r_1</imath> and <imath>r_2</imath>, respectively.
+
+Since <imath>\omega_1</imath> is tangent to both <imath>AB</imath> and <imath>AD</imath>, its center is <imath>(r_1,r_1)</imath>.
+
+Since <imath>\omega_2</imath> is tangent to both <imath>AB</imath> and <imath>BC</imath>, its center is <imath>(4-r_2,r_2)</imath>.
+
+Using the distance formula for a point and a line, the tangency of <imath>\omega_1</imath> to <imath>DC</imath> gives
+
+<cmath> \frac{3r_1-4r_1+4h}{5}=r_1. </cmath>
+
+Simplifying,
+
+<cmath> 4h-r_1=5r_1 </cmath>
+
+<cmath> r_1=\frac{2h}{3}. </cmath>
+
+Similarly, the tangency of <imath>\omega_2</imath> to <imath>DC</imath> gives
+
+<cmath> \frac{3(4-r_2)-4r_2+4h}{5}=r_2. </cmath>
+
+Simplifying,
+
+<cmath> 12+4h=12r_2 </cmath>
+
+<cmath> r_2=1+\frac{h}{3}. </cmath>
+
+Since the circles are tangent to each other, the distance between their centers equals the sum of their radii. Thus,
+
+<cmath> (4-r_1-r_2)^2+(r_2-r_1)^2 =(r_1+r_2)^2. </cmath>
+
+Expanding and simplifying,
+
+<cmath> (r_2-r_1)^2=8(r_1+r_2)-16. </cmath>
+
+Substituting our expressions for the radii,
+
+<cmath> \left(1-\frac{h}{3}\right)^2 =8(h+1)-16. </cmath>
+
+Multiplying by <imath>9</imath> and simplifying,
+
+<cmath> h^2-78h+81=0. </cmath>
+
+Using the quadratic formula,
+
+<cmath> h=\frac{78\pm\sqrt{78^2-4(81)}}{2} </cmath>
+
+<cmath> h=39\pm12\sqrt{10}. </cmath>
+
+Since the circles must fit inside the trapezoid, we take the smaller root:
+
+<cmath> h=39-12\sqrt{10}. </cmath>
+
+Finally, the distance between the centers is
+
+<cmath> r_1+r_2=1+h. </cmath>
+
+Therefore,
+
+<cmath> d=40-12\sqrt{10}. </cmath>
+
+Hence, <imath>m=40</imath>, <imath>n=12</imath>, and <imath>p=10</imath>, so
+
+<cmath> m+n+p=40+12+10=\boxed{62}. </cmath>
+
+The answer is <imath>\boxed{\text{(D) }62}</imath>.
+<imath>\sim</imath>Cyrus825
+
+==See Also==
+{{AMC12 box|year=2026|ab=A|num-b=23|num-a=25}}
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

@@ -1,0 +1,122 @@
+Title: 2026 AMC 12A Problems/Problem 7
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_7&oldid=297616&action=raw
+
+Published Time: 2026-11-09T19:25:07Z
+
+Markdown Content:
+==Problem==
+What is the value of <imath>(1+i)^{20} + (1-i)^{20}</imath>, where <imath>i=\sqrt{-1}</imath>?
+
+<imath>\textbf{(A)}~-2048 \qquad \textbf{(B)}~-1024 \qquad \textbf{(C)}~0 \qquad \textbf{(D)}~1024 \qquad \textbf{(E)}~2048</imath>
+
+==Solution 1==
+Observe that <imath>(1+i)^2 = 2i</imath> and <imath>(1-i)^2 = -2i</imath>. <imath>(1+i)^{20} = (2i)^{10} = -1024</imath> and <imath>(1-i)^{20} = (-2i)^{10} = -1024</imath>. Therefore the answer is <imath>-1024 + -1024 = -2048</imath>, <imath>\fbox{A}.</imath>
+<imath>\newline</imath>
+<imath>\sim</imath> cyrus825
+
+==Solution 2 (Complex Exponentials) ==
+
+By Euler's Formula, <imath>a + bi = k(\cos(\theta) + i\sin(\theta)) = ke^{i\theta}</imath>, where <imath>\theta = \tan^{-1}\left(\frac b a\right)</imath>, and <imath>k=\sqrt{a^2+b^2}</imath> by the Pythagorean Theorem. Therefore, we can express both complex numbers as the following:
+
+<cmath> 1  + i = \sqrt{2}e^{i\frac{\pi}{4}}~ \&~  1 - i = \sqrt{2}e^{i\frac{-\pi}{4}}</cmath>
+
+By DeMoivre's Theorem, <imath> (e^{i\theta})^{n} = e^{in\theta} </imath>. Applying this, we get:
+
+<cmath> (1+i)^{20}  + (1-i)^{20} = 2^{10}(e^{i\frac{\pi}{4}})^{20} + 2^{10}(e^{i\frac{-\pi}{4}})^{20} = 2^{10}\left(e^{i5\pi} + e^{i5\pi}\right) = 2^{11}\left(e^{i\pi}\right) = -2048~\fbox{\textbf{A}} </cmath>
+<imath>\newline</imath>
+<imath>\sim</imath> Fernat123
+
+===Solution 2.1 (Polar Form)===
+Alternatively, we can express both numbers directly in polar form without complex exponentials:
+<cmath>1 + i = \sqrt{2}\left(\cos 45^\circ + i\sin 45^\circ\right)</cmath>
+<cmath>1 - i = \sqrt{2}\left(\cos(-45^\circ) + i\sin(-45^\circ)\right)</cmath>
+
+By De Moivre's Theorem, raising each to the <imath>20^{\text{th}}</imath> power yields:
+<cmath>(1+i)^{20} = (\sqrt{2})^{20}\left(\cos(20 \cdot 45^\circ) + i\sin(20 \cdot 45^\circ)\right) = 2^{10}\left(\cos 900^\circ + i\sin 900^\circ\right)</cmath>
+<cmath>(1-i)^{20} = (\sqrt{2})^{20}\left(\cos(20 \cdot (-45^\circ)) + i\sin(20 \cdot (-45^\circ))\right) = 2^{10}\left(\cos(-900^\circ) + i\sin(-900^\circ)\right)</cmath>
+
+Summing the two terms, the imaginary components cancel since <imath>\sin(-900^\circ) = -\sin(900^\circ)</imath>:
+<cmath>(1+i)^{20} + (1-i)^{20} = 2^{10}\left(2\cos 900^\circ\right) = 2^{11}\cos 900^\circ</cmath>
+
+Because <imath>900^\circ \equiv 180^\circ \pmod{360^\circ}</imath>, we have <imath>\cos 900^\circ = \cos 180^\circ = -1</imath>:
+<cmath>2^{11}(-1) = -2048 \implies \boxed{\textbf{(A) } -2048}</cmath>
+
+~ Cbathine0001
+
+==Solution 3 (Bash) ==
+First, we compute <imath>(1+i)^5</imath> by expanding <imath>(1+i)^2</imath> and <imath>(1+i)^3</imath>:
+<cmath>(1+i)^2=1+2i+i^2=2i</cmath>
+<cmath>(1+i)^3=(1+i)^2(1+i)=2i(1+i)=2i+2i^2=-2+2i</cmath>
+<cmath>(1+i)^5=(1+i)^2(1+i)^3=2i(-2+2i)=-4i+4i^2=-4-4i</cmath>
+
+Squaring twice gives <imath>(1+i)^{20}</imath>:
+<cmath>(1+i)^{10}=(-4-4i)^2=16+32i+16i^2=32i</cmath>
+<cmath>(1+i)^{20}=(32i)^2=1024i^2=-1024</cmath>
+
+We do the same for <imath>1-i</imath>:
+<cmath>(1-i)^2=1-2i+i^2=-2i</cmath>
+<cmath>(1-i)^3=(1-i)^2(1-i)=-2i(1-i)=-2i+2i^2=-2-2i</cmath>
+<cmath>(1-i)^5=(1-i)^2(1-i)^3=-2i(-2-2i)=4i+4i^2=-4+4i</cmath>
+
+Squaring twice:
+<cmath>(1-i)^{10}=(-4+4i)^2=16-32i+16i^2=-32i</cmath>
+<cmath>(1-i)^{20}=(-32i)^2=1024i^2=-1024</cmath>
+
+Therefore,
+<cmath>(1+i)^{20}+(1-i)^{20}=-1024+(-1024)=\boxed{\textbf{(A) }-2048}.</cmath>
+
+~ [[Logibyte]]
+
+==Solution 4 (Roots of Unity)==
+
+Let <imath>\omega = \frac{\sqrt{2}}{2} + \frac{\sqrt{2}}{2}i</imath> be a primitive <imath>8</imath>th root of unity. Then <imath>1 + i = \sqrt{2}\,\omega</imath> and <imath>1 - i = \sqrt{2}\,\omega^7</imath>, since <imath>\omega^7 = \overline{\omega} = \frac{\sqrt{2}}{2} - \frac{\sqrt{2}}{2}i</imath>.
+
+Therefore
+<cmath>(1 + i)^{20} + (1 - i)^{20} = (\sqrt{2})^{20}\left(\omega^{20} + \omega^{140}\right) = 2^{10}\left(\omega^{20} + \omega^{140}\right).</cmath>
+
+Because <imath>\omega^8 = 1</imath>, we reduce the exponents mod <imath>8</imath>. We have <imath>20 \equiv 4 \pmod{8}</imath> and <imath>140 \equiv 4 \pmod{8}</imath>, so both terms equal <imath>\omega^4</imath>. Since <imath>\omega</imath> is a primitive <imath>8</imath>th root of unity, <imath>\omega^4</imath> is the <imath>8</imath>th root of unity directly opposite <imath>1</imath> on the unit circle, so <imath>\omega^4 = -1</imath>.
+
+The expression equals <imath>1024(-1 - 1) = \boxed{\textbf{(A)}~-2048}</imath>.
+
+~ Aeioujyot
+
+
+==Solution 5 (Conjugates)==
+
+Notice that <imath>1-i=\overline{1+i}</imath> by the definition of conjugates. Again notice that <imath>\overline{z}^n=\overline{z^n}</imath> by properties of conjugates, and also that <imath>z+\overline z=2\Re(z)</imath>. Hence we have the following if <imath>z=1+i</imath>:
+
+* <imath>(1+i)^{20}+(1-i)^{20}=2\Re((1+i)^{20})</imath>
+* <imath>\Re((1+i)^{20})=\Re\left(\left(\sqrt 2e^{i\pi /4}\right)^{20}\right)=\Re(2^{10}e^{5i\pi})=-2^{10}</imath>
+
+Hence our desired value is <imath>2\cdot -2^{10}=-2^{11}=\boxed{-2048\hspace{1mm}\textbf{(A)}}</imath>.
+
+~singularity1
+
+==Solution 6 (Similar to Others)==
+
+Firstly, in order to make the coefficients of 1 and <imath>i</imath> the same we ''must'' require that <imath>\cos</imath> and <imath>\sin</imath> are the same. This happens when <imath>\theta = \frac{\pi}{4}</imath>. Thus, considering <imath>re^{i \theta}</imath>, we see both expressions evaluate to <imath>\sqrt{2} \cdot e^{i \frac{\pi}{4}}</imath> and <imath>\sqrt{2} \cdot e^{i \frac{-\pi}{4}}</imath> respectively. Thus we have
+
+<cmath>(\sqrt{2} e^{i \frac{\pi}{4}})^{20} + (\sqrt{2} e^{i \frac{-\pi}{4}})^{20}</cmath>
+<cmath>2^{10} e^{i5\pi} + 2^{10} e^{-i5\pi}</cmath>
+<cmath>-2^{10} - 2^{10}</cmath>
+<cmath>-1024-1024</cmath>
+<cmath>= \boxed{-2048}.</cmath>
+
+~Pinotation
+
+==Video Solution 1 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=Jc2s489VKIQ
+
+==Video Solution 2 and 3 by MathIsFun==
+https://youtu.be/JRWnRtZNW9o?si=GRCRBI6CO0P1pcnp&t=306 (Binomial expansion)
+
+https://youtu.be/JRWnRtZNW9o?si=tUuHKTkbgmfkyJ45&t=795 (Polar Coordinates)
+
+==See Also==
+{{AMC12 box|year=2026|ab=A|num-b=6|num-a=8}}
+- [[AMC 12]]
+- [[AMC 12 Problems and Solutions]]
+- [[Mathematics competitions]]
+- [[Mathematics competition resources]]
+{{MAA Notice}}

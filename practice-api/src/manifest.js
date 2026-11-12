@@ -17,14 +17,15 @@ const ARCHIVE_AMC12_ID = /^amc12-(\d{4})-[ab]$/;
 const EARLY_ARCHIVE_POLICY_VERSION = 'amc12-archive-2002-2006-v1';
 const LATE_ARCHIVE_POLICY_VERSION = 'amc12-archive-2007-plus-v1';
 
-// A release is deliberately all-or-nothing: the public AMC 12 archive is the
-// complete 2002--2025 A/B collection, not an arbitrary subset that happens to
-// have passed per-form validation. Keeping the expected IDs here lets both the
-// release importer and its unit tests share one audited definition.
-export const ARCHIVE_RELEASE_FORM_IDS = Object.freeze(
+// Accept the original complete collection and its exact 2026A extension.
+// Arbitrary subsets, future papers, and the unreleased 2026B remain forbidden.
+export const LEGACY_ARCHIVE_RELEASE_FORM_IDS = Object.freeze(
   Array.from({ length: 24 }, (_, offset) => 2002 + offset)
     .flatMap((year) => [`amc12-${year}-a`, `amc12-${year}-b`])
 );
+export const ARCHIVE_RELEASE_FORM_IDS = Object.freeze([
+  ...LEGACY_ARCHIVE_RELEASE_FORM_IDS, 'amc12-2026-a'
+]);
 const ARCHIVE_RELEASE_FORM_ID_SET = new Set(ARCHIVE_RELEASE_FORM_IDS);
 
 function isScoreValue(value) {
@@ -169,7 +170,7 @@ function strictArchivePolicy(input, questions) {
   // hand-edited release cannot silently score 2002--2006 blanks as 1.5.
   const idMatch = typeof input.id === 'string' ? input.id.match(ARCHIVE_AMC12_ID) : null;
   if (!idMatch || !ARCHIVE_RELEASE_FORM_ID_SET.has(input.id)) {
-    throw badRequest('INVALID_MANIFEST', 'Archive form id must be an AMC 12A/12B paper from 2002 through 2025.');
+    throw badRequest('INVALID_MANIFEST', 'Archive form id must be a 2002–2025 AMC 12A/12B paper or 2026 AMC 12A.');
   }
   const year = Number(idMatch[1]);
   const early = year <= 2006;
@@ -317,7 +318,7 @@ function normalizeArchiveV1(input) {
     throw badRequest('INVALID_MANIFEST', 'Unsupported archive manifest schemaVersion.');
   }
   if (typeof input.id !== 'string' || !ARCHIVE_RELEASE_FORM_ID_SET.has(input.id)) {
-    throw badRequest('INVALID_MANIFEST', 'Archive form id must be an AMC 12A/12B paper from 2002 through 2025.');
+    throw badRequest('INVALID_MANIFEST', 'Archive form id must be a 2002–2025 AMC 12A/12B paper or 2026 AMC 12A.');
   }
   if (input.publicationStatus !== 'archive-practice' || input.isSynthetic !== false) {
     throw badRequest('INVALID_MANIFEST', 'Archive manifests must be non-synthetic archive-practice releases.');
@@ -535,8 +536,9 @@ export function normalizeManifest(input) {
 /**
  * Validate the one production archive release accepted by
  * import-archive-release.js. Per-form validation alone is insufficient here:
- * it would allow a partial catalog or a mixture of independently built
- * revisions to be published together.
+ * it would allow a partial catalog or mixed revisions of the legacy collection.
+ * The 2026A extension has its own revision and provenance so adding it does
+ * not rewrite the 48 immutable published forms or their approved contexts.
  *
  * The return value intentionally remains the original manifests. The service
  * normalizes them again immediately before its transactional import, keeping
@@ -558,14 +560,18 @@ export function validateArchiveReleaseBatch(input) {
   if (input.schemaVersion !== ARCHIVE_RELEASE_BATCH_SCHEMA) {
     throw badRequest('INVALID_ARCHIVE_RELEASE', `Expected ${ARCHIVE_RELEASE_BATCH_SCHEMA}.`);
   }
-  if (!Array.isArray(input.forms) || input.forms.length !== ARCHIVE_RELEASE_FORM_IDS.length) {
+  if (!Array.isArray(input.forms)
+    || ![LEGACY_ARCHIVE_RELEASE_FORM_IDS.length, ARCHIVE_RELEASE_FORM_IDS.length].includes(input.forms.length)) {
     throw badRequest(
       'INVALID_ARCHIVE_RELEASE',
-      `Archive release must contain exactly ${ARCHIVE_RELEASE_FORM_IDS.length} forms.`
+      'Archive release must contain the complete legacy 48 forms, optionally plus 2026 AMC 12A (49 forms).'
     );
   }
 
   const seenIds = new Set();
+  const expectedIds = input.forms.length === LEGACY_ARCHIVE_RELEASE_FORM_IDS.length
+    ? LEGACY_ARCHIVE_RELEASE_FORM_IDS : ARCHIVE_RELEASE_FORM_IDS;
+  const expectedIdSet = new Set(expectedIds);
   let releaseVersion = null;
   let answerKeyCatalogHash = null;
   let answerKeyCatalogSchemaVersion = null;
@@ -582,7 +588,7 @@ export function validateArchiveReleaseBatch(input) {
       );
     }
     const id = manifest.id;
-    if (typeof id !== 'string' || !ARCHIVE_RELEASE_FORM_ID_SET.has(id)) {
+    if (typeof id !== 'string' || !expectedIdSet.has(id)) {
       throw badRequest('INVALID_ARCHIVE_RELEASE', `Archive form ${index + 1} has an unexpected AMC 12 id.`);
     }
     if (seenIds.has(id)) {
@@ -593,13 +599,15 @@ export function validateArchiveReleaseBatch(input) {
     if (typeof manifest.version !== 'string' || manifest.version.trim() === '' || manifest.version.length > 100) {
       throw badRequest('INVALID_ARCHIVE_RELEASE', `Archive form ${id} needs a non-empty release version.`);
     }
-    if (releaseVersion === null) {
-      releaseVersion = manifest.version;
-    } else if (manifest.version !== releaseVersion) {
-      throw badRequest(
-        'MIXED_ARCHIVE_RELEASE_VERSION',
-        `Archive release must use one version; ${id} differs from ${releaseVersion}.`
-      );
+    if (id !== 'amc12-2026-a') {
+      if (releaseVersion === null) {
+        releaseVersion = manifest.version;
+      } else if (manifest.version !== releaseVersion) {
+        throw badRequest(
+          'MIXED_ARCHIVE_RELEASE_VERSION',
+          `Legacy archive forms must use one version; ${id} differs from ${releaseVersion}.`
+        );
+      }
     }
 
     // Re-run the strict private/public hash and archive-policy checks here,
@@ -609,6 +617,8 @@ export function validateArchiveReleaseBatch(input) {
     if (normalized.sourceSchemaVersion !== ARCHIVE_MANIFEST_SCHEMA || normalized.practiceKind !== 'archive') {
       throw badRequest('INVALID_ARCHIVE_RELEASE', `Archive form ${id} is not a validated archive-practice manifest.`);
     }
+    // The independently validated addition does not change legacy provenance.
+    if (id === 'amc12-2026-a') continue;
     const answerKey = normalized.provenance.answerKey;
     const media = normalized.provenance.media;
     if (answerKeyCatalogHash === null) {
@@ -644,7 +654,7 @@ export function validateArchiveReleaseBatch(input) {
     }
   }
 
-  const missing = ARCHIVE_RELEASE_FORM_IDS.filter((id) => !seenIds.has(id));
+  const missing = expectedIds.filter((id) => !seenIds.has(id));
   if (missing.length) {
     throw badRequest('PARTIAL_ARCHIVE_RELEASE', `Archive release is missing: ${missing.join(', ')}.`);
   }

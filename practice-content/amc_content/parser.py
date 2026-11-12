@@ -25,19 +25,19 @@ _CHOICE_RE = re.compile(
         # just the `(A)` label or the whole `(A) choice` fragment.  The
         # closing brace is deliberately not consumed here: `_extract_choices`
         # needs to distinguish those two layouts before it cuts the value.
-        \\(?:textbf|mathrm|textrm|text|bf|rm)\s*(?:\$\s*)?\{
+        \\(?:textbf|mathbf|mathrm|textrm|text|bf|rm)\s*(?:\$\s*)?\{
             \s*\(\s*(?P<styled>[A-Za-z])\s*\)
         |
         # Older AoPS pages instead write `({\\mathrm {A}})`.  This complete
         # label is safe to consume because its type-setting brace ends before
         # the option value begins.
-        \(\s*\\(?:textbf|mathrm|textrm|text|bf|rm)\s*\{
+        \(\s*\\(?:textbf|mathbf|mathrm|textrm|text|bf|rm)\s*\{
             \s*(?P<outer>[A-Za-z])\s*\}\s*\)
         |
         # A handful of old pages omit parentheses for option A but retain the
         # normal `(B)` through `(E)` sequence. Require a visible choice-row
         # separator so ordinary bold variables never become answer markers.
-        \\(?:textbf|mathrm|textrm|text|bf|rm)\s*\{
+        \\(?:textbf|mathbf|mathrm|textrm|text|bf|rm)\s*\{
             \s*(?P<bare>[A-Za-z])\s*\}(?=\s*(?:[-—]|\\qquad|\\quad))
     )
     """,

@@ -1,0 +1,126 @@
+Title: 2026 AMC 12A Problems/Problem 25
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_25&oldid=297600&action=raw
+
+Published Time: 2026-11-09T17:59:02Z
+
+Markdown Content:
+==Problem==
+
+Let <imath>m</imath> be a positive integer such that there are at least <imath>50</imath> positive integers <imath>x</imath> less than <imath>m</imath> for which <imath>x^2-1</imath> is a multiple of <imath>m</imath>. What is the sum of the digits of the least possible value of <imath>m</imath>?
+
+<imath>\mathbf{(A)} 12\qquad\mathbf{(B)} 15\qquad\mathbf{(C)} 16\qquad\mathbf{(D)} 18\qquad\mathbf{(E)} 22</imath>
+
+==Solution 1==
+Let <imath>p^k</imath> be the largest power of a prime <imath>p</imath> that divides <imath>x^2-1</imath>. We focus on the exponent of each prime involved. First, if <imath>p\ge 3</imath>, then we have
+<cmath>x^2\equiv 1\pmod{p^k}\implies (x+1)(x-1)\equiv 0\pmod{p^k}</cmath>
+But <imath>x+1</imath> and <imath>x-1</imath> cannot both be divisible by <imath>p</imath> since then <imath>x+1\equiv x-1\equiv 0\pmod{p}\implies 2\equiv 0\pmod{p}</imath>, which is false. Therefore, all powers of <imath>p</imath> must be “stored” in either <imath>x+1</imath> or <imath>x-1</imath>, hence <imath>x\equiv \pm 1\pmod{p^k}</imath>. As a result, each odd prime power contributes a multiplication of <imath>2</imath>, or a doubling, to the total number of solutions by the Chinese Remainder Theorem.
+
+For <imath>p=2</imath>, we may use the above argument, except that both <imath>x+1</imath> and <imath>x-1</imath> may be divisible by <imath>2</imath>, but only one may be divisible by <imath>4</imath>. Therefore, one of <imath>x+1</imath> and <imath>x-1</imath> is even, and the other is divisible by <imath>2^{k-1}</imath>. This implies that <imath>x\equiv \pm 1\pmod{2^{k-1}}</imath>, so at most <imath>4</imath> solutions exist to <imath>x^2\equiv 1\pmod{2^k}</imath>. We perform casework on the precise value of <imath>k</imath>.
+
+When <imath>k=0</imath>, there are no solutions created (clear). When <imath>k=1</imath>, then there is exactly one solution contribution, so the number of solutions does not increase. When <imath>k=2</imath>, then <imath>x\equiv \pm 1\pmod{2}</imath>, hence <imath>x\equiv 1,3\pmod{4}</imath>, resulting in a doubling of the number of solutions. Finally, when <imath>k\ge 3</imath>, then <imath>x\equiv 1,2^{k-1}-1,2^{k-1}+1,2^k-1\pmod{2^k}</imath>, resulting in a quadrupling of the number of solutions.
+
+From our analysis above, we see that <imath>m</imath> being divisible by two copies of the same odd prime does not increase the number of solutions, hence <imath>m</imath> should be squarefree with respect to odd primes. We also know that we should have <imath>k\le 3</imath> for <imath>p=2</imath>, otherwise we are wasting powers of <imath>2</imath>; we also do not have <imath>k=1</imath> since <imath>k=0</imath> is better. Finally, we perform casework on the value of <imath>k</imath> for <imath>p=2</imath> (also known as <imath>\nu_2</imath>):
+* When <imath>k=0</imath>, the minimum is <imath>3\cdot 5\cdot 7\cdot 11\cdot 13\cdot 17</imath>, which produces <imath>2^6=64</imath> solutions.
+* When <imath>k=2</imath>, the minimum is <imath>2^2\cdot 3\cdot 5\cdot 7\cdot 11\cdot 13</imath>, which produces <imath>2^6=64</imath> solutions.
+* When <imath>k=3</imath>, the minimum is <imath>2^3\cdot 3\cdot 5\cdot 7\cdot 11</imath>, which produces <imath>4\cdot 2^4=64</imath> solutions.
+
+By direct comparison, we see that <imath>k=3</imath> produces the smallest <imath>m</imath>. Evaluating directly yields <imath>9240</imath>. The sum of the digits is <imath>15</imath>, or <imath>\boxed{\textbf{(B)}}</imath>.
+
+~ [https://artofproblemsolving.com/wiki/index.php/User:Eevee9406 eevee9406]
+
+==Solution 2==
+We want the least <imath>m</imath> such that at least 50 integers <imath>x</imath>, with <imath>1\le x<m</imath>, satisfy
+
+<cmath>x^2\equiv 1\pmod m.</cmath>
+
+Notice that <imath>x^2-1=(x-1)(x+1)</imath>. Since <imath>x-1</imath> and <imath>x+1</imath> differ by <imath>2</imath>, they cannot both be divisible by an odd prime.
+
+Thus, for every odd prime power dividing <imath>m</imath>, there are exactly <imath>2</imath> possible residues: <imath>x\equiv 1</imath> or <imath>-1</imath>.
+
+Let us now consider the powers of <imath>2</imath>. Looking at modulo <imath>8</imath>, we see that all four odd residues <imath>1,3,5,7</imath> satisfy <imath>x^2\equiv 1\pmod 8</imath>.
+
+For higher powers <imath>2^a</imath>, notice that exactly one of <imath>x-1</imath> and <imath>x+1</imath> is divisible by <imath>4</imath>, while the other has exactly one factor of <imath>2</imath>. Thus, if <imath>2^a\mid(x-1)(x+1)</imath>, we must have
+
+<cmath>x\equiv\pm1\pmod{2^{a-1}}.</cmath>
+
+Each residue gives at most two possibilities modulo <imath>2^a</imath>, so there can never be more than <imath>4</imath> solutions. 
+
+By the Chinese Remainder Theorem, if <imath>m</imath> is divisible by <imath>8</imath> and has <imath>k</imath> distinct odd prime factors, then there are <imath>4\cdot 2^k</imath> solutions modulo <imath>m</imath>. Indeed, for all <imath>a \geq 3</imath>, the four residues <imath>1, -1, 1+2^{a-1}, -1+2^{a-1}</imath> all satisfy the congruence modulo <imath>2^a</imath>.
+
+We need at least 50 solutions, so we want
+
+<cmath>4\cdot 2^k\ge 50.</cmath>
+
+The smallest possible <imath>k</imath> is <imath>4</imath>, giving <imath>64</imath> solutions.
+
+To minimize <imath>m</imath>, we choose the four smallest odd primes, <imath>3,5,7,11</imath>, along with <imath>8</imath>. Thus,
+
+<cmath>m=8\cdot3\cdot5\cdot7\cdot11=9240.</cmath>
+
+The sum of the digits of <imath>9240</imath> is <imath>\boxed{15}.</imath>
+
+~lprado
+
+==Solution 3==
+
+First, we try
+<cmath>
+m_0=8\cdot3\cdot5\cdot7\cdot11=9240.
+</cmath>
+Modulo <imath>8</imath>, all four odd residues work; modulo each odd prime, the two residues <imath>\pm1</imath> work. The Chinese Remainder Theorem gives <imath>4\cdot2^4=64</imath> solutions, so the least possible <imath>m</imath> satisfies <imath>m\le9240</imath>.
+
+<asy>
+size(500);
+defaultpen(fontsize(11pt));
+
+string[] moduli={"mod $8$","mod $3$","mod $5$","mod $7$","mod $11$"};
+string[] roots={"$1,3,5,7$","$\pm1$","$\pm1$","$\pm1$","$\pm1$"};
+string[] counts={"$4$","$2$","$2$","$2$","$2$"};
+pen border=gray(0.45)+linewidth(0.7);
+
+for(int j=0; j<5; ++j) {
+  pair C=(2.2*j,0);
+  fill(box(C+(-0.95,0.65),C+(0.95,1.35)),rgb(0.94,0.96,1));
+  draw(box(C+(-0.95,-0.15),C+(0.95,1.35)),border);
+  draw((C+(-0.95,0.65))--(C+(0.95,0.65)),border);
+  label(moduli[j],C+(0,1));
+  label(roots[j],C+(0,0.25));
+  label(counts[j],C+(0,-0.65),(0,0),blue);
+  if(j<4) label("$\times$",C+(1.1,-0.65));
+}
+
+label("$=64$",(9.9,-0.65),E,blue);
+label("Independent choices by CRT",(4.4,-1.25),S);
+</asy>
+
+To prove minimality, note that <imath>\gcd(x-1,x+1)\mid2</imath>. Thus each odd prime power <imath>p^e</imath> allows exactly two roots, <imath>x\equiv\pm1\pmod{p^e}</imath>. A power <imath>2^a</imath> allows at most four: for <imath>a\ge3</imath>, one of <imath>x-1,x+1</imath> has exactly one factor of <imath>2</imath>, forcing
+<cmath>
+x\equiv\pm1\pmod{2^{a-1}}.
+</cmath>
+For <imath>a\le2</imath>, there are at most two roots.
+
+Let <imath>k</imath> be the number of distinct odd prime factors of <imath>m</imath>. If <imath>k\le3</imath>, there are at most <imath>4\cdot2^3=32</imath> solutions. If <imath>k\ge5</imath>, then
+<cmath>
+m\ge3\cdot5\cdot7\cdot11\cdot13=15015>9240,
+</cmath>
+also impossible. Hence <imath>k=4</imath>.
+
+Since <imath>2\cdot2^4=32<50</imath>, the power of <imath>2</imath> must contribute more than two roots, requiring <imath>8\mid m</imath>. Therefore
+<cmath>
+m\ge8\cdot3\cdot5\cdot7\cdot11=9240.
+</cmath>
+Equality is attainable by our construction, so the answer is
+<cmath>
+9+2+4+0=\boxed{\text{(B)}\ 15}.
+</cmath>
+
+~SZ624
+
+==See Also==
+{{AMC12 box|year=2026|ab=A|num-b=24|after=Last Problem}}
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

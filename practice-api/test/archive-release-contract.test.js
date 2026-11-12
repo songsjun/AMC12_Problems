@@ -6,8 +6,8 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { ApiError } from '../src/errors.js';
-import { ARCHIVE_RELEASE_FORM_IDS, validateArchiveReleaseBatch } from '../src/manifest.js';
-import { archiveReleaseFixture, sealArchiveManifest } from './archive-fixture.js';
+import { ARCHIVE_RELEASE_FORM_IDS, LEGACY_ARCHIVE_RELEASE_FORM_IDS, normalizeManifest, validateArchiveReleaseBatch } from '../src/manifest.js';
+import { archiveManifestFixture, archiveReleaseFixture, sealArchiveManifest } from './archive-fixture.js';
 
 const execFileAsync = promisify(execFile);
 const archiveImporter = fileURLToPath(new URL('../scripts/import-archive-release.js', import.meta.url));
@@ -21,8 +21,54 @@ test('archive release contract accepts exactly the complete, uniform archive-v1 
   const release = archiveReleaseFixture({ version: 'archive-2026-07-28-r1' });
   const forms = validateArchiveReleaseBatch(release);
   assert.equal(forms.length, 48);
-  assert.deepEqual(new Set(forms.map((form) => form.id)), new Set(ARCHIVE_RELEASE_FORM_IDS));
+  assert.deepEqual(new Set(forms.map((form) => form.id)), new Set(LEGACY_ARCHIVE_RELEASE_FORM_IDS));
   assert.deepEqual(new Set(forms.map((form) => form.version)), new Set(['archive-2026-07-28-r1']));
+});
+
+test('the exact 49-form extension preserves the legacy revisions and allows independent 2026A provenance', () => {
+  const legacy = archiveReleaseFixture({ version: 'archive-existing-r3' });
+  const legacyBytes = JSON.stringify(legacy.forms);
+  const addition = archiveManifestFixture({ year: 2026, version: 'archive-2026a-r1', unscoredQuestionNumber: null });
+  addition.provenance.answerKey.catalogHash = 'e'.repeat(64);
+  addition.provenance.media.manifestSha256 = 'f'.repeat(64);
+  addition.provenance.releaseAuthorization.authorizedAt = '2026-11-12';
+  sealArchiveManifest(addition);
+  const expanded = { ...legacy, forms: [addition, ...legacy.forms] };
+  const forms = validateArchiveReleaseBatch(expanded);
+  assert.equal(forms.length, 49);
+  assert.deepEqual(new Set(forms.map((form) => form.id)), new Set(ARCHIVE_RELEASE_FORM_IDS));
+  assert.equal(JSON.stringify(forms.slice(1)), legacyBytes);
+  assert.equal(normalizeManifest(addition).scoringPolicy.blankPoints, 1.5);
+
+  for (const [field, code] of [
+    ['version', 'MIXED_ARCHIVE_RELEASE_VERSION'],
+    ['catalogHash', 'MIXED_ARCHIVE_ANSWER_KEY_CATALOG'],
+    ['manifestSha256', 'MIXED_ARCHIVE_MEDIA_MANIFEST']
+  ]) {
+    const mixed = structuredClone(expanded);
+    const changed = mixed.forms[4];
+    if (field === 'version') changed.version = 'different-legacy-version';
+    if (field === 'catalogHash') changed.provenance.answerKey.catalogHash = '9'.repeat(64);
+    if (field === 'manifestSha256') changed.provenance.media.manifestSha256 = '8'.repeat(64);
+    sealArchiveManifest(changed);
+    expectArchiveError(() => validateArchiveReleaseBatch(mixed), code);
+  }
+});
+
+test('the extended release rejects an absent legacy paper, duplicate, 2026B, and unknown ids', () => {
+  for (const id of ['amc12-2026-b', 'amc12-2027-a']) {
+    const invalid = archiveReleaseFixture({ include2026: true });
+    invalid.forms.at(-1).id = id;
+    sealArchiveManifest(invalid.forms.at(-1));
+    expectArchiveError(() => validateArchiveReleaseBatch(invalid), 'INVALID_ARCHIVE_RELEASE');
+    expectArchiveError(() => normalizeManifest(invalid.forms.at(-1)), 'INVALID_MANIFEST');
+  }
+  const partial = archiveReleaseFixture({ include2026: true });
+  partial.forms.shift();
+  expectArchiveError(() => validateArchiveReleaseBatch(partial), 'INVALID_ARCHIVE_RELEASE');
+  const duplicate = archiveReleaseFixture({ include2026: true });
+  duplicate.forms[1] = structuredClone(duplicate.forms[0]);
+  expectArchiveError(() => validateArchiveReleaseBatch(duplicate), 'DUPLICATE_ARCHIVE_FORM');
 });
 
 test('archive release contract rejects partial, duplicate, unexpected-schema, and mixed-version batches before storage', () => {

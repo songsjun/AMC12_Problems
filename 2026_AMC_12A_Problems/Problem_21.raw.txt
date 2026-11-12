@@ -1,0 +1,110 @@
+Title: 2026 AMC 12A Problems/Problem 21
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_21&oldid=297615&action=raw
+
+Published Time: 2026-11-09T19:10:16Z
+
+Markdown Content:
+==Problem==
+Six dogs find a large cookie in the shape of a regular hexagon <imath>ABCDEF</imath>. To divide the cookie, the dogs agree to choose a point <imath>P</imath> uniformly at random in the interior of the hexagon. The dogs will then cut out the segments <imath>\overline{PA}</imath>, <imath>\overline{PB}</imath>, <imath>\overline{PC}</imath>, <imath>\overline{PD}</imath>, <imath>\overline{PE}</imath>, and <imath>\overline{PF}</imath>, dividing the cookie into six triangles, one for each dog. A dog will be happy if and only if its piece has at least <imath>\frac{1}{10}</imath> of the total area of the hexagon. What is the probability that all six dogs will be happy?
+
+<imath>\textbf{(A) }\dfrac{\sqrt3}{50}\qquad\textbf{(B) }\dfrac{1}{25}\qquad\textbf{(C) }\dfrac{3\sqrt3}{50}\qquad\textbf{(D) }\dfrac{4}{25}\qquad\textbf{(E) }\dfrac25</imath>
+
+==Solution 1==
+
+Let <imath>O</imath> be the center and <imath>S</imath> the total area. Write <imath>[XYZ]</imath> for the area of <imath>\triangle XYZ</imath>. Extend <imath>OP</imath> to meet the boundary at <imath>Q</imath>, and set <imath>t=\frac{OP}{OQ}</imath>.
+
+With a fixed base, a triangle's area changes linearly as its vertex moves along a line. Thus, for every side <imath>UV</imath>,
+<cmath>
+[PUV]=(1-t)[OUV]+t[QUV]
+=(1-t)\frac S6+t[QUV]
+\ge(1-t)\frac S6.
+</cmath>
+Equality holds for the side containing <imath>Q</imath>, so the smallest piece has area exactly <imath>(1-t)S/6</imath>. Therefore, all six dogs are happy precisely when
+<cmath>
+\frac{(1-t)S}{6}\ge\frac S{10}
+\quad\Longleftrightarrow\quad
+t\le\frac25.
+</cmath>
+Along every ray from <imath>O</imath>, the allowed points occupy the first <imath>\frac{2}{5}</imath> of the distance to the boundary. Hence the allowed region is the blue hexagon below, a copy of the original scaled by <imath>\frac{2}{5}</imath> about <imath>O</imath>.
+
+<asy>
+unitsize(0.85cm);
+defaultpen(fontsize(10pt));
+
+pair O=(0,0);
+pair[] v=new pair[6];
+string[] names={"$A$","$B$","$C$","$D$","$E$","$F$"};
+for(int j=0; j<6; ++j) v[j]=3*dir(60*j);
+path H=v[0]--v[1]--v[2]--v[3]--v[4]--v[5]--cycle;
+pair Q=(v[0]+2*v[1])/3, P=0.4*Q;
+
+fill(P--v[0]--v[1]--cycle,rgb(1,0.94,0.78));
+fill(scale(0.4)*H,rgb(0.85,0.93,1));
+draw(H,linewidth(1));
+draw(scale(0.4)*H,blue+linewidth(1));
+
+draw(O--v[0],gray(0.6)+dashed);
+draw(O--v[1],gray(0.6)+dashed);
+draw(P--v[0],linewidth(0.7));
+draw(P--v[1],linewidth(0.7));
+draw(O--Q,red+linewidth(1));
+
+dot(O);
+dot(P,red);
+dot(Q);
+label("$O$",O,SW);
+label("$P$",P+(-0.1,-0.4),(0,0),red);
+label("$Q$",Q,NE);
+for(int j=0; j<6; ++j)
+  label(names[j],v[j],dir(60*j));
+
+label("$\frac{OP}{OQ}=\frac25$",(0,-3.25),S);
+draw((-3.5,-4.0)--(3.5,3.15),invisible);
+</asy>
+
+Since <imath>P</imath> is chosen uniformly, the probability equals the area ratio:
+<cmath>
+\left(\frac25\right)^2=\boxed{\frac4{25}},
+</cmath>
+We choose <imath>\boxed{\textbf{(D)}}</imath>.
+
+~SZ624
+
+==Solution 2==
+We may assume WLOG that the hexagon has side length <imath>1</imath>. The area of the hexagon is then
+<cmath>\frac{\sqrt{3}}{4}\cdot 6=\frac{3\sqrt{3}}{2}</cmath>
+so the area that each dog must get in order to be happy is <imath>\frac{3\sqrt{3}}{20}</imath>. This implies that the distance <imath>h</imath> from <imath>P</imath> to each side, or the height of the triangle of each dog, must satisfy
+<cmath>\frac{1}{2}\cdot 1\cdot h\ge \frac{3\sqrt{3}}{20}\implies h\ge \frac{3\sqrt{3}}{10}</cmath>
+By symmetry, the area produced that yields a valid configuration is a smaller hexagon. The distance between opposite sides of the original hexagon can be found to be <imath>\sqrt{3}</imath>, so the distance between opposite sides of the new hexagon is
+<cmath>\sqrt{3}-2\cdot \frac{3\sqrt{3}}{10}=\frac{2\sqrt{3}}{5}</cmath>
+Therefore, the ratio between side lengths of the smaller hexagon to the larger hexagon is
+<cmath>\frac{\frac{2\sqrt{3}}{5}}{\sqrt{3}}=\frac{2}{5}</cmath>
+since the ratio of the distances between opposite sides is the same as the ratio of the lengths of the sides. Therefore, the ratio of the areas, which is precisely the fraction of the original hexagon that is valid, or the answer, is <imath>\left(\frac{2}{5}\right)^2=\frac{4}{25}</imath>, which is <imath>\boxed{\textbf{(D)}}</imath>.
+
+
+
+
+Other Path you can take: 
+Alternatively, instead of using the total distance between opposite sides, we can analyze the region from the center using the apothem. 
+
+Let the distances from the interior point <imath>P</imath> to the sides of the hexagon be <imath>h_1, h_2, \dots, h_6</imath>. Since each base has a length of <imath>1</imath>, the total area of the hexagon is the sum of the areas of these six triangles:
+<cmath> \sum_{k=1}^6 \frac{1}{2}h_k = \frac{3\sqrt{3}}{2} \implies \sum_{k=1}^6 h_k = 3\sqrt{3} </cmath>
+As established above, each height must satisfy <imath>h_k \ge \frac{3\sqrt{3}}{10}</imath>. This condition bounds <imath>P</imath> within a smaller, concentric regular hexagon shifted inward by a distance of <imath>\frac{3\sqrt{3}}{10}</imath> from each side. 
+
+Since the apothem of the original unit hexagon is <imath>a = \frac{\sqrt{3}}{2}</imath>, the apothem of this smaller valid region is:
+<cmath> a_{\text{small}} = a - \frac{3\sqrt{3}}{10} = \frac{\sqrt{3}}{2} - \frac{3\sqrt{3}}{10} = \frac{\sqrt{3}}{5} </cmath>
+Using the ratio of their apothems, the ratio of their areas (and thus the probability) is:
+<cmath> \text{Probability} = \left( \frac{a_{\text{small}}}{a} \right)^2 = \left( \frac{\frac{\sqrt{3}}{5}}{\frac{\sqrt{3}}{2}} \right)^2 = \left( \frac{2}{5} \right)^2 = \frac{4}{25} </cmath>
+
+~ [https://artofproblemsolving.com/wiki/index.php/User:Eevee9406 eevee9406]
+Other path: ~ [https://artofproblemsolving.com/wiki/index.php/User:akalkunte121 akalkunte121]
+
+
+==See Also==
+{{AMC12 box|year=2026|ab=A|num-b=20|num-a=22}}
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

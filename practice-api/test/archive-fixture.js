@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { ARCHIVE_RELEASE_BATCH_SCHEMA, ARCHIVE_RELEASE_FORM_IDS } from '../src/manifest.js';
+import { ARCHIVE_RELEASE_BATCH_SCHEMA, ARCHIVE_RELEASE_FORM_IDS, LEGACY_ARCHIVE_RELEASE_FORM_IDS } from '../src/manifest.js';
 
 function canonicalJson(value) {
   if (value === null || typeof value === 'boolean' || typeof value === 'number' || typeof value === 'string') {
@@ -97,11 +97,11 @@ export function archiveManifestFixture({
   return sealArchiveManifest(manifest);
 }
 
-/** The exact production-shaped 48-form release, without requiring a database. */
-export function archiveReleaseFixture({ version = 'archive-r1' } = {}) {
+/** Exact production-shaped legacy/extended release, without a database. */
+export function archiveReleaseFixture({ version = 'archive-r1', include2026 = false } = {}) {
   return {
     schemaVersion: ARCHIVE_RELEASE_BATCH_SCHEMA,
-    forms: ARCHIVE_RELEASE_FORM_IDS.map((id) => {
+    forms: (include2026 ? ARCHIVE_RELEASE_FORM_IDS : LEGACY_ARCHIVE_RELEASE_FORM_IDS).map((id) => {
       const [, yearText, variant] = /^amc12-(\d{4})-([ab])$/.exec(id);
       const year = Number(yearText);
       return archiveManifestFixture({

@@ -22,6 +22,8 @@ from .builder import ContentBuildError
 from .canonical import canonical_hash, canonical_json, normalize_markdown, sha256_bytes
 from .parser import parse_problem_markdown
 from .validator import (
+    ARCHIVE_FORM_IDS,
+    LEGACY_ARCHIVE_FORM_IDS,
     archive_public_projection as validator_archive_public_projection,
     validate_archive_private_manifest,
     validate_archive_public_manifest,
@@ -181,9 +183,17 @@ def _form_directories(root: Path) -> list[tuple[int, str, Path]]:
         match = _FORM_DIR_RE.fullmatch(directory.name)
         if not match:
             continue
-        forms.append((int(match.group("year")), match.group("variant"), directory))
-    if len(forms) != 48:
-        raise ContentBuildError([f"expected all 48 AMC 12 archive directories, found {len(forms)}"])
+        year, variant = int(match.group("year")), match.group("variant")
+        if _form_id(year, variant) not in ARCHIVE_FORM_IDS:
+            # A future paper may have a documentation-only placeholder in Git.
+            # Any source or other entry still makes an unsupported paper fail.
+            entries = list(directory.iterdir())
+            if entries and all(entry.is_file() and entry.name in {"README", "README.md"} for entry in entries):
+                continue
+        forms.append((year, variant, directory))
+    ids = frozenset(_form_id(year, variant) for year, variant, _ in forms)
+    if ids not in (LEGACY_ARCHIVE_FORM_IDS, ARCHIVE_FORM_IDS):
+        raise ContentBuildError(["archive directories must contain the complete 2002–2025 A/B collection, optionally plus 2026 A"])
     return forms
 
 
@@ -191,8 +201,8 @@ def _validate_key_catalog(catalog: dict[str, Any]) -> dict[str, dict[str, Any]]:
     if catalog.get("schemaVersion") != ARCHIVE_KEY_SCHEMA:
         raise ContentBuildError([f"historical answer-key schema must be {ARCHIVE_KEY_SCHEMA}"])
     forms = catalog.get("forms")
-    if not isinstance(forms, list) or len(forms) != 48:
-        raise ContentBuildError(["historical answer-key catalog must contain exactly 48 forms"])
+    if not isinstance(forms, list) or len(forms) not in (48, 49):
+        raise ContentBuildError(["historical answer-key catalog must contain the complete legacy 48 or extended 49 forms"])
     by_id: dict[str, dict[str, Any]] = {}
     for record in forms:
         if not isinstance(record, dict) or not isinstance(record.get("formId"), str):
@@ -232,6 +242,8 @@ def _validate_key_catalog(catalog: dict[str, Any]) -> dict[str, dict[str, Any]]:
         # on JSON object key spelling or option ordering.
         record = {**record, "acceptedOptions": accepted_options}
         by_id[record["formId"]] = record
+    if frozenset(by_id) not in (LEGACY_ARCHIVE_FORM_IDS, ARCHIVE_FORM_IDS):
+        raise ContentBuildError(["historical answer-key catalog must contain the complete 2002–2025 A/B collection, optionally plus 2026 A"])
     return by_id
 
 
@@ -1054,7 +1066,7 @@ def _archive_scoring_policy(year: int, scored_question_count: int) -> dict[str, 
     practice score.
     """
 
-    if year < 2002 or year > 2025:
+    if year < 2002 or year > 2026:
         raise ContentBuildError([f"unsupported AMC 12 archive scoring year: {year}"])
     if scored_question_count not in range(0, 26):
         raise ContentBuildError([f"invalid archive scored-question count: {scored_question_count}"])
@@ -1097,12 +1109,32 @@ def _last_boxed_solution_option(solution: str) -> str | None:
     return candidates[-1] if candidates else None
 
 
+def _archive_release_authorization(year: int, variant: str) -> dict[str, str]:
+    if (year, variant.upper()) == (2026, "A"):
+        return {
+            "status": "authorized-archive-practice",
+            "authorizedBy": "workspace-owner",
+            "authorizedAt": "2026-11-12",
+            "evidence": "Workspace owner requested downloading the 2026 AMC 12A problems and solutions from AoPS, adding them locally, and publishing them.",
+        }
+    return {
+        "status": "authorized-archive-practice",
+        "authorizedBy": "workspace-owner",
+        "authorizedAt": "2026-07-27",
+        "evidence": "Platform owner requested publication of all historical AMC 12 papers for online practice.",
+    }
+
+
 def build_archive_release(inputs: ArchiveInputs) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
-    """Build all 48 private/public archive artifacts and an auditable report."""
+    """Build the complete legacy or extended archive and an auditable report."""
 
     source_root = inputs.source_root.resolve()
     catalog = _load_object(inputs.answer_keys_path, "historical answer-key catalog")
     keys = _validate_key_catalog(catalog)
+    form_directories = _form_directories(source_root)
+    source_ids = {_form_id(year, variant) for year, variant, _ in form_directories}
+    if source_ids != set(keys):
+        raise ContentBuildError(["historical answer-key catalog and archive source directories must contain the same forms"])
     overrides = _validate_overrides(_load_object(inputs.overrides_path, "historical overrides"))
     media_document = _load_object(inputs.media_manifest_path, "historical media manifest")
     media_by_scope = _validate_media(media_document, media_path=inputs.media_manifest_path)
@@ -1114,7 +1146,7 @@ def build_archive_release(inputs: ArchiveInputs) -> tuple[list[dict[str, Any]], 
     report_forms: list[dict[str, Any]] = []
     used_overrides: set[str] = set()
 
-    for year, variant, directory in _form_directories(source_root):
+    for year, variant, directory in form_directories:
         form_id = _form_id(year, variant)
         key_record = keys.get(form_id)
         if key_record is None:
@@ -1277,12 +1309,7 @@ def build_archive_release(inputs: ArchiveInputs) -> tuple[list[dict[str, Any]], 
             "archiveNotice": _archive_notice(year),
             "questions": questions,
             "provenance": {
-                "releaseAuthorization": {
-                    "status": "authorized-archive-practice",
-                    "authorizedBy": "workspace-owner",
-                    "authorizedAt": "2026-07-27",
-                    "evidence": "Platform owner requested publication of all historical AMC 12 papers for online practice.",
-                },
+                "releaseAuthorization": _archive_release_authorization(year, variant),
                 "answerKey": {
                     "catalogSchemaVersion": catalog["schemaVersion"],
                     "catalogHash": catalog_hash,

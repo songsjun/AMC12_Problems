@@ -1,0 +1,435 @@
+Title: 2026 AMC 12A Problems/Problem 17
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_17&oldid=297935&action=raw
+
+Published Time: 2026-11-11T01:47:26Z
+
+Markdown Content:
+{{duplicate|[[2026 AMC 10A Problems/Problem 22|2026 AMC 10A #22]] and [[2026 AMC 12A Problems/Problem 17|2026 AMC 12A #17]]}}
+
+==Problem==
+An engineer is designing a closely packed field of <imath>7</imath> wind turbines for electricity production. Each turbine, whose center is marked by a labeled dot in the figure, occupies one of <imath>7</imath> congruent elliptical regions. Turbines in the same row have centers that are <imath>4</imath> units apart, and turbines in the same column have centers that are <imath>9</imath> units apart, as shown in the figure below
+
+
+<asy>
+unitsize(0.65cm);
+
+// --------------------------------------------------
+// Parameters
+// --------------------------------------------------
+real ellipseWidth  = 2;
+real ellipseHeight = 3*sqrt(3)/2;
+
+// Line styles
+pen ellipsePen = black + linewidth(1.2);
+pen arrowPen   = black + linewidth(1.2);
+
+// --------------------------------------------------
+// Point definitions
+// --------------------------------------------------
+pair O = ( 0,    0);
+pair F = ( 4,    0);
+pair A = ( 2,  4.5);
+pair B = (-2,  4.5);
+pair C = (-4,    0);
+pair D = (-2, -4.5);
+pair E = ( 2, -4.5);
+
+// --------------------------------------------------
+// Ellipse drawing function
+// --------------------------------------------------
+void drawEllipse(pair center) {
+    draw(
+        shift(center) *
+        scale(ellipseWidth, ellipseHeight) *
+        unitcircle,
+        ellipsePen
+    );
+}
+
+// Draw all seven ellipses
+pair[] centers = {O, A, B, C, D, E, F};
+
+for (int i = 0; i < centers.length; ++i) {
+    drawEllipse(centers[i]);
+}
+
+// --------------------------------------------------
+// Dimension arrows
+// --------------------------------------------------
+
+// Horizontal dimension: 4
+draw((-2,-8)--(2,-8), p=arrowPen, arrow=Arrows(TeXHead));
+label("$4$", (0,-8), S);
+
+// Vertical dimension: 9
+draw((6.7,-4.5)--(6.7,4.5), p=arrowPen, arrow=Arrows(TeXHead));
+label("$9$", (6.7,0), E);
+
+
+// --------------------------------------------------
+// Points and labels
+// --------------------------------------------------
+void markPoint(pair p, string name) {
+    dot(p, black);
+    label("$" + name + "$", p, W);
+}
+
+markPoint(O, "O");
+markPoint(A, "A");
+markPoint(B, "B");
+markPoint(C, "C");
+markPoint(D, "D");
+markPoint(E, "E");
+markPoint(F, "F");
+</asy>
+
+The major axis of each ellipse is <imath>m\sqrt{p}</imath>, where <imath>m</imath> and <imath>p</imath> are positive integers and <imath>p</imath> is not divisible by the square of any prime. What is <imath>m + p</imath>?
+<imath>\textbf{(A)}~6 \qquad \textbf{(B)}~8 \qquad \textbf{(C)}~9 \qquad \textbf{(D)}~10 \qquad \textbf{(E)}~12</imath>
+
+==Solution 1==
+
+Let <imath>L</imath> be the major axis length. Each ellipse has horizontal semiaxis <imath>2</imath>, and adjacent rows are <imath>\frac{9}{2}</imath> apart. Place the middle center at <imath>O=(0,0)</imath>; then the upper-right center is <imath>A=(2,\frac{9}{2})</imath>.
+
+Let <imath>T</imath> be their point of tangency. A half-turn about the midpoint of <imath>OA</imath> swaps the two ellipses, so it fixes their unique common point <imath>T</imath>. Thus <imath>T</imath> is the midpoint of <imath>OA</imath>.
+
+Dilating the middle ellipse by a factor of <imath>2</imath> about <imath>O</imath> sends <imath>T</imath> to <imath>A</imath>. The resulting ellipse, drawn with a blue dashed curve, has semiaxes <imath>4</imath> and <imath>L</imath>.
+
+<asy>
+size(350);
+defaultpen(fontsize(10pt));
+
+real L=3*sqrt(3);
+pair O=(0,0), A=(2,4.5), T=A/2, H=(2,0);
+path ell=xscale(2)*yscale(L/2)*unitcircle;
+pen enlarged=blue+dashed+linewidth(1.1);
+pen guides=gray(0.6)+dashed+linewidth(0.6);
+pen median=red+linewidth(1);
+
+// Two original ellipses and the coordinate axes.
+fill(ell,gray(0.96));
+draw((-4.7,0)--(4.9,0),gray(0.6),Arrow(5));
+draw((0,-5.5)--(0,7.7),gray(0.6),Arrow(5));
+draw(ell,linewidth(0.9));
+draw(shift(A)*ell,linewidth(0.9));
+
+// Dilation by 2 about O: T maps to A.
+draw(scale(2)*ell,enlarged);
+draw((0,A.y)--A--H,guides);
+draw(O--A,median);
+
+// Equal marks on OT and TA.
+pair n=0.13*(rotate(90)*unit(A));
+pair J=(O+T)/2, K=(T+A)/2;
+draw((J-n)--(J+n),median);
+draw((K-n)--(K+n),median);
+
+draw((H+(-0.15,0))--(H+(-0.15,0.15))--(H+(0,0.15)),
+     gray(0.6));
+
+dot(O);
+dot(A,red);
+dot(T,red);
+label("$O$",O,SW);
+label("$A$",A,NE,red);
+label("$T$",T+(-0.25,-0.2),SW,red);
+label("$2$",H,SE);
+label("$4$",(4,0),SE,blue);
+label("$\frac92$",(0,4.5),W);
+label("$L$",(0,L),NW,blue);
+label("$x$",(4.9,0),E);
+label("$y$",(0,7.7),N);
+label("Dilation by $2$",(0,-5.85),S,blue);
+</asy>
+
+Since <imath>A=(2,\frac{9}{2})</imath> lies on this ellipse,
+<cmath>
+\frac{2^2}{4^2}+\frac{(9/2)^2}{L^2}=1
+\quad\Longrightarrow\quad
+L^2=27
+\quad\Longrightarrow\quad
+L=3\sqrt3.
+</cmath>
+Therefore <imath>m+p=3+3=\boxed{\text{(A)}\ 6}</imath>.
+
+==Solution 2==
+<asy>
+
+unitsize(0.65cm);
+
+// --------------------------------------------------
+// Parameters
+// --------------------------------------------------
+real ellipseWidth  = 2;
+real ellipseHeight = 3*sqrt(3)/2;
+
+// Line styles
+pen ellipsePen = black + linewidth(1.2);
+pen arrowPen   = black + linewidth(1.2);
+pen redPen     = red + linewidth(1.5);
+
+// --------------------------------------------------
+// Point definitions
+// --------------------------------------------------
+pair O = ( 0,    0);
+pair F = ( 4,    0);
+pair A = ( 2,  4.5);
+pair B = (-2,  4.5);
+pair C = (-4,    0);
+pair D = (-2, -4.5);
+pair E = ( 2, -4.5);
+
+// Midpoint of OA, on the central ellipse
+pair M = (O+A)/2;
+
+// Tangency point between D and E
+pair P = (D+E)/2;
+
+// --------------------------------------------------
+// Ellipse drawing function
+// --------------------------------------------------
+void drawEllipse(pair center) {
+    draw(
+        shift(center) *
+        scale(ellipseWidth, ellipseHeight) *
+        unitcircle,
+        ellipsePen
+    );
+}
+
+// Draw all seven ellipses
+pair[] centers = {O, A, B, C, D, E, F};
+
+for (int i = 0; i < centers.length; ++i) {
+    drawEllipse(centers[i]);
+}
+
+// --------------------------------------------------
+// Dimension arrows
+// --------------------------------------------------
+
+// Horizontal dimension: 4
+draw((-2,-8)--(2,-8),
+     p=arrowPen, arrow=Arrows(TeXHead));
+label("$4$", (0,-8), S);
+
+// Vertical dimension: 9
+draw((6.7,-4.5)--(6.7,4.5),
+     p=arrowPen, arrow=Arrows(TeXHead));
+label("$9$", (6.7,0), E);
+
+// --------------------------------------------------
+// Original points and labels
+// --------------------------------------------------
+void markPoint(pair p, string name) {
+    dot(p, black);
+    label("$" + name + "$", p, W);
+}
+
+markPoint(O, "O");
+markPoint(A, "A");
+markPoint(B, "B");
+markPoint(C, "C");
+markPoint(D, "D");
+markPoint(E, "E");
+markPoint(F, "F");
+
+// --------------------------------------------------
+// Red annotations
+// --------------------------------------------------
+
+// Red dots at annotated centers
+dot(O, redPen);
+dot(A, redPen);
+dot(D, redPen);
+dot(E, redPen);
+
+// Coordinates of O
+label("$(0,0)$", (-0.5,-1.15), red);
+
+// Coordinates of A
+label("$\left(2,\frac92\right)$",
+      (2.7,3.3), red);
+
+// --------------------------------------------------
+// Midpoint M of OA
+// --------------------------------------------------
+
+// Visible red dot directly on the ellipse
+fill(circle(M,0.14), red);
+
+// M label inside the central ellipse
+label("$M$", (0.35,1.8), red);
+
+// Coordinates inside the central ellipse
+label("$\left(1,\frac94\right)$",
+      (0.75,1.05), red);
+
+// --------------------------------------------------
+// Distance 2 from D to tangency point
+// --------------------------------------------------
+
+// Plain red segment, no arrowhead
+draw(D--P, redPen);
+
+// Distance label above segment
+label("$2$", (-1,-4.1), red);
+
+</asy>
+Let <imath>O</imath> be the origin, at <imath>(0,0)</imath>. Also, let the major axis of an ellipse, which is what we're looking for, be <imath>a</imath>. Then the equation of the ellipse centered at <imath>O</imath> is
+<cmath>\frac{x^2}{4} + \frac{y^2}{(\frac{a}{2})^2}=1.</cmath>
+
+Notice that if we could find one pair that lies on the ellipse, we could plug it into the equation and solve for <imath>a</imath>.
+
+Let's focus on the ellipse centered at <imath>A</imath>. It has coordinates <imath>(2, \frac{9}{2})</imath>. Notice that the midpoint of <imath>O</imath> and <imath>A</imath> (<imath>M</imath> in the above diagram) lies on the central ellipse. The coordinates of that midpoint are <imath>(1, \frac94)</imath> (by the midpoint formula). We now have a point that lies on the ellipse. Plugging it in, we get
+
+<cmath>\frac{1^2}{4} + \frac{(\frac94)^2}{(\frac{a}{2})^2}=1.</cmath>
+<cmath>a^2 + 81 = 4a^2</cmath>
+<cmath>a^2 = 27.</cmath>
+
+Thus, <imath>a = 3\sqrt3</imath>, and our answer is <imath>\boxed{\text{(A) }6}.</imath>
+
+~lprado
+
+Hi, would you want a diagram added to your solution?
+
+Hi, yes.
+
+Hi, I have added the diagram (though i'm not the person who asked the original question) ~sujoybec51
+
+==Solution 3 (Easiest)==
+We can view the given figure of ellipses as a vertical stretch of this figure of seven tangent circles of radius <imath>2</imath> by some scale factor: 
+
+<asy>
+size(220);
+real r = 2;
+real d = 2*r;
+
+//Center Init
+pair O = (0,0);
+pair[] P;
+for (int i = 0; i < 6; ++i) {
+  P[i] = d*dir(60*i);
+}
+// P[2] = top-left, P[3] = left, P[4] = bottom-left
+
+//Circles
+draw(circle(O, r));
+for (int i = 0; i < 6; ++i) {
+  draw(circle(P[i], r));
+}
+
+//Isosceles Triangle
+draw(P[3] -- P[2] -- P[4] -- cycle, blue + 1bp);
+
+//Altitude
+pair M = (P[2] + P[4]) / 2;   // = (-2, 0)
+draw(P[3] -- M, red + dashed + 1bp);
+
+//h Label
+label("$h$", M, E, blue);
+
+//Radius Label
+draw(O -- (r,0));
+label("$2$", (r/2, 0), S);
+
+
+//Center Marks
+dot(O);
+for (int i = 0; i < 6; ++i) {
+  dot(P[i]);
+}
+</asy>
+
+By connecting three centers as shown, we create an isosceles triangle with equal legs of length <imath>4</imath> and deduce <imath>h=4\sqrt3.</imath> Since this vertical distance was given as <imath>9</imath> in the problem, we conclude that the stretch factor between this diagram and the given one is <imath>\frac{9}{4\sqrt3}.</imath> 
+
+Thus, the major axis of one of the ellipses is simply the diameter of one of these circles multiplied by the stretch factor, or <imath>m\sqrt{p}=(4)\left(\frac{9}{4\sqrt3}\right)=3\sqrt{3}\implies m+n=\boxed{\text{(A) } 6}</imath> 
+
+~Neoronean 
+
+~Tacos_are_yummy_1 (<imath>\LaTeX</imath>)
+
+~ Bnn81351 (very minor <imath>\LaTeX</imath> edit)
+
+==Solution 4 (Ruler Cheese)==
+
+You can ruler bash. Very risky but works. 
+Edit: By ruler, we get the length of one major axis to be around <imath>5.125</imath>, which is very close to <imath>3 \sqrt3</imath>, so <imath>3+3=</imath>   <imath>\boxed{\text{(A) }6}.</imath>
+
+It would be so orz if someone actually got the answer by this :sob:
+
+~Jelly0607
+~N0lan (made edit and LaTeX)
+
+===Note===
+Yay, a fellow cheese enthusiast!
+
+A way to justify the radical approximation 5.125 is as follows:
+
+Due to the hexagonal nature (and rightfully so, to maximize electricity, "hexagons are the bestagons") of the turbines, the simplified number under the radical is almost certainly <imath>p=3</imath>. From there, you can 3 from the answer choices to obtain <imath>m</imath>: $<cmath>\textbf{(A)}~m=3 \qquad \textbf{(B)}~m=4 \qquad \textbf{(C)}~m=6 \qquad \textbf{(D)}~m=7 \qquad \textbf{(E)}~m=9</cmath>
+
+Also, here are some calculations to show the diagram is intended to be to scale for the ruler cheese:
+
+You can verify that the ratio of the small to the long line segment on your test sheet is indeed approximately 4:9. For example, the measurement on my test sheet, to the rounding error in my 0.1 cm ruler, is 1.4 cm:3.4 cm; using the same ruler, the measurement on the diagram on this webpage above at 100% zoom is 2.7 cm: 6.7 cm.
+
+Since the scale on both axes is similar to the given values with negligible error, we conclude the graph is almost certainly to scale.
+
+~megaboy6679
+
+==Solution 5 (Transformations)==
+We apply the transformation to the diagram 
+<cmath>T(x, y) \implies \left( \frac{x}{a}, \frac{y}{b} \right)</cmath>
+So that the center turbine maps to a unit circle.
+
+<asy>
+size(220);
+real r = 2;
+real d = 2*r;
+pair O = (0,0);
+pair[] P;
+for (int i = 0; i < 6; ++i) {
+  P[i] = d*dir(60*i);
+}
+draw(circle(O, r));
+for (int i = 0; i < 6; ++i) {
+  draw(circle(P[i], r));
+}
+pair M = (P[2] + P[4]) / 2;   // = (-2, 0)
+draw(O -- (r,0));
+label("$1$", (r/2, 0), S);
+dot(O);
+for (int i = 0; i < 6; ++i) {
+  dot(P[i]);
+}
+</asy>
+Since each of the outer circles are contacting each other and the center circle, hexagon ABCDEF is a regular hexagon with a side length of 2. On the original hexagon, the distance <imath>\overline{AE}</imath> is 9. Under <imath>T(x, y)</imath>, the distance AE becomes <imath>\frac{9}{a}</imath>.
+The distance between AE is also equal to 
+
+<imath>\overline{AE}= 2*2\sin(60) = 2\sqrt{3}</imath>. 
+
+Therefore, 
+
+<imath>\frac{9}{a} = 2\sqrt{3} \implies a= \frac{3\sqrt{3}}{2}</imath> 
+
+Hence the major axis is <imath>2a = 3\sqrt{3}</imath>. The answer is <imath>3 + 3 = \boxed{\text{(A) }6}.</imath>
+
+~Sharkbluehorse
+
+==Video Solution 1 by MadMath==
+https://youtu.be/xDBib-6lENo
+
+==Video Solution 2 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=Jc2s489VKIQ
+==Video Solution 3==
+https://youtu.be/sOCkYWCu-6c
+
+==See Also==
+{{AMC10 box|year=2026|ab=A|num-b=21|num-a=23}}
+{{AMC12 box|year=2026|ab=A|num-b=16|num-a=18}}
+* [[AMC 10]]
+* [[AMC 10 Problems and Solutions]]
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

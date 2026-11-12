@@ -3,9 +3,11 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import {
+  adjacentProblem,
   normalizeHref,
   normalizeImageSrc,
   normalizeProblem,
+  parseProblemHash,
   practiceDestination,
   problemPath,
   protectMath
@@ -13,14 +15,33 @@ import {
 
 test('problem paths are constrained to the fixed archive corpus', () => {
   assert.deepEqual(normalizeProblem('2025', 'B', '25'), { year: 2025, variant: 'B', number: 25 });
-  assert.deepEqual(normalizeProblem('../2025', 'Z', '0'), { year: 2025, variant: 'A', number: 1 });
+  assert.deepEqual(normalizeProblem('../2025', 'Z', '0'), { year: 2026, variant: 'A', number: 1 });
+  assert.deepEqual(normalizeProblem('2026', 'B', '25'), { year: 2026, variant: 'A', number: 25 });
+  assert.equal(problemPath(2026, 'A', 1), '2026_AMC_12A_Problems/Problem_01.md');
   assert.equal(problemPath(2002, 'A', 1), '2002_AMC_12A_Problems/Problem_01.md');
+});
+
+test('navigation crosses the new paper boundary and stops before an unavailable 2026B', () => {
+  assert.deepEqual(adjacentProblem(2025, 'B', 25, 1), { year: 2026, variant: 'A', number: 1 });
+  assert.deepEqual(adjacentProblem(2026, 'A', 1, -1), { year: 2025, variant: 'B', number: 25 });
+  assert.deepEqual(adjacentProblem(2025, 'A', 25, 1), { year: 2025, variant: 'B', number: 1 });
+  assert.equal(adjacentProblem(2026, 'A', 25, 1), null);
+  assert.equal(adjacentProblem(2002, 'A', 1, -1), null);
+});
+
+test('hashes retain old paper links and reject unavailable variants and problem numbers', () => {
+  assert.deepEqual(parseProblemHash('#2025BP25'), { year: 2025, variant: 'B', number: 25 });
+  assert.deepEqual(parseProblemHash('#2026AP1'), { year: 2026, variant: 'A', number: 1 });
+  for (const hash of ['#2026BP1', '#2027AP1', '#2026AP0', '#2026AP26', '#../2026AP1']) {
+    assert.equal(parseProblemHash(hash), null, hash);
+  }
 });
 
 test('practice destinations identify a complete paper with a constrained same-origin query', () => {
   assert.equal(practiceDestination(2024, 'B', 'practice'), 'practice/?form=amc12-2024-b&mode=practice');
   assert.equal(practiceDestination('2023', 'A', 'batch'), 'practice/?form=amc12-2023-a&mode=batch');
-  assert.equal(practiceDestination('../2025', 'Z', 'practice'), 'practice/?form=amc12-2025-a&mode=practice');
+  assert.equal(practiceDestination('../2025', 'Z', 'practice'), 'practice/?form=amc12-2026-a&mode=practice');
+  assert.equal(practiceDestination(2026, 'A', 'practice'), 'practice/?form=amc12-2026-a&mode=practice');
   assert.throws(() => practiceDestination(2025, 'A', 'unsafe'), {
     name: 'TypeError', message: 'Practice mode must be practice or batch.'
   });

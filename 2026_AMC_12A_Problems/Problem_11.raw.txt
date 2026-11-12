@@ -1,0 +1,108 @@
+Title: 2026 AMC 12A Problems/Problem 11
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_11&oldid=298188&action=raw
+
+Published Time: 2026-11-12T16:24:16Z
+
+Markdown Content:
+{{duplicate|[[2026 AMC 10A Problems/Problem 15|2026 AMC 10A #16]] and [[2026 AMC 12A Problems/Problem 11|2026 AMC 12A #11]]}}
+==Problem==
+An urn contains <imath>6</imath> red balls, <imath>4</imath> black balls, and <imath>4</imath> white balls. Suppose <imath>7</imath> balls are drawn at random without replacement and a score is computed as follows:
+
+- <imath>1</imath> point is given for each red ball up to a maximum of <imath>3</imath> points.
+
+- <imath>1</imath> point is given for each black ball up to a maximum of <imath>2</imath> points.
+
+- <imath>1</imath> point is given for each white ball up to a maximum of <imath>2</imath> points.
+
+For example, drawing <imath>1</imath> red ball, <imath>4</imath> black balls, and <imath>2</imath> white balls would earn a score of <imath>1 + 2 + 2 = 5</imath>. What is the probability of getting the lowest possible score?
+
+<imath>\textbf{(A)}\   \dfrac{1}{858}  \qquad 	\textbf{(B)}\   \dfrac{5}{3432}  \qquad 	\textbf{(C)}\   \dfrac{1}{312}  \qquad 	\textbf{(D)}\   \dfrac{2}{429}  \qquad 	\textbf{(E)}\   \dfrac{5}{264}</imath>
+
+==Solution 1==
+The minimum possible score is <imath>4,</imath> which can occur by drawing <imath>(R,B,W)=\{(6,0,1),(6,1,0),(0,4,3),(0,3,4)\}.</imath> Considering all balls to be distinct, the first two cases can occur in <imath>2\cdot4\cdot7!</imath> (ordered) ways - <imath>2</imath> ways to select black or white, <imath>4</imath> ways to select the black/white ball, and <imath>7!</imath> ways to order the <imath>7</imath> resulting balls. The last two cases total to <imath>2\cdot4\cdot7!.</imath>
+
+The answer is <imath>\dfrac{2(2\cdot4\cdot7!)}{14\cdot13\cdot12\cdot11\cdot10\cdot9\cdot8}=\boxed{\text{(D) }\dfrac{2}{429}}</imath> 
+
+Note: You can think of each case as already having the max amount of balls of a single color and then choosing from the remainder of the balls to get to 4 points. For example: you already have 6 red balls => then you have to choose 1 more ball that gives 1 point. Since all the remaining balls give one point, there are 8 ways(for 8 remaining balls) to do this. If you had 4 black balls, you would have needed 2 more points so you can choose accordingly from the red set of balls.
+
+-Amon26
+~Tacos_are_yummy_1
+~chrislakee: The only hard question on this test imo
+
+==Solution 2 (Casework)==
+As explained in the previous solution, the minimum possible score is <imath>4,</imath> which can occur by drawing <imath>6</imath> red's with any other color, or <imath>4</imath> blacks and <imath>3</imath> whites, or <imath>4</imath> whites and <imath>3</imath> black. There are <imath>\binom{14}{7}</imath> ways to choose 7 balls from a group of 14, and we can now do casework. For the case with 6 reds and 1 of any other color, there are <imath>\binom{6}{6}\cdot \binom{8}{1}=8</imath>, cases. For the other 2 cases, which are symmetric, there are a total of <imath>2\binom{4}{4}\cdot \binom{4}{3}=8</imath> valid combinations. Thus, we have <imath>\frac{8+8}{\binom{14}{7}}=\frac{16\cdot 7\cdot 6\cdot 5\cdot 4\cdot 3\cdot 2}{14\cdot 13\cdot 12\cdot 11\cdot 10\cdot 9\cdot 8}</imath>. Cancelling terms, we find the fraction simplifies to <imath>\frac{2}{13\cdot 11\cdot 3}=\frac{2}{429}</imath>, so the answer is <imath>\boxed{\textbf{(D)}}</imath>
+
+~Voidling
+
+==Solution 3==
+It is not hard to see that after experimentation that we can achieve a minimal score with:
+* 6 red, 1 white or black
+* 3 white and 4 black, or 4 white and 3 black
+Now suppose we line up all 14 balls in a row from left to right. When we draw our first ball in the problem, we pick the leftmost ball, and then we pick the next leftmost ball, and so on. Now let us split into cases:
+
+* <imath>\textbf{6 red, 1 white or black}</imath>: We want all 6 red balls and 1 white or black ball to be in the 7 leftmost balls. We have <imath>2 \cdot 7 = 14</imath> ways to do this. Then for the 7 rightmost balls, we have <imath>\binom{7}{3}=35</imath> ways of rearranging them and so we have <imath>14 \cdot 35</imath> ways for this case.
+
+* <imath>\textbf{3 white and 4 black, or 4 white and 3 black}</imath>: This is symmetrical to the last case (just swap the 7 leftmost balls with the 7 rightmost balls), so we have <imath>14 \cdot 35</imath> ways for this case. 
+
+The number of ways to arrange all 14 balls in our row is <imath>\frac{14!}{6! \cdot 4! \cdot 4!}</imath>, and so our desired probability is <imath>\frac{2 \cdot 14 \cdot 35}{\frac{14!}{6! \cdot 4! \cdot 4!}}=\boxed{\textbf{(D)}~\frac{2}{429}}</imath>.
+
+~Baihly2024
+
+~MATHGURU2015 minor edit to fix the number of the final answer
+
+==Video Solution by TechMath Thinker (2.5 mins)==
+
+https://youtu.be/7hBDU2LNWrs
+
+~midnight_rain
+
+==Solution 4 (BS Cheese)==
+
+As before, the optimal cases are either six red or no red (white and black naturally follow, though this cheese doesn't actually use them). There are likely two distractors to account for the correct value for only one of the cases. If this is true, there is a set of 3 answer choices where two sum to the third, since these cases are mutually exclusive and cover all valid minimums.
+
+Now, converting each of the fractions to common denominator 3432 to analyze: <cmath>\textbf{(A)}\   \dfrac{4}{3432}  \qquad 	\textbf{(B)}\   \dfrac{5}{3432}  \qquad 	\textbf{(C)}\   \dfrac{11}{3432}  \qquad 	\textbf{(D)}\   \dfrac{16}{3432}  \qquad 	\textbf{(E)}\   \dfrac{65}{3432}</cmath>
+
+Notably, the only set of 3 choices that have this property are choices <imath>\textbf{(B)}</imath>, <imath>\textbf{(C)}</imath>, and <imath>\textbf{(D)}</imath>. The correct answer corresponds to the sum, <imath>\boxed{\textbf{(D)}\   \dfrac{2}{429}}</imath>.
+
+~megaboy6679
+
+Did you actually use this method
+
+~randomuser456
+
+yes, but only to double check lol
+
+==Solution 5 (Very Easy)==
+We can see that the minimum amount of points obtained is 4, which can be obtained in two cases. The first case is using all 6 red balls and one of the black or white balls. Since there are 8 black or white balls, there are 8 cases for that. The second case is using only black and white balls. Since we are picking 7 out of the 8 black or white balls, we leave one ball out, and there are 8 ball choices to leave out. Since case 1 has 8 possibilities and case 2 has another 8, and the total possibilities is <imath>\binom{14}{7}</imath>, we get <imath>\boxed{\frac{16}{3432}=\frac{2}{429}}</imath>, which is choice <imath>\boxed{\text{(D)}}</imath>.
+-Neo
+===== Love this one ~PeetahUndebrethale =====
+
+==Solution 6 (pure probability, not assumed to be distinct)==
+The probability of the first case occurring in one order, 6 red and 1 of either colors, can be found with this:
+
+<imath>\frac{6}{14} \cdot \frac{5}{13} \cdot \frac{4}{12} \cdot \frac{3}{11} \cdot \frac{2}{10} \cdot \frac{1}{9} \cdot \frac{8}{8}= \frac{1}{3003}</imath> and then multiply by 7 to get <imath>\frac{1}{429}</imath>, the actual probability of the first case occurring, because there's <imath>\binom{7}{6} = 7</imath> orders that the events could've happened in.
+
+The probability of the second case occurring in one order, 4 black and 3 white, can be found with this:
+<imath>\frac{4}{14} \cdot \frac{3}{13} \cdot \frac{2}{12} \cdot \frac{1}{11} \cdot \frac{4}{10} \cdot \frac{3}{9} \cdot \frac{2}{8} = \frac{1}{30030}</imath> and then multiply by <imath>\binom{7}{4} = 35</imath>. We also know that the third case, 4 white and 3 black, has the same probability of the second case, so we can do <imath>\frac{1}{30030} \cdot 35 \cdot 2 = \frac{1}{429}</imath>
+
+Therefore the probability is <imath>\boxed{\textbf{(D)}\   \dfrac{2}{429}}</imath>.
+
+~iambaconiamgod
+
+==Video Solution 1 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=Jc2s489VKIQ
+
+==Video Solution 2 by MathWhile==
+https://youtu.be/dok7Q3Hj3r4?t=8
+
+==See Also==
+{{AMC12 box|year=2026|ab=A|num-b=10|num-a=12}}
+{{AMC10 box|year=2026|ab=A|num-b=14|num-a=16}}
+* [[AMC 12]]
+* [[AMC 10]]
+* [[AMC 12 Problems and Solutions]]
+* [[AMC 10 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

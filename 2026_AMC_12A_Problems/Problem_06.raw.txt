@@ -1,0 +1,74 @@
+Title: 2026 AMC 12A Problems/Problem 6
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_6&oldid=297719&action=raw
+
+Published Time: 2026-11-10T00:15:14Z
+
+Markdown Content:
+{{duplicate|[[2026 AMC 10A Problems/Problem 10|2026 AMC 10A #10]] and [[2026 AMC 12A Problems/Problem 6|2026 AMC 12A #6]]}}
+==Problem==
+
+For what odd positive integer <imath>n</imath> is the mean of <imath>1</imath>, <imath>4</imath>, <imath>9</imath>, <imath>16</imath>, <imath>\dots</imath>, <imath>n^{2}</imath> exactly <imath>32\%</imath> greater than its median?
+
+<imath>\textbf{(A)}\   19  \qquad 	\textbf{(B)}\   39  \qquad 	\textbf{(C)}\   49  \qquad 	\textbf{(D)}\   89  \qquad 	\textbf{(E)}\   169</imath>
+
+==Solution 1==
+Since all answer choices are odd, the median of the sequence is 
+<cmath>\left(\frac{n+1}{2}\right)^2</cmath>
+
+The mean of the sequence is
+<cmath>\frac{1}{n}\sum_{k=1}^{n} k^2 = \frac{1}{n}\cdot\frac{n(n+1)(2n+1)}{6} = \frac{(n+1)(2n+1)}{6}</cmath>
+
+Since the mean is <imath>32\%</imath> greater than the median, we have
+<cmath>\frac{(n+1)(2n+1)}{6} = \frac{132}{100}\left(\frac{n+1}{2}\right)^2</cmath>
+<cmath>200n + 100 = 198n + 198</cmath>
+<cmath>n = \boxed{\textbf{(C) } 49}</cmath>
+
+~[[Logibyte]]
+
+==Solution 2 (Divisibility, Answer choices)==
+As established in Solution 1, we have the mean and median. Now we write the ratio of of mean to median:
+<cmath>\frac{\text{Mean}}{\text{Median}} = \frac{\frac{(n+1)(2n+1)}{6}}{\frac{(n+1)^2}{4}} = \frac{2(2n+1)}{3(n+1)} = \frac{4n+2}{3n+3}</cmath>
+
+We are given that this ratio is exactly <imath>32\%</imath> greater than <imath>1</imath>, which means:
+<cmath>\frac{4n+2}{3n+3}=\frac{132}{100} = \frac{33}{25}</cmath>
+
+Note that the fraction <imath>\frac{33}{25}</imath> is in simplest form. For the denominator <imath>3(n+1)</imath> to reduce to a multiple of <imath>25</imath> after canceling out any common factors with the numerator, <imath>n+1</imath> must be a multiple of <imath>25</imath>.
+
+We test the given answer choices for <imath>n+1</imath>:
+* (A) <imath>19 + 1 = 20</imath> (not a multiple of 25)
+* (B) <imath>39 + 1 = 40</imath> (not a multiple of 25)
+* (C) <imath>49 + 1 = 50</imath> (multiple of 25)
+* (D) <imath>89 + 1 = 90</imath> (not a multiple of 25)
+* (E) <imath>169 + 1 = 170</imath> (not a multiple of 25)
+
+Only <imath>n = 49</imath> satisfies.
+
+<cmath>n = \boxed{\textbf{(C) } 49}</cmath>
+
+~[[User：Icosahedron0288#Created Pages|Icosahedron0288]]
+
+~Minor edits by Calvin67
+
+==Solution 3==
+Let <imath>n=2k-1.</imath> The median of the sequence would then be <imath>k^2,</imath> while the mean would be <imath>\frac{1^2+2^2+3^2+...+(2k-1)^2}{2k-1}=\frac{(2k-1)(2k)(4k-1)}{6(2k-1)}=\frac{(k)(4k-1)}{3}.</imath> 
+
+Equating, we get <imath>\frac{(k)(4k-1)}{3}=1.32(k^2)\implies 4k-1=3.96k\implies k=25\implies n=\boxed{\text{(C) }49}</imath> ~Tacos_are_yummy_1
+~Minor Edits by Horseneck3
+
+==Video Solution 1 by MathIsFun==
+https://youtu.be/JRWnRtZNW9o?si=Pf0Lz9pvz6wwnbuX&t=5
+
+==Video Solution 2 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=Jc2s489VKIQ
+
+==See Also==
+{{AMC12 box|year=2026|ab=A|num-b=5|num-a=7}}
+{{AMC10 box|year=2026|ab=A|num-b=9|num-a=11}}
+* [[AMC 12]]
+* [[AMC 10]]
+* [[AMC 12 Problems and Solutions]]
+* [[AMC 10 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

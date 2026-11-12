@@ -1,0 +1,358 @@
+Title: 2026 AMC 12A Problems/Problem 18
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_18&oldid=297048&action=raw
+
+Published Time: 2026-11-08T00:32:26Z
+
+Markdown Content:
+==Problem==
+A sphere with center <imath>O</imath> and radius <imath>9</imath> cuts three mutually perpendicular planes that meet at point <imath>P</imath>, forming three circular cross-sections on these planes, which have radii <imath>7, 4,</imath> and <imath>3</imath>. What is <imath>OP</imath>?
+
+<imath>\textbf{(A)}~10\qquad\textbf{(B)}~11\qquad\textbf{(C)}~12\qquad\textbf{(D)}~13\qquad\textbf{(E)}~14</imath>
+
+==Diagram==
+
+<asy>
+size(440);
+defaultpen(fontsize(14pt));
+
+real R=9;
+real a=sqrt(32), b=sqrt(65), c=sqrt(72);
+triple P3=(0,0,0), O3=(a,b,c);
+triple A3=(0,b,c), B3=(a,0,c), C3=(a,b,0);
+
+pair project(triple q) {
+  return ((7*q.x-10*q.y)/sqrt(149),
+          (30*q.x+21*q.y+298*q.z)/sqrt(90145));
+}
+real depth(triple q) {
+  return (-20*q.x-14*q.y+3*q.z)/sqrt(605);
+}
+
+pair P=project(P3), O=project(O3);
+pair A=project(A3), B=project(B3), C=project(C3);
+
+pen bluecut=rgb(0.32,0.49,0.69);
+pen greencut=rgb(0.28,0.55,0.47);
+pen goldcut=rgb(0.72,0.54,0.31);
+pen outline=rgb(0.54,0.62,0.68)+linewidth(0.9);
+pen aux=gray(0.57)+dashed+linewidth(0.65);
+pen target=rgb(0.73,0.31,0.34)+linewidth(1.15);
+
+transform circlemap(pair Q, pair u, pair v) {
+  return (Q.x,Q.y,u.x,v.x,u.y,v.y);
+}
+void rightmark(pair Q, pair u, pair v) {
+  draw((Q+u)--(Q+u+v)--(Q+v),
+       gray(0.55)+linewidth(0.6));
+}
+
+bool hidden(triple q) {
+  pair v=project(q)-O;
+  real s=R^2-v.x^2-v.y^2;
+  return s>0 && depth(q-O3)<sqrt(s)-0.0001;
+}
+void spatialedge(triple U, triple V, pen p,
+                 pen hp=gray(0.75)+linewidth(0.55)) {
+  int n=160;
+  triple d=V-U;
+  real start=0;
+  bool h=hidden(U+d/(2*n));
+
+  for(int j=1; j<n; ++j) {
+    bool next=hidden(U+((j+0.5)/n)*d);
+    if(next!=h) {
+      draw(project(U+start*d)--project(U+(j*1.0/n)*d),
+           h ? hp+dashed : p);
+      start=j*1.0/n;
+      h=next;
+    }
+  }
+  draw(project(U+start*d)--project(V),
+       h ? hp+dashed : p);
+}
+
+// Three perpendicular planes.
+triple X3=(12,0,0), Y3=(0,17,0), Z3=(0,0,18);
+triple XY3=(12,17,0), XZ3=(12,0,18), YZ3=(0,17,18);
+
+fill(P--project(X3)--project(XY3)--project(Y3)--cycle,
+     rgb(0.995,0.985,0.960));
+fill(P--project(Y3)--project(YZ3)--project(Z3)--cycle,
+     rgb(0.960,0.975,0.990));
+fill(P--project(X3)--project(XZ3)--project(Z3)--cycle,
+     rgb(0.960,0.985,0.970));
+
+// Pale shading without opacity().
+for(int j=0; j<=100; ++j) {
+  real t=j/100.0;
+  fill(circle(O+t*(-2.2,3),R*(1-t)+0.0001),
+       rgb(0.92+0.08*t,0.95+0.05*t,0.98+0.02*t));
+}
+draw(circle(O,R),outline);
+draw(arc(O,8.65,105,145),white+linewidth(1.6));
+
+pen framepen=gray(0.64)+linewidth(0.55);
+spatialedge(P3,X3,framepen);
+spatialedge(P3,Y3,framepen);
+spatialedge(P3,Z3,framepen);
+spatialedge(X3,XY3,goldcut+linewidth(0.55));
+spatialedge(Y3,XY3,goldcut+linewidth(0.55));
+spatialedge(X3,XZ3,greencut+linewidth(0.55));
+spatialedge(Z3,XZ3,greencut+linewidth(0.55));
+spatialedge(Y3,YZ3,bluecut+linewidth(0.55));
+spatialedge(Z3,YZ3,bluecut+linewidth(0.55));
+
+// The three circular sections.
+transform TA=circlemap(A,project((0,7,0)),project((0,0,7)));
+transform TB=circlemap(B,project((4,0,0)),project((0,0,4)));
+transform TC=circlemap(C,project((3,0,0)),project((0,3,0)));
+
+draw(TA*unitcircle,bluecut+linewidth(1));
+draw(TB*unitcircle,greencut+linewidth(1));
+
+real phi=atan2(14,20)*180/pi;
+real theta=acos(-c/sqrt(596))*180/pi;
+draw(TC*arc((0,0),1,phi+theta,phi+360-theta),
+     goldcut+linewidth(1));
+draw(TC*arc((0,0),1,phi+360-theta,phi+360+theta),
+     rgb(0.82,0.69,0.51)+dashed+linewidth(0.8));
+
+// Perpendiculars and section radii.
+draw(O--A,aux);
+draw(O--B,aux);
+draw(O--C,aux);
+
+pair T7=project(A3+(0,0,7));
+pair T4=project(B3+(0,0,4));
+pair T3=project(C3+(3,0,0));
+
+draw(A--T7,bluecut+linewidth(0.8));
+draw(B--T4,greencut+linewidth(0.8));
+draw(C--T3,goldcut+linewidth(0.8));
+
+label("$7$",(A+T7)/2,W,bluecut);
+label("$4$",(B+T4)/2,E,greencut);
+label("$3$",C+(1.15,-0.05),(0,0),goldcut);
+
+rightmark(A,project((0.65,0,0)),project((0,0,0.65)));
+rightmark(B,project((0,0.65,0)),project((0,0,0.65)));
+rightmark(C,project((0,0,0.65)),project((0.65,0,0)));
+
+// Sphere radius and OP.
+pair T9=O+R*dir(35);
+draw(O--T9,gray(0.4)+linewidth(0.8));
+label("$9$",(O+T9)/2,N);
+
+spatialedge(P3,O3,target,
+            rgb(0.77,0.42,0.44)+linewidth(1.15));
+
+rightmark(P,project((0.65,0,0)),project((0,0,0.65)));
+rightmark(P,project((0,0.65,0)),project((0,0,0.65)));
+
+dot(P); dot(O); dot(A); dot(B); dot(C);
+label("$P$",P,SE);
+label("$O$",O,NW);
+label("$A$",A,W);
+label("$B$",B,E);
+label("$C$",C+(-0.1,0.45),NW);
+
+draw((project(Y3)+(-0.7,-2))--
+     (project(XZ3)+(0.7,0.7)),invisible);
+</asy>
+
+<asy>
+size(520);
+defaultpen(fontsize(12pt));
+
+real a=sqrt(32), b=sqrt(65), c=sqrt(72);
+
+pen bluecut=rgb(0.32,0.49,0.69);
+pen greencut=rgb(0.28,0.55,0.47);
+pen goldcut=rgb(0.72,0.54,0.31);
+pen blueback=rgb(0.66,0.75,0.85);
+pen greenback=rgb(0.65,0.78,0.73);
+pen goldback=rgb(0.81,0.70,0.54);
+pen redline=rgb(0.73,0.34,0.38);
+pen outline=rgb(0.55,0.64,0.70)+linewidth(0.9);
+pen faint=gray(0.66)+dashed+linewidth(0.7);
+
+// Orthographic projection, at half scale.
+pair pr(triple q) {
+  return ((2*q.x-3*q.y)/(2*sqrt(13)),
+          (-15*q.x-10*q.y+39*q.z)/(2*sqrt(1846)));
+}
+real dep(triple q) {
+  return (-9*q.x-6*q.y-5*q.z)/sqrt(142);
+}
+
+void rightmark(pair H, pair u, pair v) {
+  draw((H+u)--(H+u+v)--(H+v),
+       gray(0.56)+linewidth(0.65));
+}
+
+void foreground(path g, pen p) {
+  draw(g,white+linewidth(2.5));
+  draw(g,p);
+}
+
+// Draw the near or far part of a section circle.
+void section(triple H, triple u, triple v, real r,
+             pen ink, pen pale, bool near) {
+  pair Q=pr(H), U=pr(r*u), V=pr(r*v);
+  transform T=(Q.x,Q.y,U.x,V.x,U.y,V.y);
+  real m=dep(H);
+  real k=r*sqrt(dep(u)^2+dep(v)^2);
+  path g;
+
+  if(m>=k) {
+    if(!near) return;
+    g=T*unitcircle;
+  } else if(m<=-k) {
+    if(near) return;
+    g=T*unitcircle;
+  } else {
+    real phi=atan2(dep(v),dep(u))*180/pi;
+    real t=acos(-m/k)*180/pi;
+    g=T*(near ? arc((0,0),1,phi-t,phi+t)
+              : arc((0,0),1,phi+t,phi+360-t));
+  }
+
+  if(near) foreground(g,ink+linewidth(1.15));
+  else draw(g,pale+dashed+linewidth(0.8));
+}
+
+// LEFT: sphere and circular sections.
+pair O1=(0,0);
+triple H7=(-a,0,0), H4=(0,-b,0), H3=(0,0,-c);
+pair A1=pr(H7), B1=pr(H4), C1=pr(H3);
+
+// Pale shading without opacity().
+for(int j=0; j<=100; ++j) {
+  real t=j/100.0;
+  fill(circle(t*(-1.1,1.5),4.5*(1-t)+0.0001),
+       rgb(0.92+0.08*t,0.95+0.05*t,0.98+0.02*t));
+}
+
+draw(circle(O1,4.5),outline);
+draw(arc(O1,4.32,105,143),white+linewidth(1.5));
+
+section(H7,(0,1,0),(0,0,1),7,bluecut,blueback,false);
+section(H4,(1,0,0),(0,0,1),4,greencut,greenback,false);
+section(H3,(1,0,0),(0,1,0),3,goldcut,goldback,false);
+
+draw(O1--A1,faint);
+draw(O1--B1,faint);
+draw(O1--C1,faint);
+
+pair T7=pr(H7+(0,0,7));
+pair T4=pr(H4+(0,0,4));
+pair T3=pr(H3+(0,-3,0));
+pair T9=4.5*dir(35);
+
+draw(A1--T7,bluecut+linewidth(0.8));
+draw(B1--T4,greencut+linewidth(0.8));
+draw(C1--T3,goldcut+linewidth(0.8));
+draw(O1--T9,gray(0.46)+linewidth(0.8));
+
+section(H7,(0,1,0),(0,0,1),7,bluecut,blueback,true);
+section(H4,(1,0,0),(0,0,1),4,greencut,greenback,true);
+section(H3,(1,0,0),(0,1,0),3,goldcut,goldback,true);
+
+rightmark(A1,pr((0.7,0,0)),pr((0,0,0.7)));
+rightmark(B1,pr((0,0.7,0)),pr((0,0,0.7)));
+rightmark(C1,pr((0,0,0.7)),pr((0,-0.7,0)));
+
+label("$7$",(A1+T7)/2,W,bluecut);
+label("$4$",(B1+T4)/2,E,greencut);
+label("$3$",(C1+T3)/2,SE,goldcut);
+label("$9$",(O1+T9)/2,N);
+
+dot(O1); dot(A1); dot(B1); dot(C1);
+label("$O$",O1,NW);
+label("$A$",A1,W);
+label("$B$",B1,E);
+label("$C$",C1,W);
+
+label("Sphere and cross-sections",(0,5.2),N);
+
+// RIGHT: auxiliary box with opposite vertices P and O.
+pair P2=(8.1,-3.7);
+pair ex=(5.2,0), ey=(-2,1.7), ez=(0,5.7);
+
+pair X=P2+ex, Y=P2+ey, Z=P2+ez;
+pair A2=P2+ey+ez;
+pair B2=P2+ex+ez;
+pair C2=P2+ex+ey;
+pair O2=P2+ex+ey+ez;
+
+fill(P2--X--C2--Y--cycle,
+     rgb(0.995,0.980,0.945));
+fill(P2--Y--A2--Z--cycle,
+     rgb(0.950,0.973,0.993));
+fill(P2--X--B2--Z--cycle,
+     rgb(0.950,0.983,0.967));
+
+// Preblended colors simulate transparent overlap.
+pair J=P2+(0,ey.y);
+fill(P2--Y--J--cycle,
+     rgb(0.964,0.972,0.951));
+fill(P2--X--C2--J--cycle,
+     rgb(0.971,0.978,0.945));
+
+// Hidden edges and the interior diagonal.
+draw(Y--C2--X,
+     gray(0.73)+dashed+linewidth(0.7));
+draw(C2--O2,
+     goldback+dashed+linewidth(1.15));
+draw(P2--O2,
+     redline+dashed+linewidth(1.2));
+
+// Foreground edges interrupt the lines behind them.
+pen edge=gray(0.56)+linewidth(0.8);
+
+foreground(P2--Y--A2--Z,edge);
+foreground(P2--X--B2--Z--cycle,edge);
+foreground(A2--O2,bluecut+linewidth(1.3));
+foreground(B2--O2,greencut+linewidth(1.3));
+
+rightmark(P2,0.075*ex,0.075*ez);
+rightmark(A2,0.065*ex,-0.065*ez);
+rightmark(B2,0.09*ey,-0.065*ez);
+rightmark(C2,-0.065*ex,0.065*ez);
+
+dot(P2); dot(O2); dot(A2); dot(B2); dot(C2);
+
+label("$P$",P2,SW);
+label("$O$",O2,NE);
+label("$A$",A2,NW,bluecut);
+label("$B$",B2,NE,greencut);
+label("$C$",C2,SE,goldcut);
+label("$OP$",(P2+O2)/2,W,redline);
+
+label("Three perpendicular planes",(9.7,5.2),N);
+
+draw((-4.9,-5.6)--(14.2,5.8),invisible);
+</asy>
+
+~SZ624
+
+==Solution 1==
+
+Every point on the three cross-sections also lies on the sphere. Therefore, each of those points is <imath>9</imath> away from <imath>O</imath> from the definition of the sphere. Let the centers of the circles with radii <imath>7</imath>, <imath>4</imath>, and <imath>3</imath> be <imath>A</imath>, <imath>B</imath>, and <imath>C</imath>, respectively. By the Pythagorean Theorem, 
+<cmath>OA = \sqrt{9^2 - 7^2} = \sqrt{32}.</cmath>
+<cmath>OB = \sqrt{9^2 - 4^2} = \sqrt{65}.</cmath>
+<cmath>OC = \sqrt{9^2 - 3^2} = \sqrt{72}.</cmath>
+
+Assume that the planes are the <imath>xy</imath> plane, the <imath>xz</imath> plane, and the <imath>yz</imath> plane, all of which are mutually perpendicular. The distance from an arbitrary point to each plane is equal to the <imath>z</imath>, <imath>y</imath>, and <imath>z</imath> coordinates of that point. Observe that <imath>OA</imath>, <imath>OB</imath>, and <imath>OC</imath> are the distances from <imath>O</imath> to each of the planes. Then the distance between <imath>O</imath> and the origin, or point <imath>P</imath>, is equal to <imath>\sqrt{x^2+y^2+z^2}</imath>, where <imath>x</imath>, <imath>y</imath>, and <imath>z</imath> are the coordinates of <imath>O</imath>. By our reasoning above, the coordinates of <imath>O</imath> are <imath>(\sqrt{32},\sqrt{65},\sqrt{72})</imath>. Plugging in, we find that 
+<cmath>OP = \sqrt{(\sqrt{32})^2+(\sqrt{65})^2+(\sqrt{72})^2} = \sqrt{32+65+72} = \sqrt{169} = \boxed{13},</cmath>
+so the answer is <imath>\boxed{(D)\, 13}</imath>.
+~gb1falcon
+
+==See Also==
+{{AMC12 box|year=2026|ab=A|num-b=17|num-a=19}}
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

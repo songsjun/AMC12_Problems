@@ -1,0 +1,152 @@
+Title: 2026 AMC 12A Problems/Problem 2
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_2&oldid=298190&action=raw
+
+Published Time: 2026-11-12T17:12:36Z
+
+Markdown Content:
+{{duplicate|[[2026 AMC 10A Problems/Problem 3|2026 AMC 10A #3]] and [[2026 AMC 12A Problems/Problem 2|2026 AMC 12A #2]]}}
+==Problem==
+Square <imath>ABCD</imath> has side length <imath>24</imath>. Let <imath>E</imath> be the midpoint of <imath>\overline{BC}</imath>, and let <imath>F</imath> be the intersection of <imath>\overline{AE}</imath> and <imath>\overline{BD}</imath>.
+
+<asy>
+unitsize(0.12cm);
+
+pair A = (0,24);
+pair B = (0,0);
+pair C = (24,0);
+pair D = (24,24);
+pair E = (B + C)/2;
+pair F = intersectionpoint(A--E, B--D);
+
+draw(A--B--C--D--cycle, linewidth(1));
+draw(A--E, linewidth(1));
+draw(B--D, linewidth(1));
+
+dot(A);
+dot(B);
+dot(C);
+dot(D);
+dot(E);
+dot(F);
+
+label("$A$", A + 3.3*dir(135));
+label("$B$", B + 3.3*dir(-135));
+label("$C$", C + 3.3*dir(-45));
+label("$D$", D + 3.3*dir(45));
+label("$E$", E + 2.6*dir(-90));
+label("$F$", F + 2.7*dir(0));
+</asy>
+
+What is the area of <imath>\triangle BEF</imath>?
+
+<imath>
+	\textbf{(A)}\   36  \qquad
+	\textbf{(B)}\   40  \qquad
+	\textbf{(C)}\   45  \qquad
+	\textbf{(D)}\   48  \qquad
+	\textbf{(E)}\   52  
+</imath>
+
+==Solution 1==
+To find the intersection point of the two lines, we can turn them into a system of equations. <imath>\overline{AFE}</imath> becomes <imath>y=-2x+24</imath>, and <imath>\overline{BFD}</imath> becomes <imath>y=x</imath>. Solving, we get <imath>y=x=8</imath>. Therefore the height of the triangle is <imath>8</imath> and the base is <imath>12</imath>. So <imath>\frac{8\cdot12}{2}=\boxed{48}</imath>.
+~MrThinker
+
+
+Edit: Both <imath>\overline{AFE}</imath> and <imath>\overline{BFD}</imath> were written as <imath>\overline{ABC}</imath> ~ GETTHEMONKEY
+
+==Solution 2==
+<imath>\overline{AD}</imath> is parallel to <imath>\overline{BC}</imath>, so <imath>\angle{ADF} = \angle{FBE}</imath> and <imath>\angle{DAF} = \angle{FEB}</imath>. By the AA similarity theorem, <imath>ADF \sim EBF</imath>. Let the height of the triangle <imath>EBF</imath> be <imath>x</imath>. <imath>AD = 24</imath> and<imath>EB = 12</imath>, so the height of the triangle <imath>DAF</imath> is twice the height of <imath>FEB</imath>. The sum of the two heights covers the whole height of the rectangle, so <imath>3x = 24</imath>, and <imath>x = 8</imath>. Therefore, the area of the triangle is <imath>\frac{12 \cdot8}{2} = 48</imath> <imath>\fbox{D}</imath>. <imath>\newline</imath>
+<imath>\sim</imath>cyrus825
+
+==Solution 3==
+We can see that <imath>\overline{AE}</imath> is a median of <imath>\triangle ABC</imath>. Let <imath>\overline{BD}</imath> intersect <imath>\overline{AC}</imath> at <imath>G</imath>, so <imath>\overline{BG}</imath> is another median and <imath>F</imath> is the centroid. The medians of <imath>\triangle ABC</imath> split it into six triangles of equal area, and <imath>\triangle BEF</imath> is one of them. Therefore,
+<cmath>[BEF]=\frac{1}{6}[ABC]=\frac{1}{6}\cdot288=\boxed{\textbf{(D)}~48}</cmath>
+
+~ [[Logibyte]]
+
+==Solution 4 (Coordinate geometry)==
+We can solve this problem using coordinate geometry. Define B to be <imath>(0,0)</imath>. We can find the intersection of lines <imath>\overline{BD}</imath> and <imath>\overline{AE}</imath> by defining these lines as <imath>y=x</imath> and <imath>y=-2x+24</imath>, respectively. Solving these equations, we find the intersection point to be at <imath>(8,8)</imath> Finally, using Shoelace Theorem, we find the total area to be <imath>\frac{1}{2}|(0+0+12\cdot 8)-(0+0+0)|=48</imath>, so the answer is <imath>\boxed{\textbf{D}}</imath>
+~Voidling
+
+==Solution 5 (Cheese) ==
+Measure the base and height, and scale it to match the quantities in the problem. Then calculate the area. 
+WARNING!!! - Only do this if you have 30 seconds left.
+<imath>\newline</imath>
+<imath>\sim</imath>MATH_1S_AWESOME
+
+Edit: Diagrams are NOT drawn to scale so this won't work
+<imath>\newline</imath>
+Edit: Diagrams are usually drawn to scale, even though they say it doesn't have to be drawn to scale so you don't use the niche technique of ruler bashing
+<imath>\newline</imath>
+Edit: why would you have 30 seconds left while on the second problem
+
+== Solution 6 (Area ratios) ==
+We know that triangle <imath>ABE</imath> has area <imath>\frac{12 \times 24}{2}</imath>, which is just <imath>144</imath>. Since the line <imath>BD</imath> bisects the angle <imath>\angle ABE</imath>, we can use the properties of the angle bisector theorem. By the angle bisector theorem:
+<cmath>\frac{AF}{FE} = \frac{AB}{BE}</cmath>
+<cmath>\frac{AF}{FE} = \frac{24}{12} = \frac{2}{1}</cmath>
+Therefore, <imath>AF = 2FE</imath>. This means that <imath>FE = \frac{1}{3}AE</imath>, which helps us conclude that the area of <imath>\triangle BFE</imath> is <imath>\frac{1}{3}</imath> of the area of <imath>\triangle ABE</imath>. 
+
+So our answer is:
+<cmath>\frac{144}{3} = \boxed{48}</cmath>
+
+~Chiragnoodles
+
+
+== Solution 7 (Bashing) ==
+We know that square <imath>ABCD</imath> has area of 576, triangle <imath>ABE</imath> has area of 144 and triangle <imath>BCD</imath> has area 288. Now we use the answer choices to figure out the area of the remaining two triangles. Using 48 as the area of triangle <imath>BEF</imath> we can find that the triangle’s height to be 8. This means triangle <imath>AFD</imath> has a height of 24 - 8 = 16. Now we calculate the area of triangle <imath>AFD</imath> to be 192. Since triangle <imath>ABE</imath> and <imath>BCD</imath> overlap we must subtract the area of <imath>BEF</imath>. We get 144 + 288 + 192 - 48 =576. Since 576 is the area of <imath>ABCD</imath> we know the area of <imath>BEF</imath> is 48. Hence we get answer <cmath>\boxed{48}</cmath>
+
+~MATHGURU2015 (First time adding a solution to AOPS, please correct any formatting errors)
+
+==Solution 8 (super duper cheese)==
+Recognize this is the [https://tasks.illustrativemathematics.org/content-standards/tasks/1571 construction of a third.]
+
+<imath>\frac{24}{3} \times 12 \times \frac{1}{2} = \boxed{\textbf{(D)}~48}</imath>
+
+==Solution 9 (Cross Product)==
+Establish a coordinate system with point <imath>B</imath> at the origin <imath>(0,0)</imath>, <imath>C</imath> at <imath>(24,0)</imath>, <imath>A</imath> at <imath>(0,24)</imath>, and <imath>D</imath> at <imath>(24,24)</imath>. Since <imath>E</imath> is the midpoint of <imath>\overline{BC}</imath>, its coordinates are <imath>(12,0)</imath>.
+
+This allows us to write linear equations representing lines <imath>AE</imath> and <imath>BD</imath>:
+* Line <imath>AE</imath> passes through <imath>(0,24)</imath> and <imath>(12,0)</imath>, giving <imath>y = -2x + 24</imath>.
+* Line <imath>BD</imath> passes through <imath>(0,0)</imath> and <imath>(24,24)</imath>, giving <imath>y = x</imath>.
+
+Setting these equations equal to find their intersection point <imath>F</imath>:
+<cmath>x = -2x + 24 \implies 3x = 24 \implies x = 8</cmath>
+Thus, the intersection <imath>F</imath> is at <imath>(8,8)</imath>. Since point <imath>B</imath> is at <imath>(0,0)</imath>, we can represent two sides of <imath>\triangle BEF</imath> as vectors in three dimensions (assuming a <imath>z</imath>-component of <imath>0</imath>):
+<cmath>\overrightarrow{BF} = \langle 8, 8, 0 \rangle \quad \text{and} \quad \overrightarrow{BE} = \langle 12, 0, 0 \rangle</cmath>
+
+Taking the cross product of these two vectors gives:
+<cmath>\overrightarrow{BF} \times \overrightarrow{BE} = \begin{vmatrix} \mathbf{i} & \mathbf{j} & \mathbf{k} \\ 8 & 8 & 0 \\ 12 & 0 & 0 \end{vmatrix} = \langle 0, 0, (8)(0) - (8)(12) \rangle = \langle 0, 0, -96 \rangle</cmath>
+
+Taking half the magnitude of the cross product gives the area of <imath>\triangle BEF</imath>:
+<cmath>\text{Area} = \frac{1}{2} \left\| \overrightarrow{BF} \times \overrightarrow{BE} \right\| = \frac{1}{2} \sqrt{0^2 + 0^2 + (-96)^2} = \frac{96}{2} = \boxed{\textbf{(D) } 48}</cmath>
+~thesuperioraxolotl
+
+== Video Solution (Fast and Easy) ==
+https://www.youtube.com/watch?v=JPFWG_ckccg
+
+~ Pi Academy
+
+==Video Solution 1 (Coordinate Geometry)==
+https://youtu.be/sNFSsL75LGE?t=121
+
+~Foozono ~MathisFun
+
+==Video Solution 2 (Angle Bisector/Area Ratios)==
+https://youtu.be/sNFSsL75LGE?t=289
+
+~Chiragnoodles ~MathisFun
+
+==Video Solution 3 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=Jc2s489VKIQ
+
+==See Also==
+{{AMC12 box|year=2026|ab=A|num-b=1|num-a=3}}
+{{AMC10 box|year=2026|ab=A|num-b=2|num-a=4}}
+* [[AMC 12]]
+* [[AMC 10]]
+* [[AMC 12 Problems and Solutions]]
+* [[AMC 10 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

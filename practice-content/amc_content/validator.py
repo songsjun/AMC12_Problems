@@ -22,6 +22,10 @@ ARCHIVE_PUBLICATION_STATUS = "archive-practice"
 _ARCHIVE_AMC12_ID_RE = re.compile(r"^amc12-(?P<year>\d{4})-[ab]$")
 _EARLY_ARCHIVE_POLICY_VERSION = "amc12-archive-2002-2006-v1"
 _LATE_ARCHIVE_POLICY_VERSION = "amc12-archive-2007-plus-v1"
+LEGACY_ARCHIVE_FORM_IDS = frozenset(
+    f"amc12-{year}-{variant}" for year in range(2002, 2026) for variant in ("a", "b")
+)
+ARCHIVE_FORM_IDS = LEGACY_ARCHIVE_FORM_IDS | {"amc12-2026-a"}
 
 
 def score_value_error(value: Any) -> str | None:
@@ -360,8 +364,8 @@ def _archive_scoring_errors(manifest: dict[str, Any], questions: Any) -> list[st
     id_match = _ARCHIVE_AMC12_ID_RE.fullmatch(form_id) if isinstance(form_id, str) else None
     if id_match:
         year = int(id_match.group("year"))
-        if year < 2002 or year > 2025:
-            errors.append("archive AMC 12 id year must be from 2002 through 2025")
+        if form_id not in ARCHIVE_FORM_IDS:
+            errors.append("archive AMC 12 id must be a 2002–2025 A/B paper or 2026 A")
         else:
             early = year <= 2006
             expected_blank = 2.5 if early else 1.5

@@ -1,0 +1,47 @@
+Title: 2026 AMC 12A Problems/Problem 12
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_12&oldid=297531&action=raw
+
+Published Time: 2026-11-09T03:33:42Z
+
+Markdown Content:
+==Problem==
+Ethan writes down five congruences:
+<cmath>x \equiv 0 \pmod{2}, \quad x \equiv 0 \pmod{3}, \quad x \equiv 1 \pmod{4}, \quad x \equiv 5 \pmod{6}, \quad x \equiv 7 \pmod{12}</cmath>How many positive integers less than or equal to <imath>2026</imath> satisfy at least one of these five congruences?
+
+<imath>\textbf{(A) } 1688 \qquad
+\textbf{(B) } 1856 \qquad
+\textbf{(C) } 1857 \qquad
+\textbf{(D) } 2025 \qquad
+\textbf{(E) } 2026</imath>
+
+==Solution 1==
+We perform casework on the residues modulo <imath>12</imath>:
+* The residues <imath>0,2,4,6,8,10</imath> correspond to <imath>x\equiv 0\pmod{2}</imath>.
+* The residues <imath>0,3,6,9</imath> correspond to <imath>x\equiv 0\pmod{3}</imath>.
+* The residues <imath>1,5,9</imath> correspond to <imath>x\equiv 1\pmod{4}</imath>.
+* The residues <imath>5,11</imath> correspond to <imath>x\equiv 5\pmod{6}</imath>.
+* The residue <imath>7</imath> corresponds to <imath>x\equiv 7\pmod{12}</imath>.
+Each residue appears at least once in the list above, hence all integers <imath>x</imath> satisfy one of these congruences, or <imath>\boxed{\textbf{(E)}}</imath>.
+
+~ [https://artofproblemsolving.com/wiki/index.php/User:Eevee9406 eevee9406]
+
+==Solution 2==
+This is the first part of AMC 12 so you realize that the problems are not going to be too complex. Write the first few numbers and you can see that they all fit into at least one category. So, you assume that all numbers work, giving you an answer of <imath>\boxed{\text{2026}}</imath>.
+
+~ hb12
+
+==Solution 3==
+Notice that all the moduli have a lowest common multiple of <imath>12</imath>, thus if all positive integers between <imath>1</imath> and <imath>12</imath> satisfy at least one of the given conditions, then we can simply add <imath>12</imath> to every single one, and it will satisfy at least the same condition as it does in the base case of integers between <imath>1</imath> and <imath>12</imath>. For example, the number <imath>5</imath> satisfies the condition <imath>x \equiv 5 \pmod{6}</imath>, thus if you add <imath>12</imath>, and because <imath>6</imath> is a factor of <imath>12</imath>, <imath>5+12=17 \equiv 5 \pmod{6}</imath>. Simply testing all numbers from <imath>1</imath> through <imath>12</imath> and confirming that every number does in fact satisfy one of these conditions, we can conclude that all positive integers satisfy at least one of these conditions. Therefore, our answer is simply <imath>2026</imath>, or <imath>\boxed{\textbf{E}}</imath>.
+~Voidling
+
+==Video Solution 1 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=Jc2s489VKIQ
+
+==See Also==
+{{AMC12 box|year=2026|ab=A|num-b=11|num-a=13}}
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

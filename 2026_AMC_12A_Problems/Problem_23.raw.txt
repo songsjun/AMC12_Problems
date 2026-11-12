@@ -1,0 +1,223 @@
+Title: 2026 AMC 12A Problems/Problem 23
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_23&oldid=297991&action=raw
+
+Published Time: 2026-11-11T07:12:32Z
+
+Markdown Content:
+==Problem==
+There is a unique real number <imath>x</imath> between <imath>0</imath> and <imath>1</imath> such that <imath>x^3 + x^2 = 1.</imath> For that <imath>x,</imath> there exist unique integers <imath>a, b,</imath> and <imath>c</imath> such that the infinite product
+<cmath>(x +1)(x^2 +1)(x^4 +1)(x^8 +1)(x^{16} +1)\dots</cmath>equals <imath>ax^2 + bx +c.</imath> What is <imath>a+b+c</imath>?
+
+<imath>\textbf{(A) } 2\qquad\textbf{(B) } 3\qquad\textbf{(C) } 4\qquad\textbf{(D) } 5\qquad\textbf{(E) } 6</imath>
+
+==Solution==
+The infinite product can be represented as
+<cmath>\lim_{n\to\infty}\prod_{k=0}^n (1+x^{2^k})</cmath>When we multiply the expression by <imath>(1-x)</imath>, the entire expression telescopes, yielding
+<cmath>\lim_{n\to\infty}\frac{1-x^{2^{n+1}}}{1-x}</cmath>which goes to <imath>\frac{1}{1-x}</imath> as <imath>n\to\infty</imath>.
+
+Finally, we equate to get <imath>1=(1-x)(ax^2+bx+c)</imath>. Expanding yields
+<cmath>ax^3+x^2(b-a)+x(c-b)+(1-c)=0</cmath>We can now guess values for <imath>a</imath>. Coincidentally, <imath>a=1</imath> works, yielding <imath>b=2</imath> and <imath>c=2</imath>. Hence the answer is <imath>1+2+2=5</imath>, or <imath>\boxed{\textbf{(D)}}</imath>.
+
+~ [https://artofproblemsolving.com/wiki/index.php/User:Eevee9406 eevee9406]
+== Solution 1.5 ==
+
+As in solution 1, we get <imath>ax^3+x^2(b-a)+x(c-b)=c-1</imath>. Instead of guessing, we can match this equation to <imath>x^3+x^2=1</imath> by ensuring the coefficients are the same. So, we get <imath>a=1</imath>, <imath>b-a=1</imath>, <imath>c-b=0</imath>, and <imath>c-1=1</imath>. Thus, <imath>a=1</imath>, <imath>b=2</imath>, and <imath>c=2</imath>, so the answer is <imath>1+2+2=5</imath>, or <imath>\boxed{\textbf{(D)}}</imath>.
+
+Technically you can’t do this because it is not an identity, but because x is irrational, you can kind of get away with it- this is still mathematically wrong. Solution 2 is a more complete way.
+- Skip_God (not my solution)
+
+~ vaishnav
+
+==Solution 2==
+Continuing as in Solution 1 and getting the polynomial
+<cmath>ax^3 + (b-a)x^2 + (c-b)x + (1-c),</cmath>
+we add and subtract <imath>ax^2</imath> to obtain
+<cmath>
+\begin{align*}
+ax^3 + ax^2 - ax^2 + (b-a)x^2 + (c-b)x + (1-c) &= a(x^3 + x^2) + (b-2a)x^2 + (c-b)x + (1-c) \\
+&= (b-2a)x^2 + (c-b)x + (1+a-c).
+\end{align*}
+</cmath>
+We assume that <imath>x</imath> and <imath>x^2</imath> are both irrational, so the only way for this polynomial to equal <imath>0</imath> is for each of the coefficients and the constant term to be <imath>0</imath>. This sets up the system of equations
+
+<cmath>
+\begin{align*}
+b-2a &= 0\\
+c-b &= 0\\
+1+a-c &= 0,
+\end{align*}
+</cmath>
+whence <imath>a=1</imath>, <imath>b=2</imath>, and <imath>c=2</imath>, so <imath>a + b + c = \boxed{\textbf{(D) }5}</imath>
+
+~ Blosp
+
+Note: No need to assume that <imath>x^2</imath> and <imath>x</imath> are both irrational; we can prove it by using the handy Rational Root Theorem. It states that since the polynomial <imath>x^3+x^2-1=0</imath> has all rational coefficients, any rational root (of the form <imath>\frac p q</imath>) of the polynomial must have <imath>p | (-1)</imath> (-1 is from the last term of the polynomial) and <imath>q | 1</imath> (1 is from the leading coefficient of the polynomial). We try out the only roots that satisfy these conditions, <imath>\pm1</imath>, and they don't work. Therefore, <imath>x</imath> and <imath>x^2</imath> are both irrational.
+~ WhatDoHumanitariansEat
+
+==Solution 3==
+We rewrite the given equation <imath>x^3 + x^2 = 1</imath> into these two equations:
+<cmath>
+\begin{align} 
+x^n + x^{n-1} = x^{n-3} \implies x^n = x^{n-3} - x^{n-1}, n \in \mathbb{R} \\
+x^{m+1} + x^m = x^{m-2} \implies x^m = x^{m-2} - x^{m+1}, m \in \mathbb{R}
+\end{align}
+</cmath>
+Note that the infinite product can be written as <imath>\sum_{n=0}^\infty x^n = 1 + x + x^2 + x^3 + x^4 + x^5...</imath>
+
+If we replace every <imath>x^{4k}</imath> term with <imath>x^{4k-2}-x^{4k+1}, k \in \mathbb{R}</imath> (equation 1) and
+
+we replace every <imath>x^{4k+2}</imath> term with <imath>x^{4k} - x^{4k+3}, k \in \mathbb{R}</imath> (equation 2),
+
+every section of
+
+<cmath>
+\begin{align*} \\
+x^{4k}+x^{4k+1}+x^{4k+2}+x^{4k+3} \\
+= x^{4k-2} - x^{4k+1} + x^{4k+1} + x^{4k} - x^{4k+3} + x^{4k+3} \\
+= x^{4k-2} + x^{4k} \\
+\end{align*}
+</cmath>
+
+therefore:
+
+<cmath>
+\begin{align*}\\
+\sum_{n=0}^\infty x^n = 1 + x + \sum_{m=0}^\infty x^{2m}\\
+\end{align*}
+</cmath>
+
+Let:
+<cmath>
+\begin{align*}\\
+u = \sum_{m=0}^\infty x^{2m}\\
+\end{align*}
+</cmath>
+
+So:
+<cmath>
+\begin{align*}\\
+\sum_{n=0}^\infty x^n = \sum_{n=0}^\infty x^{2n} + \sum_{n=0}^\infty x^{2n+1} = \sum_{n=0}^\infty x^{2n} + x \sum_{n=0}^\infty x^{2n} = u + ux\\
+\end{align*}
+</cmath>
+
+And now solving for <imath>u</imath>:
+<cmath>
+\begin{align*}\\
+u + ux = 1 + x + u \implies ux = 1+x \implies u = \frac{1}{x} + 1\\
+\end{align*}
+</cmath>
+
+Therefore:
+<cmath>
+\begin{align*}\\
+u + ux = \frac{1}{x} + 1 + (x)(\frac{1}{x} + 1) = \frac{1}{x} + 1 + 1 + x\\
+\end{align*}
+</cmath>
+
+Because <imath>1 = x^3 + x^2</imath>, <imath>\frac{1}{x} = x^2 + x</imath>
+
+Therefore:
+<cmath>
+\begin{align*}\\
+\frac{1}{x} + 1 + 1 + x = x^2 + x + 2 + x = x^2 + 2x + 2\\
+\end{align*}
+</cmath>
+
+And <imath>1 + 2 + 2 = \boxed{\textbf{(D) }5}</imath>
+
+~hi-person
+
+==Solution 4==
+Note that the provided product
+<cmath>
+(x + 1)(x^2 + 1)(x^4 + 1)(x^8 + 1)(x^{16} + 1)\dotsm
+</cmath>
+expands as a formal power series
+<cmath>
+1 + x + x^2 + x^3 + x^4 + x^5 + \dotsb,
+</cmath>
+which converges to <imath>{\frac{1}{1 - x}}</imath> for the given <imath>x \in (0, 1)</imath>. We wish to find a polynomial <imath>ax^2 + bx + c</imath> such that <imath>(1 - x)(ax^2 + bx + c) = 1</imath>.
+
+Recall we are given <imath>x^3 + x^2 = 1</imath>, which can be rearranged as
+<cmath>
+x^3 = 1 - x^2 = (1 - x)(1 + x), \qquad \text{and} \qquad x^2 = 1 - x^3 = (1 - x)(1 + x + x^2).
+</cmath>
+Adding,
+<cmath>
+x^3 + x^2 = (1 - x)((1 + x) + (1 + x + x^2)) = (1 - x)(2 + 2x + x^2),
+</cmath>
+which is <imath>1</imath> since <imath>x^3 + x^2 = 1</imath>.
+
+We are done, having found <imath>a = 1</imath>, <imath>b = 2</imath>, <imath>c = 2</imath>, so <imath>a + b + c = \boxed{\textbf{(D) }5}</imath>.
+
+~Mqnic_
+
+== Solution 5 ==
+
+As Solution 4 showed, 
+<cmath> (x + 1)(x^2 + 1)(x^4 + 1)(x^8 + 1)(x^{16} + 1)\dotsm </cmath>
+is rearranged as 
+<cmath> 1 + x + x^2 + x^3 + x^4 + x^5 + \dotsb, </cmath>
+and it is converged to <imath>\frac{1}{1 - x}</imath>.
+
+Using the relation <imath>x^3 + x^2 = 1</imath>, we can express:
+<cmath> \frac{x^3 + x^2}{1-x} = \frac{1}{1-x} </cmath>
+
+By performing polynomial long division on <imath>\frac{x^3+x^2}{1-x}</imath>:
+<cmath> \frac{x^3+x^2}{-(x-1)} = -x^2 - 2x - 2 + \frac{2}{1-x} </cmath>
+
+Equating this to <imath>\frac{1}{1-x}</imath>:
+<cmath> \frac{1}{1-x} = -x^2 - 2x - 2 + \frac{2}{1-x} </cmath>
+
+Rearranging the terms yields:
+<cmath> \frac{1}{1-x} = x^2 + 2x + 2 </cmath>
+
+Thus, <imath>(x + 1)(x^2 + 1)(x^4 + 1)(x^8 + 1)(x^{16} + 1)\dotsm</imath> equals <imath>x^2 + 2x + 2</imath>.
+
+And <imath>1 + 2 + 2 = \boxed{\textbf{(D) }5}</imath>.
+
+~harry3973
+
+==Solution 6==
+
+As used in Solutions 4 and 5, we can set <imath>S</imath> as the sum of our infinite series
+<cmath> S = 1 + x + x^2 + x^3 + x^4 + x^5 + \dotsb </cmath>
+Using the relation we are given, we can extrapolate the following infinite list of equations:
+<cmath> x^3 + x^2 = 1 </cmath>
+<cmath> x^4 + x^3 = x </cmath>
+<cmath> x^5 + x^4 = x^2 </cmath>
+<cmath> \vdots </cmath>
+Summing them, we get
+<cmath> x^2 + 2(x^3 + x^4 + x^5 + \dotsm) = 1 + x + x^2 + \dotsm </cmath> 
+which can be rearranged and substituted to get
+<cmath> x^3 + x^4 + x^5 + \dotsm =  \dfrac{S - x^2}{2} </cmath>
+Our original series can now be written as 
+<cmath> S = 1 + x + x^2 + \dfrac{S - x^2}{2} </cmath>
+Solving for <imath>S</imath> gives us 
+<cmath> S = x^2 + 2x + 2 </cmath>
+And <imath>1 + 2 + 2 = \boxed{\textbf{(D) }5}</imath>
+
+~ paalu
+
+==Solution 7==
+
+As shown in solution 4,
+<cmath> (x + 1)(x^2 + 1)(x^4 + 1)\dotsm </cmath>
+converges to <imath>{\frac{1}{1 - x}}</imath>
+
+<imath> x^3 + x^2 = 1 </imath> can be rearranged as <cmath> x^3 = 1 - x^2 </cmath> which can be factored as <cmath> x^3 = (1 - x)(1 + x) </cmath> and rearranged as <cmath> 1 - x = \frac{x^3}{1+x} </cmath>
+Substituting <imath> 1 - x </imath> in the denominator with <imath> \frac{x^3}{1+x} </imath> yields <cmath> \frac{1 + x}{x^3} = ax^2 + bx + c</cmath>
+Since <imath>1 = x^3 + x^2</imath>, <cmath> 1 + x = (1 + x)(x^3 + x^2) = x^4 + 2x^3 + x^2(x^3 + x^2) = x^5 + 2x^4 + 2x^3 </cmath>
+
+Dividing by <imath> x^3 </imath> yields <cmath> x^2 + 2x + 2 </cmath> And <imath> 1 + 2 + 2 = \boxed{\textbf{(D) }5}</imath>
+
+~ heliopolis
+
+==See Also==
+{{AMC12 box|year=2026|ab=A|num-b=22|num-a=24}}
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

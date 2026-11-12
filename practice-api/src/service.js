@@ -613,9 +613,9 @@ export class PracticeService {
 
   /**
    * The only service-level path for archive-v1. The batch validator verifies
-   * all 48 reserved IDs, one common release version, and shared key/media
-   * provenance before any storage call; the store then imports the complete
-   * collection in one transaction.
+   * the complete legacy 48 IDs and their shared version/key/media provenance,
+   * optionally with the independently sourced 2026A addition, before storage.
+   * The store imports the complete collection in one transaction.
    */
   async importArchiveRelease(payload, { publish = false } = {}) {
     if (typeof publish !== 'boolean') {

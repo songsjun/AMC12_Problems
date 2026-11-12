@@ -1,0 +1,60 @@
+Title: 2026 AMC 12A Problems/Problem 13
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems/Problem_13&oldid=298161&action=raw
+
+Published Time: 2026-11-12T06:36:40Z
+
+Markdown Content:
+==Problem==
+A board has <imath>4</imath> spaces in a row, which can be filled with numbers. The sides of a fair, <imath>8</imath>-sided die are numbered <imath>1</imath> through <imath>8</imath>. David rolls the die <imath>4</imath> times. After each roll, he randomly chooses an empty spot to write the number shown on the die. What is the probability that the numbers on the board form a strictly increasing sequence when read from left to right?
+
+<imath>\textbf{(A) } \frac{1}{128} \qquad\textbf{(B) } \frac{5}{432} \qquad\textbf{(C) } \frac{35}{2048} \qquad\textbf{(D) } \frac{35}{1024} \qquad\textbf{(E) } \frac{1}{24}</imath>
+
+==Solution==
+Notice that this is equivalent to just independently choosing a random number in each of the four places. The number of orderings where the numbers on the board form a strictly increasing sequence is just the number of ways to choose <imath>4</imath> distinct numbers from the set of <imath>8</imath> numbers (since each selection corresponds to a unique valid strictly increasing ordering). Therefore, the answer is
+<cmath>\frac{\binom{8}{4}}{8^4}=\frac{8\cdot 7\cdot 6\cdot 5}{8^4\cdot 24}=\frac{70}{2^{12}}=\frac{35}{2048}</cmath>
+so the answer is <imath>\boxed{\textbf{(C)}}</imath>.
+
+~ [https://artofproblemsolving.com/wiki/index.php/User:Eevee9406 eevee9406]
+
+==Alternative Solution==
+
+The probability that David rolls four different numbers is <imath>\left(\frac{8}{8}\right)\left(\frac{7}{8}\right)\left(\frac{6}{8}\right)\left(\frac{5}{8}\right)</imath>.
+
+There's only one right order out of 24 orders (<imath>4!</imath>), so the probability that they are in the right order is <imath>\frac{1}{24}</imath>.
+
+Multiplying, we get <imath>\boxed{\textbf{(C) } \frac{35}{2048}}</imath>.
+
+~ [https://artofproblemsolving.com/wiki/index.php/User:ShockFish ShockFish]
+
+==Alternative Solution 2==
+
+We can immediately see that the largest possible first digit is <imath>5</imath>, so we will find the number of correct orderings for each unique first digit <imath>\leq 5</imath>.
+
+To start, the only valid ordering for the case where the first digit is <imath>5</imath> is <imath>5, 6, 7, 8</imath>.
+
+We look at the case where the first number is <imath>4</imath>, and we can see that the remaining <imath>3</imath> numbers must be selected out of <imath>{5, 6, 7, 8}</imath>. Notice that selecting an ordering whilst satisfying the condition that they must be in strictly increasing order is the same as choosing to exclude <imath>1</imath> number, as the <imath>3</imath> numbers that remain only have one order in which they are strictly increasing. Thus the number of orderings where the first digit is <imath>4</imath> is <imath>\binom{4}{1}</imath>. (The simpler logic is just choosing <imath>3</imath> of the <imath>4</imath> numbers and doing <imath>\binom{n}{3}</imath> for each case, but these two are logically equivalent)
+
+We can generalize this to the remaining cases of the first digit being <imath>3, 2,</imath> or <imath>1</imath>. If <imath>3</imath> is the first digit, then the number of correct orderings is the same as the number of combinations where we exclude <imath>2</imath> numbers from the <imath>5</imath> numbers that are bigger than <imath>3</imath>, which is <imath>\binom{5}{2}</imath>.
+
+Thus, the total number of correct orderings will be <imath>1+\binom{4}{1}+\binom{5}{2}+\binom{6}{3}+\binom{7}{4}=70</imath>.
+
+The total number of possible orderings is <imath>{8^4}=4096</imath>, so the probability will be <imath>\frac{70}{4096}=\boxed{\textbf{(C) } \frac{35}{2048}}</imath>.
+
+~ bread782
+
+==Remark==
+Answers <imath>\textbf{(B)}</imath> and <imath>\textbf{(E)}</imath> are sus because they have denominators that are multiples of 3, but the dice has 8 sides
+
+~iambaconiamgod
+
+==Video Solution 1 by SpreadTheMathLove==
+https://www.youtube.com/watch?v=Jc2s489VKIQ
+
+==See Also==
+{{AMC12 box|year=2026|ab=A|num-b=12|num-a=14}}
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}

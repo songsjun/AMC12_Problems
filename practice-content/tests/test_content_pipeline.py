@@ -187,6 +187,30 @@ The answer is $\boxed{(D)}$.
         self.assertIn("Choose the correct value.", parsed.prompt_markdown)
         self.assertFalse(parsed.errors)
 
+    def test_2026a_q25_mathbf_choices_preserve_values_and_solution_boundary(self) -> None:
+        # AoPS 2026 AMC 12A Q25, revision 297600: the source uses mathbf labels.
+        prompt = (
+            "Let $m$ be a positive integer such that there are at least $50$ positive integers $x$ "
+            "less than $m$ for which $x^2-1$ is a multiple of $m$. "
+            "What is the sum of the digits of the least possible value of $m$?"
+        )
+        for choices in (
+            r"$\mathbf{(A)} 12\qquad\mathbf{(B)} 15\qquad\mathbf{(C)} 16\qquad\mathbf{(D)} 18\qquad\mathbf{(E)} 22$",
+            r"$(\mathbf{A}) 12\qquad(\mathbf{B}) 15\qquad(\mathbf{C}) 16\qquad(\mathbf{D}) 18\qquad(\mathbf{E}) 22$",
+            r"$\mathbf{A}\qquad 12\qquad\mathbf{(B)} 15\qquad\mathbf{(C)} 16\qquad\mathbf{(D)} 18\qquad\mathbf{(E)} 22$",
+        ):
+            with self.subTest(choices=choices):
+                parsed = self._parse(
+                    "# 2026 AMC 12A Problem 25\n\n## Problem\n" + prompt + "\n\n" + choices
+                    + "\n\n## Solution 1\nLet $p^k$ be the largest power of a prime $p$ that divides $x^2-1$.\n",
+                    number=25,
+                )
+                self.assertFalse(parsed.errors)
+                self.assertEqual(parsed.choices, dict(zip("ABCDE", ("$12$", "$15$", "$16$", "$18$", "$22$"))))
+                self.assertEqual(parsed.prompt_markdown.strip(), prompt)
+                self.assertNotIn("largest power", parsed.prompt_markdown)
+                self.assertIn("largest power", parsed.solution_markdown)
+
     def test_parser_removes_an_entire_independently_delimited_final_choice_row(self) -> None:
         parsed = self._parse(
             r"""# Demo Problem 1
@@ -989,6 +1013,23 @@ class ArchiveManifestValidationTests(unittest.TestCase):
         private["scoringPolicy"]["blank"] = 1.5
         errors = validate_archive_private_manifest(private)
         self.assertIn("archive AMC 12 scoringPolicy.blank must be 2.5 for 2004", errors)
+
+    def test_2026a_uses_modern_scoring_and_2026b_is_not_released(self) -> None:
+        private = self._private_archive_fixture()
+        private["id"] = "amc12-2026-a"
+        private["scoringPolicy"] = _archive_scoring_policy(2026, 24)
+        private["scoringPolicyVersion"] = private["scoringPolicy"]["version"]
+        self.assertEqual(private["scoringPolicy"]["blank"], 1.5)
+        private["contentHash"] = archive_public_projection(private)["contentHash"]
+        private["manifestHash"] = canonical_hash(private, omit=("manifestHash",))
+        self.assertEqual(validate_archive_private_manifest(private), [])
+        self.assertEqual(validate_archive_public_manifest(archive_public_projection(private)), [])
+
+        private["id"] = "amc12-2026-b"
+        self.assertIn(
+            "archive AMC 12 id must be a 2002–2025 A/B paper or 2026 A",
+            validate_archive_private_manifest(private),
+        )
 
 
 class ArtifactTests(unittest.TestCase):

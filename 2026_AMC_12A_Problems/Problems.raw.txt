@@ -1,0 +1,721 @@
+Title: 2026 AMC 12A Problems
+
+URL Source: https://artofproblemsolving.com/wiki/index.php?title=2026_AMC_12A_Problems&oldid=297882&action=raw
+
+Published Time: 2026-11-10T17:01:32Z
+
+Markdown Content:
+{{AMC12 Problems|year=2026|ab=A}}
+
+==Problem 1==
+A sign in a parking lot states that the total price includes a <imath>27\%</imath> tax. To the nearest whole number, what percentage of the amount a customer pays is this tax?
+
+<imath>
+	\textbf{(A)}\   21\%  \qquad
+	\textbf{(B)}\   22\%  \qquad
+	\textbf{(C)}\   27\%  \qquad
+	\textbf{(D)}\   37\%  \qquad
+	\textbf{(E)}\   73\%  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 1|Solution]]
+
+==Problem 2==
+Square <imath>ABCD</imath> has side length <imath>24</imath>. Let <imath>E</imath> be the midpoint of <imath>\overline{BC}</imath>, and let <imath>F</imath> be the intersection of <imath>\overline{AE}</imath> and <imath>\overline{BD}</imath>.
+
+<asy>
+unitsize(0.12cm);
+
+pair A = (0,24);
+pair B = (0,0);
+pair C = (24,0);
+pair D = (24,24);
+pair E = (B + C)/2;
+pair F = intersectionpoint(A--E, B--D);
+
+draw(A--B--C--D--cycle, linewidth(1));
+draw(A--E, linewidth(1));
+draw(B--D, linewidth(1));
+
+dot(A);
+dot(B);
+dot(C);
+dot(D);
+dot(E);
+dot(F);
+
+label("$A$", A + 3.3*dir(135));
+label("$B$", B + 3.3*dir(-135));
+label("$C$", C + 3.3*dir(-45));
+label("$D$", D + 3.3*dir(45));
+label("$E$", E + 2.6*dir(-90));
+label("$F$", F + 2.7*dir(0));
+</asy>
+
+What is the area of <imath>\triangle BEF</imath>?
+
+<imath>
+	\textbf{(A)}\   36  \qquad
+	\textbf{(B)}\   40  \qquad
+	\textbf{(C)}\   45  \qquad
+	\textbf{(D)}\   48  \qquad
+	\textbf{(E)}\   52  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 2|Solution]]
+
+==Problem 3==
+Half of the internal angles of a polygon measure <imath>150^{\circ}</imath> each, and the other half of its internal angles measure <imath>190^{\circ}</imath> each. How many sides does the polygon have?
+
+<imath>
+	\textbf{(A)}\   36  \qquad
+	\textbf{(B)}\   40  \qquad
+	\textbf{(C)}\   60  \qquad
+	\textbf{(D)}\   72  \qquad
+	\textbf{(E)}\   180  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 3|Solution]]
+
+==Problem 4==
+Let <imath>a_{1}, a_{2}, a_{3}</imath>, <imath>\dots</imath> be a sequence with <imath>a_{1} = 94</imath>, <imath>a_{2} = 190</imath>, and <imath>a_{n}</imath> equal to the arithmetic mean of the previous <imath>n-1</imath> terms for <imath>n \ge 3</imath>. What is the value of <imath>a_{10}</imath>?
+
+<imath>
+	\textbf{(A)}\   47  \qquad
+	\textbf{(B)}\   95  \qquad
+	\textbf{(C)}\   142  \qquad
+	\textbf{(D)}\   284  \qquad
+	\textbf{(E)}\   564  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 4|Solution]]
+
+==Problem 5==
+How many ordered triples of positive integers <imath>(x,y,z)</imath> satisfy both of the following equations?
+\begin{align*}
+	x + y + z &= 31\\
+	x + 3y + 3z &= 41
+\end{align*}
+
+<imath>
+	\textbf{(A)}\   4  \qquad
+	\textbf{(B)}\   5  \qquad
+	\textbf{(C)}\   6  \qquad
+	\textbf{(D)}\   7  \qquad
+	\textbf{(E)}\   8  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 5|Solution]]
+
+==Problem 6==
+For what positive integer <imath>n</imath> is the mean of <imath>1</imath>, <imath>4</imath>, <imath>9</imath>, <imath>16</imath>, <imath>\dots</imath>, <imath>n^{2}</imath> exactly <imath>32\%</imath> greater than its median?
+
+<imath>
+	\textbf{(A)}\   19  \qquad
+	\textbf{(B)}\   39  \qquad
+	\textbf{(C)}\   49  \qquad
+	\textbf{(D)}\   89  \qquad
+	\textbf{(E)}\   169  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 6|Solution]]
+
+==Problem 7==
+What is the value of <imath>(1+i)^{20} + (1-i)^{20}</imath>, where <imath>i = \sqrt{-1}</imath>?
+
+<imath>
+	\textbf{(A)}\   -2048  \qquad
+	\textbf{(B)}\   -1024  \qquad
+	\textbf{(C)}\   0  \qquad
+	\textbf{(D)}\   1024  \qquad
+	\textbf{(E)}\   2048  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 7|Solution]]
+
+==Problem 8==
+At Euclid High School, 25 students registered to take the AMC 10 and 75 students registered to take the AMC 12. (No student registered to take both.) However, not all 100 students showed up on test day. To compute the percentage of those students who actually took one of the exams, Euclid High School performed the following incorrect two-step process:
+
+*Step 1: The school computed both the percentage of AMC 10 registrants who actually took that exam and the percentage of AMC 12 registrants who actually took that exam.
+
+*Step 2: The school took the average of the previous two numbers to obtain a final percentage.
+
+Suppose that Euclid High School's process yielded an answer of <imath>60\%</imath>. What is the minimum number of students who might have actually taken one of the exams?
+
+<imath>
+	\textbf{(A)}\   30  \qquad
+	\textbf{(B)}\   35  \qquad
+	\textbf{(C)}\   40  \qquad
+	\textbf{(D)}\   50  \qquad
+	\textbf{(E)}\   60  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 8|Solution]]
+
+==Problem 9==
+How many ordered pairs <imath>(x,y)</imath> of real numbers satisfy the following system of equations?
+\begin{align*}
+	|x^{2} - y^{2}| &= 4\\
+	\frac{16x}{y} &= xy
+\end{align*}
+
+<imath>
+	\textbf{(A)}\   2  \qquad
+	\textbf{(B)}\   4  \qquad
+	\textbf{(C)}\   6  \qquad
+	\textbf{(D)}\   8  \qquad
+	\textbf{(E)}\   10  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 9|Solution]]
+
+==Problem 10==
+The tree diagram below has nodes labeled with rational numbers. The top node, at level <imath>0</imath>, is <imath>\frac{1}{2}</imath>. Each node <imath>\frac{a}{b}</imath> sprouts two nodes in the level below it, <imath>\frac{a}{a+b}</imath> and <imath>\frac{b}{a+b}</imath>. For example, level <imath>1</imath> has nodes <imath>\frac{1}{1+2} = \frac{1}{3}</imath> and <imath>\frac{2}{1+2} = \frac{2}{3}</imath>.
+
+<asy>
+unitsize(1.2cm);
+
+// ============================================================
+// 1. GEOMETRY PARAMETERS
+// ============================================================
+
+// Vertical distances.
+real edgeDrop      = 0.8;  // Length of ordinary branches.
+real labelGap      = 0.65; // Gap between branch tips and next label row.
+real finalEdgeDrop = 0.42; // Length of the final branches.
+
+// Horizontal distances between a parent and either child.
+// Index 0 corresponds to the first branching level.
+real[] branchOffset = {2.0, 1.0, 0.5, 0.28};
+
+// Drawing styles.
+pen branchPen = black + linewidth(1);
+pen textPen   = black;
+
+// ============================================================
+// 2. REUSABLE DRAWING FUNCTIONS
+// ============================================================
+
+// Draw two downward branches from each parent.
+//
+// Returns the x-coordinates of the children, ordered
+// left-to-right within each parent's pair.
+real[] drawChildren(real[] parentX, real parentY,
+                    real horizontalOffset, real verticalDrop) {
+
+    real[] childX = new real[2*parentX.length];
+
+    real childY = parentY - verticalDrop;
+
+    for (int i = 0; i < parentX.length; ++i) {
+
+        // Coordinates of the two children.
+        real leftX  = parentX[i] - horizontalOffset;
+        real rightX = parentX[i] + horizontalOffset;
+
+        childX[2*i]   = leftX;
+        childX[2*i+1] = rightX;
+
+        // Draw the two outgoing arrows.
+        draw((parentX[i], parentY)--(leftX, childY),
+             branchPen, arrow=Arrow(TeXHead));
+
+        draw((parentX[i], parentY)--(rightX, childY),
+             branchPen, arrow=Arrow(TeXHead));
+    }
+
+    return childX;
+}
+
+// Place a row of fraction labels.
+//
+// The x-coordinates and fraction labels must have
+// matching lengths and be listed from left to right.
+void labelLevel(real[] x, real y, string[] fractions) {
+
+    for (int i = 0; i < x.length; ++i) {
+        label("$" + fractions[i] + "$",
+              (x[i], y), N, textPen);
+    }
+}
+
+// ============================================================
+// 3. FRACTION LABELS
+// ============================================================
+
+// Each array corresponds to one level of the tree.
+// Children are ordered from left to right.
+
+string[] level0 = {
+    "\frac{1}{2}"
+};
+
+string[] level1 = {
+    "\frac{1}{3}",
+    "\frac{2}{3}"
+};
+
+string[] level2 = {
+    "\frac{1}{4}", "\frac{3}{4}",
+    "\frac{2}{5}", "\frac{3}{5}"
+};
+
+string[] level3 = {
+    "\frac{1}{5}", "\frac{4}{5}",
+    "\frac{3}{7}", "\frac{4}{7}",
+    "\frac{2}{7}", "\frac{5}{7}",
+    "\frac{3}{8}", "\frac{5}{8}"
+};
+
+// ============================================================
+// 4. VERTICAL POSITIONING
+// ============================================================
+
+// Distance between consecutive rows of fraction labels.
+real rowStep = edgeDrop + labelGap;
+
+// Vertical coordinates of the four labelled levels.
+real y0 = 0;
+real y1 = y0 - rowStep;
+real y2 = y1 - rowStep;
+real y3 = y2 - rowStep;
+
+// ============================================================
+// 5. GENERATE THE TREE
+// ============================================================
+
+// Level 0: Root.
+real[] x0 = {0};
+labelLevel(x0, y0, level0);
+
+// Level 1: Two children.
+real[] x1 = drawChildren(
+    x0, y0, branchOffset[0], edgeDrop
+);
+labelLevel(x1, y1, level1);
+
+// Level 2: Four children.
+real[] x2 = drawChildren(
+    x1, y1, branchOffset[1], edgeDrop
+);
+labelLevel(x2, y2, level2);
+
+// Level 3: Eight children.
+real[] x3 = drawChildren(
+    x2, y2, branchOffset[2], edgeDrop
+);
+labelLevel(x3, y3, level3);
+
+// ============================================================
+// 6. FINAL BRANCHES AND CONTINUATION MARKS
+// ============================================================
+
+// Draw the final, shorter pair of arrows from each level-3 node.
+for (int i = 0; i < x3.length; ++i) {
+
+    draw((x3[i], y3)--(x3[i]-branchOffset[3],
+                       y3-finalEdgeDrop),
+         branchPen, arrow=Arrow(TeXHead));
+
+    draw((x3[i], y3)--(x3[i]+branchOffset[3],
+                       y3-finalEdgeDrop),
+         branchPen, arrow=Arrow(TeXHead));
+}
+
+// Place vertical continuation marks below the final labelled row.
+real dotsY = y3 - finalEdgeDrop - labelGap;
+
+for (int i = 0; i < x3.length; ++i) {
+    label("$\vdots$", (x3[i], dotsY), N, textPen);
+}
+</asy>
+
+At what level does the node <imath>\frac{20}{27}</imath> appear in the diagram?
+
+
+<imath>
+	\textbf{(A)}\   5  \qquad
+	\textbf{(B)}\   8  \qquad
+	\textbf{(C)}\   12  \qquad
+	\textbf{(D)}\   26  \qquad
+	\textbf{(E)}\   \text{The node } \dfrac{20}{27} \text{ does not appear in the diagram.}  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 10|Solution]]
+
+==Problem 11==
+An urn contains <imath>6</imath> red balls, <imath>4</imath> black balls, and <imath>4</imath> white balls. Suppose <imath>7</imath> balls are drawn at random without replacement and a score is computed as follows:
+
+- <imath>1</imath> point is given for each red ball up to a maximum of <imath>3</imath> points.
+
+- <imath>1</imath> point is given for each black ball up to a maximum of <imath>2</imath> points.
+
+- <imath>1</imath> point is given for each white ball up to a maximum of <imath>2</imath> points.
+
+For example, drawing <imath>1</imath> red ball, <imath>4</imath> black balls, and <imath>2</imath> white balls would earn a score of <imath>1 + 2 + 2 = 5</imath>. What is the probability of getting the lowest possible score?
+
+<imath>
+	\textbf{(A)}\   \dfrac{1}{858}  \qquad
+	\textbf{(B)}\   \dfrac{5}{3432}  \qquad
+	\textbf{(C)}\   \dfrac{1}{312}  \qquad
+	\textbf{(D)}\   \dfrac{2}{429}  \qquad
+	\textbf{(E)}\   \dfrac{5}{264}  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 11|Solution]]
+
+==Problem 12==
+Ethan writes down five congruences:
+<cmath> x \equiv  0 \pmod{2}, x \equiv  0 \pmod{3}, x \equiv 1 \pmod{4}, x \equiv 5 \pmod{6}, x \equiv 7 \pmod{12}. </cmath>
+How many positive integers less than or equal to <imath>2026</imath> satisfy at least one of these five congruences?
+
+<imath>
+	\textbf{(A)}\   1688  \qquad
+	\textbf{(B)}\   1856  \qquad
+	\textbf{(C)}\   1857  \qquad
+	\textbf{(D)}\   2025  \qquad
+	\textbf{(E)}\   2026  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 12|Solution]]
+
+==Problem 13==
+A board has <imath>4</imath> spaces in a row, which can be filled with numbers. The sides of a fair, <imath>8</imath>-sided die are numbered <imath>1</imath> through <imath>8</imath>. David rolls the die <imath>4</imath> times. After each roll, he randomly chooses an empty spot to write the number down on the die. What is the probability that the numbers on the board form a strictly increasing sequence when read from left to right?
+
+<imath>
+	\textbf{(A)}\   \dfrac{1}{128}  \qquad
+	\textbf{(B)}\   \dfrac{5}{432}  \qquad
+	\textbf{(C)}\   \dfrac{35}{2048}  \qquad
+	\textbf{(D)}\   \dfrac{35}{1024}  \qquad
+	\textbf{(E)}\   \dfrac{1}{24}  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 13|Solution]]
+
+==Problem 14==
+Three identical boxes, each with one open face, are made from <imath>1</imath>-inch-thick wood. The outer dimensions of each box are <imath>a</imath>, <imath>b</imath>, and <imath>c</imath> inches, where <imath>a < b < c</imath>, and each open face appears on a face with outer dimensions <imath>b \times c</imath>.
+
+<asy>
+size(220);
+pen box = rgb(0.66,0.68,0.80);
+pen grn = rgb(0.80,0.88,0.76);
+pen pnk = rgb(0.92,0.68,0.68);
+pair P(real x, real y) { return (x,-y); }
+pair A = P(727,300), B = P(1012,340), C = P(1012,762), D = P(727,724);
+pair E = P(891,212), F = P(1164,244), G = P(1164,644);
+pair I1 = P(763,348), I2 = P(972,376), I3 = P(972,720), I4 = P(763,692);
+pair K1 = P(909,368), K2 = P(909,586), K3 = P(972,594);
+filldraw(A--B--C--D--cycle, box, black+1);
+filldraw(A--E--F--B--cycle, box, black+1);
+filldraw(B--F--G--C--cycle, box, black+1);
+filldraw(I1--I2--I3--I4--cycle, grn, black+1);
+filldraw(I4--K2--K3--I3--cycle, pnk, black+1);
+draw(K1--K2, black+1);
+label("$c$", P(705,512));
+label("$b$", P(865,775));
+label("$a$", P(1115,712));
+</asy>
+
+It happens that if the open faces of the two boxes are held together, then the space inside can exactly contain the (rotated) third box, with no room to spare. What is <imath>a + b + c</imath>?
+
+<imath>
+	\textbf{(A)}\   20  \qquad
+	\textbf{(B)}\   22  \qquad
+	\textbf{(C)}\   24  \qquad
+	\textbf{(D)}\   26  \qquad
+	\textbf{(E)}\   28  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 14|Solution]]
+
+==Problem 15==
+Suppose that <imath>\sin a = \frac{1}{4}</imath> and <imath>\sin b = \frac{1}{8}</imath> with <imath>0 \le b < a \le  \frac{\pi}{2}</imath>. What is the greatest integer less than <imath>\log_{2}\big( \sin(a+b) \cdot \sin(a-b) \big)</imath>?
+
+
+<imath>
+	\textbf{(A)}\   -5  \qquad
+	\textbf{(B)}\   -4  \qquad
+	\textbf{(C)}\   0  \qquad
+	\textbf{(D)}\   1  \qquad
+	\textbf{(E)}\   5  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 15|Solution]]
+
+==Problem 16==
+Gerry is playing the Triples Game. Her task is to partition the <imath>3 \times 3</imath> grid of squares shown on the left into three sections, each containing three adjoining squares. (Three squares are adjoining if each shares an edge with at least one of the other two.) One point will be awarded for each section containing more <imath>\textsf{X}</imath>'s than <imath>\textsf{O}</imath>'s. Shown on the right is a sample partition that will earn one point in total. A partition that earns two or more points will win the game. What fraction of the possible partitions of this particular grid will result in a win for Gerry?
+
+<asy>
+unitsize(0.62cm);
+string[][] m = {{"X","O","X"},{"X","X","O"},{"O","O","O"}};
+pen thick = linewidth(1);
+pen redpen = rgb(0.85,0,0) + linewidth(2.5) + miterjoin + squarecap;
+for (int s = 0; s < 2; ++s) {
+real x0 = 5.5*s;
+for (int k = 0; k <= 3; ++k) {
+draw((x0+k,0)--(x0+k,3), s == 0 ? thick : defaultpen);
+draw((x0,k)--(x0+3,k), s == 0 ? thick : defaultpen);
+}
+for (int r = 0; r < 3; ++r)
+for (int c = 0; c < 3; ++c)
+label("\textsf{" + m[r][c] + "}", (x0+c+0.5, 2.5-r));
+}
+draw((5.5,0)--(8.5,0)--(8.5,3)--(5.5,3)--cycle, redpen);
+draw((7.5,0)--(7.5,3), redpen);
+draw((7.5,2)--(6.5,2)--(6.5,1)--(5.5,1), redpen);
+</asy>
+
+<imath>
+	\textbf{(A)}\   \dfrac{3}{10}  \qquad
+	\textbf{(B)}\   \dfrac{1}{3}  \qquad
+	\textbf{(C)}\   \dfrac{2}{5}  \qquad
+	\textbf{(D)}\   \dfrac{4}{9}  \qquad
+	\textbf{(E)}\   \dfrac{1}{2}  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 16|Solution]]
+
+==Problem 17==
+An engineer is designing a closely packed field of <imath>7</imath> wind turbines for electricity production. Each turbine, whose center is marked by a labeled dot in the figure, occupies one of <imath>7</imath> congruent elliptical regions. Turbines in the same row have centers that are <imath>4</imath> units apart, and turbines in the same column have centers that are <imath>9</imath> units apart, as shown in the figure below.
+
+<asy>
+unitsize(0.65cm);
+
+// --------------------------------------------------
+// Parameters
+// --------------------------------------------------
+real ellipseWidth  = 2;
+real ellipseHeight = 3*sqrt(3)/2;
+
+// Line styles
+pen ellipsePen = black + linewidth(1.2);
+pen arrowPen   = black + linewidth(1.2);
+
+// --------------------------------------------------
+// Point definitions
+// --------------------------------------------------
+pair O = ( 0,    0);
+pair F = ( 4,    0);
+pair A = ( 2,  4.5);
+pair B = (-2,  4.5);
+pair C = (-4,    0);
+pair D = (-2, -4.5);
+pair E = ( 2, -4.5);
+
+// --------------------------------------------------
+// Ellipse drawing function
+// --------------------------------------------------
+void drawEllipse(pair center) {
+    draw(
+        shift(center) *
+        scale(ellipseWidth, ellipseHeight) *
+        unitcircle,
+        ellipsePen
+    );
+}
+
+// Draw all seven ellipses
+pair[] centers = {O, A, B, C, D, E, F};
+
+for (int i = 0; i < centers.length; ++i) {
+    drawEllipse(centers[i]);
+}
+
+// --------------------------------------------------
+// Dimension arrows
+// --------------------------------------------------
+
+// Horizontal dimension: 4
+draw((-2,-8)--(2,-8), p=arrowPen, arrow=Arrows(TeXHead));
+label("$4$", (0,-8), S);
+
+// Vertical dimension: 9
+draw((6.7,-4.5)--(6.7,4.5), p=arrowPen, arrow=Arrows(TeXHead));
+label("$9$", (6.7,0), E);
+
+
+// --------------------------------------------------
+// Points and labels
+// --------------------------------------------------
+void markPoint(pair p, string name) {
+    dot(p, black);
+    label("$" + name + "$", p, W);
+}
+
+markPoint(O, "O");
+markPoint(A, "A");
+markPoint(B, "B");
+markPoint(C, "C");
+markPoint(D, "D");
+markPoint(E, "E");
+markPoint(F, "F");
+</asy>
+
+The major axis of each ellipse is <imath>m\sqrt{p}</imath>, where <imath>m</imath> and <imath>p</imath> are positive integers and <imath>p</imath> is not divisible by the square of any prime. What is <imath>m + p</imath>?
+
+<imath>
+	\textbf{(A)}\   6  \qquad
+	\textbf{(B)}\   8  \qquad
+	\textbf{(C)}\   9  \qquad
+	\textbf{(D)}\   10  \qquad
+	\textbf{(E)}\   12  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 17|Solution]]
+
+==Problem 18==
+A sphere with center <imath>O</imath> and radius <imath>9</imath> cuts three mutually perpendicular planes that meet at point <imath>P</imath>, forming three circular cross-sections on the planes, which have radii <imath>7</imath>, <imath>4</imath>, and <imath>3</imath>. What is <imath>OP</imath>?
+
+<imath>
+	\textbf{(A)}\   10  \qquad
+	\textbf{(B)}\   11  \qquad
+	\textbf{(C)}\   12  \qquad
+	\textbf{(D)}\   13  \qquad
+	\textbf{(E)}\   14  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 18|Solution]]
+
+==Problem 19==
+How many values of <imath>x</imath> between <imath>0</imath> and <imath>2\pi</imath>, inclusive, satisfy the equation
+<cmath>\sin x + \sin(2x) + \sin(3x) = 1 + \cos x + \cos(2x)\ ?</cmath>
+
+<imath>
+	\textbf{(A)}\   1  \qquad
+	\textbf{(B)}\   2  \qquad
+	\textbf{(C)}\   4  \qquad
+	\textbf{(D)}\   6  \qquad
+	\textbf{(E)}\   8  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 19|Solution]]
+
+==Problem 20==
+How many polynomials <imath>f(x)</imath> of degree <imath>3</imath> satisfying
+<cmath> f\left( 3+\sqrt{5} \right) = f\left( 3 - \sqrt{5} \right)  </cmath>
+are there that have leading coefficient equal to <imath>1</imath> and all of whose coefficients are integers between <imath>-10</imath> and <imath>10</imath>, inclusive?
+
+<imath>
+	\textbf{(A)}\   21  \qquad
+	\textbf{(B)}\   42  \qquad
+	\textbf{(C)}\   63  \qquad
+	\textbf{(D)}\   84  \qquad
+	\textbf{(E)}\   105  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 20|Solution]]
+
+==Problem 21==
+Six dogs find a large cookie in the shape of a regular hexagon <imath>ABCDEF</imath>. To divide the cookie, the dogs agree to choose point <imath>P</imath> uniformly at random in the interior of the hexagon. The dogs will then cut out the segments <imath>\overline{PA}</imath>, <imath>\overline{PB}</imath>, <imath>\overline{PC}</imath>, <imath>\overline{PD}</imath>, <imath>\overline{PE}</imath>, and <imath>\overline{PF}</imath>, dividing the cooking into six triangles, one for each dog. A dog will be happy if and only if its piece has at least <imath>\frac{1}{10}</imath> of the total area of the hexagon. What is the probability that all six dogs will be happy?
+
+<imath>
+	\textbf{(A)}\   \dfrac{\sqrt{3}}{50}  \qquad
+	\textbf{(B)}\   \dfrac{1}{25}  \qquad
+	\textbf{(C)}\   \dfrac{3\sqrt{3}}{50}  \qquad
+	\textbf{(D)}\   \dfrac{4}{25}  \qquad
+	\textbf{(E)}\   \dfrac{2}{5}  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 21|Solution]]
+
+==Problem 22==
+A flock of <imath>8</imath> birds is flying in a formation, led by a single leader bird, which has exactly <imath>2</imath> followers immediately behind. Each non-leader bird follows exactly one bird, and has <imath>0</imath>, <imath>1</imath>, or <imath>2</imath> followers immediately behind. Two possible formations are shown in the picture below. (When a bird has two followers, swapping its left and right subflocks can produce a different formation, as shown in the figure.)
+
+<center>
+<asy>
+size(300);
+pen e = black + dashed + linewidth(1);
+pen p = black + linewidth(5);
+
+pair A=(112,269), B=(29,186), C=(195,186);
+pair D=(29,103), E=(154,103), F=(229,103);
+pair G=(200,28), H=(258,28);
+
+draw(A--B,e);
+draw(A--C,e);
+draw(B--D,e);
+draw(C--E,e);
+draw(C--F,e);
+draw(F--G,e);
+draw(F--H,e);
+
+dot(A,p); dot(B,p); dot(C,p); dot(D,p);
+dot(E,p); dot(F,p); dot(G,p); dot(H,p);
+
+pair I=(486,269), J=(403,186), K=(569,186);
+pair L=(403,103), M=(535,103), N=(610,103);
+pair O=(506,28), Q=(565,28);
+
+draw(I--J,e);
+draw(I--K,e);
+draw(J--L,e);
+draw(K--M,e);
+draw(K--N,e);
+draw(M--O,e);
+draw(M--Q,e);
+
+dot(I,p); dot(J,p); dot(K,p); dot(L,p);
+dot(M,p); dot(N,p); dot(O,p); dot(Q,p);
+</asy>
+</center>
+
+What is the total number of possible formations?
+
+<imath>
+	\textbf{(A)}\   48  \qquad
+	\textbf{(B)}\   52  \qquad
+	\textbf{(C)}\   76  \qquad
+	\textbf{(D)}\   132  \qquad
+	\textbf{(E)}\   196  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 22|Solution]]
+
+==Problem 23==
+There is a unique real number <imath>x</imath> between <imath>0</imath> and <imath>1</imath> such that <imath>x^{3} + x^{2} = 1</imath>. For that <imath>x</imath>, there exist unique integers <imath>a</imath>, <imath>b</imath>, and <imath>c</imath> such that the infinite product
+<cmath> (x+1)(x^{2}+1)(x^{4}+1)(x^{8}+1)(x^{16}+1) \cdots</cmath>
+equals <imath>ax^{2} + bx + c</imath>. What is <imath>a+b+c</imath>?
+
+<imath>
+	\textbf{(A)}\   2  \qquad
+	\textbf{(B)}\   3  \qquad
+	\textbf{(C)}\   4  \qquad
+	\textbf{(D)}\   5  \qquad
+	\textbf{(E)}\   6  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 23|Solution]]
+
+==Problem 24==
+Trapezoid <imath>ABCD</imath> has <imath>AB = 4</imath>, <imath>CD = 5</imath>, and <imath>\angle DAB = \angle ABC = 90^{\circ}</imath>. Circles <imath>\omega_{1}</imath> and <imath>\omega_{2}</imath> lie inside the trapezoid as follows: <imath>\omega_{1}</imath> is tangent to <imath>\overline{AB}</imath>, <imath>\overline{AD}</imath>, and <imath>\overline{DC}</imath>; <imath>\omega_{2}</imath> is tangent to <imath>\overline{AB}</imath>, <imath>\overline{BC}</imath>, and <imath>\overline{DC}</imath>; and <imath>\omega_{1}</imath> and <imath>\omega_{2}</imath> are tangent to each other. The distance between the centers of <imath>\omega_{1}</imath> and <imath>\omega_{2}</imath> is <imath>m - n\sqrt{p}</imath>, where <imath>m</imath>, <imath>n</imath>, and <imath>p</imath> are positive integers such that <imath>p</imath> is not divisible by the square of any prime. What is <imath>m + n + p</imath>?
+
+<imath>
+	\textbf{(A)}\   30  \qquad
+	\textbf{(B)}\   47  \qquad
+	\textbf{(C)}\   53  \qquad
+	\textbf{(D)}\   62  \qquad
+	\textbf{(E)}\   74  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 24|Solution]]
+
+==Problem 25==
+Let <imath>m</imath> be a positive integer such that there are at least <imath>50</imath> positive integers <imath>x</imath> less than <imath>m</imath> for which <imath>x^2 - 1</imath> is a multiple of <imath>m</imath>. What is the sum of the digits of the least possible value of <imath>m</imath>?
+
+<imath>
+	\textbf{(A)}\   12  \qquad
+	\textbf{(B)}\   15  \qquad
+	\textbf{(C)}\   16  \qquad
+	\textbf{(D)}\   18  \qquad
+	\textbf{(E)}\   22  
+</imath>
+
+[[2026 AMC 12A Problems/Problem 25|Solution]]
+
+==See also==
+{{AMC12 box|year=2026|ab=A|before=[[2025 AMC 12B Problems]]|after=[[2026 AMC 12B Problems]]}}
+* [[AMC 12]]
+* [[AMC 12 Problems and Solutions]]
+* [[Mathematics competitions]]
+* [[Mathematics competition resources]]
+{{MAA Notice}}
